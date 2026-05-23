@@ -1,0 +1,164 @@
+// era-fb-pos domain — floor, tickets, menu, POS shifts (see doc/02-domain-model.md).
+// Folio / night audit remain in era-hotel-pms (bridge API only).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TableStatus {
+  FREE
+  OCCUPIED
+  RESERVED
+  DIRTY
+}
+
+enum TicketStatus {
+  OPEN
+  HELD
+  CLOSED
+  VOID
+}
+
+enum TicketLineKitchenStatus {
+  NEW
+  FIRED
+  IN_PREP
+  DONE
+  VOID
+}
+
+enum PosShiftStatus {
+  OPEN
+  CLOSED
+}
+
+model Outlet {
+  id                 String   @id @default(cuid())
+  code               String   @unique
+  name               String
+  revenueCenterCode  String   @default("FOOD") @map("revenue_center_code")
+  propertyCode       String?  @map("property_code")
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  tables             PosTable[]
+  tickets            Ticket[]
+  shifts             PosShift[]
+  menuCategories     MenuCategory[]
+
+  @@map("outlets")
+}
+
+model PosTable {
+  id              String      @id @default(cuid())
+  outletId        String      @map("outlet_id")
+  code            String
+  name            String
+  seats           Int         @default(4)
+  zone            String?
+  status          TableStatus @default(FREE)
+  currentTicketId String?     @unique @map("current_ticket_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  outlet          Outlet      @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  tickets         Ticket[]    @relation("TableTickets")
+  reservations    TableReservation[]
+
+  @@unique([outletId, code])
+  @@map("pos_tables")
+}
+
+model TableReservation {
+  id         String   @id @default(cuid())
+  tableId    String   @map("table_id")
+  startAt    DateTime @map("start_at")
+  endAt      DateTime @map("end_at")
+  guestName  String?  @map("guest_name")
+  partySize  Int      @default(2) @map("party_size")
+  createdAt  DateTime @default(now()) @map("created_at")
+  table      PosTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@index([tableId, startAt])
+  @@map("table_reservations")
+}
+
+model MenuCategory {
+  id        String     @id @default(cuid())
+  outletId  String     @map("outlet_id")
+  name      String
+  sortOrder Int        @default(0) @map("sort_order")
+  items     MenuItem[]
+  outlet    Outlet     @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@map("menu_categories")
+}
+
+model MenuItem {
+  id         String       @id @default(cuid())
+  categoryId String       @map("category_id")
+  plu        String
+  name       String
+  priceAzn   Decimal      @map("price_azn") @db.Decimal(12, 2)
+  active     Boolean      @default(true)
+  recipeSku  String?      @map("recipe_sku")
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  lines      TicketLine[]
+
+  @@unique([categoryId, plu])
+  @@map("menu_items")
+}
+
+model Ticket {
+  id                      String       @id @default(cuid())
+  outletId                String       @map("outlet_id")
+  tableId                 String?      @map("table_id")
+  status                  TicketStatus @default(OPEN)
+  waiterLabel             String?      @map("waiter_label")
+  covers                  Int          @default(1)
+  guestName               String?      @map("guest_name")
+  roomChargeReservationId String?      @map("room_charge_reservation_id")
+  subtotalAzn             Decimal      @default(0) @map("subtotal_azn") @db.Decimal(12, 2)
+  totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
+  openedAt                DateTime     @default(now()) @map("opened_at")
+  closedAt                DateTime?    @map("closed_at")
+  outlet                  Outlet       @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  table                   PosTable?    @relation("TableTickets", fields: [tableId], references: [id])
+  lines                   TicketLine[]
+
+  @@index([outletId, status])
+  @@map("tickets")
+}
+
+model TicketLine {
+  id             String                  @id @default(cuid())
+  ticketId       String                  @map("ticket_id")
+  menuItemId     String?                 @map("menu_item_id")
+  description    String
+  qty            Int                     @default(1)
+  unitPriceAzn   Decimal                 @map("unit_price_azn") @db.Decimal(12, 2)
+  kitchenStatus  TicketLineKitchenStatus @default(NEW) @map("kitchen_status")
+  notes          String?
+  ticket         Ticket                  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  menuItem       MenuItem?               @relation(fields: [menuItemId], references: [id])
+
+  @@index([ticketId])
+  @@map("ticket_lines")
+}
+
+model PosShift {
+  id          String         @id @default(cuid())
+  outletId    String         @map("outlet_id")
+  status      PosShiftStatus @default(OPEN)
+  openedAt    DateTime       @default(now()) @map("opened_at")
+  closedAt    DateTime?      @map("closed_at")
+  openingCash Decimal        @default(0) @map("opening_cash") @db.Decimal(12, 2)
+  outlet      Outlet           @relation(fields: [outletId], references: [id], onDelete: Cascade)
+
+  @@index([outletId, status])
+  @@map("pos_shifts")
+}

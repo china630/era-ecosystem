@@ -1,0 +1,1291 @@
+"use client";
+
+import { useAuth } from "../../lib/auth-context";
+import { isRestrictedUserRole } from "../../lib/role-utils";
+import { PageHeader } from "../../components/layout/page-header";
+import {
+  Fragment,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+} from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+import { apiFetch } from "../../lib/api-client";
+import { parseHrEmployeesResponse } from "../../lib/hr-employees-list";
+import { formatMoneyAzn } from "../../lib/format-money";
+import { useRequireAuth } from "../../lib/use-require-auth";
+import { EmptyState } from "../../components/empty-state";
+import { DepartmentSelect } from "../../components/payroll/department-select";
+import {
+  CARD_CONTAINER_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CENTER_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TD_RIGHT_CLASS,
+  DATA_TABLE_TH_CENTER_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
+} from "../../lib/design-system";
+import { Button } from "../../components/ui/button";
+import { VacationCalcModal } from "../../components/payroll/vacation-calc-modal";
+import { SickCalcModal } from "../../components/payroll/sick-calc-modal";
+import { PayrollRunModal } from "../../components/payroll/payroll-run-modal";
+import { AbsenceModal } from "../../components/payroll/absence-modal";
+import {
+  EmployeeAbsencesModal,
+  type EmployeeAbsenceRow,
+} from "../../components/payroll/employee-absences-modal";
+import { CalendarRange, ChevronDown, ChevronUp, Loader2, Trash2, Users, X } from "lucide-react";
+
+type RunRow = {
+  id: string;
+  year: number;
+  month: number;
+  status: string;
+  _count: { slips: number };
+};
+
+type OrgBankAccount = {
+  id: string;
+  bankName: string;
+  accountNumber: string;
+  currency: string;
+  iban: string | null;
+  swift: string | null;
+};
+
+type SalaryRegistryRow = {
+  id: string;
+  status: "DRAFT" | "SENT" | "PAID";
+  payoutFormat: "ABB_XML" | "UNIVERSAL_XLSX";
+  externalId: string | null;
+  bankAccount?: { bankName: string; accountNumber: string; currency: string } | null;
+};
+
+type EmpOpt = { id: string; firstName: string; lastName: string };
+
+type AbsenceTypeOpt = { id: string; nameAz: string; code: string; formula: string };
+
+type AbsenceRow = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  note: string;
+  employee: EmpOpt;
+  absenceType?: { id: string; nameAz: string; code: string; formula: string };
+};
+
+function decPositive(v: unknown): boolean {
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0;
+}
+
+function parseIsoDateValueUtc(s: string): number | null {
+  const x = s.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(x)) return null;
+  const y = Number(x.slice(0, 4));
+  const m = Number(x.slice(5, 7)) - 1;
+  const d = Number(x.slice(8, 10));
+  const t = Date.UTC(y, m, d, 12, 0, 0, 0);
+  return Number.isFinite(t) ? t : null;
+}
+
+function parseMonthValue(v: string): { year: number; month: number } | null {
+  const s = v.trim();
+  if (!/^\d{4}-\d{2}$/.test(s)) return null;
+  const y = Number(s.slice(0, 4));
+  const m = Number(s.slice(5, 7));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || m < 1 || m > 12) return null;
+  return { year: y, month: m };
+}
+
+function monthValueFromYm(year: number, month: number): string {
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}`;
+}
+
+function monthBoundsUtc(year: number, month: number): { startT: number; endT: number } {
+  const startT = Date.UTC(year, month - 1, 1, 12, 0, 0, 0);
+  const endT = Date.UTC(year, month, 0, 12, 0, 0, 0);
+  return { startT, endT };
+}
+
+function parseIsoDayUtcT(s: string): number {
+  const x = s.slice(0, 10);
+  return Date.UTC(
+    Number(x.slice(0, 4)),
+    Number(x.slice(5, 7)) - 1,
+    Number(x.slice(8, 10)),
+    12,
+    0,
+    0,
+    0,
+  );
+}
+
+function overlapsMonth(a: AbsenceRow, year: number, month: number): boolean {
+  const { startT, endT } = monthBoundsUtc(year, month);
+  const a0 = parseIsoDayUtcT(a.startDate);
+  const a1 = parseIsoDayUtcT(a.endDate);
+  return a1 >= startT && a0 <= endT;
+}
+
+function formatMoneyNoSymbol(v: unknown): string {
+  return formatMoneyAzn(v).replace("₼", "").trim();
+}
+
+function PayrollPageInner() {
+  const { t } = useTranslation();
+  const { token, ready } = useRequireAuth();
+  const { user } = useAuth();
+  const hideDestructive = isRestrictedUserRole(user?.role ?? undefined);
+
+  const [runs, setRuns] = useState<RunRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<unknown>(null);
+
+  const [employees, setEmployees] = useState<EmpOpt[]>([]);
+  const [absences, setAbsences] = useState<AbsenceRow[]>([]);
+  const [absLoading, setAbsLoading] = useState(false);
+  const [absErr, setAbsErr] = useState<string | null>(null);
+
+  const [calcEmp, setCalcEmp] = useState("");
+  const [absenceTypes, setAbsenceTypes] = useState<AbsenceTypeOpt[]>([]);
+  const [vacModalOpen, setVacModalOpen] = useState(false);
+  const [sickModalOpen, setSickModalOpen] = useState(false);
+  const [runModalOpen, setRunModalOpen] = useState(false);
+  const [absenceModalOpen, setAbsenceModalOpen] = useState(false);
+
+  const [monthValue, setMonthValue] = useState(() =>
+    monthValueFromYm(new Date().getFullYear(), new Date().getMonth() + 1),
+  );
+  const [departmentId, setDepartmentId] = useState("");
+
+  const [employeeAbsencesOpen, setEmployeeAbsencesOpen] = useState(false);
+  const [employeeAbsencesEmp, setEmployeeAbsencesEmp] = useState<EmpOpt | null>(null);
+
+  const [payrollJob, setPayrollJob] = useState<{
+    jobId: string;
+    state: string;
+  } | null>(null);
+  const pollAbortRef = useRef(false);
+  const [createRunLoading, setCreateRunLoading] = useState(false);
+  const [importTimesheet, setImportTimesheet] = useState(false);
+  const [approvedTimesheetId, setApprovedTimesheetId] = useState<string | null>(null);
+  const [postingRunId, setPostingRunId] = useState<string | null>(null);
+  const [payingRunId, setPayingRunId] = useState<string | null>(null);
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+  const [selectedBankAccountId, setSelectedBankAccountId] = useState("");
+  const [orgBankAccounts, setOrgBankAccounts] = useState<OrgBankAccount[]>([]);
+  const [registries, setRegistries] = useState<SalaryRegistryRow[]>([]);
+  const [markPaidBusyId, setMarkPaidBusyId] = useState<string | null>(null);
+  const [downloadBusyId, setDownloadBusyId] = useState<string | null>(null);
+  const [taxDetailsSlipId, setTaxDetailsSlipId] = useState<string | null>(null);
+  const [deletingAbsenceId, setDeletingAbsenceId] = useState<string | null>(null);
+  const payrollBusy = payrollJob !== null;
+
+  useEffect(() => {
+    const parsed = parseMonthValue(monthValue);
+    if (!parsed) return;
+    setYear(parsed.year);
+    setMonth(parsed.month);
+  }, [monthValue]);
+
+  useEffect(() => {
+    if (!token) return;
+    void (async () => {
+      const r = await apiFetch(
+        `/api/hr/timesheets?year=${year}&month=${month}&create=false`,
+      );
+      if (!r.ok) {
+        setApprovedTimesheetId(null);
+        return;
+      }
+      const j = (await r.json()) as {
+        timesheet: { id: string; status: string } | null;
+      };
+      const ts = j.timesheet;
+      if (ts && ts.status === "APPROVED") {
+        setApprovedTimesheetId(ts.id);
+      } else {
+        setApprovedTimesheetId(null);
+        setImportTimesheet(false);
+      }
+    })();
+  }, [token, year, month]);
+
+  const load = useCallback(async () => {
+    if (!token) {
+      setRuns([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const res = await apiFetch("/api/hr/payroll/runs");
+    if (!res.ok) {
+      setError(`${t("payroll.loadErr")}: ${res.status}`);
+      setRuns([]);
+    } else {
+      setRuns(await res.json());
+    }
+    setLoading(false);
+  }, [token, t]);
+
+  const downloadRunXlsx = useCallback(
+    async (runId: string) => {
+      if (!token) return;
+      const res = await apiFetch(`/api/hr/payroll/runs/${runId}/xlsx`);
+      if (!res.ok) {
+        setError(`${t("common.loadErr")}: ${res.status}`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payroll-${runId}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    },
+    [token, t],
+  );
+
+  const loadAbsencesBlock = useCallback(async () => {
+    if (!token) {
+      setAbsences([]);
+      setEmployees([]);
+      return;
+    }
+    setAbsLoading(true);
+    setAbsErr(null);
+    const [er, ea, et] = await Promise.all([
+      apiFetch("/api/hr/employees?page=1&pageSize=500"),
+      apiFetch("/api/hr/absences"),
+      apiFetch("/api/hr/absence-types"),
+    ]);
+    if (!er.ok) setAbsErr(`${t("employees.loadErr")}: ${er.status}`);
+    else {
+      const parsed = parseHrEmployeesResponse<EmpOpt>(await er.json());
+      setEmployees(parsed.items);
+    }
+    if (!ea.ok) setAbsErr(`${t("payroll.loadErr")}: ${ea.status}`);
+    else setAbsences(await ea.json());
+    if (et.ok) {
+      const types = (await et.json()) as AbsenceTypeOpt[];
+      setAbsenceTypes(types);
+    }
+    setAbsLoading(false);
+  }, [token, t]);
+
+  useEffect(() => {
+    if (!ready || !token) return;
+    void load();
+  }, [load, ready, token]);
+
+  useEffect(() => {
+    if (!ready || !token) return;
+    void loadAbsencesBlock();
+  }, [loadAbsencesBlock, ready, token]);
+
+  useEffect(() => {
+    if (!token) return;
+    void (async () => {
+      const res = await apiFetch("/api/hr/payroll/bank-accounts");
+      if (!res.ok) {
+        setOrgBankAccounts([]);
+        setSelectedBankAccountId("");
+        return;
+      }
+      const rows = (await res.json()) as OrgBankAccount[];
+      setOrgBankAccounts(rows);
+      setSelectedBankAccountId(rows[0]?.id ?? "");
+    })();
+  }, [token]);
+
+  useEffect(() => {
+    if (employees.length === 0) return;
+    setCalcEmp((prev) =>
+      prev && employees.some((e) => e.id === prev) ? prev : employees[0].id,
+    );
+  }, [employees]);
+
+  useEffect(() => {
+    return () => {
+      pollAbortRef.current = true;
+    };
+  }, []);
+
+  const pollPayrollJob = useCallback(
+    async (jobId: string, opts?: { refreshRunId?: string }) => {
+      pollAbortRef.current = false;
+      const intervalMs = 900;
+      const maxMs = 15 * 60 * 1000;
+      const start = Date.now();
+      while (!pollAbortRef.current && Date.now() - start < maxMs) {
+        const res = await apiFetch(`/api/hr/payroll/jobs/${jobId}`);
+        if (!res.ok) {
+          setPayrollJob(null);
+          alert(await res.text());
+          return;
+        }
+        const s = (await res.json()) as {
+          state: string;
+          failedReason?: string;
+        };
+        setPayrollJob({ jobId, state: s.state });
+        if (s.state === "completed") {
+          setPayrollJob(null);
+          await load();
+          const rid = opts?.refreshRunId;
+          if (rid) {
+            const r = await apiFetch(`/api/hr/payroll/runs/${rid}`);
+            if (r.ok) setDetail(await r.json());
+          }
+          return;
+        }
+        if (s.state === "failed") {
+          setPayrollJob(null);
+          alert(s.failedReason ?? "Job failed");
+          return;
+        }
+        await new Promise((r) => setTimeout(r, intervalMs));
+      }
+      if (!pollAbortRef.current) {
+        setPayrollJob(null);
+        alert(t("payroll.jobTimeout"));
+      }
+    },
+    [load, t],
+  );
+
+  async function createRun(override?: {
+    year?: number;
+    month?: number;
+    importTimesheet?: boolean;
+  }) {
+    if (!token || createRunLoading || payrollBusy) return;
+    setCreateRunLoading(true);
+    const y = override?.year ?? year;
+    const m = override?.month ?? month;
+    const imp = override?.importTimesheet ?? importTimesheet;
+    const body: Record<string, unknown> = { year: y, month: m };
+    if (imp && approvedTimesheetId) {
+      body.timesheetId = approvedTimesheetId;
+    }
+    const res = await apiFetch("/api/hr/payroll/runs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      alert(raw);
+      setCreateRunLoading(false);
+      return;
+    }
+    let data: unknown;
+    try {
+      data = JSON.parse(raw) as unknown;
+    } catch {
+      await load();
+      setCreateRunLoading(false);
+      return;
+    }
+    if (
+      data &&
+      typeof data === "object" &&
+      "async" in data &&
+      (data as { async?: boolean }).async === true &&
+      "jobId" in data
+    ) {
+      const jobId = String((data as { jobId: string }).jobId);
+      setPayrollJob({ jobId, state: "waiting" });
+      setCreateRunLoading(false);
+      void pollPayrollJob(jobId);
+      return;
+    }
+    await load();
+    setCreateRunLoading(false);
+  }
+
+  async function postRun(id: string) {
+    if (!token || payrollBusy || postingRunId !== null) return;
+    setPostingRunId(id);
+    const res = await apiFetch(`/api/hr/payroll/runs/${id}/post`, {
+      method: "POST",
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      alert(raw);
+      setPostingRunId(null);
+      return;
+    }
+    let data: unknown;
+    try {
+      data = JSON.parse(raw) as unknown;
+    } catch {
+      await load();
+      if (detailId === id) {
+        const r = await apiFetch(`/api/hr/payroll/runs/${id}`);
+        if (r.ok) setDetail(await r.json());
+      }
+      setPostingRunId(null);
+      return;
+    }
+    if (
+      data &&
+      typeof data === "object" &&
+      "async" in data &&
+      (data as { async?: boolean }).async === true &&
+      "jobId" in data
+    ) {
+      const jobId = String((data as { jobId: string }).jobId);
+      setPayrollJob({ jobId, state: "waiting" });
+      setPostingRunId(null);
+      void pollPayrollJob(jobId, { refreshRunId: id });
+      return;
+    }
+    await load();
+    if (detailId === id) {
+      const r = await apiFetch(`/api/hr/payroll/runs/${id}`);
+      if (r.ok) setDetail(await r.json());
+    }
+    setPostingRunId(null);
+  }
+
+  async function payRun(id: string) {
+    if (!token || payingRunId) return;
+    if (!id) {
+      toast.error(t("payroll.payRunNeedRun"));
+      return;
+    }
+    if (!selectedBankAccountId) {
+      toast.error(t("payroll.payRunNeedBank"));
+      return;
+    }
+    setPayingRunId(id);
+    const res = await apiFetch(`/api/hr/payroll/runs/${id}/pay`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bankAccountId: selectedBankAccountId }),
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      alert(raw);
+      setPayingRunId(null);
+      return;
+    }
+    setPayoutModalOpen(false);
+    await load();
+    const regsRes = await apiFetch(`/api/hr/payroll/runs/${id}/registries`);
+    if (regsRes.ok) setRegistries((await regsRes.json()) as SalaryRegistryRow[]);
+    if (detailId === id) {
+      const r = await apiFetch(`/api/hr/payroll/runs/${id}`);
+      if (r.ok) setDetail(await r.json());
+    }
+    setPayingRunId(null);
+    toast.success(t("payroll.payRunSuccess"));
+  }
+
+  async function loadRegistries(runId: string) {
+    const res = await apiFetch(`/api/hr/payroll/runs/${runId}/registries`);
+    if (res.ok) {
+      setRegistries((await res.json()) as SalaryRegistryRow[]);
+    } else {
+      setRegistries([]);
+    }
+  }
+
+  async function downloadRegistryExport(registryId: string) {
+    setDownloadBusyId(registryId);
+    const linkRes = await apiFetch(`/api/hr/payroll/registries/${registryId}/export-link`);
+    if (!linkRes.ok) {
+      alert(await linkRes.text());
+      setDownloadBusyId(null);
+      return;
+    }
+    const linkBody = (await linkRes.json()) as { url: string };
+    const fileRes = await apiFetch(linkBody.url);
+    if (!fileRes.ok) {
+      alert(await fileRes.text());
+      setDownloadBusyId(null);
+      return;
+    }
+    const blob = await fileRes.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `salary-registry-${registryId}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setDownloadBusyId(null);
+  }
+
+  async function markRegistryPaid(registryId: string, runId: string) {
+    setMarkPaidBusyId(registryId);
+    const res = await apiFetch(`/api/hr/payroll/registries/${registryId}/mark-paid`, {
+      method: "POST",
+    });
+    if (!res.ok) {
+      alert(await res.text());
+      setMarkPaidBusyId(null);
+      return;
+    }
+    await loadRegistries(runId);
+    setMarkPaidBusyId(null);
+  }
+
+  async function openDetail(id: string) {
+    if (!token) return;
+    setDetailId(id);
+    const r = await apiFetch(`/api/hr/payroll/runs/${id}`);
+    setDetail(r.ok ? await r.json() : null);
+  }
+
+  async function removeAbsence(id: string) {
+    if (!token || deletingAbsenceId !== null || !window.confirm("OK?")) return;
+    setDeletingAbsenceId(id);
+    const res = await apiFetch(`/api/hr/absences/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert(await res.text());
+      setDeletingAbsenceId(null);
+      return;
+    }
+    await loadAbsencesBlock();
+    setDeletingAbsenceId(null);
+  }
+
+  type Slip = {
+    id: string;
+    employee: EmpOpt & { kind?: string; departmentId?: string | null };
+    gross: unknown;
+    incomeTax: unknown;
+    dsmfWorker: unknown;
+    dsmfEmployer: unknown;
+    itsWorker: unknown;
+    itsEmployer: unknown;
+    unemploymentWorker: unknown;
+    unemploymentEmployer: unknown;
+    contractorSocialWithheld?: unknown;
+    net: unknown;
+    timesheetWorkDays?: number | null;
+    timesheetVacationDays?: number | null;
+    timesheetSickDays?: number | null;
+    timesheetBusinessTripDays?: number | null;
+  };
+
+  const slips =
+    detail &&
+    typeof detail === "object" &&
+    "slips" in detail &&
+    Array.isArray((detail as { slips: unknown[] }).slips)
+      ? (detail as { slips: Slip[] }).slips
+      : [];
+
+  const slipsFiltered = useMemo(() => {
+    if (!departmentId) return slips;
+    return slips.filter((s) => String(s.employee.departmentId ?? "") === departmentId);
+  }, [slips, departmentId]);
+
+  const showContractorCol = slips.some(
+    (s) =>
+      s.employee.kind === "CONTRACTOR" || decPositive(s.contractorSocialWithheld),
+  );
+
+  const showTimesheetCols = slips.some(
+    (s) =>
+      s.timesheetWorkDays != null ||
+      s.timesheetVacationDays != null ||
+      s.timesheetSickDays != null ||
+      s.timesheetBusinessTripDays != null,
+  );
+
+  const currentRun = useMemo(() => {
+    return runs.find((r) => r.year === year && r.month === month) ?? null;
+  }, [runs, year, month]);
+
+  useEffect(() => {
+    if (!currentRun) {
+      setDetailId(null);
+      setDetail(null);
+      return;
+    }
+    if (detailId === currentRun.id) return;
+    void openDetail(currentRun.id);
+    void loadRegistries(currentRun.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRun]);
+
+  const absencesInMonth = useMemo(() => {
+    return absences.filter((a) => overlapsMonth(a, year, month));
+  }, [absences, year, month]);
+
+  if (!ready) {
+    return (
+      <div className="text-gray-600">
+        <p>{t("common.loading")}</p>
+      </div>
+    );
+  }
+  if (!token) return null;
+
+  return (
+    <div className="space-y-8">
+      <PageHeader
+        title="Məzuniyyət və Əmək haqqı"
+        actions={
+          <div className="flex w-full flex-wrap items-end justify-between gap-x-4 gap-y-3">
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="block shrink-0 text-[13px] font-medium text-[#34495E]">
+                Ay
+                <input
+                  type="month"
+                  value={monthValue}
+                  onChange={(e) => setMonthValue(e.target.value)}
+                  className="mt-1 block h-8 rounded-lg border border-[#D5DADF] bg-white px-2 text-[13px]"
+                />
+              </label>
+              <DepartmentSelect
+                value={departmentId}
+                onChange={setDepartmentId}
+                className="mt-1 block h-8 min-w-[200px] rounded-lg border border-[#D5DADF] bg-white px-2 text-[13px] sm:min-w-[220px]"
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setAbsenceModalOpen(true)}
+                disabled={employees.length === 0 || absenceTypes.length === 0}
+              >
+                Yeni qeyd
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setVacModalOpen(true)}
+                disabled={employees.length === 0}
+              >
+                {t("payroll.vacationCalc")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setSickModalOpen(true)}
+                disabled={employees.length === 0}
+              >
+                {t("payroll.sickCalcTitle")}
+              </button>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => setRunModalOpen(true)}
+                disabled={payrollBusy}
+              >
+                Yeni hesab
+              </button>
+            </div>
+          </div>
+        }
+      />
+
+      {payrollJob && (
+        <div className={`${CARD_CONTAINER_CLASS} border-l-4 border-l-[#2980B9] p-4`}>
+          <p className="text-[13px] font-semibold text-[#34495E]">{t("payroll.jobBusy")}</p>
+          <p className="mt-1 text-xs text-[#7F8C8D]">{t("payroll.jobBusyHint")}</p>
+          <p className="mt-2 text-xs tabular-nums text-[#34495E]">
+            {t("payroll.jobState", { state: payrollJob.state })}
+          </p>
+          <div
+            className="mt-3 h-2 rounded-full bg-action/15 overflow-hidden"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={t("payroll.jobBusy")}
+          >
+            <div className="h-full w-2/5 rounded-full bg-action animate-pulse" />
+          </div>
+        </div>
+      )}
+
+      <section className="space-y-3">
+        <div className="flex min-h-8 flex-wrap items-center justify-between gap-3">
+          <h2 className="inline-flex items-center gap-2 text-lg font-semibold text-[#34495E]">
+            <Users className="h-5 w-5 text-[#7F8C8D]" aria-hidden />
+            {t("payroll.slipsTitle")}
+          </h2>
+          {currentRun ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <span className="rounded-lg border border-[#D5DADF] bg-[#EBEDF0] px-2 py-1 text-xs font-semibold uppercase tracking-wide text-[#34495E]">
+                {currentRun.status}
+              </span>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={payrollBusy}
+                onClick={() => void downloadRunXlsx(currentRun.id)}
+              >
+                {t("payroll.exportXlsx")}
+              </button>
+              {currentRun.status === "DRAFT" ? (
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={payrollBusy || postingRunId === currentRun.id}
+                  onClick={() => void postRun(currentRun.id)}
+                >
+                  {postingRunId === currentRun.id ? "…" : t("payroll.post")}
+                </button>
+              ) : null}
+              {currentRun.status === "POSTED" ? (
+                <button
+                  type="button"
+                  className={PRIMARY_BUTTON_CLASS}
+                  disabled={orgBankAccounts.length === 0 || payrollBusy}
+                  onClick={() => setPayoutModalOpen(true)}
+                >
+                  {t("payroll.payRun")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        {!detailId ? (
+          <EmptyState title={t("payroll.emptyRuns")} description={t("payroll.emptyRunsHint")} />
+        ) : slipsFiltered.length === 0 ? (
+          <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-slate-600`}>
+            {departmentId ? "No employees in this department." : t("payroll.emptyRunsHint")}
+          </div>
+        ) : (
+          <>
+              <div className="md:hidden space-y-3">
+                {slipsFiltered.map((s) => (
+                  <div
+                    key={s.id}
+                    className={`${CARD_CONTAINER_CLASS} space-y-1.5 p-4 text-sm`}
+                  >
+                    <div className="font-semibold text-gray-900">
+                      {s.employee.lastName} {s.employee.firstName}
+                    </div>
+                    <div className="text-slate-600">
+                      {t("employees.thKind")}:{" "}
+                      {s.employee.kind === "CONTRACTOR"
+                        ? t("employees.kindContractor")
+                        : t("employees.kindEmployee")}
+                    </div>
+                    <div>
+                      {t("employees.thGross")}: {formatMoneyNoSymbol(s.gross)}
+                    </div>
+                    <div>
+                      {t("payroll.thPit")}: {formatMoneyNoSymbol(s.incomeTax)}
+                    </div>
+                    {showContractorCol && (
+                      <div>
+                        {t("payroll.thContractorSoc")}:{" "}
+                        {formatMoneyNoSymbol(s.contractorSocialWithheld ?? 0)}
+                      </div>
+                    )}
+                    <div>
+                      {t("payroll.thDsmfW")} / {t("payroll.thDsmfE")}:{" "}
+                      {formatMoneyNoSymbol(s.dsmfWorker)} / {formatMoneyNoSymbol(s.dsmfEmployer)}
+                    </div>
+                    <div>
+                      {t("payroll.thItsW")} / {t("payroll.thItsE")}:{" "}
+                      {formatMoneyNoSymbol(s.itsWorker)} / {formatMoneyNoSymbol(s.itsEmployer)}
+                    </div>
+                    <div>
+                      {t("payroll.thUnempW")} / {t("payroll.thUnempE")}:{" "}
+                      {formatMoneyNoSymbol(s.unemploymentWorker)} / {formatMoneyNoSymbol(s.unemploymentEmployer)}
+                    </div>
+                    {showTimesheetCols && (
+                      <div className="text-xs text-slate-600 pt-1 border-t border-dashed border-slate-200">
+                        {t("payroll.thTsWork")}: {s.timesheetWorkDays ?? "—"} · {t("payroll.thTsVac")}:{" "}
+                        {s.timesheetVacationDays ?? "—"} · {t("payroll.thTsSick")}: {s.timesheetSickDays ?? "—"}{" "}
+                        · {t("payroll.thTsTrip")}: {s.timesheetBusinessTripDays ?? "—"}
+                      </div>
+                    )}
+                    <div className="font-medium text-primary pt-1 border-t border-slate-100">
+                      {t("payroll.thNet")}: {formatMoneyNoSymbol(s.net)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className={`hidden md:block ${DATA_TABLE_VIEWPORT_CLASS}`}>
+                <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+                  <thead className="sticky top-0 z-10 bg-[#F8FAFC] shadow-[0_1px_0_0_#D5DADF]">
+                    <tr className="border-b border-[#D5DADF]">
+                      <th className={`${DATA_TABLE_TH_LEFT_CLASS} bg-[#F8FAFC]`} rowSpan={2}>
+                        {t("payroll.thEmployee")}
+                      </th>
+                      <th className={`${DATA_TABLE_TH_LEFT_CLASS} bg-[#F8FAFC]`} rowSpan={2}>
+                        {t("employees.thKind")}
+                      </th>
+                      {showTimesheetCols ? (
+                        <th
+                          className={`${DATA_TABLE_TH_CENTER_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                          colSpan={4}
+                        >
+                          Tabel (gün)
+                        </th>
+                      ) : null}
+                      <th className={`${DATA_TABLE_TH_RIGHT_CLASS} bg-[#F8FAFC]`} rowSpan={2}>
+                        {t("employees.thGross")} (₼)
+                      </th>
+                      <th className={`${DATA_TABLE_TH_RIGHT_CLASS} bg-[#F8FAFC]`} rowSpan={2}>
+                        {t("payroll.thPit")} (₼)
+                      </th>
+                      {showContractorCol && (
+                        <th className={`${DATA_TABLE_TH_RIGHT_CLASS} bg-[#F8FAFC]`} rowSpan={2}>
+                          {t("payroll.thContractorSoc")} (₼)
+                        </th>
+                      )}
+                      <th
+                        className={`${DATA_TABLE_TH_CENTER_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                        colSpan={3}
+                      >
+                        İşçi (₼)
+                      </th>
+                      <th
+                        className={`${DATA_TABLE_TH_CENTER_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                        colSpan={3}
+                      >
+                        İşəgötürən (₼)
+                      </th>
+                      <th
+                        className={`${DATA_TABLE_TH_RIGHT_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                        rowSpan={2}
+                      >
+                        {t("payroll.thNet")} (₼)
+                      </th>
+                    </tr>
+                    <tr className="border-b border-[#D5DADF] bg-[#F8FAFC]">
+                      {showTimesheetCols ? (
+                        <>
+                          <th
+                            className={`${DATA_TABLE_TH_CENTER_CLASS} w-10 min-w-10 border-l border-[#D5DADF] bg-[#F8FAFC] py-1`}
+                          >
+                            W
+                          </th>
+                          <th className={`${DATA_TABLE_TH_CENTER_CLASS} w-10 min-w-10 bg-[#F8FAFC] py-1`}>
+                            M
+                          </th>
+                          <th className={`${DATA_TABLE_TH_CENTER_CLASS} w-10 min-w-10 bg-[#F8FAFC] py-1`}>
+                            X
+                          </th>
+                          <th
+                            className={`${DATA_TABLE_TH_CENTER_CLASS} w-10 min-w-10 border-r border-[#D5DADF] bg-[#F8FAFC] py-1`}
+                          >
+                            E
+                          </th>
+                        </>
+                      ) : null}
+                      <th
+                        className={`${DATA_TABLE_TH_RIGHT_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                      >
+                        DSMF
+                      </th>
+                      <th className={`${DATA_TABLE_TH_RIGHT_CLASS} bg-[#F8FAFC]`}>İTS</th>
+                      <th
+                        className={`${DATA_TABLE_TH_RIGHT_CLASS} border-r border-[#D5DADF] bg-[#F8FAFC]`}
+                      >
+                        İŞS
+                      </th>
+                      <th
+                        className={`${DATA_TABLE_TH_RIGHT_CLASS} border-l border-[#D5DADF] bg-[#F8FAFC]`}
+                      >
+                        DSMF
+                      </th>
+                      <th className={`${DATA_TABLE_TH_RIGHT_CLASS} bg-[#F8FAFC]`}>İTS</th>
+                      <th
+                        className={`${DATA_TABLE_TH_RIGHT_CLASS} border-r border-[#D5DADF] bg-[#F8FAFC]`}
+                      >
+                        İŞS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {slipsFiltered.map((s) => (
+                      <Fragment key={s.id}>
+                      <tr className={DATA_TABLE_TR_CLASS}>
+                        <td className={DATA_TABLE_TD_CLASS}>
+                          <div className="flex items-center gap-1">
+                            <span className="min-w-0 font-semibold text-[#34495E]">
+                              {s.employee.lastName} {s.employee.firstName}
+                            </span>
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              title={t("payroll.absencesTitle")}
+                              onClick={() => {
+                                setEmployeeAbsencesEmp({
+                                  id: s.employee.id,
+                                  firstName: s.employee.firstName,
+                                  lastName: s.employee.lastName,
+                                });
+                                setEmployeeAbsencesOpen(true);
+                              }}
+                            >
+                              <CalendarRange className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                            </button>
+                          </div>
+                        </td>
+                        <td className={DATA_TABLE_TD_CENTER_CLASS}>
+                          {s.employee.kind === "CONTRACTOR"
+                            ? t("employees.kindContractor")
+                            : t("employees.kindEmployee")}
+                        </td>
+                        {showTimesheetCols && (
+                          <>
+                            <td className={`${DATA_TABLE_TD_CENTER_CLASS} w-10 min-w-10 p-1`}>
+                              {s.timesheetWorkDays ?? "—"}
+                            </td>
+                            <td className={`${DATA_TABLE_TD_CENTER_CLASS} w-10 min-w-10 p-1`}>
+                              {s.timesheetVacationDays ?? "—"}
+                            </td>
+                            <td className={`${DATA_TABLE_TD_CENTER_CLASS} w-10 min-w-10 p-1`}>
+                              {s.timesheetSickDays ?? "—"}
+                            </td>
+                            <td
+                              className={`${DATA_TABLE_TD_CENTER_CLASS} w-10 min-w-10 border-r border-[#D5DADF] p-1`}
+                            >
+                              {s.timesheetBusinessTripDays ?? "—"}
+                            </td>
+                          </>
+                        )}
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyNoSymbol(s.gross)}</td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyNoSymbol(s.incomeTax)}</td>
+                        {showContractorCol && (
+                          <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                            {formatMoneyNoSymbol(s.contractorSocialWithheld ?? 0)}
+                          </td>
+                        )}
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} border-l border-[#D5DADF]`}>
+                          {formatMoneyNoSymbol(s.dsmfWorker)}
+                        </td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyNoSymbol(s.itsWorker)}</td>
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} border-r border-[#D5DADF]`}>
+                          {formatMoneyNoSymbol(s.unemploymentWorker)}
+                        </td>
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} border-l border-[#D5DADF]`}>
+                          {formatMoneyNoSymbol(s.dsmfEmployer)}
+                        </td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyNoSymbol(s.itsEmployer)}</td>
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} border-r border-[#D5DADF]`}>
+                          {formatMoneyNoSymbol(s.unemploymentEmployer)}
+                        </td>
+                        <td className={`${DATA_TABLE_TD_RIGHT_CLASS} border-l border-[#D5DADF] font-semibold`}>
+                          <div className="flex items-center justify-end gap-1">
+                            <span className="tabular-nums">{formatMoneyNoSymbol(s.net)}</span>
+                            <button
+                              type="button"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              title={t("payroll.taxDetails")}
+                              onClick={() =>
+                                setTaxDetailsSlipId((prev) => (prev === s.id ? null : s.id))
+                              }
+                            >
+                              {taxDetailsSlipId === s.id ? (
+                                <ChevronUp className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                      {taxDetailsSlipId === s.id ? (
+                        <tr className={`${DATA_TABLE_TR_CLASS} bg-[#F8FAFC]`}>
+                          <td
+                            className={`${DATA_TABLE_TD_CLASS} text-xs text-[#34495E]`}
+                            colSpan={showTimesheetCols ? (showContractorCol ? 13 : 12) : showContractorCol ? 9 : 8}
+                          >
+                            <span className="font-semibold text-slate-900">{t("payroll.taxDetails")}:</span>{" "}
+                            {t("payroll.thPit")} {formatMoneyNoSymbol(s.incomeTax)} · DSMF{" "}
+                            {formatMoneyNoSymbol(s.dsmfWorker)} · İTS {formatMoneyNoSymbol(s.itsWorker)} · İŞS{" "}
+                            {formatMoneyNoSymbol(s.unemploymentWorker)}
+                            {showContractorCol ? ` · ${t("payroll.thContractorSoc")} ${formatMoneyNoSymbol(s.contractorSocialWithheld ?? 0)}` : ""}
+                          </td>
+                        </tr>
+                      ) : null}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+          </>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        {currentRun ? (
+          <div className={`${CARD_CONTAINER_CLASS} p-4`}>
+            <h3 className="text-sm font-semibold text-[#34495E] mb-2">{t("payroll.salaryRegistries")}</h3>
+            {registries.length === 0 ? (
+              <p className="text-sm text-[#7F8C8D]">—</p>
+            ) : (
+              <div className="space-y-2">
+                {registries.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex flex-wrap items-center justify-between gap-2 border border-[#D5DADF] rounded-lg px-3 py-2"
+                  >
+                    <div className="text-sm text-[#34495E]">
+                      <span className="font-medium">{r.payoutFormat}</span> ·{" "}
+                      {r.bankAccount ? `${r.bankAccount.bankName} (${r.bankAccount.currency})` : "—"} ·{" "}
+                      <span className="uppercase">{r.status}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {r.payoutFormat === "UNIVERSAL_XLSX" && r.status !== "DRAFT" ? (
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={downloadBusyId === r.id}
+                          onClick={() => void downloadRegistryExport(r.id)}
+                        >
+                          {downloadBusyId === r.id ? "…" : t("payroll.downloadRegistry")}
+                        </button>
+                      ) : null}
+                      {r.status === "SENT" ? (
+                        <button
+                          type="button"
+                          className={PRIMARY_BUTTON_CLASS}
+                          disabled={markPaidBusyId === r.id}
+                          onClick={() => currentRun && void markRegistryPaid(r.id, currentRun.id)}
+                        >
+                          {markPaidBusyId === r.id ? "…" : t("payroll.markRegistryPaid")}
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {loading && <p className="text-gray-600">{t("common.loading")}</p>}
+        {!loading && !error && !currentRun && (
+          <EmptyState title={t("payroll.emptyRuns")} description={t("payroll.emptyRunsHint")} />
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-base font-semibold text-[#34495E]">{t("payroll.tabAbsences")}</h2>
+        {absErr && <p className="text-red-600 text-sm">{absErr}</p>}
+        {absLoading && <p className="text-gray-600">{t("common.loading")}</p>}
+        {!absLoading && absencesInMonth.length === 0 ? (
+          <div className={`${CARD_CONTAINER_CLASS} p-4 text-sm text-slate-600`}>
+            —
+          </div>
+        ) : (
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.absenceThEmployee")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.absenceThType")}</th>
+                  <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("payroll.absenceThPeriod")}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.absenceNote")}</th>
+                  {!hideDestructive ? (
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("teamPage.actions")}</th>
+                  ) : null}
+                </tr>
+              </thead>
+              <tbody>
+                {absencesInMonth.map((a) => (
+                  <tr key={a.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
+                      {a.employee.lastName} {a.employee.firstName}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {a.absenceType?.nameAz ?? t("payroll.absenceTypeUnknown")}
+                    </td>
+                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} whitespace-nowrap`}>
+                      {String(a.startDate).slice(0, 10)} — {String(a.endDate).slice(0, 10)}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{a.note || "—"}</td>
+                    {!hideDestructive ? (
+                      <td className={DATA_TABLE_TD_CLASS}>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            title={t("payroll.absenceDelete")}
+                            disabled={deletingAbsenceId !== null}
+                            onClick={() => void removeAbsence(a.id)}
+                          >
+                            {deletingAbsenceId === a.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-[#E74C3C]" aria-hidden />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <VacationCalcModal
+        open={vacModalOpen}
+        onClose={() => setVacModalOpen(false)}
+        employees={employees}
+        absenceTypes={absenceTypes}
+        defaultEmployeeId={calcEmp}
+      />
+      <SickCalcModal
+        open={sickModalOpen}
+        onClose={() => setSickModalOpen(false)}
+        employees={employees}
+        defaultEmployeeId={calcEmp}
+      />
+      <PayrollRunModal
+        open={runModalOpen}
+        onClose={() => setRunModalOpen(false)}
+        busy={createRunLoading || payrollBusy}
+        defaultYear={year}
+        defaultMonth={month}
+        timesheetApprovedAvailable={Boolean(approvedTimesheetId)}
+        onCreate={({ year: y, month: m, importTimesheet: it }) => {
+          setYear(y);
+          setMonth(m);
+          setImportTimesheet(Boolean(it));
+          void createRun({
+            year: y,
+            month: m,
+            importTimesheet: Boolean(it),
+          }).then(() => setRunModalOpen(false));
+        }}
+      />
+      <AbsenceModal
+        open={absenceModalOpen}
+        onClose={() => setAbsenceModalOpen(false)}
+        employees={employees}
+        types={absenceTypes}
+        defaultEmployeeId={calcEmp}
+        onSaved={() => {
+          void loadAbsencesBlock();
+        }}
+      />
+
+      <EmployeeAbsencesModal
+        open={employeeAbsencesOpen}
+        onClose={() => setEmployeeAbsencesOpen(false)}
+        employeeId={employeeAbsencesEmp?.id ?? null}
+        employeeLabel={
+          employeeAbsencesEmp
+            ? `${employeeAbsencesEmp.lastName} ${employeeAbsencesEmp.firstName}`
+            : undefined
+        }
+        year={year}
+        month={month}
+      />
+
+      {payoutModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-lg`} role="dialog" aria-modal="true">
+            <header className="flex shrink-0 items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 pr-2">
+                <h3 className="m-0 text-lg font-semibold leading-snug text-[#34495E]">{t("payroll.payRun")}</h3>
+                <p className="mb-0 mt-1 text-[13px] leading-snug text-[#7F8C8D]">{t("payroll.payRunHint")}</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                className={MODAL_CLOSE_BUTTON_CLASS}
+                onClick={() => setPayoutModalOpen(false)}
+                disabled={Boolean(payingRunId)}
+                aria-label={t("common.close")}
+              >
+                <X className="h-4 w-4 shrink-0" aria-hidden />
+              </Button>
+            </header>
+            <div className="mt-4 flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <label className={MODAL_FIELD_LABEL_CLASS}>
+                  {t("payroll.bankAccount")}
+                  <select
+                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                    value={selectedBankAccountId}
+                    onChange={(e) => setSelectedBankAccountId(e.target.value)}
+                  >
+                    {orgBankAccounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.bankName} • {a.accountNumber} ({a.currency})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className={MODAL_FOOTER_ACTIONS_CLASS}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={MODAL_FOOTER_BUTTON_CLASS}
+                  onClick={() => setPayoutModalOpen(false)}
+                  disabled={Boolean(payingRunId)}
+                >
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="primary"
+                  className={MODAL_FOOTER_BUTTON_CLASS}
+                  onClick={() => void payRun(currentRun?.id || "")}
+                  disabled={Boolean(payingRunId)}
+                >
+                  {payingRunId ? "…" : t("payroll.payRunConfirm")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export default function PayrollPage() {
+  const { t } = useTranslation();
+  return (
+    <Suspense
+      fallback={
+        <div className="text-gray-600">
+          <p>{t("common.loading")}</p>
+        </div>
+      }
+    >
+      <PayrollPageInner />
+    </Suspense>
+  );
+}

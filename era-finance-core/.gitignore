@@ -1,0 +1,30 @@
+node_modules
+dist
+**/dist
+**/.next
+**/node_modules
+.env
+.env.local
+docker/stack.local.env
+*.log
+*.tsbuildinfo
+coverage
+.DS_Store
+screens
+bats
+
+# Локальные черновики каталога i18n (не участвуют в сборке; канон — npm run i18n:catalog → apps/api/src/admin/i18n-default-catalog-data.json)
+_i18n-default-catalog-data.new.json
+*_i18n-default-catalog*.new.json
+
+# Generated large AZ customs parse output (regenerate with npm run db:parse-az-customs-md)
+docs/tmp/parsed-az-customs-tariff.json
+
+# Local tool scratch (md_to_pdf etc.)
+tools/__pycache__/
+tools/_*.pdf
+tools/_*.html
+
+# Local Docker / WXT dev artifacts (do not commit)
+redis-data/
+apps/extension/.output/

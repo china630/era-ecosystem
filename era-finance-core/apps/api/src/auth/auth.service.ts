@@ -1,0 +1,1666 @@
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import { JwtService } from "@nestjs/jwt";
+import {
+  AccessRequestStatus,
+  HoldingAccessRole,
+  InviteStatus,
+  Prisma,
+  TariffTier,
+  UserLocale,
+  UserRole,
+  legalFormToOrganizationKind,
+  organizationKindToPayrollSettingsTemplateGroup,
+  OrganizationKind,
+} from "@erafinance/database";
+import * as bcrypt from "bcrypt";
+import type { Response } from "express";
+import { OrgStructureService } from "../hr/org-structure.service";
+import { OrganizationsService } from "../organizations/organizations.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES } from "../subscription/subscription.constants";
+import { billingPeriodKeyBaku } from "../billing/baku-billing.util";
+import { resolveNewOrganizationTrialSubscription } from "../subscription/trial-package.util";
+import { MailService } from "../mail/mail.service";
+import { PiiCryptoService } from "../security/pii-crypto.service";
+import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
+import { ReferralsService } from "../referrals/referrals.service";
+import {
+  decodeOrganizationTaxId,
+  decryptText,
+  encryptText,
+  normalizeName,
+} from "../security/pii-crypto.util";
+import type { AuthUser } from "./types/auth-user";
+import type { CreateOrgDto } from "./dto/create-org.dto";
+import type { LoginDto } from "./dto/login.dto";
+import type { RegisterOrgDto } from "./dto/register-org.dto";
+import type { RegisterUserDto } from "./dto/register-user.dto";
+import type { UpdateMeDto } from "./dto/update-me.dto";
+
+const REFRESH_COOKIE = "refresh_token";
+const REFRESH_EXT_COOKIE = "refresh_token_ext";
+/** Cookie scope for extension refresh (must match POST path prefix). */
+const EXTENSION_REFRESH_COOKIE_PATH = "/api/auth/extension";
+
+export type PublicUser = {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  fullName: string | null;
+  avatarUrl: string | null;
+  /** E.164 phone when set */
+  phone: string | null;
+  locale: UserLocale;
+  role: UserRole | null;
+  organizationId: string | null;
+  isSuperAdmin: boolean;
+};
+
+export type OrgSummary = {
+  id: string;
+  name: string;
+  taxId: string;
+  currency: string;
+  role: UserRole;
+  kind: OrganizationKind;
+};
+
+@Injectable()
+export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+    private readonly organizations: OrganizationsService,
+    private readonly orgStructure: OrgStructureService,
+    private readonly mail: MailService,
+    private readonly piiCrypto: PiiCryptoService,
+    private readonly directory: GlobalCompanyDirectoryService,
+    private readonly referrals: ReferralsService,
+  ) {}
+
+  private inviteTokenSecret(): string {
+    return (
+      this.config.get<string>("INVITE_TOKEN_SECRET") ??
+      this.config.getOrThrow<string>("JWT_SECRET")
+    );
+  }
+
+  private get refreshSecret(): string {
+    return (
+      this.config.get<string>("JWT_REFRESH_SECRET") ??
+      this.config.getOrThrow<string>("JWT_SECRET")
+    );
+  }
+
+  private get extRefreshSecret(): string {
+    return (
+      this.config.get<string>("EXT_REFRESH_SECRET") ??
+      this.config.getOrThrow<string>("JWT_SECRET")
+    );
+  }
+
+  private async findOrganizationByTaxIdForLookup(normalizedTaxId: string) {
+    const blind = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
+    return this.prisma.organization.findFirst({
+      where: { taxIdBlindIndex: blind },
+    });
+  }
+
+  setRefreshCookie(res: Response, refreshToken: string): void {
+    const maxAgeMs = this.parseDurationToMs(
+      this.config.get<string>("JWT_REFRESH_EXPIRES", "7d"),
+    );
+    res.cookie(REFRESH_COOKIE, refreshToken, {
+      httpOnly: true,
+      secure: this.config.get<string>("NODE_ENV") === "production",
+      sameSite: "lax",
+      maxAge: maxAgeMs,
+      path: "/",
+    });
+  }
+
+  clearRefreshCookie(res: Response): void {
+    res.clearCookie(REFRESH_COOKIE, { path: "/" });
+  }
+
+  setExtensionRefreshCookie(res: Response, refreshToken: string): void {
+    const maxAgeMs = this.parseDurationToMs(
+      this.config.get<string>("EXT_REFRESH_EXPIRES", "1d"),
+    );
+    const secure = this.config.get<string>("NODE_ENV") === "production";
+    res.cookie(REFRESH_EXT_COOKIE, refreshToken, {
+      httpOnly: true,
+      secure,
+      sameSite: "none",
+      maxAge: maxAgeMs,
+      path: EXTENSION_REFRESH_COOKIE_PATH,
+    });
+  }
+
+  clearExtensionRefreshCookie(res: Response): void {
+    res.clearCookie(REFRESH_EXT_COOKIE, {
+      path: EXTENSION_REFRESH_COOKIE_PATH,
+    });
+  }
+
+  /**
+   * Silent refresh from extension: Origin must be chrome-extension:// or moz-extension://
+   * and must not be a web origin (defense in depth).
+   */
+  assertExtensionOrigin(origin: string | undefined): void {
+    if (!origin?.length) {
+      throw new ForbiddenException("Extension refresh requires Origin");
+    }
+    if (origin.startsWith("http://") || origin.startsWith("https://")) {
+      throw new ForbiddenException("Invalid origin for extension refresh");
+    }
+    if (process.env.NODE_ENV === "production") {
+      const allow = (this.config.get<string>("CORS_EXTENSION_ORIGINS") ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!allow.includes(origin)) {
+        throw new ForbiddenException("Extension origin not allowed");
+      }
+      return;
+    }
+    if (
+      !/^chrome-extension:\/\/.+/i.test(origin) &&
+      !/^moz-extension:\/\/.+/i.test(origin)
+    ) {
+      throw new ForbiddenException("Invalid extension origin (dev)");
+    }
+  }
+
+  /**
+   * Bootstrap extension session from ERP tab: Origin must be web app (whitelist).
+   */
+  assertWebOrigin(origin: string | undefined): void {
+    if (!origin?.length) {
+      throw new ForbiddenException("Extension bootstrap requires Origin");
+    }
+    if (
+      origin.startsWith("chrome-extension://") ||
+      origin.startsWith("moz-extension://")
+    ) {
+      throw new ForbiddenException("Invalid origin for extension bootstrap");
+    }
+    if (process.env.NODE_ENV === "production") {
+      const allow = (this.config.get<string>("ERP_WEB_ORIGINS") ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!allow.includes(origin)) {
+        throw new ForbiddenException("Web origin not allowed for extension bootstrap");
+      }
+      return;
+    }
+    try {
+      const u = new URL(origin);
+      if (u.protocol === "http:" || u.protocol === "https:") {
+        if (
+          u.hostname === "localhost" ||
+          u.hostname === "127.0.0.1" ||
+          u.hostname === "[::1]"
+        ) {
+          return;
+        }
+        if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(u.hostname)) return;
+        if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(u.hostname)) return;
+      }
+    } catch {
+      throw new ForbiddenException("Invalid web origin (dev)");
+    }
+    throw new ForbiddenException("Invalid web origin (dev)");
+  }
+
+  private parseDurationToMs(spec: string): number {
+    const m = /^(\d+)([dhms])?$/.exec(spec.trim().toLowerCase());
+    if (!m) {
+      return 7 * 24 * 3600 * 1000;
+    }
+    const n = Number(m[1]);
+    const u = m[2] ?? "s";
+    const mult =
+      u === "d" ? 86400_000 : u === "h" ? 3600_000 : u === "m" ? 60_000 : 1000;
+    return n * mult;
+  }
+
+  /** Регистрация только аккаунта (email + ФИО + пароль); организация — через POST /auth/organizations. */
+  async registerUser(dto: RegisterUserDto) {
+    const email = dto.email.toLowerCase().trim();
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      throw new ConflictException("Email already registered");
+    }
+    const fn = dto.firstName.trim();
+    const ln = dto.lastName.trim();
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        firstNameCipher: encryptText(normalizeName(fn)),
+        lastNameCipher: encryptText(normalizeName(ln)),
+        fullNameCipher: encryptText(normalizeName(`${fn} ${ln}`.trim())),
+      },
+    });
+    const tokens = await this.signTokenPairWithoutOrg(user.id);
+    const orgs = await this.listOrganizationsForUser(user.id);
+    return {
+      ...tokens,
+      user: this.toPublicUserNoOrg(user),
+      organizations: orgs,
+    };
+  }
+
+  async register(dto: RegisterOrgDto) {
+    const normalizedTaxId = dto.taxId.trim();
+    const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
+    const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.adminEmail.toLowerCase() },
+    });
+    if (existing) {
+      throw new ConflictException("Email already registered");
+    }
+    const dup = await this.findOrganizationByTaxIdForLookup(normalizedTaxId);
+    if (dup) {
+      throw new ConflictException("VÖEN already registered");
+    }
+
+    const passwordHash = await bcrypt.hash(dto.adminPassword, 10);
+    const fn = dto.adminFirstName.trim();
+    const ln = dto.adminLastName.trim();
+
+    const kind = legalFormToOrganizationKind(dto.legalForm);
+
+    let org: { id: string; name: string; taxIdCipher: string | null; currency: string };
+    let userId: string;
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const o = await tx.organization.create({
+          data: {
+            name: dto.organizationName.trim(),
+            taxIdBlindIndex,
+            taxIdCipher,
+            currency: (dto.currency ?? "AZN").toUpperCase(),
+            subscriptionPlan: "mvp",
+            activeModules: [...DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES],
+            legalForm: dto.legalForm,
+            kind,
+            settings: {
+              templateGroup: organizationKindToPayrollSettingsTemplateGroup(kind),
+            },
+          },
+        });
+        const trial = await resolveNewOrganizationTrialSubscription(tx, o.createdAt);
+        await tx.organization.update({
+          where: { id: o.id },
+          data: { activeModules: trial.activeModules },
+        });
+
+        await tx.organizationSubscription.create({
+          data: {
+            organizationId: o.id,
+            currentTier: TariffTier.TIER_0,
+            activeModules: trial.activeModules,
+            isTrial: true,
+            trialExpiresAt: trial.expiresAt,
+            expiresAt: trial.expiresAt,
+            billingPeriodKey: billingPeriodKeyBaku(o.createdAt),
+            customConfig: trial.customConfig,
+          },
+        });
+        const u = await tx.user.create({
+          data: {
+            email: dto.adminEmail.toLowerCase(),
+            passwordHash,
+            firstNameCipher: encryptText(normalizeName(fn)),
+            lastNameCipher: encryptText(normalizeName(ln)),
+            fullNameCipher: encryptText(normalizeName(`${fn} ${ln}`.trim())),
+          },
+        });
+        await tx.organizationMembership.create({
+          data: {
+            userId: u.id,
+            organizationId: o.id,
+            role: UserRole.OWNER,
+          },
+        });
+        await this.organizations.provisionChartOfAccountsFromTemplate(tx, o.id, kind);
+        await this.referrals.attachReferralOnSignupTx(tx, {
+          organizationId: o.id,
+          organizationCreatedAt: o.createdAt,
+          referralCode: dto.referralCode,
+        });
+        return { org: o, userId: u.id };
+      });
+      org = created.org;
+      userId = created.userId;
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002" &&
+        (`${e.meta?.target ?? ""}`.includes("organizations_tax_id_key") ||
+          `${e.meta?.target ?? ""}`.includes("organizations_tax_id_blind_index_key"))
+      ) {
+        throw new ConflictException("VÖEN already registered");
+      }
+      throw e;
+    }
+
+    this.directory.scheduleUpsert({
+      taxId: normalizedTaxId,
+      name: org.name.trim(),
+      legalAddress: null,
+      phone: null,
+      directorName: null,
+      legalForm: dto.legalForm,
+    });
+    await this.prisma.globalCounterparty.upsert({
+      where: { taxId: normalizedTaxId },
+      create: {
+        taxId: normalizedTaxId,
+        name: org.name.trim(),
+        legalAddress: null,
+        legalForm: dto.legalForm,
+        vatStatus: null,
+      },
+      update: {
+        name: org.name.trim(),
+        legalForm: dto.legalForm,
+      },
+    });
+
+    await this.orgStructure.ensureDefaultDepartmentAndPosition(org.id);
+
+    const tokens = await this.signTokenPair(userId, org.id);
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const orgs = await this.listOrganizationsForUser(userId);
+    return {
+      ...tokens,
+      user: this.toPublicUser(user, org.id, UserRole.OWNER),
+      organizations: orgs,
+      organization: {
+        id: org.id,
+        name: org.name,
+        taxId: decodeOrganizationTaxId(org),
+        currency: org.currency,
+      },
+    };
+  }
+
+  /** Новая организация для уже авторизованного пользователя (роль OWNER). */
+  async createOrganizationForExistingUser(userId: string, dto: CreateOrgDto) {
+    const normalizedTaxId = dto.taxId.trim();
+    const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
+    const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
+    const dup = await this.findOrganizationByTaxIdForLookup(normalizedTaxId);
+    if (dup) {
+      throw new ConflictException("VÖEN already registered");
+    }
+
+    if (dto.holdingId) {
+      const holding = await this.prisma.holding.findFirst({
+        where: { id: dto.holdingId, ownerId: userId },
+      });
+      if (!holding) {
+        throw new ForbiddenException("Holding not found or access denied");
+      }
+    }
+
+    const kind = legalFormToOrganizationKind(dto.legalForm);
+
+    let org: { id: string; name: string; taxIdCipher: string | null; currency: string };
+    try {
+      const created = await this.prisma.$transaction(async (tx) => {
+        const o = await tx.organization.create({
+          data: {
+            name: dto.organizationName.trim(),
+            taxIdBlindIndex,
+            taxIdCipher,
+            currency: (dto.currency ?? "AZN").toUpperCase(),
+            subscriptionPlan: "mvp",
+            activeModules: [...DEFAULT_NEW_ORGANIZATION_ACTIVE_MODULES],
+            legalForm: dto.legalForm,
+            kind,
+            settings: {
+              templateGroup: organizationKindToPayrollSettingsTemplateGroup(kind),
+            },
+            ...(dto.holdingId && { holdingId: dto.holdingId }),
+          },
+        });
+        const trial = await resolveNewOrganizationTrialSubscription(tx, o.createdAt);
+        await tx.organization.update({
+          where: { id: o.id },
+          data: { activeModules: trial.activeModules },
+        });
+
+        await tx.organizationSubscription.create({
+          data: {
+            organizationId: o.id,
+            currentTier: TariffTier.TIER_0,
+            activeModules: trial.activeModules,
+            isTrial: true,
+            trialExpiresAt: trial.expiresAt,
+            expiresAt: trial.expiresAt,
+            billingPeriodKey: billingPeriodKeyBaku(o.createdAt),
+            customConfig: trial.customConfig,
+          },
+        });
+        await tx.organizationMembership.create({
+          data: {
+            userId,
+            organizationId: o.id,
+            role: UserRole.OWNER,
+          },
+        });
+        await this.organizations.provisionChartOfAccountsFromTemplate(tx, o.id, kind);
+        await this.referrals.attachReferralOnSignupTx(tx, {
+          organizationId: o.id,
+          organizationCreatedAt: o.createdAt,
+          referralCode: dto.referralCode,
+        });
+        return { org: o };
+      });
+      org = created.org;
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002" &&
+        (`${e.meta?.target ?? ""}`.includes("organizations_tax_id_key") ||
+          `${e.meta?.target ?? ""}`.includes("organizations_tax_id_blind_index_key"))
+      ) {
+        throw new ConflictException("VÖEN already registered");
+      }
+      throw e;
+    }
+
+    this.directory.scheduleUpsert({
+      taxId: normalizedTaxId,
+      name: org.name.trim(),
+      legalAddress: null,
+      phone: null,
+      directorName: null,
+      legalForm: dto.legalForm,
+    });
+    await this.prisma.globalCounterparty.upsert({
+      where: { taxId: normalizedTaxId },
+      create: {
+        taxId: normalizedTaxId,
+        name: org.name.trim(),
+        legalAddress: null,
+        legalForm: dto.legalForm,
+        vatStatus: null,
+      },
+      update: {
+        name: org.name.trim(),
+        legalForm: dto.legalForm,
+      },
+    });
+
+    await this.orgStructure.ensureDefaultDepartmentAndPosition(org.id);
+
+    const tokens = await this.signTokenPair(userId, org.id);
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const orgs = await this.listOrganizationsForUser(userId);
+    return {
+      ...tokens,
+      user: this.toPublicUser(user, org.id, UserRole.OWNER),
+      organizations: orgs,
+    };
+  }
+
+  async login(dto: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase() },
+    });
+    if (!user) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+    const ok = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!ok) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+    const memberships = await this.prisma.organizationMembership.findMany({
+      where: { userId: user.id },
+      orderBy: { joinedAt: "asc" },
+      include: { organization: true },
+    });
+    const orgs = await this.listOrganizationsForUser(user.id);
+    if (memberships.length === 0) {
+      const tokens = await this.signTokenPairWithoutOrg(user.id);
+      return {
+        ...tokens,
+        user: this.toPublicUserNoOrg(user),
+        organizations: orgs,
+      };
+    }
+    const first = memberships[0];
+    const tokens = await this.signTokenPair(user.id, first.organizationId);
+    return {
+      ...tokens,
+      user: this.toPublicUser(user, first.organizationId, first.role),
+      organizations: orgs,
+    };
+  }
+
+  async refreshFromCookie(refreshToken: string | undefined) {
+    if (!refreshToken?.length) {
+      throw new UnauthorizedException("Missing refresh token");
+    }
+    let payload: {
+      sub: string;
+      typ?: string;
+      organizationId?: string | null;
+    };
+    try {
+      payload = await this.jwt.verifyAsync(refreshToken, {
+        secret: this.refreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+    if (payload.typ !== "refresh") {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const orgIdFromPayload = payload.organizationId;
+
+    if (orgIdFromPayload) {
+      const m = await this.prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: orgIdFromPayload,
+          },
+        },
+      });
+      if (!m) {
+        throw new UnauthorizedException("Organization access revoked");
+      }
+      const tokens = await this.signTokenPair(user.id, orgIdFromPayload);
+      const orgs = await this.listOrganizationsForUser(user.id);
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, orgIdFromPayload, m.role),
+        organizations: orgs,
+      };
+    }
+
+    const first = await this.prisma.organizationMembership.findFirst({
+      where: { userId: user.id },
+      orderBy: { joinedAt: "asc" },
+    });
+    if (first) {
+      const tokens = await this.signTokenPair(user.id, first.organizationId);
+      const orgs = await this.listOrganizationsForUser(user.id);
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, first.organizationId, first.role),
+        organizations: orgs,
+      };
+    }
+
+    const tokens = await this.signTokenPairWithoutOrg(user.id);
+    const orgs = await this.listOrganizationsForUser(user.id);
+    return {
+      ...tokens,
+      user: this.toPublicUserNoOrg(user),
+      organizations: orgs,
+    };
+  }
+
+  async switchOrganization(userId: string, organizationId: string) {
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+    });
+    if (!m) {
+      throw new ForbiddenException("Not a member of this organization");
+    }
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const tokens = await this.signTokenPair(userId, organizationId);
+    const orgs = await this.listOrganizationsForUser(userId);
+    const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+      userId,
+    );
+    return {
+      ...tokens,
+      user: this.toPublicUser(user, organizationId, m.role),
+      organizations: orgs,
+      access: this.sessionAccessFlags(
+        organizationId,
+        m.role,
+        canViewHoldingReports,
+      ),
+    };
+  }
+
+  async me(
+    userId: string,
+    organizationId: string | null,
+    role: UserRole | null,
+  ) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const orgs = await this.listOrganizationsForUser(userId);
+    const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+      userId,
+    );
+    const access = this.sessionAccessFlags(
+      organizationId,
+      role,
+      canViewHoldingReports,
+    );
+    if (!organizationId || role == null) {
+      return {
+        user: this.toPublicUserNoOrg(user),
+        organizations: orgs,
+        access,
+      };
+    }
+    return {
+      user: this.toPublicUser(user, organizationId, role),
+      organizations: orgs,
+      access,
+    };
+  }
+
+  async getMeProfile(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const names = this.decodeUserNames(user);
+    return {
+      id: user.id,
+      email: user.email,
+      emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+      firstName: names.firstName,
+      lastName: names.lastName,
+      phone: user.phone ?? null,
+      locale: user.locale,
+      avatarUrl: user.avatarUrl ?? null,
+    };
+  }
+
+  async updateMe(userId: string, dto: UpdateMeDto) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+
+    if (
+      user.emailVerifiedAt != null &&
+      dto.email != null &&
+      dto.email.trim().toLowerCase() !== user.email.toLowerCase()
+    ) {
+      throw new ConflictException({
+        code: "EMAIL_VERIFIED_LOCKED",
+        message: "Verified email cannot be changed via self-service",
+      });
+    }
+
+    if (dto.email != null && dto.email.trim().toLowerCase() !== user.email.toLowerCase()) {
+      const emailNorm = dto.email.trim().toLowerCase();
+      const exists = await this.prisma.user.findUnique({
+        where: { email: emailNorm },
+      });
+      if (exists) {
+        throw new ConflictException("Email already in use");
+      }
+    }
+
+    if (dto.passwordChange) {
+      const ok = await bcrypt.compare(
+        dto.passwordChange.currentPassword,
+        user.passwordHash,
+      );
+      if (!ok) {
+        throw new BadRequestException({
+          code: "INVALID_CURRENT_PASSWORD",
+          message: "Invalid current password",
+        });
+      }
+    }
+
+    if (dto.phone != null && dto.phone !== "" && !/^\+994\d{9}$/.test(dto.phone)) {
+      throw new BadRequestException({
+        code: "INVALID_PHONE",
+        message: "Phone must be +994 followed by 9 digits",
+      });
+    }
+
+    const data: Prisma.UserUpdateInput = {};
+
+    if (dto.firstName != null) {
+      data.firstNameCipher = encryptText(normalizeName(dto.firstName));
+    }
+    if (dto.lastName != null) {
+      data.lastNameCipher = encryptText(normalizeName(dto.lastName));
+    }
+    if (dto.firstName != null || dto.lastName != null) {
+      const fn =
+        dto.firstName != null
+          ? normalizeName(dto.firstName)
+          : user.firstNameCipher
+            ? decryptText(user.firstNameCipher)
+            : "";
+      const ln =
+        dto.lastName != null
+          ? normalizeName(dto.lastName)
+          : user.lastNameCipher
+            ? decryptText(user.lastNameCipher)
+            : "";
+      data.fullNameCipher = encryptText(normalizeName(`${fn} ${ln}`.trim()));
+    }
+
+    if (dto.email != null) {
+      data.email = dto.email.trim().toLowerCase();
+    }
+
+    if (dto.phone !== undefined) {
+      data.phone =
+        dto.phone === "" || dto.phone == null ? null : dto.phone.trim();
+    }
+
+    if (dto.locale != null) {
+      data.locale = dto.locale;
+    }
+
+    if (dto.passwordChange) {
+      data.passwordHash = await bcrypt.hash(dto.passwordChange.newPassword, 10);
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+
+    const names = this.decodeUserNames(updated);
+    return {
+      id: updated.id,
+      email: updated.email,
+      emailVerifiedAt: updated.emailVerifiedAt?.toISOString() ?? null,
+      firstName: names.firstName,
+      lastName: names.lastName,
+      phone: updated.phone ?? null,
+      locale: updated.locale,
+      avatarUrl: updated.avatarUrl ?? null,
+    };
+  }
+
+  private sessionAccessFlags(
+    organizationId: string | null,
+    role: UserRole | null,
+    canViewHoldingReports: boolean,
+  ): {
+    canPostAccounting: boolean;
+    canViewHoldingReports: boolean;
+  } {
+    if (!organizationId || role == null) {
+      return { canPostAccounting: false, canViewHoldingReports };
+    }
+    return {
+      canPostAccounting:
+        role === UserRole.OWNER ||
+        role === UserRole.ADMIN ||
+        role === UserRole.ACCOUNTANT,
+      canViewHoldingReports,
+    };
+  }
+
+  /** Владелец холдинга или участник с ролью не VIEWER — как в AccessControlService. */
+  private async userMayViewAnyHoldingReport(userId: string): Promise<boolean> {
+    const row = await this.prisma.holding.findFirst({
+      where: {
+        OR: [
+          { ownerId: userId },
+          {
+            memberships: {
+              some: {
+                userId,
+                role: {
+                  in: [
+                    HoldingAccessRole.OWNER,
+                    HoldingAccessRole.ADMIN,
+                    HoldingAccessRole.ACCOUNTANT,
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+    return Boolean(row);
+  }
+
+  private async listOrganizationsForUser(userId: string): Promise<OrgSummary[]> {
+    const rows = await this.prisma.organizationMembership.findMany({
+      where: { userId },
+      orderBy: { joinedAt: "asc" },
+      include: { organization: true },
+    });
+    return rows.map((r) => ({
+      id: r.organization.id,
+      name: r.organization.name,
+      taxId: decodeOrganizationTaxId(r.organization),
+      currency: r.organization.currency,
+      role: r.role,
+      kind: r.organization.kind,
+    }));
+  }
+
+  private decodeUserNames(user: {
+    firstNameCipher: string | null;
+    lastNameCipher: string | null;
+  }): { firstName: string | null; lastName: string | null; fullName: string | null } {
+    const firstName = user.firstNameCipher ? decryptText(user.firstNameCipher) : null;
+    const lastName = user.lastNameCipher ? decryptText(user.lastNameCipher) : null;
+    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim() || null;
+    return { firstName, lastName, fullName };
+  }
+
+  private toPublicUser(
+    user: {
+      id: string;
+      email: string;
+      firstNameCipher: string | null;
+      lastNameCipher: string | null;
+      avatarUrl: string | null;
+      phone: string | null;
+      locale: UserLocale;
+      isSuperAdmin?: boolean;
+    },
+    organizationId: string,
+    role: UserRole,
+  ): PublicUser {
+    const names = this.decodeUserNames(user);
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: names.firstName,
+      lastName: names.lastName,
+      fullName: names.fullName,
+      avatarUrl: user.avatarUrl ?? null,
+      phone: user.phone ?? null,
+      locale: user.locale,
+      role,
+      organizationId,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
+    };
+  }
+
+  private toPublicUserNoOrg(user: {
+    id: string;
+    email: string;
+    firstNameCipher: string | null;
+    lastNameCipher: string | null;
+    avatarUrl: string | null;
+    phone: string | null;
+    locale: UserLocale;
+    isSuperAdmin?: boolean;
+  }): PublicUser {
+    const names = this.decodeUserNames(user);
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: names.firstName,
+      lastName: names.lastName,
+      fullName: names.fullName,
+      avatarUrl: user.avatarUrl ?? null,
+      phone: user.phone ?? null,
+      locale: user.locale,
+      role: null,
+      organizationId: null,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
+    };
+  }
+
+  /** Сессия без контекста организации (создание компании через POST /auth/organizations). */
+  private async signTokenPairWithoutOrg(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const accessToken = await this.jwt.signAsync({
+      sub: user.id,
+      email: user.email,
+      organizationId: null,
+      role: null,
+    });
+    const refreshToken = await this.jwt.signAsync(
+      { sub: user.id, typ: "refresh", organizationId: null },
+      {
+        secret: this.refreshSecret,
+        expiresIn: (this.config.get<string>("JWT_REFRESH_EXPIRES") ?? "7d") as any,
+      },
+    );
+    return { accessToken, refreshToken };
+  }
+
+  private async signTokenPair(userId: string, organizationId: string) {
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+    });
+    if (!m) {
+      throw new UnauthorizedException("Invalid organization context");
+    }
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const accessToken = await this.jwt.signAsync({
+      sub: user.id,
+      email: user.email,
+      organizationId,
+      role: m.role,
+    });
+    const refreshToken = await this.jwt.signAsync(
+      { sub: user.id, typ: "refresh", organizationId },
+      {
+        secret: this.refreshSecret,
+        expiresIn: (this.config.get<string>("JWT_REFRESH_EXPIRES") ?? "7d") as any,
+      },
+    );
+    return { accessToken, refreshToken };
+  }
+
+  private async signExtensionTokenPairWithoutOrg(userId: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const accessToken = await this.jwt.signAsync({
+      sub: user.id,
+      email: user.email,
+      organizationId: null,
+      role: null,
+      aud: "extension",
+    });
+    const refreshToken = await this.jwt.signAsync(
+      { sub: user.id, typ: "refresh-ext", organizationId: null },
+      {
+        secret: this.extRefreshSecret,
+        expiresIn: (this.config.get<string>("EXT_REFRESH_EXPIRES") ??
+          "1d") as any,
+      },
+    );
+    return { accessToken, refreshToken };
+  }
+
+  private async signExtensionTokenPair(userId: string, organizationId: string) {
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+    });
+    if (!m) {
+      throw new UnauthorizedException("Invalid organization context");
+    }
+    const user = await this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+    });
+    const accessToken = await this.jwt.signAsync({
+      sub: user.id,
+      email: user.email,
+      organizationId,
+      role: m.role,
+      aud: "extension",
+    });
+    const refreshToken = await this.jwt.signAsync(
+      { sub: user.id, typ: "refresh-ext", organizationId },
+      {
+        secret: this.extRefreshSecret,
+        expiresIn: (this.config.get<string>("EXT_REFRESH_EXPIRES") ??
+          "1d") as any,
+      },
+    );
+    return { accessToken, refreshToken };
+  }
+
+  /**
+   * Issue extension JWT pair from a valid **standard** HttpOnly refresh cookie
+   * (same verification as POST /auth/refresh). Used only from ERP web Origin.
+   */
+  async refreshExtensionFromBootstrapCookie(refreshToken: string | undefined) {
+    if (!refreshToken?.length) {
+      throw new UnauthorizedException("Missing refresh token");
+    }
+    let payload: {
+      sub: string;
+      typ?: string;
+      organizationId?: string | null;
+    };
+    try {
+      payload = await this.jwt.verifyAsync(refreshToken, {
+        secret: this.refreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+    if (payload.typ !== "refresh") {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const orgIdFromPayload = payload.organizationId;
+
+    if (orgIdFromPayload) {
+      const m = await this.prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: orgIdFromPayload,
+          },
+        },
+      });
+      if (!m) {
+        throw new UnauthorizedException("Organization access revoked");
+      }
+      const tokens = await this.signExtensionTokenPair(user.id, orgIdFromPayload);
+      const orgs = await this.listOrganizationsForUser(user.id);
+      const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+        user.id,
+      );
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, orgIdFromPayload, m.role),
+        organizations: orgs,
+        access: this.sessionAccessFlags(
+          orgIdFromPayload,
+          m.role,
+          canViewHoldingReports,
+        ),
+      };
+    }
+
+    const first = await this.prisma.organizationMembership.findFirst({
+      where: { userId: user.id },
+      orderBy: { joinedAt: "asc" },
+    });
+    if (first) {
+      const tokens = await this.signExtensionTokenPair(
+        user.id,
+        first.organizationId,
+      );
+      const orgs = await this.listOrganizationsForUser(user.id);
+      const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+        user.id,
+      );
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, first.organizationId, first.role),
+        organizations: orgs,
+        access: this.sessionAccessFlags(
+          first.organizationId,
+          first.role,
+          canViewHoldingReports,
+        ),
+      };
+    }
+
+    const tokens = await this.signExtensionTokenPairWithoutOrg(user.id);
+    const orgs = await this.listOrganizationsForUser(user.id);
+    const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+      user.id,
+    );
+    return {
+      ...tokens,
+      user: this.toPublicUserNoOrg(user),
+      organizations: orgs,
+      access: this.sessionAccessFlags(null, null, canViewHoldingReports),
+    };
+  }
+
+  /** Rotate extension refresh cookie from `refresh_token_ext`. */
+  async refreshExtensionFromExtCookie(extRefreshToken: string | undefined) {
+    if (!extRefreshToken?.length) {
+      throw new UnauthorizedException("Missing extension refresh token");
+    }
+    let payload: {
+      sub: string;
+      typ?: string;
+      organizationId?: string | null;
+    };
+    try {
+      payload = await this.jwt.verifyAsync(extRefreshToken, {
+        secret: this.extRefreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException("Invalid extension refresh token");
+    }
+    if (payload.typ !== "refresh-ext") {
+      throw new UnauthorizedException("Invalid extension refresh token");
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+    if (!user) {
+      throw new UnauthorizedException("User not found");
+    }
+
+    const orgIdFromPayload = payload.organizationId;
+
+    if (orgIdFromPayload) {
+      const m = await this.prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: orgIdFromPayload,
+          },
+        },
+      });
+      if (!m) {
+        throw new UnauthorizedException("Organization access revoked");
+      }
+      const tokens = await this.signExtensionTokenPair(user.id, orgIdFromPayload);
+      const orgs = await this.listOrganizationsForUser(user.id);
+      const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+        user.id,
+      );
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, orgIdFromPayload, m.role),
+        organizations: orgs,
+        access: this.sessionAccessFlags(
+          orgIdFromPayload,
+          m.role,
+          canViewHoldingReports,
+        ),
+      };
+    }
+
+    const first = await this.prisma.organizationMembership.findFirst({
+      where: { userId: user.id },
+      orderBy: { joinedAt: "asc" },
+    });
+    if (first) {
+      const tokens = await this.signExtensionTokenPair(
+        user.id,
+        first.organizationId,
+      );
+      const orgs = await this.listOrganizationsForUser(user.id);
+      const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+        user.id,
+      );
+      return {
+        ...tokens,
+        user: this.toPublicUser(user, first.organizationId, first.role),
+        organizations: orgs,
+        access: this.sessionAccessFlags(
+          first.organizationId,
+          first.role,
+          canViewHoldingReports,
+        ),
+      };
+    }
+
+    const tokens = await this.signExtensionTokenPairWithoutOrg(user.id);
+    const orgs = await this.listOrganizationsForUser(user.id);
+    const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+      user.id,
+    );
+    return {
+      ...tokens,
+      user: this.toPublicUserNoOrg(user),
+      organizations: orgs,
+      access: this.sessionAccessFlags(null, null, canViewHoldingReports),
+    };
+  }
+
+  async validateUserForJwtPayload(payload: {
+    sub: string;
+    email: string;
+    organizationId: string | null;
+    role: UserRole | null;
+  }): Promise<AuthUser> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+    });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+    if (!payload.organizationId) {
+      return {
+        userId: user.id,
+        email: user.email,
+        organizationId: null,
+        role: null,
+        isSuperAdmin: Boolean(user.isSuperAdmin),
+      };
+    }
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: payload.sub,
+          organizationId: payload.organizationId,
+        },
+      },
+    });
+    if (!m) {
+      throw new UnauthorizedException();
+    }
+    /** Роль из БД — источник истины (смена OWNER↔ADMIN, transfer ownership без немедленного обновления JWT). */
+    return {
+      userId: user.id,
+      email: user.email,
+      organizationId: payload.organizationId,
+      role: m.role,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
+    };
+  }
+
+  /**
+   * Супер-админ: выдать токены от имени другого пользователя (поддержка).
+   */
+  async impersonate(superAdminUserId: string, targetUserId: string) {
+    const admin = await this.prisma.user.findUnique({
+      where: { id: superAdminUserId },
+    });
+    if (!admin?.isSuperAdmin) {
+      throw new ForbiddenException();
+    }
+    if (targetUserId === superAdminUserId) {
+      throw new BadRequestException("Cannot impersonate yourself");
+    }
+    const target = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+    });
+    if (!target) {
+      throw new NotFoundException("User not found");
+    }
+    const memberships = await this.prisma.organizationMembership.findMany({
+      where: { userId: targetUserId },
+      orderBy: { joinedAt: "asc" },
+      include: { organization: true },
+    });
+    if (memberships.length === 0) {
+      throw new BadRequestException("Target user has no organization membership");
+    }
+    const first = memberships[0];
+    const tokens = await this.signTokenPair(targetUserId, first.organizationId);
+    const orgs = await this.listOrganizationsForUser(targetUserId);
+    return {
+      ...tokens,
+      user: this.toPublicUser(target, first.organizationId, first.role),
+      organizations: orgs,
+    };
+  }
+
+  /** Запрос на вступление в организацию по VÖEN (организация уже существует). */
+  async requestJoinByTaxId(userId: string, taxId: string, message?: string) {
+    const normalized = taxId.trim();
+    if (!normalized) {
+      throw new BadRequestException("taxId required");
+    }
+    const org = await this.findOrganizationByTaxIdForLookup(normalized);
+    if (!org) {
+      throw new NotFoundException("Organization not found for this VÖEN");
+    }
+    const existing = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId: org.id },
+      },
+    });
+    if (existing) {
+      throw new ConflictException("Already a member of this organization");
+    }
+    const pending = await this.prisma.accessRequest.findFirst({
+      where: {
+        organizationId: org.id,
+        requesterId: userId,
+        status: AccessRequestStatus.PENDING,
+      },
+    });
+    if (pending) {
+      throw new ConflictException("Access request already pending");
+    }
+    return this.prisma.accessRequest.create({
+      data: {
+        organizationId: org.id,
+        requesterId: userId,
+        message: message?.trim() || null,
+      },
+    });
+  }
+
+  async listPendingAccessRequests(organizationId: string) {
+    return this.prisma.accessRequest.findMany({
+      where: {
+        organizationId,
+        status: AccessRequestStatus.PENDING,
+      },
+      orderBy: { createdAt: "asc" },
+      include: {
+        requester: {
+          select: {
+            id: true,
+            email: true,
+            firstNameCipher: true,
+            lastNameCipher: true,
+          },
+        },
+      },
+    });
+  }
+
+  async decideAccessRequest(
+    organizationId: string,
+    requestId: string,
+    actorUserId: string,
+    actorRole: UserRole,
+    accept: boolean,
+    assignRole: UserRole = UserRole.USER,
+  ) {
+    if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException();
+    }
+    const req = await this.prisma.accessRequest.findFirst({
+      where: { id: requestId, organizationId },
+    });
+    if (!req || req.status !== AccessRequestStatus.PENDING) {
+      throw new NotFoundException("Request not found");
+    }
+    await this.prisma.$transaction(async (tx) => {
+      if (accept) {
+        await tx.organizationMembership.create({
+          data: {
+            userId: req.requesterId,
+            organizationId,
+            role: assignRole,
+          },
+        });
+        await tx.accessRequest.update({
+          where: { id: requestId },
+          data: {
+            status: AccessRequestStatus.ACCEPTED,
+            decidedAt: new Date(),
+            decidedByUserId: actorUserId,
+          },
+        });
+      } else {
+        await tx.accessRequest.update({
+          where: { id: requestId },
+          data: {
+            status: AccessRequestStatus.DECLINED,
+            decidedAt: new Date(),
+            decidedByUserId: actorUserId,
+          },
+        });
+      }
+    });
+    return { ok: true };
+  }
+
+  async createInvite(
+    organizationId: string,
+    email: string,
+    role: UserRole,
+    invitedByUserId: string,
+  ) {
+    const norm = email.toLowerCase().trim();
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: norm },
+    });
+    if (existingUser) {
+      const mem = await this.prisma.organizationMembership.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: existingUser.id,
+            organizationId,
+          },
+        },
+      });
+      if (mem) {
+        throw new ConflictException("User already in organization");
+      }
+    }
+    const dup = await this.prisma.organizationInvite.findFirst({
+      where: {
+        organizationId,
+        email: norm,
+        status: InviteStatus.PENDING,
+      },
+    });
+    if (dup) {
+      throw new ConflictException("Invite already pending");
+    }
+    const created = await this.prisma.organizationInvite.create({
+      data: {
+        organizationId,
+        email: norm,
+        role,
+        invitedByUserId,
+      },
+      include: { organization: { select: { name: true } } },
+    });
+
+    const token = await this.jwt.signAsync(
+      { typ: "org-invite", inviteId: created.id, email: norm },
+      {
+        secret: this.inviteTokenSecret(),
+        expiresIn: "7d",
+      },
+    );
+    const webUrl = (this.config.get<string>("WEB_URL") ?? "http://localhost:3000").replace(/\/$/, "");
+    const acceptUrl = `${webUrl}/settings/team?invite=${encodeURIComponent(token)}`;
+    try {
+      await this.mail.sendMail({
+        to: norm,
+        subject: `ERA Finance invite: ${created.organization.name}`,
+        text: `You were invited to ${created.organization.name}. Open this link to accept: ${acceptUrl}`,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Invite email send failed (${norm}): ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
+    return { ...created, inviteToken: token, acceptUrl };
+  }
+
+  async listInvitesForUser(userEmail: string) {
+    const norm = userEmail.toLowerCase();
+    return this.prisma.organizationInvite.findMany({
+      where: {
+        email: norm,
+        status: InviteStatus.PENDING,
+      },
+      include: {
+        organization: { select: { id: true, name: true, taxIdCipher: true } },
+      },
+    });
+  }
+
+  async acceptInvite(userId: string, userEmail: string, inviteId: string) {
+    const norm = userEmail.toLowerCase();
+    return this.prisma.$transaction(async (tx) => {
+      const inv = await tx.organizationInvite.findFirst({
+        where: { id: inviteId, email: norm },
+      });
+      if (!inv) {
+        throw new NotFoundException("Invite not found");
+      }
+      const reserved = await tx.organizationInvite.updateMany({
+        where: { id: inv.id, status: InviteStatus.PENDING },
+        data: { status: InviteStatus.ACCEPTED, decidedAt: new Date() },
+      });
+      if (reserved.count === 0) {
+        const row = await tx.organizationInvite.findUnique({
+          where: { id: inviteId },
+        });
+        if (row?.status === InviteStatus.ACCEPTED) {
+          throw new ConflictException("Invite already accepted");
+        }
+        throw new ConflictException("Invite is no longer valid");
+      }
+      try {
+        await tx.organizationMembership.create({
+          data: {
+            userId,
+            organizationId: inv.organizationId,
+            role: inv.role,
+          },
+        });
+      } catch (e) {
+        if (
+          e instanceof Prisma.PrismaClientKnownRequestError &&
+          e.code === "P2002"
+        ) {
+          throw new ConflictException("Already a member of this organization");
+        }
+        throw e;
+      }
+      return { ok: true };
+    });
+  }
+
+  async acceptInviteByToken(userId: string, userEmail: string, token: string) {
+    let payload: { typ?: string; inviteId?: string; email?: string };
+    try {
+      payload = await this.jwt.verifyAsync(token, {
+        secret: this.inviteTokenSecret(),
+      });
+    } catch (e: unknown) {
+      const name =
+        e && typeof e === "object" && "name" in e
+          ? String((e as { name: unknown }).name)
+          : "";
+      if (name === "TokenExpiredError") {
+        throw new UnauthorizedException("Invite token expired");
+      }
+      throw new UnauthorizedException("Invalid invite token");
+    }
+    if (payload.typ !== "org-invite" || !payload.inviteId) {
+      throw new UnauthorizedException("Invalid invite token");
+    }
+    const email = userEmail.toLowerCase().trim();
+    if (payload.email && payload.email.toLowerCase().trim() !== email) {
+      throw new ForbiddenException("Invite token email mismatch");
+    }
+    return this.acceptInvite(userId, email, payload.inviteId);
+  }
+
+  async listOrganizationInvites(organizationId: string) {
+    return this.prisma.organizationInvite.findMany({
+      where: { organizationId, status: InviteStatus.PENDING },
+      orderBy: { createdAt: "desc" },
+      include: {
+        invitedBy: { select: { id: true, email: true, firstNameCipher: true, lastNameCipher: true } },
+      },
+    });
+  }
+
+  async revokeInvite(
+    organizationId: string,
+    inviteId: string,
+    actorRole: UserRole,
+  ) {
+    if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException();
+    }
+    const inv = await this.prisma.organizationInvite.findFirst({
+      where: { id: inviteId, organizationId },
+    });
+    if (!inv) throw new NotFoundException("Invite not found");
+    if (inv.status !== InviteStatus.PENDING) {
+      throw new BadRequestException("Invite is already decided");
+    }
+    await this.prisma.organizationInvite.update({
+      where: { id: inviteId },
+      data: { status: InviteStatus.DECLINED, decidedAt: new Date() },
+    });
+    return { ok: true };
+  }
+
+  async listMembers(organizationId: string) {
+    return this.prisma.organizationMembership.findMany({
+      where: { organizationId },
+      orderBy: { joinedAt: "asc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstNameCipher: true,
+            lastNameCipher: true,
+            avatarUrl: true,
+          },
+        },
+      },
+    });
+  }
+
+  async removeMember(
+    organizationId: string,
+    targetUserId: string,
+    actorUserId: string,
+    actorRole: UserRole,
+  ) {
+    if (actorRole !== UserRole.OWNER && actorRole !== UserRole.ADMIN) {
+      throw new ForbiddenException();
+    }
+    if (targetUserId === actorUserId) {
+      throw new BadRequestException("Cannot remove yourself");
+    }
+    const target = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: targetUserId,
+          organizationId,
+        },
+      },
+    });
+    if (!target) {
+      throw new NotFoundException("Member not found");
+    }
+    if (target.role === UserRole.OWNER) {
+      throw new ForbiddenException("Cannot remove owner");
+    }
+    await this.prisma.organizationMembership.delete({
+      where: {
+        userId_organizationId: {
+          userId: targetUserId,
+          organizationId,
+        },
+      },
+    });
+    return { ok: true };
+  }
+}
+

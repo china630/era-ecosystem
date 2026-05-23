@@ -7,6 +7,10 @@ node_modules/
 dist/
 **/.next/
 **/dist/
+*.tsbuildinfo
 
 # Docker persistent data (never commit)
 docker-data/
+
+# IDE / local plans
+.cursor/

@@ -1,0 +1,92 @@
+[
+  {
+    "title": "Rezervasyon İşlemleri",
+    "bullets": [
+      "Rezervasyonlar herhangi bir kritere göre tek tuşla listelenebilir, sıralanabilir, gruplanabilir ve filtrelenebilir",
+      "Renklendirmeler sayesinde dikkat edilmesi gereken bilgiler kolayca görülür",
+      "Tek tuşla tüm işlemlere ulaşılır, tekve/veya toplu olarak işlem yapılır",
+      "Tüm ekranlar farklı formatlarda Excel’e veya yazıcıya aktarılır",
+      "Listelerde çoklu sıralama, filtreleme, arama, gruplama standarttır",
+      "Dijital arşivleme yeteneği sayesinde tüm belgeler, ilgili kaydın içerisine saklanır",
+      "Kullanıcılar yetkilerine göre menüde ve formlarda sadece izin verilen bilgileri görebilir ve işlem yapabilir"
+    ]
+  },
+  {
+    "title": "Rezervasyon Kartı",
+    "bullets": [
+      "Rezervasyonla ilgili tüm detaylar bir arada",
+      "No more duplicates ! Misafir kontrol ile eski verilere ulaşım otomatik ve sınırsız profil açma – eşleme",
+      "Tek tuşla oda tipi müsaitliğine ulaşım.",
+      "Tek tuşla oda blokajı yapabilme.",
+      "Acenta detaylarına, fiyatlara, misafir bilgilerine, satış projelerine hızlı erişme.",
+      "Fiyatlandırma sekmesine ulaşım için yetki kontrolü; fiyatlandırma ile ilgili tüm veriler bir arada."
+    ]
+  },
+  {
+    "title": "Kat Hizmetleri",
+    "bullets": [
+      "Elektraweb Otel Programı ile tüm kat hizmetleri işlemleri dijital ortamda yapılabilir",
+      "Oda durumuna göre, eşit ağırlıklı olarak maid dağılımı yapabilirsiniz.",
+      "Kat Görevlisi ve Şef raporlarını alabilirsiniz."
+    ]
+  },
+  {
+    "title": "Folyo İşlemleri",
+    "bullets": [
+      "Ödeme, posting ve faturalama işlemleri aynı ekrandan tek tuşla yapılır; zaman kazandırır.",
+      "Aynı anda değişik para birimleri ile işlem girilebilir otomatik çevirim sağlar.",
+      "Oda hesabı sınırsız farklı pencerelerde görüntülenerek ödeme alınır, hesap girilir, fatura kesilir.",
+      "Detaylı ve farklı formattaki tasarımlarla istenilen formatta folyo çıktısı verir."
+    ]
+  },
+  {
+    "title": "Ön Muhasebe",
+    "bullets": [
+      "İstenilen para biriminde işlem yapılabilir",
+      "Günlük harcamalar raporlanabilir.",
+      "Döviz bozma işlemleri hızlıdır.",
+      "Kasa raporu ayrıntılı ve kolay anlaşılırdır.Elektraweb,\n\t\n\t\tcari hesap,",
+      "borç – alacak takibi,",
+      "kasa takibi,",
+      "personel hesap takibi,",
+      "fatura ve irsaliye düzenleme,",
+      "çek ve senetlerin vade takibi"
+    ]
+  },
+  {
+    "title": "Forecast ve Analizler",
+    "bullets": [
+      "İstenilen iki tarih arasındaki doluluk hareketlilik ve gelirleri grafik ve detaylı analizlerle gösterir.",
+      "Kullanımı çok kolaydır. grafikte bir günün üzerine tıklandığında o güne ait değişik listeleri otomatik hazırlar.",
+      "Rezervasyon kartına yazdığınız her detaya göre forecast alabilmenizi sağlar."
+    ]
+  },
+  {
+    "title": "Blokaj",
+    "bullets": [
+      "Önbürodaki operasyonun tamamını (Rezervasyon, Checkin-Checkout, Folyo, Blokaj, Tahsilat) yapabileceğiniz şekilde tasarlanmıştır.",
+      "ElektraWeb Blokaj ekranından misafirin rezervasyon kartına ulaşabilir, sürükle bırak ile oda – tarih değiştirilebilir, tahsilat, chin/chout işlem girişi yapabilir, folyosuna gidebilirsiniz.",
+      "Online kanallardan gelen ve daha oda ataması yapılmamış rezervasyonlarınızı da blokajda en üstte görebilir, sürükle bırak ile oda verebilirsiniz.",
+      "Yine bu ekranda kanal yönetimi işlemleri yapılabilir ve POS bilgileri girilebilir."
+    ]
+  },
+  {
+    "title": "Roomrack",
+    "bullets": [
+      "Anlık oda durumları tek ekranda görüntülenebilir, temizlik ve doluluğa göre farklı renklerle işaretlenebilir",
+      "Gösterilen odalar filtrelenip girişlere, çıkışlara ve konaklayanlara kolaylıkla ulaşılabilir",
+      "Bu ekrandan çıkmadan seçilen oda üzerinde tahsilat, folyo ve check-out işlemleri yapılabilir",
+      "VIP, geç check-in ve check-outlar için kuyruktaki odalar görsel simgeler ile işaretlenebilir"
+    ]
+  },
+  {
+    "title": "Görev ve İş Yönetimi",
+    "bullets": [
+      "Girilen tüm istek ve şikayetler otomatik görev yönetimine dahil olur.\n\tİşin tanımına göre, bölümü, yetkilisi, önemi ve beklenen bitiş süresi belirlenir.",
+      "İş, ilgili birimin ekranına veya mobil cihazına düşer. Çağrıyı alan görevli “göreve başla” tuşuna basarak başlar ve bittiğinde ise “tamamla” diyerek bitirir.",
+      "Eğer iş, planlanan ve/veya max zaman diliminde bitmez ise otomatik bir üste mesaj gider.",
+      "Misafir ile ilgili olan işlemler rezervasyon kartı içerisinden de takip edilir. İstenirse check-in, check-out,folyo ve faturalama işlemleri esnasında otomatik hatırlatma yapar.",
+      "VIP, setup ve ön ödeme kontrol gibi işlemler böylece hem hatırlatma hem de ilgili bölüme bir görev olarak tanımlanmış olur."
+    ]
+  }
+]

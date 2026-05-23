@@ -1,0 +1,46 @@
+openapi: 3.0.3
+info:
+  title: ERA Hotel PMS — ERP outbound catalog
+  version: 2026-05-phase2
+  description: |
+    Events POSTed to EXTERNAL_INTEGRATION_URL (Nafta 1C bridge / ERA gateway).
+    Envelope fields: eventType, propertyCode, occurredAt, correlationId, payload.
+    See doc/clone-spec/18-erp-integration.md and 22-outbound-integration-policy.md.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/integration/mock-receiver:
+    post:
+      summary: Dev mock receiver (all outbound types)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutboundEnvelope'
+components:
+  schemas:
+    OutboundEnvelope:
+      type: object
+      required: [eventType, propertyCode, occurredAt, payload]
+      properties:
+        eventType:
+          type: string
+          enum:
+            - SATELLITE_HOTEL_FOLIO_CHARGE_POSTED
+            - SATELLITE_HOTEL_FOLIO_PAYMENT_RECEIVED
+            - SATELLITE_HOTEL_FOLIO_CHARGE_VOIDED
+            - SATELLITE_HOTEL_CHECKOUT_CLOSED
+            - SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED
+            - SATELLITE_HOTEL_INVOICE_ISSUED
+            - SATELLITE_HOTEL_PAYMENT_FISCALIZED
+            - SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT
+            - SATELLITE_HOTEL_MASTER_DATA_SYNC
+        propertyCode:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+        payload:
+          type: object

@@ -1,0 +1,192 @@
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
+import { UserRole } from "@erafinance/database";
+import type { Prisma } from "@erafinance/database";
+import { OrganizationId } from "../common/org-id.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { RolesGuard } from "../auth/guards/roles.guard";
+import { PrismaService } from "../prisma/prisma.service";
+import { AuditService } from "./audit.service";
+
+@ApiTags("audit")
+@ApiBearerAuth("bearer")
+@Controller("audit")
+@UseGuards(JwtAuthGuard, RolesGuard)
+export class AuditController {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
+
+  @Get("recent")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @ApiOperation({
+    summary: "Последние записи AuditLog (совместимость)",
+  })
+  async recent(
+    @OrganizationId() organizationId: string,
+    @Query("take") takeRaw?: string,
+  ) {
+    const n = Math.min(
+      100,
+      Math.max(1, Number.parseInt(takeRaw ?? "20", 10) || 20),
+    );
+    return this.prisma.auditLog.findMany({
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
+      take: n,
+      select: {
+        id: true,
+        userId: true,
+        entityType: true,
+        entityId: true,
+        action: true,
+        createdAt: true,
+        changes: true,
+        oldValues: true,
+        newValues: true,
+        hash: true,
+      },
+    });
+  }
+
+  @Get("logs")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @ApiOperation({
+    summary: "Журнал аудита с фильтрами (пагинация: page, pageSize; иначе take)",
+  })
+  async logs(
+    @OrganizationId() organizationId: string,
+    @Query("userId") userId?: string,
+    @Query("from") from?: string,
+    @Query("to") to?: string,
+    @Query("entityType") entityType?: string,
+    @Query("entityId") entityId?: string,
+    @Query("action") action?: string,
+    @Query("take") takeRaw?: string,
+    @Query("page") pageRaw?: string,
+    @Query("pageSize") pageSizeRaw?: string,
+  ) {
+    const where: Prisma.AuditLogWhereInput = { organizationId };
+    if (userId) {
+      where.userId = userId;
+    }
+    if (from || to) {
+      where.createdAt = {};
+      if (from) {
+        where.createdAt.gte = new Date(from);
+      }
+      if (to) {
+        where.createdAt.lte = new Date(to);
+      }
+    }
+    if (entityType) {
+      where.entityType = entityType;
+    }
+    if (entityId) {
+      where.entityId = entityId;
+    }
+    if (action) {
+      where.action = action;
+    }
+
+    const userSelect = {
+      id: true,
+      email: true,
+      firstNameCipher: true,
+      lastNameCipher: true,
+    } as const;
+
+    const page = Math.max(1, Number.parseInt(pageRaw ?? "0", 10) || 0);
+    const pageSizeParsed = Number.parseInt(pageSizeRaw ?? "0", 10) || 0;
+    if (page > 0 && pageSizeParsed > 0) {
+      const pageSize = Math.min(100, Math.max(1, pageSizeParsed));
+      const skip = (page - 1) * pageSize;
+      const [total, items] = await Promise.all([
+        this.prisma.auditLog.count({ where }),
+        this.prisma.auditLog.findMany({
+          where,
+          orderBy: { createdAt: "desc" },
+          skip,
+          take: pageSize,
+          include: {
+            user: { select: userSelect },
+          },
+        }),
+      ]);
+      return { items, total, page, pageSize };
+    }
+
+    const take = Math.min(
+      100,
+      Math.max(1, Number.parseInt(takeRaw ?? "50", 10) || 50),
+    );
+    const items = await this.prisma.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take,
+      include: {
+        user: { select: userSelect },
+      },
+    });
+    return { items, total: items.length, page: 1, pageSize: take };
+  }
+
+  @Get("logs/:id")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @ApiOperation({ summary: "Одна запись аудита" })
+  async logOne(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    const row = await this.prisma.auditLog.findFirst({
+      where: { id, organizationId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstNameCipher: true,
+            lastNameCipher: true,
+          },
+        },
+      },
+    });
+    if (!row) {
+      throw new NotFoundException("Audit log not found");
+    }
+    return row;
+  }
+
+  @Post("integrity-check")
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Проверка целостности хешей audit_logs для организации",
+  })
+  async integrityCheck(@OrganizationId() organizationId: string) {
+    return this.audit.verifyOrganizationLogs(organizationId);
+  }
+
+  @Post("verify-chain")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.AUDITOR)
+  @ApiOperation({
+    summary:
+      "Проверка hash-chain audit_logs; возвращает список скомпрометированных записей",
+  })
+  async verifyChain(@OrganizationId() organizationId: string) {
+    return this.audit.verifyOrganizationChain(organizationId);
+  }
+}

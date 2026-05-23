@@ -1,0 +1,39 @@
+# Тома данных на диске D (см. DOCKER_DATA_ROOT в .env) — не используем named volumes на диске C.
+# Создайте каталоги один раз; шаблон README для D:\DockerData\erafinance_erp\ — docker/README-docker-data.txt
+# Postgres 16 + Redis 7 (see docs/deploy/README.md).
+# First init: only `docker-init/00-extensions.sql` runs inside Postgres (uuid-ossp). From the host once on an empty DB:
+#   npm run db:bootstrap-local   (= db:migrate + db:seed incl. platform super-admins + db:sync-i18n from resources.ts)
+# See docker/README-docker-data.txt.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: erafinance-postgres
+    environment:
+      POSTGRES_USER: erafinance
+      POSTGRES_PASSWORD: erafinance
+      POSTGRES_DB: erafinance
+    ports:
+      - "5432:5432"
+    volumes:
+      - ${DOCKER_DATA_ROOT:-D:/DockerData/erafinance_erp}/postgres:/var/lib/postgresql/data
+      - ./packages/database/prisma/docker-init/00-extensions.sql:/docker-entrypoint-initdb.d/00-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U erafinance -d erafinance"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: erafinance-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${DOCKER_DATA_ROOT:-D:/DockerData/erafinance_erp}/redis:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5

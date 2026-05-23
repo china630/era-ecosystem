@@ -1,0 +1,595 @@
+openapi: 3.0.3
+info:
+  title: ERA — fb-pos ↔ hotel-pms bridge
+  version: 0.3.0
+  description: |
+    Контракт интеграции **era-fb-pos** (клиент) и **era-hotel-pms** (сервер folio / in-house).
+
+    - **Реализовано** (Stage 17): room-charge + idempotency, in-house, folio-summary,
+      pos-shift-status, room-charges lookup; PMS webhook on check-out (`FB_POS_WEBHOOK_URL`).
+    - Lite calendar: `resources` / `reservations` (session auth).
+
+    См. также: [23-pos-bridge.md](../../era-hotel-pms/doc/clone-spec/23-pos-bridge.md),
+    [09-wireflow-ticket-to-folio.md](../09-wireflow-ticket-to-folio.md),
+    [10-wireflow-cash-fiscal.md](../10-wireflow-cash-fiscal.md),
+    [era-hotel-pms DELIVERY.md](../../era-hotel-pms/doc/DELIVERY.md) Stage 17.
+
+servers:
+  - url: https://{pmsHost}
+    description: era-hotel-pms (prod/staging)
+    variables:
+      pmsHost:
+        default: pms.nafta.example.com
+  - url: http://localhost:3000
+    description: Local dev
+
+tags:
+  - name: room-charge
+    description: Начисление на folio проживающего (fb-pos → PMS)
+  - name: in-house
+    description: Поиск гостей in-house (fb-pos → PMS, planned)
+  - name: folio
+    description: Сводка folio перед room charge (planned)
+  - name: pos-shift
+    description: Сигнал открытых POS-смен для night audit
+  - name: pms-calendar
+    description: Lite-календарь слотов в PMS (не дублировать зал fb-pos)
+  - name: fb-pos-webhooks
+    description: Callbacks PMS → fb-pos (planned, на стороне fb-pos)
+
+security:
+  - posBridgeSecret: []
+
+paths:
+  /api/pos/room-charge:
+    post:
+      tags: [room-charge]
+      summary: Начисить сумму ресторанного чека на folio номера
+      description: |
+        Вызывается **fb-pos** при закрытии чека способом «На номер».
+
+        **Реализовано** в hotel-pms.
+
+        Побочные эффекты PMS:
+        - создаётся `FolioCharge` на открытом folio резервации `IN_HOUSE`;
+        - при включённом outbound — событие `SATELLITE_HOTEL_FOLIO_CHARGE_POSTED` → ERP.
+
+        KKM на месте **не** печатается (policy Nafta).
+      operationId: postRoomCharge
+      x-era-status: implemented
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomChargeRequest'
+            examples:
+              byRoom:
+                summary: По номеру комнаты
+                value:
+                  roomNumber: "201"
+                  revenueCode: FOOD
+                  amount: 48.50
+                  description: "Restaurant — Table T-12 — Ticket a1b2c3"
+                  outletCode: RESTAURANT
+                  externalTicketId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+              byReservation:
+                summary: По reservationId
+                value:
+                  reservationId: "550e8400-e29b-41d4-a716-446655440000"
+                  revenueCode: BAR
+                  amount: 12.00
+                  description: "Bar — walk-in — Ticket c3d4e5"
+                  outletCode: BAR
+      responses:
+        '201':
+          description: Folio charge создан
+          headers:
+            X-Correlation-Id:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolioChargeResponse'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Idempotency conflict (planned — duplicate key, different body)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/pms/in-house:
+    get:
+      tags: [in-house]
+      summary: Список проживающих гостей (поиск для «На номер»)
+      description: |
+        **Планируется** (FB-1). Вызывается fb-pos при вводе комнаты / фамилии на экране оплаты.
+
+        Не заменяет полный folio UI PMS — только минимум для выбора гостя.
+      operationId: listInHouseGuests
+      x-era-status: implemented
+      parameters:
+        - name: query
+          in: query
+          description: Комната, фамилия или фрагмент (min 2 символа)
+          schema:
+            type: string
+            minLength: 2
+        - name: roomNumber
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 50
+      responses:
+        '200':
+          description: Список совпадений
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InHouseGuest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/pms/reservations/{reservationId}/folio-summary:
+    get:
+      tags: [folio]
+      summary: Можно ли начислить room charge и лимит (опционально)
+      operationId: getFolioSummaryForPos
+      x-era-status: implemented
+      parameters:
+        - name: reservationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolioPosSummary'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/pms/room-charges:
+    get:
+      tags: [room-charge]
+      summary: Lookup folio charge by idempotency key
+      operationId: getRoomChargeByIdempotency
+      x-era-status: implemented
+      parameters:
+        - name: externalTicketId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: idempotencyKey
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FolioChargeResponse'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/pms/pos-shift-status:
+    get:
+      tags: [pos-shift]
+      summary: Есть ли открытые POS-смены (для night audit PMS)
+      description: |
+        **Планируется.** PMS опрашивает fb-pos перед night audit
+        **или** fb-pos push-ит статус при open/close Z.
+
+        Альтернатива: `GET` на fb-pos `/api/pos/shifts/open` с тем же secret.
+      operationId: getPosShiftStatus
+      x-era-status: implemented
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PosShiftStatus'
+
+    put:
+      tags: [pos-shift]
+      summary: fb-pos сообщает об открытой/закрытой смене (push)
+      operationId: reportPosShiftStatus
+      x-era-status: implemented
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PosShiftStatusReport'
+      responses:
+        '204':
+          description: Принято
+
+  /api/pos/resources:
+    get:
+      tags: [pms-calendar]
+      summary: Справочник столов/кабинетов (lite PMS calendar)
+      x-era-status: implemented
+      description: Сессия PMS + `RESERVATIONS_READ`. Для полного зала — модель Table в fb-pos.
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosResource'
+
+  /api/pos/reservations:
+    get:
+      tags: [pms-calendar]
+      summary: Брони слотов на день (lite)
+      x-era-status: implemented
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PosSlotReservation'
+
+# --- fb-pos host (planned webhooks) ---
+  /api/webhooks/pms/reservation-lifecycle:
+    post:
+      tags: [fb-pos-webhooks]
+      summary: PMS → fb-pos (check-out / cancel in-house)
+      x-era-status: planned
+      servers:
+        - url: https://{fbPosHost}
+          variables:
+            fbPosHost:
+              default: fbpos.nafta.example.com
+      security:
+        - posBridgeSecret: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PmsReservationLifecycleEvent'
+      responses:
+        '202':
+          description: Принято в обработку
+
+components:
+  securitySchemes:
+    posBridgeSecret:
+      type: apiKey
+      in: header
+      name: X-Pos-Bridge-Secret
+      description: |
+        Shared secret `POS_BRIDGE_SECRET`.
+
+        Также поддерживается `Authorization: Bearer <secret>` (реализовано в PMS).
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: session
+      description: UI/session пользователя PMS (не для fb-pos prod)
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      description: |
+        UUID чека fb-pos (`externalTicketId`). Повтор с тем же ключом возвращает тот же `FolioCharge` (planned).
+      schema:
+        type: string
+        format: uuid
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      schema:
+        type: string
+      description: Сквозной trace fb-pos ↔ PMS ↔ ERP
+
+  schemas:
+    RoomChargeRequest:
+      type: object
+      required: [revenueCode, amount, description]
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+          description: Предпочтительно после выбора из in-house API
+        roomNumber:
+          type: string
+          description: Альтернатива — PMS резолвит активный IN_HOUSE на комнате
+        revenueCode:
+          type: string
+          example: FOOD
+          description: Код из master revenue codes PMS
+        amount:
+          type: number
+          format: double
+          exclusiveMinimum: 0
+          description: AZN, итог чека (или часть при split)
+        description:
+          type: string
+          minLength: 1
+          description: Текст строки folio (без префикса outlet — PMS добавит `[outletCode]`)
+        outletCode:
+          type: string
+          example: RESTAURANT
+        productSku:
+          type: string
+          deprecated: true
+          description: Nafta — склад в ERP; только dev при `STOCK_CONSUMPTION_ENABLED`
+        externalTicketId:
+          type: string
+          format: uuid
+          description: Id чека fb-pos; дублирует Idempotency-Key (planned persistence)
+        ticketNumber:
+          type: string
+          description: Человекочитаемый № чека для folio
+        posShiftId:
+          type: string
+          format: uuid
+          description: Смена fb-pos для аудита
+        waiterCode:
+          type: string
+      oneOf:
+        - required: [reservationId]
+        - required: [roomNumber]
+
+    FolioChargeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        folioId:
+          type: string
+          format: uuid
+        revenueCodeId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          description: Decimal serialized as string
+        qty:
+          type: integer
+        description:
+          type: string
+        businessDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        reservationId:
+          type: string
+          format: uuid
+          description: Echo для fb-pos (planned in response)
+
+    InHouseGuest:
+      type: object
+      required: [reservationId, roomNumber, guestName, status]
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+        guestName:
+          type: string
+        status:
+          type: string
+          enum: [IN_HOUSE]
+        folioId:
+          type: string
+          format: uuid
+        folioStatus:
+          type: string
+          enum: [OPEN, CLOSED]
+        balanceHint:
+          type: number
+          description: Текущий баланс folio (опционально, для UI)
+        checkOutDate:
+          type: string
+          format: date
+        allowRoomCharge:
+          type: boolean
+
+    FolioPosSummary:
+      type: object
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+        folioId:
+          type: string
+          format: uuid
+        folioStatus:
+          type: string
+          enum: [OPEN, CLOSED]
+        balance:
+          type: number
+        allowRoomCharge:
+          type: boolean
+        denyReason:
+          type: string
+          enum:
+            - FOLIO_CLOSED
+            - NOT_IN_HOUSE
+            - CREDIT_LIMIT
+            - NIGHT_AUDIT_RUNNING
+        creditLimit:
+          type: number
+          nullable: true
+
+    PosShiftStatus:
+      type: object
+      properties:
+        hasOpenShift:
+          type: boolean
+        openShiftCount:
+          type: integer
+        outlets:
+          type: array
+          items:
+            type: object
+            properties:
+              outletCode:
+                type: string
+              shiftId:
+                type: string
+                format: uuid
+              openedAt:
+                type: string
+                format: date-time
+
+    PosShiftStatusReport:
+      type: object
+      required: [outletCode, shiftId, status]
+      properties:
+        propertyCode:
+          type: string
+        outletCode:
+          type: string
+        shiftId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        openedAt:
+          type: string
+          format: date-time
+        closedAt:
+          type: string
+          format: date-time
+
+    PosResource:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        resourceType:
+          type: string
+          enum: [TABLE, SPA_CABIN]
+        outletCode:
+          type: string
+        active:
+          type: boolean
+
+    PosSlotReservation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        resourceId:
+          type: string
+          format: uuid
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+        partySize:
+          type: integer
+        guestName:
+          type: string
+        reservationId:
+          type: string
+          format: uuid
+          nullable: true
+
+    PmsReservationLifecycleEvent:
+      type: object
+      required: [eventType, reservationId, timestamp]
+      properties:
+        eventType:
+          type: string
+          enum:
+            - reservation_checked_out
+            - reservation_cancelled
+            - folio_closed
+        reservationId:
+          type: string
+          format: uuid
+        roomNumber:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ErrorBody:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+
+  responses:
+    BusinessError:
+      description: Бизнес-ошибка (текст в `error`)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorBody'
+          examples:
+            notInHouse:
+              value:
+                error: Room charge only for IN_HOUSE reservations
+            noRoom:
+              value:
+                error: No in-house reservation for room
+            revenueCode:
+              value:
+                error: Revenue code FOOD not found
+    Unauthorized:
+      description: Нет bridge secret и нет сессии с правом folio charge
+    Forbidden:
+      description: Недостаточно прав
+    ServerError:
+      description: Внутренняя ошибка

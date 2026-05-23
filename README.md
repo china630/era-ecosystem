@@ -14,11 +14,24 @@ Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Do
 | `era-hotel-pms` | Hotel industry satellite (submodule) |
 | `era-fb-pos` | F&B POS satellite — floor, KDS, tickets (submodule) |
 
-## Submodules
+## Repositories in this monorepo
 
-```bash
-git submodule update --init --recursive
-```
+All services are vendored in this repository (not git submodules):
+
+| Directory | Role |
+|-----------|------|
+| `packages/era-contracts` | Shared TypeScript types & event schemas |
+| `era-finance-core` | Financial data plane |
+| `era-365-orchestrator` | Control plane — billing, identity, SSO |
+| `era-hotel-pms` | Hotel industry satellite |
+| `era-fb-pos` | F&B POS satellite — floor, KDS, tickets |
+
+Historical submodule remotes (optional upstream sync):
+
+- `era-finance-core` → https://github.com/china630/dayday_erp.git
+- `era-hotel-pms` → https://github.com/china630/era-hotel-pms.git
+- `era-365-orchestrator` → https://github.com/china630/era-365-orchestrator.git
+- `era-fb-pos` → https://github.com/china630/era-fb-pos.git
 
 ## Quick start (Docker — full stack)
 

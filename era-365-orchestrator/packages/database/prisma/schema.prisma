@@ -1,0 +1,446 @@
+// ERA 365 Control Plane — billing, identity RBAC, tenancy limits.
+// Shares PostgreSQL with era-finance-core during migration (same table names / @@map).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TariffTier {
+  TIER_0
+  TIER_1
+  TIER_2
+  TIER_3
+}
+
+enum BillingStatus {
+  ACTIVE
+  SOFT_BLOCK
+  HARD_BLOCK
+}
+
+enum SubscriptionInvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PricingKind {
+  FOUNDATION
+  MODULE
+  QUOTA
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+enum ReferralCommissionStatus {
+  ACCRUED
+  PAID
+  CANCELLED
+}
+
+enum AccessRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  ACCOUNTANT
+  USER
+  PROCUREMENT
+  AUDITOR
+  WAREHOUSE_KEEPER
+  HR_OFFICER
+  HR_MANAGER
+  DEPARTMENT_HEAD
+  DIRECTOR
+  PARTNER
+}
+
+enum PermissionCategory {
+  CORE
+  BILLING
+  ACCOUNTING
+  SALES
+  PURCHASES
+  INVENTORY
+  HR
+  PSA
+  CUSTOMS
+  ADMIN
+  REPORTING
+  INTEGRATIONS
+}
+
+/// Per-tenant billing state (migrated from organizations.billing_status).
+model TenantBilling {
+  organizationId       String        @id @map("organization_id") @db.Uuid
+  billingStatus        BillingStatus @default(ACTIVE) @map("billing_status")
+  subscriptionPlan     String?       @map("subscription_plan")
+  activeModules        String[]      @default([]) @map("active_modules")
+  billingPeriodKey     String?       @map("billing_period_key") @db.VarChar(7)
+  whatsappAlertsUsed   Int           @default(0) @map("whatsapp_alerts_used")
+  ocrPagesUsed         Int           @default(0) @map("ocr_pages_used")
+  accumulatedBalance   Decimal       @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
+  currentCreditTier    TariffTier?   @map("current_credit_tier")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  @@map("tenant_billing")
+}
+
+model OrganizationSubscription {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId          String     @unique @map("organization_id") @db.Uuid
+  currentTier             TariffTier @default(TIER_0) @map("current_tier")
+  isTrial                 Boolean    @default(true) @map("is_trial")
+  trialExpiresAt          DateTime?  @map("trial_expires_at") @db.Timestamptz(6)
+  activatedPremiumModules String[]   @default([]) @map("activated_premium_modules")
+  billingPeriodKey        String?    @map("billing_period_key") @db.VarChar(7)
+  expiresAt               DateTime?  @map("expires_at") @db.Timestamptz(6)
+  activeModules           String[]   @default([]) @map("active_modules")
+  createdAt               DateTime   @default(now()) @map("created_at")
+  updatedAt               DateTime   @updatedAt @map("updated_at")
+  isBlocked               Boolean    @default(false) @map("is_blocked")
+  customConfig            Json?      @map("custom_config")
+
+  @@map("organization_subscriptions")
+}
+
+model SubscriptionInvoice {
+  id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String                    @map("user_id") @db.Uuid
+  amount         Decimal                   @db.Decimal(12, 2)
+  status         SubscriptionInvoiceStatus
+  date           DateTime                  @db.Date
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+  periodStart    DateTime?                 @map("period_start") @db.Timestamptz(6)
+  periodEnd      DateTime?                 @map("period_end") @db.Timestamptz(6)
+  billingPeriod  String?                   @map("billing_period")
+  pdfLink        String?                   @map("pdf_link")
+  paymentOrderId String?                   @unique @map("payment_order_id") @db.Uuid
+  items          BillingInvoiceItem[]
+  paymentOrder   PaymentOrder?             @relation(fields: [paymentOrderId], references: [id])
+  referralCommissions ReferralCommission[]
+
+  @@index([userId])
+  @@index([userId, date])
+  @@index([userId, billingPeriod])
+  @@map("subscription_invoices")
+}
+
+model BillingInvoiceItem {
+  id                    String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  subscriptionInvoiceId String              @map("subscription_invoice_id") @db.Uuid
+  organizationId        String              @map("organization_id") @db.Uuid
+  description           String
+  amount                Decimal             @db.Decimal(12, 2)
+  subscriptionInvoice   SubscriptionInvoice @relation(fields: [subscriptionInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionInvoiceId])
+  @@index([organizationId])
+  @@map("billing_invoice_items")
+}
+
+model UsageMeterEvent {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  actionType     String   @map("action_type") @db.VarChar(64)
+  quantity       Int      @default(1)
+  unitCostAzn    Decimal  @map("unit_cost_azn") @db.Decimal(12, 4)
+  balanceAfter   Decimal  @map("balance_after") @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([organizationId, createdAt])
+  @@map("usage_meter_events")
+}
+
+model OrganizationModule {
+  organizationId      String    @map("organization_id") @db.Uuid
+  moduleKey           String    @map("module_key")
+  priceSnapshot       Decimal   @map("price_snapshot") @db.Decimal(12, 2)
+  activatedAt         DateTime  @default(now()) @map("activated_at")
+  pendingDeactivation Boolean   @default(false) @map("pending_deactivation")
+  cancelledAt         DateTime? @map("cancelled_at")
+  accessUntil         DateTime? @map("access_until") @db.Timestamptz(6)
+
+  @@id([organizationId, moduleKey])
+  @@map("organization_modules")
+}
+
+model OrganizationBundle {
+  organizationId      String   @map("organization_id") @db.Uuid
+  bundleId            String   @map("bundle_id") @db.Uuid
+  priceSnapshot       Decimal  @map("price_snapshot") @db.Decimal(12, 2)
+  activatedAt         DateTime @default(now()) @map("activated_at")
+  pendingDeactivation Boolean  @default(false) @map("pending_deactivation")
+  cancelledAt         DateTime? @map("cancelled_at")
+  accessUntil         DateTime? @map("access_until") @db.Timestamptz(6)
+  bundle              PricingBundle @relation(fields: [bundleId], references: [id], onDelete: Restrict)
+
+  @@id([organizationId, bundleId])
+  @@map("organization_bundles")
+}
+
+model Pricing {
+  id        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key       String      @unique
+  kind      PricingKind
+  name      String
+  amountAzn Decimal     @map("amount_azn") @db.Decimal(12, 2)
+  unitSize  Int?        @map("unit_size")
+  sortOrder Int         @default(0) @map("sort_order")
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  @@map("pricing")
+}
+
+model PricingModule {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key           String   @unique
+  name          String
+  pricePerMonth Decimal  @map("price_per_month") @db.Decimal(12, 2)
+  isPremium     Boolean  @default(false) @map("is_premium")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("pricing_modules")
+}
+
+model PricingBundle {
+  id                  String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  slug                String?  @unique
+  name                String
+  discountPercent     Decimal  @default(0) @map("discount_percent") @db.Decimal(5, 2)
+  moduleKeys          Json     @map("module_keys")
+  isTrialDefault      Boolean  @default(false) @map("is_trial_default")
+  trialDurationDays   Int?     @map("trial_duration_days")
+  trialQuotas         Json?    @map("trial_quotas")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  organizationBundles OrganizationBundle[]
+
+  @@index([isTrialDefault])
+  @@map("pricing_bundles")
+}
+
+model LandingModuleMarketing {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  moduleSlug   String   @unique @map("module_slug")
+  sortOrder    Int      @default(0) @map("sort_order")
+  names        Json
+  descriptions Json
+  tasks        Json
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("landing_module_marketing")
+}
+
+model PaymentOrder {
+  id                  String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId      String               @map("organization_id") @db.Uuid
+  amountAzn           Decimal              @map("amount_azn") @db.Decimal(12, 2)
+  currency            String               @default("AZN")
+  status              PaymentOrderStatus   @default(PENDING)
+  provider            String               @default("pasha_bank")
+  providerTxnId       String?              @map("provider_txn_id")
+  monthsApplied       Int                  @default(1) @map("months_applied")
+  description         String               @default("")
+  idempotencyKey      String?              @unique @map("idempotency_key")
+  metadata            Json                 @default("{}")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  paidAt              DateTime?            @map("paid_at")
+  subscriptionInvoice SubscriptionInvoice?
+
+  @@index([organizationId])
+  @@index([status])
+  @@map("payment_orders")
+}
+
+model SystemConfig {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_config")
+}
+
+model Role {
+  id             String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code           String           @unique
+  legacyEnumRole UserRole?        @map("legacy_enum_role")
+  isSystem       Boolean          @default(true) @map("is_system")
+  nameAz         String           @map("name_az")
+  nameRu         String           @map("name_ru")
+  nameEn         String           @map("name_en")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  permissions    RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code        String              @unique
+  category    PermissionCategory
+  description String?
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id") @db.Uuid
+  permissionId String     @map("permission_id") @db.Uuid
+  createdAt    DateTime   @default(now()) @map("created_at")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+/// Platform identity (shared `users` table during control-plane migration).
+model User {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  isSuperAdmin Boolean  @default(false) @map("is_super_admin")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  memberships  OrganizationMembership[]
+
+  @@map("users")
+}
+
+model OrganizationMembership {
+  userId          String   @map("user_id") @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  role            UserRole
+  joinedAt        DateTime @default(now()) @map("joined_at")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId String?  @map("deleted_by_user_id") @db.Uuid
+  deletedReason   String?  @map("deleted_reason")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, organizationId])
+  @@index([organizationId])
+  @@index([organizationId, deletedAt], map: "organization_memberships_org_deleted_at_idx")
+  @@map("organization_memberships")
+}
+
+model AccessRequest {
+  id              String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String              @map("organization_id") @db.Uuid
+  requesterId     String              @map("requester_id") @db.Uuid
+  status          AccessRequestStatus @default(PENDING)
+  message         String?
+  createdAt       DateTime            @default(now()) @map("created_at")
+  decidedAt       DateTime?           @map("decided_at")
+  decidedByUserId String?             @map("decided_by_user_id") @db.Uuid
+  deletedAt       DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId String?             @map("deleted_by_user_id") @db.Uuid
+  deletedReason   String?             @map("deleted_reason")
+
+  @@index([organizationId, status])
+  @@index([requesterId])
+  @@index([organizationId, deletedAt], map: "access_requests_org_deleted_at_idx")
+  @@map("access_requests")
+}
+
+model OrganizationInvite {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  email           String
+  role            UserRole
+  status          InviteStatus @default(PENDING)
+  invitedByUserId String?      @map("invited_by_user_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at")
+  decidedAt       DateTime?    @map("decided_at")
+  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
+  deletedReason   String?      @map("deleted_reason")
+
+  @@index([organizationId, email])
+  @@index([organizationId, deletedAt], map: "organization_invites_org_deleted_at_idx")
+  @@map("organization_invites")
+}
+
+model Partner {
+  id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code             String    @unique
+  displayName      String    @map("display_name")
+  ownerUserId      String?   @map("owner_user_id") @db.Uuid
+  isCorporate      Boolean   @default(false) @map("is_corporate")
+  fixedRatePercent Decimal?  @map("fixed_rate_percent") @db.Decimal(5, 2)
+  contactEmail     String?   @map("contact_email")
+  contactPhone     String?   @map("contact_phone")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  referrals        Referral[]
+
+  @@map("partners")
+}
+
+model Referral {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  partnerId      String   @map("partner_id") @db.Uuid
+  organizationId String   @unique @map("organization_id") @db.Uuid
+  signupAt       DateTime @default(now()) @map("signup_at")
+  windowEndsAt   DateTime @map("window_ends_at")
+  isActive       Boolean  @default(true) @map("is_active")
+  source         String?
+  partner        Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  commissions    ReferralCommission[]
+
+  @@index([partnerId])
+  @@index([windowEndsAt])
+  @@map("referrals")
+}
+
+model ReferralCommission {
+  id                    String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  referralId            String                   @map("referral_id") @db.Uuid
+  subscriptionInvoiceId String?                  @map("subscription_invoice_id") @db.Uuid
+  amountAzn             Decimal                  @map("amount_azn") @db.Decimal(19, 4)
+  ratePercent           Decimal                  @map("rate_percent") @db.Decimal(5, 2)
+  periodMonth           Int                      @map("period_month")
+  periodYear            Int                      @map("period_year")
+  status                ReferralCommissionStatus @default(ACCRUED)
+  paidAt                DateTime?                @map("paid_at")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  referral              Referral                 @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  subscriptionInvoice   SubscriptionInvoice?     @relation(fields: [subscriptionInvoiceId], references: [id], onDelete: SetNull)
+
+  @@unique([referralId, periodYear, periodMonth])
+  @@index([subscriptionInvoiceId])
+  @@map("referral_commissions")
+}

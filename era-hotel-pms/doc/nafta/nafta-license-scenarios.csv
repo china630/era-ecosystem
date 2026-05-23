@@ -1,0 +1,8 @@
+﻿Сценарий;Модули;EUR/год;Экономия vs текущий API;Экономия vs факт 5000
+Текущий набор модулей (Standart);PMS, ChannelManager&BookingEngine, POS, STOCK, F&B, ACC, Procurement, FixedAsset, SPA, DMENU, DoorLockIntegration;5859.84;0;-859.84
+Только PMS + Channel (минимум отеля);PMS, ChannelManager&BookingEngine;3182.4;2677.44;1817.6
+PMS + Channel + ACC + STOCK + POS (без SPA, F&B, Fixed, Door, Menu);PMS, Channel, ACC, STOCK, POS;4459.2;1400.64;540.8
+Текущий набор БЕЗ SPA + DMENU;PMS, ChannelManager&BookingEngine, POS, STOCK, F&B, ACC, Procurement, FixedAsset, DoorLockIntegration;5347.2;512.64;-347.2
+Текущий набор БЕЗ FixedAsset + Procurement;PMS, ChannelManager&BookingEngine, POS, STOCK, F&B, ACC, SPA, DMENU, DoorLockIntegration;5492.64;367.2;-492.64
+Текущий набор на пакете MIDI (×0.5 room);PMS, ChannelManager&BookingEngine, POS, STOCK, F&B, ACC, Procurement, FixedAsset, SPA, DMENU, DoorLockIntegration [Midi factor 0.5];3612;2247.84;1388
+PMS+Channel на MIDI;PMS, Channel [Midi];1591.2;4268.64;3408.8

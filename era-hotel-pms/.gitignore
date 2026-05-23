@@ -1,0 +1,10 @@
+node_modules/
+doc/.cache/
+.next/
+out/
+.env
+.env.local
+.env*.local
+logs/
+*.log
+.DS_Store

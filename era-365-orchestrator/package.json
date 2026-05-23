@@ -1,0 +1,20 @@
+{
+  "name": "era-365-orchestrator",
+  "private": true,
+  "description": "ERA control plane — billing, identity, SSO, and tenancy orchestration",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run start:dev -w @era365/api",
+    "dev:web": "npm run dev -w @era365/web",
+    "build": "npm run build -w @era365/database && npm run build -w @era365/api && npm run build -w @era365/web",
+    "db:generate": "npm run db:generate -w @era365/database"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "screensOnDisk": 292,
+  "manifestRows": 292,
+  "coveragePct": 100,
+  "functionalScreens": 190,
+  "emptyScreens": 102,
+  "missingCount": 0,
+  "missing": [],
+  "dupes": [],
+  "byPart": {
+    "Screen Manifest Table (Part 2_ IMG-20260522-WA0157 to IMG-20260522-WA0255).txt": 63,
+    "Манифест ТЗ (Часть 1)_ Индекс экранных форм ElektraWeb (WA0056 - WA0155).txt": 88,
+    "Манифест ТЗ (Часть 3)_ Индексная таблица экранов WA0256 – WA0347.txt": 39,
+    "Часть 4.txt": 102
+  },
+  "licenseUsage": {
+    "PMS": {
+      "functionalScreens": 45,
+      "emptyScreens": 33,
+      "examples": [
+        "IMG-20260522-WA0104.jpg",
+        "IMG-20260522-WA0105.jpg",
+        "IMG-20260522-WA0106.jpg"
+      ]
+    },
+    "ChannelManager": {
+      "functionalScreens": 9,
+      "emptyScreens": 4,
+      "examples": [
+        "IMG-20260522-WA0068.jpg",
+        "IMG-20260522-WA0074.jpg",
+        "IMG-20260522-WA0127.jpg"
+      ]
+    },
+    "POS": {
+      "functionalScreens": 3,
+      "emptyScreens": 2,
+      "examples": [
+        "IMG-20260522-WA0089.jpg",
+        "IMG-20260522-WA0098.jpg",
+        "IMG-20260522-WA0146.jpg"
+      ]
+    },
+    "STOCK": {
+      "functionalScreens": 11,
+      "emptyScreens": 8,
+      "examples": [
+        "IMG-20260522-WA0092.jpg",
+        "IMG-20260522-WA0283.jpg",
+        "IMG-20260522-WA0284.jpg"
+      ]
+    },
+    "F&B": {
+      "functionalScreens": 2,
+      "emptyScreens": 0,
+      "examples": [
+        "IMG-20260522-WA0283.jpg",
+        "IMG-20260522-WA0291.jpg"
+      ]
+    },
+    "ACC": {
+      "functionalScreens": 29,
+      "emptyScreens": 40,
+      "examples": [
+        "IMG-20260522-WA0072.jpg",
+        "IMG-20260522-WA0091.jpg",
+        "IMG-20260522-WA0094.jpg"
+      ]
+    },
+    "Procurement": {
+      "functionalScreens": 1,
+      "emptyScreens": 3,
+      "examples": [
+        "IMG-20260522-WA0321.jpg"
+      ]
+    },
+    "FixedAsset": {
+      "functionalScreens": 4,
+      "emptyScreens": 0,
+      "examples": [
+        "IMG-20260522-WA0070.jpg",
+        "IMG-20260522-WA0231.jpg",
+        "IMG-20260522-WA0288.jpg"
+      ]
+    },
+    "SPA": {
+      "functionalScreens": 0,
+      "emptyScreens": 0,
+      "examples": []
+    },
+    "DMENU": {
+      "functionalScreens": 2,
+      "emptyScreens": 1,
+      "examples": [
+        "IMG-20260522-WA0345.jpg",
+        "IMG-20260522-WA0346.jpg"
+      ]
+    },
+    "DoorLock": {
+      "functionalScreens": 0,
+      "emptyScreens": 0,
+      "examples": []
+    }
+  }
+}

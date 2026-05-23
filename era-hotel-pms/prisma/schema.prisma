@@ -1,0 +1,626 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  DIRTY
+  CLEAN
+  INSPECTED
+  OOO
+  OOS
+  MAINTENANCE
+}
+
+enum ReservationStatus {
+  OPTION
+  CONFIRMED
+  IN_HOUSE
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  COMPANY_ACCOUNT
+}
+
+enum FolioType {
+  GUEST
+  COMPANY
+  AGENCY
+}
+
+enum FolioStatus {
+  OPEN
+  CLOSED
+  VOID
+}
+
+enum BusinessDayStatus {
+  OPEN
+  CLOSED
+}
+
+enum NightAuditStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum OutboundEventStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum CashShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum HousekeepingTaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum ChannelErrorStatus {
+  OPEN
+  RESOLVED
+}
+
+enum MedicalOrderStatus {
+  PENDING
+  COMPLETED
+}
+
+enum LabResultFlag {
+  NORMAL
+  HIGH
+  LOW
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum FiscalDocumentStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum TourismSubmissionStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum PosResourceType {
+  TABLE
+  SPA_CABIN
+}
+
+enum PosReservationStatus {
+  BOOKED
+  SEATED
+  CANCELLED
+  COMPLETED
+}
+
+enum StockMovementType {
+  RECEIPT
+  ISSUE
+  TRANSFER
+}
+
+model HotelProfile {
+  id                       String   @id @default(uuid())
+  name                     String
+  currency                 String   @default("AZN")
+  timezone                 String   @default("Asia/Baku")
+  propertyCode             String   @unique
+  organizationId           String   @default("nafta-sanatorium-org")
+  roomCapacity             Int      @default(78)
+  integrationSettingsJson  String?  @db.Text
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+model Role {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  name            String
+  permissionsJson String   @db.Text
+  users           User[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model User {
+  id           String     @id @default(uuid())
+  login        String     @unique
+  email        String?
+  passwordHash String
+  fullName     String
+  department   String?
+  status       UserStatus @default(ACTIVE)
+  roleId       String
+  role         Role       @relation(fields: [roleId], references: [id])
+  isCrossSystem Boolean   @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([roleId])
+  @@index([status])
+}
+
+model RoomType {
+  id            String              @id @default(uuid())
+  code          String              @unique
+  name          String
+  adultCapacity Int                 @default(2)
+  childCapacity Int                 @default(0)
+  baseQuota     Int
+  rooms         Room[]
+  reservations  Reservation[]
+  ratePlans     RatePlan[]
+  stopSells     ChannelStopSell[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model ChannelStopSell {
+  id         String    @id @default(uuid())
+  date       DateTime  @db.Date
+  roomTypeId String?
+  roomType   RoomType? @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([date, roomTypeId])
+}
+
+model Room {
+  id           String             @id @default(uuid())
+  roomNumber   String             @unique
+  roomTypeId   String
+  roomType     RoomType           @relation(fields: [roomTypeId], references: [id])
+  floor        Int                @default(1)
+  status       RoomStatus         @default(AVAILABLE)
+  reservations Reservation[]
+  hkTasks      HousekeepingTask[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model MealPlan {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  ratePlans    RatePlan[]
+  reservations Reservation[]
+}
+
+model RatePlan {
+  id            String        @id @default(uuid())
+  code          String        @unique
+  name          String
+  medicalFlag   Boolean       @default(false)
+  pricePerNight Decimal       @db.Decimal(12, 2)
+  roomTypeId    String?
+  roomType      RoomType?     @relation(fields: [roomTypeId], references: [id])
+  mealPlanId    String?
+  mealPlan      MealPlan?     @relation(fields: [mealPlanId], references: [id])
+  reservations  Reservation[]
+}
+
+model Department {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  revenueCodes RevenueCode[]
+  charges      FolioCharge[]
+}
+
+model RevenueCode {
+  id           String             @id @default(uuid())
+  code         String             @unique
+  name         String
+  taxTag       String?
+  departmentId String?
+  department   Department?        @relation(fields: [departmentId], references: [id])
+  charges      FolioCharge[]
+  routingRule  FolioRoutingRule?
+}
+
+model BookingSource {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  reservations Reservation[]
+}
+
+model Agency {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String
+  voen         String?
+  reservations Reservation[]
+}
+
+model Guest {
+  id             String         @id @default(uuid())
+  fullName       String
+  voen           String?
+  passportNumber String
+  phone          String
+  reservations   Reservation[]
+  medicalAlerts  MedicalAlert[]
+}
+
+model Reservation {
+  id            String            @id @default(uuid())
+  roomTypeId    String
+  roomType      RoomType          @relation(fields: [roomTypeId], references: [id])
+  roomId        String?
+  room          Room?             @relation(fields: [roomId], references: [id])
+  guestId       String
+  guest         Guest             @relation(fields: [guestId], references: [id])
+  ratePlanId    String
+  ratePlan      RatePlan          @relation(fields: [ratePlanId], references: [id])
+  mealPlanId    String?
+  mealPlan      MealPlan?         @relation(fields: [mealPlanId], references: [id])
+  sourceId      String?
+  source        BookingSource?    @relation(fields: [sourceId], references: [id])
+  agencyId      String?
+  agency        Agency?           @relation(fields: [agencyId], references: [id])
+  checkInDate   DateTime
+  checkOutDate  DateTime
+  status        ReservationStatus @default(CONFIRMED)
+  paymentMethod PaymentMethod
+  totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  stay          Stay?
+  folios        Folio[]
+  channelErrors ChannelSyncError[]
+  medicalOrders   MedicalOrder[]
+  medicalAlerts   MedicalAlert[]
+  fiscalDocuments   FiscalDocument[]
+  tourismSubmissions TourismSubmission[]
+  posReservations   PosReservation[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([status])
+  @@index([roomId])
+  @@index([guestId])
+  @@index([roomTypeId])
+  @@index([agencyId])
+}
+
+model Stay {
+  id             String      @id @default(uuid())
+  reservationId  String      @unique
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  actualCheckIn  DateTime
+  actualCheckOut DateTime?
+  createdAt      DateTime    @default(now())
+}
+
+model Folio {
+  id            String         @id @default(uuid())
+  reservationId String
+  reservation   Reservation    @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  type          FolioType
+  status        FolioStatus    @default(OPEN)
+  charges         FolioCharge[]
+  payments        FolioPayment[]
+  fiscalDocuments FiscalDocument[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([reservationId])
+}
+
+model FiscalDocument {
+  id               String               @id @default(uuid())
+  reservationId    String
+  reservation      Reservation          @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  folioId          String?
+  folio            Folio?               @relation(fields: [folioId], references: [id], onDelete: SetNull)
+  invoiceNumber    String?
+  counterpartyVoen String?
+  fiscalStatus     FiscalDocumentStatus @default(PENDING)
+  fiscalExternalId String?
+  rejectionReason  String?
+  lastEventAt      DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([reservationId])
+  @@index([folioId])
+  @@index([fiscalStatus])
+}
+
+model FolioRoutingRule {
+  id              String      @id @default(uuid())
+  revenueCodeId   String      @unique
+  revenueCode     RevenueCode @relation(fields: [revenueCodeId], references: [id])
+  targetFolioType FolioType
+  createdAt       DateTime    @default(now())
+}
+
+model FolioCharge {
+  id            String      @id @default(uuid())
+  folioId       String
+  folio         Folio       @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  revenueCodeId String
+  revenueCode   RevenueCode @relation(fields: [revenueCodeId], references: [id])
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  amount        Decimal     @db.Decimal(12, 2)
+  qty           Int         @default(1)
+  description   String
+  businessDate  DateTime
+  createdAt     DateTime    @default(now())
+}
+
+model FolioPayment {
+  id              String        @id @default(uuid())
+  folioId         String
+  folio           Folio         @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  amount          Decimal       @db.Decimal(12, 2)
+  paymentMethod   PaymentMethod
+  registerRef     String?
+  fiscalReceiptId String?
+  fiscalQrPayload String?
+  createdAt       DateTime      @default(now())
+}
+
+model CashShift {
+  id         String          @id @default(uuid())
+  cashier    String
+  registerId String
+  status     CashShiftStatus @default(OPEN)
+  openedAt   DateTime        @default(now())
+  closedAt   DateTime?
+}
+
+model BusinessDay {
+  id        String            @id @default(uuid())
+  date      DateTime          @unique @db.Date
+  status    BusinessDayStatus @default(OPEN)
+  nightRuns NightAuditRun[]
+}
+
+model NightAuditRun {
+  id            String           @id @default(uuid())
+  businessDayId String
+  businessDay   BusinessDay      @relation(fields: [businessDayId], references: [id])
+  status        NightAuditStatus @default(RUNNING)
+  stepsJson     String?          @db.Text
+  errorsJson    String?          @db.Text
+  completedAt   DateTime?
+  createdAt     DateTime         @default(now())
+}
+
+model HousekeepingTask {
+  id        String                 @id @default(uuid())
+  roomId    String
+  room      Room                   @relation(fields: [roomId], references: [id])
+  status    HousekeepingTaskStatus @default(PENDING)
+  notes     String?
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+}
+
+model ChannelSyncError {
+  id            String             @id @default(uuid())
+  reservationId String?
+  reservation   Reservation?       @relation(fields: [reservationId], references: [id])
+  otaReference  String?
+  errorMessage  String
+  status        ChannelErrorStatus @default(OPEN)
+  createdAt     DateTime           @default(now())
+}
+
+model MedicalAlert {
+  id            String       @id @default(uuid())
+  guestId       String
+  guest         Guest        @relation(fields: [guestId], references: [id])
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id])
+  temperature   Decimal?     @db.Decimal(4, 1)
+  message       String
+  resolved      Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+}
+
+model MedicalOrder {
+  id            String             @id @default(uuid())
+  reservationId String
+  reservation   Reservation        @relation(fields: [reservationId], references: [id])
+  orderType     String
+  status        MedicalOrderStatus @default(PENDING)
+  labResults    LabResult[]
+  createdAt     DateTime           @default(now())
+}
+
+model LabResult {
+  id             String        @id @default(uuid())
+  medicalOrderId String
+  medicalOrder   MedicalOrder  @relation(fields: [medicalOrderId], references: [id], onDelete: Cascade)
+  testName       String
+  resultValue    String
+  flag           LabResultFlag @default(NORMAL)
+  createdAt      DateTime      @default(now())
+}
+
+model MedicalProcedure {
+  id            String   @id @default(uuid())
+  reservationId String?
+  code          String
+  name          String
+  amount        Decimal  @db.Decimal(12, 2)
+}
+
+model TourismSubmission {
+  id            String                  @id @default(uuid())
+  reservationId String
+  reservation   Reservation             @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  eventKind     String
+  status        TourismSubmissionStatus @default(PENDING)
+  payloadJson   String                  @db.Text
+  errorMessage  String?
+  sentAt        DateTime?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+
+  @@index([reservationId])
+  @@index([status])
+}
+
+model PosResource {
+  id            String             @id @default(uuid())
+  code          String             @unique
+  name          String
+  resourceType  PosResourceType
+  outletCode    String             @default("RESTAURANT")
+  active        Boolean            @default(true)
+  reservations  PosReservation[]
+  createdAt     DateTime           @default(now())
+}
+
+model PosReservation {
+  id            String               @id @default(uuid())
+  resourceId    String
+  resource      PosResource          @relation(fields: [resourceId], references: [id])
+  reservationId String?
+  reservation   Reservation?         @relation(fields: [reservationId], references: [id])
+  guestName     String?
+  startAt       DateTime
+  endAt         DateTime
+  partySize     Int                  @default(2)
+  status        PosReservationStatus @default(BOOKED)
+  notes         String?
+  createdAt     DateTime             @default(now())
+
+  @@index([resourceId, startAt])
+}
+
+/// External era-fb-pos shift (Z not closed) — blocks night audit when OPEN
+enum PosBridgeShiftStatus {
+  OPEN
+  CLOSED
+}
+
+model PosBridgeShift {
+  id              String               @id @default(uuid())
+  externalShiftId String
+  outletCode      String
+  propertyCode    String?
+  status          PosBridgeShiftStatus @default(OPEN)
+  openedAt        DateTime
+  closedAt        DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@unique([outletCode, externalShiftId])
+  @@index([status])
+}
+
+/// Room charge idempotency from fb-pos (Idempotency-Key / externalTicketId)
+model PosRoomChargeIdempotency {
+  id             String   @id @default(uuid())
+  idempotencyKey String   @unique
+  folioChargeId  String   @unique
+  reservationId  String
+  requestHash    String
+  createdAt      DateTime @default(now())
+
+  @@index([reservationId])
+}
+
+model Warehouse {
+  id         String          @id @default(uuid())
+  code       String          @unique
+  name       String
+  movements  StockMovement[]
+  createdAt  DateTime        @default(now())
+}
+
+model ProductGroup {
+  id       String    @id @default(uuid())
+  code     String    @unique
+  name     String
+  products Product[]
+}
+
+model Product {
+  id           String          @id @default(uuid())
+  code         String          @unique
+  name         String
+  groupId      String?
+  group        ProductGroup?   @relation(fields: [groupId], references: [id])
+  unit         String          @default("pcs")
+  barcode      String?
+  active       Boolean         @default(true)
+  movements    StockMovement[]
+  recipe       Recipe?
+  recipeLines  RecipeLine[]    @relation("Ingredient")
+  createdAt    DateTime        @default(now())
+}
+
+model StockMovement {
+  id          String            @id @default(uuid())
+  productId   String
+  product     Product           @relation(fields: [productId], references: [id])
+  warehouseId String
+  warehouse   Warehouse         @relation(fields: [warehouseId], references: [id])
+  type        StockMovementType
+  qty         Decimal           @db.Decimal(12, 3)
+  reference   String?
+  createdAt   DateTime          @default(now())
+
+  @@index([productId, warehouseId])
+}
+
+model Recipe {
+  id        String       @id @default(uuid())
+  productId String       @unique
+  product   Product      @relation(fields: [productId], references: [id])
+  lines     RecipeLine[]
+}
+
+model RecipeLine {
+  id                  String  @id @default(uuid())
+  recipeId            String
+  recipe              Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientProductId String
+  ingredient          Product @relation("Ingredient", fields: [ingredientProductId], references: [id])
+  qty                 Decimal @db.Decimal(12, 3)
+}
+
+model OutboundEventLog {
+  id          String              @id @default(uuid())
+  eventType   String
+  payloadJson String              @db.Text
+  status      OutboundEventStatus @default(PENDING)
+  attempts    Int                 @default(0)
+  lastError   String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}

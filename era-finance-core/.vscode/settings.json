@@ -1,0 +1,7 @@
+{
+  "terminal.integrated.env.windows": {
+    "NPM_CONFIG_CACHE": "D:/DockerData/erafinance_erp/npm-cache",
+    "TMP": "D:/DockerData/erafinance_erp/tmp",
+    "TEMP": "D:/DockerData/erafinance_erp/tmp"
+  }
+}

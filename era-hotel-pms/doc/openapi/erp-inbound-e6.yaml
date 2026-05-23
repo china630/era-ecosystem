@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: ERA Hotel PMS — ERP inbound (phase 2 draft)
+  version: 0.1.0
+  description: Inbound callbacks from ERA Finance / 1C bridge. Outbound events remain in 22-outbound-integration-policy.
+
+paths:
+  /api/integration/erp/inbound:
+    post:
+      summary: E6 — invoice fiscal status changed
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/E6FiscalStatusChanged'
+      responses:
+        '200':
+          description: Status applied to FiscalDocument
+        '401':
+          description: Invalid webhook secret
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    E6FiscalStatusChanged:
+      type: object
+      required: [eventType, invoiceRef, fiscalStatus]
+      properties:
+        eventType:
+          type: string
+          enum: [invoice_fiscal_status_changed]
+        invoiceRef:
+          type: string
+          description: FiscalDocument id, invoiceNumber, or fiscalExternalId
+        fiscalStatus:
+          type: string
+          enum: [pending, sent, accepted, rejected]
+        fiscalExternalId:
+          type: string
+        rejectionReason:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time

@@ -1,0 +1,7 @@
+﻿Параметр;Значение
+Отель;Nafta Sanatorium Hotel
+Номеров;78
+Период;11.06.2025 — 11.06.2026
+Пакет;Standart
+Формула;annual = 12 × (rooms×ROOMPRICE×packet + BASE + USERPRICE×qty) × period
+Источник цен;priceapi/getapi.php?type=product (май 2026)

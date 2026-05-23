@@ -1,0 +1,2955 @@
+[
+  {
+    "cat": "Otel / PMS",
+    "slug": "on-buro",
+    "code": "PMS",
+    "name": "Ön Büro Modülü",
+    "url": "https://www.elektraweb.com/on-buro/",
+    "api": {
+      "ID": 5,
+      "NAME": "ElektraWeb Ön Büro Yönetimi Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 2.4,
+      "BASEPRICE": 0,
+      "ORDERNO": 1,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 0,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Front Office Management Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 30,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/on-buro/",
+      "EN_LINK": "https://eptera.com/eptera-pms/index.html",
+      "DESCRIPTION_EN": "Efficiently handles front office operations, reservations, housekeeping, folios, billing, online sales, identity reporting, and management analytics.\n",
+      "TAXPERCENT": null,
+      "CODE": "PMS",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "&Ouml;n B&uuml;ro Mod&uuml;l&uuml;",
+    "sections": [
+      {
+        "title": "&Ouml;n B&uuml;ro Programı",
+        "para": "Elektraweb Web Tabanlı Otel Programı &Ouml;n b&uuml;ro mod&uuml;l&uuml; ile rezervasyon, resepsiyon, housekeeping, fatura, folyo, channel manager, online rezervasyon, emniyet kimlik bildirimi gibi işlemleri rahatlıkla ger&ccedil;ekleştirebilir, ayrıntılı y&ouml;netim raporlarına tek tuşla ulaşabilirsiniz.",
+        "bullets": []
+      },
+      {
+        "title": "G&uuml;nl&uuml;k Durum Ekranı",
+        "para": "Elektraweb Otel Y&ouml;netim Sistemi, &ldquo;G&uuml;nl&uuml;k Durum Ekranı&rdquo; ile doluluk, gelir, forecast, konaklayanlar, rezervasyonlar ilgili bilgiler ve hatta &ccedil;ağrı merkezi notları gibi otel hakkındaki t&uuml;m &ouml;nemli ve kritik bilgileri tek bir ekranda sunar.",
+        "bullets": []
+      },
+      {
+        "title": "&nbsp;",
+        "para": "",
+        "bullets": [
+          "Rezervasyonlar herhangi bir kritere göre tek tuşla listelenebilir, sıralanabilir, gruplanabilir ve filtrelenebilir",
+          "Renklendirmeler sayesinde dikkat edilmesi gereken bilgiler kolayca görülür",
+          "Tek tuşla tüm işlemlere ulaşılır, tekve/veya toplu olarak işlem yapılır",
+          "Tüm ekranlar farklı formatlarda Excel’e veya yazıcıya aktarılır",
+          "Listelerde çoklu sıralama, filtreleme, arama, gruplama standarttır",
+          "Dijital arşivleme yeteneği sayesinde tüm belgeler, ilgili kaydın içerisine saklanır",
+          "Kullanıcılar yetkilerine göre menüde ve formlarda sadece izin verilen bilgileri görebilir ve işlem yapabilir"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/DURUM_TABLET.png",
+      "https://www.elektraweb.com/wp-content/uploads/2020/06/REZLIST.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/rezervvasyon_kart-1536x670-1-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/Kat_hizmetleri2-1536x789-1-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/folyo1-1536x686-1-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/onkasa-1536x787-1-1.webp"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/on-buro-1.png",
+      "screenshots/elektraweb/on-buro-2.jpg",
+      "screenshots/elektraweb/on-buro-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "kanal-yonetimi",
+    "code": "ChannelManager&BookingEngine",
+    "name": "Kanal Yönetimi",
+    "url": "https://www.elektraweb.com/kanal-yonetimi/",
+    "api": {
+      "ID": 272,
+      "NAME": "ElektraWeb Kanal Yönetimi & Online Rezervasyon Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 1,
+      "BASEPRICE": 0,
+      "ORDERNO": 2,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Channel Management & Online Reservation Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 15,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/kanal-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-channel-manager/index.html",
+      "DESCRIPTION_EN": "Synchronizes availability, rates, and reservations with online channels in real time, supports stop sale automation, and enables direct bookings through the hotel’s website via the integrated online booking engine.",
+      "TAXPERCENT": null,
+      "CODE": "ChannelManager&BookingEngine",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Kanal Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Kanal Y&ouml;netimi",
+        "para": "ElektraWeb, yalnızca &ccedil;evrimi&ccedil;i kanalları (Booking.com, Expedia, Hotelbeds, HotelsPro vb.) Senkronize etmekle kalmayan, aynı zamanda oteldeki rezervasyonları alan entegre bir kanal y&ouml;neticisine sahiptir. Bu y&uuml;zden &ccedil;ok daha kolay ve daha etkilidir.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/kanal_yonetimi-2.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/kanal_yonetimi.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/08/kanallar.jpg-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/kanal-yonetimi-1.jpg",
+      "screenshots/elektraweb/kanal-yonetimi-2.jpg",
+      "screenshots/elektraweb/kanal-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "online-rezervasyon-motoru",
+    "code": "ChannelManager&BookingEngine",
+    "name": "Online Rezervasyon Motoru",
+    "url": "https://www.elektraweb.com/online-rezervasyon-motoru/",
+    "api": {
+      "ID": 272,
+      "NAME": "ElektraWeb Kanal Yönetimi & Online Rezervasyon Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 1,
+      "BASEPRICE": 0,
+      "ORDERNO": 2,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Channel Management & Online Reservation Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 15,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/kanal-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-channel-manager/index.html",
+      "DESCRIPTION_EN": "Synchronizes availability, rates, and reservations with online channels in real time, supports stop sale automation, and enables direct bookings through the hotel’s website via the integrated online booking engine.",
+      "TAXPERCENT": null,
+      "CODE": "ChannelManager&BookingEngine",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Online Rezervasyon Motoru",
+    "sections": [
+      {
+        "title": "Online Rezervasyon Motoru",
+        "para": "Elektraweb, online rezervasyon, kanal y&ouml;netimi , fiyat y&ouml;netimi, &Ccedil;ağrı Merkezi , satış takip mod&uuml;lleriyle b&uuml;t&uuml;nleşik satış y&ouml;netimi sağlar",
+        "bullets": [
+          "ElektraWeb, otel misafirleri ve seyahat acentelerine y&ouml;nelik, webde ve mobil olarak kullanılabilen, &ouml;n b&uuml;roya entegre edilmiş bir online rezervasyon motoruna sahiptir. Grup ve zincir otellerde, merkezi rezervasyon sistemi(CRS), online rezervasyon motoru olarak kullanılabilir."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/infographic_onlinerez.png",
+      "https://www.elektraweb.com/wp-content/uploads/2020/01/Screen-Shot-2020-01-20-at-09.45.50.png",
+      "https://www.elektraweb.com/wp-content/uploads/2020/01/Screen-Shot-2020-01-20-at-17.48.16.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/google_myhotel.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/trivago.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/tel.jpg-1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/online-rezervasyon-motoru-1.png",
+      "screenshots/elektraweb/online-rezervasyon-motoru-2.png",
+      "screenshots/elektraweb/online-rezervasyon-motoru-3.png"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "satis-projeleri-ve-banket-yonetimi",
+    "code": "SalesMarketing",
+    "name": "Satış ve Banket Yönetimi",
+    "url": "https://www.elektraweb.com/satis-projeleri-ve-banket-yonetimi/",
+    "api": {
+      "ID": 8,
+      "NAME": "ElektraWeb  Satış Pazarlama Yazılımı ",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 10,
+      "ORDERNO": 46,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Sales Marketing Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/satis-projeleri-ve-banket-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-operation/eptera-sales-marketing/index.html",
+      "DESCRIPTION_EN": "Manages events, groups, weddings, and banquets with resource booking, staff calendars, and equipment availability.",
+      "TAXPERCENT": null,
+      "CODE": "SalesMarketing",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Satış ve Banket Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Satış Projeleri ve Banket Y&ouml;netimi",
+        "para": "Elektraweb Satış Projeleri ve Banket Y&ouml;netimi&nbsp; ile, t&uuml;m satış projelerinizi tek ekrandan izleyebilirsiniz.",
+        "bullets": [
+          "Salon ve men&uuml; organizasyonları",
+          "Kontrat y&ouml;netimi",
+          "Teklif hazırlama"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/shutterstock_645095311.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/banket1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/banket-takvimi.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/banket-detaylari.png-scaled.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/banket-anlasmalari-revize-2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/satis-projeleri-ve-banket-yonetimi-1.jpg",
+      "screenshots/elektraweb/satis-projeleri-ve-banket-yonetimi-2.png",
+      "screenshots/elektraweb/satis-projeleri-ve-banket-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "acente-bonus",
+    "code": "AgencyLoyaltyModule+BookingPortal",
+    "name": "Acente Bonus",
+    "url": "https://www.elektraweb.com/acente-bonus/",
+    "api": {
+      "ID": 295,
+      "NAME": "ElektraWeb Acente Sadakat  Modülü+ Booking Portal Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0,
+      "BASEPRICE": 291.66667,
+      "ORDERNO": 116,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Agency Loyalty Module + Booking Portal Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "AgencyLoyaltyModule+BookingPortal",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Acente Bonus",
+    "sections": [
+      {
+        "title": "Elektra Acente Bonus Sisteminin Avantajları​",
+        "para": "Hızlı Entegrasyon : Acentelerin kullanacağı &ouml;n rezervasyon ekranı i&ccedil;in ayrıca kontenjan veya fiyat girişi yapmanıza gerek yoktur. Elektra sisteminde tanımlı olan bilgiler otomatik olarak kullanılır. Acenteler kayıt olup onaylandıklarında hemen &ccedil;alışmaya başlayabilirler.​",
+        "bullets": [
+          "Acenteler rezervasyon girişi yapabilir,",
+          "Otel ile &ccedil;evrimi&ccedil;i iletişim kurabilir,",
+          "Rezervasyon iptali ve değişiklik taleplerini iletebilir,",
+          "Check-in ve check-out tamamlandığında ne kadar bonus kazandıklarını g&ouml;r&uuml;nt&uuml;leyebilirler"
+        ]
+      },
+      {
+        "title": "&nbsp;",
+        "para": "Tam entegrasyon : Elektra Acente Sadakat Sistemi, Elektra Otel Y&ouml;netim Sistemi (PMS) ile %100 entegre &ccedil;alışır; ayrı bir yazılım veya manuel veri aktarımı gerektirmez.​",
+        "bullets": []
+      },
+      {
+        "title": "Neden Elektra Acenta Bonus Sistemi Daha Avantajlı ?",
+        "para": "Tam entegrasyon : Elektra Acente Sadakat Sistemi, Elektra Otel Y&ouml;netim Sistemi (PMS) ile %100 entegre &ccedil;alışır; ayrı bir yazılım veya manuel veri aktarımı gerektirmez.​",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/acente-bonus-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "tur-operatoru-entegrasyonu",
+    "code": "TOY",
+    "name": "Tur Operatörü Entegrasyonu",
+    "url": "https://www.elektraweb.com/tur-operatoru-entegrasyonu/",
+    "api": {
+      "ID": 252,
+      "NAME": "ElektraWeb Tur Operatörü Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.33,
+      "BASEPRICE": 0,
+      "ORDERNO": 91,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Eptera Tour Operator",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Transfers bookings directly from offline agency extranets into the PMS with controlled data validation.",
+      "TAXPERCENT": null,
+      "CODE": "TOY",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Tur Operat&ouml;r&uuml; Entegrasyonu",
+    "sections": [
+      {
+        "title": "Operat&ouml;r entegrasyonunun size kazandırdıkları",
+        "para": "Manuel girişleri ortadan kaldırın, hatalı fiyatları yakalayın ve onay s&uuml;re&ccedil;lerini saatlerden saniyelere indirin.",
+        "bullets": []
+      },
+      {
+        "title": "Konnekt&ouml;r&uuml; iş başında g&ouml;r&uuml;n",
+        "para": "Tarama programı, operat&ouml;r panellerindeki rezervasyonları otomatik olarak ElektraWeb Operat&ouml;r Rezervasyon ekranına aktarır. Manuel kontrol bitti.",
+        "bullets": []
+      },
+      {
+        "title": "40+ tur operat&ouml;r&uuml; ile hazır entegrasyon",
+        "para": "Doğrudan API entegrasyonu olan operat&ouml;rlerin yanı sıra, 25+ operat&ouml;r ile e-posta kanalı &uuml;zerinden de rezervasyon entegrasyonu sağlanır.",
+        "bullets": []
+      },
+      {
+        "title": "Mobil y&ouml;netim ile her yerden tam kontrol",
+        "para": "Operat&ouml;r rezervasyon s&uuml;re&ccedil;lerinizi cebinizden y&ouml;netin. Onay s&uuml;re&ccedil;leri artık masa başına bağlı değil.",
+        "bullets": []
+      },
+      {
+        "title": "Operat&ouml;r s&uuml;re&ccedil;lerinizi otomatikleştirmeye bug&uuml;n başlayın",
+        "para": "Elektraweb uzmanları tesisinizin ihtiya&ccedil;larına &ouml;zel bir demo ile entegrasyon s&uuml;recini birlikte tamamlayalım.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/tur-operatoru-entegrasyonu-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "kimlikokur-kimlik-ve-pasaport-okuma",
+    "code": "ID&PassportScanner",
+    "name": "Kimlikokur",
+    "url": "https://www.elektraweb.com/kimlikokur-kimlik-ve-pasaport-okuma/",
+    "api": {
+      "ID": 32,
+      "NAME": "ElektraWeb Kimlikokur Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 20,
+      "ORDERNO": 71,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera ID & Passport Scanner Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/kimlikokur-kimlik-ve-pasaport-okuma/",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": "Eptera ID & Passport Scanner scans passports and ID cards, saves them as image and text, and transfers the extracted details directly into the PMS or any Windows based application.",
+      "TAXPERCENT": null,
+      "CODE": "ID&PassportScanner",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Kimlikokur Kimlik ve Pasaport Okuma",
+    "sections": [
+      {
+        "title": "Kimlikokur Kimlik ve Pasaport Okuma Programı",
+        "para": "Kimlikokur , d&uuml;nyadaki t&uuml;m kimlik ve pasaportları okuyup tanıyabilen, resim ve metin olarak saklayıp, windows ortamındaki t&uuml;m programlara aktarabilen bir yazılımdır.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2020/07/kimlikokur_webcam.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/kimlikokur-kimlik-ve-pasaport-okuma-1.jpg",
+      "screenshots/elektraweb/kimlikokur-kimlik-ve-pasaport-okuma-2.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "hotspot-internet-guvenlik-ve-loglama-sistemi",
+    "code": "HotspotHotel",
+    "name": "Hotspot ve Loglama",
+    "url": "https://www.elektraweb.com/hotspot-internet-guvenlik-ve-loglama-sistemi/",
+    "api": {
+      "ID": 255,
+      "NAME": "ElektraWeb Hotspot Hotel Yazılımı",
+      "DESCRIPTION": "İlk Yıl Tek seferlik Kurulum ücreti eklenir",
+      "ROOMPRICE": 0.125,
+      "BASEPRICE": 25,
+      "ORDERNO": 32,
+      "INSTALLATIONFEE": 150,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": false,
+      "NAME_EN": "Eptera Hotel Hotspot Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/hotspot-internet-guvenlik-ve-loglama-sistemi/",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": 0,
+      "CODE": "HotspotHotel",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": 20
+    },
+    "pageTitle": "Hotspot ve Loglama Sistemi",
+    "sections": [
+      {
+        "title": "Hotspot İnternet G&uuml;venlik ve Loglama Sistemi",
+        "para": "5651 sayılı yasa&nbsp; ile internet kullanılan yerlerde kullanıma ait trafik bilgilerinin zaman (hash) damgası ile birlikte saklanması ve gizliliğinin sağlanması zorunlu hale getirilmiştir. Elektraweb , internet verilerinin 5651 nolu yasa da belirtildiği şekilde muhafazasını ve gizliliğini sağlayan, yazılım + donanım olarak sunulan bir &ccedil;&ouml;z&uuml;me ahiptir .",
+        "bullets": []
+      },
+      {
+        "title": "Hotspot Sistemi&#39;nin Diğer &Uuml;st&uuml;n &Ouml;zellikleri",
+        "para": "",
+        "bullets": [
+          "13 dilde tasarım, otomatik misafirin diline g&ouml;re karşılama,",
+          "Ge&ccedil;ici bağlantı &ouml;zelliği,",
+          "&Uuml;cretli-&Uuml;cretsiz Internet Bağlantısı, Oda hesabına yazma, raporlama,",
+          "Kişiselleştirilebilir hotspot ayarları,",
+          "Oda numarası, Toplantı grubu, Konferans Kodu, Personel girişi ve SMS ile Bağlantı,",
+          "T&uuml;m Otel yazılımları ile entegre yapı,",
+          "T&uuml;m personel programları ile entegre",
+          "Bağlanan kullanıcıya g&ouml;re ayrı ayrı hız tanımlama,",
+          "Kullanıcıya kullanım s&uuml;resi tanımlama,",
+          "Reklam mod&uuml;l&uuml;; + Her bağlantı tipine g&ouml;re ayrı ayrı reklam g&ouml;sterebilme + Giriş yapan kullanıcının diline g&ouml;re ayrı ayrı reklam g&ouml;sterebilme + &Ccedil;alışan personele duyuru ve bilgilendirme g&ouml;sterebilme + Toplantı gruplarına &ouml;zel reklam ve duyuru g&ouml;sterebilme,",
+          "Otomatik kara liste &ouml;zelliği ile yetkisiz girişleri engelleme",
+          "Yoğun girişlerde &ldquo;Autologin&rdquo; &ouml;zelliği ile şifresiz bağlantıları",
+          "Otel yoğunluk haritası",
+          "Misafir ayak izi vb. durum raporlama",
+          "7/24 stabil &ccedil;alışma ve kararlılık"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/HOTSPOT_banner.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/hotspot-internet-guvenlik-ve-loglama-sistemi-1.jpg",
+      "screenshots/elektraweb/hotspot-internet-guvenlik-ve-loglama-sistemi-2.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "cagri-merkezi-programi",
+    "code": "CALL",
+    "name": "Çağrı Merkezi",
+    "url": "https://www.elektraweb.com/cagri-merkezi-programi/",
+    "api": {
+      "ID": 10,
+      "NAME": "ElektraWeb Çağrı Merkezi Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 20,
+      "ORDERNO": 50,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Call Center Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/cagri-merkezi-programi/",
+      "EN_LINK": "https://eptera.com/eptera-operation/eptera-call-center/index.html",
+      "DESCRIPTION_EN": "Supports centralized reservation handling with CRM insights that automatically display caller details during the call.",
+      "TAXPERCENT": null,
+      "CODE": "CALL",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "&Ccedil;ağrı Merkezi Programı",
+    "sections": [
+      {
+        "title": "&Ccedil;ağrı Merkezi Programı",
+        "para": "Elektraweb &Ccedil;ağrı Merkezi &Ccedil;&ouml;z&uuml;mleri &nbsp;sayesinde, telefon, whatsapp, web sayfası ve sosyal medya &uuml;zerinden sizinle iletişim kuran t&uuml;m m&uuml;şterilerinizin &ccedil;ağrılarını ortak bir platformda toplayabilir, ekibinizin onlarla iletişime ge&ccedil;erek bilgilendirme yapmasını ve &ouml;zel talepleri almalarını sağlayabilirsiniz.",
+        "bullets": []
+      },
+      {
+        "title": "T&uuml;m &Ccedil;ağrılarınız Tek Platformda Toplansın",
+        "para": "Whatsapp: &nbsp;Whatsapp hesabınıza gelen mesajları ve talepleri otomatik olarak kayıt altına alabilirsiniz",
+        "bullets": [
+          "Misafir bilgileri, Otel adı, İletişim şekli, &Ccedil;ağrı Y&ouml;n&uuml;, &Ccedil;ağrı Kanalı ve Referans bilgileri tek ekranda g&ouml;r&uuml;n&uuml;r"
+        ]
+      },
+      {
+        "title": "&nbsp;",
+        "para": "",
+        "bullets": [
+          "Misafir bilgileri, Otel adı, İletişim şekli, &Ccedil;ağrı Y&ouml;n&uuml;, &Ccedil;ağrı Kanalı ve Referans bilgileri tek ekranda g&ouml;r&uuml;n&uuml;r",
+          "&Ccedil;ağrıyı yapan misafirin ge&ccedil;miş tarihli aramaları, istekleri, ge&ccedil;miş rezervasyon talepleri, otel konaklamaları ve gelecek rezervasyonlarına ait bilgilere kolaylıkla ulaşılır",
+          "Misafirin talep ettiği bir iş ya da g&ouml;rev varsa talep oluşturulabilir veya ilettiği yorum kayıt altına alınabilir",
+          "Misafir deneyimlerini &ouml;l&ccedil;&uuml;mlemek i&ccedil;in anket formları g&ouml;nderilebilir"
+        ]
+      },
+      {
+        "title": "&Ccedil;ağrı Merkeziniz ile CRM Sisteminiz Entegre &Ccedil;alışsın",
+        "para": "",
+        "bullets": [
+          "Misafir bilgileri, Otel adı, İletişim şekli, &Ccedil;ağrı Y&ouml;n&uuml;, &Ccedil;ağrı Kanalı ve Referans bilgileri tek ekranda g&ouml;r&uuml;n&uuml;r",
+          "&Ccedil;ağrıyı yapan misafirin ge&ccedil;miş tarihli aramaları, istekleri, ge&ccedil;miş rezervasyon talepleri, otel konaklamaları ve gelecek rezervasyonlarına ait bilgilere kolaylıkla ulaşılır",
+          "Misafirin talep ettiği bir iş ya da g&ouml;rev varsa talep oluşturulabilir veya ilettiği yorum kayıt altına alınabilir",
+          "Misafir deneyimlerini &ouml;l&ccedil;&uuml;mlemek i&ccedil;in anket formları g&ouml;nderilebilir"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/Ekran-Goruntusu-2021-10-11-16.32.22-1392x1536-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/Ekran-Goruntusu-2021-10-11-16.46.46-1536x687-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/image_2021_09_03T06_57_28_850Z-1536x975-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/cagri-merkezi-programi-1.webp",
+      "screenshots/elektraweb/cagri-merkezi-programi-2.webp",
+      "screenshots/elektraweb/cagri-merkezi-programi-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "mobil-kimlik-okur-ve-check-in",
+    "code": "SmartIDReaderStandard",
+    "name": "Mobil Kimlik Okur",
+    "url": "https://www.elektraweb.com/mobil-kimlik-okur-ve-check-in/",
+    "api": {
+      "ID": 302,
+      "NAME": "ElektraWeb Mobil Kimlik Okur ve Check-in Standart Yazılımı",
+      "DESCRIPTION": "Aylık 1000 okuma",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 10,
+      "ORDERNO": 19,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Standart Smart ID Reader",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 10,
+      "TR_LINK": null,
+      "EN_LINK": "https://eptera.com/eptera-mobile-idreader/index.html",
+      "DESCRIPTION_EN": "Eptera Standart Smart ID Reader is a mobile solution that lets hotels scan guest IDs and passports instantly using a phone or tablet camera, and transfer the details directly into the PMS. It includes up to 1,000 scans per month.",
+      "TAXPERCENT": null,
+      "CODE": "SmartIDReaderStandard",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Mobil Kimlik Okur ve Check-in",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/mobil-kimlik-okur-ve-check-in-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "check-in-kiosk",
+    "code": "CheckInKiosk",
+    "name": "Check-in Kiosk",
+    "url": "https://www.elektraweb.com/check-in-kiosk/",
+    "api": {
+      "ID": 303,
+      "NAME": "ElektraWeb Check In Kiosk Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 20,
+      "ORDERNO": 80,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Check-in Kiosk",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 20,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Eptera Check-in Kiosk is a self service check in solution that lets guests complete check in within minutes from a kiosk tablet placed in the lobby, bar, or any convenient area.",
+      "TAXPERCENT": null,
+      "CODE": "CheckInKiosk",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Check-in Kiosk",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/check-in-kiosk-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "fiyat-yonetimi",
+    "code": "DynamicPricing",
+    "name": "Dinamik Fiyatlandırma",
+    "url": "https://www.elektraweb.com/fiyat-yonetimi/",
+    "api": {
+      "ID": 296,
+      "NAME": "ElektraWeb Dinamik Fiyatlandırma Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 0,
+      "ORDERNO": 56,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Dynamic Pricing Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 20,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Dynamic Pricing allows hotels to automatically update room rates based on occupancy levels. Rates are optimized in real time according to current demand, helping increase revenue while reducing manual work and saving time for the team.",
+      "TAXPERCENT": null,
+      "CODE": "DynamicPricing",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Dinamik Fiyatlandırma",
+    "sections": [
+      {
+        "title": "Dinamik Fiyatlandırma",
+        "para": "Dinamik Fiyatlandırma, otellerin doluluk oranlarına g&ouml;re oda fiyatlarını otomatik olarak g&uuml;ncelleyebilmesini sağlayan yenilik&ccedil;i bir &ouml;zelliktir. Bu sistem sayesinde fiyatlar, anlık doluluk seviyelerine g&ouml;re optimize edilir; b&ouml;ylece hem gelir artışı sağlanır hem de manuel m&uuml;dahaleye gerek kalmadan zaman ve iş g&uuml;c&uuml; tasarrufu elde edilir.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/fiyat-yonetimi-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "elektraweb-sadakat-ve-crm-yonetimi",
+    "code": "CRM",
+    "name": "Sadakat ve CRM",
+    "url": "https://www.elektraweb.com/elektraweb-sadakat-ve-crm-yonetimi/",
+    "api": {
+      "ID": 41,
+      "NAME": "ElektraWeb CRM ve Sadakat Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 39,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera CRM & Loyalty Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/elektraweb-sadakat-ve-crm-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-crm/crm/index.html",
+      "DESCRIPTION_EN": "Enhances guest engagement through automation, personalized communication, loyalty points, targeted benefits, and detailed customer insights.",
+      "TAXPERCENT": null,
+      "CODE": "CRM",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Sadakat ve CRM Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "CRM ve Sadakat Y&ouml;netimi",
+        "para": "Misafirlerinizin tekrar geliş sayısını arttırmak ve onları daha yakından tanımak i&ccedil;in Sadakat Y&ouml;netimi ile kampanyalar d&uuml;zenleyebilir ve puan kazanmalarını sağlayabilirsiniz. Misafirlerin kazanacakları puanlar bir sonraki tatilleri i&ccedil;in yeniden sizi tercih etmeleri i&ccedil;in etken olacaktır.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2023/02/sadakat.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/online_rez.png",
+      "https://www.elektraweb.com/wp-content/uploads/2023/02/image_2022_03_30T06_52_31_242Z.png.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2023/02/CRM_02-1536x857-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/elektraweb-sadakat-ve-crm-yonetimi-1.jpg",
+      "screenshots/elektraweb/elektraweb-sadakat-ve-crm-yonetimi-2.png",
+      "screenshots/elektraweb/elektraweb-sadakat-ve-crm-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "akilli-sohbet",
+    "code": "ArtificialIntelligenceIntegration",
+    "name": "Akıllı Sohbet",
+    "url": "https://www.elektraweb.com/akilli-sohbet/",
+    "api": {
+      "ID": 314,
+      "NAME": "ElektraWeb Yapay Zeka Entegrasyonu Yazılımı",
+      "DESCRIPTION": "İtibar Yönetimi Yapay Zeka Entegrasyonu yıllık kullanım ücreti",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 12.5,
+      "ORDERNO": 74,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": true,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Artificial Intelligence Integration",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "ArtificialIntelligenceIntegration",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Akıllı Sohbet",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/akilli-sohbet-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "itibar-yonetimi",
+    "code": "ReputationManagement",
+    "name": "İtibar Yönetimi",
+    "url": "https://www.elektraweb.com/itibar-yonetimi/",
+    "api": {
+      "ID": 273,
+      "NAME": "ElektraWeb İtibar Yönetimi  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 0,
+      "ORDERNO": 55,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Reputation Management Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 20,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/kanal-yonetimi/",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": "Aggregates online reviews, analyzes sentiment with AI, and delivers actionable insights for reputation improvement.",
+      "TAXPERCENT": null,
+      "CODE": "ReputationManagement",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "İtibar Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Elektraweb İtibar Y&ouml;netimi ile &Ccedil;evrimi&ccedil;i İtibarınızı Zirveye Taşıyın!",
+        "para": "Otelinizin &ccedil;evrimi&ccedil;i itibarını en gelişmiş yapay zek&acirc; teknolojileriyle profesyonelce y&ouml;netin, dijital d&uuml;nyada g&uuml;&ccedil;l&uuml; ve g&uuml;venilir bir imaj oluşturun.",
+        "bullets": [
+          "Google, Tripadvisor, Booking, Expedia gibi platformlardan yorumları anlık toplar ve analiz ederiz.",
+          "Yorumları otomatik olarak sınıflandırıp, dilinize &ccedil;evirir, olumlu/olumsuz şeklinde puanlarız.",
+          "Yapay zek&acirc; destekli ara&ccedil;larımızla, misafirlerinize tek tıkla kendi dillerinde profesyonel yanıtlar verirsiniz.",
+          "Otelinizde h&acirc;l&acirc; konaklayan misafirlerin olumsuz yorumlarını anında bildirerek hızlı &ccedil;&ouml;z&uuml;m sağlar.",
+          "Detaylı performans analiziyle iyileştirme gereken alanları kolayca keşfedersiniz."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/itibar-yonetimi-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "web-sitesi-tasarimi",
+    "code": "PredesignedWebsite",
+    "name": "Web Sitesi Tasarımı",
+    "url": "https://www.elektraweb.com/web-sitesi-tasarimi/",
+    "api": {
+      "ID": 35,
+      "NAME": "ElektraWeb Standart Web Sitesi Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 40,
+      "ORDERNO": 48,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Standard Website Software (SSL Included)",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "PredesignedWebsite",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Web Sitesi Tasarımı",
+    "sections": [
+      {
+        "title": "Web Sitesi Tasarımı",
+        "para": "Modern ve Profesyonel Tasarım ile misafirlerinize g&uuml;ven veren, itibarlı ve prestijli bir marka algısı yaratın.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2023/05/div.header78_content-bottom.png",
+      "https://www.elektraweb.com/wp-content/uploads/2024/05/Frame-53-1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2024/05/Frame-53.png",
+      "https://www.elektraweb.com/wp-content/uploads/2024/05/Frame-55.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/web-sitesi-tasarimi-1.png",
+      "screenshots/elektraweb/web-sitesi-tasarimi-2.png",
+      "screenshots/elektraweb/web-sitesi-tasarimi-3.png"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "misafir-uygulamasi",
+    "code": "GuestMobileApplication(SuperAssistant)",
+    "name": "Misafir Uygulaması",
+    "url": "https://www.elektraweb.com/misafir-uygulamasi/",
+    "api": {
+      "ID": 262,
+      "NAME": "ElektraWeb Misafir Mobil Uygulama ( Generic) Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.5,
+      "BASEPRICE": 0,
+      "ORDERNO": 57,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": false,
+      "NAME_EN": "Guest Generic Mobile Application",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 100,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": "https://eptera.com/eptera-guest-app/index.html",
+      "DESCRIPTION_EN": "Guest Generic Mobile Application is a ready to use guest mobile app with standard features. It is not published under a specific hotel name and it is not branded for a single property. It covers core functions like guest messaging, service requests, and basic reservation related flows.",
+      "TAXPERCENT": null,
+      "CODE": "GuestMobileApplication(SuperAssistant)",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Misafir Uygulaması",
+    "sections": [
+      {
+        "title": "Hem M&uuml;şteri Memnuniyetiniz Artsın, Hem de Kazancınız",
+        "para": "Misafirlerinize benzersiz ve ayrıcalıklı bir konaklama deneyimi sunan Elektra Misafir Mobil Uygulaması, modern otelcilikte ihtiya&ccedil; duyduğunuz t&uuml;m &ouml;zellikleri tek platformda buluşturuyor:",
+        "bullets": []
+      },
+      {
+        "title": "&nbsp;",
+        "para": "Bilgilendirme: Misafirleriniz oteliniz ve &ccedil;evresi hakkında g&uuml;ncel bilgilere anında erişerek keyifli bir deneyim yaşar.",
+        "bullets": []
+      },
+      {
+        "title": "Dijital D&ouml;n&uuml;ş&uuml;m&uuml; Otelinize Taşıyın, Operasyonlarınızı Kolaylaştırın",
+        "para": "Bilgilendirme: Misafirleriniz oteliniz ve &ccedil;evresi hakkında g&uuml;ncel bilgilere anında erişerek keyifli bir deneyim yaşar.",
+        "bullets": []
+      },
+      {
+        "title": "&nbsp;",
+        "para": "Planlama: Misafirler konaklamalarını daha iyi organize eder, etkinliklerden maksimum fayda sağlar.",
+        "bullets": []
+      },
+      {
+        "title": "Restoranlardan Golf Sahalarına Tesisteki T&uuml;m Mekanların Rezervasyonu Online",
+        "para": "Planlama: Misafirler konaklamalarını daha iyi organize eder, etkinliklerden maksimum fayda sağlar.",
+        "bullets": []
+      },
+      {
+        "title": "&nbsp;",
+        "para": "Talep Etme: Misafir talepleri hızlı ve dijital ortamda iletilir, b&ouml;ylece hizmet kaliteniz artar ve operasyonunuz hızlanır.",
+        "bullets": []
+      },
+      {
+        "title": "Misafirleriniz ile Her An İletişimde Kalın",
+        "para": "Talep Etme: Misafir talepleri hızlı ve dijital ortamda iletilir, b&ouml;ylece hizmet kaliteniz artar ve operasyonunuz hızlanır.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/006.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/004.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/005.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/011-1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/misafir-uygulamasi-1.png",
+      "screenshots/elektraweb/misafir-uygulamasi-2.png",
+      "screenshots/elektraweb/misafir-uygulamasi-3.png"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "devremulk-ve-devre-tatil-yonetimi",
+    "code": "Timeshare",
+    "name": "Devremülk ve Devre Tatil",
+    "url": "https://www.elektraweb.com/devremulk-ve-devre-tatil-yonetimi/",
+    "api": {
+      "ID": 239,
+      "NAME": "ElektraWeb Devre Tatil  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.8,
+      "BASEPRICE": 20,
+      "ORDERNO": 105,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Timeshare Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": "Eptera Timeshare module simplifies hotel operations with contract management, annual tracking, and period based pricing lists.",
+      "TAXPERCENT": null,
+      "CODE": "Timeshare",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Devrem&uuml;lk ve Devre Tatil Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Devrem&uuml;lk ve Devre Tatil Y&ouml;netimi",
+        "para": "Elektraweb Devrem&uuml;lk ve Devre Tatil Programı&rsquo;na web tabanlı yapısı sayesinde her yerden ulaşılabilir. Satış ekibi sisteme her zaman bağlanıp s&ouml;zleşme girebilir, boş daire ve d&ouml;nem bilgilerini g&ouml;rebilir. S&ouml;zleşmelerin girilmesi, senetlerin yazdırılması işlemi, kolaylıkla ofis dışından bile yapılabilir",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/devremulk-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/07/devremülk.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/devremulk_prim_ekrani.jpeg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/devremulk2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/devremulk3.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/devremulk-ve-devre-tatil-yonetimi-1.jpg",
+      "screenshots/elektraweb/devremulk-ve-devre-tatil-yonetimi-2.png",
+      "screenshots/elektraweb/devremulk-ve-devre-tatil-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "whatsapp-api",
+    "code": "WhatsappIntegration",
+    "name": "WhatsApp API",
+    "url": "https://www.elektraweb.com/whatsapp-api/",
+    "api": {
+      "ID": 43,
+      "NAME": "ElektraWeb Whatsapp Entegrasyonu Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 5,
+      "ORDERNO": 51,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": false,
+      "NAME_EN": "Eptera Whatsapp Integration",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Enables personalized WhatsApp communications with template messages and automated workflows (requires CRM).",
+      "TAXPERCENT": null,
+      "CODE": "WhatsappIntegration",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "WhatsApp API​",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/whatsapp-api-1.jpg"
+    ]
+  },
+  {
+    "cat": "Otel / PMS",
+    "slug": "karbon-ayak-izi-sifirlama-modulu",
+    "code": "Development(CarbonNotr)",
+    "name": "Karbon Dengeleme",
+    "url": "https://www.elektraweb.com/karbon-ayak-izi-sifirlama-modulu/",
+    "api": {
+      "ID": 274,
+      "NAME": "ElektraWeb Karbon Nötrleme Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.083333,
+      "BASEPRICE": 0,
+      "ORDERNO": 71,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Carbon Offsetting Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 10,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/karbon-ayak-izi-sifirlama-modulu/",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": "Eptera Carbon Offsetting module calculates the carbon footprint of a guest stay, processes the offset payment online, and issues an internationally approved certificate in the guest’s name with QR verification.",
+      "TAXPERCENT": null,
+      "CODE": "Development(CarbonNotr)",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Karbon Dengeleme",
+    "sections": [
+      {
+        "title": "Karbon Ayak İzi Sıfırlama Mod&uuml;l&uuml;",
+        "para": "YEŞİL OTEL OLMANIN AVANTAJLARINI YAŞAYIN",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2025/01/tablet3.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/01/simge1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/01/simge-3.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/01/simge-4.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/01/simge-2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/karbon-ayak-izi-sifirlama-modulu-1.png",
+      "screenshots/elektraweb/karbon-ayak-izi-sifirlama-modulu-2.png",
+      "screenshots/elektraweb/karbon-ayak-izi-sifirlama-modulu-3.png"
+    ]
+  },
+  {
+    "cat": "POS",
+    "slug": "restoran-pos-yonetim-programi",
+    "code": "POS",
+    "name": "Restoran POS",
+    "url": "https://www.elektraweb.com/restoran-pos-yonetim-programi/",
+    "api": {
+      "ID": 7,
+      "NAME": "ElektraWeb Pos  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 20,
+      "ORDERNO": 9,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Restaurant POS Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 4,
+      "TR_LINK": "https://www.elektraweb.com/restoran-pos-yonetim-programi/",
+      "EN_LINK": "https://eptera.com/eptera-restaurant-management/pos/index.html",
+      "DESCRIPTION_EN": "Seamlessly integrates with PMS and inventory, enabling automatic posting to guest folios and streamlined F&B sales for both in-house and external customers.",
+      "TAXPERCENT": null,
+      "CODE": "POS",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Restoran POS Y&ouml;netim Programı",
+    "sections": [
+      {
+        "title": "Restoran POS Y&ouml;netimi Programı",
+        "para": "POS Y&ouml;netim Sistemi Nedir?",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/01/01.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/01/POS_TEL_siparis.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/01/QR_kod.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/01/POS_TABLET_mutfak.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/01/POS_PC_pakettakibi.png"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/restoran-pos-yonetim-programi-1.jpg",
+      "screenshots/elektraweb/restoran-pos-yonetim-programi-2.png",
+      "screenshots/elektraweb/restoran-pos-yonetim-programi-3.png"
+    ]
+  },
+  {
+    "cat": "POS",
+    "slug": "restoran-online-rezervasyon-sistemi",
+    "code": "DigitalMenu",
+    "name": "Restoran Online Rezervasyon",
+    "url": "https://www.elektraweb.com/restoran-online-rezervasyon-sistemi/",
+    "api": {
+      "ID": 306,
+      "NAME": "ElektraWeb Restoran Rezervasyon Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 73,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Digital Menu Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 10,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "DigitalMenu",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Restoran Online Rezervasyon Sistemi",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/restoran-online-rezervasyon-sistemi-1.jpg"
+    ]
+  },
+  {
+    "cat": "POS",
+    "slug": "akilli-dijital-menu",
+    "code": "DigitalMenu",
+    "name": "Akıllı Dijital Menü",
+    "url": "https://www.elektraweb.com/akilli-dijital-menu/",
+    "api": {
+      "ID": 306,
+      "NAME": "ElektraWeb Restoran Rezervasyon Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 73,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Digital Menu Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 10,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "DigitalMenu",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Akıllı Dijital Men&uuml;",
+    "sections": [
+      {
+        "title": "Men&uuml;n&uuml;z Dilediğiniz Gibi G&ouml;r&uuml;ns&uuml;n",
+        "para": "Smart Menu, işletmelere farklı g&ouml;r&uuml;n&uuml;mlerde men&uuml; tasarımları sunar. B&ouml;ylece farklı konseptlere sahip restoranlar, kendilerine en uygun g&ouml;r&uuml;n&uuml;m&uuml; se&ccedil;ebilir ve istedikleri &ouml;zelleştirmeleri yaparak ihtiya&ccedil;larına en uygun men&uuml;ye sahip olabilirler.",
+        "bullets": [
+          "QR Kod ile Men&uuml;ye Erişim Misafirler, QR kodu okutarak anında men&uuml;ye ulaşır.",
+          "1.⁠ ⁠&Ccedil;oklu Dil Se&ccedil;eneği Misafirler men&uuml;y&uuml; kendi dillerinde inceleyebilir, &uuml;r&uuml;nler hakkında detaylı bilgiye (i&ccedil;indekiler, alerjenler vb.) ulaşabilir.",
+          "2.⁠ ⁠İşletme Bilgileri Men&uuml;de Instagram, telefon, TripAdvisor gibi alanlar doldurulduğunda misafirler bu bilgilere Smart Menu &uuml;zerinden erişebilir.",
+          "3.⁠ ⁠Misafir Garson İletişimi Misafirler diledikleri an tek dokunuşla: Garson &ccedil;ağırabilir Hesap isteyebilir Garsona mesaj g&ouml;nderebilir."
+        ]
+      },
+      {
+        "title": "Temel&nbsp;&Ouml;zellikler",
+        "para": "&nbsp;",
+        "bullets": [
+          "QR Kod ile Men&uuml;ye Erişim Misafirler, QR kodu okutarak anında men&uuml;ye ulaşır.",
+          "1.⁠ ⁠&Ccedil;oklu Dil Se&ccedil;eneği Misafirler men&uuml;y&uuml; kendi dillerinde inceleyebilir, &uuml;r&uuml;nler hakkında detaylı bilgiye (i&ccedil;indekiler, alerjenler vb.) ulaşabilir.",
+          "2.⁠ ⁠İşletme Bilgileri Men&uuml;de Instagram, telefon, TripAdvisor gibi alanlar doldurulduğunda misafirler bu bilgilere Smart Menu &uuml;zerinden erişebilir.",
+          "3.⁠ ⁠Misafir Garson İletişimi Misafirler diledikleri an tek dokunuşla: Garson &ccedil;ağırabilir Hesap isteyebilir Garsona mesaj g&ouml;nderebilir.",
+          "Detaylı &Uuml;r&uuml;n Bilgisi Misafirler &uuml;r&uuml;n i&ccedil;eriğini, alerjenleri ve yanına uygun eşlik&ccedil;i &uuml;r&uuml;nleri tek ekranda g&ouml;r&uuml;nt&uuml;leyebilir.",
+          "Yapay Zeka ile Satışlarınızı Artırın Misafir sipariş oluştururken, yapay zeka siparişe en uygun eşlik&ccedil;i &uuml;r&uuml;nleri otomatik olarak &ouml;nerir. B&ouml;ylece misafirler daha kolay karar verir ve daha fazla &uuml;r&uuml;n keşfeder.",
+          "Akıllı İndirim Tanımlamaları Yapay zeka &ouml;nerilerine &ouml;zel indirimler tanımlayarak bu &uuml;r&uuml;nleri daha cazip hale getirebilirsiniz.",
+          "Tek Dokunuşla Sipariş Misafirler tek dokunuşla, kolayca sipariş verebilir.",
+          "Akıllı Sipariş Onay Sistemi Siparişler, tercihinize g&ouml;re doğrudan mutfağa iletilebilir veya garson onayına y&ouml;nlendirilebilir."
+        ]
+      },
+      {
+        "title": "Rezervasyonlarınızı SmartMenu ile Tek Ekrandan Y&ouml;netin",
+        "para": "Doluluk, &ouml;n &ouml;deme ve masa y&ouml;netimi artık &ccedil;ok daha kolay.",
+        "bullets": []
+      },
+      {
+        "title": "Smart Menu&#39;n&uuml;n Avantajları",
+        "para": "İnteraktif bir deneyim sunar; misafirlerle etkileşim kurar, &uuml;r&uuml;n &ouml;nerileri yapar ve deneyimi s&uuml;rekli geliştirir.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/akilli-dijital-menu-1.jpg"
+    ]
+  },
+  {
+    "cat": "POS",
+    "slug": "spa-ve-spor-salonu-yonetimi",
+    "code": "SPA",
+    "name": "SPA ve Spor Salonu",
+    "url": "https://www.elektraweb.com/spa-ve-spor-salonu-yonetimi/",
+    "api": {
+      "ID": 12,
+      "NAME": "ElektraWeb Spa ve Klup Üyelik  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 20,
+      "ORDERNO": 45,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Spa & Club Membership Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 4,
+      "TR_LINK": "https://www.elektraweb.com/spa-ve-spor-salonu-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-spa/index.html",
+      "DESCRIPTION_EN": "Schedules rooms and staff, tracks sales and commissions, manages payments, and supports bulk operations within a single calendar.",
+      "TAXPERCENT": null,
+      "CODE": "SPA",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "SPA ve Spor Salonu Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "SPA ve Spor Salonu Y&ouml;netimi",
+        "para": "Spa merkezleri, sağlık merkezleri, spor merkezleri, kul&uuml;pler ve dernekler gibi &uuml;yelikle &ccedil;alışan t&uuml;m kurumlar i&ccedil;in geliştirilmiş web tabanlı bir yazılımdır.",
+        "bullets": []
+      },
+      {
+        "title": "Mobil Kullanım",
+        "para": "İnternet erişimi olan her yerden ve her cihazdan (cepten, tabletten, masa&uuml;st&uuml;nden) rahat&ccedil;a kullanır ve teknolojinin sağladığı &ouml;zg&uuml;rl&uuml;ğ&uuml;n keyfini &ccedil;ıkarırsınız. İlk satın alma maliyeti olmadığından programı hemen kullanmaya başlayabilirsiniz. ElektraWEB Spa sunucuya ihtiya&ccedil; duymadığından, sunucu ve sunucu lisanslarına ait maliyetlerden de kurtulursunuz.",
+        "bullets": []
+      },
+      {
+        "title": "Hızlı ve Kolay Kullanım",
+        "para": "Masa&uuml;st&uuml; versiyonlara g&ouml;re, ajanda ekranının a&ccedil;ılması, işlem girilmesi ve tahsilat yapılması ortalama 5 kat kadar daha hızlıdır. Kolay kullanımlı ve g&ouml;rsel ekran tasarımına sahiptir. ElektraWeb ile entegre olduğundan otel ile bağlantısı mevcuttur. Kolay kullanımlı, g&ouml;rsel ekran tasarımına sahiptir. ElektraWeb ile entegreli olduğundan otel ile bağlantısı mevcuttur.",
+        "bullets": []
+      },
+      {
+        "title": "Zaman ve İşlem Tasarrufu",
+        "para": "Telefon ve tablet &uuml;zerinden randevu alma ve &uuml;yelik yapma imkanı sağlar. &Ouml;zellikle fitness &uuml;yelikleri i&ccedil;in işletmeler &ouml;ncesinde m&uuml;şteriler ile birebir g&ouml;r&uuml;şme yapabilirler ve kişiye telefon veya tablet verip kendi &uuml;ye kartını doldurmasını sağlayabilirler.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/spa-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/shutterstock_635175203.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/spa-ve-spor-salonu-yonetimi-1.jpg",
+      "screenshots/elektraweb/spa-ve-spor-salonu-yonetimi-2.jpg",
+      "screenshots/elektraweb/spa-ve-spor-salonu-yonetimi-3.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "muhasebe-yonetimi",
+    "code": "ACC",
+    "name": "Muhasebe Yönetimi",
+    "url": "https://www.elektraweb.com/muhasebe-yonetimi/",
+    "api": {
+      "ID": 16,
+      "NAME": "ElektraWeb Muhasebe  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.4,
+      "BASEPRICE": 10,
+      "ORDERNO": 7,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Accounting System",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/muhasebe-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-pms/cash-invoice-transactions/index.html",
+      "DESCRIPTION_EN": "A modern corporate accounting system unifies financial operations—general ledger, Accounts receivable and payable, budgeting, billing, banking, and reporting—into one secure platform for accurate control, compliance, and performance-driven decision making.",
+      "TAXPERCENT": null,
+      "CODE": "ACC",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Muhasebe Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Muhasebe Y&ouml;netimi",
+        "para": "Otellerin ihtiya&ccedil;larına g&ouml;re &ouml;zelleştirilmiş kapsamlı bir web tabanlı muhasebe y&ouml;netim sistemi dir. &Ouml;n muhasebe ve genel muhasebe dışında işletmenin idari s&uuml;re&ccedil;lerinin tamamını y&ouml;netebilecek satın alma, demirbaş, personel, stok ve satış y&ouml;netimi mod&uuml;llerine de sahiptir. Tamamen mod&uuml;ler olarak tasarlandığından ihtiya&ccedil; doğrultusunda istenilen mod&uuml;ller sonradan da eklenebilir.",
+        "bullets": [
+          "Masraf merkezleri, proje kartları ve operasyon tanımlarına g&ouml;re gelir ve gider analizi yapılabilir.",
+          "Mod&uuml;llerden otomatik olarak oluşan ve manuel de eklenebilen &Ouml;deme Emirleri sayesinde nakit akışınızı planlayabilirsiniz.",
+          "Vadesi gelen &ouml;deme ve tahsilatları otomatik olarak hatırlatır.",
+          "&nbsp;Yaşlandırma analizi sayesinde vadesi ge&ccedil;miş bor&ccedil; ve alacaklarınızı g&ouml;rebilir, tek bir tuşla da satıcı firmalara olan bor&ccedil;larınız i&ccedil;in &ouml;deme emirlerinizi oluşturabilirsiniz."
+        ]
+      },
+      {
+        "title": "Elektraweb Muhasebe mod&uuml;l&uuml; e-fatura uyumludur",
+        "para": "",
+        "bullets": [
+          "Masraf Merkezleri",
+          "Proje Kartları",
+          "Operasyon Tanımları",
+          "Hesap Planı ve Dövizli Hesap Takibi",
+          "Muhasebe Fişleri,",
+          "Ödeme Emirleri,",
+          "e-Mutabakatlar,",
+          "Yaşlandırma Analizi",
+          "Mali Tablolar",
+          "Finansal Durum",
+          "Hesap Analizleri",
+          "Masraf Merkezi Bazında Kar/Zarar Analizi",
+          "Proje Maliyet Takibi",
+          "Kur Değerleme Fişleri",
+          "Yansıtma Fişleri"
+        ]
+      },
+      {
+        "title": "&nbsp;",
+        "para": "",
+        "bullets": [
+          "Masraf Merkezleri",
+          "Proje Kartları",
+          "Operasyon Tanımları",
+          "Hesap Planı ve Dövizli Hesap Takibi",
+          "Muhasebe Fişleri,",
+          "Ödeme Emirleri,",
+          "e-Mutabakatlar,",
+          "Yaşlandırma Analizi",
+          "Mali Tablolar",
+          "Finansal Durum",
+          "Hesap Analizleri",
+          "Masraf Merkezi Bazında Kar/Zarar Analizi",
+          "Proje Maliyet Takibi",
+          "Kur Değerleme Fişleri",
+          "Yansıtma Fişleri"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/muhasebe-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/07/WhatsApp-Image-2020-07-02-at-10.20.47.jpeg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/muhasebefisi2-min.png-scaled.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/mahsup-fisi-min.png-scaled.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/fatura-min-1.png-scaled.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/Mutabakat1.png.webp"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/muhasebe-yonetimi-1.jpg",
+      "screenshots/elektraweb/muhasebe-yonetimi-2.jpeg",
+      "screenshots/elektraweb/muhasebe-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "e-fatura-e-arsiv-e-irsaliye",
+    "code": "E-InvoiceIntegration",
+    "name": "e-Fatura / e-Arşiv / e-İrsaliye",
+    "url": "https://www.elektraweb.com/e-fatura-e-arsiv-e-irsaliye/",
+    "api": {
+      "ID": 17,
+      "NAME": "ElektraWeb E-Uygulama  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.04,
+      "BASEPRICE": 5,
+      "ORDERNO": 3,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera E-Application Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "",
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Eptera lets you manage e-Invoice e-Archive e-Delivery Note and e-Ledger processes in a compliant and streamlined way through your hotel system.",
+      "TAXPERCENT": null,
+      "CODE": "E-InvoiceIntegration",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "e-Fatura, e-Arşiv, e-İrsaliye",
+    "sections": [
+      {
+        "title": "ELEKTRAWEB ile e-Fatura, e-Arşiv, e-Defter ve e-İrsaliye&#39;yi HEMEN KULLANMAYA BAŞLAYIN",
+        "para": "Otelinizin &ldquo;Dijital D&ouml;n&uuml;ş&uuml;m&rdquo; s&uuml;recini Elektra ile y&ouml;netebilirsiniz.",
+        "bullets": []
+      },
+      {
+        "title": "Elektrawebliler Nasıl e-Fatura, e-Arşiv Kullanabilirler?",
+        "para": "Elektraweb Otel Programı,&nbsp; efinans, Turkcell, EDM, İzibiz ve Uyumsoft gibi piyasada en &ccedil;ok tercih edilen entegrat&ouml;rler ile entegrasyonlarını tamamlamıştır. E-fatura ve e-Arşiv m&uuml;kellefi olmak isteyen konaklama işletmeleri mali m&uuml;h&uuml;rlerini aldıktan sonra entegrasyon ve kurulum işlemleri ile ilgili&nbsp; Elektraweb ekibi y&ouml;nlendirme yapmaktadır",
+        "bullets": []
+      },
+      {
+        "title": "e-Belgelerinize Nasıl Karekod Eklersiniz?",
+        "para": "Gelir İdaresi Başkanlığının, 17 Şubat 2023 tarihinde yayınladığı kılavuz kapsamında elektronik iletilen belgelere&nbsp; KAREKOD &nbsp;zorunluluğu getirilmiştir. Bu uygulama 01.09.2023 tarihi itibari ile y&uuml;r&uuml;rl&uuml;ğe girecektir. E Fatura ve E Arşiv Fatura kullanıcısı olan işletmeler i&ccedil;in mevzuata uygun tasarım y&uuml;kleme işlemleri sırasıyla;",
+        "bullets": [
+          "Entegrat&ouml;r firmadan &nbsp;Karekod i&ccedil;eren tasarımı indirin. (Bu işlemler&nbsp;entegrat&ouml;r firma ekranından yapılır.)",
+          "Kuruluş &gt; Otel Ayarları Paneli &gt;&nbsp; Entegrat&ouml;r Bağlantı Bilgiler i ekranından gidin.",
+          "Bağlantı Ayarları&nbsp; ekranını a&ccedil;ın.",
+          "Ekrandaki&nbsp; Fatura Tasarımı Y&uuml;kle &nbsp;butonuna tıklayın.",
+          "Ekrandaki tasarımları&nbsp; X &nbsp;işareti ile silin.",
+          "Dosya Se&ccedil;iniz &nbsp;butonu ile indirdiğiniz tasarımları se&ccedil;ip y&uuml;kleyin. (Dosya ismi&nbsp; defaultEfatura_HOTELID_ŞUBEID.xslt &nbsp;şeklinde olmalı ve otelin bilgileri yer almalıdır. Dosya ismi videoda detaylı g&ouml;sterilmiştir.)",
+          "Tasarımlar y&uuml;klendikten sonra sayfayı&nbsp; kaydedin ."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2023/07/banner_e-fatura-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2023/07/mm.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/e-fatura-e-arsiv-e-irsaliye-1.jpg",
+      "screenshots/elektraweb/e-fatura-e-arsiv-e-irsaliye-2.webp",
+      "screenshots/elektraweb/e-fatura-e-arsiv-e-irsaliye-3.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "stok-takip-programi",
+    "code": "STOCK",
+    "name": "Stok Takip",
+    "url": "https://www.elektraweb.com/stok-takip-programi/",
+    "api": {
+      "ID": 14,
+      "NAME": "ElektraWeb Stok  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 8,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Material Management (Stock & Inventory)",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/stok-takip-programi/",
+      "EN_LINK": "https://eptera.com/eptera-resource-management/inventory-management/index.html",
+      "DESCRIPTION_EN": "Provides real-time procurement, inventory, cost control, stock levels, and purchase planning.",
+      "TAXPERCENT": null,
+      "CODE": "STOCK",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Stok Takip Programı",
+    "sections": [
+      {
+        "title": "Stok Takip Programı",
+        "para": "işletmenizdeki stok hareketlerini g&ouml;rmenizi, alış ve satışlarınızı planlayabilmenizi, m&uuml;şterilerinizin t&uuml;ketim eğilimlerini tahmin etmenizi, personelinizin stokları kullanma şeklini analiz edebilmenizi ve nihayetinde hedefleriniz i&ccedil;in &ouml;ng&ouml;r&uuml;de bulunabilmenizi sağlar.",
+        "bullets": []
+      },
+      {
+        "title": "&nbsp;",
+        "para": "Elektraweb Depolama s&uuml;recinin etkin y&ouml;netimi i&ccedil;in basit fakat detaylı veri y&ouml;netimi sağlar. G&uuml;nde 20 ayrı firmadan, en az 100 &ccedil;eşit malzeme geliyor ve 5 ayrı deponuza dağılıyor. &Ccedil;uvalla mı gelmiş, tenekede mi? Faturaya koli fiyatı yazılmış. İhtiya&ccedil; acildi ve malzemelerin bir kısmı depoya girmeden &uuml;retime g&ouml;nderildi, acaba ka&ccedil;ak olur mu?",
+        "bullets": []
+      },
+      {
+        "title": "Otel Depo Hareketlerinin Takibi",
+        "para": "Elektraweb Depolama s&uuml;recinin etkin y&ouml;netimi i&ccedil;in basit fakat detaylı veri y&ouml;netimi sağlar. G&uuml;nde 20 ayrı firmadan, en az 100 &ccedil;eşit malzeme geliyor ve 5 ayrı deponuza dağılıyor. &Ccedil;uvalla mı gelmiş, tenekede mi? Faturaya koli fiyatı yazılmış. İhtiya&ccedil; acildi ve malzemelerin bir kısmı depoya girmeden &uuml;retime g&ouml;nderildi, acaba ka&ccedil;ak olur mu?",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/stok-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/shutterstock_2048757569.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/5-Stokhareketleri-1536x864-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/5-Stokhareketleri.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/stok-takip-programi-1.jpg",
+      "screenshots/elektraweb/stok-takip-programi-2.webp",
+      "screenshots/elektraweb/stok-takip-programi-3.webp"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "demirbas-ve-amortisman-yonetimi",
+    "code": "FixedAsset",
+    "name": "Demirbaş Yönetimi",
+    "url": "https://www.elektraweb.com/demirbas-ve-amortisman-yonetimi/",
+    "api": {
+      "ID": 18,
+      "NAME": "ElektraWeb Demirbaş  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 5,
+      "ORDERNO": 27,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Fixed Assets Management",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/demirbas-ve-amortisman-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-resource-management/assets/index.html",
+      "DESCRIPTION_EN": "Tracks assets, amortization, barcode labeling, usage history, loss/waste, and vendor-based allocation.",
+      "TAXPERCENT": null,
+      "CODE": "FixedAsset",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Demirbaş Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Demirbaş ve Amortisman Y&ouml;netimi",
+        "para": "Elektraweb Demirbaş Programı &nbsp;barkotlu el bilgisayarı ile sayım yapabilen, &uuml;r&uuml;nlerin &ouml;zelliklerine ve yerlerine g&ouml;re barkod basabilen, garanti ve servis anlaşmalarını takip edebilen ve muhasebe ile entegre &ccedil;alışan bir mod&uuml;ld&uuml;r.",
+        "bullets": [
+          "Demirbaş Yer Tanımları",
+          "Demirbaş &Ouml;m&uuml;r Kodları",
+          "Demirbaş Grupları",
+          "Demirbaş Kartları",
+          "Demirbaş Sayım Kartları",
+          "Demirbaş Amortisman Ayırma İşlemleri"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/qr_tel.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/06/7-DemirbaşKartı.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/demirbas-ve-amortisman-yonetimi-1.jpg",
+      "screenshots/elektraweb/demirbas-ve-amortisman-yonetimi-2.jpg",
+      "screenshots/elektraweb/demirbas-ve-amortisman-yonetimi-3.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "uretim-recetelendirme-ve-maliyet-analizi",
+    "code": "F&B",
+    "name": "Üretim ve Maliyet",
+    "url": "https://www.elektraweb.com/uretim-recetelendirme-ve-maliyet-analizi/",
+    "api": {
+      "ID": 15,
+      "NAME": "ElektraWeb Üretim  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 28,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Production, Recipe and Cost Analysis Software ",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/uretim-recetelendirme-ve-maliyet-analizi/",
+      "EN_LINK": "https://eptera.com/eptera-resource-management/inventory-management/index.html",
+      "DESCRIPTION_EN": "Eptera Production, Recipes & Costing helps hotels and restaurants manage ingredients, semi finished items, finished products, and portion level costing.",
+      "TAXPERCENT": null,
+      "CODE": "F&B",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "&Uuml;retim ve Maliyet",
+    "sections": [
+      {
+        "title": "&Uuml;r&uuml;n, Re&ccedil;ete ve &Uuml;retim",
+        "para": "Elektraweb &lsquo;de detaylı stok, &uuml;r&uuml;n ve re&ccedil;ete tanımlamaları ile, stoklarınıza, işletmenize girişten, &nbsp;t&uuml;ketim ve satış aşamalarına kadar ge&ccedil;en s&uuml;re&ccedil;te kullanılmak &uuml;zere pratik kimlik tanımlamaları yaparak, &uuml;retim ve satış işlemlerinizin hatasız ger&ccedil;ekleşmesini sağlarsınız",
+        "bullets": []
+      },
+      {
+        "title": "Stok Mod&uuml;l&uuml; - POS Entegrasyonu",
+        "para": "&Uuml;r&uuml;nler otelin veya restoranın&nbsp; POS &nbsp;programı ile entegre &ccedil;alışabilmektedir. Bu entegrasyon ile satışı yapılan &uuml;r&uuml;nlerin re&ccedil;etelerindeki değerler stoklardan otomatik olarak d&uuml;şer.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/recete_maliyet-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/06/5-Ürün-Kartı_Reçete.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/06/6-Sayım-Envanter-Raporu.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/uretim-recetelendirme-ve-maliyet-analizi-1.jpg",
+      "screenshots/elektraweb/uretim-recetelendirme-ve-maliyet-analizi-2.jpg",
+      "screenshots/elektraweb/uretim-recetelendirme-ve-maliyet-analizi-3.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "satin-alma-yonetimi",
+    "code": "Procurement",
+    "name": "Satın Alma",
+    "url": "https://www.elektraweb.com/satin-alma-yonetimi/",
+    "api": {
+      "ID": 19,
+      "NAME": "ElektraWeb Satın Alma  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 10,
+      "ORDERNO": 26,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Procurement Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://www.elektraweb.com/satin-alma-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-resource-management/inventory-management/index.html",
+      "DESCRIPTION_EN": "Eptera Procurement Software streamlines the full purchasing cycle from department requests to delivery. It supports multi location approval workflows based on warehouse, stock groups, or total amount, so every request follows the right chain automatically.",
+      "TAXPERCENT": null,
+      "CODE": "Procurement",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Satın Alma Programı",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/satinalma-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/satinalma-talebi-ekran1-renkli.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/satinalma-talep-liste.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/satinalma-analizi.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/fiyat-anlasmalari.jpg.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/satinalma-islem-dongusu.jpg.webp"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/satin-alma-yonetimi-1.jpg",
+      "screenshots/elektraweb/satin-alma-yonetimi-2.webp",
+      "screenshots/elektraweb/satin-alma-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "banka-entegrasyonlari",
+    "code": "AccountingIntegration",
+    "name": "Banka Entegrasyonları",
+    "url": "https://www.elektraweb.com/banka-entegrasyonlari/",
+    "api": {
+      "ID": 26,
+      "NAME": "ElektraWeb Muhasebe Entegrasyonu Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 52,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Accounting Integration",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "AccountingIntegration",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Banka Entegrasyonları",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/banka-entegrasyonlari-1.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "personel-ve-bordro-yonetimi",
+    "code": "HR",
+    "name": "Personel ve Bordro",
+    "url": "https://www.elektraweb.com/personel-ve-bordro-yonetimi/",
+    "api": {
+      "ID": 50,
+      "NAME": "ElektraWeb İnsan Kaynakları  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.2,
+      "BASEPRICE": 10,
+      "ORDERNO": 24,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": false,
+      "NAME_EN": "Eptera Human Resources Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 2,
+      "TR_LINK": "elektraweb.com/personel-ve-bordro-yonetimi/",
+      "EN_LINK": "https://eptera.com/eptera-resource-management/human-resources/index.html",
+      "DESCRIPTION_EN": "Centralizes employee data, documents, approvals, leave tracking, and internal communications through a personalized interface.",
+      "TAXPERCENT": null,
+      "CODE": "HR",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Personel ve Bordro Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Hızlı, Hatasız ve Dijital Personel Y&ouml;netimi",
+        "para": "",
+        "bullets": [
+          "İş başvurularını online alabilir ve saklayabilirsiniz.",
+          "SGK işe giriş ve işten ayrılış bildirgelerini tek tuşla verebilir, bordro oluşturabilirsiniz.",
+          "Jandarma Kimlik Bildirimi online yapabilirsiniz.",
+          "İzin, avans gibi talepleri online y&ouml;netebilirsiniz.",
+          "Shift tanımları yapabilir ve raporlayabilirsiniz.",
+          "Performans değerlendirmelerini y&ouml;neticiler online yapabilir.",
+          "KVKK&rsquo;ya uygun dijital tebligat yapabilirsiniz.",
+          "Personel &ouml;demelerini bankalara otomatik iletebilirsiniz.",
+          "Sicil kartları herhangi bir kritere g&ouml;re listelenebilir, sıralanabilir, gruplanabilir ve filtrelenebilir.",
+          "T&uuml;m ekranlar excel&rsquo;e veya yazıcıya aktarılabilir.",
+          "Sicil kartından tek tuşla bordro oluşturulabilir ve bordro ekranına ge&ccedil;iş yapılabilir.",
+          "Tek tuşla SGK İşe Giriş ve İşten Ayrılış Bildirgeleri verilebilir, SGK dok&uuml;manı PDF olarak indirilebilir.",
+          "İşe giriş ve ayrılış s&uuml;recindeki raporlamalara yazdır ekranından kolayca ulaşılabilir.",
+          "Personele ait t&uuml;m bilgilere tek ekrandan kolayca ulaşılabilir.",
+          "İzin işlemleri, icra ve avans takibi, aşı takibi ve zimmet takibi yapılabilir."
+        ]
+      },
+      {
+        "title": "Sicil Kartı İşlemleri",
+        "para": "",
+        "bullets": [
+          "Sicil kartları herhangi bir kritere g&ouml;re listelenebilir, sıralanabilir, gruplanabilir ve filtrelenebilir.",
+          "T&uuml;m ekranlar excel&rsquo;e veya yazıcıya aktarılabilir.",
+          "Sicil kartından tek tuşla bordro oluşturulabilir ve bordro ekranına ge&ccedil;iş yapılabilir.",
+          "Tek tuşla SGK İşe Giriş ve İşten Ayrılış Bildirgeleri verilebilir, SGK dok&uuml;manı PDF olarak indirilebilir.",
+          "İşe giriş ve ayrılış s&uuml;recindeki raporlamalara yazdır ekranından kolayca ulaşılabilir.",
+          "Personele ait t&uuml;m bilgilere tek ekrandan kolayca ulaşılabilir.",
+          "İzin işlemleri, icra ve avans takibi, aşı takibi ve zimmet takibi yapılabilir.",
+          "Personele ait belge ve dok&uuml;manlar g&uuml;venli şekilde saklanabilir.",
+          "Eğitim mod&uuml;l&uuml;nde girilen t&uuml;m eğitimler personelin kartında g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Yıllık izin, &uuml;cretli/&uuml;cretsiz izin girişi yapılabilir; yıllık izin takibi sistem tarafından otomatik y&uuml;r&uuml;t&uuml;l&uuml;r.",
+          "İzin tarihlerine g&ouml;re personelin bordrolarına otomatik puantaj oluşturulabilir.",
+          "SGK tarafından belirlenen taban ve tavan &uuml;cretler, vergi dilimleri, sakatlık indirimleri gibi t&uuml;m parametreler tek tuşla sisteme &ccedil;ekilebilir.",
+          "Emekli ve normal bordrolara ait vergi parametre bilgileri otomatik oluşturulabilir.",
+          "Oluşturulan parametrelere standart puantajlar tanımlanarak bordro d&ouml;nemine g&ouml;re g&uuml;n sayıları otomatik olarak bordroya işlenebilir.",
+          "Firma bazlı olacak şekilde ayrı parametre tabloları oluşturulabilir."
+        ]
+      },
+      {
+        "title": "Sicil Kartı",
+        "para": "",
+        "bullets": [
+          "Personele ait t&uuml;m bilgilere tek ekrandan kolayca ulaşılabilir.",
+          "İzin işlemleri, icra ve avans takibi, aşı takibi ve zimmet takibi yapılabilir.",
+          "Personele ait belge ve dok&uuml;manlar g&uuml;venli şekilde saklanabilir.",
+          "Eğitim mod&uuml;l&uuml;nde girilen t&uuml;m eğitimler personelin kartında g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Yıllık izin, &uuml;cretli/&uuml;cretsiz izin girişi yapılabilir; yıllık izin takibi sistem tarafından otomatik y&uuml;r&uuml;t&uuml;l&uuml;r.",
+          "İzin tarihlerine g&ouml;re personelin bordrolarına otomatik puantaj oluşturulabilir.",
+          "SGK tarafından belirlenen taban ve tavan &uuml;cretler, vergi dilimleri, sakatlık indirimleri gibi t&uuml;m parametreler tek tuşla sisteme &ccedil;ekilebilir.",
+          "Emekli ve normal bordrolara ait vergi parametre bilgileri otomatik oluşturulabilir.",
+          "Oluşturulan parametrelere standart puantajlar tanımlanarak bordro d&ouml;nemine g&ouml;re g&uuml;n sayıları otomatik olarak bordroya işlenebilir.",
+          "Firma bazlı olacak şekilde ayrı parametre tabloları oluşturulabilir.",
+          "Personellere ait puantaj bilgilerine g&ouml;re bordro hazırlanabilir, ek kazan&ccedil;lar sisteme eklenebilir.",
+          "Personelin aylık, g&uuml;nl&uuml;k veya saatlik &uuml;cretine g&ouml;re netten br&uuml;te veya br&uuml;tten nete maaş tahakkukları yapılabilir.",
+          "Firma tarafından &ccedil;alışılan banka i&ccedil;in banka maaş &ouml;deme listesi tek tuşla alınabilir.",
+          "Muhtasar beyanname i&ccedil;in otomatik TXT dosyası oluşturulabilir."
+        ]
+      },
+      {
+        "title": "Aylık Parametreler",
+        "para": "",
+        "bullets": [
+          "SGK tarafından belirlenen taban ve tavan &uuml;cretler, vergi dilimleri, sakatlık indirimleri gibi t&uuml;m parametreler tek tuşla sisteme &ccedil;ekilebilir.",
+          "Emekli ve normal bordrolara ait vergi parametre bilgileri otomatik oluşturulabilir.",
+          "Oluşturulan parametrelere standart puantajlar tanımlanarak bordro d&ouml;nemine g&ouml;re g&uuml;n sayıları otomatik olarak bordroya işlenebilir.",
+          "Firma bazlı olacak şekilde ayrı parametre tabloları oluşturulabilir.",
+          "Personellere ait puantaj bilgilerine g&ouml;re bordro hazırlanabilir, ek kazan&ccedil;lar sisteme eklenebilir.",
+          "Personelin aylık, g&uuml;nl&uuml;k veya saatlik &uuml;cretine g&ouml;re netten br&uuml;te veya br&uuml;tten nete maaş tahakkukları yapılabilir.",
+          "Firma tarafından &ccedil;alışılan banka i&ccedil;in banka maaş &ouml;deme listesi tek tuşla alınabilir.",
+          "Muhtasar beyanname i&ccedil;in otomatik TXT dosyası oluşturulabilir.",
+          "Personel shift tanımlarınızı kolayca yapabilir ve raporlayabilirsiniz.",
+          "Departman m&uuml;d&uuml;rleri kendi kullanıcı bilgileriyle giriş yaparak sadece kendi departmanına ait personellerin shift tanımlarını y&ouml;netebilir.",
+          "Shift ekranı haftalık veya aylık olarak g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Toplu olarak bir departmana shift atanabilir."
+        ]
+      },
+      {
+        "title": "Bordrolar",
+        "para": "",
+        "bullets": [
+          "Personellere ait puantaj bilgilerine g&ouml;re bordro hazırlanabilir, ek kazan&ccedil;lar sisteme eklenebilir.",
+          "Personelin aylık, g&uuml;nl&uuml;k veya saatlik &uuml;cretine g&ouml;re netten br&uuml;te veya br&uuml;tten nete maaş tahakkukları yapılabilir.",
+          "Firma tarafından &ccedil;alışılan banka i&ccedil;in banka maaş &ouml;deme listesi tek tuşla alınabilir.",
+          "Muhtasar beyanname i&ccedil;in otomatik TXT dosyası oluşturulabilir.",
+          "Personel shift tanımlarınızı kolayca yapabilir ve raporlayabilirsiniz.",
+          "Departman m&uuml;d&uuml;rleri kendi kullanıcı bilgileriyle giriş yaparak sadece kendi departmanına ait personellerin shift tanımlarını y&ouml;netebilir.",
+          "Shift ekranı haftalık veya aylık olarak g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Toplu olarak bir departmana shift atanabilir.",
+          "Eğitim tanımları yapılarak katılacak personeller se&ccedil;ilebilir ve eğitim raporları oluşturulabilir.",
+          "Aktarılan personellerin eğitim kayıtları otomatik olarak sicil kartlarında g&ouml;r&uuml;nt&uuml;lenebilir."
+        ]
+      },
+      {
+        "title": "Muhtasar D&uuml;zenleme",
+        "para": "",
+        "bullets": [
+          "Muhtasar beyanname i&ccedil;in otomatik TXT dosyası oluşturulabilir.",
+          "Personel shift tanımlarınızı kolayca yapabilir ve raporlayabilirsiniz.",
+          "Departman m&uuml;d&uuml;rleri kendi kullanıcı bilgileriyle giriş yaparak sadece kendi departmanına ait personellerin shift tanımlarını y&ouml;netebilir.",
+          "Shift ekranı haftalık veya aylık olarak g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Toplu olarak bir departmana shift atanabilir.",
+          "Eğitim tanımları yapılarak katılacak personeller se&ccedil;ilebilir ve eğitim raporları oluşturulabilir.",
+          "Aktarılan personellerin eğitim kayıtları otomatik olarak sicil kartlarında g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Web siteniz &uuml;zerinden iş başvuruları alınabilir ve başvuru yapan adayların t&uuml;m bilgileri otomatik olarak CV ekranına kaydedilebilir.",
+          "İşe alım ger&ccedil;ekleşmesi durumunda bu bilgiler tek tuşla sicil kartına aktarılabilir.",
+          "&Ccedil;alışan personeller kendi kullanıcı bilgileriyle sisteme giriş yaparak istedikleri tarih aralıklarında kolayca izin talep edebilir."
+        ]
+      },
+      {
+        "title": "Personel Shift Programı",
+        "para": "",
+        "bullets": [
+          "Personel shift tanımlarınızı kolayca yapabilir ve raporlayabilirsiniz.",
+          "Departman m&uuml;d&uuml;rleri kendi kullanıcı bilgileriyle giriş yaparak sadece kendi departmanına ait personellerin shift tanımlarını y&ouml;netebilir.",
+          "Shift ekranı haftalık veya aylık olarak g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Toplu olarak bir departmana shift atanabilir.",
+          "Eğitim tanımları yapılarak katılacak personeller se&ccedil;ilebilir ve eğitim raporları oluşturulabilir.",
+          "Aktarılan personellerin eğitim kayıtları otomatik olarak sicil kartlarında g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Web siteniz &uuml;zerinden iş başvuruları alınabilir ve başvuru yapan adayların t&uuml;m bilgileri otomatik olarak CV ekranına kaydedilebilir.",
+          "İşe alım ger&ccedil;ekleşmesi durumunda bu bilgiler tek tuşla sicil kartına aktarılabilir.",
+          "&Ccedil;alışan personeller kendi kullanıcı bilgileriyle sisteme giriş yaparak istedikleri tarih aralıklarında kolayca izin talep edebilir.",
+          "Personellerin y&ouml;neticileri, tanımlanmış onay s&uuml;reci doğrultusunda izin taleplerini değerlendirebilir ve işleme alabilir.",
+          "İzin onay s&uuml;reci firma yapısına g&ouml;re esnek şekilde d&uuml;zenlenebilir."
+        ]
+      },
+      {
+        "title": "Personel Eğitim Programı",
+        "para": "",
+        "bullets": [
+          "Eğitim tanımları yapılarak katılacak personeller se&ccedil;ilebilir ve eğitim raporları oluşturulabilir.",
+          "Aktarılan personellerin eğitim kayıtları otomatik olarak sicil kartlarında g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Web siteniz &uuml;zerinden iş başvuruları alınabilir ve başvuru yapan adayların t&uuml;m bilgileri otomatik olarak CV ekranına kaydedilebilir.",
+          "İşe alım ger&ccedil;ekleşmesi durumunda bu bilgiler tek tuşla sicil kartına aktarılabilir.",
+          "&Ccedil;alışan personeller kendi kullanıcı bilgileriyle sisteme giriş yaparak istedikleri tarih aralıklarında kolayca izin talep edebilir.",
+          "Personellerin y&ouml;neticileri, tanımlanmış onay s&uuml;reci doğrultusunda izin taleplerini değerlendirebilir ve işleme alabilir.",
+          "İzin onay s&uuml;reci firma yapısına g&ouml;re esnek şekilde d&uuml;zenlenebilir.",
+          "İş G&uuml;c&uuml; Devir Oranı (Turnover); belirli bir ay veya yıl i&ccedil;inde işletmeden ayrılan ve işe giren personellerin &ccedil;alışma s&uuml;relerini oranlayan rapordur.",
+          "Turnover oranı ne kadar d&uuml;ş&uuml;kse, şirketin &ccedil;alışan verimliliği ve istikrarı o kadar y&uuml;ksek kabul edilir.",
+          "Elektra İnsan Kaynakları Programı, departmanlar ve firmalar bazında verimliliği grafiksel olarak hesaplayabilir.",
+          "Turnover raporu ile &ccedil;alışma s&uuml;releri, departman bazlı devir oranı, işe giriş ve işten ayrılma oranları analiz edilebilir."
+        ]
+      },
+      {
+        "title": "CV Kartı",
+        "para": "",
+        "bullets": [
+          "Web siteniz &uuml;zerinden iş başvuruları alınabilir ve başvuru yapan adayların t&uuml;m bilgileri otomatik olarak CV ekranına kaydedilebilir.",
+          "İşe alım ger&ccedil;ekleşmesi durumunda bu bilgiler tek tuşla sicil kartına aktarılabilir.",
+          "&Ccedil;alışan personeller kendi kullanıcı bilgileriyle sisteme giriş yaparak istedikleri tarih aralıklarında kolayca izin talep edebilir.",
+          "Personellerin y&ouml;neticileri, tanımlanmış onay s&uuml;reci doğrultusunda izin taleplerini değerlendirebilir ve işleme alabilir.",
+          "İzin onay s&uuml;reci firma yapısına g&ouml;re esnek şekilde d&uuml;zenlenebilir.",
+          "İş G&uuml;c&uuml; Devir Oranı (Turnover); belirli bir ay veya yıl i&ccedil;inde işletmeden ayrılan ve işe giren personellerin &ccedil;alışma s&uuml;relerini oranlayan rapordur.",
+          "Turnover oranı ne kadar d&uuml;ş&uuml;kse, şirketin &ccedil;alışan verimliliği ve istikrarı o kadar y&uuml;ksek kabul edilir.",
+          "Elektra İnsan Kaynakları Programı, departmanlar ve firmalar bazında verimliliği grafiksel olarak hesaplayabilir.",
+          "Turnover raporu ile &ccedil;alışma s&uuml;releri, departman bazlı devir oranı, işe giriş ve işten ayrılma oranları analiz edilebilir.",
+          "Elektraweb İnsan Kaynakları Programı &uuml;zerinden personelinize ait &uuml;cret bordroları dahil t&uuml;m evrakları, yasal ge&ccedil;erliliğe sahip ve hukuki delil niteliğinde elektronik ortamda iletebilirsiniz."
+        ]
+      },
+      {
+        "title": "Personel Dijital İzin Talebi",
+        "para": "",
+        "bullets": [
+          "&Ccedil;alışan personeller kendi kullanıcı bilgileriyle sisteme giriş yaparak istedikleri tarih aralıklarında kolayca izin talep edebilir.",
+          "Personellerin y&ouml;neticileri, tanımlanmış onay s&uuml;reci doğrultusunda izin taleplerini değerlendirebilir ve işleme alabilir.",
+          "İzin onay s&uuml;reci firma yapısına g&ouml;re esnek şekilde d&uuml;zenlenebilir.",
+          "İş G&uuml;c&uuml; Devir Oranı (Turnover); belirli bir ay veya yıl i&ccedil;inde işletmeden ayrılan ve işe giren personellerin &ccedil;alışma s&uuml;relerini oranlayan rapordur.",
+          "Turnover oranı ne kadar d&uuml;ş&uuml;kse, şirketin &ccedil;alışan verimliliği ve istikrarı o kadar y&uuml;ksek kabul edilir.",
+          "Elektra İnsan Kaynakları Programı, departmanlar ve firmalar bazında verimliliği grafiksel olarak hesaplayabilir.",
+          "Turnover raporu ile &ccedil;alışma s&uuml;releri, departman bazlı devir oranı, işe giriş ve işten ayrılma oranları analiz edilebilir.",
+          "Elektraweb İnsan Kaynakları Programı &uuml;zerinden personelinize ait &uuml;cret bordroları dahil t&uuml;m evrakları, yasal ge&ccedil;erliliğe sahip ve hukuki delil niteliğinde elektronik ortamda iletebilirsiniz.",
+          "Bordro, s&ouml;zleşme, atama/g&ouml;revlendirme yazısı, maaş/prim bildirimleri, savunma ve ihtar belgeleri, hedef/performans bildirimleri gibi t&uuml;m tebliğ edilmesi zorunlu evrakların iletim s&uuml;reci tamamen elektronik ortamda y&ouml;netilebilir.",
+          "Bu sistem; belgelerin g&ouml;nderildiği bi&ccedil;imde korunmasını sağlayan, alıcı kimliğini kesin olarak tespit eden, i&ccedil;eriği değiştirilemez hale getiren, yasal ge&ccedil;erliliği olan ve iş mahkemelerinde 1. dereceden delil kabul edilen g&uuml;venli bir altyapı sunar."
+        ]
+      },
+      {
+        "title": "Turnover",
+        "para": "",
+        "bullets": [
+          "İş G&uuml;c&uuml; Devir Oranı (Turnover); belirli bir ay veya yıl i&ccedil;inde işletmeden ayrılan ve işe giren personellerin &ccedil;alışma s&uuml;relerini oranlayan rapordur.",
+          "Turnover oranı ne kadar d&uuml;ş&uuml;kse, şirketin &ccedil;alışan verimliliği ve istikrarı o kadar y&uuml;ksek kabul edilir.",
+          "Elektra İnsan Kaynakları Programı, departmanlar ve firmalar bazında verimliliği grafiksel olarak hesaplayabilir.",
+          "Turnover raporu ile &ccedil;alışma s&uuml;releri, departman bazlı devir oranı, işe giriş ve işten ayrılma oranları analiz edilebilir.",
+          "Elektraweb İnsan Kaynakları Programı &uuml;zerinden personelinize ait &uuml;cret bordroları dahil t&uuml;m evrakları, yasal ge&ccedil;erliliğe sahip ve hukuki delil niteliğinde elektronik ortamda iletebilirsiniz.",
+          "Bordro, s&ouml;zleşme, atama/g&ouml;revlendirme yazısı, maaş/prim bildirimleri, savunma ve ihtar belgeleri, hedef/performans bildirimleri gibi t&uuml;m tebliğ edilmesi zorunlu evrakların iletim s&uuml;reci tamamen elektronik ortamda y&ouml;netilebilir.",
+          "Bu sistem; belgelerin g&ouml;nderildiği bi&ccedil;imde korunmasını sağlayan, alıcı kimliğini kesin olarak tespit eden, i&ccedil;eriği değiştirilemez hale getiren, yasal ge&ccedil;erliliği olan ve iş mahkemelerinde 1. dereceden delil kabul edilen g&uuml;venli bir altyapı sunar.",
+          "Personellerinizin giriş&ndash;&ccedil;ıkış bilgilerini anlık olarak kontrol edebilirsiniz.",
+          "MagicPass 12628 &ndash; Parmak izi okuyucu",
+          "MagicPass 126xx serisi &ndash; Parmak izi okuyucu",
+          "MagicFace 302 &ndash; Y&uuml;z tanıma",
+          "MagicFace 835 &ndash; Y&uuml;z tanıma",
+          "ZKTECO C3-100/200/400",
+          "MagicFace 20656 &ndash; Parmak izi okuyucu"
+        ]
+      },
+      {
+        "title": "Resmi Belgelerin Elektronik Ortamda G&ouml;nderimi (e-Bordro)",
+        "para": "Bu cihazlar haricindeki entegrasyonlar i&ccedil;in 250 &euro; &uuml;cretlendirme uygulanır.",
+        "bullets": [
+          "Elektraweb İnsan Kaynakları Programı &uuml;zerinden personelinize ait &uuml;cret bordroları dahil t&uuml;m evrakları, yasal ge&ccedil;erliliğe sahip ve hukuki delil niteliğinde elektronik ortamda iletebilirsiniz.",
+          "Bordro, s&ouml;zleşme, atama/g&ouml;revlendirme yazısı, maaş/prim bildirimleri, savunma ve ihtar belgeleri, hedef/performans bildirimleri gibi t&uuml;m tebliğ edilmesi zorunlu evrakların iletim s&uuml;reci tamamen elektronik ortamda y&ouml;netilebilir.",
+          "Bu sistem; belgelerin g&ouml;nderildiği bi&ccedil;imde korunmasını sağlayan, alıcı kimliğini kesin olarak tespit eden, i&ccedil;eriği değiştirilemez hale getiren, yasal ge&ccedil;erliliği olan ve iş mahkemelerinde 1. dereceden delil kabul edilen g&uuml;venli bir altyapı sunar.",
+          "Personellerinizin giriş&ndash;&ccedil;ıkış bilgilerini anlık olarak kontrol edebilirsiniz.",
+          "MagicPass 12628 &ndash; Parmak izi okuyucu",
+          "MagicPass 126xx serisi &ndash; Parmak izi okuyucu",
+          "MagicFace 302 &ndash; Y&uuml;z tanıma",
+          "MagicFace 835 &ndash; Y&uuml;z tanıma",
+          "ZKTECO C3-100/200/400",
+          "MagicFace 20656 &ndash; Parmak izi okuyucu",
+          "MagicFace MF 857 &ndash; Y&uuml;z tanıma",
+          "MagicFace MF 900 &ndash; Y&uuml;z tanıma"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/ik_foto.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/sicil_karti_telefn.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/sicil-karti-islemleri.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/sicil-karti-600x281-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/aylik-parametreler-600x319-1.webp",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/bordrolar-600x326-1.webp"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/personel-ve-bordro-yonetimi-1.png",
+      "screenshots/elektraweb/personel-ve-bordro-yonetimi-2.jpg",
+      "screenshots/elektraweb/personel-ve-bordro-yonetimi-3.webp"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "sirketim-ik-mobil-uygulama",
+    "code": "IKPP",
+    "name": "Şirketim İK Mobil",
+    "url": "https://www.elektraweb.com/sirketim-ik-mobil-uygulama/",
+    "api": {
+      "ID": 265,
+      "NAME": "ElektraWeb İnsan Kaynakları Personel Portalı (Mobil Uygulama) Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.5,
+      "BASEPRICE": 0,
+      "ORDERNO": 59,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": false,
+      "ABROAD": null,
+      "NAME_EN": "Eptera Human Resources Employee Portal (Mobile App) Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 30,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": "https://eptera.com/eptera-resource-management/human-resources-portal/index.html",
+      "DESCRIPTION_EN": "The HR mobile app lets companies manage HR workflows together with quality management and audit processes from a single mobile platform. This improves operational efficiency while also supporting employee engagement and organizational transparency.",
+      "TAXPERCENT": null,
+      "CODE": "IKPP",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Şirketim İK Mobil Uygulaması",
+    "sections": [
+      {
+        "title": "T&uuml;m Y&ouml;netim S&uuml;re&ccedil;leri Tek Bir Uygulamada",
+        "para": "Elektraweb&#39;in geliştirdiği &quot;Şirketim&quot; isimli mobil uygulama; İK ve Kalite Denetimini tek platformda birleştirerek y&ouml;neticiler ve &ccedil;alışanlar i&ccedil;in t&uuml;m s&uuml;re&ccedil;leri kolay, hızlı ve şeffaf hale getiriyor.",
+        "bullets": [
+          "Onay ve takip s&uuml;re&ccedil;lerinde zaman tasarrufu",
+          "Tek panelden t&uuml;m ekibin izin, mesai ve performans durumunu g&ouml;rme",
+          "Şeffaf raporlama ile daha hızlı karar alma",
+          "Kalite denetimleri i&ccedil;in gerekli dok&uuml;manlara her an erişim",
+          "&Ccedil;alışan katılımı ve geri bildirimi sayesinde kurumsal iklimi net g&ouml;rme",
+          "İzin, fazla mesai, avans ve bordro gibi t&uuml;m talepleri tek tuşla iletme",
+          "Performans değerlendirmelerini, &ouml;d&uuml;l ve uyarı s&uuml;re&ccedil;lerini şeffaf bi&ccedil;imde g&ouml;rebilme",
+          "Eğitim ve g&ouml;rev tanımlarına kolay erişim",
+          "&Ouml;neri ve şikayetlerini kayda alarak s&ouml;z hakkı kazanma",
+          "Duyuru ve etkinliklere anında ulaşarak kurumsal aidiyet hissi",
+          "Kağıtsız ofis: T&uuml;m s&uuml;re&ccedil;ler dijital",
+          "Zaman ve maliyet tasarrufu: Y&ouml;netsel y&uuml;k azalır, verimlilik artar",
+          "Kurumsal hafıza: T&uuml;m bilgiler kayıtlı, denetime hazır",
+          "Dijital k&uuml;lt&uuml;r: Şirketin t&uuml;m işleyişi modern, planlı ve izlenebilir bir formatta ilerler"
+        ]
+      },
+      {
+        "title": "AVANTAJLAR",
+        "para": "Elektraweb İnsan Kaynakları ve Kalite Y&ouml;netim Uygulaması, kurumların bug&uuml;n ihtiya&ccedil; duyduğu şeffaf, planlayıcı, organize edici ve denetleyici sistemin dijital karşılığıdır.",
+        "bullets": [
+          "Onay ve takip s&uuml;re&ccedil;lerinde zaman tasarrufu",
+          "Tek panelden t&uuml;m ekibin izin, mesai ve performans durumunu g&ouml;rme",
+          "Şeffaf raporlama ile daha hızlı karar alma",
+          "Kalite denetimleri i&ccedil;in gerekli dok&uuml;manlara her an erişim",
+          "&Ccedil;alışan katılımı ve geri bildirimi sayesinde kurumsal iklimi net g&ouml;rme",
+          "İzin, fazla mesai, avans ve bordro gibi t&uuml;m talepleri tek tuşla iletme",
+          "Performans değerlendirmelerini, &ouml;d&uuml;l ve uyarı s&uuml;re&ccedil;lerini şeffaf bi&ccedil;imde g&ouml;rebilme",
+          "Eğitim ve g&ouml;rev tanımlarına kolay erişim",
+          "&Ouml;neri ve şikayetlerini kayda alarak s&ouml;z hakkı kazanma",
+          "Duyuru ve etkinliklere anında ulaşarak kurumsal aidiyet hissi",
+          "Kağıtsız ofis: T&uuml;m s&uuml;re&ccedil;ler dijital",
+          "Zaman ve maliyet tasarrufu: Y&ouml;netsel y&uuml;k azalır, verimlilik artar",
+          "Kurumsal hafıza: T&uuml;m bilgiler kayıtlı, denetime hazır",
+          "Dijital k&uuml;lt&uuml;r: Şirketin t&uuml;m işleyişi modern, planlı ve izlenebilir bir formatta ilerler",
+          "Şirket i&ccedil;in tam bir y&ouml;netim asistanı,"
+        ]
+      },
+      {
+        "title": "ŞİRKETİM Mobil Aray&uuml;z&uuml;",
+        "para": "Profilim: Kendi bilgileriniz ve g&ouml;rev tanımlarınız burada.",
+        "bullets": [
+          "Men&uuml;deki her başlık sizi ilgili s&uuml;rece y&ouml;nlendirir.",
+          "Sağ &uuml;stteki ↻ ikonuyla ekranı yenileyebilir, ➤ ikonuyla &ccedil;ıkış yapabilirsiniz.",
+          "Denemek i&ccedil;in hemen bir izin isteğinde bulunabilir veya anket yanıtlayarak başlayabilirsiniz."
+        ]
+      },
+      {
+        "title": "İlk Kullanım İ&ccedil;in İpucu",
+        "para": "T&uuml;m Operasyonlar Tek Ekranda - &Ccedil;alışanların g&uuml;nl&uuml;k işleyişine dair t&uuml;m talepler artık kağıttan, maillerden ve telefon trafiğinden &ccedil;ıkıp tek bir dijital platformda y&ouml;netiliyor. Bu sayfa, &ccedil;alışan deneyiminin kalbini oluşturuyor.",
+        "bullets": [
+          "Men&uuml;deki her başlık sizi ilgili s&uuml;rece y&ouml;nlendirir.",
+          "Sağ &uuml;stteki ↻ ikonuyla ekranı yenileyebilir, ➤ ikonuyla &ccedil;ıkış yapabilirsiniz.",
+          "Denemek i&ccedil;in hemen bir izin isteğinde bulunabilir veya anket yanıtlayarak başlayabilirsiniz."
+        ]
+      },
+      {
+        "title": "&Ccedil;alışma S&uuml;re&ccedil;leri",
+        "para": "T&uuml;m Operasyonlar Tek Ekranda - &Ccedil;alışanların g&uuml;nl&uuml;k işleyişine dair t&uuml;m talepler artık kağıttan, maillerden ve telefon trafiğinden &ccedil;ıkıp tek bir dijital platformda y&ouml;netiliyor. Bu sayfa, &ccedil;alışan deneyiminin kalbini oluşturuyor.",
+        "bullets": []
+      },
+      {
+        "title": "ŞİRKETİM &Ccedil;ALIŞMA S&Uuml;RE&Ccedil;LERİ",
+        "para": "&Ccedil;alışan izinlerini şeffaf bi&ccedil;imde takip eder, y&ouml;neticiler anında onay verebilir. Planlama kolaylaşır.",
+        "bullets": []
+      },
+      {
+        "title": "ŞİRKETİM PERFORMANS VE GELİŞİM",
+        "para": "Her &ccedil;alışan kendi performans değerlendirmesini g&ouml;rebilir, y&ouml;neticiler ise tek ekrandan ekip gelişimini takip eder. B&ouml;ylece s&uuml;re&ccedil; adil, şeffaf ve &ouml;l&ccedil;&uuml;lebilir hale gelir.",
+        "bullets": []
+      },
+      {
+        "title": "ŞİRKETİM KURUMSAL BİLGİLER",
+        "para": "&Ccedil;alışma alanları tek ekranda g&ouml;sterilerek iletişim ve y&ouml;n bulma kolaylığı sağlanır.",
+        "bullets": []
+      },
+      {
+        "title": "ŞİRKETİM İLETİŞİM VE KATILIM",
+        "para": "Şirket i&ccedil;i gelişmeler anında paylaşılır ve bilgilendirme gecikmeden yapılır.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/sirketim-ik-mobil-uygulama-1.jpg"
+    ]
+  },
+  {
+    "cat": "ERP",
+    "slug": "kalite-ve-dokuman-yonetim-sistemi",
+    "code": "QM",
+    "name": "Kalite ve Doküman Yönetimi",
+    "url": "https://www.elektraweb.com/kalite-ve-dokuman-yonetim-sistemi/",
+    "api": {
+      "ID": 349,
+      "NAME": "ElektraWeb Kampanya Yönetimi",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 0,
+      "ORDERNO": 73,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "ElektraWeb Quality and Document Management Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 10,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Eptera Quality and Document Management is a web and cloud based system for managing quality workflows, audits, and corporate documentation in one place.",
+      "TAXPERCENT": null,
+      "CODE": "QM",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Elektraweb Kalite ve Denetim Y&ouml;netim Sistemi",
+    "sections": [
+      {
+        "title": "Entegre Kalite Y&ouml;netimi ile Operasyonel M&uuml;kemmellik",
+        "para": "İşletmenizdeki departmanların kalite y&ouml;netimi i&ccedil;in takip etmesi/doldurması gereken formları ve &ccedil;izelgeleri, departmanlardan ayrı ayrı talep edip, kalite sistemine manuel olarak mı giriyorsunuz?",
+        "bullets": []
+      },
+      {
+        "title": "İnsan Kaynakları",
+        "para": "Elektraweb Kalite ve Dok&uuml;man Y&ouml;netimi, kalite s&uuml;re&ccedil;lerini hayata ge&ccedil;iren insan kaynağını da kapsayan b&uuml;t&uuml;nc&uuml;l bir yapı sunar. Organizasyon şeması, departman ve pozisyon tanımları, g&ouml;rev tanımları ve personel bilgileri merkezi bir sistemde y&ouml;netilerek kurumun organizasyon yapısı şeffaf ve s&uuml;rd&uuml;r&uuml;lebilir hale getirilir.",
+        "bullets": [
+          "T&uuml;m pozisyonlara ait g&ouml;revler sistemde standart formatlarda tanımlanır ve d&uuml;zenlenir.",
+          "G&ouml;revler, &ouml;nem derecesine g&ouml;re gruplanarak analiz edilir.",
+          "Operasyon, satış, &ccedil;ağrı merkezli gibi farklı birimlere ait g&ouml;revler tek &ccedil;atı altında y&ouml;netilir.",
+          "Sıra numarası ile g&ouml;rev akışı yapılandırılır ve s&uuml;re&ccedil;sel şeffaflık sağlanır.",
+          "Tanımlar; kalite s&uuml;re&ccedil;leri, denetimler, eğitim ihtiya&ccedil; analizleri ve performans değerlendirme sistemleriyle entegre edilir .",
+          "G&uuml;ncellemeler merkezi olarak y&ouml;netilerek revizyonların t&uuml;m birimlere aynı anda yansıması sağlanır."
+        ]
+      },
+      {
+        "title": "Dok&uuml;man Y&ouml;netimi",
+        "para": "",
+        "bullets": [
+          "Elektraweb Dok&uuml;man Y&ouml;netimi Mod&uuml;l&uuml;; prosed&uuml;r, talimat, form ve kayıtların oluşturulması, onaylanması, revize edilmesi ve arşivlenmesini merkezi bir yapı altında toplar.",
+          "T&uuml;m belgeler i&ccedil;in onay, kontrol ve yayın s&uuml;re&ccedil;leri sistem tarafından otomatik olarak y&uuml;r&uuml;t&uuml;l&uuml;r; b&ouml;ylece g&uuml;ncel versiyon her zaman erişilebilir olur ve eski s&uuml;r&uuml;mlerin karışıklığı &ouml;nlenir.",
+          "Kullanıcılar, departman veya belge tipine g&ouml;re dok&uuml;manlarını kolayca g&ouml;r&uuml;nt&uuml;leyebilir, d&uuml;zenleyebilir ve revizyon s&uuml;recini takip edebilir.",
+          "Kullanıcılar, her dok&uuml;man i&ccedil;in metin girişi yapabilir, PDF dosyaları ekleyebilir ve URL bağlantılarıyla dok&uuml;man i&ccedil;eriğini g&uuml;venli şekilde paylaşabilir.",
+          "Bulut tabanlı yapısı sayesinde t&uuml;m bilgilere her yerden erişim sağlanır, kurum i&ccedil;i iletişim ve denetim s&uuml;re&ccedil;leri standartlaşır .",
+          "Mod&uuml;l, ISO ve Turquality başta olmak &uuml;zere t&uuml;m kalite y&ouml;netim standartlarına uygun şekilde &ccedil;alışır.",
+          "Denetim Y&ouml;netimi, DOİF, Risk Y&ouml;netimi ve Eğitim Y&ouml;netimi mod&uuml;lleriyle entegre &ccedil;alışarak kurumsal kalite s&uuml;re&ccedil;lerinin b&uuml;t&uuml;nsel y&ouml;netimini destekler."
+        ]
+      },
+      {
+        "title": "Dok&uuml;man Revizyon Y&ouml;netimi",
+        "para": "",
+        "bullets": [
+          "&Ccedil;alışanlardan veya departmanlardan gelen revizyon taleplerini merkezi bir yapı altında toplar.",
+          "Her talep; değerlendirme, onay s&uuml;reci ve revizyon onay aşamalarında sistematik olarak izlenir.",
+          "Bu sayede kurum i&ccedil;inde dok&uuml;man değişiklikleri rastgele değil, tanımlı bir kalite akışı i&ccedil;inde y&uuml;r&uuml;t&uuml;l&uuml;r.",
+          "Revizyon taleplerinin durumları (Yeni, Değerlendiriliyor, Onay S&uuml;recinde, Revizyon Onaylandı, Revize Onaylanmadı) anlık olarak g&ouml;r&uuml;nt&uuml;lenebilir.",
+          "Kullanıcı dostu aray&uuml;z, her dok&uuml;manın ge&ccedil;mişine ulaşmayı kolaylaştırır ve dok&uuml;man g&uuml;venilirliğini korur.",
+          "Elektraweb Denetim Y&ouml;netimi, işletmelerin t&uuml;m i&ccedil; denetim, denetim formu oluşturma ve denetim sonu&ccedil;larının analiz s&uuml;re&ccedil;lerini tek platformda toplar."
+        ]
+      },
+      {
+        "title": "Denetim Y&ouml;netimi",
+        "para": "",
+        "bullets": [
+          "Elektraweb Denetim Y&ouml;netimi, işletmelerin t&uuml;m i&ccedil; denetim, denetim formu oluşturma ve denetim sonu&ccedil;larının analiz s&uuml;re&ccedil;lerini tek platformda toplar.",
+          "Her departman, her lokasyon veya tedarik&ccedil;i i&ccedil;in denetim kriterleri planlayarak, soruları tanımlayabilir ve sonu&ccedil;ları puanlayarak risk seviyelerini değerlendirebilirsiniz.",
+          "Sahada başka bir cihaza gerek duyulmadan Elektraweb&rsquo;in geliştirilmiş olduğu ve Kalite Mod&uuml;l&uuml; ile birlikte &ccedil;alışan DenetimApp uygulaması ile sahada yanıtlanan cevaplar sisteme anlık olarak kaydedilir.",
+          "Denetim ekranında; soru bazında uygulama durumu, puan, risk etkisi, risk ihtimali ve gerekiyorsa DOİF kaydı aynı anda y&ouml;netilebilir.",
+          "S&uuml;r&uuml;kle-bırak &ouml;zelliği ve size &ouml;zel kolon tasarımları ile grafik analiz ekranları filtrelenebilir. Tamamlanan denetimler, &lsquo;Denetim Analizi&rsquo; ekranında departman, tarih, denetim t&uuml;r&uuml; veya bulguya g&ouml;re raporlanır.",
+          "Sonu&ccedil; olarak; işletme standartlarınızla &ouml;l&ccedil;&uuml;lebilir veriye d&ouml;n&uuml;şt&uuml;ren, s&uuml;rd&uuml;r&uuml;lebilir kalite i&ccedil;in y&ouml;netime karar desteği sağlayan bir denetim altyapısı sunar.",
+          "B&ouml;ylece denetim sonu&ccedil;ları sadece kaydedilmiş olmaz; iyileştirme, tekrar denetim ve risk azaltma s&uuml;re&ccedil;leriyle b&uuml;t&uuml;nleşik &ccedil;alışır."
+        ]
+      },
+      {
+        "title": "Denetim Raporlama",
+        "para": "Denetim raporları artık tek bir tuşla hazırlanabilir. Manuel olarak saatler s&uuml;ren raporlama s&uuml;re&ccedil;leri saniyeler i&ccedil;inde tamamlanır; t&uuml;m bulgular, &ouml;neriler ve aksiyonlar eksiksiz şekilde sistemden otomatik olarak rapora yansır. Şirketin logo ve kurumsal bilgileriyle profesyonel bir formatta sunulan bu raporlar, hem &uuml;st y&ouml;netime hem de ilgili birimlere kolayca iletilebilir. B&ouml;ylece ISO, TURQUALITY ve diğer t&uuml;m denetim s&uuml;reci hızlanırken, ra",
+        "bullets": [
+          "Elektraweb DOİF Y&ouml;netimi Mod&uuml;l&uuml;, işletmelerin kalite ve operasyon s&uuml;re&ccedil;lerinde y&uuml;r&uuml;t&uuml;len denetim, risk analizi ve i&ccedil; kontrol faaliyetleri sonucunda tespit edilen uygunsuzlukların sistematik bi&ccedil;imde kayıt altına alınmasını sağlar."
+        ]
+      },
+      {
+        "title": "DOİF Y&ouml;netimi (D&uuml;zeltici, &Ouml;nleyici, İyileştirici Faaliyetler)",
+        "para": "",
+        "bullets": [
+          "Elektraweb DOİF Y&ouml;netimi Mod&uuml;l&uuml;, işletmelerin kalite ve operasyon s&uuml;re&ccedil;lerinde y&uuml;r&uuml;t&uuml;len denetim, risk analizi ve i&ccedil; kontrol faaliyetleri sonucunda tespit edilen uygunsuzlukların sistematik bi&ccedil;imde kayıt altına alınmasını sağlar.",
+          "DOİF Formu &uuml;zerinden d&uuml;zeltici, &ouml;nleyici veya iyileştirici faaliyet se&ccedil;ilerek; uygunsuzluk t&uuml;r&uuml;, tespit eden kişi, sorumlu departman, k&ouml;k sebep, yapılacak faaliyet, boyut, seviye ve kapanış tarihi detaylı bi&ccedil;imde kaydedilir.",
+          "S&uuml;re&ccedil; boyunca ilgili fotoğraflar, dok&uuml;manlar, revize edilmiş prosed&uuml;r bağlantıları ve yetkili pozisyon bilgileri eklenebilir.",
+          "DOİF ekranı &uuml;zerinden faaliyet durumu (Yeni, A&ccedil;ık, Planlandı, Kapatıldı, İptal) izlenir; her adımda sistem otomatik bildirimler &uuml;retir.",
+          "DOİF Analizi ekranı, kayıtların s&uuml;resi, departmanı, k&ouml;k nedeni ve boyutu bazında filtrelenmesini ve raporlanmasını sağlar.",
+          "DOİF Mod&uuml;l&uuml;, TURQUALITY programı ile ISO 9001, ISO 22000, ISO 45001 gibi uluslararası kalite y&ouml;netim sistemlerinin gereklilikleri ile uyumlu bir yapı sunar.",
+          "Bu yapı, kurum genelinde kalite bilincini, şeffaf raporlamayı ve s&uuml;rekli iyileştirme k&uuml;lt&uuml;r&uuml;n&uuml; g&uuml;&ccedil;lendirir."
+        ]
+      },
+      {
+        "title": "Risk Y&ouml;netimi (Analiz, Olasılık, Şiddet ve Frekans Değerleme Sistemi)",
+        "para": "",
+        "bullets": [
+          "Elektraweb Risk Y&ouml;netimi, kurumların faaliyet bazlı risk analizlerini standart bir format ile dijital ortamda y&uuml;r&uuml;t&uuml;lmesini sağlar.",
+          "Risk Analizi ekranında her faaliyet i&ccedil;in tehlike, mevcut durum, olas&amp;ı; risk, etkilenebilecek paydaşlar, tespitin tarihi ve a&ccedil;ıklamalar tanımlanır.",
+          "Her faaliyet &ccedil;evresel, operasyonel, finansal veya iş g&uuml;venliği temelli riskler a&ccedil;ısından değerlendirilir.",
+          "Risk olasılığı, şiddeti ve frekansı tanımlanarak mevcut ve sonraki durumlar analiz edilir.",
+          "Riskin etkilediği alanlar, &ouml;nlem planları ve termin tarihleri kayıt altına alınır; bu sayede risklerin g&ouml;z ardı edilmesi engellenir.",
+          "Risk Azaltma se&ccedil;enekleri (riski transfer et, riski y&ouml;net, faaliyetten ka&ccedil;ın, riski g&ouml;ze al vb.) işaretlenerek alınan aksiyon t&uuml;r&uuml; kayıt altına alınır.",
+          "T&uuml;m değerlendirme tabloları (olasılık, frekans, şiddet, risk değeri) tanımlanabilir yapıdadır ve kurumun kendi kriterlerine g&ouml;re &ouml;zelleştirilebilir.",
+          "Kalite, İş Sağlığı ve G&uuml;venliği, Gıda G&uuml;venliği, &Ccedil;evre ve Operasyon birimlerinde aktif olarak kullanılır."
+        ]
+      },
+      {
+        "title": "Ekipman Bakım Y&ouml;netimi",
+        "para": "",
+        "bullets": [
+          "Elektraweb Ekipman Bakım Y&ouml;netimi Mod&uuml;l&uuml;, işletmedeki t&uuml;m ekipmanların konum, t&uuml;r, bakım periyodu ve sorumluluklarını tek bir dijital sistemde toplar.",
+          "Her ekipman i&ccedil;in tip, lokasyon, i&ccedil;/dış bakım periyodu, yasal zorunluluk durumu ve ilgili bakım firması tanımlanır.",
+          "Bakım S&ouml;zleşmesi ekranında, s&ouml;zleşme numarası, firma, başlangı&ccedil;-bitiş tarihi ve ekipman bağlantısı yapılır.",
+          "Her bakım kaydı, ger&ccedil;ekleşme durumu ve bakım firması bazında kayıt altına alınır; b&ouml;ylece d&uuml;zenleme ve mutabakat ortadan kalkar.",
+          "Bakım Takvimi, planlanan ve ger&ccedil;ekleşen bakımları ay sekmesinde listeler; bakım firması, tarih ve durum (planlandı/ger&ccedil;ekleşti) bilgilerini i&ccedil;erir.",
+          "Bu yapı sayesinde kurumlar; iş g&uuml;venliği, operasyonel s&uuml;reklilik ve kalite standartlarına s&uuml;re&ccedil;lebilir &ouml;l&ccedil;&uuml;de korunur."
+        ]
+      },
+      {
+        "title": "Mevzuat Y&ouml;netimi",
+        "para": "Eğitim Tanımları: Kurumda verilen t&uuml;m eğitimlerin t&uuml;r&uuml;n&uuml;, s&uuml;resini ve ge&ccedil;erlilik s&uuml;resini belirler. Zorunlu, oryantasyon, dil veya kişisel gelişim eğitimleri bu ekrandan tanımlanır. Eğitim s&uuml;releri, kategori bazında y&ouml;netilir; sistem yasal zorunluluk uyarıları verir.",
+        "bullets": [
+          "Mevzuat Y&ouml;netimi mod&uuml;l&uuml;, resmi gazetede yayınlanan her t&uuml;rl&uuml; mevzuat (y&ouml;netmelik, tebliğ, y&ouml;nerge vb.) i&ccedil;in detaylı kayıt ve revizyon takibi sağlar.",
+          "Kurumun tabi olduğu t&uuml;m yasal d&uuml;zenlemeleri, revizyon tarihlerini ve sorumlu departmanları sistematik bi&ccedil;imde kayıt altına alır.",
+          "Her kayıt, ilgili departman, sorumlu kişi ve sorumlu kurum bilgileri ile ilişkilendirilir.",
+          "&quot;Revize&quot; sekmesinde değişen maddeler, belge tipi ve uygunluk durumu ayrı satırlarda takip edilir.",
+          "B&ouml;ylece kurumsal denetimlerde, i&ccedil; ve dış standartlara uygunluk net bi&ccedil;imde belgelenir."
+        ]
+      },
+      {
+        "title": "Eğitim Y&ouml;netimi",
+        "para": "Eğitim Tanımları: Kurumda verilen t&uuml;m eğitimlerin t&uuml;r&uuml;n&uuml;, s&uuml;resini ve ge&ccedil;erlilik s&uuml;resini belirler. Zorunlu, oryantasyon, dil veya kişisel gelişim eğitimleri bu ekrandan tanımlanır. Eğitim s&uuml;releri, kategori bazında y&ouml;netilir; sistem yasal zorunluluk uyarıları verir.",
+        "bullets": []
+      },
+      {
+        "title": "&Ouml;l&ccedil;me ve Değerlendirme Y&ouml;netimi",
+        "para": "&Ouml;l&ccedil;me ve Değerlendirme Y&ouml;netimi, kurumların ihtiya&ccedil; duyduğu sınav, form ve anket s&uuml;re&ccedil;lerini tek bir yapı altında toplayan kapsamlı bir y&ouml;netim mod&uuml;l&uuml;d&uuml;r. &Ccedil;alışan memnuniyetinden eğitim değerlendirmelerine, bilgi testlerinden operasyon formlarına kadar t&uuml;m &ouml;l&ccedil;&uuml;m s&uuml;re&ccedil;leri dijital ortamda oluşturulur, uygulanır ve analiz edilir. Kullanıcılar, soru setlerini kolayca tasarlayabilir; sonu&ccedil;lar ise ",
+        "bullets": [
+          "Sınav, form ve anket s&uuml;re&ccedil;leri tek bir panel &uuml;zerinden oluşturulur, yapılandırılır ve y&ouml;netilir.",
+          "Yorum, tek se&ccedil;im, &ccedil;oklu se&ccedil;im ve derecelendirme gibi farklı soru tipleri tanımlanır ve s&uuml;re&ccedil;lerde kullanılır.",
+          "Katılımcı bazlı y&ouml;netim yapılır; anonimlik ve g&ouml;r&uuml;n&uuml;rl&uuml;k ayarları esnek şekilde belirlenir.",
+          "QR kod &uuml;retilir ve mobil uyumlu ekranlar sayesinde hızlı doldurma deneyimi sağlanır.",
+          "Soru, kategori ve cevap yapıları detaylı şekilde d&uuml;zenlenir ve ihtiya&ccedil;lara g&ouml;re &ouml;zelleştirilir.",
+          "Sonu&ccedil;lar kişi bazlı veya soru bazlı olarak analiz edilir ve raporlanır."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2024/08/kalite_dokuman_banner.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/tel_ekran05.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/tel_ekran03.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/tel_ekran01.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/tel_ekran02.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/06/tel_ekran06.png"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/kalite-ve-dokuman-yonetim-sistemi-1.jpg",
+      "screenshots/elektraweb/kalite-ve-dokuman-yonetim-sistemi-2.png",
+      "screenshots/elektraweb/kalite-ve-dokuman-yonetim-sistemi-3.png"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "elektraweb-lite",
+    "code": "MINI",
+    "name": "Elektraweb Lite",
+    "url": "https://www.elektraweb.com/elektraweb-lite/",
+    "api": {
+      "ID": 177,
+      "NAME": "ElektraWeb Elektraweb Mini Yazılımı ",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0,
+      "BASEPRICE": 0,
+      "ORDERNO": 105,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Elektraweb Mini",
+      "HIDE_IN_PRICE_LIST": true,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://yardim.elektraweb.com/",
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "MINI",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Elektraweb Lite",
+    "sections": [
+      {
+        "title": "Oda Planı &Ouml;zellikleri",
+        "para": "1 - Se&ccedil;ilen periyoda g&ouml;re ekranı g&ouml;r&uuml;nt&uuml;leyebilme",
+        "bullets": []
+      },
+      {
+        "title": "Rezervasyon Oluşturma ve Detayları",
+        "para": "18 - Takvim &uuml;zerinde s&uuml;r&uuml;kleyerek rezervasyon oluşturabilme",
+        "bullets": [
+          "S&uuml;r&uuml;kleyerek rezervasyon s&uuml;resini uzatma veya kısaltma",
+          "S&uuml;r&uuml;kleyerek oda değişikliği veya tarih değişikliği yapabilme"
+        ]
+      },
+      {
+        "title": "Fiyatlandırma",
+        "para": "33 - Otomatik gelen g&uuml;nl&uuml;k fiyatı manuel olarak değiştirebilme ve indirim yapabilme",
+        "bullets": []
+      },
+      {
+        "title": "Folyo İşlemleri",
+        "para": "37 - Hızlı postinge folyodan ulaşabilme",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/elektraweb-lite-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "elektraweb-mini",
+    "code": "MINI",
+    "name": "Elektraweb MINI",
+    "url": "https://www.elektraweb.com/elektraweb-mini/",
+    "api": {
+      "ID": 177,
+      "NAME": "ElektraWeb Elektraweb Mini Yazılımı ",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0,
+      "BASEPRICE": 0,
+      "ORDERNO": 105,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Elektraweb Mini",
+      "HIDE_IN_PRICE_LIST": true,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": "https://yardim.elektraweb.com/",
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "MINI",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Elektraweb MİNİ",
+    "sections": [
+      {
+        "title": "K&uuml;&ccedil;&uuml;k Oteller i&ccedil;in Kanal Y&ouml;netimi İ&ccedil;inde",
+        "para": "T&uuml;rkiye&rsquo;nin ve d&uuml;nyanın en iyi otellerinde tercih edilen Elektraweb Otel Y&ouml;netim Sistemi, daha kolay ve ekonomik bir versiyonu olan Elektraweb Mini &lsquo;yi k&uuml;&ccedil;&uuml;k &ouml;l&ccedil;ekli otellerin kullanımına sunuyor. Elektraweb Mini, online rezervasyon ve kanal y&ouml;netimi ile entegre olduğundan otelinizi daha karlı satar ve &ccedil;ok daha kolay y&ouml;netirsiniz.",
+        "bullets": []
+      },
+      {
+        "title": "MİNİ OTEL PROGRAMI",
+        "para": "T&uuml;rkiye&rsquo;nin ve d&uuml;nyanın en iyi otellerinde tercih edilen Elektraweb Otel Y&ouml;netim Sistemi, daha kolay ve ekonomik bir versiyonu olan Elektraweb Mini &lsquo;yi k&uuml;&ccedil;&uuml;k &ouml;l&ccedil;ekli otellerin kullanımına sunuyor. Elektraweb Mini, online rezervasyon ve kanal y&ouml;netimi ile entegre olduğundan otelinizi daha karlı satar ve &ccedil;ok daha kolay y&ouml;netirsiniz.",
+        "bullets": [
+          "Rezervasyon, check-in, check-out, konaklama, blokaj, folyo, fatura, g&uuml;n sonu, polis kimlik bildirimi ve maliye raporu&nbsp;işlemlerini ger&ccedil;ekleştirirsiniz"
+        ]
+      },
+      {
+        "title": "Elektraweb Mini ile;",
+        "para": "&nbsp;",
+        "bullets": [
+          "Rezervasyon, check-in, check-out, konaklama, blokaj, folyo, fatura, g&uuml;n sonu, polis kimlik bildirimi ve maliye raporu&nbsp;işlemlerini ger&ccedil;ekleştirirsiniz",
+          "KBS&nbsp;Bildirimleri ni hatasız ve anlık olarak ger&ccedil;ekleştirebilirsiniz",
+          "KVKK &nbsp;kriterlerine kolayca uyum sağlarsınız",
+          "Konaklama vergisi&nbsp; otomatik olarak faturanıza eklenir",
+          "Faturanızı&nbsp;saniyeler i&ccedil;inde hatasız olarak kesersiniz",
+          "Maliye Listesi, G&uuml;n Sonu Raporu &nbsp;vb.ihtiyacınız olan t&uuml;m raporları tek tıkla hazırlarsınız",
+          "G&uuml;nl&uuml;k Durum&nbsp;raporları her an elinizin altındadır"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2020/03/bekranlar_mini.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/03/ekine_rack.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/03/ekine_004.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/03/ekine_websitesitr.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2020/03/ekine_2.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/elektraweb-mini-1.jpg",
+      "screenshots/elektraweb/elektraweb-mini-2.jpg",
+      "screenshots/elektraweb/elektraweb-mini-3.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "yapay-zeka-destekli-otel-yonetimi",
+    "code": "ArtificialIntelligenceIntegration",
+    "name": "Yapay Zeka Destekli Otel",
+    "url": "https://www.elektraweb.com/yapay-zeka-destekli-otel-yonetimi/",
+    "api": {
+      "ID": 314,
+      "NAME": "ElektraWeb Yapay Zeka Entegrasyonu Yazılımı",
+      "DESCRIPTION": "İtibar Yönetimi Yapay Zeka Entegrasyonu yıllık kullanım ücreti",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 12.5,
+      "ORDERNO": 74,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": true,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Artificial Intelligence Integration",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "ArtificialIntelligenceIntegration",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Yapay Zeka Destekli Otel Y&ouml;netimi",
+    "sections": [
+      {
+        "title": "Yapay Zeka Destekli Otel Y&ouml;netimi",
+        "para": "Rezervasyon Asistanı",
+        "bullets": [
+          "Her Dilde Sesli ve yazılı İletişim kurar",
+          "En iyi tarih ve Fiyat Alternatiflerini hazırlar",
+          "Rezervasyon Bilgilerini Eksiksiz Alır",
+          "&nbsp;&Ouml;deme Linki ve Konfirmasyon G&ouml;nderir",
+          "7/24 &ccedil;alışır",
+          "Misafirlerin taleplerini sesli olarak alır",
+          "İlgili b&ouml;l&uuml;m i&ccedil;in g&ouml;rev ataması yapar",
+          "G&uuml;nl&uuml;k programlar hakkında anında bilgi verir"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai3.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai4.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai4-1.png",
+      "https://www.elektraweb.com/wp-content/uploads/2025/02/Ai6.png"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/yapay-zeka-destekli-otel-yonetimi-1.png",
+      "screenshots/elektraweb/yapay-zeka-destekli-otel-yonetimi-2.png",
+      "screenshots/elektraweb/yapay-zeka-destekli-otel-yonetimi-3.png"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "otel-satis-portali",
+    "code": "PORTAL",
+    "name": "Otel Satış Portalı",
+    "url": "https://www.elektraweb.com/otel-satis-portali/",
+    "api": {
+      "ID": 226,
+      "NAME": "ElektraWeb ElektraHotels Portalı Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0,
+      "BASEPRICE": 300,
+      "ORDERNO": 65,
+      "INSTALLATIONFEE": 3600,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": true,
+      "ABROAD": null,
+      "NAME_EN": "Elektra Hotels Portal",
+      "HIDE_IN_PRICE_LIST": true,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": 0,
+      "CODE": "PORTAL",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": 0
+    },
+    "pageTitle": "Otel Satış Portalı",
+    "sections": [
+      {
+        "title": "ElektraWeb Otel Satış Portalı &Ccedil;&ouml;z&uuml;mleri",
+        "para": "Zincir oteller i&ccedil;in &ldquo;Merkezi Rezervasyon Portalı&rdquo; &ccedil;&ouml;z&uuml;mleri i&ccedil;ermektedir. Elektraweb Satış Portalı &Ccedil;&ouml;z&uuml;mleri ile işletmeler, &ccedil;ağrı merkezlerinde veya web sitelerinde u&ccedil;ak, tur, transfer hizmetlerini de dinamik olarak paketleyerek, B2B, B2C ve B2E satışlar yapabilme imkanına kavuşurlar.",
+        "bullets": [
+          "Kullanıcı ara y&uuml;z&uuml; hem &ccedil;ok basit hem de &ccedil;ok fonksiyoneldir",
+          "T&uuml;m oda tipleri ve fiyat opsiyonlarını tek ekranda g&ouml;rebilme kolaylığı sağlar",
+          "G&uuml;nl&uuml;k fiyat ve doluluğa aynı ekrandan ulaşılır",
+          "Yapılan indirim ve promosyonlar &ouml;ne &ccedil;ıkarılabilir",
+          "İletişim talebi, yol tarifi, hava durumu ve online destek &ouml;zellikleri eklenebilir"
+        ]
+      },
+      {
+        "title": "Tek Ekranda Kolay ve Hızlı Rezervasyon",
+        "para": "",
+        "bullets": [
+          "Kullanıcı ara y&uuml;z&uuml; hem &ccedil;ok basit hem de &ccedil;ok fonksiyoneldir",
+          "T&uuml;m oda tipleri ve fiyat opsiyonlarını tek ekranda g&ouml;rebilme kolaylığı sağlar",
+          "G&uuml;nl&uuml;k fiyat ve doluluğa aynı ekrandan ulaşılır",
+          "Yapılan indirim ve promosyonlar &ouml;ne &ccedil;ıkarılabilir",
+          "İletişim talebi, yol tarifi, hava durumu ve online destek &ouml;zellikleri eklenebilir",
+          "Yorumlara rezervasyon sayfasından ulaşım imkanı verilebilir",
+          "Değişik oda tipi ve tarihlere aynı ekrandan rezervasyon yapılabilir"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2021/09/otelportali_banner.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/09/landingpage_satisportali-min.png",
+      "https://www.elektraweb.com/wp-content/uploads/2023/08/landingpage_satisportali.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/09/seyahat_portali_cozumleri2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/09/seyahat_portali_cozumleri3-min.png",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/otel-satis-portali-1.jpg",
+      "screenshots/elektraweb/otel-satis-portali-2.png",
+      "screenshots/elektraweb/otel-satis-portali-3.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "park-otomasyon-cozumleri",
+    "code": "PARK",
+    "name": "Park Otomasyon",
+    "url": "https://www.elektraweb.com/park-otomasyon-cozumleri/",
+    "api": {
+      "ID": 185,
+      "NAME": "ElektraWeb Park Otomasyonu  Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.4,
+      "BASEPRICE": 200,
+      "ORDERNO": 69,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": true,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": false,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Park Automation Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 30,
+      "TR_LINK": "https://www.elektraweb.com/park-otomasyon-cozumleri/",
+      "EN_LINK": "",
+      "DESCRIPTION_EN": "Eptera Park Automation is a cloud based ticketing and access control system for theme parks clubs and beaches. It supports sales payments and barcode or QR or RFID based entry, and it can run membership and prepaid wallet flows in the same platform.",
+      "TAXPERCENT": null,
+      "CODE": "PARK",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Park Otomasyon &Ccedil;&ouml;z&uuml;mleri",
+    "sections": [
+      {
+        "title": "Elektraweb Park / Kul&uuml;p / Beach Otomasyon Sistemi",
+        "para": "Eğlence ve tema parkları, kul&uuml;pler, beachler, eğlence, k&uuml;lt&uuml;r, sanat veya spor alanlarının satış, &ouml;deme alma, barkodlu otomatik giriş s&uuml;re&ccedil;lerinin y&ouml;netilmesini sağlayan otomasyon sistemidir. &Uuml;ye y&ouml;netim sistemleri ile entegre &ccedil;alıştığından, &uuml;ye tiplerine g&ouml;re &ouml;n &ouml;deme alma, fiyatlandırma, otomatik ge&ccedil;iş izni, &uuml;ye bileklik veya kart basımı s&uuml;re&ccedil;lerini tek program &uuml;zerinden &ccedil;&ouml;z&uuml;",
+        "bullets": [
+          "Web tabanlı ve bulut yapıdadır; internetin olduğu her yerde hemen kullanıma başlanabilir.",
+          "Sınırsız sayıda giriş turnikesi ve her t&uuml;rl&uuml; kart, barkod, QR okuyucusu ile &ccedil;alışabilir.",
+          "Hızlı ve kolay giriş ekranı ile tekli ve / veya grup biletleri kolayca basılır. Bu biletler kart veya bileklik şeklinde olabilir.",
+          "Basılan kart veya bileklikler Qr (Barkod) veya RF (temassız) teknolojisini kullanabilir."
+        ]
+      },
+      {
+        "title": "Hızlı ve Kolay Y&ouml;netim",
+        "para": "",
+        "bullets": [
+          "Web tabanlı ve bulut yapıdadır; internetin olduğu her yerde hemen kullanıma başlanabilir.",
+          "Sınırsız sayıda giriş turnikesi ve her t&uuml;rl&uuml; kart, barkod, QR okuyucusu ile &ccedil;alışabilir.",
+          "Hızlı ve kolay giriş ekranı ile tekli ve / veya grup biletleri kolayca basılır. Bu biletler kart veya bileklik şeklinde olabilir.",
+          "Basılan kart veya bileklikler Qr (Barkod) veya RF (temassız) teknolojisini kullanabilir.",
+          "Bir grubun t&uuml;m &uuml;yelerine ayrı kart veya bileklik basılabileceği gibi t&uuml;m grup i&ccedil;in ortak bir kart / bileklik de basılabilir.",
+          "Ayrı kartlar basılsa bile aileler ve gruplar isterlerse ortak bakiye kullanabilirler.",
+          "İlk kayıt esnasında istenirse ad soyad, telefon numarası gibi bilgiler alınıp &uuml;yelik ve CRM &ccedil;alışması yapılabilir.",
+          "İlk kayıt esnasında ve/veya sonrasında i&ccedil;erideki harcamalar i&ccedil;in ayrıca karta para y&uuml;klenebilir.",
+          "Turnike ve elektronik kapılardan ge&ccedil;işte bakiye kontrol&uuml; yapılır ve giriş &uuml;creti verilen biletin &ouml;zelliklerine g&ouml;re karttan d&uuml;şer.",
+          "Karta y&uuml;klenen ekstra bakiyesini ziyaret&ccedil;iler i&ccedil;erideki satış noktalarında harcayabilir, kendi cep telefonlarından kart bakiyelerini ve ekstrelerin g&ouml;rebilirler. İsterlerse kredi kartı ile online para y&uuml;kleyebilirler."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/park_otomasyon-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/08/landingpage_otomasyon2.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/08/landingpage_otomasyon3.png",
+      "https://www.elektraweb.com/wp-content/uploads/2021/08/otomasyon_image1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/08/bileklik.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2021/08/land_of_legends-min.png"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/park-otomasyon-cozumleri-1.jpg",
+      "screenshots/elektraweb/park-otomasyon-cozumleri-2.png",
+      "screenshots/elektraweb/park-otomasyon-cozumleri-3.png"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "sistem-entegrasyonlari",
+    "code": "WebService",
+    "name": "Sistem Entegrasyonları",
+    "url": "https://www.elektraweb.com/sistem-entegrasyonlari/",
+    "api": {
+      "ID": 30,
+      "NAME": "ElektraWeb Web Servis Yazılımı ",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.1,
+      "BASEPRICE": 10,
+      "ORDERNO": 96,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Eptera Web Service Software",
+      "HIDE_IN_PRICE_LIST": null,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Provides guest identity validation for Wi-Fi access via PMS data.",
+      "TAXPERCENT": null,
+      "CODE": "WebService",
+      "HIDE_IN_EPTERA_PRICE_LIST": null,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Sistem Entegrasyonları",
+    "sections": [
+      {
+        "title": "Sistem Entegrasyonları",
+        "para": "Elektraweb Otel Programı,&nbsp;sistem entegrasyonları sayesinde 3. parti sistemlerle entegre &ccedil;alışır.",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/dijital_fuar-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/sistem_ent.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/sistem-entegrasyonlari-1.jpg",
+      "screenshots/elektraweb/sistem-entegrasyonlari-2.jpg",
+      "screenshots/elektraweb/sistem-entegrasyonlari-3.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "fuar-ve-sempozyum-dijital-kayit-sistemi",
+    "code": "ExhibitionandSymposium",
+    "name": "Fuar Kongre Kayıt",
+    "url": "https://www.elektraweb.com/fuar-ve-sempozyum-dijital-kayit-sistemi/",
+    "api": {
+      "ID": 242,
+      "NAME": "ElektraWeb Fuar ve Sempozyum  Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0,
+      "BASEPRICE": 417,
+      "ORDERNO": 208,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Eptera Exhibition and Symposium Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "ExhibitionandSymposium",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Fuar Kongre ve Seminer Dijital Kayıt Sistemi",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/dijital_fuar-1.jpg",
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/fuar-ve-sempozyum-dijital-kayit-sistemi-1.jpg",
+      "screenshots/elektraweb/fuar-ve-sempozyum-dijital-kayit-sistemi-2.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "yurt-yonetim-programi",
+    "code": "Okul",
+    "name": "Yurt Yönetim Programı",
+    "url": "https://www.elektraweb.com/yurt-yonetim-programi/",
+    "api": {
+      "ID": 322,
+      "NAME": "Elektraweb Okul Yazılımı",
+      "DESCRIPTION": null,
+      "ROOMPRICE": 0.75,
+      "BASEPRICE": 150,
+      "ORDERNO": 61,
+      "INSTALLATIONFEE": 1000,
+      "USEFACTOR": false,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Eptera School Softwarwe",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 100,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": 0,
+      "CODE": "Okul",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": 0
+    },
+    "pageTitle": "Yurt Y&ouml;netim Programı",
+    "sections": [
+      {
+        "title": "Yurt Y&ouml;netim Programı",
+        "para": "Opex Yurt Y&ouml;netimi Programı , Yurt y&ouml;netiminin;",
+        "bullets": [
+          "Konaklayan &ouml;ğrencilerin s&ouml;zleşmelerini hazırlayabildiği,",
+          "&Ouml;ğrencilerin ve ailelerinin bilgilerini kaydedip, ihtiya&ccedil; halinde ulaşabilecekleri,",
+          "CRM sistemini y&ouml;netebilecekleri,",
+          "&Ouml;deme ve tahsilat s&uuml;re&ccedil;lerini takip edebilecekleri,",
+          "Mobil uygulama sayesinde &ouml;ğrenciler ile 7/24 iletişim halinde kalabildikleri",
+          "Online Anketler yoluyla memnuniyet araştırması yapabildikleri",
+          "Online arıza bildirimi alabildikleri",
+          "Odaların m&uuml;saitlik durumlarını tek ekranda izleyebilecekleri"
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/yurt-yonetim-programi-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "marina-yonetim-sistemi",
+    "code": "MARIN",
+    "name": "Marina Yönetim",
+    "url": "https://www.elektraweb.com/marina-yonetim-sistemi/",
+    "api": {
+      "ID": 284,
+      "NAME": "ElektraWeb Marina Yönetimi Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 2,
+      "BASEPRICE": 0,
+      "ORDERNO": 207,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": null,
+      "SHOWQUANTITY": null,
+      "ABROAD": null,
+      "NAME_EN": "Eptera Marina Management Software",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 360,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": "Eptera Marina Management System helps marinas manage operations from a single cloud based platform, accessible on web and mobile from any device with internet access.",
+      "TAXPERCENT": null,
+      "CODE": "MARIN",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Marina Y&ouml;netim Sistemi",
+    "sections": [
+      {
+        "title": "ELEKTRAWEB Marina Y&ouml;netim Sistemi ile Teknelerinizi Y&ouml;netin, S&uuml;re&ccedil;leri Dijitalleştirin",
+        "para": "G&uuml;n&uuml;m&uuml;z&uuml;n rekabet&ccedil;i marina işletmeciliğinde başarı; yalnızca iskeleleri doldurmakla değil, operasyonları eksiksiz y&ouml;netmek, m&uuml;şteri memnuniyetini en &uuml;st seviyeye taşımak ve finansal s&uuml;rd&uuml;r&uuml;lebilirliği sağlamakla &ouml;l&ccedil;&uuml;l&uuml;yor.",
+        "bullets": [
+          "Tekneler &amp; M&uuml;şteri Profilleri: Her tekne ve sahibine ait t&uuml;m bilgiler eksiksiz kayıt altına alınır.",
+          "S&ouml;zleşme &amp; Rezervasyon: Uzun ve kısa d&ouml;nemli bağlama s&ouml;zleşmeleri, fiyatlandırma ve rezervasyon s&uuml;re&ccedil;leri kusursuz y&ouml;netilir.",
+          "Giriş&ndash;&Ccedil;ıkış &amp; Seyir: T&uuml;m hareketler kayıt altında tutularak şeffaflık ve g&uuml;venlik sağlanır.",
+          "Muhasebe &amp; Finans: Gelir-gider, faturalama, tahsilat ve POS entegrasyonlarıyla finansal disiplin g&uuml;&ccedil;lendirilir.",
+          "Bakım &amp; İş Emirleri: Teknik bakım, stok ve iş g&uuml;c&uuml; y&ouml;netimi tek noktadan kontrol edilerek sorumluluk gerektiren işler g&uuml;vence altına alınır."
+        ]
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/marina-yonetim-sistemi-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "tedarik-portali",
+    "code": null,
+    "name": "Tedarik Portalı",
+    "url": "https://www.elektraweb.com/tedarik-portali/",
+    "api": null,
+    "pageTitle": "Tedarik Portalı",
+    "sections": [
+      {
+        "title": "Tedarik&ccedil;i Portalı ile İşinizi Y&uuml;kseltin!",
+        "para": "Zamanınız kıymetli, b&uuml;t&ccedil;eniz &ouml;nemli ve iş s&uuml;re&ccedil;lerinizin verimli olması gerekiyor. Tedarik&ccedil;i portalımız ile t&uuml;m bu ihtiya&ccedil;larınıza kolayca &ccedil;&ouml;z&uuml;m bulabilirsiniz. Hızlı, g&uuml;venilir, esnek ve ekonomik alımlar i&ccedil;in hemen bizimle &ccedil;alışmaya başlayın!",
+        "bullets": []
+      }
+    ],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/tedarik-portali-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "premium-sunucu-hizmeti",
+    "code": "PremiumServerforPMS",
+    "name": "Premium Sunucu",
+    "url": "https://www.elektraweb.com/premium-sunucu-hizmeti/",
+    "api": {
+      "ID": 300,
+      "NAME": "ElektraWeb Premium Sunucu PMS Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0,
+      "BASEPRICE": 200,
+      "ORDERNO": 36,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Premium Server for PMS",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 0,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "PremiumServerforPMS",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Premium Sunucu Hizmeti",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/premium-sunucu-hizmeti-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "google-yedekleme",
+    "code": "BackupforPMS",
+    "name": "Google Yedekleme",
+    "url": "https://www.elektraweb.com/google-yedekleme/",
+    "api": {
+      "ID": 298,
+      "NAME": "ElektraWeb Yedekleme PMS Yazılımı",
+      "DESCRIPTION": "",
+      "ROOMPRICE": 0.25,
+      "BASEPRICE": 0,
+      "ORDERNO": 34,
+      "INSTALLATIONFEE": 0,
+      "USEFACTOR": false,
+      "CATEGORYID": 1,
+      "SHOWQUANTITY": null,
+      "ABROAD": true,
+      "NAME_EN": "Backup for PMS",
+      "HIDE_IN_PRICE_LIST": false,
+      "MINPRICE": 12.5,
+      "USERPRICE": 0,
+      "TR_LINK": null,
+      "EN_LINK": null,
+      "DESCRIPTION_EN": null,
+      "TAXPERCENT": null,
+      "CODE": "BackupforPMS",
+      "HIDE_IN_EPTERA_PRICE_LIST": true,
+      "INSTALLATION_TAXPERCENT": null
+    },
+    "pageTitle": "Google Yedekleme",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/google-yedekleme-1.jpg"
+    ]
+  },
+  {
+    "cat": "Diğer",
+    "slug": "viofun",
+    "code": null,
+    "name": "Viofun",
+    "url": "https://www.elektraweb.com/viofun/",
+    "api": null,
+    "pageTitle": "Viofun",
+    "sections": [],
+    "imageUrls": [
+      "https://www.elektraweb.com/wp-content/uploads/2022/09/restoran_POS_deneme1.jpg"
+    ],
+    "localImages": [
+      "screenshots/elektraweb/viofun-1.jpg"
+    ]
+  }
+]

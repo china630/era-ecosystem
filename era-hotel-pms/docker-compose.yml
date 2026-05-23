@@ -1,0 +1,91 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: era-hotel-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: era_hotel_pms
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d era_hotel_pms"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: era-hotel-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: era-hotel-app
+    profiles: ["dev"]
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/era_hotel_pms?schema=public
+      REDIS_URL: redis://redis:6379
+      EXTERNAL_INTEGRATION_URL: http://localhost:3000/api/integration/mock-receiver
+      EXTERNAL_INTEGRATION_TOKEN: ""
+      EXTERNAL_HTTP_TIMEOUT_MS: "10000"
+      EXTERNAL_RETRY_MAX: "3"
+      HOTEL_PROPERTY_CODE: NAFTA-SANATORIUM-001
+      RUN_SEED: "true"
+      NODE_ENV: development
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+
+  app-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: era-hotel-app-prod
+    profiles: ["prod"]
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/era_hotel_pms?schema=public
+      REDIS_URL: redis://redis:6379
+      EXTERNAL_INTEGRATION_URL: http://app-prod:3000/api/integration/mock-receiver
+      EXTERNAL_INTEGRATION_TOKEN: ""
+      EXTERNAL_HTTP_TIMEOUT_MS: "10000"
+      EXTERNAL_RETRY_MAX: "3"
+      HOTEL_PROPERTY_CODE: NAFTA-SANATORIUM-001
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/rooms"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:

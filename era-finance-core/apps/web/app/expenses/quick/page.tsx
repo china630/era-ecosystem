@@ -1,0 +1,157 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { apiFetch } from "../../../lib/api-client";
+import { useAuth } from "../../../lib/auth-context";
+import {
+  CARD_CONTAINER_CLASS,
+  INPUT_BORDERED_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from "../../../lib/design-system";
+import { useRequireAuth } from "../../../lib/use-require-auth";
+import { PageHeader } from "../../../components/layout/page-header";
+
+export default function QuickExpensePage() {
+  const { t } = useTranslation();
+  const { token, ready } = useRequireAuth();
+  const { organizationId: orgId } = useAuth();
+  const [amount, setAmount] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [description, setDescription] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [departments, setDepartments] = useState<Array<{ id: string; name: string }>>(
+    [],
+  );
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token || !orgId) {
+      setDepartments([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const res = await apiFetch("/api/hr/departments");
+      if (cancelled || !res.ok) return;
+      const data = (await res.json()) as Array<{ id: string; name: string }>;
+      setDepartments(data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, orgId]);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token) return;
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n <= 0) return;
+    setBusy(true);
+    setMsg(null);
+    setErr(null);
+    const res = await apiFetch("/api/accounting/quick-expense", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amount: n,
+        date: date || undefined,
+        description: description.trim() || undefined,
+        ...(departmentId ? { departmentId } : {}),
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      setErr(`${t("quickExpense.err")}: ${await res.text()}`);
+      return;
+    }
+    setMsg(t("quickExpense.ok"));
+    setAmount("");
+    setDescription("");
+    setDepartmentId("");
+  }
+
+  if (!ready) {
+    return (
+      <div className="text-gray-600">
+        <p>{t("common.loading")}</p>
+      </div>
+    );
+  }
+  if (!token) return null;
+
+  if (!orgId) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <PageHeader
+          title={t("quickExpense.title")}
+          subtitle={`${t("quickExpense.subtitle")} — выберите организацию в шапке или на странице «Мои компании».`}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-lg space-y-6">
+      <PageHeader title={t("quickExpense.title")} subtitle={t("quickExpense.subtitle")} />
+
+      {msg && <p className="text-sm text-emerald-700">{msg}</p>}
+      {err && <p className="text-sm text-red-600">{err}</p>}
+
+      <form
+        onSubmit={(e) => void submit(e)}
+        className={`${CARD_CONTAINER_CLASS} space-y-4 p-5`}
+      >
+        <label className="block text-[13px] font-medium text-[#34495E]">
+          {t("quickExpense.amount")}
+          <input
+            type="number"
+            step="0.01"
+            min={0.01}
+            required
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
+          />
+        </label>
+        <label className="block text-[13px] font-medium text-[#34495E]">
+          {t("quickExpense.date")}
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
+          />
+        </label>
+        <label className="block text-[13px] font-medium text-[#34495E]">
+          {t("quickExpense.description")}
+          <input
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
+          />
+        </label>
+        <label className="block text-[13px] font-medium text-[#34495E]">
+          {t("quickExpense.department")}
+          <select
+            value={departmentId}
+            onChange={(e) => setDepartmentId(e.target.value)}
+            className={`mt-1 block w-full ${INPUT_BORDERED_CLASS}`}
+          >
+            <option value="">{t("quickExpense.departmentNone")}</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" disabled={busy} className={PRIMARY_BUTTON_CLASS}>
+          {busy ? "…" : t("quickExpense.submit")}
+        </button>
+      </form>
+    </div>
+  );
+}

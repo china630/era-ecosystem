@@ -1,0 +1,847 @@
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from "@nestjs/common";
+import {
+  AdvanceReportStatus,
+  CashOrderKind,
+  CashOrderPkoSubtype,
+  CashOrderRkoSubtype,
+  CashOrderStatus,
+  Decimal,
+  LedgerType,
+  type Prisma,
+} from "@erafinance/database";
+import { AccountingService } from "../accounting/accounting.service";
+import {
+  ACCOUNTABLE_PERSONS_ACCOUNT_CODE,
+  MAIN_BANK_ACCOUNT_CODE,
+  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+  PAYROLL_EXPENSE_ACCOUNT_CODE,
+  PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+  RECEIVABLE_ACCOUNT_CODE,
+  REVENUE_ACCOUNT_CODE,
+} from "../ledger.constants";
+import {
+  assertValidCashDeskAccountCode,
+  resolveCashAccountCodeForCurrency,
+} from "../common/cash-account-code.util";
+import { PrismaService } from "../prisma/prisma.service";
+import { ReportingService } from "../reporting/reporting.service";
+import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
+import { TreasuryService } from "../treasury/treasury.service";
+import { ApprovalsService } from "../approvals/approvals.service";
+import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
+
+type Tx = Prisma.TransactionClient;
+
+function d(v: Decimal | string | null | undefined): Decimal {
+  if (v == null || v === "") return new Decimal(0);
+  if (typeof v === "string") return new Decimal(v);
+  return v;
+}
+
+function utcDayIteratorInclusive(fromYmd: string, toYmd: string): string[] {
+  const out: string[] = [];
+  let t = new Date(`${fromYmd}T12:00:00.000Z`).getTime();
+  const end = new Date(`${toYmd}T12:00:00.000Z`).getTime();
+  while (t <= end) {
+    out.push(new Date(t).toISOString().slice(0, 10));
+    t += 86_400_000;
+  }
+  return out;
+}
+
+@Injectable()
+export class CashOrderService {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accounting: AccountingService,
+    private readonly reporting: ReportingService,
+    private readonly treasury: TreasuryService,
+    private readonly approvals: ApprovalsService,
+    @Optional() private readonly councilTriggers?: CouncilTriggerService,
+  ) {}
+
+  async nextOrderNumberTx(
+    tx: Tx,
+    organizationId: string,
+    kind: CashOrderKind,
+    year: number,
+  ): Promise<string> {
+    const prefix = kind === CashOrderKind.KMO ? "KMO" : "KXO";
+    const start = `${prefix}-${year}-`;
+    const last = await tx.cashOrder.findFirst({
+      where: {
+        organizationId,
+        orderNumber: { startsWith: start },
+      },
+      orderBy: { orderNumber: "desc" },
+    });
+    let seq = 1;
+    if (last) {
+      const parts = last.orderNumber.split("-");
+      const n = Number.parseInt(parts[2] ?? "0", 10);
+      if (!Number.isNaN(n)) seq = n + 1;
+    }
+    return `${prefix}-${year}-${String(seq).padStart(5, "0")}`;
+  }
+
+  /**
+   * Авто-касса: ордер при оплате инвойса наличными (101*), без дубля проводки.
+   */
+  async createAutoFromInvoicePayment(
+    tx: Tx,
+    organizationId: string,
+    params: {
+      invoiceId: string;
+      invoiceNumber: string;
+      counterpartyId: string;
+      currency: string;
+      amount: Decimal;
+      valueDate: Date;
+      debitAccountCode: string;
+      paymentId: string;
+      transactionId: string;
+    },
+  ): Promise<void> {
+    if (
+      params.debitAccountCode !== "101" &&
+      !params.debitAccountCode.startsWith("101.")
+    ) {
+      return;
+    }
+    const existing = await tx.cashOrder.findFirst({
+      where: { sourceInvoicePaymentId: params.paymentId },
+    });
+    if (existing) return;
+
+    const year = params.valueDate.getUTCFullYear();
+    const orderNumber = await this.nextOrderNumberTx(
+      tx,
+      organizationId,
+      CashOrderKind.KMO,
+      year,
+    );
+
+    await tx.cashOrder.create({
+      data: {
+        organizationId,
+        orderNumber,
+        date: params.valueDate,
+        kind: CashOrderKind.KMO,
+        status: CashOrderStatus.DRAFT,
+        pkoSubtype: CashOrderPkoSubtype.INCOME_FROM_CUSTOMER,
+        currency: params.currency,
+        amount: params.amount,
+        purpose: `Invoice ${params.invoiceNumber}`,
+        cashAccountCode: params.debitAccountCode,
+        offsetAccountCode: RECEIVABLE_ACCOUNT_CODE,
+        counterpartyId: params.counterpartyId,
+        sourceInvoiceId: params.invoiceId,
+        sourceInvoicePaymentId: params.paymentId,
+        skipJournalPosting: true,
+        linkedTransactionId: params.transactionId,
+      },
+    });
+  }
+
+  async getCashBalancesByCurrency(
+    organizationId: string,
+    ledgerType: LedgerType,
+  ): Promise<Record<string, string>> {
+    const today = new Date().toISOString().slice(0, 10);
+    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
+    const tb = await this.reporting.trialBalance(
+      organizationId,
+      yearStart,
+      today,
+      ledgerType,
+    );
+    const accounts = await this.prisma.account.findMany({
+      where: { organizationId, ledgerType },
+      select: { code: true, currency: true },
+    });
+    const byCode = new Map(accounts.map((a) => [a.code, a]));
+
+    const sums = new Map<string, Decimal>();
+    for (const row of tb.rows) {
+      if (row.accountCode !== "101" && !row.accountCode.startsWith("101.")) {
+        continue;
+      }
+      const net = d(row.closingDebit).sub(d(row.closingCredit));
+      const cur = byCode.get(row.accountCode)?.currency ?? "AZN";
+      sums.set(cur, (sums.get(cur) ?? new Decimal(0)).add(net));
+    }
+    const out: Record<string, string> = { AZN: "0.00", USD: "0.00", EUR: "0.00" };
+    for (const [cur, v] of sums) {
+      if (cur in out) {
+        out[cur] = v.toFixed(2);
+      } else {
+        out[cur] = v.toFixed(2);
+      }
+    }
+    return out;
+  }
+
+  listOrders(
+    organizationId: string,
+    opts?: { dateFrom?: string; dateTo?: string; page?: number; pageSize?: number },
+  ) {
+    const from = opts?.dateFrom?.trim();
+    const to = opts?.dateTo?.trim();
+    const dateRange =
+      from &&
+      to &&
+      /^\d{4}-\d{2}-\d{2}$/.test(from) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(to)
+        ? {
+            date: {
+              gte: new Date(`${from}T00:00:00.000Z`),
+              lte: new Date(`${to}T23:59:59.999Z`),
+            },
+          }
+        : {};
+    const where = { organizationId, ...dateRange };
+    const page = Math.max(1, Math.trunc(opts?.page ?? 1));
+    const pageSize = Math.min(200, Math.max(1, Math.trunc(opts?.pageSize ?? 25)));
+    const skip = (page - 1) * pageSize;
+    const include = {
+      counterparty: { select: { id: true, nameCipher: true, taxIdCipher: true } },
+      employee: {
+        select: { id: true, firstName: true, lastName: true, finCode: true },
+      },
+      cashFlowItem: { select: { id: true, code: true, name: true } },
+      cashDesk: { select: { id: true, name: true } },
+    };
+    return Promise.all([
+      this.prisma.cashOrder.findMany({
+        where,
+        orderBy: [{ date: "desc" }, { orderNumber: "desc" }],
+        skip,
+        take: pageSize,
+        include,
+      }),
+      this.prisma.cashOrder.count({ where }),
+    ]).then(([rows, total]) => ({
+      items: rows.map((row) => ({
+        ...row,
+        counterparty: row.counterparty
+          ? {
+              ...row.counterparty,
+              name: row.counterparty.nameCipher
+                ? decryptText(row.counterparty.nameCipher) ?? ""
+                : "",
+              taxId: row.counterparty.taxIdCipher
+                ? decryptText(row.counterparty.taxIdCipher) ?? ""
+                : "",
+            }
+          : null,
+      })),
+      total,
+      page,
+      pageSize,
+    }));
+  }
+
+  async createDraftPko(
+    organizationId: string,
+    dto: {
+      date: string;
+      pkoSubtype: CashOrderPkoSubtype;
+      amount: number;
+      currency?: string;
+      purpose: string;
+      cashAccountCode?: string;
+      offsetAccountCode?: string;
+      counterpartyId?: string;
+      employeeId?: string;
+      notes?: string;
+      cashFlowItemId: string;
+      cashDeskId?: string;
+    },
+  ) {
+    const amount = new Decimal(dto.amount);
+    if (amount.lte(0)) {
+      throw new BadRequestException("amount must be positive");
+    }
+    await this.treasury.assertCashFlowItem(organizationId, dto.cashFlowItemId);
+    if (dto.cashDeskId) {
+      await this.treasury.assertCashDesk(organizationId, dto.cashDeskId);
+    }
+    const date = new Date(dto.date + "T12:00:00.000Z");
+    const year = date.getUTCFullYear();
+    const offset = this.resolvePkoOffset(dto.pkoSubtype, dto.offsetAccountCode);
+    const cashCode = resolveCashAccountCodeForCurrency(
+      dto.currency,
+      dto.cashAccountCode,
+    );
+    return this.prisma.$transaction(async (tx) => {
+      const orderNumber = await this.nextOrderNumberTx(
+        tx,
+        organizationId,
+        CashOrderKind.KMO,
+        year,
+      );
+      return tx.cashOrder.create({
+        data: {
+          organizationId,
+          orderNumber,
+          date,
+          kind: CashOrderKind.KMO,
+          status: CashOrderStatus.DRAFT,
+          pkoSubtype: dto.pkoSubtype,
+          currency: dto.currency || "AZN",
+          amount,
+          purpose: dto.purpose.trim() || "—",
+          notes: dto.notes?.trim() || null,
+          cashAccountCode: cashCode,
+          offsetAccountCode: offset,
+          counterpartyId: dto.counterpartyId ?? null,
+          employeeId: dto.employeeId ?? null,
+          cashFlowItemId: dto.cashFlowItemId,
+          cashDeskId: dto.cashDeskId ?? null,
+        },
+      });
+    });
+  }
+
+  async createDraftRko(
+    organizationId: string,
+    dto: {
+      date: string;
+      rkoSubtype: CashOrderRkoSubtype;
+      amount: number;
+      currency?: string;
+      purpose: string;
+      cashAccountCode?: string;
+      offsetAccountCode?: string;
+      counterpartyId?: string;
+      employeeId?: string;
+      notes?: string;
+      cashFlowItemId: string;
+      cashDeskId?: string;
+      withholdingTaxAmount?: number;
+    },
+  ) {
+    const amount = new Decimal(dto.amount);
+    if (amount.lte(0)) {
+      throw new BadRequestException("amount must be positive");
+    }
+    await this.treasury.assertCashFlowItem(organizationId, dto.cashFlowItemId);
+    if (dto.cashDeskId) {
+      await this.treasury.assertCashDesk(organizationId, dto.cashDeskId);
+    }
+    const wht =
+      dto.withholdingTaxAmount != null && dto.withholdingTaxAmount > 0
+        ? new Decimal(dto.withholdingTaxAmount)
+        : null;
+    if (wht && wht.lte(0)) {
+      throw new BadRequestException("withholdingTaxAmount must be positive");
+    }
+    const date = new Date(dto.date + "T12:00:00.000Z");
+    const year = date.getUTCFullYear();
+    const offset = await this.resolveRkoOffset(
+      this.prisma,
+      organizationId,
+      dto.rkoSubtype,
+      dto.employeeId,
+      dto.offsetAccountCode,
+    );
+    const cashCode = resolveCashAccountCodeForCurrency(
+      dto.currency,
+      dto.cashAccountCode,
+    );
+    return this.prisma.$transaction(async (tx) => {
+      const orderNumber = await this.nextOrderNumberTx(
+        tx,
+        organizationId,
+        CashOrderKind.KXO,
+        year,
+      );
+      return tx.cashOrder.create({
+        data: {
+          organizationId,
+          orderNumber,
+          date,
+          kind: CashOrderKind.KXO,
+          status: CashOrderStatus.DRAFT,
+          rkoSubtype: dto.rkoSubtype,
+          currency: dto.currency || "AZN",
+          amount,
+          purpose: dto.purpose.trim() || "—",
+          notes: dto.notes?.trim() || null,
+          cashAccountCode: cashCode,
+          offsetAccountCode: offset,
+          counterpartyId: dto.counterpartyId ?? null,
+          employeeId: dto.employeeId ?? null,
+          cashFlowItemId: dto.cashFlowItemId,
+          cashDeskId: dto.cashDeskId ?? null,
+          withholdingTaxAmount: wht,
+        },
+      });
+    });
+  }
+
+  private resolvePkoOffset(
+    st: CashOrderPkoSubtype,
+    explicit?: string,
+  ): string {
+    if (explicit?.trim()) return explicit.trim();
+    switch (st) {
+      case CashOrderPkoSubtype.INCOME_FROM_CUSTOMER:
+        return REVENUE_ACCOUNT_CODE;
+      case CashOrderPkoSubtype.WITHDRAWAL_FROM_BANK:
+        return MAIN_BANK_ACCOUNT_CODE;
+      case CashOrderPkoSubtype.RETURN_FROM_ACCOUNTABLE:
+        throw new BadRequestException(
+          "offsetAccountCode required (subaccount 244.xx)",
+        );
+      case CashOrderPkoSubtype.OTHER:
+        throw new BadRequestException("offsetAccountCode required");
+      default:
+        return REVENUE_ACCOUNT_CODE;
+    }
+  }
+
+  /**
+   * Backdated KXO: нельзя получить отрицательный остаток на кассе 101* на любой день
+   * от даты ордера до сегодня (UTC), см. TZ §6.0.1.
+   */
+  private async assertBackdatedRkoNoCashGap(
+    organizationId: string,
+    params: {
+      date: Date;
+      kind: CashOrderKind;
+      cashAccountCode: string;
+      amount: Decimal;
+      withholdingTaxAmount: Decimal | null;
+    },
+  ): Promise<void> {
+    if (params.kind !== CashOrderKind.KXO) return;
+    const orderDay = params.date.toISOString().slice(0, 10);
+    const todayDay = new Date().toISOString().slice(0, 10);
+    if (orderDay >= todayDay) return;
+
+    const daysSpan = utcDayIteratorInclusive(orderDay, todayDay).length;
+    if (daysSpan > 400) {
+      throw new BadRequestException("Backdating depth exceeds 400 days");
+    }
+
+    const cashOut = new Decimal(params.amount);
+
+    const entries = await this.prisma.journalEntry.findMany({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        account: { code: params.cashAccountCode },
+      },
+      select: {
+        debit: true,
+        credit: true,
+        transaction: { select: { date: true } },
+      },
+    });
+
+    const byDay = new Map<string, Decimal>();
+    for (const e of entries) {
+      const key = e.transaction.date.toISOString().slice(0, 10);
+      const net = d(e.debit).sub(d(e.credit));
+      byDay.set(key, (byDay.get(key) ?? new Decimal(0)).add(net));
+    }
+
+    let balance = new Decimal(0);
+    for (const [day, delta] of [...byDay.entries()].sort((a, b) =>
+      a[0].localeCompare(b[0]),
+    )) {
+      if (day >= orderDay) break;
+      balance = balance.add(delta);
+    }
+
+    for (const dayStr of utcDayIteratorInclusive(orderDay, todayDay)) {
+      balance = balance.add(byDay.get(dayStr) ?? new Decimal(0));
+      if (balance.sub(cashOut).lt(0)) {
+        throw new ForbiddenException(
+          `Операция невозможна: возникнет кассовый разрыв на [${dayStr}]`,
+        );
+      }
+    }
+  }
+
+  private async resolveRkoOffset(
+    prisma: PrismaService | Tx,
+    organizationId: string,
+    st: CashOrderRkoSubtype,
+    employeeId: string | undefined,
+    explicit?: string,
+  ): Promise<string> {
+    if (explicit?.trim()) return explicit.trim();
+    switch (st) {
+      case CashOrderRkoSubtype.SALARY:
+        return PAYROLL_EXPENSE_ACCOUNT_CODE;
+      case CashOrderRkoSubtype.SUPPLIER_PAYMENT:
+        return PAYABLE_SUPPLIERS_ACCOUNT_CODE;
+      case CashOrderRkoSubtype.BANK_DEPOSIT:
+        return MAIN_BANK_ACCOUNT_CODE;
+      case CashOrderRkoSubtype.ACCOUNTABLE_ISSUE:
+        if (!employeeId) {
+          throw new BadRequestException("employeeId required for accountable issue");
+        }
+        const emp = await prisma.employee.findFirst({
+          where: { id: employeeId, organizationId },
+        });
+        if (!emp?.accountableAccountCode244?.trim()) {
+          throw new BadRequestException(
+            "Employee has no accountable account (244) — set accountableAccountCode244",
+          );
+        }
+        return emp.accountableAccountCode244.trim();
+      case CashOrderRkoSubtype.OTHER:
+        throw new BadRequestException("offsetAccountCode required");
+      default:
+        return PAYROLL_EXPENSE_ACCOUNT_CODE;
+    }
+  }
+
+  async postOrder(organizationId: string, orderId: string) {
+    const order = await this.prisma.cashOrder.findFirst({
+      where: { id: orderId, organizationId },
+    });
+    if (!order) throw new NotFoundException("Cash order not found");
+    if (order.status !== CashOrderStatus.DRAFT) {
+      throw new ConflictException("Order is not draft");
+    }
+    await this.approvals.assertCashOrderMayPost(organizationId, orderId);
+    if (order.skipJournalPosting) {
+      const posted = await this.prisma.cashOrder.update({
+        where: { id: order.id },
+        data: {
+          status: CashOrderStatus.POSTED,
+          postedTransactionId: order.linkedTransactionId ?? undefined,
+        },
+      });
+      this.maybeTriggerCouncilForCashOrder(organizationId, posted);
+      return posted;
+    }
+    if (!order.cashFlowItemId) {
+      throw new BadRequestException("cashFlowItemId required (DDS)");
+    }
+    await this.treasury.assertCashFlowItem(organizationId, order.cashFlowItemId);
+    if (order.cashDeskId) {
+      await this.treasury.assertCashDesk(organizationId, order.cashDeskId);
+    }
+    if (!order.offsetAccountCode?.trim()) {
+      throw new BadRequestException("offsetAccountCode missing");
+    }
+    const cash = order.cashAccountCode;
+    assertValidCashDeskAccountCode(cash);
+    const offset = order.offsetAccountCode.trim();
+    if (offset === "301" && order.kind !== CashOrderKind.KMO) {
+      throw new BadRequestException(
+        "Capital contribution to equity (301) in cash desk must be posted as KMO (Dr 101* / Cr 301)",
+      );
+    }
+    const cashPaid = new Decimal(order.amount);
+    const wht =
+      order.withholdingTaxAmount != null
+        ? new Decimal(order.withholdingTaxAmount)
+        : new Decimal(0);
+    if (wht.lt(0)) {
+      throw new BadRequestException("Invalid withholdingTaxAmount");
+    }
+    if (wht.gt(0) && order.kind !== CashOrderKind.KXO) {
+      throw new BadRequestException("withholdingTaxAmount is only valid for KXO");
+    }
+
+    await this.assertBackdatedRkoNoCashGap(organizationId, {
+      date: order.date,
+      kind: order.kind,
+      cashAccountCode: cash,
+      amount: cashPaid,
+      withholdingTaxAmount: wht.gt(0) ? wht : null,
+    });
+
+    const posted = await this.prisma.$transaction(async (tx) => {
+      let lines: Array<{ accountCode: string; debit: string; credit: string }>;
+      if (order.kind === CashOrderKind.KMO) {
+        lines = [
+          { accountCode: cash, debit: cashPaid.toString(), credit: "0" },
+          { accountCode: offset, debit: "0", credit: cashPaid.toString() },
+        ];
+      } else if (wht.gt(0)) {
+        const gross = cashPaid.add(wht);
+        lines = [
+          { accountCode: offset, debit: gross.toString(), credit: "0" },
+          { accountCode: cash, debit: "0", credit: cashPaid.toString() },
+          {
+            accountCode: PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+            debit: "0",
+            credit: wht.toString(),
+          },
+        ];
+      } else {
+        lines = [
+          { accountCode: offset, debit: cashPaid.toString(), credit: "0" },
+          { accountCode: cash, debit: "0", credit: cashPaid.toString() },
+        ];
+      }
+      const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        organizationId,
+        date: order.date,
+        reference: order.orderNumber,
+        description: order.purpose,
+        isFinal: true,
+        lines,
+      });
+      await tx.cashOrder.update({
+        where: { id: order.id },
+        data: {
+          status: CashOrderStatus.POSTED,
+          postedTransactionId: transactionId,
+        },
+      });
+      return tx.cashOrder.findUniqueOrThrow({ where: { id: order.id } });
+    });
+    this.maybeTriggerCouncilForCashOrder(organizationId, posted);
+    return posted;
+  }
+
+  private maybeTriggerCouncilForCashOrder(
+    organizationId: string,
+    order: {
+      id: string;
+      kind: CashOrderKind;
+      status: CashOrderStatus;
+      currency: string;
+      amount: Decimal;
+      orderNumber: string;
+      sourceInvoiceId: string | null;
+      sourceInvoicePaymentId: string | null;
+    },
+  ): void {
+    if (!this.councilTriggers) return;
+    if (order.kind !== CashOrderKind.KMO) return;
+    if (order.status !== CashOrderStatus.POSTED) return;
+    if (order.sourceInvoiceId || order.sourceInvoicePaymentId) return;
+    void this.councilTriggers.maybeTriggerHighValueTransaction({
+      organizationId,
+      entityType: "CASH_ORDER",
+      entityId: order.id,
+      label: `CashOrder:${order.orderNumber}`,
+      amountAzn: Number(order.amount),
+      currency: order.currency,
+    });
+  }
+
+  async getPrintHtml(organizationId: string, orderId: string): Promise<string> {
+    const order = await this.prisma.cashOrder.findFirst({
+      where: { id: orderId, organizationId },
+      include: {
+        counterparty: true,
+        employee: true,
+        organization: { select: { name: true, taxIdCipher: true } },
+      },
+    });
+    if (!order) throw new NotFoundException("Cash order not found");
+
+    const cp = order.counterparty?.nameCipher
+      ? decryptText(order.counterparty.nameCipher) ?? ""
+      : "";
+    const emp = order.employee
+      ? `${order.employee.firstName} ${order.employee.lastName}`
+      : "";
+    const party = cp || emp || "—";
+    const amountStr = order.amount.toFixed(2);
+    /** Public names: incoming = KMO, outgoing = KXO (see TZ §6.0). */
+    const documentTitleAz =
+      order.kind === CashOrderKind.KMO
+        ? "Kassa Mədaxil Orderi (KMO)"
+        : "Kassa Məxaric Orderi (KXO)";
+    return `<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>${documentTitleAz} — № ${order.orderNumber}</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 11pt;
+      line-height: 1.35;
+      color: #111;
+      max-width: 180mm;
+      margin: 0 auto;
+      padding: 10mm 12mm;
+      box-sizing: border-box;
+    }
+    .sheet { page-break-inside: avoid; }
+    h1 { font-size: 14pt; text-align: center; margin: 0 0 12px; font-weight: 700; }
+    .sub { text-align: center; font-size: 9pt; color: #444; margin: 0 0 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td { border: 1px solid #222; padding: 8px 10px; vertical-align: top; }
+    td.lbl { width: 36%; font-weight: 600; background: #f8f8f8; }
+    .muted { color: #555; font-size: 9pt; }
+    .sign { margin-top: 22px; font-size: 10pt; }
+    @media print {
+      body { padding: 0; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <p class="muted">Azərbaycan Respublikası — kassa sənədi (çap üçün)</p>
+    <h1>${documentTitleAz}</h1>
+    <p class="sub">№ ${order.orderNumber}</p>
+    <p><strong>Tarix:</strong> ${order.date.toISOString().slice(0, 10)}</p>
+    <p><strong>Təşkilat:</strong> ${order.organization.name} &nbsp;·&nbsp; VÖEN: ${decodeOrganizationTaxId(order.organization) || "—"}</p>
+    <table>
+      <tr><td class="lbl">Kontragent / işçi</td><td>${party}</td></tr>
+      <tr><td class="lbl">Təyinat</td><td>${order.purpose}</td></tr>
+      <tr><td class="lbl">Məbləğ</td><td>${amountStr} ${order.currency}</td></tr>
+      <tr><td class="lbl">Kassa hesabı (101)</td><td>${order.cashAccountCode}</td></tr>
+      <tr><td class="lbl">Əks hesab</td><td>${order.offsetAccountCode ?? "—"}</td></tr>
+    </table>
+    <p class="sign muted">İmza məsul şəxsin: ______________________ &nbsp;&nbsp; M.Ə.</p>
+  </div>
+  <script>window.onload = function () { window.focus(); };</script>
+</body>
+</html>`;
+  }
+
+  async listAccountablePersons(organizationId: string, ledgerType: LedgerType) {
+    const today = new Date().toISOString().slice(0, 10);
+    const yearStart = `${new Date().getUTCFullYear()}-01-01`;
+    const tb = await this.reporting.trialBalance(
+      organizationId,
+      yearStart,
+      today,
+      ledgerType,
+    );
+    const employees = await this.prisma.employee.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        finCode: true,
+        accountableAccountCode244: true,
+      },
+    });
+    const byAccount = new Map(
+      employees
+        .filter((e) => e.accountableAccountCode244?.trim())
+        .map((e) => [e.accountableAccountCode244!.trim(), e]),
+    );
+
+    const rows: Array<{
+      employee: (typeof employees)[0];
+      accountCode: string;
+      balance: string;
+      currency: string;
+    }> = [];
+
+    for (const row of tb.rows) {
+      if (
+        row.accountCode !== ACCOUNTABLE_PERSONS_ACCOUNT_CODE &&
+        !row.accountCode.startsWith(`${ACCOUNTABLE_PERSONS_ACCOUNT_CODE}.`)
+      ) {
+        continue;
+      }
+      const net = d(row.closingDebit).sub(d(row.closingCredit));
+      if (net.lte(0)) continue;
+      const emp = byAccount.get(row.accountCode);
+      if (!emp) continue;
+      rows.push({
+        employee: emp,
+        accountCode: row.accountCode,
+        balance: net.toFixed(2),
+        currency: "AZN",
+      });
+    }
+    return rows;
+  }
+
+  async createAdvanceReportDraft(
+    organizationId: string,
+    dto: {
+      employeeId: string;
+      reportDate: string;
+      expenseLines: Array<{ amount: number; description: string }>;
+      purpose?: string;
+    },
+  ) {
+    const emp = await this.prisma.employee.findFirst({
+      where: { id: dto.employeeId, organizationId },
+    });
+    if (!emp?.accountableAccountCode244?.trim()) {
+      throw new BadRequestException("Employee accountable 244 account not set");
+    }
+    let total = new Decimal(0);
+    for (const line of dto.expenseLines) {
+      total = total.add(new Decimal(line.amount));
+    }
+    if (total.lte(0)) {
+      throw new BadRequestException("total expenses must be positive");
+    }
+    return this.prisma.advanceReport.create({
+      data: {
+        organizationId,
+        employeeId: dto.employeeId,
+        reportDate: new Date(dto.reportDate + "T12:00:00.000Z"),
+        expenseLines: dto.expenseLines as object,
+        totalDeclared: total,
+        purpose: dto.purpose?.trim() ?? "",
+        status: AdvanceReportStatus.DRAFT,
+      },
+    });
+  }
+
+  async postAdvanceReport(organizationId: string, reportId: string) {
+    const rep = await this.prisma.advanceReport.findFirst({
+      where: { id: reportId, organizationId },
+      include: { employee: true },
+    });
+    if (!rep) throw new NotFoundException("Advance report not found");
+    if (rep.status !== AdvanceReportStatus.DRAFT) {
+      throw new ConflictException("Already posted");
+    }
+    const acc244 = rep.employee.accountableAccountCode244?.trim();
+    if (!acc244) {
+      throw new BadRequestException("Employee 244 account missing");
+    }
+    const amt = rep.totalDeclared.toString();
+
+    return this.prisma.$transaction(async (tx) => {
+      const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+        organizationId,
+        date: rep.reportDate,
+        reference: `AVANS-${rep.id.slice(0, 8)}`,
+        description: rep.purpose || "Avans hesabatı",
+        isFinal: true,
+        lines: [
+          {
+            accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+            debit: amt,
+            credit: "0",
+          },
+          { accountCode: acc244, debit: "0", credit: amt },
+        ],
+      });
+      await tx.advanceReport.update({
+        where: { id: rep.id },
+        data: {
+          status: AdvanceReportStatus.POSTED,
+          transactionId,
+        },
+      });
+      return tx.advanceReport.findUniqueOrThrow({ where: { id: rep.id } });
+    });
+  }
+}
