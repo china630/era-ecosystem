@@ -1,75 +1,50 @@
 # ERA Ecosystem (Umbrella)
 
-Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Domain PRDs and technical specs live inside each submodule only.
+Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Domain PRDs and technical specs live inside each app.
 
-**Setup & run (RU):** [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) — настройка и запуск каждой системы (Docker, локально, env, порты, SSO, events).
+**Docs:** [`docs/SATELLITE_DOCUMENTATION.md`](./docs/SATELLITE_DOCUMENTATION.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md)
 
-## Layout
+## Industry satellites
+
+| App | PRD | Host | Port |
+|-----|-----|------|------|
+| `era-hotel-pms` | [doc](era-hotel-pms/doc/clone-spec/README.md) | hotel.era.az | 3000 |
+| `era-fb-pos` | [PRD](era-fb-pos/PRD.md) | pos.era.az | 3200 |
+| `era-retail-pos` | [PRD](era-retail-pos/PRD.md) | retail.era.az | 3300 |
+| `era-logistics` | [PRD](era-logistics/PRD.md) | logistics.era.az | 3301 |
+| `era-construction` | [PRD](era-construction/PRD.md) | construction.era.az | 3302 |
+| `era-crm-field` | [PRD](era-crm-field/PRD.md) | crm.era.az | 3303 |
+| `era-auto-sto` | [PRD](era-auto-sto/PRD.md) | auto.era.az | 3304 |
+| `era-wholesale` | [PRD](era-wholesale/PRD.md) | wholesale.era.az | 3305 |
+| `era-clinic` | [PRD](era-clinic/PRD.md) | clinic.era.az | 3306 |
+
+## Core platform
 
 | Path | Role |
 |------|------|
-| `packages/era-contracts` | Shared TypeScript types & event schemas |
-| `era-finance-core` | Financial data plane (submodule) |
-| `era-365-orchestrator` | Control plane — billing, identity, SSO (submodule) |
-| `era-hotel-pms` | Hotel industry satellite (submodule) |
-| `era-fb-pos` | F&B POS satellite — floor, KDS, tickets (submodule) |
-
-## Repositories in this monorepo
-
-All services are vendored in this repository (not git submodules):
-
-| Directory | Role |
-|-----------|------|
-| `packages/era-contracts` | Shared TypeScript types & event schemas |
+| `packages/era-contracts` | Shared event schemas (`@era/contracts`) |
+| `packages/satellite-kit` | Shared gateway helpers (`@era/satellite-kit`) |
 | `era-finance-core` | Financial data plane |
-| `era-365-orchestrator` | Control plane — billing, identity, SSO |
-| `era-hotel-pms` | Hotel industry satellite |
-| `era-fb-pos` | F&B POS satellite — floor, KDS, tickets |
+| `era-365-orchestrator` | Control plane — SSO, billing, event ingress |
 
-Historical submodule remotes (optional upstream sync):
-
-- `era-finance-core` → https://github.com/china630/dayday_erp.git
-- `era-hotel-pms` → https://github.com/china630/era-hotel-pms.git
-- `era-365-orchestrator` → https://github.com/china630/era-365-orchestrator.git
-- `era-fb-pos` → https://github.com/china630/era-fb-pos.git
-
-## Quick start (Docker — full stack)
-
-Traefik uses **file-based** routing (`traefik/traefik.yml` + `traefik/dynamic.yml`) — no Compose labels on apps.
+## Quick start (Docker)
 
 ```bash
 cp .env.example .env
-# Add to hosts: 127.0.0.1 app.era.az api.era.az hotel.era.az pos.era.az
+# Hosts: see docs/SMOKE_ALL_SERVICES.md
 docker compose up -d --build
 ```
 
-After first start, run DB migrations per service — see [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md#3-запуск-всего-стека-в-docker-рекомендуется).
+| Host | Service |
+|------|---------|
+| `app.era.az` | Orchestrator UI |
+| `api.era.az` | Control plane API |
+| `hotel.era.az` | Hotel PMS |
+| `pos.era.az` | F&B POS |
+| `retail.era.az` … `clinic.era.az` | Industry satellites |
 
-| Host | Service | Internal URL |
-|------|---------|----------------|
-| `app.era.az` | Orchestrator UI | `http://orchestrator:3100` |
-| `api.era.az` | Control plane API | `http://orchestrator:4100` |
-| `hotel.era.az` | Hotel PMS | `http://hotel-pms:3000` |
-| `pos.era.az` | F&B POS | `http://fb-pos:3200` |
-
-`finance-core` is **not** on Traefik — internal only at `http://finance-core:4000`.
-
-Traefik dashboard: http://localhost:8080
-
-## Local development (single service)
-
-| Service | Directory | Dev command | Default port |
-|---------|-----------|-------------|--------------|
-| Orchestrator | `era-365-orchestrator` | `npm run dev` | API 4100, Web 3100 |
-| Finance | `era-finance-core` | `npm run dev` | API 4000, Web 3000 |
-| Hotel PMS | `era-hotel-pms` | `npm run dev` | 3000 |
-| F&B POS | `era-fb-pos` | `npm run dev` | 3200 |
-| Contracts | `packages/era-contracts` | `npm run build` | — |
-
-Infra only: `docker compose up -d postgres redis` from repo root.
-
-Full env variables, SSO, and event bus: [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md).
+`finance-core` is internal only (`http://finance-core:4000`).
 
 ## Integration
 
-- SSO & satellite events: [`docs/INTEGRATION_SSO_EVENTS.md`](./docs/INTEGRATION_SSO_EVENTS.md)
+- SSO & events: [`docs/INTEGRATION_SSO_EVENTS.md`](./docs/INTEGRATION_SSO_EVENTS.md)

@@ -1,15 +1,15 @@
 import {
+  isSatelliteEvent,
+  getSatelliteEventType,
+} from "@era/contracts";
+import { Queue } from "bullmq";
+import {
   BadRequestException,
   Injectable,
   Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import {
-  isSatelliteHotelReservationCompleted,
-  type SatelliteHotelReservationCompletedEvent,
-} from "@era/contracts";
-import { Queue } from "bullmq";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 
 export const ERA_SATELLITE_EVENTS_QUEUE = "era-satellite-events";
@@ -43,23 +43,26 @@ export class SatelliteEventsService {
     }
   }
 
-  async enqueue(
-    body: unknown,
-  ): Promise<{ jobId: string; queue: string }> {
-    if (!isSatelliteHotelReservationCompleted(body)) {
+  async enqueue(body: unknown): Promise<{ jobId: string; queue: string; type: string }> {
+    if (!isSatelliteEvent(body)) {
       throw new BadRequestException(
         "Unsupported or invalid satellite event payload",
       );
     }
-    const event = body as SatelliteHotelReservationCompletedEvent;
-    const job = await this.getQueue().add(event.type, event, {
-      jobId: event.correlationId,
+    const eventType = getSatelliteEventType(body) ?? "unknown";
+    const correlationId = (body as { correlationId: string }).correlationId;
+    const job = await this.getQueue().add(eventType, body, {
+      jobId: correlationId,
       removeOnComplete: 1000,
       removeOnFail: 5000,
     });
     this.logger.log(
-      `Enqueued ${event.type} correlation=${event.correlationId} job=${job.id}`,
+      `Enqueued ${eventType} correlation=${correlationId} job=${job.id}`,
     );
-    return { jobId: String(job.id), queue: ERA_SATELLITE_EVENTS_QUEUE };
+    return {
+      jobId: String(job.id),
+      queue: ERA_SATELLITE_EVENTS_QUEUE,
+      type: eventType,
+    };
   }
 }

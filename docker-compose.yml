@@ -69,6 +69,8 @@ services:
         condition: service_started
       fb-pos:
         condition: service_started
+      retail-pos:
+        condition: service_started
 
   orchestrator:
     build:
@@ -177,6 +179,160 @@ services:
       redis:
         condition: service_healthy
       hotel-pms:
+        condition: service_started
+    networks:
+      - era-network
+
+  retail-pos:
+    build:
+      context: ./era-retail-pos
+      dockerfile: Dockerfile
+    container_name: era-retail-pos
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${RETAIL_POS_DB:-era_retail_pos}?schema=public
+      PORT: "3300"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  logistics:
+    build:
+      context: ./era-logistics
+      dockerfile: Dockerfile
+    container_name: era-logistics
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${LOGISTICS_DB:-era_logistics}?schema=public
+      PORT: "3301"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  construction:
+    build:
+      context: ./era-construction
+      dockerfile: Dockerfile
+    container_name: era-construction
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CONSTRUCTION_DB:-era_construction}?schema=public
+      PORT: "3302"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  crm-field:
+    build:
+      context: ./era-crm-field
+      dockerfile: Dockerfile
+    container_name: era-crm-field
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CRM_FIELD_DB:-era_crm_field}?schema=public
+      PORT: "3303"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  auto-sto:
+    build:
+      context: ./era-auto-sto
+      dockerfile: Dockerfile
+    container_name: era-auto-sto
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${AUTO_STO_DB:-era_auto_sto}?schema=public
+      PORT: "3304"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  wholesale:
+    build:
+      context: ./era-wholesale
+      dockerfile: Dockerfile
+    container_name: era-wholesale
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${WHOLESALE_DB:-era_wholesale}?schema=public
+      PORT: "3305"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  clinic:
+    build:
+      context: ./era-clinic
+      dockerfile: Dockerfile
+    container_name: era-clinic
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CLINIC_DB:-era_clinic}?schema=public
+      PORT: "3306"
+      HOSTNAME: 0.0.0.0
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      orchestrator:
         condition: service_started
     networks:
       - era-network

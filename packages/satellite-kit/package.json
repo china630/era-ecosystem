@@ -1,0 +1,23 @@
+{
+  "name": "@era/satellite-kit",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared helpers for ERA industry satellites — orchestrator gateway and event builders",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@era/contracts": "file:../era-contracts"
+  },
+  "peerDependencies": {
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "axios": "^1.9.0",
+    "typescript": "^5.7.3"
+  }
+}

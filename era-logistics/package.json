@@ -1,0 +1,30 @@
+{
+  "name": "era-logistics",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fleet, trips, POD",
+  "scripts": {
+    "dev": "next dev -p 3301",
+    "build": "prisma generate && next build",
+    "start": "next start -p 3301",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "dependencies": {
+    "@era/contracts": "file:../packages/era-contracts",
+    "@era/satellite-kit": "file:../packages/satellite-kit",
+    "@prisma/client": "^6.9.0",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5",
+    "prisma": "^6.9.0",
+    "typescript": "^5.7.3"
+  }
+}

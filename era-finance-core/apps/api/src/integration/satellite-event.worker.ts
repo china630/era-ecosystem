@@ -5,7 +5,17 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { isSatelliteHotelReservationCompleted } from "@era/contracts";
+import {
+  getSatelliteEventType,
+  isSatelliteAutoWorkOrderCompleted,
+  isSatelliteClinicVisitCompleted,
+  isSatelliteConstructionProgressActApproved,
+  isSatelliteCrmLeadConverted,
+  isSatelliteHotelReservationCompleted,
+  isSatelliteLogisticsTripCompleted,
+  isSatelliteRetailSaleCompleted,
+  isSatelliteWholesaleOrderConfirmed,
+} from "@era/contracts";
 import { Job, Worker } from "bullmq";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
@@ -16,15 +26,6 @@ import {
   type SatelliteEventJobPayload,
 } from "./satellite-event.queue";
 
-/**
- * Consumes `era-satellite-events` from Redis (produced by orchestrator gateway).
- *
- * Planned handler steps (GL/FIFO not implemented in this phase):
- * 1. Parse job → `isSatelliteHotelReservationCompleted()`
- * 2. `runWithTenantContextAsync({ organizationId })`
- * 3. `prisma.$transaction()` → `GeneralLedgerService.postSatelliteRevenue`, `StockService.consumeIfSku`
- * 4. Idempotency via `correlationId` unique table (future migration)
- */
 @Injectable()
 export class SatelliteEventWorker implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(SatelliteEventWorker.name);
@@ -65,21 +66,48 @@ export class SatelliteEventWorker implements OnModuleInit, OnModuleDestroy {
 
   private async handle(job: Job<SatelliteEventJobPayload>): Promise<void> {
     const data = job.data;
-    if (!isSatelliteHotelReservationCompleted(data)) {
-      this.logger.warn(`Job ${job.id}: unknown event shape, skipping`);
+    const eventType = getSatelliteEventType(data);
+    if (!eventType) {
+      this.logger.warn(`Job ${job.id}: missing event type, skipping`);
+      return;
+    }
+
+    const organizationId =
+      typeof data === "object" &&
+      data !== null &&
+      "organizationId" in data &&
+      typeof (data as { organizationId: unknown }).organizationId === "string"
+        ? (data as { organizationId: string }).organizationId
+        : null;
+
+    if (!organizationId) {
+      this.logger.warn(`Job ${job.id}: missing organizationId, skipping`);
+      return;
+    }
+
+    const recognized =
+      isSatelliteHotelReservationCompleted(data) ||
+      isSatelliteRetailSaleCompleted(data) ||
+      isSatelliteLogisticsTripCompleted(data) ||
+      isSatelliteConstructionProgressActApproved(data) ||
+      isSatelliteCrmLeadConverted(data) ||
+      isSatelliteAutoWorkOrderCompleted(data) ||
+      isSatelliteClinicVisitCompleted(data) ||
+      isSatelliteWholesaleOrderConfirmed(data);
+
+    if (!recognized) {
+      this.logger.warn(`Job ${job.id}: unrecognized event ${eventType}`);
       return;
     }
 
     await runWithTenantContextAsync(
-      { organizationId: data.organizationId, skipTenantFilter: false },
+      { organizationId, skipTenantFilter: false },
       async () => {
         this.logger.log(
-          `SATELLITE_HOTEL_RESERVATION_COMPLETED correlation=${data.correlationId} reservation=${data.payload.reservationId} amountNet=${data.payload.amountNet}`,
+          `Satellite event ${eventType} correlation=${(data as { correlationId?: string }).correlationId ?? job.id}`,
         );
-        // Placeholder: idempotency + GL post inside prisma.$transaction
         await this.prisma.$transaction(async () => {
-          // GeneralLedgerService.postSatelliteRevenue(data)
-          // StockService.consumeIfSku(data.payload.items)
+          // Placeholder: route to GL/stock services per event type
         });
       },
     );

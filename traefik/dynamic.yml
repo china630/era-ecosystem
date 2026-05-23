@@ -27,6 +27,48 @@ http:
         - web
       service: fb-pos
 
+    retail-pos:
+      rule: Host(`retail.era.az`)
+      entryPoints:
+        - web
+      service: retail-pos
+
+    logistics:
+      rule: Host(`logistics.era.az`)
+      entryPoints:
+        - web
+      service: logistics
+
+    construction:
+      rule: Host(`construction.era.az`)
+      entryPoints:
+        - web
+      service: construction
+
+    crm-field:
+      rule: Host(`crm.era.az`)
+      entryPoints:
+        - web
+      service: crm-field
+
+    auto-sto:
+      rule: Host(`auto.era.az`)
+      entryPoints:
+        - web
+      service: auto-sto
+
+    wholesale:
+      rule: Host(`wholesale.era.az`)
+      entryPoints:
+        - web
+      service: wholesale
+
+    clinic:
+      rule: Host(`clinic.era.az`)
+      entryPoints:
+        - web
+      service: clinic
+
   services:
     orchestrator-web:
       loadBalancer:
@@ -47,3 +89,38 @@ http:
       loadBalancer:
         servers:
           - url: "http://fb-pos:3200"
+
+    retail-pos:
+      loadBalancer:
+        servers:
+          - url: "http://retail-pos:3300"
+
+    logistics:
+      loadBalancer:
+        servers:
+          - url: "http://logistics:3301"
+
+    construction:
+      loadBalancer:
+        servers:
+          - url: "http://construction:3302"
+
+    crm-field:
+      loadBalancer:
+        servers:
+          - url: "http://crm-field:3303"
+
+    auto-sto:
+      loadBalancer:
+        servers:
+          - url: "http://auto-sto:3304"
+
+    wholesale:
+      loadBalancer:
+        servers:
+          - url: "http://wholesale:3305"
+
+    clinic:
+      loadBalancer:
+        servers:
+          - url: "http://clinic:3306"

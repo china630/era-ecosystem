@@ -487,6 +487,36 @@ curl http://localhost:4000/api/health
 
 ---
 
+## 9–15. Industry satellites (W1–W7)
+
+Общий шаблон для каждого app:
+
+```bash
+cd era-{name}
+cp .env.example .env
+npm install
+npx prisma db push
+npm run dev
+```
+
+| App | Dir | Port | Host | PRD |
+|-----|-----|------|------|-----|
+| Retail POS | `era-retail-pos` | 3300 | retail.era.az | [PRD](../era-retail-pos/PRD.md) |
+| Logistics | `era-logistics` | 3301 | logistics.era.az | [PRD](../era-logistics/PRD.md) |
+| Construction | `era-construction` | 3302 | construction.era.az | [PRD](../era-construction/PRD.md) |
+| CRM Field | `era-crm-field` | 3303 | crm.era.az | [PRD](../era-crm-field/PRD.md) |
+| Auto STO | `era-auto-sto` | 3304 | auto.era.az | [PRD](../era-auto-sto/PRD.md) |
+| Wholesale | `era-wholesale` | 3305 | wholesale.era.az | [PRD](../era-wholesale/PRD.md) |
+| Clinic | `era-clinic` | 3306 | clinic.era.az | [PRD](../era-clinic/PRD.md) |
+
+Retail presets: grocery, apparel, electronics, pharmacy — см. [`era-retail-pos/doc/presets/`](../era-retail-pos/doc/presets/).
+
+**CRM Field:** не дублирует CRM контрагентов и WhatsApp-отправку инвойсов в Finance — только pre-sale ops.
+
+Smoke all services: [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md).
+
+---
+
 ## 12. Частые проблемы
 
 | Симптом | Решение |
@@ -507,5 +537,6 @@ curl http://localhost:4000/api/health
 |----------|----------|
 | [`README.md`](../README.md) | Обзор umbrella |
 | [`DESIGN.md`](../DESIGN.md) | UI/UX и архитектурные принципы |
-| [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md) | SSO + BullMQ pipeline |
+| [`SATELLITE_DOCUMENTATION.md`](./SATELLITE_DOCUMENTATION.md) | Стандарт PRD/DELIVERY |
+| [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) | Smoke всех сервисов |
 | [`era-finance-core/docs/deploy/`](../era-finance-core/docs/deploy/) | Production deploy finance |

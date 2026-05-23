@@ -1,6 +1,6 @@
 # DESIGN.md — ERA Ecosystem (Global UI/UX)
 
-**Final single source of truth** for all ERA product UI (umbrella `DESIGN.md`; submodule apps such as `era-finance-core/apps/web`, `era-365-orchestrator/apps/web`, and industry satellites). Any layout or styling task should be implementable from this file alone. **Reference implementation:** the cash **«Avans hesabatı»** advance-report draft modal (`banking.cash.btnAdvanceTop`) — modal shell, spacing, fields, and footer actions without a separator strip.
+**Final single source of truth** for all ERA product UI (umbrella `DESIGN.md`; apps under `era-finance-core`, `era-365-orchestrator`, and industry satellites). Satellite doc standard: [`docs/SATELLITE_DOCUMENTATION.md`](docs/SATELLITE_DOCUMENTATION.md).
 
 Code tokens: `apps/web/lib/design-system.ts`, `apps/web/lib/form-styles.ts`, `apps/web/lib/form-classes.ts`. New and refactored screens **must** match this document; divergent legacy UI is **debt to remove**, not an alternate standard.
 
