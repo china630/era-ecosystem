@@ -1,0 +1,18 @@
+{
+  "name": "@era/contracts",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Cross-system event JSON schemas and shared API types for the ERA ecosystem",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

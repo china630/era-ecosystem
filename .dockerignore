@@ -1,0 +1,9 @@
+docker-data
+.git
+**/.env
+!**/.env.example
+**/node_modules
+**/.next
+**/dist
+*.md
+!era-finance-core/packages/database/prisma/**/*.md

@@ -1,0 +1,49 @@
+# Traefik dynamic routing — internal Docker DNS on era-network.
+# finance-core is intentionally NOT exposed here (data plane, internal only).
+
+http:
+  routers:
+    orchestrator-app:
+      rule: Host(`app.era.az`)
+      entryPoints:
+        - web
+      service: orchestrator-web
+
+    orchestrator-api:
+      rule: Host(`api.era.az`)
+      entryPoints:
+        - web
+      service: orchestrator-api
+
+    hotel-pms:
+      rule: Host(`hotel.era.az`)
+      entryPoints:
+        - web
+      service: hotel-pms
+
+    fb-pos:
+      rule: Host(`pos.era.az`)
+      entryPoints:
+        - web
+      service: fb-pos
+
+  services:
+    orchestrator-web:
+      loadBalancer:
+        servers:
+          - url: "http://orchestrator:3100"
+
+    orchestrator-api:
+      loadBalancer:
+        servers:
+          - url: "http://orchestrator:4100"
+
+    hotel-pms:
+      loadBalancer:
+        servers:
+          - url: "http://hotel-pms:3000"
+
+    fb-pos:
+      loadBalancer:
+        servers:
+          - url: "http://fb-pos:3200"

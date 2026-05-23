@@ -1,0 +1,187 @@
+# ERA Ecosystem — single-server stack (Traefik file provider, no routing labels on apps).
+# Usage: cp .env.example .env && docker compose up -d --build
+# Hosts: app.era.az, api.era.az, hotel.era.az, pos.era.az → 127.0.0.1
+
+name: era-ecosystem
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: era-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-era}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-era_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-era}
+    volumes:
+      - ./docker-data/postgres:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    ports:
+      - "${POSTGRES_PUBLISH_PORT:-5432}:5432"
+    networks:
+      - era-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-era} -d ${POSTGRES_DB:-era}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: era-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - ./docker-data/redis:/data
+    ports:
+      - "${REDIS_PUBLISH_PORT:-6379}:6379"
+    networks:
+      - era-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  traefik:
+    image: traefik:v2.10
+    container_name: era-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - era-network
+    depends_on:
+      orchestrator:
+        condition: service_started
+      hotel-pms:
+        condition: service_started
+      fb-pos:
+        condition: service_started
+
+  orchestrator:
+    build:
+      context: ./era-365-orchestrator
+      dockerfile: Dockerfile
+    container_name: era-orchestrator
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${ORCHESTRATOR_DB:-era_orchestrator}?schema=public
+      REDIS_URL: redis://redis:6379/0
+      PORT: "4100"
+      FINANCE_CORE_URL: http://finance-core:4000
+      CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
+      ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
+      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-365-orchestrator}
+      ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
+      ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      finance-core:
+        condition: service_healthy
+    networks:
+      - era-network
+    # No ports published — Traefik routes app.era.az / api.era.az via dynamic.yml
+
+  finance-core:
+    build:
+      context: .
+      dockerfile: era-finance-core/Dockerfile
+    container_name: era-finance-core
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
+      REDIS_URL: redis://redis:6379/1
+      API_PORT: "4000"
+      CONTROL_PLANE_URL: http://orchestrator:4100
+      CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
+      ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
+      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-365-orchestrator}
+      ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
+      ERA_AUTH_MODE: ${ERA_AUTH_MODE:-legacy}
+      SATELLITE_EVENT_WORKER_DISABLED: ${SATELLITE_EVENT_WORKER_DISABLED:-0}
+      SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - era-network
+
+  hotel-pms:
+    build:
+      context: ./era-hotel-pms
+      dockerfile: Dockerfile
+      target: runner
+    container_name: era-hotel-pms
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${HOTEL_DB:-era_hotel_pms}?schema=public
+      REDIS_URL: redis://redis:6379/2
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
+      FB_POS_WEBHOOK_URL: http://fb-pos:3200/api/webhooks/pms/reservation-lifecycle
+      NEXT_PUBLIC_FB_POS_URL: http://pos.era.az
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-hotel-pms}
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-legacy}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - era-network
+
+  fb-pos:
+    build:
+      context: ./era-fb-pos
+      dockerfile: Dockerfile
+    container_name: era-fb-pos
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FB_POS_DB:-era_fb_pos}?schema=public
+      REDIS_URL: redis://redis:6379/3
+      PORT: "3200"
+      HOSTNAME: 0.0.0.0
+      PMS_BRIDGE_URL: http://hotel-pms:3000
+      POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
+      FB_POS_WEBHOOK_SECRET: ${FB_POS_WEBHOOK_SECRET:-dev-fb-pos-webhook-secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      hotel-pms:
+        condition: service_started
+    networks:
+      - era-network
+
+networks:
+  era-network:
+    name: era-network
+    driver: bridge

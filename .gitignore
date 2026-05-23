@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+dist/
+**/.next/
+**/dist/
+
+# Docker persistent data (never commit)
+docker-data/
