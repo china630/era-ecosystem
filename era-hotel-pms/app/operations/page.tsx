@@ -2,7 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -187,17 +193,15 @@ export default function OperationsPage() {
   const lastSteps = status?.lastRun ? parseSteps(status.lastRun.stepsJson) : [];
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-6 text-xl font-semibold">{t('title')}</h1>
-
-      {msg && <p className="mb-4 text-sm text-slate-300">{msg}</p>}
+    <AppShell maxWidthClass="max-w-2xl">
+      <PageHeader title={t('title')} />
+      <StatusMessage>{msg}</StatusMessage>
 
       {can(PERMISSIONS.CASH_SHIFT) && (
-        <section className="mb-8 rounded-xl border border-slate-700 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('cashShift')}</h2>
+        <PageSection className="mb-6">
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('cashShift')}</h2>
           {hasOpenShift && status?.openShift ? (
-            <div className="mb-3 text-sm text-amber-200">
+            <div className="mb-3 text-[13px] text-amber-800">
               {t('openShiftDetail', {
                 cashier: status.openShift.cashier,
                 register: status.openShift.registerId,
@@ -205,48 +209,38 @@ export default function OperationsPage() {
               })}
             </div>
           ) : (
-            <p className="mb-3 text-sm text-slate-400">{t('noOpenShift')}</p>
+            <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('noOpenShift')}</p>
           )}
           {!hasOpenShift && (
             <div className="mb-3 flex flex-wrap gap-2">
               <input
                 placeholder={t('cashierPlaceholder')}
-                className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+                className={MODAL_INPUT_CLASS}
                 value={cashier}
                 onChange={(e) => setCashier(e.target.value)}
               />
               <input
                 placeholder={t('registerPlaceholder')}
-                className="w-24 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+                className={`w-28 ${MODAL_INPUT_CLASS}`}
                 value={registerId}
                 onChange={(e) => setRegisterId(e.target.value)}
               />
-              <button
-                type="button"
-                disabled={busy}
-                onClick={openShift}
-                className="rounded bg-emerald-700 px-3 py-1 text-sm disabled:opacity-50"
-              >
+              <button type="button" disabled={busy} onClick={openShift} className={PRIMARY_BUTTON_CLASS}>
                 {t('openShift')}
               </button>
             </div>
           )}
           {hasOpenShift && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={closeShift}
-              className="rounded bg-rose-800 px-3 py-2 text-sm disabled:opacity-50"
-            >
+            <button type="button" disabled={busy} onClick={closeShift} className={SECONDARY_BUTTON_CLASS}>
               {t('closeShift')}
             </button>
           )}
-        </section>
+        </PageSection>
       )}
 
-      <section className="mb-8 rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('nightAudit')}</h2>
-        <ul className="mb-4 space-y-1 text-xs text-slate-400">
+      <PageSection className="mb-6">
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('nightAudit')}</h2>
+        <ul className="mb-4 space-y-1 text-[13px] text-[#7F8C8D]">
           <li>
             {t('inHouse')} {status?.inHouseCount ?? tc('dash')}
           </li>
@@ -259,75 +253,65 @@ export default function OperationsPage() {
             {hasOpenShift ? t('cashShiftOpenBlock') : t('cashShiftOk')}
           </li>
         </ul>
-        {hasOpenShift && (
-          <p className="mb-3 text-sm text-rose-300">{t('closeShiftsBeforeNa')}</p>
-        )}
+        {hasOpenShift && <p className="mb-3 text-[13px] text-rose-600">{t('closeShiftsBeforeNa')}</p>}
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             disabled={busy || hasOpenShift}
             onClick={runNightAudit}
-            className="rounded bg-indigo-700 px-3 py-2 text-sm disabled:opacity-50"
+            className={PRIMARY_BUTTON_CLASS}
           >
             {t('runNightAudit')}
           </button>
-          <button
-            type="button"
-            onClick={retryEvents}
-            className="rounded border border-slate-600 px-3 py-2 text-sm hover:bg-slate-800"
-          >
+          <button type="button" onClick={retryEvents} className={SECONDARY_BUTTON_CLASS}>
             {t('processRetry')}
           </button>
         </div>
         {lastSteps.length > 0 && (
-          <ol className="mt-4 list-decimal space-y-1 pl-5 text-xs text-slate-300">
+          <ol className="mt-4 list-decimal space-y-1 pl-5 text-[13px] text-[#34495E]">
             {lastSteps.map((s, i) => (
               <li key={i}>{s}</li>
             ))}
           </ol>
         )}
-      </section>
+      </PageSection>
 
       {runs.length > 0 && (
-        <section className="mb-8 rounded-xl border border-slate-700 p-4">
-          <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">{t('recentRuns')}</h2>
-          <ul className="space-y-2 text-xs text-slate-400">
+        <PageSection className="mb-6">
+          <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('recentRuns')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#7F8C8D]">
             {runs.map((r) => (
               <li key={r.id}>
                 {r.businessDay.date.slice(0, 10)} — {r.status} ({new Date(r.createdAt).toLocaleString()})
               </li>
             ))}
           </ul>
-        </section>
+        </PageSection>
       )}
 
       {tourismFailed.length > 0 && (
-        <section className="mb-8 rounded-xl border border-amber-900/50 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase text-amber-500">{t('tourismRegistry')}</h2>
-          <ul className="space-y-2 text-sm">
+        <PageSection className="mb-6 border-amber-200 bg-amber-50">
+          <h2 className="mb-3 text-sm font-semibold text-amber-900">{t('tourismRegistry')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#34495E]">
             {tourismFailed.map((row) => (
               <li key={row.id} className="flex flex-wrap items-center gap-2">
                 <span>
                   {row.reservation.guest.fullName} — {row.eventKind}:{' '}
                   {row.errorMessage ?? tc('failedStatus')}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => retryTourism(row.id)}
-                  className="rounded bg-amber-800 px-2 py-1 text-xs"
-                >
+                <button type="button" onClick={() => retryTourism(row.id)} className={SECONDARY_BUTTON_CLASS}>
                   {tc('retry')}
                 </button>
               </li>
             ))}
           </ul>
-        </section>
+        </PageSection>
       )}
 
       {can(PERMISSIONS.RESERVATIONS_CANCEL) && (
-        <section className="rounded-xl border border-slate-700 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('noShowCandidates')}</h2>
-          <ul className="space-y-2 text-sm">
+        <PageSection>
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('noShowCandidates')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#34495E]">
             {noShows.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center gap-2">
                 <span>
@@ -337,16 +321,16 @@ export default function OperationsPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => markNoShow(r.id)}
-                  className="rounded bg-rose-800 px-2 py-1 text-xs disabled:opacity-50"
+                  className={SECONDARY_BUTTON_CLASS}
                 >
                   {t('markNoShow')}
                 </button>
               </li>
             ))}
-            {noShows.length === 0 && <li className="text-slate-500">{tc('none')}</li>}
+            {noShows.length === 0 && <li className="text-[#7F8C8D]">{tc('none')}</li>}
           </ul>
-        </section>
+        </PageSection>
       )}
-    </div>
+    </AppShell>
   );
 }

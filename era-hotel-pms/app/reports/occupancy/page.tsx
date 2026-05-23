@@ -4,7 +4,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -31,9 +42,9 @@ interface OccupancyGrid {
 }
 
 function cellClass(available: number): string {
-  if (available < 0) return 'bg-rose-950 text-rose-200';
-  if (available <= 2) return 'bg-amber-950/80 text-amber-100';
-  return 'bg-emerald-950/50 text-emerald-100';
+  if (available < 0) return 'bg-rose-50 text-rose-800';
+  if (available <= 2) return 'bg-amber-50 text-amber-900';
+  return 'bg-[#F1F5F9] text-[#34495E]';
 }
 
 function OccupancyContent() {
@@ -73,91 +84,89 @@ function OccupancyContent() {
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermissionReports')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-6xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionReports')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <AppNav />
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">{t('occupancyTitle')}</h1>
-          <p className="text-sm text-slate-400">{t('occupancySubtitle')}</p>
-        </div>
-        <div className="flex gap-2 text-sm">
-          <button
-            type="button"
-            onClick={() => setDays(14)}
-            className={`rounded px-3 py-1 ${days === 14 ? 'bg-sky-700' : 'border border-slate-600'}`}
-          >
-            {t('days14')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDays(30)}
-            className={`rounded px-3 py-1 ${days === 30 ? 'bg-sky-700' : 'border border-slate-600'}`}
-          >
-            {t('days30')}
-          </button>
-        </div>
-      </header>
+    <AppShell maxWidthClass="max-w-6xl">
+      <PageHeader
+        title={t('occupancyTitle')}
+        subtitle={t('occupancySubtitle')}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => setDays(14)}
+              className={days === 14 ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            >
+              {t('days14')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDays(30)}
+              className={days === 30 ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
+            >
+              {t('days30')}
+            </button>
+          </>
+        }
+      />
 
-      <p className="mb-4 text-xs text-slate-500">
-        {t('legend')}
-      </p>
+      <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('legend')}</p>
 
-      {error && <p className="mb-4 text-sm text-rose-400">{error}</p>}
-      {loading && <p className="text-slate-400">{tc('loading')}</p>}
+      {error && <p className="mb-4 text-[13px] text-rose-600">{error}</p>}
+      {loading && <p className="text-[13px] text-[#7F8C8D]">{tc('loading')}</p>}
 
       {grid && !loading && (
-        <div className="overflow-x-auto rounded-xl border border-slate-700">
-          <table className="min-w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-700 bg-slate-900">
-                <th className="sticky left-0 z-10 bg-slate-900 px-3 py-2">{t('type')}</th>
-                <th className="px-2 py-2 text-slate-500">{t('avgPct')}</th>
-                {grid.dates.map((d) => (
-                  <th key={d} className="whitespace-nowrap px-2 py-2 text-slate-400">
-                    {d.slice(5)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {grid.rows.map((row) => (
-                <tr key={row.roomTypeId} className="border-t border-slate-800">
-                  <td className="sticky left-0 z-10 bg-slate-950 px-3 py-2 font-medium">
-                    {row.code}
-                    <span className="block text-slate-500">{row.name}</span>
-                  </td>
-                  <td className="px-2 py-2 text-slate-400">{row.avgOccupancyPct}%</td>
-                  {row.cells.map((c) => (
-                    <td
-                      key={c.date}
-                      className={`whitespace-nowrap px-2 py-2 text-center ${cellClass(c.available)}`}
-                      title={t('soldTitle', { sold: c.sold, total: c.total })}
-                    >
-                      {c.sold}/{c.total}
-                    </td>
+        <PageSection className="p-0">
+          <div className={`${DATA_TABLE_VIEWPORT_CLASS} rounded-none border-0 shadow-none`}>
+            <table className={DATA_TABLE_CLASS}>
+              <thead>
+                <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                  <th className={`${DATA_TABLE_TH_LEFT_CLASS} sticky left-0 z-10 bg-[#F8FAFC]`}>{t('type')}</th>
+                  <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('avgPct')}</th>
+                  {grid.dates.map((d) => (
+                    <th key={d} className={`${DATA_TABLE_TH_LEFT_CLASS} whitespace-nowrap`}>
+                      {d.slice(5)}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {grid.rows.map((row) => (
+                  <tr key={row.roomTypeId} className={DATA_TABLE_TR_CLASS}>
+                    <td className={`${DATA_TABLE_TD_CLASS} sticky left-0 z-10 bg-white font-medium`}>
+                      {row.code}
+                      <span className="block text-[#7F8C8D]">{row.name}</span>
+                    </td>
+                    <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{row.avgOccupancyPct}%</td>
+                    {row.cells.map((c) => (
+                      <td
+                        key={c.date}
+                        className={`${DATA_TABLE_TD_CLASS} whitespace-nowrap text-center ${cellClass(c.available)}`}
+                        title={t('soldTitle', { sold: c.sold, total: c.total })}
+                      >
+                        {c.sold}/{c.total}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </PageSection>
       )}
-    </div>
+    </AppShell>
   );
 }
 
 export default function OccupancyReportPage() {
   const tc = useTranslations('common');
   return (
-    <Suspense fallback={<div className="p-8 text-slate-400">{tc('loading')}</div>}>
+    <Suspense fallback={<div className="p-8 text-[#7F8C8D]">{tc('loading')}</div>}>
       <OccupancyContent />
     </Suspense>
   );

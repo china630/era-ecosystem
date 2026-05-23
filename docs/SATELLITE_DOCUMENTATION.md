@@ -6,7 +6,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 
 | Document | Path |
 |----------|------|
-| Global UI/UX | [`DESIGN.md`](../DESIGN.md) |
+| Global UI/UX | [`DESIGN.md`](../DESIGN.md) — shared tokens/components: `@era/satellite-kit/ui` |
 | Run all services | [`SETUP_AND_RUN.md`](./SETUP_AND_RUN.md) |
 | SSO & event bus | [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md) |
 | Smoke checklist | [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) |

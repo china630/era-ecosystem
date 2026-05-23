@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -42,58 +51,71 @@ export default function AgencyLedgerPage() {
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermission')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-3xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-4 text-xl font-semibold">{t('agencyLedgerTitle')}</h1>
-      <div className="mb-4 flex flex-wrap gap-2 text-sm">
-        <select
-          className="rounded border border-slate-600 bg-slate-800 px-2 py-1"
-          value={agencyId}
-          onChange={(e) => setAgencyId(e.target.value)}
-        >
-          <option value="">{t('agencySelect')}</option>
-          {agencies.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.code} — {a.name}
-            </option>
-          ))}
-        </select>
-        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded border border-slate-600 bg-slate-800 px-2 py-1" />
-        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded border border-slate-600 bg-slate-800 px-2 py-1" />
-        <button type="button" onClick={load} className="rounded bg-sky-700 px-3 py-1">
-          {tc('load')}
-        </button>
-      </div>
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader
+        title={t('agencyLedgerTitle')}
+        leading={
+          <>
+            <select className={MODAL_INPUT_CLASS} value={agencyId} onChange={(e) => setAgencyId(e.target.value)}>
+              <option value="">{t('agencySelect')}</option>
+              {agencies.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.code} — {a.name}
+                </option>
+              ))}
+            </select>
+            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={MODAL_INPUT_CLASS} />
+            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={MODAL_INPUT_CLASS} />
+          </>
+        }
+        actions={
+          <button type="button" onClick={load} className={PRIMARY_BUTTON_CLASS}>
+            {tc('load')}
+          </button>
+        }
+      />
+
       {ledger && (
-        <table className="w-full text-sm">
-          <tbody>
-            <tr>
-              <td className="py-1 text-slate-500">{t('opening')}</td>
-              <td>{ledger.opening.toFixed(2)} {tc('azn')}</td>
-            </tr>
-            <tr>
-              <td className="py-1 text-slate-500">{t('newCharges')}</td>
-              <td>{ledger.newCharges.toFixed(2)} {tc('azn')}</td>
-            </tr>
-            <tr>
-              <td className="py-1 text-slate-500">{t('payments')}</td>
-              <td>{ledger.payments.toFixed(2)} {tc('azn')}</td>
-            </tr>
-            <tr>
-              <td className="py-1 font-medium text-slate-300">{t('closing')}</td>
-              <td className="font-medium">{ledger.closing.toFixed(2)} {tc('azn')}</td>
-            </tr>
-          </tbody>
-        </table>
+        <PageSection className="p-0">
+          <div className={DATA_TABLE_VIEWPORT_CLASS}>
+            <table className={DATA_TABLE_CLASS}>
+              <tbody>
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('opening')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {ledger.opening.toFixed(2)} {tc('azn')}
+                  </td>
+                </tr>
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('newCharges')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {ledger.newCharges.toFixed(2)} {tc('azn')}
+                  </td>
+                </tr>
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>{t('payments')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {ledger.payments.toFixed(2)} {tc('azn')}
+                  </td>
+                </tr>
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{t('closing')}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} font-semibold`}>
+                    {ledger.closing.toFixed(2)} {tc('azn')}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </PageSection>
       )}
-    </div>
+    </AppShell>
   );
 }

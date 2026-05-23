@@ -2,17 +2,44 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_CHECKBOX_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
-function PosBridgeTest() {
+function PosBridgeTestModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const t = useTranslations('integration');
+  const tc = useTranslations('common');
   const [roomNumber, setRoomNumber] = useState('201');
   const [amount, setAmount] = useState('15');
   const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const formId = 'pos-bridge-form';
 
   async function send() {
+    setBusy(true);
     const res = await fetch('/api/pos/room-charge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -25,29 +52,51 @@ function PosBridgeTest() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('roomChargePosted') : data.error);
+    if (res.ok) onClose();
   }
 
   return (
-    <section className="mb-8 rounded-xl border border-slate-700 p-4">
-      <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">{t('posBridgeTest')}</h2>
-      <div className="flex flex-wrap gap-2 text-sm">
-        <input
-          className="w-20 rounded border border-slate-600 bg-slate-800 px-2 py-1"
-          value={roomNumber}
-          onChange={(e) => setRoomNumber(e.target.value)}
+    <EraModal
+      open={open}
+      title={t('posBridgeTest')}
+      onClose={onClose}
+      footer={
+        <EraModalFooter
+          onCancel={onClose}
+          onSubmit={send}
+          busy={busy}
+          submitLabel={t('roomChargeFood')}
         />
-        <input
-          className="w-20 rounded border border-slate-600 bg-slate-800 px-2 py-1"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <button type="button" onClick={send} className="rounded bg-emerald-800 px-3 py-1 text-xs">
-          {t('roomChargeFood')}
-        </button>
-        {msg && <span className="text-xs text-slate-400">{msg}</span>}
-      </div>
-    </section>
+      }
+    >
+      <form id={formId} className={FORM_STACK_CLASS} onSubmit={(e) => { e.preventDefault(); void send(); }}>
+        {msg && <p className="text-[13px] text-[#7F8C8D]">{msg}</p>}
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="pos-room">
+            Room
+          </label>
+          <input
+            id="pos-room"
+            className={MODAL_INPUT_CLASS}
+            value={roomNumber}
+            onChange={(e) => setRoomNumber(e.target.value)}
+          />
+        </div>
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="pos-amount">
+            {tc('amount')}
+          </label>
+          <input
+            id="pos-amount"
+            className={MODAL_INPUT_CLASS}
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+        </div>
+      </form>
+    </EraModal>
   );
 }
 
@@ -76,26 +125,22 @@ function E6Simulator({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 text-sm">
+    <div className="flex flex-wrap gap-2">
       <input
         placeholder={t('invoiceRefPlaceholder')}
-        className="min-w-[16rem] flex-1 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs"
+        className={`min-w-[16rem] flex-1 ${MODAL_INPUT_CLASS}`}
         value={invoiceRef}
         onChange={(e) => setInvoiceRef(e.target.value)}
       />
-      <select
-        className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs"
-        value={status}
-        onChange={(e) => setStatus(e.target.value)}
-      >
+      <select className={MODAL_INPUT_CLASS} value={status} onChange={(e) => setStatus(e.target.value)}>
         <option value="sent">{t('fiscalSent')}</option>
         <option value="accepted">{t('fiscalAccepted')}</option>
         <option value="rejected">{t('fiscalRejected')}</option>
       </select>
-      <button type="button" onClick={send} className="rounded bg-indigo-700 px-3 py-1 text-xs">
+      <button type="button" onClick={send} className={PRIMARY_BUTTON_CLASS}>
         {t('sendE6')}
       </button>
-      {msg && <span className="w-full text-xs text-slate-400">{msg}</span>}
+      {msg && <span className="w-full text-[13px] text-[#7F8C8D]">{msg}</span>}
     </div>
   );
 }
@@ -143,6 +188,7 @@ export default function IntegrationAdminPage() {
   const [logs, setLogs] = useState<OutboundLog[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [posModalOpen, setPosModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [sRes, lRes] = await Promise.all([
@@ -185,21 +231,26 @@ export default function IntegrationAdminPage() {
     await load();
   }
 
+  async function pushMasterData() {
+    const res = await fetch('/api/integration/master-data-sync', { method: 'POST' });
+    const data = await res.json();
+    setMsg(res.ok ? t('e5Sent', { id: data.correlationId }) : data.error);
+    await load();
+  }
+
   if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermission')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-4xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
+      </AppShell>
     );
   }
 
   if (!settings) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('loading')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-4xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('loading')}</p>
+      </AppShell>
     );
   }
 
@@ -222,35 +273,35 @@ export default function IntegrationAdminPage() {
     });
   };
 
-  async function pushMasterData() {
-    const res = await fetch('/api/integration/master-data-sync', { method: 'POST' });
-    const data = await res.json();
-    setMsg(res.ok ? t('e5Sent', { id: data.correlationId }) : data.error);
-    await load();
-  }
-
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-2 text-xl font-semibold">{t('title')}</h1>
-      <p className="mb-6 text-sm text-slate-400">{t('subtitle')}</p>
+    <AppShell maxWidthClass="max-w-4xl">
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setPosModalOpen(true)}>
+            {t('posBridgeTest')}
+          </button>
+        }
+      />
+      <StatusMessage>{msg}</StatusMessage>
 
-      {msg && <p className="mb-4 text-sm text-slate-300">{msg}</p>}
-
-      <section className="mb-8 space-y-3 rounded-xl border border-slate-700 p-4 text-sm">
+      <PageSection className="mb-6 space-y-3 text-[13px] text-[#34495E]">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
             checked={settings.enabled}
             onChange={(e) => toggle('enabled', e.target.checked)}
           />
           {t('globalEnabled')}
         </label>
-        <p className="text-xs uppercase text-slate-500">{t('realtimeFolio')}</p>
+        <p className="text-xs font-semibold uppercase text-[#7F8C8D]">{t('realtimeFolio')}</p>
         {(Object.keys(REALTIME_EVENT_KEYS) as (keyof typeof REALTIME_EVENT_KEYS)[]).map((key) => (
           <label key={key} className="flex items-center gap-2">
             <input
               type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
               checked={settings.realtime[key]}
               onChange={(e) => toggle(key, e.target.checked)}
             />
@@ -260,6 +311,7 @@ export default function IntegrationAdminPage() {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
             checked={settings.cityLedgerSnapshot}
             onChange={(e) => toggle('cityLedgerSnapshot', e.target.checked)}
           />
@@ -268,6 +320,7 @@ export default function IntegrationAdminPage() {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
             checked={settings.masterDataSync}
             onChange={(e) => toggle('masterDataSync', e.target.checked)}
           />
@@ -276,97 +329,97 @@ export default function IntegrationAdminPage() {
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
+            className={MODAL_CHECKBOX_CLASS}
             checked={settings.nightAuditClosed}
             onChange={(e) => toggle('nightAuditClosed', e.target.checked)}
           />
           {t('eventNightAudit')}
         </label>
-        <label className="block">
-          {t('defaultUrl')}
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="url-default">
+            {t('defaultUrl')}
+          </label>
           <input
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs"
+            id="url-default"
+            className={MODAL_INPUT_CLASS}
             value={settings.urls.default}
             onChange={(e) =>
               setSettings((s) => s && { ...s, urls: { ...s.urls, default: e.target.value } })
             }
           />
-        </label>
-        <label className="block">
-          {t('nightAuditUrl')}
+        </div>
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="url-na">
+            {t('nightAuditUrl')}
+          </label>
           <input
-            className="mt-1 w-full rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs"
+            id="url-na"
+            className={MODAL_INPUT_CLASS}
             value={settings.urls.nightAudit}
             onChange={(e) =>
               setSettings((s) => s && { ...s, urls: { ...s.urls, nightAudit: e.target.value } })
             }
           />
-        </label>
-        <div className="flex gap-2 pt-2">
-          <button
-            type="button"
-            disabled={busy}
-            onClick={save}
-            className="rounded bg-emerald-700 px-4 py-2 text-sm disabled:opacity-50"
-          >
+        </div>
+        <div className="flex flex-wrap gap-2 pt-2">
+          <button type="button" disabled={busy} onClick={save} className={PRIMARY_BUTTON_CLASS}>
             {tc('save')}
           </button>
-          <button
-            type="button"
-            onClick={retryFailed}
-            className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
-          >
+          <button type="button" onClick={retryFailed} className={SECONDARY_BUTTON_CLASS}>
             {t('processRetry')}
           </button>
-          <button
-            type="button"
-            onClick={pushMasterData}
-            className="rounded border border-slate-600 px-4 py-2 text-sm hover:bg-slate-800"
-          >
+          <button type="button" onClick={pushMasterData} className={SECONDARY_BUTTON_CLASS}>
             {t('pushMasterData')}
           </button>
         </div>
-      </section>
+      </PageSection>
 
-      <PosBridgeTest />
-
-      <section className="mb-8 rounded-xl border border-indigo-900/50 p-4">
-        <h2 className="mb-2 text-sm font-medium uppercase text-slate-500">{t('e6Title')}</h2>
-        <p className="mb-3 text-xs text-slate-400">{t('e6Hint')}</p>
+      <PageSection className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('e6Title')}</h2>
+        <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('e6Hint')}</p>
         <E6Simulator onDone={() => load()} />
-      </section>
+      </PageSection>
 
-      <section className="rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('outboundJournal')}</h2>
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="text-slate-500">
-              <th className="py-1">{tc('time')}</th>
-              <th>Event</th>
-              <th>{tc('status')}</th>
-              <th>{t('attempts')}</th>
-              <th>{tc('error')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((l) => (
-              <tr key={l.id} className="border-t border-slate-800">
-                <td className="py-1 pr-2">{new Date(l.createdAt).toLocaleString()}</td>
-                <td className="max-w-[10rem] truncate">{l.eventType.replace('SATELLITE_HOTEL_', '')}</td>
-                <td>{l.status}</td>
-                <td>{l.attempts}</td>
-                <td className="max-w-[12rem] truncate text-rose-300">{l.lastError ?? tc('dash')}</td>
+      <PageSection>
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('outboundJournal')}</h2>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('time')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>Event</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('status')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('attempts')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('error')}</th>
               </tr>
-            ))}
-            {logs.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-4 text-slate-500">
-                  {t('noEvents')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
-    </div>
+            </thead>
+            <tbody>
+              {logs.map((l) => (
+                <tr key={l.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{new Date(l.createdAt).toLocaleString()}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} max-w-[10rem] truncate`}>
+                    {l.eventType.replace('SATELLITE_HOTEL_', '')}
+                  </td>
+                  <td className={DATA_TABLE_TD_CLASS}>{l.status}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{l.attempts}</td>
+                  <td className={`${DATA_TABLE_TD_CLASS} max-w-[12rem] truncate text-rose-600`}>
+                    {l.lastError ?? tc('dash')}
+                  </td>
+                </tr>
+              ))}
+              {logs.length === 0 && (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                    {t('noEvents')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </PageSection>
+
+      <PosBridgeTestModal open={posModalOpen} onClose={() => setPosModalOpen(false)} />
+    </AppShell>
   );
 }

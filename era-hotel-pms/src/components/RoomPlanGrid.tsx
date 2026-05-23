@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { DATA_TABLE_VIEWPORT_CLASS } from '@era/satellite-kit/ui';
 
 type ReservationStatus =
   | 'OPTION'
@@ -39,12 +40,12 @@ interface ReservationBar {
 }
 
 const statusBarStyles: Record<ReservationStatus, string> = {
-  CONFIRMED: 'bg-sky-800 border-sky-600',
-  IN_HOUSE: 'bg-amber-800 border-amber-600',
-  OPTION: 'bg-slate-700 border-slate-500',
-  CHECKED_OUT: 'bg-slate-600',
-  CANCELLED: 'bg-slate-800',
-  NO_SHOW: 'bg-rose-900',
+  CONFIRMED: 'bg-[#2980B9]/15 border-[#2980B9]/50 text-[#34495E]',
+  IN_HOUSE: 'bg-amber-50 border-amber-400/60 text-amber-900',
+  OPTION: 'bg-[#F1F5F9] border-[#D5DADF] text-[#7F8C8D]',
+  CHECKED_OUT: 'bg-[#EBEDF0] border-[#D5DADF] text-[#7F8C8D]',
+  CANCELLED: 'bg-[#F1F5F9] border-[#D5DADF] text-[#7F8C8D]',
+  NO_SHOW: 'bg-rose-50 border-rose-400/60 text-rose-800',
 };
 
 function parseDay(iso: string): Date {
@@ -139,12 +140,14 @@ export default function RoomPlanGrid({
   const colTemplate = `120px repeat(${days}, minmax(52px, 1fr))`;
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-700">
+    <div className={DATA_TABLE_VIEWPORT_CLASS}>
       <div className="min-w-max">
-        <div className="grid gap-px bg-slate-800 text-xs" style={{ gridTemplateColumns: colTemplate }}>
-          <div className="sticky left-0 z-20 bg-slate-900 px-2 py-2 font-medium">Room</div>
+        <div className="grid gap-px bg-[#D5DADF] text-xs" style={{ gridTemplateColumns: colTemplate }}>
+          <div className="sticky left-0 z-20 bg-[#F8FAFC] px-2 py-2 text-[13px] font-semibold text-[#34495E]">
+            Room
+          </div>
           {dateHeaders.map((d) => (
-            <div key={d} className="bg-slate-900 px-1 py-2 text-center text-slate-400">
+            <div key={d} className="bg-[#F8FAFC] px-1 py-2 text-center text-[13px] text-[#7F8C8D]">
               {d.slice(5)}
             </div>
           ))}
@@ -158,12 +161,12 @@ export default function RoomPlanGrid({
             return (
               <div key={room.id} className="contents">
                 <div
-                  className={`sticky left-0 z-10 flex flex-col justify-center border-t border-slate-800 px-2 py-2 ${
-                    isOoo ? 'bg-slate-800 text-slate-500' : 'bg-slate-950'
+                  className={`sticky left-0 z-10 flex flex-col justify-center border-t border-[#D5DADF] px-2 py-2 ${
+                    isOoo ? 'bg-[#EBEDF0] text-[#7F8C8D]' : 'bg-white'
                   }`}
                 >
-                  <span className="font-medium">{room.roomNumber}</span>
-                  <span className="text-slate-500">
+                  <span className="font-medium text-[#34495E]">{room.roomNumber}</span>
+                  <span className="text-[#7F8C8D]">
                     fl.{room.floor} · {room.roomType.code}
                     {isOoo && ` · ${room.status}`}
                   </span>
@@ -173,7 +176,7 @@ export default function RoomPlanGrid({
                     return (
                       <div
                         key={`${room.id}-skip-${colIdx}`}
-                        className={`min-h-[44px] border-t border-slate-800 ${isOoo ? 'bg-slate-800/60' : ''}`}
+                        className={`min-h-[44px] border-t border-[#D5DADF] ${isOoo ? 'bg-[#EBEDF0]/80' : 'bg-white'}`}
                       />
                     );
                   }
@@ -184,14 +187,14 @@ export default function RoomPlanGrid({
                     return (
                       <div
                         key={`${room.id}-bar-${bar.id}`}
-                        className={`flex min-h-[44px] items-stretch border-t border-slate-800 p-0.5 ${isOoo ? 'bg-slate-800/60' : 'bg-slate-900/40'}`}
+                        className={`flex min-h-[44px] items-stretch border-t border-[#D5DADF] p-0.5 ${isOoo ? 'bg-[#EBEDF0]/80' : 'bg-[#F8FAFC]'}`}
                         style={{ gridColumn: `span ${cell.span}` }}
                       >
                         <button
                           type="button"
                           onClick={() => onSelect(selected ? null : bar.id)}
                           onDoubleClick={() => window.location.assign(`/folio/${bar.id}`)}
-                          className={`w-full truncate rounded border px-1 py-1 text-left text-[10px] ${statusBarStyles[bar.status]} ${selected ? 'ring-2 ring-white' : ''}`}
+                          className={`w-full truncate rounded-lg border px-1 py-1 text-left text-[10px] ${statusBarStyles[bar.status]} ${selected ? 'ring-2 ring-[#2980B9]' : ''}`}
                           title={`${bar.guest.fullName} — double-click folio`}
                         >
                           {bar.guest.fullName}
@@ -202,8 +205,8 @@ export default function RoomPlanGrid({
                   return (
                     <div
                       key={`${room.id}-empty-${colIdx}`}
-                      className={`min-h-[44px] border-t border-slate-800 ${
-                        isOoo ? 'bg-slate-800/60' : 'bg-slate-900/30'
+                      className={`min-h-[44px] border-t border-[#D5DADF] ${
+                        isOoo ? 'bg-[#EBEDF0]/80' : 'bg-white'
                       }`}
                     />
                   );

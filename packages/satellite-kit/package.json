@@ -2,22 +2,37 @@
   "name": "@era/satellite-kit",
   "version": "0.0.1",
   "private": true,
-  "description": "Shared helpers for ERA industry satellites — orchestrator gateway and event builders",
+  "description": "Shared helpers for ERA industry satellites — orchestrator gateway, DESIGN.md UI kit",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "default": "./dist/ui/index.js"
+    }
+  },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@era/contracts": "file:../era-contracts"
+    "@era/contracts": "file:../era-contracts",
+    "lucide-react": "^0.511.0"
   },
   "peerDependencies": {
-    "axios": "^1.7.0"
+    "axios": "^1.7.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",
+    "@types/react": "^19.1.4",
     "axios": "^1.9.0",
+    "react": "^19.1.0",
     "typescript": "^5.7.3"
   }
 }

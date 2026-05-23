@@ -2,7 +2,24 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import { Plus } from 'lucide-react';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  GHOST_BUTTON_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -38,6 +55,9 @@ export default function ChannelPage() {
   const [errorText, setErrorText] = useState('');
   const [stopDate, setStopDate] = useState('');
   const [stopRoomTypeId, setStopRoomTypeId] = useState('');
+  const [stopSellModalOpen, setStopSellModalOpen] = useState(false);
+  const [logErrorModalOpen, setLogErrorModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [eRes, sRes, rtRes] = await Promise.all([
@@ -58,15 +78,24 @@ export default function ChannelPage() {
     load();
   }, [load]);
 
+  const stopSellFormId = 'stop-sell-form';
+  const logErrorFormId = 'log-error-form';
+
   async function logError(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     const res = await fetch('/api/channel/errors', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ otaReference: otaRef || undefined, errorMessage: errorText }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('errorLogged') : data.error);
+    if (res.ok) {
+      setLogErrorModalOpen(false);
+      setOtaRef('');
+    }
     await load();
   }
 
@@ -79,6 +108,7 @@ export default function ChannelPage() {
 
   async function addStopSell(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     const res = await fetch('/api/channel/stop-sell', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -89,7 +119,13 @@ export default function ChannelPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('salesClosed') : data.error);
+    if (res.ok) {
+      setStopSellModalOpen(false);
+      setStopDate('');
+      setStopRoomTypeId('');
+    }
     await load();
   }
 
@@ -102,133 +138,187 @@ export default function ChannelPage() {
 
   if (!can(PERMISSIONS.CHANNEL_MANAGE)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermissionChannel')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-3xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionChannel')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-4 text-xl font-semibold">{t('title')}</h1>
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader title={t('title')} />
+      <StatusMessage>{msg}</StatusMessage>
 
-      {msg && <p className="mb-4 text-sm text-slate-300">{msg}</p>}
-
-      <section className="mb-8 rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('stopSell')}</h2>
-        <p className="mb-3 text-xs text-slate-400">{t('stopSellHint')}</p>
-        <form onSubmit={addStopSell} className="flex flex-wrap gap-2 text-sm">
-          <input
-            type="date"
-            required
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1"
-            value={stopDate}
-            onChange={(e) => setStopDate(e.target.value)}
-          />
-          <select
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1"
-            value={stopRoomTypeId}
-            onChange={(e) => setStopRoomTypeId(e.target.value)}
-          >
-            <option value="">{t('allRoomTypes')}</option>
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>
-                {rt.code}
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="rounded bg-rose-800 px-3 py-1">
+      <PageSection className="mb-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('stopSell')}</h2>
+            <p className="mt-1 text-[13px] text-[#7F8C8D]">{t('stopSellHint')}</p>
+          </div>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setStopSellModalOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t('closeSales')}
           </button>
-        </form>
-        <table className="mt-4 w-full text-left text-xs">
-          <thead>
-            <tr className="text-slate-500">
-              <th className="py-1">{tc('date')}</th>
-              <th>{t('roomType')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {stopSells.map((s) => (
-              <tr key={s.id} className="border-t border-slate-800">
-                <td className="py-1">{s.date.slice(0, 10)}</td>
-                <td>{s.roomType?.code ?? tc('all')}</td>
-                <td>
-                  <button
-                    type="button"
-                    onClick={() => removeStopSell(s.id)}
-                    className="text-sky-400 hover:underline"
-                  >
-                    {tc('remove')}
-                  </button>
-                </td>
+        </div>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('date')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('roomType')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
               </tr>
-            ))}
-            {stopSells.length === 0 && (
-              <tr>
-                <td colSpan={3} className="py-2 text-slate-500">
-                  {t('noStopSell')}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {stopSells.map((s) => (
+                <tr key={s.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{s.date.slice(0, 10)}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{s.roomType?.code ?? tc('all')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    <button type="button" onClick={() => removeStopSell(s.id)} className={GHOST_BUTTON_CLASS}>
+                      {tc('remove')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {stopSells.length === 0 && (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td colSpan={3} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                    {t('noStopSell')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </PageSection>
 
-      <section className="mb-8 rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('syncJournal')}</h2>
-        <form onSubmit={logError} className="mb-4 grid gap-2 sm:grid-cols-2">
-          <input
-            placeholder={t('otaReference')}
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
-            value={otaRef}
-            onChange={(e) => setOtaRef(e.target.value)}
-          />
-          <input
-            placeholder={t('errorMessage')}
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
-            value={errorText}
-            onChange={(e) => setErrorText(e.target.value)}
-            required
-          />
-          <button type="submit" className="sm:col-span-2 rounded bg-sky-700 py-2 text-sm">
+      <PageSection>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('syncJournal')}</h2>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setLogErrorModalOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t('logSyncError')}
           </button>
-        </form>
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="text-slate-500">
-              <th className="py-2">{t('otaRef')}</th>
-              <th>{tc('message')}</th>
-              <th>{tc('status')}</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {errors.map((e) => (
-              <tr key={e.id} className="border-t border-slate-800">
-                <td className="py-2">{e.otaReference ?? tc('dash')}</td>
-                <td>{e.errorMessage}</td>
-                <td>{e.resolvedAt ? t('resolved') : t('open')}</td>
-                <td>
-                  {!e.resolvedAt && (
-                    <button
-                      type="button"
-                      onClick={() => resolve(e.id)}
-                      className="text-xs text-sky-400 hover:underline"
-                    >
-                      {tc('resolve')}
-                    </button>
-                  )}
-                </td>
+        </div>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('otaRef')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('message')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('status')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS} />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+            </thead>
+            <tbody>
+              {errors.map((e) => (
+                <tr key={e.id} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{e.otaReference ?? tc('dash')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{e.errorMessage}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>{e.resolvedAt ? t('resolved') : t('open')}</td>
+                  <td className={DATA_TABLE_TD_CLASS}>
+                    {!e.resolvedAt && (
+                      <button type="button" onClick={() => resolve(e.id)} className={GHOST_BUTTON_CLASS}>
+                        {tc('resolve')}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </PageSection>
+
+      <EraModal
+        open={stopSellModalOpen}
+        title={t('stopSell')}
+        subtitle={t('stopSellHint')}
+        onClose={() => setStopSellModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={stopSellFormId}
+            onCancel={() => setStopSellModalOpen(false)}
+            busy={busy}
+            submitLabel={t('closeSales')}
+          />
+        }
+      >
+        <form id={stopSellFormId} onSubmit={addStopSell} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stop-date">
+              {tc('date')}
+            </label>
+            <input
+              id="stop-date"
+              type="date"
+              required
+              className={MODAL_INPUT_CLASS}
+              value={stopDate}
+              onChange={(e) => setStopDate(e.target.value)}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stop-roomType">
+              {t('roomType')}
+            </label>
+            <select
+              id="stop-roomType"
+              className={MODAL_INPUT_CLASS}
+              value={stopRoomTypeId}
+              onChange={(e) => setStopRoomTypeId(e.target.value)}
+            >
+              <option value="">{t('allRoomTypes')}</option>
+              {roomTypes.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.code}
+                </option>
+              ))}
+            </select>
+          </div>
+        </form>
+      </EraModal>
+
+      <EraModal
+        open={logErrorModalOpen}
+        title={t('logSyncError')}
+        onClose={() => setLogErrorModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={logErrorFormId}
+            onCancel={() => setLogErrorModalOpen(false)}
+            busy={busy}
+            submitLabel={t('logSyncError')}
+          />
+        }
+      >
+        <form id={logErrorFormId} onSubmit={logError} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ota-ref">
+              {t('otaReference')}
+            </label>
+            <input
+              id="ota-ref"
+              className={MODAL_INPUT_CLASS}
+              value={otaRef}
+              onChange={(e) => setOtaRef(e.target.value)}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="error-text">
+              {t('errorMessage')}
+            </label>
+            <input
+              id="error-text"
+              className={MODAL_INPUT_CLASS}
+              value={errorText}
+              onChange={(e) => setErrorText(e.target.value)}
+              required
+            />
+          </div>
+        </form>
+      </EraModal>
+    </AppShell>
   );
 }

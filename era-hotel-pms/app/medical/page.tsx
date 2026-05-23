@@ -2,7 +2,18 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import { Plus } from 'lucide-react';
+import {
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -37,6 +48,8 @@ export default function MedicalPage() {
   const [alertMsg, setAlertMsg] = useState(defaultAlert);
   const [orderType, setOrderType] = useState('LAB');
   const [msg, setMsg] = useState<string | null>(null);
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [aRes, rRes] = await Promise.all([
@@ -56,15 +69,23 @@ export default function MedicalPage() {
     load();
   }, [load]);
 
+  const alertFormId = 'create-alert-form';
+
   async function createAlert(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     const res = await fetch('/api/medical/alerts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ guestId, reservationId: reservationId || undefined, message: alertMsg, temperature: 38.2 }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('alertCreated') : data.error);
+    if (res.ok) {
+      setAlertModalOpen(false);
+      setAlertMsg(defaultAlert);
+    }
     await load();
   }
 
@@ -112,23 +133,26 @@ export default function MedicalPage() {
 
   if (!can(PERMISSIONS.MEDICAL_MANAGE)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermissionMedical')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-3xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionMedical')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-4 text-xl font-semibold">{t('title')}</h1>
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader title={t('title')} />
+      <StatusMessage>{msg}</StatusMessage>
 
-      {msg && <p className="mb-4 text-sm text-slate-300">{msg}</p>}
-
-      <section className="mb-8 rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('alerts')}</h2>
-        <ul className="mb-4 space-y-1 text-sm">
+      <PageSection className="mb-6">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('alerts')}</h2>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setAlertModalOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('createAlert')}
+          </button>
+        </div>
+        <ul className="space-y-1 text-[13px] text-[#34495E]">
           {alerts.map((a) => (
             <li key={a.id}>
               {a.guest.fullName}: {a.message}
@@ -136,38 +160,13 @@ export default function MedicalPage() {
             </li>
           ))}
         </ul>
-        <form onSubmit={createAlert} className="grid gap-2 sm:grid-cols-2">
-          <select
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
-            value={guestId}
-            onChange={(e) => {
-              setGuestId(e.target.value);
-              const r = reservations.find((x) => x.guest.id === e.target.value);
-              if (r) setReservationId(r.id);
-            }}
-          >
-            {reservations.map((r) => (
-              <option key={r.guest.id} value={r.guest.id}>
-                {r.guest.fullName}
-              </option>
-            ))}
-          </select>
-          <input
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
-            value={alertMsg}
-            onChange={(e) => setAlertMsg(e.target.value)}
-          />
-          <button type="submit" className="sm:col-span-2 rounded bg-rose-800 py-2 text-sm">
-            {t('createAlert')}
-          </button>
-        </form>
-      </section>
+      </PageSection>
 
-      <section className="mb-8 rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('orderLab')}</h2>
-        <div className="flex flex-wrap gap-2">
+      <PageSection className="mb-6">
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('orderLab')}</h2>
+        <div className="flex flex-wrap items-center gap-2">
           <select
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+            className={MODAL_INPUT_CLASS}
             value={reservationId}
             onChange={(e) => setReservationId(e.target.value)}
           >
@@ -177,23 +176,68 @@ export default function MedicalPage() {
               </option>
             ))}
           </select>
-          <input
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
-            value={orderType}
-            onChange={(e) => setOrderType(e.target.value)}
-          />
-          <button type="button" onClick={createOrder} className="rounded bg-sky-700 px-3 py-1 text-sm">
+          <input className={MODAL_INPUT_CLASS} value={orderType} onChange={(e) => setOrderType(e.target.value)} />
+          <button type="button" onClick={createOrder} className={PRIMARY_BUTTON_CLASS}>
             {t('createOrderLab')}
           </button>
         </div>
-      </section>
+      </PageSection>
 
-      <section className="rounded-xl border border-slate-700 p-4">
-        <h2 className="mb-3 text-sm font-medium uppercase text-slate-500">{t('procedureFolio')}</h2>
-        <button type="button" onClick={postProcedure} className="rounded bg-emerald-700 px-3 py-2 text-sm">
+      <PageSection>
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('procedureFolio')}</h2>
+        <button type="button" onClick={postProcedure} className={PRIMARY_BUTTON_CLASS}>
           {t('postProcedure')}
         </button>
-      </section>
-    </div>
+      </PageSection>
+
+      <EraModal
+        open={alertModalOpen}
+        title={t('createAlert')}
+        onClose={() => setAlertModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={alertFormId}
+            onCancel={() => setAlertModalOpen(false)}
+            busy={busy}
+            submitLabel={t('createAlert')}
+          />
+        }
+      >
+        <form id={alertFormId} onSubmit={createAlert} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="alert-guest">
+              {tc('guest')}
+            </label>
+            <select
+              id="alert-guest"
+              className={MODAL_INPUT_CLASS}
+              value={guestId}
+              onChange={(e) => {
+                setGuestId(e.target.value);
+                const r = reservations.find((x) => x.guest.id === e.target.value);
+                if (r) setReservationId(r.id);
+              }}
+            >
+              {reservations.map((r) => (
+                <option key={r.guest.id} value={r.guest.id}>
+                  {r.guest.fullName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="alert-msg">
+              {tc('message')}
+            </label>
+            <input
+              id="alert-msg"
+              className={MODAL_INPUT_CLASS}
+              value={alertMsg}
+              onChange={(e) => setAlertMsg(e.target.value)}
+            />
+          </div>
+        </form>
+      </EraModal>
+    </AppShell>
   );
 }

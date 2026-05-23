@@ -179,6 +179,7 @@ for (const s of SATELLITES) {
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
+  transpilePackages: ["@era/satellite-kit"],
 };
 
 export default nextConfig;

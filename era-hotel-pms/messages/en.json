@@ -51,6 +51,8 @@
     "amount": "Amount",
     "add": "Add",
     "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
     "load": "Load",
     "compare": "Compare",
     "retry": "Retry",

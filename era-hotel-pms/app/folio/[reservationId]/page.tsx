@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  GHOST_BUTTON_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -31,10 +38,10 @@ interface FolioRow {
 }
 
 const FISCAL_COLORS: Record<string, string> = {
-  PENDING: 'text-amber-300',
-  SENT: 'text-sky-300',
-  ACCEPTED: 'text-emerald-300',
-  REJECTED: 'text-rose-300',
+  PENDING: 'text-amber-700',
+  SENT: 'text-[#2980B9]',
+  ACCEPTED: 'text-[#2980B9]',
+  REJECTED: 'text-rose-600',
 };
 
 function folioBalance(f: FolioRow): number {
@@ -128,32 +135,39 @@ export default function FolioPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <Link href="/" className="text-sm text-sky-400 hover:underline">
-        {t('backChessboard')}
-      </Link>
-      <h1 className="mt-2 mb-4 text-xl font-semibold">
-        {t('title', { id: reservationId.slice(0, 8) })}
-      </h1>
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader
+        title={t('title', { id: reservationId.slice(0, 8) })}
+        leading={
+          <Link href="/" className="text-[13px] text-[#2980B9] hover:underline">
+            {t('backChessboard')}
+          </Link>
+        }
+      />
 
-      <p
-        className={`mb-4 rounded-lg px-4 py-2 text-sm ${Math.abs(totalBalance) < 0.01 ? 'bg-emerald-950 text-emerald-200' : 'bg-amber-950 text-amber-200'}`}
+      <PageSection
+        className={`mb-4 text-[13px] ${
+          Math.abs(totalBalance) < 0.01
+            ? 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
+            : 'border-amber-200 bg-amber-50 text-amber-900'
+        }`}
       >
         {t('totalBalance')} <strong>{totalBalance.toFixed(2)} AZN</strong>
         {Math.abs(totalBalance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
-      </p>
+      </PageSection>
+
+      <StatusMessage>{msg}</StatusMessage>
 
       {folios.map((f) => (
-        <div key={f.id} className="mb-4 rounded-xl border border-slate-700 p-4">
-          <h2 className="font-medium">
+        <PageSection key={f.id} className="mb-4">
+          <h2 className="font-semibold text-[#34495E]">
             {t('folioLine', {
               type: f.type,
               status: f.status,
               balance: folioBalance(f).toFixed(2),
             })}
           </h2>
-          <ul className="mt-2 space-y-1 text-sm text-slate-400">
+          <ul className="mt-2 space-y-1 text-[13px] text-[#7F8C8D]">
             {f.charges.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center gap-2">
                 <span>
@@ -164,11 +178,7 @@ export default function FolioPage() {
                   })}
                 </span>
                 {can(PERMISSIONS.FOLIO_VOID) && (
-                  <button
-                    type="button"
-                    onClick={() => voidCharge(c.id)}
-                    className="text-xs text-rose-400 hover:underline"
-                  >
+                  <button type="button" onClick={() => voidCharge(c.id)} className={GHOST_BUTTON_CLASS}>
                     {t('void')}
                   </button>
                 )}
@@ -182,19 +192,15 @@ export default function FolioPage() {
             ))}
           </ul>
           {can(PERMISSIONS.FOLIO_PAYMENT) && f.charges.length > 0 && (
-            <button
-              type="button"
-              onClick={() => issueInvoice(f.id)}
-              className="mt-2 rounded bg-indigo-800 px-2 py-1 text-xs"
-            >
+            <button type="button" onClick={() => issueInvoice(f.id)} className={`mt-2 ${SECONDARY_BUTTON_CLASS}`}>
               {t('issueInvoice')}
             </button>
           )}
           {(f.fiscalDocuments?.length ?? 0) > 0 && (
-            <div className="mt-3 rounded border border-slate-600 bg-slate-900/50 p-2 text-xs">
-              <p className="font-medium text-slate-400">{t('fiscalTitle')}</p>
+            <div className="mt-3 rounded-lg border border-[#D5DADF] bg-[#F8FAFC] p-2 text-[13px]">
+              <p className="font-semibold text-[#34495E]">{t('fiscalTitle')}</p>
               {f.fiscalDocuments!.map((d) => (
-                <p key={d.id} className={FISCAL_COLORS[d.fiscalStatus] ?? 'text-slate-300'}>
+                <p key={d.id} className={FISCAL_COLORS[d.fiscalStatus] ?? 'text-[#34495E]'}>
                   {d.invoiceNumber ?? d.id.slice(0, 8)} —{' '}
                   {tFiscal(d.fiscalStatus as 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED')}
                   {d.fiscalExternalId ? ` (${d.fiscalExternalId})` : ''}
@@ -203,31 +209,27 @@ export default function FolioPage() {
               ))}
             </div>
           )}
-        </div>
+        </PageSection>
       ))}
 
       {can(PERMISSIONS.FOLIO_CHARGE) && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <PageSection className="mb-4 flex flex-wrap items-center gap-2">
           <input
             type="number"
-            className="w-24 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+            className={`w-24 ${MODAL_INPUT_CLASS}`}
             value={chargeAmount}
             onChange={(e) => setChargeAmount(e.target.value)}
           />
-          <button
-            type="button"
-            onClick={addCharge}
-            className="rounded bg-slate-600 px-3 py-1 text-sm hover:bg-slate-500"
-          >
+          <button type="button" onClick={addCharge} className={SECONDARY_BUTTON_CLASS}>
             {t('postCharge')}
           </button>
-        </div>
+        </PageSection>
       )}
 
       {can(PERMISSIONS.FOLIO_PAYMENT) && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <PageSection className="flex flex-wrap items-center gap-2">
           <select
-            className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+            className={MODAL_INPUT_CLASS}
             value={selectedFolio}
             onChange={(e) => setSelectedFolio(e.target.value)}
           >
@@ -240,21 +242,15 @@ export default function FolioPage() {
           <input
             type="number"
             placeholder={tc('amount')}
-            className="w-28 rounded border border-slate-600 bg-slate-800 px-2 py-1 text-sm"
+            className={`w-28 ${MODAL_INPUT_CLASS}`}
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
           />
-          <button
-            type="button"
-            onClick={addPayment}
-            className="rounded bg-emerald-700 px-3 py-1 text-sm hover:bg-emerald-600"
-          >
+          <button type="button" onClick={addPayment} className={PRIMARY_BUTTON_CLASS}>
             {t('recordPayment')}
           </button>
-        </div>
+        </PageSection>
       )}
-
-      {msg && <p className="text-sm text-slate-300">{msg}</p>}
-    </div>
+    </AppShell>
   );
 }

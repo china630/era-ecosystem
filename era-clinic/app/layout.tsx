@@ -1,11 +1,17 @@
+import type { Metadata } from "next";
+import { APP_SHELL_CLASS } from "@era/satellite-kit/ui";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "ERA Clinic",
+  description: "ERA industry satellite — operational shell",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "Segoe UI, sans-serif", margin: 0, padding: "1rem" }}>
-        <header style={{ marginBottom: "1rem", borderBottom: "1px solid #D5DADF" }}>
-          <strong>ERA Clinic</strong>
-        </header>
-        {children}
+      <body className={APP_SHELL_CLASS}>
+        <div className="mx-auto max-w-5xl px-4 py-6">{children}</div>
       </body>
     </html>
   );

@@ -3,7 +3,15 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import { Plus } from 'lucide-react';
+import {
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import NewBookingModal from '@/components/NewBookingModal';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -55,14 +63,14 @@ interface Arrival {
 }
 
 const statusStyles: Record<RoomStatus, string> = {
-  AVAILABLE: 'border-emerald-500/60 bg-emerald-950/40',
-  CLEAN: 'border-emerald-400/50 bg-emerald-950/30',
-  INSPECTED: 'border-teal-500/60 bg-teal-950/40',
-  OCCUPIED: 'border-amber-500/60 bg-amber-950/40',
-  DIRTY: 'border-rose-500/60 bg-rose-950/40',
-  OOO: 'border-orange-600/60 bg-orange-950/40',
-  OOS: 'border-slate-600/60 bg-slate-800/60',
-  MAINTENANCE: 'border-slate-500/60 bg-slate-800/60',
+  AVAILABLE: 'border-[#2980B9]/40 bg-[#F8FAFC]',
+  CLEAN: 'border-[#2980B9]/30 bg-white',
+  INSPECTED: 'border-[#34495E]/30 bg-[#F1F5F9]',
+  OCCUPIED: 'border-amber-400/60 bg-amber-50',
+  DIRTY: 'border-rose-400/60 bg-rose-50',
+  OOO: 'border-orange-400/60 bg-orange-50',
+  OOS: 'border-[#D5DADF] bg-[#EBEDF0]',
+  MAINTENANCE: 'border-[#7F8C8D]/40 bg-[#F1F5F9]',
 };
 
 export default function Chessboard() {
@@ -72,6 +80,7 @@ export default function Chessboard() {
   const tCommon = useTranslations('common');
   const tRoom = useTranslations('roomStatus');
   const tRes = useTranslations('reservationStatus');
+  const tBooking = useTranslations('booking');
 
   const roomStatusLabel = (status: RoomStatus) => tRoom(status);
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -82,6 +91,7 @@ export default function Chessboard() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [revenueCodes, setRevenueCodes] = useState<{ id: string; code: string }[]>([]);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -166,38 +176,29 @@ export default function Chessboard() {
     }
   }
 
-  const assignableRooms = selected
-    ? rooms.filter(
-        (r) =>
-          r.roomType.code === selected.roomType.code &&
-          ['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(r.status),
-      )
-    : [];
-
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <AppNav />
-      <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">{tMeta('title')}</h1>
-        <p className="mt-1 text-sm text-slate-400">{t('subtitle')}</p>
-      </header>
+    <AppShell maxWidthClass="max-w-6xl">
+      <PageHeader
+        title={tMeta('title')}
+        subtitle={t('subtitle')}
+        actions={
+          can(PERMISSIONS.RESERVATIONS_WRITE) ? (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setBookingModalOpen(true)}>
+              <Plus className="h-4 w-4" aria-hidden />
+              {tBooking('createBooking')}
+            </button>
+          ) : undefined
+        }
+      />
 
-      {message && (
-        <p className="mb-4 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm text-slate-200">
-          {message}
-        </p>
-      )}
+      <StatusMessage>{message}</StatusMessage>
 
-      <p className="mb-4 text-xs text-slate-500">
-        {t('hkHint')}
-      </p>
+      <p className="mb-4 text-[13px] text-[#7F8C8D]">{t('hkHint')}</p>
 
       {arrivals.length > 0 && (
-        <section className="mb-8 rounded-xl border border-slate-700 bg-slate-900 p-4">
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-400">
-            {t('arrivalsTitle')}
-          </h2>
-          <ul className="space-y-2 text-sm">
+        <PageSection className="mb-6">
+          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('arrivalsTitle')}</h2>
+          <ul className="space-y-2 text-[13px] text-[#34495E]">
             {arrivals
               .filter((a) => !a.room && a.status === 'CONFIRMED')
               .map((a) => (
@@ -206,7 +207,7 @@ export default function Chessboard() {
                     {a.guest.fullName} — {a.roomType.code}
                   </span>
                   <select
-                    className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-xs"
+                    className={MODAL_INPUT_CLASS}
                     value={assignRoomId}
                     onChange={(e) => setAssignRoomId(e.target.value)}
                   >
@@ -226,7 +227,7 @@ export default function Chessboard() {
                   <button
                     type="button"
                     disabled={busy || !assignRoomId}
-                    className="rounded bg-sky-700 px-2 py-1 text-xs disabled:opacity-50"
+                    className={PRIMARY_BUTTON_CLASS}
                     onClick={() => assignToRoom(a.id, assignRoomId)}
                   >
                     {t('assign')}
@@ -234,11 +235,11 @@ export default function Chessboard() {
                 </li>
               ))}
           </ul>
-        </section>
+        </PageSection>
       )}
 
       {loading ? (
-        <p className="text-slate-400">{t('loadingRooms')}</p>
+        <p className="text-[13px] text-[#7F8C8D]">{t('loadingRooms')}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {rooms.map((room) => (
@@ -246,15 +247,15 @@ export default function Chessboard() {
               key={room.id}
               type="button"
               onClick={() => setSelected(room)}
-              className={`rounded-xl border-2 p-4 text-left transition hover:ring-2 hover:ring-slate-500 ${statusStyles[room.status]} ${selected?.id === room.id ? 'ring-2 ring-white' : ''}`}
+              className={`rounded-2xl border-2 p-4 text-left transition hover:ring-2 hover:ring-[#2980B9]/30 ${statusStyles[room.status]} ${selected?.id === room.id ? 'ring-2 ring-[#2980B9]' : ''}`}
             >
-              <div className="text-lg font-bold">{room.roomNumber}</div>
-              <div className="text-xs text-slate-400">
+              <div className="text-lg font-bold text-[#34495E]">{room.roomNumber}</div>
+              <div className="text-[13px] text-[#7F8C8D]">
                 {room.roomType.code} · {t('floor', { floor: room.floor })}
               </div>
-              <div className="mt-2 text-xs font-medium">{roomStatusLabel(room.status)}</div>
+              <div className="mt-2 text-[13px] font-medium text-[#34495E]">{roomStatusLabel(room.status)}</div>
               {room.reservations[0] && (
-                <div className="mt-2 truncate text-xs text-slate-300">
+                <div className="mt-2 truncate text-[13px] text-[#7F8C8D]">
                   {room.reservations[0].guest.fullName} ({tRes(room.reservations[0].status)})
                 </div>
               )}
@@ -264,14 +265,14 @@ export default function Chessboard() {
       )}
 
       {selected && (
-        <aside className="mt-8 rounded-xl border border-slate-700 bg-slate-900 p-6">
-          <h2 className="text-lg font-medium">{t('roomTitle', { number: selected.roomNumber })}</h2>
-          <p className="text-sm text-slate-400">
+        <PageSection className="mt-6">
+          <h2 className="text-lg font-semibold text-[#34495E]">{t('roomTitle', { number: selected.roomNumber })}</h2>
+          <p className="text-[13px] text-[#7F8C8D]">
             {selected.roomType.name} · {roomStatusLabel(selected.status)}
           </p>
 
           {activeReservation ? (
-            <div className="mt-4 space-y-2 text-sm">
+            <div className="mt-4 space-y-2 text-[13px] text-[#34495E]">
               <p>
                 {t('guest')}: {activeReservation.guest.fullName}
               </p>
@@ -282,10 +283,7 @@ export default function Chessboard() {
                 {t('balance')}: {activeReservation.totalAmount} AZN
               </p>
               {can(PERMISSIONS.FOLIO_READ) && (
-                <Link
-                  href={`/folio/${activeReservation.id}`}
-                  className="text-sm text-sky-400 hover:underline"
-                >
+                <Link href={`/folio/${activeReservation.id}`} className="text-[#2980B9] hover:underline">
                   {t('openFolio')}
                 </Link>
               )}
@@ -295,7 +293,7 @@ export default function Chessboard() {
                     type="button"
                     disabled={busy}
                     onClick={() => runAction(`/api/reservations/${activeReservation.id}/check-in`)}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium hover:bg-emerald-500 disabled:opacity-50"
+                    className={PRIMARY_BUTTON_CLASS}
                   >
                     {t('checkIn')}
                   </button>
@@ -314,33 +312,31 @@ export default function Chessboard() {
                             description: t('quickPosting'),
                           })
                         }
-                        className="rounded-lg bg-slate-600 px-3 py-1.5 text-sm hover:bg-slate-500 disabled:opacity-50"
+                        className={SECONDARY_BUTTON_CLASS}
                       >
                         {t('addCharge')}
                       </button>
                     )}
                     {can(PERMISSIONS.RESERVATIONS_CHECKOUT) && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() =>
-                        runAction(`/api/reservations/${activeReservation.id}/check-out`)
-                      }
-                      className="rounded-lg bg-amber-600 px-3 py-1.5 text-sm font-medium hover:bg-amber-500 disabled:opacity-50"
-                    >
-                      {t('checkOut')}
-                    </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => runAction(`/api/reservations/${activeReservation.id}/check-out`)}
+                        className={SECONDARY_BUTTON_CLASS}
+                      >
+                        {t('checkOut')}
+                      </button>
                     )}
                   </>
                 )}
               </div>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-slate-500">{t('noReservation')}</p>
+            <p className="mt-4 text-[13px] text-[#7F8C8D]">{t('noReservation')}</p>
           )}
 
-          <div className="mt-6 border-t border-slate-700 pt-4">
-            <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">{t('housekeeping')}</p>
+          <div className="mt-6 border-t border-[#D5DADF] pt-4">
+            <p className="mb-2 text-xs font-semibold uppercase text-[#7F8C8D]">{t('housekeeping')}</p>
             <div className="flex flex-wrap gap-2">
               {(['CLEAN', 'INSPECTED', 'DIRTY', 'AVAILABLE', 'OOO'] as RoomStatus[]).map((s) => (
                 <button
@@ -348,15 +344,23 @@ export default function Chessboard() {
                   type="button"
                   disabled={busy}
                   onClick={() => setRoomStatus(s)}
-                  className="rounded border border-slate-600 px-2 py-1 text-xs hover:bg-slate-800 disabled:opacity-50"
+                  className={SECONDARY_BUTTON_CLASS}
                 >
                   {roomStatusLabel(s)}
                 </button>
               ))}
             </div>
           </div>
-        </aside>
+        </PageSection>
       )}
-    </div>
+
+      <NewBookingModal
+        open={bookingModalOpen}
+        onClose={() => {
+          setBookingModalOpen(false);
+          void load();
+        }}
+      />
+    </AppShell>
   );
 }

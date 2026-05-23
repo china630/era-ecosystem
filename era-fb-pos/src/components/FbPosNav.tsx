@@ -2,34 +2,38 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CalendarDays, ChefHat, LayoutDashboard, LayoutGrid, Receipt } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "@era/satellite-kit/ui";
 
-const links = [
-  { href: "/", label: "Dashboard" },
-  { href: "/floor", label: "Floor" },
-  { href: "/orders", label: "Orders" },
-  { href: "/kds", label: "KDS" },
-  { href: "/calendar", label: "Reservations" },
+const links: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/floor", label: "Floor", icon: LayoutGrid },
+  { href: "/orders", label: "Orders", icon: Receipt },
+  { href: "/kds", label: "KDS", icon: ChefHat },
+  { href: "/calendar", label: "Reservations", icon: CalendarDays },
 ];
 
 export default function FbPosNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-6 flex flex-wrap items-center gap-4 border-b border-[#D5DADF] pb-4 text-sm">
-      <span className="font-semibold text-[#34495E]">ERA F&B POS</span>
-      {links.map((l) => (
-        <Link
-          key={l.href}
-          href={l.href}
-          className={
-            pathname === l.href
-              ? "font-medium text-[#2980B9]"
-              : "text-[#7F8C8D] hover:text-[#2980B9]"
-          }
-        >
-          {l.label}
-        </Link>
-      ))}
+    <nav className="mb-6 flex flex-wrap items-center gap-2 border-b border-[#D5DADF] pb-4">
+      <span className="mr-4 text-[13px] font-semibold text-[#34495E]">ERA F&B POS</span>
+      {links.map((l) => {
+        const Icon = l.icon;
+        const active = pathname === l.href;
+        return (
+          <Link
+            key={l.href}
+            href={l.href}
+            className={active ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS}
+          >
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
+            {l.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

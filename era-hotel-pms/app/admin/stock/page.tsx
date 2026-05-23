@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import { Plus } from 'lucide-react';
+import {
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
+import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -16,6 +26,8 @@ export default function StockAdminPage() {
   const [warehouseId, setWarehouseId] = useState('');
   const [qty, setQty] = useState('10');
   const [msg, setMsg] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   async function load() {
     const [p, w] = await Promise.all([
@@ -32,8 +44,11 @@ export default function StockAdminPage() {
     if (can(PERMISSIONS.MASTER_DATA_MANAGE)) load();
   }, [can]);
 
+  const formId = 'stock-receipt-form';
+
   async function receipt(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     const res = await fetch('/api/stock/movements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -46,50 +61,98 @@ export default function StockAdminPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('movementPosted') : data.error);
+    if (res.ok) setModalOpen(false);
   }
 
   if (!can(PERMISSIONS.MASTER_DATA_MANAGE)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermission')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-3xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-4 text-xl font-semibold">{t('title')}</h1>
-      {msg && <p className="mb-4 text-sm text-slate-300">{msg}</p>}
-      <ul className="mb-4 text-xs text-slate-400">
-        {products.map((p) => (
-          <li key={p.id}>
-            {p.code} — {p.name}
-          </li>
-        ))}
-      </ul>
-      <form onSubmit={receipt} className="flex flex-wrap gap-2 text-sm">
-        <select value={productId} onChange={(e) => setProductId(e.target.value)} className="rounded border border-slate-600 bg-slate-800 px-2 py-1">
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader
+        title={t('title')}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setModalOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
+            {t('receipt')}
+          </button>
+        }
+      />
+      <StatusMessage>{msg}</StatusMessage>
+      <PageSection>
+        <ul className="space-y-1 text-[13px] text-[#7F8C8D]">
           {products.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.code}
-            </option>
+            <li key={p.id}>
+              {p.code} — {p.name}
+            </li>
           ))}
-        </select>
-        <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} className="rounded border border-slate-600 bg-slate-800 px-2 py-1">
-          {warehouses.map((w) => (
-            <option key={w.id} value={w.id}>
-              {w.code}
-            </option>
-          ))}
-        </select>
-        <input type="number" value={qty} onChange={(e) => setQty(e.target.value)} className="w-20 rounded border border-slate-600 bg-slate-800 px-2 py-1" />
-        <button type="submit" className="rounded bg-sky-700 px-3 py-1">
-          {t('receipt')}
-        </button>
-      </form>
-    </div>
+        </ul>
+      </PageSection>
+
+      <EraModal
+        open={modalOpen}
+        title={t('receipt')}
+        onClose={() => setModalOpen(false)}
+        footer={
+          <EraModalFooter formId={formId} onCancel={() => setModalOpen(false)} busy={busy} submitLabel={t('receipt')} />
+        }
+      >
+        <form id={formId} onSubmit={receipt} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stock-product">
+              {tc('name')}
+            </label>
+            <select
+              id="stock-product"
+              value={productId}
+              onChange={(e) => setProductId(e.target.value)}
+              className={MODAL_INPUT_CLASS}
+            >
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stock-warehouse">
+              {tc('code')}
+            </label>
+            <select
+              id="stock-warehouse"
+              value={warehouseId}
+              onChange={(e) => setWarehouseId(e.target.value)}
+              className={MODAL_INPUT_CLASS}
+            >
+              {warehouses.map((w) => (
+                <option key={w.id} value={w.id}>
+                  {w.code}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="stock-qty">
+              {tc('amount')}
+            </label>
+            <input
+              id="stock-qty"
+              type="number"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              className={MODAL_INPUT_CLASS}
+            />
+          </div>
+        </form>
+      </EraModal>
+    </AppShell>
   );
 }

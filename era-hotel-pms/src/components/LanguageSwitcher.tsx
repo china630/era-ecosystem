@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { MODAL_INPUT_CLASS } from '@era/satellite-kit/ui';
 import { locales, type Locale } from '@/i18n/config';
 
 export default function LanguageSwitcher() {
@@ -19,12 +20,12 @@ export default function LanguageSwitcher() {
   }
 
   return (
-    <label className="flex items-center gap-2 text-xs text-slate-400">
+    <label className="flex items-center gap-2 text-[12px] text-[#7F8C8D]">
       <span className="sr-only">{t('label')}</span>
       <select
         value={locale}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded border border-slate-600 bg-slate-800 px-2 py-1 text-slate-200"
+        className={`${MODAL_INPUT_CLASS} !h-8 !min-h-8 text-[12px]`}
         aria-label={t('label')}
       >
         {locales.map((code) => (

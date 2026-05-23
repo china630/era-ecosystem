@@ -2,7 +2,19 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import AppNav from '@/components/AppNav';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  MODAL_INPUT_CLASS,
+  PRIMARY_BUTTON_CLASS,
+} from '@era/satellite-kit/ui';
+import { PageHeader } from '@era/satellite-kit/ui';
+import AppShell, { PageSection } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -26,54 +38,61 @@ export default function ReconciliationPage() {
 
   if (!can(PERMISSIONS.REPORTS_READ)) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        <AppNav />
-        <p className="text-slate-400">{tc('noPermission')}</p>
-      </div>
+      <AppShell maxWidthClass="max-w-3xl">
+        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermission')}</p>
+      </AppShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <AppNav />
-      <h1 className="mb-4 text-xl font-semibold">{t('reconciliationTitle')}</h1>
-      <div className="mb-4 flex gap-2 text-sm">
-        <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded border border-slate-600 bg-slate-800 px-2 py-1" />
-        <button type="button" onClick={load} className="rounded bg-sky-700 px-3 py-1">
-          {tc('compare')}
-        </button>
-      </div>
+    <AppShell maxWidthClass="max-w-3xl">
+      <PageHeader
+        title={t('reconciliationTitle')}
+        leading={
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={MODAL_INPUT_CLASS} />
+        }
+        actions={
+          <button type="button" onClick={load} className={PRIMARY_BUTTON_CLASS}>
+            {tc('compare')}
+          </button>
+        }
+      />
+
       {report && (
         <>
-          <p className={`mb-4 text-sm ${report.matched ? 'text-emerald-300' : 'text-amber-300'}`}>
+          <p className={`mb-4 text-[13px] ${report.matched ? 'text-[#2980B9]' : 'text-amber-800'}`}>
             {t('compareSummary', {
               folio: report.folioTotal.toFixed(2),
               e1: report.e1Total.toFixed(2),
               delta: report.totalDelta.toFixed(2),
             })}
           </p>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="text-slate-500">
-                <th className="text-left">{tc('code')}</th>
-                <th>Folio</th>
-                <th>E1</th>
-                <th>{t('delta')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {report.lines.map((l) => (
-                <tr key={l.revenueCode} className="border-t border-slate-800">
-                  <td className="py-1">{l.revenueCode}</td>
-                  <td>{l.folioAmount.toFixed(2)}</td>
-                  <td>{l.e1Amount.toFixed(2)}</td>
-                  <td>{l.delta.toFixed(2)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <PageSection className="p-0">
+            <div className={DATA_TABLE_VIEWPORT_CLASS}>
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('code')}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>Folio</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>E1</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t('delta')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.lines.map((l) => (
+                    <tr key={l.revenueCode} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{l.revenueCode}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{l.folioAmount.toFixed(2)}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{l.e1Amount.toFixed(2)}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} text-right font-mono`}>{l.delta.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </PageSection>
         </>
       )}
-    </div>
+    </AppShell>
   );
 }
