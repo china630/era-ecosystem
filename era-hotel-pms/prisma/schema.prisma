@@ -254,6 +254,7 @@ model RatePlan {
   reservations  Reservation[]
   packageLines  RatePlanPackageLine[]
   procedureInclusions RatePlanProcedureInclusion[]
+  contractPricingRules ContractPricingRule[]
 }
 
 model RatePlanPackageLine {
@@ -353,6 +354,31 @@ model Agency {
   name         String
   voen         String?
   reservations Reservation[]
+  contractPricingRules ContractPricingRule[]
+}
+
+enum ContractPricingRuleType {
+  DISCOUNT
+  SUPPLEMENT
+}
+
+model ContractPricingRule {
+  id           String                  @id @default(uuid())
+  name         String
+  agencyId     String?
+  agency       Agency?                 @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  ratePlanId   String
+  ratePlan     RatePlan                @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  ruleType     ContractPricingRuleType
+  valuePercent Decimal                 @db.Decimal(5, 2)
+  validFrom    DateTime                @db.Date
+  validTo      DateTime?               @db.Date
+  active       Boolean                 @default(true)
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  @@index([agencyId, ratePlanId])
+  @@index([validFrom, validTo])
 }
 
 model Guest {
@@ -432,23 +458,25 @@ model Folio {
 }
 
 model FiscalDocument {
-  id               String               @id @default(uuid())
-  reservationId    String
-  reservation      Reservation          @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  folioId          String?
-  folio            Folio?               @relation(fields: [folioId], references: [id], onDelete: SetNull)
-  invoiceNumber    String?
-  counterpartyVoen String?
-  fiscalStatus     FiscalDocumentStatus @default(PENDING)
-  fiscalExternalId String?
-  rejectionReason  String?
-  lastEventAt      DateTime?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  id                     String               @id @default(uuid())
+  reservationId          String
+  reservation            Reservation          @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  folioId                String?
+  folio                  Folio?               @relation(fields: [folioId], references: [id], onDelete: SetNull)
+  invoiceNumber          String?
+  counterpartyVoen       String?
+  fiscalStatus           FiscalDocumentStatus @default(PENDING)
+  fiscalExternalId       String?
+  rejectionReason        String?
+  integrateToAccounting  Boolean              @default(false)
+  lastEventAt            DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
 
   @@index([reservationId])
   @@index([folioId])
   @@index([fiscalStatus])
+  @@index([integrateToAccounting])
 }
 
 model FolioRoutingRule {
