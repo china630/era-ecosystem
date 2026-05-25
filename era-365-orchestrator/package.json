@@ -10,8 +10,8 @@
     "dev": "concurrently -k -n api,web -c blue,magenta \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run start:dev -w @era365/api",
     "dev:web": "npm run dev -w @era365/web",
-    "build": "npm run build -w @era365/database && npm run build -w @era365/api && npm run build -w @era365/web",
-    "db:generate": "npm run db:generate -w @era365/database"
+    "build": "npm run build -w @era365/database && npm run build -w @era365/mdm-database && npm run build -w @era365/api && npm run build -w @era365/web",
+    "db:generate": "npm run db:generate -w @era365/database && npm run db:generate -w @era365/mdm-database"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

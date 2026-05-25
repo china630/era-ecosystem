@@ -1,0 +1,82 @@
+// ERA MDM — global natural persons, legal entities, consent stubs (option B database).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PersonAccessRequestStatus {
+  PENDING
+  GRANTED
+  DENIED
+}
+
+model GlobalNaturalPerson {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  finBlindIndex  String?               @unique @map("fin_blind_index")
+  finCipher      String?               @map("fin_cipher")
+  fullNameCipher String?               @map("full_name_cipher")
+  phoneCipher    String?               @map("phone_cipher")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  accessRequests PersonAccessRequest[]
+  accessGrants   PersonAccessGrant[]
+  accessLogs     PersonAccessLog[]
+
+  @@map("global_natural_persons")
+}
+
+model GlobalLegalEntity {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  taxIdBlindIndex String   @unique @map("tax_id_blind_index")
+  taxIdCipher     String   @map("tax_id_cipher")
+  nameCipher      String   @map("name_cipher")
+  organizationId  String?  @unique @map("organization_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("global_legal_entities")
+}
+
+model PersonAccessRequest {
+  id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId       String                    @map("person_id") @db.Uuid
+  requesterOrgId String                    @map("requester_org_id") @db.Uuid
+  purpose        String
+  status         PersonAccessRequestStatus @default(PENDING)
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  decidedAt      DateTime?                 @map("decided_at")
+  person         GlobalNaturalPerson       @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([requesterOrgId, status])
+  @@map("person_access_requests")
+}
+
+model PersonAccessGrant {
+  id           String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId     String              @map("person_id") @db.Uuid
+  granteeOrgId String              @map("grantee_org_id") @db.Uuid
+  grantedAt    DateTime            @default(now()) @map("granted_at")
+  expiresAt    DateTime?           @map("expires_at")
+  person       GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, granteeOrgId])
+  @@map("person_access_grants")
+}
+
+model PersonAccessLog {
+  id         String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId   String              @map("person_id") @db.Uuid
+  actorOrgId String              @map("actor_org_id") @db.Uuid
+  action     String
+  metaJson   String?             @map("meta_json")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  person     GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@index([personId, createdAt])
+  @@map("person_access_logs")
+}

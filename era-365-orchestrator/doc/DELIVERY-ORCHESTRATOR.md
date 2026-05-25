@@ -20,3 +20,11 @@ PRD: [../PRD.md](../PRD.md)
 
 - [ ] RS256 + JWKS
 - [ ] Permission resolution into JWT `permissions[]`
+
+## CP-MDM — era-mdm Phase 1 (Wave 3 Nafta HN-P)
+
+- [x] Separate DB `era_mdm` — package `@era365/mdm-database`
+- [x] Models: `GlobalNaturalPerson`, `GlobalLegalEntity`, consent stubs (`PersonAccessRequest`, `PersonAccessGrant`, `PersonAccessLog`)
+- [x] `MdmModule` — `GET /internal/v1/mdm/health`, `POST .../organizations/register`, `POST .../persons`, `POST .../access-requests`
+- [x] PII encrypt + blind index (see [doc/adr/era-mdm-phase1.md](adr/era-mdm-phase1.md))
+- [ ] Finance registration cutover from `auth.service.ts` (documented deferral in ADR §5)

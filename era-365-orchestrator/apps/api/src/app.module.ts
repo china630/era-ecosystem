@@ -8,6 +8,7 @@ import { MembershipModule } from "./membership/membership.module";
 import { OrganizationModule } from "./organization/organization.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SatelliteEventsModule } from "./satellite-events/satellite-events.module";
+import { MdmModule } from "./mdm/mdm.module";
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { SatelliteEventsModule } from "./satellite-events/satellite-events.modul
     DisputeModule,
     EntitlementsModule,
     SatelliteEventsModule,
+    MdmModule,
   ],
   controllers: [AppController],
 })
