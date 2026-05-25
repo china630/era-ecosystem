@@ -162,3 +162,29 @@ model PosShift {
   @@index([outletId, status])
   @@map("pos_shifts")
 }
+
+model Role {
+  id              String @id @default(cuid())
+  code            String @unique
+  name            String
+  permissionsJson String @default("[]") @map("permissions_json")
+  users           User[]
+
+  @@map("roles")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  login         String    @unique
+  email         String?
+  fullName      String    @map("full_name")
+  passwordHash  String    @map("password_hash")
+  roleId        String    @map("role_id")
+  role          Role      @relation(fields: [roleId], references: [id])
+  status        String    @default("ACTIVE")
+  isCrossSystem Boolean   @default(false) @map("is_cross_system")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("users")
+}

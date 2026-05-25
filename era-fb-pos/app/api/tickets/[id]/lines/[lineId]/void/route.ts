@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
+import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const voidSchema = z.object({
   reason: z.string().min(1),
@@ -11,6 +12,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string; lineId: string }> },
 ) {
+  const session = await getSessionFromRequest(request);
+  const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+  if (denied) return denied;
+
   const { id, lineId } = await params;
   const body = voidSchema.parse(await request.json());
 

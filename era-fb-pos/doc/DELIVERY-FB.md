@@ -11,14 +11,14 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 - [x] Prisma: Ticket model + related domain schema
 - [x] `POST /api/tickets` + room charge bridge API
 - [x] doc/DOCUMENTATION-INDEX.md + UAT-SMOKE.md
-- [ ] Auth FB_WAITER / FB_MANAGER
-- [ ] Menu CRUD admin
+- [x] Auth FB_WAITER / FB_MANAGER — login + RBAC on pay/fire/void/shift/menu
+- [x] Menu CRUD admin — `GET/POST /api/menu`, `/admin/menu`
 - [x] PMS bridge client wired (`HOTEL_PMS_URL` / stub) + `GET /api/health`
 
 ## FB-1 — MVP Nafta (G-FB-1…7)
 
-- [x] FB-01 Floor + open ticket — `GET /api/tables`, `POST /api/tickets`, `/floor` page
-- [x] FB-02 KDS fire/done — `POST /api/tickets/{id}/fire`, `PATCH /api/kds/lines/{lineId}`, `/kds` page
+- [x] FB-01 Floor + open ticket — `/floor` wired to `POST /api/tickets`
+- [x] FB-02 KDS fire/done — `/orders` fire + `/kds` mark done via API
 - [x] FB-03 Cash/card + KKM mock — `POST /api/tickets/{id}/pay` (stub fiscal receipt)
 - [x] FB-04 Room charge → PMS — `POST /api/tickets/{id}/room-charge`, `GET /api/in-house`
 - [x] FB-05 Void line — `POST /api/tickets/{id}/lines/{lineId}/void`

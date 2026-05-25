@@ -2,12 +2,17 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
+import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const closeSchema = z.object({
   shiftId: z.string().optional(),
 });
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  const denied = requireAnyRole(session, [FB_ROLES.MANAGER]);
+  if (denied) return denied;
+
   const body = closeSchema.parse(await request.json().catch(() => ({})));
 
   const shift = body.shiftId

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const patchSchema = z.object({
   kitchenStatus: z.enum(["IN_PREP", "DONE"]),
@@ -10,6 +11,10 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ lineId: string }> },
 ) {
+  const session = await getSessionFromRequest(request);
+  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  if (denied) return denied;
+
   const { lineId } = await params;
   const body = patchSchema.parse(await request.json());
 

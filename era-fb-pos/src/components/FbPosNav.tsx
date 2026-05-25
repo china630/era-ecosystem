@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, ChefHat, LayoutDashboard, LayoutGrid, Receipt } from "lucide-react";
+import { CalendarDays, ChefHat, LayoutDashboard, LayoutGrid, Receipt, UtensilsCrossed } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SIDEBAR_LINK_ACTIVE_CLASS, SIDEBAR_LINK_CLASS } from "@era/satellite-kit/ui";
 
@@ -11,6 +11,7 @@ const links: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/floor", label: "Floor", icon: LayoutGrid },
   { href: "/orders", label: "Orders", icon: Receipt },
   { href: "/kds", label: "KDS", icon: ChefHat },
+  { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
   { href: "/calendar", label: "Reservations", icon: CalendarDays },
 ];
 

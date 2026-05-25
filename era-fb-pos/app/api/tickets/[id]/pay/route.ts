@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
+import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const paySchema = z.object({
   method: z.enum(["CASH", "CARD"]),
@@ -12,6 +13,10 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const session = await getSessionFromRequest(request);
+  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  if (denied) return denied;
+
   const { id } = await params;
   const body = paySchema.parse(await request.json());
 

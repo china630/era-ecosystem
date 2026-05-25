@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET() {
   const tickets = await prisma.ticket.findMany({
@@ -23,12 +24,17 @@ const createSchema = z.object({
         description: z.string(),
         qty: z.number().int().positive().default(1),
         unitPriceAzn: z.number().nonnegative(),
+        menuItemPlu: z.string().optional(),
       }),
     )
     .optional(),
 });
 
 export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  const denied = requireAnyRole(session, [FB_ROLES.WAITER, FB_ROLES.MANAGER]);
+  if (denied) return denied;
+
   const body = createSchema.parse(await request.json());
   let outlet = await prisma.outlet.findUnique({
     where: { code: body.outletCode },
@@ -54,11 +60,23 @@ export async function POST(request: Request) {
       subtotalAzn: subtotal,
       totalAzn: subtotal,
       lines: {
-        create: lines.map((l) => ({
-          description: l.description,
-          qty: l.qty,
-          unitPriceAzn: l.unitPriceAzn,
-        })),
+        create: await Promise.all(
+          lines.map(async (l) => {
+            let menuItemId: string | undefined;
+            if (l.menuItemPlu) {
+              const menuItem = await prisma.menuItem.findFirst({
+                where: { plu: l.menuItemPlu },
+              });
+              menuItemId = menuItem?.id;
+            }
+            return {
+              description: l.description,
+              qty: l.qty,
+              unitPriceAzn: l.unitPriceAzn,
+              menuItemId,
+            };
+          }),
+        ),
       },
     },
     include: { lines: true, table: true },

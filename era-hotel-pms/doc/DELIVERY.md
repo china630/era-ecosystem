@@ -186,7 +186,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [ ] HK mobile PWA `/hk/mobile`
 - [ ] B2C booking engine
 - [ ] Door locks integration
-- [ ] `era-fb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md)
+- [x] `era-fb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) Wave 2 UI + auth
 - [ ] PMS-04 drag-resize room plan
 - [ ] Auto email reports (WA0345+)
 

@@ -145,4 +145,4 @@ OpenAPI: [fb-pos-pms-bridge.yaml](../era-hotel-pms/doc/openapi/fb-pos-pms-bridge
 | Date | Note |
 |------|------|
 | 2026-05 | Initial PRD stub |
-| 2026-05-24 | PRD v1.0: benchmarks, modules, PMS bridge matrix, G-FB alignment |
+| 2026-05-25 | Wave 2: FB-0 auth (FB_WAITER/FB_MANAGER), menu admin, interactive floor/orders/kds UI |

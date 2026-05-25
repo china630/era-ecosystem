@@ -7,6 +7,13 @@
 - [x] Prisma Ticket model + `POST /api/tickets`
 - [x] Room charge bridge: `POST /api/tickets/{id}/room-charge`
 
+## FB-0 — Auth & menu
+
+1. `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` — session cookie
+2. `GET /api/menu` — seeded items
+3. Manager: `POST /api/menu` create item; `/admin/menu` UI
+4. RBAC: waiter can fire/pay; manager required for void line and Z-close
+
 ## FB-1 — MVP Nafta
 
 1. `POST /api/shifts/open` `{ "outletCode": "RESTAURANT", "openingCash": 100 }`
