@@ -23,6 +23,12 @@
 | [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md) | `doc/DOCUMENTATION-INDEX.md` | umbrella | stable |
 | [UAT-SMOKE.md](UAT-SMOKE.md) | `doc/UAT-SMOKE.md` | hotel-pms | stable |
 | [i18n.md](i18n.md) | `doc/i18n.md` | hotel-pms | stable |
+| [nafta/DOC-B-CHECKLIST.md](nafta/DOC-B-CHECKLIST.md) | `doc/nafta/` | hotel-pms | stable |
+| [nafta/NOTEBOOKLM-PROMPT.md](nafta/NOTEBOOKLM-PROMPT.md) | `doc/nafta/` | hotel-pms | stable |
+| [nafta/README.md](nafta/README.md) | `doc/nafta/` | hotel-pms | stable |
+| [nafta/NOTEBOOKLM-IMPORT.md](nafta/NOTEBOOKLM-IMPORT.md) | `doc/nafta/` | hotel-pms | stable |
+| [nafta/process-catalog.md](nafta/process-catalog.md) | `doc/nafta/` | hotel-pms | stable |
+| [nafta/open-questions-nafta.md](nafta/open-questions-nafta.md) | `doc/nafta/` | hotel-pms | stable |
 
 ---
 

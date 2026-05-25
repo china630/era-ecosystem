@@ -8,6 +8,7 @@ import {
   BedDouble,
   Building2,
   CalendarDays,
+  Car,
   ClipboardList,
   FileBarChart,
   HeartPulse,
@@ -18,6 +19,7 @@ import {
   Radio,
   Settings,
   Users,
+  UtensilsCrossed,
   Wrench,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -125,6 +127,24 @@ export default function AppSidebar() {
       labelKey: 'medical',
       icon: HeartPulse,
       show: can(PERMISSIONS.MEDICAL_MANAGE),
+    },
+    {
+      href: '/procedures',
+      labelKey: 'procedures',
+      icon: Activity,
+      show: can(PERMISSIONS.MEDICAL_MANAGE),
+    },
+    {
+      href: '/transfers',
+      labelKey: 'transfers',
+      icon: Car,
+      show: can(PERMISSIONS.RESERVATIONS_WRITE),
+    },
+    {
+      href: '/banquets',
+      labelKey: 'banquets',
+      icon: UtensilsCrossed,
+      show: can(PERMISSIONS.RESERVATIONS_READ),
     },
     {
       href: '/operations',
