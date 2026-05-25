@@ -1,0 +1,32 @@
+{
+  "source": "NotebookLM 2026-05-25",
+  "total_screens_indexed": 1243,
+  "core_sample_in_repo": 14,
+  "core_sample_file": "screens-manifest-v2-core.json",
+  "legacy_manifest_v1_rows": 292,
+  "by_priority": {
+    "must": 185,
+    "should": 210,
+    "skip": 848
+  },
+  "by_era_owner": {
+    "hotel-pms": 230,
+    "clinic": 25,
+    "fb-pos": 80,
+    "finance": 60,
+    "orchestrator": 10,
+    "defer": 838
+  },
+  "by_wave": {
+    "3": 215,
+    "4": 90,
+    "5": 90,
+    "defer": 848
+  },
+  "gaps": [
+    "NotebookLM token limit — full 1243-row JSON not in one response.",
+    "Imported 14 representative screens (Wave 3 touchpoints + Wave 4 transfer/banquet) to screens-manifest-v2-core.json.",
+    "Merge strategy: extend v1 screens-manifest.csv with NotebookLM batch exports OR run local merge script when full CSV available.",
+    "Mark STOCK, PURCHASE, FIXED_ASSETS, bulk CRM/WhatsApp as priority=skip / era_owner=defer per matrix."
+  ]
+}

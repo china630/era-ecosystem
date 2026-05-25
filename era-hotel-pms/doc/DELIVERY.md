@@ -190,10 +190,43 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [ ] PMS-04 drag-resize room plan
 - [ ] Auto email reports (WA0345+)
 
-## Verify
+### Stage 18 — SAN-PKG (Wave 3 Nafta)
 
-```bash
-docker compose up -d
-npx prisma migrate deploy
-npm run build
-```
+- [x] `RatePlanPackageLine` — package routing to revenue codes (ROOM / TREATMENT / BOARD)
+- [x] `medicalFlag` rate plans: check-in defers charges; night audit EOD posts package bundle
+- [x] Revenue codes `PKG`, `TREATMENT`, `BOARD`; seed MEDICAL package @ 180 AZN/night
+- [x] Folio routing rules unchanged (single guest folio default per Q1)
+- [x] Traceability: [doc/nafta/README.md](doc/nafta/README.md)
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § SAN-PKG
+
+### Stage 19 — PROC-SCHED (Wave 3 Nafta)
+
+- [x] `ProcedureService`, `ProcedureAppointment`, `RatePlanProcedureInclusion`
+- [x] `/procedures` UI + `/api/procedures/*` — book, finish, no-show
+- [x] Conflict check: staff + place overlap
+- [x] Finish: included in package → audit only; extra → MEDICAL folio charge
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § PROC-SCHED
+
+**Migration:** `20260528100000_wave3_sanatorium`
+
+### Stage 21 — BANQUET BEO (Wave 4 Nafta HN-8)
+
+- [x] `BanquetSaloon`, `BanquetMenuPackage`, `BanquetEvent` + `BanquetEventStatus`
+- [x] Hall block via `PosResource` (`BANQUET_HALL`) + `PosReservation` on confirm
+- [x] `/banquets` UI + `/api/banquets/*` — create draft BEO, confirm, deposit payment on folio
+- [x] Seed: saloon **NAFTANI-HALL**, menu package, sample BEO
+- [x] fb-pos: `beoId` on ticket, outlet `BANQUET` — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) banquet section
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § BANQUET
+
+**Migration:** `20260528140000_wave4_banquet`
+
+### Stage 20 — TRANSFER (Wave 4 Nafta HN-7)
+
+- [x] `TransferVehicle`, `TransferOrder` — IN/OUT directions, fleet assignment
+- [x] `/transfers` UI + `/api/transfers/*` — book, assign vehicle, complete
+- [x] Complete: posts `TRANSFER` revenue on folio when not yet charged
+- [x] Seed: 2 vehicles, sample IN transfer for in-house guest Ali Mammadov
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § TRANSFER
+
+**Migration:** `20260528130000_wave4_transfer`
+

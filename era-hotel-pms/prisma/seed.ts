@@ -18,6 +18,9 @@ async function main() {
   await prisma.productGroup.deleteMany();
   await prisma.warehouse.deleteMany();
   await prisma.posReservation.deleteMany();
+  await prisma.banquetEvent.deleteMany();
+  await prisma.banquetMenuPackage.deleteMany();
+  await prisma.banquetSaloon.deleteMany();
   await prisma.posResource.deleteMany();
   await prisma.tourismSubmission.deleteMany();
   await prisma.fiscalDocument.deleteMany();
@@ -26,6 +29,12 @@ async function main() {
   await prisma.medicalOrder.deleteMany();
   await prisma.medicalAlert.deleteMany();
   await prisma.medicalProcedure.deleteMany();
+  await prisma.procedureAppointment.deleteMany();
+  await prisma.transferOrder.deleteMany();
+  await prisma.transferVehicle.deleteMany();
+  await prisma.ratePlanProcedureInclusion.deleteMany();
+  await prisma.procedureService.deleteMany();
+  await prisma.ratePlanPackageLine.deleteMany();
   await prisma.channelSyncError.deleteMany();
   await prisma.housekeepingTask.deleteMany();
   await prisma.nightAuditRun.deleteMany();
@@ -125,6 +134,18 @@ async function main() {
   const revMedical = await prisma.revenueCode.create({
     data: { code: 'MEDICAL', name: 'Medical procedures', departmentId: deptMed.id },
   });
+  const revPkg = await prisma.revenueCode.create({
+    data: { code: 'PKG', name: 'Medical package bundle', departmentId: deptMed.id },
+  });
+  const revTreatment = await prisma.revenueCode.create({
+    data: { code: 'TREATMENT', name: 'Included treatment', departmentId: deptMed.id },
+  });
+  const revBoard = await prisma.revenueCode.create({
+    data: { code: 'BOARD', name: 'Included board', departmentId: deptRest.id },
+  });
+  const revTransfer = await prisma.revenueCode.create({
+    data: { code: 'TRANSFER', name: 'Airport transfer', departmentId: deptAcc.id },
+  });
 
   await prisma.folioRoutingRule.create({
     data: { revenueCodeId: revRoom.id, targetFolioType: 'COMPANY' },
@@ -157,6 +178,45 @@ async function main() {
       medicalFlag: true,
       roomTypeId: typeDlx.id,
       mealPlanId: mealHB.id,
+    },
+  });
+
+  await prisma.ratePlanPackageLine.createMany({
+    data: [
+      { ratePlanId: rateMedical.id, revenueCodeId: revRoom.id, amount: 90, sortOrder: 1 },
+      { ratePlanId: rateMedical.id, revenueCodeId: revTreatment.id, amount: 60, sortOrder: 2 },
+      { ratePlanId: rateMedical.id, revenueCodeId: revBoard.id, amount: 30, sortOrder: 3 },
+    ],
+  });
+
+  const svcMassage = await prisma.procedureService.create({
+    data: { code: 'MASSAGE', name: 'Therapeutic massage', durationMin: 45, defaultAmount: 50 },
+  });
+  const svcMud = await prisma.procedureService.create({
+    data: { code: 'MUD', name: 'Mud bath', durationMin: 30, defaultAmount: 40 },
+  });
+  await prisma.ratePlanProcedureInclusion.create({
+    data: { ratePlanId: rateMedical.id, serviceId: svcMassage.id },
+  });
+
+  const vehicleVan1 = await prisma.transferVehicle.create({
+    data: {
+      code: 'VAN-01',
+      brand: 'Mercedes Vito',
+      licensePlate: '10-AA-001',
+      driverName: 'Rashad Aliyev',
+      driverPhone: '+994501112233',
+      maxSeats: 7,
+    },
+  });
+  await prisma.transferVehicle.create({
+    data: {
+      code: 'VAN-02',
+      brand: 'Toyota Hiace',
+      licensePlate: '10-BB-002',
+      driverName: 'Elvin Mammadov',
+      driverPhone: '+994502223344',
+      maxSeats: 4,
     },
   });
 
@@ -208,11 +268,50 @@ async function main() {
       mealPlanId: mealHB.id,
       checkInDate: new Date(),
       checkOutDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      status: 'CONFIRMED',
+      status: 'IN_HOUSE',
       paymentMethod: PaymentMethod.CARD,
-      totalAmount: 180 * 3,
+      totalAmount: 0,
     },
   });
+
+  await prisma.room.update({ where: { id: room201.id }, data: { status: 'OCCUPIED' } });
+  const medRes = await prisma.reservation.findFirst({
+    where: { guestId: guest1.id, status: 'IN_HOUSE' },
+  });
+  if (medRes) {
+    await prisma.stay.create({
+      data: { reservationId: medRes.id, actualCheckIn: new Date() },
+    });
+    await prisma.folio.create({ data: { reservationId: medRes.id, type: 'GUEST', status: 'OPEN' } });
+    const tomorrow = new Date(Date.now() + 86400000);
+    tomorrow.setHours(10, 0, 0, 0);
+    const end = new Date(tomorrow.getTime() + 45 * 60000);
+    await prisma.procedureAppointment.create({
+      data: {
+        reservationId: medRes.id,
+        serviceId: svcMassage.id,
+        staffName: 'Dr. Hasanova',
+        placeCode: 'SPA-1',
+        startAt: tomorrow,
+        endAt: end,
+        status: 'BOOKED',
+      },
+    });
+    const pickup = new Date(Date.now() + 2 * 86400000);
+    pickup.setHours(14, 30, 0, 0);
+    await prisma.transferOrder.create({
+      data: {
+        reservationId: medRes.id,
+        direction: 'IN',
+        flightNo: 'J2-812',
+        pickupAt: pickup,
+        vehicleId: vehicleVan1.id,
+        status: 'CONFIRMED',
+        price: 35,
+        notes: 'Ganja airport arrival',
+      },
+    });
+  }
 
   const room101 = rooms.find((r) => r.roomNumber === '101')!;
   const active = await prisma.reservation.create({
@@ -290,7 +389,46 @@ async function main() {
     data: [
       { code: 'T-01', name: 'Table 1', resourceType: 'TABLE', outletCode: 'RESTAURANT' },
       { code: 'SPA-1', name: 'Spa cabin 1', resourceType: 'SPA_CABIN', outletCode: 'SPA' },
+      {
+        code: 'NAFTANI-HALL',
+        name: 'Naftani Banquet Hall',
+        resourceType: 'BANQUET_HALL',
+        outletCode: 'BANQUET',
+      },
     ],
+  });
+
+  const hallResource = await prisma.posResource.findUnique({ where: { code: 'NAFTANI-HALL' } });
+  const banquetSaloon = await prisma.banquetSaloon.create({
+    data: {
+      code: 'NAFTANI-HALL',
+      name: 'Naftani Banquet Hall',
+      maxPax: 120,
+      posResourceId: hallResource!.id,
+    },
+  });
+  const banquetMenu = await prisma.banquetMenuPackage.create({
+    data: {
+      code: 'STD-BANQUET',
+      name: 'Standard banquet menu',
+      pricePerPax: 85,
+    },
+  });
+  const beoDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  beoDate.setHours(0, 0, 0, 0);
+  await prisma.banquetEvent.create({
+    data: {
+      referenceNo: 'BEO-SEED-001',
+      eventName: 'Corporate dinner — Demo Travel',
+      saloonId: banquetSaloon.id,
+      menuPackageId: banquetMenu.id,
+      reservationId: active.id,
+      eventDate: beoDate,
+      pax: 60,
+      advanceAmount: 500,
+      contactName: 'Demo Travel Agency',
+      status: 'DRAFT',
+    },
   });
 
   const wh = await prisma.warehouse.create({

@@ -176,7 +176,7 @@ export async function checkInReservation(id: string) {
 
     return updated;
   }).then(async (updated) => {
-    if (revenueRoom) {
+    if (!reservation.ratePlan.medicalFlag && revenueRoom) {
       const nights = countNights(reservation.checkInDate, reservation.checkOutDate);
       await postCharge({
         reservationId: id,
@@ -189,7 +189,34 @@ export async function checkInReservation(id: string) {
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');
     void submitTourismCheckIn(id).catch((e) => console.error('Tourism check-in failed', e));
+    void notifyClinicCheckIn(id, updated).catch((e) =>
+      console.error('Clinic episode hook failed', e),
+    );
     return result;
+  });
+}
+
+async function notifyClinicCheckIn(reservationId: string, reservation: { guest: { fullName: string; passportNumber: string; phone: string }; ratePlan: { medicalFlag: boolean }; stay?: { id: string } | null }) {
+  if (!reservation.ratePlan.medicalFlag) return;
+  const baseUrl = process.env.CLINIC_API_URL?.trim();
+  if (!baseUrl) return;
+
+  const stay = await prisma.stay.findUnique({ where: { reservationId } });
+  const secret = process.env.CLINIC_BRIDGE_SECRET ?? '';
+  await fetch(`${baseUrl.replace(/\/$/, '')}/api/sanatorium/episodes/from-stay`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(secret ? { 'X-Clinic-Bridge-Secret': secret } : {}),
+    },
+    body: JSON.stringify({
+      reservationId,
+      hotelStayId: stay?.id ?? null,
+      guestName: reservation.guest.fullName,
+      passportNumber: reservation.guest.passportNumber,
+      phone: reservation.guest.phone,
+      organizationId: process.env.HOTEL_ORGANIZATION_ID ?? 'nafta-sanatorium-org',
+    }),
   });
 }
 

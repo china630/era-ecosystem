@@ -238,6 +238,7 @@ WhatsApp WA0159–0182, BigQuery WA0226, Agency portal WA0225.
 | Фаза | Поведение в PMS |
 |------|-----------------|
 | Ф.1 | MED-04 и quick posting — начисление **по факту**; пакет «N процедур/день» в тарифе **не списывается** автоматически |
+| **Wave 3 (2026-05)** | `RatePlanPackageLine` на `medicalFlag` тарифах; night audit EOD постит ROOM/TREATMENT/BOARD; check-in без upfront room charge; см. DELIVERY Stage 18 |
 | Ф.2 | Учёт пакета Medical rate plan — остаток процедур, без дублирования charge за включённое |
 
 ## C.7 Пользовательские истории

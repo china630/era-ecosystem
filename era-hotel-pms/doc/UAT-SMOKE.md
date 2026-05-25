@@ -68,6 +68,34 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 1. `/housekeeping` — complete task, set OOO.
 2. `/medical` — alert + procedure to folio (Doctor login if needed).
 
+## 12. SAN-PKG — medical package EOD (Stage 18)
+
+1. Seed guest **Ali Mammadov** in-house on rate **MEDICAL** (room 201).
+2. `/folio/[reservationId]` — no upfront ROOM bundle at check-in (medical defer).
+3. `/operations` — close shifts, run night audit.
+4. Folio shows package lines (ROOM 90 + TREATMENT 60 + BOARD 30) for business date.
+
+## 13. PROC-SCHED (Stage 19)
+
+1. `/procedures` — book MASSAGE for in-house guest (seed has BOOKED slot).
+2. **Finish** included MASSAGE — audit note only, no extra MEDICAL charge.
+3. Book **MUD** (not in package), finish — MEDICAL charge on folio.
+
+## 14. TRANSFER (Stage 20 / HN-7)
+
+1. `/transfers` — seed shows CONFIRMED IN transfer for **Ali Mammadov** (flight J2-812, VAN-01).
+2. Book OUT transfer for in-house guest — status BOOKED.
+3. Assign vehicle — status CONFIRMED.
+4. **Complete** — `TRANSFER` charge on guest folio; order status DONE.
+
+## 15. BANQUET BEO (Stage 21 / HN-8)
+
+1. `/banquets` as `manager` — seed shows DRAFT BEO for **NAFTANI-HALL**.
+2. **Confirm** — hall blocked on POS calendar; deposit 500 AZN posted to company guest folio (room 101).
+3. `cd era-fb-pos && npm run dev` — open shift on outlet `BANQUET`.
+4. `POST http://localhost:3200/api/tickets` with `{ "outletCode": "BANQUET", "beoId": "<event-id>", "guestName": "Corporate dinner" }`.
+5. Add extras line; optional room charge to in-house guest folio.
+
 ## 11. FB-POS bridge (Stage 17 / SP3)
 
 Requires `era-fb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.

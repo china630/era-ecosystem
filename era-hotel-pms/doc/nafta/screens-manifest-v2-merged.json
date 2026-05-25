@@ -1,0 +1,698 @@
+[
+  {
+    "screen_id": "WA_ACC_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 01.10.52.jpeg",
+    "elektraweb_module_code": "ACCOUNTING",
+    "menu_path_ru": "Бухгалтерия → План счетов",
+    "screen_name": "План счетов (Chart of Accounts)",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "code",
+      "account name",
+      "debit",
+      "credit"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "finance",
+    "wave": "5",
+    "clone_spec_ref": "18-erp-integration.md",
+    "user_story_id": "FIN-01",
+    "notes": "Справочник GL счетов."
+  },
+  {
+    "screen_id": "WA_CASH_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 21.49.58.jpeg",
+    "elektraweb_module_code": "FRONT_CASH",
+    "menu_path_ru": "Касса → Курсы валют и ввод",
+    "screen_name": "Ежедневные курсы валют (Daily Currency Rates & Entry)",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "date",
+      "target currency",
+      "buy rate",
+      "exchange rate",
+      "bank note buy"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "3",
+    "clone_spec_ref": "05-folio-and-cash.md",
+    "user_story_id": "PROC-31",
+    "notes": "Ввод курсов обмена валют на день."
+  },
+  {
+    "screen_id": "WA_CASH_02",
+    "file_ref": "WhatsApp Image 2026-05-25 at 21.48.55.jpeg",
+    "elektraweb_module_code": "FRONT_CASH",
+    "menu_path_ru": "Касса → Счета агентств и платежи",
+    "screen_name": "Agency CL and Payment Summary",
+    "screen_type": "report",
+    "key_fields_actions": [
+      "agency",
+      "city ledger",
+      "cash paid",
+      "net amount"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "finance",
+    "wave": "5",
+    "clone_spec_ref": "18-erp-integration.md",
+    "user_story_id": "PROC-21",
+    "notes": "Управление дебиторской задолженностью агентств."
+  },
+  {
+    "screen_id": "WA_CHAN_01",
+    "file_ref": "doc/Elektraweb/05 CHANNEL MANAGER/Stop Sale...",
+    "elektraweb_module_code": "CHANNEL",
+    "menu_path_ru": "Менеджер каналов → Остановка продаж",
+    "screen_name": "Stop Sale",
+    "screen_type": "form",
+    "key_fields_actions": [
+      "start date",
+      "end date",
+      "room type",
+      "channel"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "5",
+    "clone_spec_ref": "06-channel-crm-med.md#A",
+    "user_story_id": "PROC-23",
+    "notes": "Блокировка продаж для OTA."
+  },
+  {
+    "screen_id": "WA_CHAN_02",
+    "file_ref": "_Contract Discounts & Supplements.2026-05-25.21-28-04.Nafta Sanatorium Hotel.xlsx",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Скидки и доплаты по контрактам",
+    "screen_name": "Contract Discounts & Supplements",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "hotel name",
+      "discount / supplemet",
+      "rate code",
+      "value",
+      "apply start"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "5",
+    "clone_spec_ref": "06-channel-crm-med.md#A",
+    "user_story_id": "PROC-24",
+    "notes": "Управление контрактными ценами и скидками."
+  },
+  {
+    "screen_id": "WA_CRM_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 03.05.47.jpeg",
+    "elektraweb_module_code": "CRM",
+    "menu_path_ru": "CRM → Ежедневный мед. статус",
+    "screen_name": "Список медицинской информации гостей (Guest Medical Info List)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "health problem",
+      "complaints",
+      "diagnoses",
+      "symptoms"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": false,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "clinic",
+    "wave": "3",
+    "clone_spec_ref": "06-channel-crm-med.md#C.2",
+    "user_story_id": "US-02",
+    "notes": "Отображает жалобы и диагнозы гостей."
+  },
+  {
+    "screen_id": "WA_CRM_02",
+    "file_ref": "WhatsApp Image 2026-05-25 at 03.09.30.jpeg",
+    "elektraweb_module_code": "CRM",
+    "menu_path_ru": "CRM → Бронирования → Список бронирований",
+    "screen_name": "Список бронирований (Reservation List)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "check in from",
+      "check out to",
+      "res state",
+      "room type",
+      "guests"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "3",
+    "clone_spec_ref": "04-pms-core#1.1",
+    "user_story_id": "PROC-01",
+    "notes": "Основной реестр бронирований."
+  },
+  {
+    "screen_id": "WA_CRM_03",
+    "file_ref": "WhatsApp Image 2026-05-25 at 03.24.29.jpeg",
+    "elektraweb_module_code": "CRM",
+    "menu_path_ru": "CRM → Списки CRM → Медицинские записи",
+    "screen_name": "Медицинские записи (Medical Records)",
+    "screen_type": "form",
+    "key_fields_actions": [
+      "start photo",
+      "final photo",
+      "information",
+      "notes"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": false,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "clinic",
+    "wave": "3",
+    "clone_spec_ref": "06-channel-crm-med.md#C.4",
+    "user_story_id": "PROC-28",
+    "notes": "Прикрепление фото и сканов к медицинской карте."
+  },
+  {
+    "screen_id": "WA_CRM_04",
+    "file_ref": "WhatsApp Image 2026-05-25 at 03.25.24.jpeg",
+    "elektraweb_module_code": "CRM",
+    "menu_path_ru": "CRM → Списки CRM → Лабораторные анализы → Результаты",
+    "screen_name": "Результаты анализов (Lab Test Results)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "dr",
+      "guest",
+      "group",
+      "test",
+      "min",
+      "max",
+      "unit",
+      "value"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": false,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "clinic",
+    "wave": "3",
+    "clone_spec_ref": "06-channel-crm-med.md#C.3",
+    "user_story_id": "PROC-07",
+    "notes": "Просмотр результатов анализов с референсными значениями."
+  },
+  {
+    "screen_id": "WA_CRM_05",
+    "file_ref": "WhatsApp Image 2026-05-25 at 03.24.58.jpeg",
+    "elektraweb_module_code": "CRM",
+    "menu_path_ru": "CRM → Списки CRM → Лабораторные анализы → Определения",
+    "screen_name": "Настройки анализов (Lab Test Definitions)",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "group",
+      "name",
+      "min",
+      "max",
+      "unit",
+      "gender"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "clinic",
+    "wave": "3",
+    "clone_spec_ref": "06-channel-crm-med.md#C.3",
+    "user_story_id": "PROC-07",
+    "notes": "Справочник лабораторных тестов."
+  },
+  {
+    "screen_id": "WA_FIXED_01",
+    "file_ref": "Sheet: Fixed Asset Cards",
+    "elektraweb_module_code": "FIXED_ASSETS",
+    "menu_path_ru": "Основные средства → Карточки ОС",
+    "screen_name": "Fixed Asset Cards",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "code",
+      "name",
+      "lifetime",
+      "purchase date"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "skip",
+    "era_owner": "defer",
+    "wave": "defer",
+    "clone_spec_ref": "N/A",
+    "user_story_id": "FA-01",
+    "notes": "Defer — Finance ERP only."
+  },
+  {
+    "screen_id": "WA_INV_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 19.57.26.jpeg",
+    "elektraweb_module_code": "INVOICE",
+    "menu_path_ru": "Счета → Все счета",
+    "screen_name": "Все счета (All Invoices / Producer Receipt)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "invoice account",
+      "cur amount",
+      "invoice type",
+      "integrate to accounting"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "finance",
+    "wave": "5",
+    "clone_spec_ref": "17-az-compliance.md",
+    "user_story_id": "PROC-35",
+    "notes": "Центр выгрузки и управления электронными счетами (e-invoicing)."
+  },
+  {
+    "screen_id": "WA_POS_01",
+    "file_ref": "WhatsApp Image 2026-05-24 at 23.55.05.jpeg",
+    "elektraweb_module_code": "POS",
+    "menu_path_ru": "POS → Детали закрытых чеков",
+    "screen_name": "Pos Product Transactions Detail",
+    "screen_type": "report",
+    "key_fields_actions": [
+      "department name",
+      "table no",
+      "product name",
+      "check open time"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "fb-pos",
+    "wave": "3",
+    "clone_spec_ref": "23-pos-bridge.md",
+    "user_story_id": "POS-01",
+    "notes": "Room charge bridge Wave 2/3."
+  },
+  {
+    "screen_id": "WA_POS_02",
+    "file_ref": "WhatsApp Image 2026-05-24 at 23.36.04.jpeg",
+    "elektraweb_module_code": "POS",
+    "menu_path_ru": "POS → Детали продаж продуктов",
+    "screen_name": "Детали продаж (Pos Product Sales Detail)",
+    "screen_type": "report",
+    "key_fields_actions": [
+      "check id",
+      "department",
+      "product",
+      "quantity",
+      "net unit price",
+      "sales total"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "fb-pos",
+    "wave": "3",
+    "clone_spec_ref": "15-pos-fb-spa.md",
+    "user_story_id": "POS-01",
+    "notes": "Детализация транзакций POS по продуктам."
+  },
+  {
+    "screen_id": "WA_POS_03",
+    "file_ref": "WhatsApp Image 2026-05-24 at 23.55.05.jpeg",
+    "elektraweb_module_code": "POS",
+    "menu_path_ru": "POS → Отчеты → Детали закрытых чеков",
+    "screen_name": "Детали чека POS (qpos-check-detail-2)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "department name",
+      "product name",
+      "table no",
+      "check open time",
+      "check close time"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "fb-pos",
+    "wave": "3",
+    "clone_spec_ref": "23-pos-bridge.md",
+    "user_story_id": "PROC-15",
+    "notes": "Реестр закрытых чеков в ресторанах и кафе."
+  },
+  {
+    "screen_id": "WA_PURCH_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 01.03.09.jpeg",
+    "elektraweb_module_code": "PURCHASE",
+    "menu_path_ru": "Закупки → Новая заявка",
+    "screen_name": "Requisition",
+    "screen_type": "form",
+    "key_fields_actions": [
+      "branch",
+      "requested warehouse",
+      "stock",
+      "quantity"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "skip",
+    "era_owner": "defer",
+    "wave": "defer",
+    "clone_spec_ref": "16-stock-procurement.md",
+    "user_story_id": "PO-01",
+    "notes": "Defer — deep PO out of scope."
+  },
+  {
+    "screen_id": "WA_SETUP_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 21.26.43.jpeg",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Автопарк",
+    "screen_name": "Vehicle List",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "vehicle brand",
+      "vehicle license plate",
+      "driver name",
+      "driver phone"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#4.9",
+    "user_story_id": "TR-04",
+    "notes": "Справочник автомобилей."
+  },
+  {
+    "screen_id": "WA_SETUP_02",
+    "file_ref": "Sheet: Banquet Agreements",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Банкетные договоры",
+    "screen_name": "Banquet Agreements",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "name",
+      "saloon",
+      "statu",
+      "banquet type",
+      "max pax",
+      "general total",
+      "advance"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#5.1",
+    "user_story_id": "BQ-01",
+    "notes": "Управление договорами BEO."
+  },
+  {
+    "screen_id": "WA_SETUP_03",
+    "file_ref": "Sheet: Banquet Saloons",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Банкетные залы",
+    "screen_name": "Banquet Saloons",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "saloon name",
+      "max pax",
+      "area",
+      "connected saloon"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#5.1",
+    "user_story_id": "BQ-02",
+    "notes": "Справочник банкетных залов."
+  },
+  {
+    "screen_id": "WA_SETUP_04",
+    "file_ref": "Sheet: Banquet Menu",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Банкетное меню",
+    "screen_name": "Banquet Menu",
+    "screen_type": "settings",
+    "key_fields_actions": [
+      "menu name",
+      "revenue name",
+      "fix price",
+      "pax price",
+      "content"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "fb-pos",
+    "wave": "4",
+    "clone_spec_ref": "15-pos-fb-spa.md",
+    "user_story_id": "BQ-03",
+    "notes": "Банкетное меню и калькуляция."
+  },
+  {
+    "screen_id": "WA_SETUP_05",
+    "file_ref": "Sheet: Event Calendar",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Календарь мероприятий",
+    "screen_name": "Event Calendar",
+    "screen_type": "dashboard",
+    "key_fields_actions": [
+      "date",
+      "special days",
+      "banquet",
+      "stop sale"
+    ],
+    "links_to": {
+      "reservation": false,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "should",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#5.1",
+    "user_story_id": "BQ-04",
+    "notes": "Сетка занятости помещений (Saloons)."
+  },
+  {
+    "screen_id": "WA_SETUP_06",
+    "file_ref": "WhatsApp Image 2026-05-25 at 20.46.53.jpeg",
+    "elektraweb_module_code": "SETUP",
+    "menu_path_ru": "Настройки → Стандартные доп. начисления → Пакеты",
+    "screen_name": "Описание стандартных пакетов (Standart Package Price)",
+    "screen_type": "form",
+    "key_fields_actions": [
+      "package name",
+      "base price",
+      "currency",
+      "route all postings to folio",
+      "deduct from room price"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "3",
+    "clone_spec_ref": "06-channel-crm-med.md#C.6",
+    "user_story_id": "US-01",
+    "notes": "Настройка санаторных пакетов и роутинга на фолио."
+  },
+  {
+    "screen_id": "WA_SPA_01",
+    "file_ref": "Sheet: Spa Reservation List",
+    "elektraweb_module_code": "SPA",
+    "menu_path_ru": "SPA → Список бронирований",
+    "screen_name": "Расписание SPA (Spa Reservation List)",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "guest name",
+      "spa staff",
+      "place",
+      "service",
+      "res start",
+      "status"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "3",
+    "clone_spec_ref": "DELIVERY.md#Stage-19",
+    "user_story_id": "US-03",
+    "notes": "Используется для расписания медицинских процедур."
+  },
+  {
+    "screen_id": "WA_TRANS_01",
+    "file_ref": "WhatsApp Image 2026-05-25 at 22.10.09.jpeg",
+    "elektraweb_module_code": "TRANSFER",
+    "menu_path_ru": "Трансфер отеля → Трансфер из аэропорта",
+    "screen_name": "Airport Transfer",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "flight number",
+      "flight time",
+      "guest",
+      "res id",
+      "transfer type"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#4.9",
+    "user_story_id": "TR-01",
+    "notes": "Реестр трансферов из аэропорта."
+  },
+  {
+    "screen_id": "WA_TRANS_02",
+    "file_ref": "WhatsApp Image 2026-05-25 at 22.10.28.jpeg",
+    "elektraweb_module_code": "TRANSFER",
+    "menu_path_ru": "Трансфер отеля → Процесс подтверждения трансфера",
+    "screen_name": "Airport Transfer Confirmation Process",
+    "screen_type": "form",
+    "key_fields_actions": [
+      "transfer res info",
+      "authorizer",
+      "confirmation",
+      "send date",
+      "vehicle"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "should",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#4.9",
+    "user_story_id": "TR-02",
+    "notes": "Форма согласования трансфера и транспорта."
+  },
+  {
+    "screen_id": "WA_TRANS_03",
+    "file_ref": "WhatsApp Image 2026-05-25 at 22.09.25.jpeg",
+    "elektraweb_module_code": "TRANSFER",
+    "menu_path_ru": "Трансфер отеля → Список групповых трансферов отеля",
+    "screen_name": "Hotel Transfer",
+    "screen_type": "list",
+    "key_fields_actions": [
+      "hotel name",
+      "status",
+      "realized transfers",
+      "folio charged",
+      "price"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": true,
+      "stay": true
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#4.9",
+    "user_story_id": "TR-03",
+    "notes": "Начисления стоимости трансфера на фолио."
+  },
+  {
+    "screen_id": "WA_TRANS_04",
+    "file_ref": "doc/Elektraweb/16 HOTEL TRANSFER/Airport Transfer Name List...",
+    "elektraweb_module_code": "TRANSFER",
+    "menu_path_ru": "Трансфер отеля → Список имен для аэропорта",
+    "screen_name": "Airport Transfer Name List",
+    "screen_type": "report",
+    "key_fields_actions": [
+      "full name",
+      "passport no",
+      "transfer type"
+    ],
+    "links_to": {
+      "reservation": true,
+      "folio": false,
+      "stay": false
+    },
+    "priority": "must",
+    "era_owner": "hotel-pms",
+    "wave": "4",
+    "clone_spec_ref": "04-pms-core#4.9",
+    "user_story_id": "TR-02",
+    "notes": "Пассажирский манифест трансфера."
+  }
+]

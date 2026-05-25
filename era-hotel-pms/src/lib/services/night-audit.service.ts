@@ -71,6 +71,17 @@ export async function runNightAudit() {
     });
 
     for (const res of inHouse) {
+      if (res.ratePlan.medicalFlag) {
+        const { postNightlyPackageCharges } = await import('@/lib/services/san-package.service');
+        const pkgResult = await postNightlyPackageCharges(res.id, date);
+        if (pkgResult.posted > 0) {
+          steps.push(`Step 3: Package charges posted (${pkgResult.posted} lines) — reservation ${res.id}`);
+        } else if (!pkgResult.skipped) {
+          steps.push(`Step 3: Package already posted — reservation ${res.id}`);
+        }
+        continue;
+      }
+
       const alreadyPosted = res.folios.some((f) =>
         f.charges.some(
           (c) =>

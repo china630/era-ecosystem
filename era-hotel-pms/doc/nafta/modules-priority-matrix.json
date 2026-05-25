@@ -1,0 +1,112 @@
+[
+  {
+    "module_code": "PMS",
+    "module_name": "Front Office & Night Audit",
+    "eur_license_hint": 1,
+    "nafta_usage": "heavy",
+    "era_owner": "hotel-pms",
+    "priority": "P0",
+    "wave": "3",
+    "rationale": "Core PMS operations: check-in, check-out, folio, packages, routing, and night audit.",
+    "key_screens": ["Front Office Control Panel", "Folio Transactions", "Night Audit"]
+  },
+  {
+    "module_code": "TRANSFER",
+    "module_name": "Hotel Transfers",
+    "eur_license_hint": null,
+    "nafta_usage": "light",
+    "era_owner": "hotel-pms",
+    "priority": "P0",
+    "wave": "4",
+    "rationale": "Crucial for Nafta Wave 4. Airport and internal transfers must link to reservations and folio charges.",
+    "key_screens": ["Airport Transfer", "Hotel Transfer", "Airport Transfer Confirmation Process", "Vehicle List"]
+  },
+  {
+    "module_code": "SETUP_BANQUET",
+    "module_name": "Banquets & Events",
+    "eur_license_hint": null,
+    "nafta_usage": "light",
+    "era_owner": "hotel-pms",
+    "priority": "P0",
+    "wave": "4",
+    "rationale": "Wave 4 priority. Management of contracts (BEO), saloons, and event folio billing.",
+    "key_screens": ["Banquet Agreements", "Banquet Saloons", "Event Calendar", "Banquet Menu"]
+  },
+  {
+    "module_code": "POS",
+    "module_name": "Point of Sale",
+    "eur_license_hint": 1,
+    "nafta_usage": "heavy",
+    "era_owner": "fb-pos",
+    "priority": "P0",
+    "wave": "3",
+    "rationale": "Restaurant operations, check closures to room folios (Wave 3). Banquet execution in POS (Wave 4).",
+    "key_screens": ["Pos Product Transactions Detail", "Open Tables", "Pos Check List"]
+  },
+  {
+    "module_code": "SPA",
+    "module_name": "Spa & Sanatorium Procedures",
+    "eur_license_hint": 1,
+    "nafta_usage": "heavy",
+    "era_owner": "hotel-pms",
+    "priority": "P0",
+    "wave": "3",
+    "rationale": "Scheduling treatments — ERA procedure schedule in PMS, not SPA cash module.",
+    "key_screens": ["Spa Reservation List", "Service-Staff Match"]
+  },
+  {
+    "module_code": "CRM",
+    "module_name": "CRM & Medical Records",
+    "eur_license_hint": null,
+    "nafta_usage": "heavy",
+    "era_owner": "clinic",
+    "priority": "P0",
+    "wave": "3",
+    "rationale": "Medical info (diagnoses, symptoms) maps to era-clinic ClinicalEpisode.",
+    "key_screens": ["Guest Medical Info List", "Lab Test Results", "Diagnoses"]
+  },
+  {
+    "module_code": "ACCOUNTING",
+    "module_name": "Finance & GL",
+    "eur_license_hint": 1,
+    "nafta_usage": "heavy",
+    "era_owner": "finance",
+    "priority": "P1",
+    "wave": "5",
+    "rationale": "General ledger, e-invoicing. era-finance-core, not PMS.",
+    "key_screens": ["Chart of Accounts", "Journal Entries", "All Invoices"]
+  },
+  {
+    "module_code": "CHANNEL",
+    "module_name": "Channel Manager",
+    "eur_license_hint": 1,
+    "nafta_usage": "light",
+    "era_owner": "hotel-pms",
+    "priority": "P1",
+    "wave": "5",
+    "rationale": "OTA rate pushes — defer full channel after core ops.",
+    "key_screens": ["Contract Details", "Stop Sale", "Online Channels"]
+  },
+  {
+    "module_code": "STOCK_PO",
+    "module_name": "Purchasing & Inventory",
+    "eur_license_hint": 1,
+    "nafta_usage": "unknown",
+    "era_owner": "defer",
+    "priority": "skip",
+    "wave": "defer",
+    "rationale": "Deep PO, warehousing and recipe costing out of scope for early ERA waves.",
+    "key_screens": ["Purchasing Management", "Stock Cards", "Requisitions"]
+  },
+  {
+    "module_code": "FIXED_ASSETS",
+    "module_name": "Fixed Assets",
+    "eur_license_hint": null,
+    "nafta_usage": "unknown",
+    "era_owner": "defer",
+    "priority": "skip",
+    "wave": "defer",
+    "rationale": "Out of scope for hotel-pms/clinic migration.",
+    "key_screens": ["Fixed Asset Cards"]
+  }
+]

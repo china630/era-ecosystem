@@ -111,6 +111,14 @@ enum TourismSubmissionStatus {
 enum PosResourceType {
   TABLE
   SPA_CABIN
+  BANQUET_HALL
+}
+
+enum BanquetEventStatus {
+  DRAFT
+  CONFIRMED
+  DONE
+  CANCELLED
 }
 
 enum PosReservationStatus {
@@ -118,6 +126,24 @@ enum PosReservationStatus {
   SEATED
   CANCELLED
   COMPLETED
+}
+
+enum ProcedureAppointmentStatus {
+  BOOKED
+  FINISHED
+  NO_SHOW
+}
+
+enum TransferDirection {
+  IN
+  OUT
+}
+
+enum TransferOrderStatus {
+  BOOKED
+  CONFIRMED
+  DONE
+  CANCELLED
 }
 
 enum StockMovementType {
@@ -226,6 +252,62 @@ model RatePlan {
   mealPlanId    String?
   mealPlan      MealPlan?     @relation(fields: [mealPlanId], references: [id])
   reservations  Reservation[]
+  packageLines  RatePlanPackageLine[]
+  procedureInclusions RatePlanProcedureInclusion[]
+}
+
+model RatePlanPackageLine {
+  id            String      @id @default(uuid())
+  ratePlanId    String
+  ratePlan      RatePlan    @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  revenueCodeId String
+  revenueCode   RevenueCode @relation(fields: [revenueCodeId], references: [id])
+  amount        Decimal     @db.Decimal(12, 2)
+  sortOrder     Int         @default(0)
+
+  @@unique([ratePlanId, revenueCodeId])
+  @@index([ratePlanId])
+}
+
+model ProcedureService {
+  id            String               @id @default(uuid())
+  code          String               @unique
+  name          String
+  durationMin   Int                  @default(30)
+  defaultAmount Decimal              @db.Decimal(12, 2)
+  appointments  ProcedureAppointment[]
+  inclusions    RatePlanProcedureInclusion[]
+  createdAt     DateTime             @default(now())
+}
+
+model RatePlanProcedureInclusion {
+  ratePlanId String
+  serviceId  String
+  ratePlan   RatePlan         @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  service    ProcedureService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([ratePlanId, serviceId])
+}
+
+model ProcedureAppointment {
+  id            String                     @id @default(uuid())
+  reservationId String
+  reservation   Reservation                @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  serviceId     String
+  service       ProcedureService           @relation(fields: [serviceId], references: [id])
+  staffName     String?
+  placeCode     String?
+  startAt       DateTime
+  endAt         DateTime
+  status        ProcedureAppointmentStatus @default(BOOKED)
+  auditNote     String?
+  createdAt     DateTime                   @default(now())
+  updatedAt     DateTime                   @updatedAt
+
+  @@index([reservationId])
+  @@index([startAt, endAt])
+  @@index([staffName, startAt])
+  @@index([placeCode, startAt])
 }
 
 model Department {
@@ -245,6 +327,7 @@ model RevenueCode {
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
   routingRule  FolioRoutingRule?
+  packageLines RatePlanPackageLine[]
 }
 
 model BookingSource {
@@ -301,6 +384,9 @@ model Reservation {
   fiscalDocuments   FiscalDocument[]
   tourismSubmissions TourismSubmission[]
   posReservations   PosReservation[]
+  procedureAppointments ProcedureAppointment[]
+  transferOrders    TransferOrder[]
+  banquetEvents     BanquetEvent[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
@@ -501,7 +587,57 @@ model PosResource {
   outletCode    String             @default("RESTAURANT")
   active        Boolean            @default(true)
   reservations  PosReservation[]
+  banquetSaloon BanquetSaloon?
   createdAt     DateTime           @default(now())
+}
+
+model BanquetSaloon {
+  id            String         @id @default(uuid())
+  code          String         @unique
+  name          String
+  maxPax        Int            @default(100)
+  posResourceId String?        @unique
+  posResource   PosResource?   @relation(fields: [posResourceId], references: [id])
+  active        Boolean        @default(true)
+  events        BanquetEvent[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model BanquetMenuPackage {
+  id          String         @id @default(uuid())
+  code        String         @unique
+  name        String
+  pricePerPax Decimal        @db.Decimal(12, 2)
+  active      Boolean        @default(true)
+  events      BanquetEvent[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model BanquetEvent {
+  id              String             @id @default(uuid())
+  referenceNo     String?
+  eventName       String
+  saloonId        String
+  saloon          BanquetSaloon      @relation(fields: [saloonId], references: [id])
+  menuPackageId   String?
+  menuPackage     BanquetMenuPackage? @relation(fields: [menuPackageId], references: [id])
+  reservationId   String?
+  reservation     Reservation?       @relation(fields: [reservationId], references: [id])
+  eventDate       DateTime           @db.Date
+  pax             Int
+  advanceAmount   Decimal            @default(0) @db.Decimal(12, 2)
+  status          BanquetEventStatus @default(DRAFT)
+  contactName     String?
+  notes           String?
+  posReservationId String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([saloonId, eventDate])
+  @@index([status])
+  @@index([reservationId])
 }
 
 model PosReservation {
@@ -582,6 +718,40 @@ model Product {
   recipe       Recipe?
   recipeLines  RecipeLine[]    @relation("Ingredient")
   createdAt    DateTime        @default(now())
+}
+
+model TransferVehicle {
+  id            String          @id @default(uuid())
+  code          String          @unique
+  brand         String
+  licensePlate  String
+  driverName    String?
+  driverPhone   String?
+  maxSeats      Int             @default(4)
+  active        Boolean         @default(true)
+  transferOrders TransferOrder[]
+  createdAt     DateTime        @default(now())
+}
+
+model TransferOrder {
+  id            String              @id @default(uuid())
+  reservationId String
+  reservation   Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  direction     TransferDirection
+  flightNo      String?
+  pickupAt      DateTime
+  vehicleId     String?
+  vehicle       TransferVehicle?    @relation(fields: [vehicleId], references: [id])
+  status        TransferOrderStatus @default(BOOKED)
+  folioCharged  Boolean             @default(false)
+  price         Decimal             @db.Decimal(12, 2)
+  notes         String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([reservationId])
+  @@index([pickupAt])
+  @@index([status])
 }
 
 model StockMovement {
