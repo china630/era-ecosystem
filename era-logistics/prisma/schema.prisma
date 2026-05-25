@@ -15,6 +15,13 @@ model Tenant {
   outlets   Outlet[]
 }
 
+enum TripStatus {
+  PLANNED
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -25,6 +32,28 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+}
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  plate     String   @unique
+  model     String?
+  trips     Trip[]
+  createdAt DateTime @default(now())
+}
+
+model Trip {
+  id            String     @id @default(cuid())
+  vehicleId     String
+  status        TripStatus @default(PLANNED)
+  routeCode     String?
+  freightAmount Decimal    @default(0) @db.Decimal(12, 2)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  vehicle       Vehicle    @relation(fields: [vehicleId], references: [id])
+  createdAt     DateTime   @default(now())
+
+  @@index([vehicleId, status])
 }
 
 model Role {

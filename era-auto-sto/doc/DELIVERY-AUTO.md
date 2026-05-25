@@ -8,7 +8,7 @@ PRD: [../PRD.md](../PRD.md)
 
 ## A1 — MVP
 
-- [ ] Work order CRUD + close event E2E
+- [x] Work order CRUD + close event E2E
 
 ## A2
 

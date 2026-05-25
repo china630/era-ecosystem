@@ -15,6 +15,12 @@ model Tenant {
   outlets   Outlet[]
 }
 
+enum WorkOrderStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -25,6 +31,17 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+}
+
+model WorkOrder {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  vehiclePlate String?
+  status       WorkOrderStatus @default(OPEN)
+  laborAmount  Decimal         @default(0) @db.Decimal(12, 2)
+  partsAmount  Decimal         @default(0) @db.Decimal(12, 2)
+  completedAt  DateTime?
+  createdAt    DateTime        @default(now())
 }
 
 model Role {

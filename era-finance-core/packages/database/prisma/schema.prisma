@@ -145,6 +145,8 @@ model Organization {
   approvalRequests             ApprovalRequest[]
   prepaidExpenses              PrepaidExpense[]
   psaProjects                  PsaProject[]
+  contracts                    Contract[]
+  budgetYears                  BudgetYear[]
   overheadDrivers              OverheadDriver[]
   overheadPools                OverheadPool[]
   manufacturingReleases        ManufacturingRelease[]
@@ -513,6 +515,7 @@ model Department {
   jobPositions    JobPosition[]
   transactions    Transaction[]
   psaProjects     PsaProject[]
+  budgetLines     BudgetLine[]
   deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?       @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?       @map("deleted_reason")
@@ -635,6 +638,7 @@ model Currency {
   approvalPolicies         ApprovalPolicy[]          @relation("ApprovalPolicyCurrency")
   prepaidExpenses          PrepaidExpense[]          @relation("PrepaidExpenseCurrency")
   psaProjects              PsaProject[]              @relation("PsaProjectCurrency")
+  contracts                Contract[]                @relation("ContractCurrency")
   accounts                 Account[]                 @relation("AccountCurrency")
   counterpartyBankAccounts CounterpartyBankAccount[] @relation("CounterpartyBankAccountCurrency")
   invoices                 Invoice[]                 @relation("InvoiceCurrency")
@@ -1953,6 +1957,109 @@ model PsaTimeEntry {
   @@map("psa_time_entries")
 }
 
+/// Commercial contract registry (PRD §4.15).
+model Contract {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  counterpartyId String               @map("counterparty_id") @db.Uuid
+  number         String
+  type           ContractType
+  status         ContractStatus       @default(DRAFT)
+  currency       String               @default("AZN")
+  amountLimit    Decimal?             @map("amount_limit") @db.Decimal(19, 4)
+  dateFrom       DateTime?            @map("date_from") @db.Date
+  dateTo         DateTime?            @map("date_to") @db.Date
+  description    String?
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty         @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+  currencyRef    Currency             @relation("ContractCurrency", fields: [currency], references: [code], onUpdate: Cascade)
+  lines          ContractLine[]
+  commitments    ContractCommitment[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status])
+  @@map("contracts")
+}
+
+model ContractLine {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contractId  String   @map("contract_id") @db.Uuid
+  description String?
+  quantity    Decimal? @db.Decimal(19, 4)
+  unitPrice   Decimal? @map("unit_price") @db.Decimal(19, 4)
+  amount      Decimal? @db.Decimal(19, 4)
+  createdAt   DateTime @default(now()) @map("created_at")
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@map("contract_lines")
+}
+
+model ContractCommitment {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  contractId    String   @map("contract_id") @db.Uuid
+  amount        Decimal  @db.Decimal(19, 4)
+  referenceType String   @map("reference_type") @db.VarChar(64)
+  referenceId   String   @map("reference_id") @db.VarChar(128)
+  createdAt     DateTime @default(now()) @map("created_at")
+  contract      Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@index([contractId])
+  @@index([referenceType, referenceId])
+  @@map("contract_commitments")
+}
+
+/// Annual organization budget (PRD §4.16, B2G).
+model BudgetYear {
+  id             String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  year           Int
+  status         BudgetYearStatus @default(DRAFT)
+  version        Int              @default(1)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lines          BudgetLine[]
+
+  @@unique([organizationId, year, version])
+  @@index([organizationId, year])
+  @@map("budget_years")
+}
+
+model BudgetLine {
+  id             String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  budgetYearId   String             @map("budget_year_id") @db.Uuid
+  accountCode    String             @map("account_code")
+  departmentId   String?            @map("department_id") @db.Uuid
+  limitAnnual    Decimal            @map("limit_annual") @db.Decimal(19, 4)
+  /// Monthly caps keyed by "01".."12" (optional).
+  limitMonthly   Json?              @map("limit_monthly")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  budgetYear     BudgetYear         @relation(fields: [budgetYearId], references: [id], onDelete: Cascade)
+  department     Department?        @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  commitments    BudgetCommitment[]
+
+  @@index([budgetYearId])
+  @@index([budgetYearId, accountCode])
+  @@map("budget_lines")
+}
+
+model BudgetCommitment {
+  id            String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  budgetLineId  String     @map("budget_line_id") @db.Uuid
+  amount        Decimal    @db.Decimal(19, 4)
+  referenceType String     @map("reference_type") @db.VarChar(64)
+  referenceId   String     @map("reference_id") @db.VarChar(128)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  budgetLine    BudgetLine @relation(fields: [budgetLineId], references: [id], onDelete: Cascade)
+
+  @@index([budgetLineId])
+  @@index([referenceType, referenceId])
+  @@map("budget_commitments")
+}
+
 model ManufacturingRelease {
   id                             String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId                 String          @map("organization_id") @db.Uuid
@@ -2285,6 +2392,7 @@ model Counterparty {
   transactions    Transaction[]
   prepaidExpenses PrepaidExpense[]
   psaProjects                     PsaProject[]
+  contracts                       Contract[]
   customsDeclarationsAsSender     CustomsDeclaration[] @relation("CustomsDeclarationSender")
   customsDeclarationsAsReceiver CustomsDeclaration[] @relation("CustomsDeclarationReceiver")
   deletedAt                       DateTime?            @map("deleted_at") @db.Timestamptz(6)
@@ -3861,4 +3969,28 @@ enum OcrJobStatus {
   RUNNING
   DONE
   ERROR
+}
+
+enum ContractType {
+  SUPPLY
+  SERVICE
+  FRAMEWORK
+  LEASE
+  CONSTRUCTION
+  INTERCOMPANY
+  OTHER
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  CLOSED
+  EXPIRED
+}
+
+enum BudgetYearStatus {
+  DRAFT
+  APPROVED
+  AMENDED
 }

@@ -15,16 +15,84 @@ model Tenant {
   outlets   Outlet[]
 }
 
+enum ShiftStatus {
+  OPEN
+  CLOSED
+}
+
+enum ReceiptStatus {
+  OPEN
+  PAID
+  VOID
+}
+
 model Outlet {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   tenantId  String
   code      String
   name      String
   preset    String?
-  tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt DateTime @default(now())
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  createdAt DateTime   @default(now())
+  registers Register[]
+  receipts  Receipt[]
 
   @@unique([tenantId, code])
+}
+
+model Register {
+  id        String    @id @default(cuid())
+  outletId  String
+  code      String
+  name      String
+  outlet    Outlet    @relation(fields: [outletId], references: [id])
+  shifts    Shift[]
+  receipts  Receipt[]
+  createdAt DateTime  @default(now())
+
+  @@unique([outletId, code])
+}
+
+model Shift {
+  id         String      @id @default(cuid())
+  registerId String
+  status     ShiftStatus @default(OPEN)
+  openedAt   DateTime    @default(now())
+  closedAt   DateTime?
+  register   Register    @relation(fields: [registerId], references: [id])
+  receipts   Receipt[]
+
+  @@index([registerId, status])
+}
+
+model Receipt {
+  id            String        @id @default(cuid())
+  outletId      String
+  registerId    String
+  shiftId       String
+  status        ReceiptStatus @default(OPEN)
+  amountNet     Decimal       @default(0) @db.Decimal(12, 2)
+  paymentMethod String?
+  paidAt        DateTime?
+  outlet        Outlet        @relation(fields: [outletId], references: [id])
+  register      Register      @relation(fields: [registerId], references: [id])
+  shift         Shift         @relation(fields: [shiftId], references: [id])
+  lines         ReceiptLine[]
+  createdAt     DateTime      @default(now())
+
+  @@index([shiftId])
+}
+
+model ReceiptLine {
+  id          String  @id @default(cuid())
+  receiptId   String
+  description String
+  qty         Int     @default(1)
+  unitPrice   Decimal @db.Decimal(12, 2)
+  lineTotal   Decimal @db.Decimal(12, 2)
+  receipt     Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@index([receiptId])
 }
 
 model Role {

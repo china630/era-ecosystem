@@ -535,7 +535,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 ### 4.15. Модуль 11: Contract Management (управление договорами)
 
-**Status:** [ ] **PLANNED (scope)** — отдельный платный модуль **`contract_management_pro`** (рабочее имя; каталог `PricingModules` — Super-Admin).
+**Status:** [~] **PARTIAL** — отдельный платный модуль **`contract_management_pro`** (рабочее имя; каталог `PricingModules` — Super-Admin).
 
 **Проблема:** договоры с контрагентами размазаны по заметкам CRM, PSA, закупкам и HR; нет единого реестра, лимитов и связи с исполнением.
 
@@ -565,11 +565,11 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 **Отличие от `era-construction`:** спутник ведёт **объектную смету и акты**; модуль 11 — **юридико-финансовый договор** с контрагентом и лимитом в ERP.
 
-Техконтракт: [TZ.md](./TZ.md) §22 (планируется).
+Техконтракт: [TZ.md](./TZ.md) §25.
 
 ### 4.16. Модуль 12: Годовой бюджет и исполнение (B2G / `OrganizationKind.BUDGET`)
 
-**Status:** [ ] **PLANNED (scope)** — полный цикл для **государственных и квазибюджетных** организаций; entitlement **`gov_budget_pro`** или включение в B2G bundle.
+**Status:** [~] **PARTIAL** — полный цикл для **государственных и квазибюджетных** организаций; entitlement **`gov_budget_pro`** или включение в B2G bundle.
 
 **Проблема:** без годового плана и контроля исполнения по статьям невозможен законный расход; разрозненные лимиты в M2 недостаточны.
 
@@ -593,7 +593,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 **Отличие от `era-construction`:** объектная BOQ/акт — спутник; **бюджет учреждения на год** — только Finance §4.16.
 
-Техконтракт: [TZ.md](./TZ.md) §23 (планируется).
+Техконтракт: [TZ.md](./TZ.md) §26.
 
 ## 5. Дорожная карта: расширения (v2 — конкурентный scope)
 

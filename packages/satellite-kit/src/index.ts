@@ -23,3 +23,16 @@ export {
   getBearerOrCookieToken,
   isPublicApiPath,
 } from "./auth/middleware-helpers";
+export {
+  FINANCE_OWNER_ROLES,
+  SATELLITE_ROLE,
+  isBusinessOwnerRole,
+  mapFinanceRoleToSatellite,
+  sessionHasRole,
+  type SatelliteRoleCode,
+} from "./auth/roles";
+export {
+  SatelliteForbiddenError,
+  forbidUnlessRole,
+  requireRole,
+} from "./auth/require-role";

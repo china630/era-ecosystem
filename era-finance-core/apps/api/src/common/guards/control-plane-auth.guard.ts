@@ -74,6 +74,8 @@ export class ControlPlaneAuthGuard implements CanActivate {
       email: payload.email,
       organizationId: payload.organizationId ?? null,
       role: payload.role ?? null,
+      roles: payload.roles ?? (payload.role ? [payload.role] : []),
+      isOwner: Boolean(payload.isOwner),
       isSuperAdmin: Boolean(payload.isSuperAdmin),
     };
     return true;

@@ -38,3 +38,29 @@ export function isSatelliteRetailSaleCompleted(
 ): data is SatelliteRetailSaleCompletedEvent {
   return satelliteRetailSaleCompletedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_RETAIL_SHIFT_CLOSED =
+  "SATELLITE_RETAIL_SHIFT_CLOSED" as const;
+
+export const satelliteRetailShiftClosedSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_RETAIL_SHIFT_CLOSED),
+  payload: z.object({
+    outletId: z.string(),
+    registerId: z.string(),
+    shiftId: z.string(),
+    preset: RetailPreset,
+    totalSales: z.number(),
+    receiptCount: z.number().int().nonnegative(),
+    currency: z.literal("AZN"),
+  }),
+});
+
+export type SatelliteRetailShiftClosedEvent = z.infer<
+  typeof satelliteRetailShiftClosedSchema
+>;
+
+export function isSatelliteRetailShiftClosed(
+  data: unknown,
+): data is SatelliteRetailShiftClosedEvent {
+  return satelliteRetailShiftClosedSchema.safeParse(data).success;
+}

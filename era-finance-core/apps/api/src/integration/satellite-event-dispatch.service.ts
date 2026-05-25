@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import {
   isSatelliteAutoWorkOrderCompleted,
+  isSatelliteClinicLabOrderCompleted,
   isSatelliteClinicVisitCompleted,
   isSatelliteConstructionProgressActApproved,
   isSatelliteCrmLeadConverted,
@@ -9,6 +10,7 @@ import {
   isSatelliteRetailSaleCompleted,
   isSatelliteWholesaleOrderConfirmed,
   satelliteAutoWorkOrderCompletedSchema,
+  satelliteClinicLabOrderCompletedSchema,
   satelliteClinicVisitCompletedSchema,
   satelliteConstructionProgressActSchema,
   satelliteCrmLeadConvertedSchema,
@@ -72,6 +74,10 @@ export class SatelliteEventDispatchService {
     if (isSatelliteClinicVisitCompleted(data)) {
       const event = satelliteClinicVisitCompletedSchema.parse(data);
       return this.handleClinicVisit(organizationId, event);
+    }
+    if (isSatelliteClinicLabOrderCompleted(data)) {
+      const event = satelliteClinicLabOrderCompletedSchema.parse(data);
+      return this.handleClinicLabOrder(organizationId, event);
     }
     if (isSatelliteWholesaleOrderConfirmed(data)) {
       const event = satelliteWholesaleOrderConfirmedSchema.parse(data);
@@ -352,6 +358,24 @@ export class SatelliteEventDispatchService {
       );
     }
     return { transactionId, invoiceId, meta: { visitId: event.payload.visitId } };
+  }
+
+  private async handleClinicLabOrder(
+    organizationId: string,
+    event: ReturnType<typeof satelliteClinicLabOrderCompletedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    this.logger.log(
+      `Clinic lab order completed stub: ${event.payload.labOrderId} (${event.correlationId})`,
+    );
+    return {
+      meta: {
+        labOrderId: event.payload.labOrderId,
+        patientRef: event.payload.patientRef,
+        testCode: event.payload.testCode,
+        amountNet: event.payload.amountNet,
+        stub: true,
+      },
+    };
   }
 
   private async handleWholesaleOrder(

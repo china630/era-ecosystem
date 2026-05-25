@@ -9,9 +9,9 @@ PRD: [../PRD.md](../PRD.md)
 
 ## L1 — MVP
 
-- [ ] Fleet + Trip models
-- [ ] Complete trip → `SATELLITE_LOGISTICS_TRIP_COMPLETED` E2E
-- [ ] UI trip list + close
+- [x] Fleet + Trip models
+- [x] Complete trip → `SATELLITE_LOGISTICS_TRIP_COMPLETED` E2E
+- [x] UI trip list + close
 
 ## L2
 

@@ -15,6 +15,13 @@ model Tenant {
   outlets   Outlet[]
 }
 
+enum B2BOrderStatus {
+  DRAFT
+  CONFIRMED
+  SHIPPED
+  CANCELLED
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -25,6 +32,17 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+}
+
+model B2BOrder {
+  id                  String         @id @default(cuid())
+  orderNumber         String         @unique
+  buyerCounterpartyId String
+  status              B2BOrderStatus @default(DRAFT)
+  amountNet           Decimal        @default(0) @db.Decimal(12, 2)
+  lineCount           Int            @default(0)
+  confirmedAt         DateTime?
+  createdAt           DateTime       @default(now())
 }
 
 model Role {

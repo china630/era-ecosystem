@@ -8,8 +8,8 @@ PRD: [../PRD.md](../PRD.md)
 
 ## C1 — MVP
 
-- [ ] Project + BOQ stub
-- [ ] Progress act approve → event E2E
+- [x] Project + BOQ stub
+- [x] Progress act approve → event E2E
 
 ## C2
 

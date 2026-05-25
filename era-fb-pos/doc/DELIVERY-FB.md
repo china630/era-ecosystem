@@ -8,7 +8,9 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 - [x] App in monorepo `era-fb-pos` (port 3200, Docker)
 - [x] UI shell: floor, orders, kds, calendar pages
-- [x] Prisma: schema stub (extend for Ticket/Shift)
+- [x] Prisma: Ticket model + related domain schema
+- [x] `POST /api/tickets` + room charge stub API
+- [x] doc/DOCUMENTATION-INDEX.md + UAT-SMOKE.md
 - [ ] Auth FB_WAITER / FB_MANAGER
 - [ ] Menu CRUD admin
 - [ ] PMS bridge client wired + integration test

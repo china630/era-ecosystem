@@ -15,6 +15,23 @@ model Tenant {
   outlets   Outlet[]
 }
 
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum LeadChannel {
+  whatsapp
+  instagram
+  visit
+  phone
+  other
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -25,6 +42,42 @@ model Outlet {
   createdAt DateTime @default(now())
 
   @@unique([tenantId, code])
+}
+
+model Lead {
+  id              String             @id @default(cuid())
+  stage           LeadStage          @default(NEW)
+  title           String
+  contactRef      String
+  channel         LeadChannel        @default(other)
+  estimatedAmount Decimal?           @db.Decimal(12, 2)
+  counterpartyId  String?
+  visits          Visit[]
+  stageHistory    LeadStageHistory[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  convertedAt     DateTime?
+}
+
+model LeadStageHistory {
+  id        String     @id @default(cuid())
+  leadId    String
+  fromStage LeadStage?
+  toStage   LeadStage
+  changedAt DateTime   @default(now())
+  lead      Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model Visit {
+  id        String   @id @default(cuid())
+  leadId    String
+  notes     String?
+  visitedAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
 }
 
 model Role {

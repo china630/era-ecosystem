@@ -2,7 +2,7 @@
 
 Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Domain PRDs and technical specs live inside each app.
 
-**Docs:** [`docs/SATELLITE_DOCUMENTATION.md`](./docs/SATELLITE_DOCUMENTATION.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md)
+**Docs:** [`docs/DEVELOPMENT_ROADMAP.md`](./docs/DEVELOPMENT_ROADMAP.md) · [`docs/SATELLITE_DOCUMENTATION.md`](./docs/SATELLITE_DOCUMENTATION.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md)
 
 ## Industry satellites
 
@@ -24,8 +24,8 @@ Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Do
 |------|------|
 | `packages/era-contracts` | Shared event schemas (`@era/contracts`) |
 | `packages/satellite-kit` | Shared gateway helpers (`@era/satellite-kit`) |
-| `era-finance-core` | Financial data plane |
-| `era-365-orchestrator` | Control plane — SSO, billing, event ingress |
+| `era-finance-core` | Financial data plane — [PRD](era-finance-core/PRD.md) |
+| `era-365-orchestrator` | Control plane — [PRD](era-365-orchestrator/PRD.md) |
 
 ## Quick start (Docker)
 

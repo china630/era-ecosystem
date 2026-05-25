@@ -24,3 +24,27 @@ export function isSatelliteCrmLeadConverted(
 ): data is SatelliteCrmLeadConvertedEvent {
   return satelliteCrmLeadConvertedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_CRM_VISIT_LOGGED =
+  "SATELLITE_CRM_VISIT_LOGGED" as const;
+
+export const satelliteCrmVisitLoggedSchema = satelliteEventBaseSchema.extend({
+  type: z.literal(SATELLITE_CRM_VISIT_LOGGED),
+  payload: z.object({
+    visitId: z.string(),
+    leadId: z.string(),
+    channel: z
+      .enum(["whatsapp", "instagram", "visit", "phone", "other"])
+      .optional(),
+  }),
+});
+
+export type SatelliteCrmVisitLoggedEvent = z.infer<
+  typeof satelliteCrmVisitLoggedSchema
+>;
+
+export function isSatelliteCrmVisitLogged(
+  data: unknown,
+): data is SatelliteCrmVisitLoggedEvent {
+  return satelliteCrmVisitLoggedSchema.safeParse(data).success;
+}

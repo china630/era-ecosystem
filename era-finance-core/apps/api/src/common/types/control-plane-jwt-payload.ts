@@ -6,6 +6,8 @@ export type ControlPlaneJwtPayload = {
   email: string;
   organizationId: string | null;
   role: UserRole | null;
+  roles?: UserRole[];
+  isOwner?: boolean;
   permissions?: string[];
   isSuperAdmin?: boolean;
   iss?: string;

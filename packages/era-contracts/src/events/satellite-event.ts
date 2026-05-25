@@ -1,10 +1,19 @@
 import { isSatelliteAutoWorkOrderCompleted } from "./auto-sto.events";
-import { isSatelliteClinicVisitCompleted } from "./clinic.events";
+import {
+  isSatelliteClinicLabOrderCompleted,
+  isSatelliteClinicVisitCompleted,
+} from "./clinic.events";
 import { isSatelliteConstructionProgressActApproved } from "./construction.events";
-import { isSatelliteCrmLeadConverted } from "./crm-field.events";
+import {
+  isSatelliteCrmLeadConverted,
+  isSatelliteCrmVisitLogged,
+} from "./crm-field.events";
 import { isSatelliteHotelReservationCompleted } from "./hotel.events";
 import { isSatelliteLogisticsTripCompleted } from "./logistics.events";
-import { isSatelliteRetailSaleCompleted } from "./retail.events";
+import {
+  isSatelliteRetailSaleCompleted,
+  isSatelliteRetailShiftClosed,
+} from "./retail.events";
 import { isSatelliteWholesaleOrderConfirmed } from "./wholesale.events";
 
 export type KnownSatelliteEvent = { type: string };
@@ -16,11 +25,14 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
   return (
     isSatelliteHotelReservationCompleted(data) ||
     isSatelliteRetailSaleCompleted(data) ||
+    isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||
     isSatelliteConstructionProgressActApproved(data) ||
     isSatelliteCrmLeadConverted(data) ||
+    isSatelliteCrmVisitLogged(data) ||
     isSatelliteAutoWorkOrderCompleted(data) ||
     isSatelliteClinicVisitCompleted(data) ||
+    isSatelliteClinicLabOrderCompleted(data) ||
     isSatelliteWholesaleOrderConfirmed(data)
   );
 }

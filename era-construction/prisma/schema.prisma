@@ -27,6 +27,27 @@ model Outlet {
   @@unique([tenantId, code])
 }
 
+model Project {
+  id           String        @id @default(cuid())
+  code         String        @unique
+  name         String
+  progressActs ProgressAct[]
+  createdAt    DateTime      @default(now())
+}
+
+model ProgressAct {
+  id         String    @id @default(cuid())
+  projectId  String
+  periodKey  String?
+  amountNet  Decimal   @db.Decimal(12, 2)
+  status     String    @default("DRAFT")
+  approvedAt DateTime?
+  project    Project   @relation(fields: [projectId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@index([projectId])
+}
+
 model Role {
   id              String   @id @default(cuid())
   code            String   @unique

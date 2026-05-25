@@ -26,3 +26,28 @@ export function isSatelliteClinicVisitCompleted(
 ): data is SatelliteClinicVisitCompletedEvent {
   return satelliteClinicVisitCompletedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_CLINIC_LAB_ORDER_COMPLETED =
+  "SATELLITE_CLINIC_LAB_ORDER_COMPLETED" as const;
+
+export const satelliteClinicLabOrderCompletedSchema =
+  satelliteEventBaseSchema.extend({
+    type: z.literal(SATELLITE_CLINIC_LAB_ORDER_COMPLETED),
+    payload: z.object({
+      labOrderId: z.string(),
+      patientRef: z.string(),
+      testCode: z.string(),
+      amountNet: z.number(),
+      currency: z.literal("AZN"),
+    }),
+  });
+
+export type SatelliteClinicLabOrderCompletedEvent = z.infer<
+  typeof satelliteClinicLabOrderCompletedSchema
+>;
+
+export function isSatelliteClinicLabOrderCompleted(
+  data: unknown,
+): data is SatelliteClinicLabOrderCompletedEvent {
+  return satelliteClinicLabOrderCompletedSchema.safeParse(data).success;
+}

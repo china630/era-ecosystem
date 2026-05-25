@@ -13,11 +13,11 @@ Source of truth for checkboxes. Summary for PM: [PRD §4](../PRD.md).
 
 ## R1 — MVP checkout (target)
 
-- [ ] Prisma: Register, Shift, Receipt, ReceiptLine
-- [ ] API: shift open/close, receipt create/pay
-- [ ] UI: checkout screen (preset-agnostic)
-- [ ] E2E: paid receipt → `SATELLITE_RETAIL_SALE_COMPLETED` → Finance worker log
-- [ ] UAT: [UAT-SMOKE](./UAT-SMOKE.md) R1 section
+- [x] Prisma: Register, Shift, Receipt, ReceiptLine
+- [x] API: shift open/close, receipt create/pay
+- [x] UI: checkout screen (preset-agnostic)
+- [x] E2E: paid receipt → `SATELLITE_RETAIL_SALE_COMPLETED` → Finance worker log
+- [x] UAT: [UAT-SMOKE](./UAT-SMOKE.md) R1 section
 
 ## R2 — Presets
 
@@ -30,7 +30,8 @@ Source of truth for checkboxes. Summary for PM: [PRD §4](../PRD.md).
 
 - [ ] Void line (R-11)
 - [ ] Return receipt (R-12)
-- [ ] `SATELLITE_RETAIL_SHIFT_CLOSED` in @era/contracts + dispatch
+- [x] `SATELLITE_RETAIL_SHIFT_CLOSED` in @era/contracts
+- [ ] Shift close dispatch
 
 ## R4 — Deferred
 

@@ -38,42 +38,55 @@ export class AuthService {
     });
 
     if (memberships.length === 0) {
-      const accessToken = await this.issueAccessToken({
+      const claims = await this.buildClaims({
         sub: user.id,
         email: user.email,
         organizationId: null,
         role: null,
         isSuperAdmin: user.isSuperAdmin,
       });
-      return { accessToken, user: { id: user.id, email: user.email } };
+      const accessToken = await this.issueAccessToken(claims);
+      const refreshToken = await this.issueRefreshToken(user.id, null);
+      return {
+        accessToken,
+        refreshToken,
+        user: { id: user.id, email: user.email },
+        claims,
+      };
     }
 
     const membership = dto.organizationId
-      ? memberships.find(
-          (m: { organizationId: string }) =>
-            m.organizationId === dto.organizationId,
-        )
+      ? memberships.find((m) => m.organizationId === dto.organizationId)
       : memberships[0];
     if (!membership) {
       throw new UnauthorizedException("Organization access denied");
     }
 
-    const accessToken = await this.issueAccessToken({
+    const claims = await this.buildClaims({
       sub: user.id,
       email: user.email,
       organizationId: membership.organizationId,
       role: membership.role,
       isSuperAdmin: user.isSuperAdmin,
     });
+    const accessToken = await this.issueAccessToken(claims);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      membership.organizationId,
+    );
 
     return {
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
         organizationId: membership.organizationId,
         role: membership.role,
+        roles: claims.roles,
+        isOwner: claims.isOwner,
       },
+      claims,
     };
   }
 
@@ -104,14 +117,16 @@ export class AuthService {
     }
 
     if (!payload.organizationId) {
+      const claims = await this.buildClaims({
+        sub: user.id,
+        email: user.email,
+        organizationId: null,
+        role: null,
+        isSuperAdmin: user.isSuperAdmin,
+      });
       return {
-        accessToken: await this.issueAccessToken({
-          sub: user.id,
-          email: user.email,
-          organizationId: null,
-          role: null,
-          isSuperAdmin: user.isSuperAdmin,
-        }),
+        accessToken: await this.issueAccessToken(claims),
+        claims,
       };
     }
 
@@ -127,15 +142,68 @@ export class AuthService {
       throw new UnauthorizedException("Organization access revoked");
     }
 
+    const claims = await this.buildClaims({
+      sub: user.id,
+      email: user.email,
+      organizationId: m.organizationId,
+      role: m.role,
+      isSuperAdmin: user.isSuperAdmin,
+    });
     return {
-      accessToken: await this.issueAccessToken({
-        sub: user.id,
-        email: user.email,
-        organizationId: m.organizationId,
-        role: m.role,
-        isSuperAdmin: user.isSuperAdmin,
-      }),
+      accessToken: await this.issueAccessToken(claims),
+      claims,
     };
+  }
+
+  async switchOrganization(userId: string, organizationId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException("User not found");
+
+    const m = await this.prisma.organizationMembership.findUnique({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+    });
+    if (!m || m.deletedAt) {
+      throw new UnauthorizedException("Organization access denied");
+    }
+
+    const claims = await this.buildClaims({
+      sub: user.id,
+      email: user.email,
+      organizationId: m.organizationId,
+      role: m.role,
+      isSuperAdmin: user.isSuperAdmin,
+    });
+    const accessToken = await this.issueAccessToken(claims);
+    const refreshToken = await this.issueRefreshToken(user.id, organizationId);
+    return { accessToken, refreshToken, claims };
+  }
+
+  async listMemberships(userId: string) {
+    const rows = await this.prisma.organizationMembership.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { joinedAt: "asc" },
+    });
+    const orgIds = rows.map((r) => r.organizationId);
+    const orgs =
+      orgIds.length > 0
+        ? await this.prisma.organization.findMany({
+            where: { id: { in: orgIds } },
+            select: { id: true, name: true, ownerId: true },
+          })
+        : [];
+    const orgMap = new Map(orgs.map((o) => [o.id, o]));
+    return rows.map((m) => {
+      const org = orgMap.get(m.organizationId);
+      return {
+        organizationId: m.organizationId,
+        organizationName: org?.name ?? null,
+        role: m.role,
+        isOwner: org?.ownerId === userId,
+        joinedAt: m.joinedAt,
+      };
+    });
   }
 
   async ssoExchange(dto: SsoExchangeDto) {
@@ -175,14 +243,57 @@ export class AuthService {
     }
 
     const role = (dto.role as UserRole | undefined) ?? m.role;
-    const accessToken = await this.issueAccessToken({
+    const claims = await this.buildClaims({
       sub: user.id,
       email: user.email,
       organizationId: dto.organizationId,
       role,
       isSuperAdmin: user.isSuperAdmin,
     });
-    return { accessToken };
+    const accessToken = await this.issueAccessToken(claims);
+    return { accessToken, claims, financeRole: role };
+  }
+
+  verifyAccessToken(token: string): Promise<EraJwtPayload> {
+    const issuer =
+      this.config.get<string>("ERA_JWT_ISSUER") ?? "era-365-orchestrator";
+    const audience =
+      this.config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ??
+      "era-finance-core";
+    return this.jwt.verifyAsync<EraJwtPayload>(token, {
+      issuer,
+      audience,
+      algorithms: ["HS256"],
+    });
+  }
+
+  private async buildClaims(input: {
+    sub: string;
+    email: string;
+    organizationId: string | null;
+    role: UserRole | null;
+    isSuperAdmin: boolean;
+  }): Promise<EraJwtPayload> {
+    let isOwner = false;
+    if (input.organizationId && input.role === "OWNER") {
+      isOwner = true;
+    } else if (input.organizationId) {
+      const org = await this.prisma.organization.findUnique({
+        where: { id: input.organizationId },
+        select: { ownerId: true },
+      });
+      isOwner = org?.ownerId === input.sub;
+    }
+    const roles = input.role ? [input.role] : [];
+    return {
+      sub: input.sub,
+      email: input.email,
+      organizationId: input.organizationId,
+      role: input.role,
+      roles,
+      isOwner,
+      isSuperAdmin: input.isSuperAdmin,
+    };
   }
 
   issueAccessToken(claims: EraJwtPayload): Promise<string> {
@@ -198,7 +309,27 @@ export class AuthService {
         audience,
         algorithm: "HS256",
         expiresIn: (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
-          "12h") as any,
+          "12h") as `${number}h`,
+      },
+    );
+  }
+
+  issueRefreshToken(
+    userId: string,
+    organizationId: string | null,
+  ): Promise<string> {
+    const refreshSecret =
+      this.config.get<string>("ERA_JWT_REFRESH_SECRET") ??
+      this.config.get<string>("ERA_JWT_SECRET");
+    if (!refreshSecret) {
+      throw new UnauthorizedException("Refresh not configured");
+    }
+    return this.jwt.signAsync(
+      { sub: userId, organizationId, typ: "refresh" },
+      {
+        secret: refreshSecret,
+        expiresIn: (this.config.get<string>("ERA_JWT_REFRESH_EXPIRES") ??
+          "7d") as `${number}d`,
       },
     );
   }

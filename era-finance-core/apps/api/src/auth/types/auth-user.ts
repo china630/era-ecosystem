@@ -6,6 +6,8 @@ export type AuthUser = {
   /** null — пользователь вошёл, но ещё не выбрал/не создал организацию (ТЗ: сначала пользователь, потом компания). */
   organizationId: string | null;
   role: UserRole | null;
+  roles?: UserRole[];
+  isOwner?: boolean;
   /** Загружается из БД при валидации JWT. */
   isSuperAdmin?: boolean;
 };

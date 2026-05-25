@@ -3020,4 +3020,51 @@ Active org context = O_k:
 
 ---
 
+## 25. Contract Management (PRD §4.15)
+
+### 25.0. Статус
+
+| Поле | Значение |
+|------|----------|
+| **Статус** | [~] **PARTIAL** — Prisma `Contract` / `ContractLine` / `ContractCommitment`, REST `/api/contracts/*`, `ContractsService.checkLimit()` |
+| **Entitlement** | `contract_management_pro` (гейтинг — Phase 2) |
+| **PRD** | **[PRD.md](./PRD.md) §4.15** |
+
+### 25.1. API
+
+| Метод | Путь | Назначение |
+|-------|------|------------|
+| GET | `/api/contracts` | Список договоров (пагинация) |
+| POST | `/api/contracts` | Создание договора (`DRAFT`) |
+| GET | `/api/contracts/:id` | Карточка договора + строки + commitments |
+| PATCH | `/api/contracts/:id` | Обновление полей |
+| POST | `/api/contracts/:id/activate` | Перевод `DRAFT`/`SUSPENDED` → `ACTIVE` |
+
+**Helper:** `ContractsService.checkLimit(contractId, amount)` — сравнение суммы commitments с `amountLimit` (без лимита → `allowed: true`).
+
+---
+
+## 26. Gov Budget (PRD §4.16)
+
+### 26.0. Статус
+
+| Поле | Значение |
+|------|----------|
+| **Статус** | [~] **PARTIAL** — Prisma `BudgetYear` / `BudgetLine` / `BudgetCommitment`, REST `/api/gov-budget/*` |
+| **Entitlement** | `gov_budget_pro` или B2G bundle (гейтинг — Phase 2) |
+| **PRD** | **[PRD.md](./PRD.md) §4.16** |
+
+### 26.1. API
+
+| Метод | Путь | Назначение |
+|-------|------|------------|
+| GET | `/api/gov-budget/years` | Список бюджетных годов |
+| POST | `/api/gov-budget/years` | Создание `BudgetYear` (`DRAFT`) + опциональные строки |
+| POST | `/api/gov-budget/years/:id/approve` | Утверждение (`APPROVED`) |
+| GET | `/api/gov-budget/years/:id/lines` | Строки бюджета |
+| POST | `/api/gov-budget/check-limit` | `{ budgetLineId, amount }` → `allowed` / `blocked` |
+| GET | `/api/gov-budget/years/:id/execution` | Plan vs fact (commitments stub) |
+
+---
+
 *Конец документа.*

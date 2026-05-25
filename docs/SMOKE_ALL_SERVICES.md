@@ -80,6 +80,39 @@ curl -X POST http://logistics.era.az/api/events/dispatch \
 
 Finance worker idempotency: table `satellite_events_processed` — replay same `correlationId` should skip.
 
+## Orchestrator membership (S1)
+
+```bash
+# Login
+curl -s -X POST http://localhost:4100/auth/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"demo.owner@erafinance.local\",\"password\":\"DemoLocal#2026\"}"
+
+# List memberships (Bearer from login)
+curl -s http://localhost:4100/memberships -H "Authorization: Bearer <accessToken>"
+```
+
+## Vertical MVP E2E (after migrate + seed)
+
+| Vertical | Happy path API |
+|----------|----------------|
+| Retail R1 | `POST /api/shifts/open` → `POST /api/receipts` → `POST /api/receipts/:id/pay` |
+| CRM C1 | `POST /api/leads` → `POST /api/leads/:id/convert` |
+| Logistics L1 | `POST /api/trips` → `POST /api/trips/:id/complete` |
+| Clinic K1 | `POST /api/appointments` → visit complete |
+| Clinic K2 | `POST /api/lab-orders/:id/complete` |
+| Construction C1 | `POST /api/acts/:id/approve` |
+| Auto A1 | `POST /api/work-orders/:id/complete` |
+| Wholesale W1 | `POST /api/orders/:id/confirm` |
+
+## CI checklist (S8)
+
+Run on PR / nightly (see `.github/workflows/ecosystem-smoke.yml`):
+
+1. `npm run build` in `packages/era-contracts`, `packages/satellite-kit`
+2. `npm run build` in `era-365-orchestrator/apps/api`
+3. Health curls against docker-compose stack (optional job)
+
 ## SSO exchange (satellites)
 
 ```bash

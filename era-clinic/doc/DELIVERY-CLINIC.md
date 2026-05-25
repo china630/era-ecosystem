@@ -8,15 +8,15 @@ PRD: [../PRD.md](../PRD.md)
 
 ## K1 — MVP приём
 
-- [ ] Patient ref + practitioner + room
-- [ ] Schedule + check-in (K-01, K-02)
-- [ ] Visit services + close → `SATELLITE_CLINIC_VISIT_COMPLETED` E2E
+- [x] Patient ref + practitioner + room
+- [x] Schedule + check-in (K-01, K-02)
+- [x] Visit services + close → `SATELLITE_CLINIC_VISIT_COMPLETED` E2E
 
 ## K2 — Лаборатория
 
-- [ ] LabOrder model + statuses ORDERED → PUBLISHED
+- [x] LabOrder model + statuses ORDERED → PUBLISHED
 - [ ] K-06…K-11 UI (order, collect, result import)
-- [ ] `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` in `@era/contracts` + finance worker
+- [x] `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` in `@era/contracts` + finance worker
 
 ## K3
 

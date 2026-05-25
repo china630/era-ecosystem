@@ -10,10 +10,10 @@ PRD: [../PRD.md](../PRD.md)
 
 ## C1 — MVP pipeline
 
-- [ ] Prisma: Lead, LeadStageHistory, Visit
-- [ ] UI: pipeline board + lead card
-- [ ] Convert → `SATELLITE_CRM_LEAD_CONVERTED` E2E
-- [ ] Doc: no duplicate counterparty create in satellite
+- [x] Prisma: Lead, LeadStageHistory, Visit
+- [x] UI: pipeline board + lead card
+- [x] Convert → `SATELLITE_CRM_LEAD_CONVERTED` E2E
+- [x] Doc: no duplicate counterparty create in satellite
 
 ## C2 — Field & inbox
 
@@ -24,4 +24,4 @@ PRD: [../PRD.md](../PRD.md)
 ## C3 — Deferred
 
 - [ ] Live WhatsApp Business API
-- [ ] `SATELLITE_CRM_VISIT_LOGGED` contract
+- [x] `SATELLITE_CRM_VISIT_LOGGED` contract

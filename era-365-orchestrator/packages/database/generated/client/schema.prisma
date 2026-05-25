@@ -328,6 +328,16 @@ model RolePermission {
   @@map("role_permissions")
 }
 
+/// Shared organizations table (ownerId for BUSINESS_OWNER / billing).
+model Organization {
+  id      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name    String
+  ownerId String? @map("owner_id") @db.Uuid
+
+  @@index([ownerId])
+  @@map("organizations")
+}
+
 /// Platform identity (shared `users` table during control-plane migration).
 model User {
   id           String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid

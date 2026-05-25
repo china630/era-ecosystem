@@ -1,9 +1,9 @@
 # ERA 365 Orchestrator
 
-Control plane submodule: billing, identity, SSO, and organization tenancy limits.
+Control plane: billing, identity, SSO, and organization tenancy limits.
 
-- `PRD.md` / `TZ.md` — to be authored in this repo (domain-local docs).
-- Phase 3 will host extracted Prisma billing/RBAC models and control-plane APIs.
+- [PRD.md](./PRD.md) · [TZ.md](./TZ.md) · [doc/DELIVERY-ORCHESTRATOR.md](./doc/DELIVERY-ORCHESTRATOR.md)
+- Integration: [docs/INTEGRATION_SSO_EVENTS.md](../docs/INTEGRATION_SSO_EVENTS.md)
 
 ## Shell layout
 

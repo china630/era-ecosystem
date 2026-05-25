@@ -31,6 +31,8 @@ import { IntegrationsModule } from "./integrations/integrations.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { ManufacturingModule } from "./manufacturing/manufacturing.module";
 import { PsaModule } from "./psa/psa.module";
+import { ContractsModule } from "./contracts/contracts.module";
+import { GovBudgetModule } from "./gov-budget/gov-budget.module";
 import { MailModule } from "./mail/mail.module";
 import { ReportingModule } from "./reporting/reporting.module";
 import { InvoicesModule } from "./invoices/invoices.module";
@@ -94,6 +96,8 @@ const useControlPlaneAuth =
     MigrationModule,
     ManufacturingModule,
     PsaModule,
+    ContractsModule,
+    GovBudgetModule,
     InvoicesModule,
     BankingModule,
     KassaModule,

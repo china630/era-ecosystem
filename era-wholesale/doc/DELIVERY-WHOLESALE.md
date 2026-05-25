@@ -8,7 +8,7 @@ PRD: [../PRD.md](../PRD.md)
 
 ## W1 — MVP
 
-- [ ] B2B order + confirm shipment event E2E
+- [x] B2B order + confirm shipment event E2E
 
 ## W2
 
