@@ -19,6 +19,21 @@ export default function HomePage() {
               Open main screen
             </Link>
           </li>
+          <li>
+            <Link href="/lab-orders" className="font-medium text-[#2980B9] hover:underline">
+              Laboratory orders (K2)
+            </Link>
+          </li>
+          <li>
+            <Link href="/scheduling" className="font-medium text-[#2980B9] hover:underline">
+              Day schedule (K3)
+            </Link>
+          </li>
+          <li>
+            <Link href="/executive" className="font-medium text-[#2980B9] hover:underline">
+              Executive summary (K-14)
+            </Link>
+          </li>
         </ul>
       </div>
     </>

@@ -19,6 +19,7 @@ enum LabOrderStatus {
   ORDERED
   COLLECTED
   IN_PROGRESS
+  RESULT_READY
   PUBLISHED
   COMPLETED
 }
@@ -67,18 +68,20 @@ model Appointment {
 }
 
 model Visit {
-  id             String             @id @default(cuid())
-  appointmentId  String?            @unique
+  id             String               @id @default(cuid())
+  appointmentId  String?              @unique
   patientRefId   String
   practitionerId String
-  status         String             @default("IN_PROGRESS")
-  amountNet      Decimal            @default(0) @db.Decimal(12, 2)
+  status         String               @default("IN_PROGRESS")
+  amountNet      Decimal              @default(0) @db.Decimal(12, 2)
   completedAt    DateTime?
-  patientRef     PatientRef         @relation(fields: [patientRefId], references: [id])
-  practitioner   Practitioner       @relation(fields: [practitionerId], references: [id])
-  appointment    Appointment?       @relation(fields: [appointmentId], references: [id])
+  patientRef     PatientRef           @relation(fields: [patientRefId], references: [id])
+  practitioner   Practitioner         @relation(fields: [practitionerId], references: [id])
+  appointment    Appointment?         @relation(fields: [appointmentId], references: [id])
   serviceLines   VisitServiceLine[]
-  createdAt      DateTime           @default(now())
+  labOrders      LabOrder[]
+  discountAudits VisitDiscountAudit[]
+  createdAt      DateTime             @default(now())
 }
 
 model VisitServiceLine {
@@ -95,14 +98,32 @@ model VisitServiceLine {
 model LabOrder {
   id           String         @id @default(cuid())
   patientRefId String
+  visitId      String?
   testCode     String
   status       LabOrderStatus @default(ORDERED)
   amountNet    Decimal        @default(0) @db.Decimal(12, 2)
+  collectedAt  DateTime?
+  resultJson   String?
+  publishedAt  DateTime?
   completedAt  DateTime?
   patientRef   PatientRef     @relation(fields: [patientRefId], references: [id])
+  visit        Visit?         @relation(fields: [visitId], references: [id])
   createdAt    DateTime       @default(now())
 
   @@index([patientRefId, status])
+  @@index([visitId])
+}
+
+model VisitDiscountAudit {
+  id         String   @id @default(cuid())
+  visitId    String
+  percent    Decimal  @db.Decimal(5, 2)
+  approvedBy String
+  reason     String
+  visit      Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([visitId])
 }
 
 model Role {

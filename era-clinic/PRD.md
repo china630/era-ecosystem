@@ -71,7 +71,7 @@
 | M2 | Practitioners, rooms, schedule | **PLANNED** | — |
 | M3 | Appointment & check-in | **PLANNED** | — |
 | M4 | Visit card & clinical services | **PLANNED** | `VISIT_COMPLETED` |
-| M5 | **Laboratory orders & results** | **PLANNED** | `LAB_ORDER_COMPLETED`, invoice lines |
+| M5 | **Laboratory orders & results** | **MVP** | `LAB_ORDER_COMPLETED`, invoice lines |
 | M6 | Service catalog cache (codes, prices) | **PLANNED** | Master prices in Finance |
 | M7 | Notifications (SMS/email stub) | **DEFERRED** | — |
 | M8 | Patient portal (results, booking) | **DEFERRED** | — |
@@ -167,3 +167,5 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 |------|------|
 | 2026-05-24 | PRD v1.0 |
 | 2026-05-24 | v1.1: M5 lab, personas, BUSINESS_OWNER, расширенные stories K-06…K-15 |
+| 2026-05-25 | SP2: lab orders UI + scheduling slots stub API |
+| 2026-05-25 | SW3/K2-K3: full lab lifecycle, discount audit, executive summary |
