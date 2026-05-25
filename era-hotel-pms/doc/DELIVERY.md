@@ -240,3 +240,23 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528150000_wave5_gl_bridge`
 
+### Stage 23 — INVOICE-AGENCY (Wave 5 Nafta NW-2)
+
+- [x] `/reports/invoices` — all fiscal documents + `integrateToAccounting` toggle (PROC-35)
+- [x] `GET /api/reports/invoices`, `PATCH /api/reports/invoices/[id]`
+- [x] Agency CL summary: city ledger, cash paid, net amount (PROC-21 / WA_CASH_02)
+- [x] `GET /api/reports/agency-cl-summary` + enhanced `/reports/agency-ledger`
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § INVOICE-AGENCY
+
+**Migration:** `20260528160000_wave5_invoice_agency`
+
+### Stage 24 — CONTRACT-PRICING (Wave 5 Nafta NW-3)
+
+- [x] `ContractPricingRule` — DISCOUNT/SUPPLEMENT % by agency + rate plan + date range (PROC-24)
+- [x] `/admin/contract-pricing` CRUD + `/api/admin/contract-pricing`
+- [x] Booking quote `/api/bookings/quote` + contract-adjusted `totalAmount` on create
+- [x] Seed: TRAVEL-AZ −10% on STANDARD rate
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § CONTRACT-PRICING
+
+**Migration:** `20260528170000_wave5_contract_pricing`
+

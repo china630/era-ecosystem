@@ -14,6 +14,7 @@ const createSchema = z.object({
   mealPlanId: z.string().uuid().optional(),
   roomId: z.string().uuid().optional(),
   sourceId: z.string().uuid().optional(),
+  agencyId: z.string().uuid().optional(),
   checkInDate: z.coerce.date(),
   checkOutDate: z.coerce.date(),
   paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),

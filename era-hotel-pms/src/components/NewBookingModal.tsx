@@ -32,12 +32,15 @@ export default function NewBookingModal({
   const tPay = useTranslations('paymentMethod');
   const [roomTypes, setRoomTypes] = useState<Option[]>([]);
   const [ratePlans, setRatePlans] = useState<Option[]>([]);
+  const [agencies, setAgencies] = useState<Option[]>([]);
   const [guests, setGuests] = useState<Option[]>([]);
   const [roomTypeId, setRoomTypeId] = useState('');
   const [ratePlanId, setRatePlanId] = useState('');
+  const [agencyId, setAgencyId] = useState('');
   const [guestId, setGuestId] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [quoteText, setQuoteText] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState('CARD');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -52,7 +55,8 @@ export default function NewBookingModal({
       fetch('/api/master/room-types').then((r) => r.json()),
       fetch('/api/master/rate-plans').then((r) => r.json()),
       fetch('/api/guests').then((r) => r.json()),
-    ]).then(([rt, rp, g]) => {
+      fetch('/api/agencies').then((r) => r.json()),
+    ]).then(([rt, rp, g, ag]) => {
       setRoomTypes(rt.map((x: { id: string; code: string }) => ({ id: x.id, label: x.code })));
       setRatePlans(
         rp.map((x: { id: string; code: string; medicalFlag: boolean }) => ({
@@ -61,8 +65,35 @@ export default function NewBookingModal({
         })),
       );
       setGuests(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
+      setAgencies(ag.map((x: { id: string; code: string; name: string }) => ({ id: x.id, label: `${x.code} — ${x.name}` })));
     });
   }, [open, tc]);
+
+  useEffect(() => {
+    if (!ratePlanId || !checkIn || !checkOut) {
+      setQuoteText(null);
+      return;
+    }
+    const qs = new URLSearchParams({
+      ratePlanId,
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+    });
+    if (agencyId) qs.set('agencyId', agencyId);
+    fetch(`/api/bookings/quote?${qs}`)
+      .then((r) => r.json())
+      .then((q) => {
+        if (q.error) {
+          setQuoteText(null);
+          return;
+        }
+        const suffix = q.contractRuleName
+          ? ` (${q.contractRuleName}: ${q.baseNightly} → ${q.adjustedNightly} AZN/night)`
+          : ` (${q.adjustedNightly} AZN/night)`;
+        setQuoteText(`${q.totalAmount.toFixed(2)} AZN · ${q.nights} nights${suffix}`);
+      })
+      .catch(() => setQuoteText(null));
+  }, [ratePlanId, agencyId, checkIn, checkOut]);
 
   async function loadGuests() {
     const g = await fetch('/api/guests').then((r) => r.json());
@@ -107,6 +138,7 @@ export default function NewBookingModal({
           roomTypeId,
           ratePlanId,
           guestId,
+          agencyId: agencyId || undefined,
           checkInDate: new Date(checkIn).toISOString(),
           checkOutDate: new Date(checkOut).toISOString(),
           paymentMethod,
@@ -184,6 +216,24 @@ export default function NewBookingModal({
             </select>
           </div>
           <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="agencyId">
+              {t('agency')}
+            </label>
+            <select
+              id="agencyId"
+              className={MODAL_INPUT_CLASS}
+              value={agencyId}
+              onChange={(e) => setAgencyId(e.target.value)}
+            >
+              <option value="">{tc('select')}</option>
+              {agencies.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="guestId">
               {t('guest')}
             </label>
@@ -250,6 +300,9 @@ export default function NewBookingModal({
               <option value="COMPANY_ACCOUNT">{tPay('COMPANY_ACCOUNT')}</option>
             </select>
           </div>
+          {quoteText ? (
+            <p className="text-[13px] font-medium text-[#2980B9]">{t('quote')}: {quoteText}</p>
+          ) : null}
         </form>
       </EraModal>
 

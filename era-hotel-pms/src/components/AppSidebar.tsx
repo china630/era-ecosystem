@@ -68,6 +68,12 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.REPORTS_READ),
     },
     {
+      href: '/reports/invoices',
+      labelKey: 'invoices',
+      icon: FileBarChart,
+      show: can(PERMISSIONS.REPORTS_READ),
+    },
+    {
       href: '/reports/agency-ledger',
       labelKey: 'agencyLedger',
       icon: ClipboardList,
@@ -121,6 +127,12 @@ export default function AppSidebar() {
       labelKey: 'channel',
       icon: Radio,
       show: can(PERMISSIONS.CHANNEL_MANAGE),
+    },
+    {
+      href: '/admin/contract-pricing',
+      labelKey: 'contractPricing',
+      icon: Settings,
+      show: can(PERMISSIONS.MASTER_DATA_MANAGE),
     },
     {
       href: '/medical',

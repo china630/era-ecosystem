@@ -2,6 +2,10 @@ import { prisma } from '@/lib/prisma';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
+import {
+  applyContractRuleToNightly,
+  findApplicableContractRule,
+} from '@/lib/services/contract-pricing.service';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
 export async function listReservations(status?: ReservationStatus) {
@@ -68,6 +72,7 @@ export async function createReservation(input: {
   mealPlanId?: string;
   roomId?: string;
   sourceId?: string;
+  agencyId?: string;
   checkInDate: Date;
   checkOutDate: Date;
   paymentMethod: PaymentMethod;
@@ -88,7 +93,14 @@ export async function createReservation(input: {
   if (!ratePlan) throw new Error('Rate plan not found');
 
   const nights = countNights(input.checkInDate, input.checkOutDate);
-  const totalAmount = toDecimal(decimalToNumber(ratePlan.pricePerNight) * nights);
+  const baseNightly = decimalToNumber(ratePlan.pricePerNight);
+  const rule = await findApplicableContractRule(
+    input.ratePlanId,
+    input.checkInDate,
+    input.agencyId,
+  );
+  const { nightly } = applyContractRuleToNightly(baseNightly, rule);
+  const totalAmount = toDecimal(nightly * nights);
 
   return prisma.reservation.create({
     data: {
@@ -98,13 +110,14 @@ export async function createReservation(input: {
       mealPlanId: input.mealPlanId,
       roomId: input.roomId,
       sourceId: input.sourceId,
+      agencyId: input.agencyId,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
       paymentMethod: input.paymentMethod,
       totalAmount,
       status: 'CONFIRMED',
     },
-    include: { room: true, roomType: true, guest: true, ratePlan: true },
+    include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
   });
 }
 

@@ -55,6 +55,7 @@ async function main() {
   await prisma.mealPlan.deleteMany();
   await prisma.roomType.deleteMany();
   await prisma.bookingSource.deleteMany();
+  await prisma.contractPricingRule.deleteMany();
   await prisma.agency.deleteMany();
   await prisma.hotelProfile.deleteMany();
 
@@ -396,6 +397,18 @@ async function main() {
 
   const agency = await prisma.agency.create({
     data: { code: 'TRAVEL-AZ', name: 'Demo Travel Agency', voen: '1234567890' },
+  });
+
+  await prisma.contractPricingRule.create({
+    data: {
+      name: 'Travel agency -10%',
+      agencyId: agency.id,
+      ratePlanId: rateStd.id,
+      ruleType: 'DISCOUNT',
+      valuePercent: 10,
+      validFrom: new Date('2026-01-01'),
+      active: true,
+    },
   });
 
   await prisma.posResource.createMany({
