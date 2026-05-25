@@ -181,4 +181,26 @@ export class ContractsService {
       requested: requested.toFixed(4),
     };
   }
+
+  /** Records contract commitment against a posted document (purchase invoice, PO, etc.). */
+  async documentUsage(
+    organizationId: string,
+    contractId: string,
+    amount: number | Decimal,
+    referenceType: string,
+    referenceId: string,
+  ) {
+    const contract = await this.prisma.contract.findFirst({
+      where: { id: contractId, organizationId },
+    });
+    if (!contract) throw new NotFoundException("Contract not found");
+    return this.prisma.contractCommitment.create({
+      data: {
+        contractId,
+        amount: new Decimal(amount.toString()),
+        referenceType,
+        referenceId,
+      },
+    });
+  }
 }

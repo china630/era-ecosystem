@@ -28,11 +28,25 @@ model Outlet {
 }
 
 model Project {
-  id           String        @id @default(cuid())
-  code         String        @unique
-  name         String
-  progressActs ProgressAct[]
-  createdAt    DateTime      @default(now())
+  id                   String                @id @default(cuid())
+  code                 String                @unique
+  name                 String
+  progressActs         ProgressAct[]
+  materialRequisitions MaterialRequisition[]
+  createdAt            DateTime              @default(now())
+}
+
+model MaterialRequisition {
+  id          String   @id @default(cuid())
+  projectId   String
+  itemCode    String
+  description String
+  qty         Decimal  @db.Decimal(12, 3)
+  status      String   @default("DRAFT")
+  project     Project  @relation(fields: [projectId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, status])
 }
 
 model ProgressAct {

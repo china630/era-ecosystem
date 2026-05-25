@@ -170,6 +170,7 @@ services:
       REDIS_URL: redis://redis:6379/3
       PORT: "3200"
       HOSTNAME: 0.0.0.0
+      HOTEL_PMS_URL: http://hotel-pms:3000
       PMS_BRIDGE_URL: http://hotel-pms:3000
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       FB_POS_WEBHOOK_SECRET: ${FB_POS_WEBHOOK_SECRET:-dev-fb-pos-webhook-secret}

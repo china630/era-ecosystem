@@ -77,3 +77,4 @@ A0 done · A1 work order E2E · A2 appointments · A3 VIN/parts catalog API
 ## §8. Changelog
 
 2026-05-24 PRD v1.0
+2026-05-25 SP4 A2: appointments API

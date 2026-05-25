@@ -68,8 +68,21 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 1. `/housekeeping` — complete task, set OOO.
 2. `/medical` — alert + procedure to folio (Doctor login if needed).
 
+## 11. FB-POS bridge (Stage 17 / SP3)
+
+Requires `era-fb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.
+
+1. Check in a guest to room **201** (or use seed in-house guest).
+2. From host: `node scripts/test-pos-bridge.mjs` — in-house lookup + idempotent room-charge + shift status.
+3. Start fb-pos: `cd era-fb-pos && npm run dev` (set `HOTEL_PMS_URL=http://127.0.0.1:3000`).
+4. `POST http://localhost:3200/api/shifts/open` with `{ "outletCode": "RESTAURANT" }`.
+5. Create ticket + `POST .../fire` + mark KDS DONE; `PATCH` ticket with `roomNumber: "201"`.
+6. `POST http://localhost:3200/api/tickets/{id}/room-charge` — expect **201** from PMS.
+7. PMS folio for room 201 shows FOOD charge; `GET /api/pms/room-charges?externalTicketId={ticketId}` returns row.
+8. `POST .../api/shifts/close` on fb-pos — night audit on `/operations` must **not** block on POS shift.
+
 ## Pass criteria
 
 - `npm run build` succeeds.
-- No blocking errors in flows 1–9.
+- No blocking errors in flows 1–11.
 - Outbound journal reflects folio ops when channels enabled.

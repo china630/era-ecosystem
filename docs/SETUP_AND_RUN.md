@@ -133,12 +133,15 @@ docker compose down -v       # остановить + удалить volumes (д
 
 После первого `docker compose up` выполните миграции **внутри** контейнеров или локально, указав `DATABASE_URL` на `localhost:5432`:
 
+> **Phase A migrations (2026-05-25):** Finance — `20260525180000_contracts_gov_budget` (contracts + gov budget tables); Orchestrator — `20260523120000_tenant_billing` plus RBAC/dispute schema from current `schema.prisma` (`db:generate` + migrate). Run both before smoke-testing platform features.
+
 ```bash
 # Orchestrator
 cd era-365-orchestrator
 npm install
 $env:DATABASE_URL="postgresql://era:<password>@localhost:5432/era_orchestrator"
 npm run db:generate
+npx prisma migrate deploy
 
 # Finance
 cd era-finance-core
@@ -230,6 +233,12 @@ npm run dev:web
 | POST | `/auth/login` | Выдача JWT (HS256) |
 | POST | `/auth/token/refresh` | Обновление access token |
 | POST | `/auth/sso/exchange` | SSO для satellites (HMAC) |
+| POST | `/auth/join-org` | Запрос доступа к организации по VÖEN |
+| GET | `/team/access-requests` | Pending join requests (OWNER/ADMIN) |
+| POST | `/team/access-requests/:id/approve` | Одобрить запрос |
+| POST | `/team/access-requests/:id/decline` | Отклонить запрос |
+| POST | `/organizations/transfer-ownership` | Передача владения (OWNER) |
+| POST | `/admin/organizations/:orgId/disputes` | Открыть ownership dispute (super-admin) |
 | GET | `/.well-known/jwks.json` | JWKS stub (phase A+) |
 | POST | `/internal/v1/entitlements/validate` | Billing / entitlements |
 | POST | `/api/v1/satellite-events` | Ingress событий → BullMQ |
@@ -269,6 +278,8 @@ ERA_JWT_SECRET=change-me-shared-hs256-secret-min-32-chars
 ERA_JWT_ISSUER=era-365-orchestrator
 ERA_JWT_AUDIENCE_FINANCE=era-finance-core
 ERA_AUTH_MODE=legacy
+# Проксировать RBAC-мутации (join-org, access-requests, transfer-ownership) на orchestrator
+ERA_CONTROL_PLANE_RBAC_PROXY=true
 
 # Satellite event worker
 SATELLITE_EVENT_REDIS_URL=redis://127.0.0.1:6379/0
@@ -290,6 +301,18 @@ npm install
 npm run db:bootstrap-local   # первый раз: migrate + seed
 npm run dev                  # API :4000 + Web :3000
 ```
+
+**Demo BUDGET org (gov budget smoke):** seed creates **Demo Budget Agency (local)** (`OrganizationKind.BUDGET`, VÖEN `9900000003`) with owner `demo.owner@erafinance.local` / `DemoLocal#2026`. Enable `gov_budget_pro` on the org subscription, then open `/gov-budget` in Finance web.
+
+**Control-plane auth cutover (dev):**
+
+```env
+ERA_AUTH_MODE=control-plane
+ERA_CONTROL_PLANE_RBAC_PROXY=true   # default; Finance forwards join/access/transfer to orchestrator
+ERA_JWT_SECRET=<same as orchestrator>
+```
+
+Login via orchestrator → use the same Bearer token on Finance API (`/api/billing/*`, `/api/contracts`, etc.) without Finance DB session lookup.
 
 Отдельно:
 
@@ -438,7 +461,8 @@ cd ../era-hotel-pms && npm install
 | 1 | Одинаковый `ERA_JWT_SECRET` на orchestrator и finance-core |
 | 2 | Login: `POST http://api.era.az/auth/login` → Bearer token |
 | 3 | Finance: `ERA_AUTH_MODE=control-plane` — stateless JWT без lookup в БД |
-| 4 | Billing по-прежнему через `ControlPlaneEntitlementGuard` |
+| 4 | RBAC mutations: `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default) — Finance proxies join/access/transfer to orchestrator |
+| 5 | Billing по-прежнему через `ControlPlaneEntitlementGuard` |
 
 ### Event bus (hotel → finance)
 

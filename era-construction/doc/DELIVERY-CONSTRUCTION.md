@@ -13,5 +13,5 @@ PRD: [../PRD.md](../PRD.md)
 
 ## C2
 
-- [ ] Material requisition (C-02)
+- [x] Material requisition (C-02) — `GET/POST /api/material-requisitions`
 - [ ] Plan vs actual (C-04)

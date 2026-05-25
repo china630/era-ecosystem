@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   forwardRef,
   Get,
+  Headers,
   Inject,
   Post,
   Res,
@@ -26,6 +27,7 @@ import { CreateOrgDto } from "../auth/dto/create-org.dto";
 import { OrganizationId } from "../common/org-id.decorator";
 import { TransferOwnershipDto } from "./dto/transfer-ownership.dto";
 import { OrganizationsService } from "./organizations.service";
+import { ControlPlaneClient } from "../control-plane/control-plane.client";
 
 @ApiTags("organizations")
 @ApiBearerAuth("bearer")
@@ -35,6 +37,7 @@ export class OrganizationsController {
     private readonly organizations: OrganizationsService,
     @Inject(forwardRef(() => AuthService))
     private readonly auth: AuthService,
+    private readonly controlPlane: ControlPlaneClient,
   ) {}
 
   @Post()
@@ -78,9 +81,18 @@ export class OrganizationsController {
     @CurrentUser() user: AuthUser,
     @OrganizationId() organizationId: string,
     @Body() dto: TransferOwnershipDto,
+    @Headers("authorization") authorization?: string,
   ) {
     if (!user.organizationId) {
       throw new ForbiddenException("Organization context required");
+    }
+    if (this.controlPlane.rbacProxyEnabled && authorization) {
+      return this.controlPlane.forward({
+        method: "POST",
+        path: "/organizations/transfer-ownership",
+        body: dto,
+        authorization,
+      });
     }
     return this.organizations.transferOwnership(
       user.userId,

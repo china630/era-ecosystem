@@ -77,6 +77,30 @@ enum UserRole {
   PARTNER
 }
 
+enum DisputeStatus {
+  EVIDENCE_REQUIRED
+  EVIDENCE_REVIEW
+  INCUMBENT_NOTIFIED
+  COOLDOWN
+  APPROVED
+  REJECTED
+  EXECUTED
+  REVERTED
+}
+
+enum DisputeSeverity {
+  SOFT
+  HARD
+}
+
+enum SecurityMode {
+  NORMAL
+  DISPUTE
+  POST_TRANSFER_LOCK
+  ROLLBACK_IN_PROGRESS
+  HARD_BLOCK_PLATFORM
+}
+
 enum PermissionCategory {
   CORE
   BILLING
@@ -330,9 +354,10 @@ model RolePermission {
 
 /// Shared organizations table (ownerId for BUSINESS_OWNER / billing).
 model Organization {
-  id      String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  name    String
-  ownerId String? @map("owner_id") @db.Uuid
+  id              String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name            String
+  ownerId         String? @map("owner_id") @db.Uuid
+  taxIdBlindIndex String? @unique @map("tax_id_blind_index")
 
   @@index([ownerId])
   @@map("organizations")
@@ -453,4 +478,30 @@ model ReferralCommission {
   @@unique([referralId, periodYear, periodMonth])
   @@index([subscriptionInvoiceId])
   @@map("referral_commissions")
+}
+
+model OwnershipDispute {
+  id                String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String          @map("organization_id") @db.Uuid
+  claimantUserId    String          @map("claimant_user_id") @db.Uuid
+  incumbentUserId   String          @map("incumbent_user_id") @db.Uuid
+  status            DisputeStatus   @default(EVIDENCE_REQUIRED)
+  severity          DisputeSeverity @default(SOFT)
+  evidenceKeys      String[]        @default([]) @map("evidence_keys")
+  counterClaimNote  String?         @map("counter_claim_note")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  executedAt        DateTime?       @map("executed_at") @db.Timestamptz(6)
+
+  @@index([organizationId, status])
+  @@map("ownership_disputes")
+}
+
+model OrganizationSecurityState {
+  organizationId  String            @id @map("organization_id") @db.Uuid
+  mode            SecurityMode      @default(NORMAL)
+  lockUntil       DateTime?         @map("lock_until") @db.Timestamptz(6)
+  activeDisputeId String?           @map("active_dispute_id") @db.Uuid
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@map("organization_security_states")
 }

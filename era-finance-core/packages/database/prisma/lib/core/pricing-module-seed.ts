@@ -37,6 +37,20 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     sortOrder: 13,
     isPremium: true,
   },
+  {
+    key: "contract_management_pro",
+    name: "Contract Management",
+    pricePerMonth: 29,
+    sortOrder: 14,
+    isPremium: true,
+  },
+  {
+    key: "gov_budget_pro",
+    name: "Gov Budget (B2G)",
+    pricePerMonth: 49,
+    sortOrder: 15,
+    isPremium: true,
+  },
 ];
 
 /**

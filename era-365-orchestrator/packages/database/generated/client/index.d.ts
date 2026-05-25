@@ -133,6 +133,16 @@ export type Referral = $Result.DefaultSelection<Prisma.$ReferralPayload>
  * 
  */
 export type ReferralCommission = $Result.DefaultSelection<Prisma.$ReferralCommissionPayload>
+/**
+ * Model OwnershipDispute
+ * 
+ */
+export type OwnershipDispute = $Result.DefaultSelection<Prisma.$OwnershipDisputePayload>
+/**
+ * Model OrganizationSecurityState
+ * 
+ */
+export type OrganizationSecurityState = $Result.DefaultSelection<Prisma.$OrganizationSecurityStatePayload>
 
 /**
  * Enums
@@ -232,6 +242,39 @@ export const UserRole: {
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
+export const DisputeStatus: {
+  EVIDENCE_REQUIRED: 'EVIDENCE_REQUIRED',
+  EVIDENCE_REVIEW: 'EVIDENCE_REVIEW',
+  INCUMBENT_NOTIFIED: 'INCUMBENT_NOTIFIED',
+  COOLDOWN: 'COOLDOWN',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  EXECUTED: 'EXECUTED',
+  REVERTED: 'REVERTED'
+};
+
+export type DisputeStatus = (typeof DisputeStatus)[keyof typeof DisputeStatus]
+
+
+export const DisputeSeverity: {
+  SOFT: 'SOFT',
+  HARD: 'HARD'
+};
+
+export type DisputeSeverity = (typeof DisputeSeverity)[keyof typeof DisputeSeverity]
+
+
+export const SecurityMode: {
+  NORMAL: 'NORMAL',
+  DISPUTE: 'DISPUTE',
+  POST_TRANSFER_LOCK: 'POST_TRANSFER_LOCK',
+  ROLLBACK_IN_PROGRESS: 'ROLLBACK_IN_PROGRESS',
+  HARD_BLOCK_PLATFORM: 'HARD_BLOCK_PLATFORM'
+};
+
+export type SecurityMode = (typeof SecurityMode)[keyof typeof SecurityMode]
+
+
 export const PermissionCategory: {
   CORE: 'CORE',
   BILLING: 'BILLING',
@@ -286,6 +329,18 @@ export const InviteStatus: typeof $Enums.InviteStatus
 export type UserRole = $Enums.UserRole
 
 export const UserRole: typeof $Enums.UserRole
+
+export type DisputeStatus = $Enums.DisputeStatus
+
+export const DisputeStatus: typeof $Enums.DisputeStatus
+
+export type DisputeSeverity = $Enums.DisputeSeverity
+
+export const DisputeSeverity: typeof $Enums.DisputeSeverity
+
+export type SecurityMode = $Enums.SecurityMode
+
+export const SecurityMode: typeof $Enums.SecurityMode
 
 export type PermissionCategory = $Enums.PermissionCategory
 
@@ -651,6 +706,26 @@ export class PrismaClient<
     * ```
     */
   get referralCommission(): Prisma.ReferralCommissionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.ownershipDispute`: Exposes CRUD operations for the **OwnershipDispute** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OwnershipDisputes
+    * const ownershipDisputes = await prisma.ownershipDispute.findMany()
+    * ```
+    */
+  get ownershipDispute(): Prisma.OwnershipDisputeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.organizationSecurityState`: Exposes CRUD operations for the **OrganizationSecurityState** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationSecurityStates
+    * const organizationSecurityStates = await prisma.organizationSecurityState.findMany()
+    * ```
+    */
+  get organizationSecurityState(): Prisma.OrganizationSecurityStateDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1108,7 +1183,9 @@ export namespace Prisma {
     OrganizationInvite: 'OrganizationInvite',
     Partner: 'Partner',
     Referral: 'Referral',
-    ReferralCommission: 'ReferralCommission'
+    ReferralCommission: 'ReferralCommission',
+    OwnershipDispute: 'OwnershipDispute',
+    OrganizationSecurityState: 'OrganizationSecurityState'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1124,7 +1201,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2904,6 +2981,154 @@ export namespace Prisma {
           }
         }
       }
+      OwnershipDispute: {
+        payload: Prisma.$OwnershipDisputePayload<ExtArgs>
+        fields: Prisma.OwnershipDisputeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OwnershipDisputeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OwnershipDisputeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          findFirst: {
+            args: Prisma.OwnershipDisputeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OwnershipDisputeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          findMany: {
+            args: Prisma.OwnershipDisputeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>[]
+          }
+          create: {
+            args: Prisma.OwnershipDisputeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          createMany: {
+            args: Prisma.OwnershipDisputeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OwnershipDisputeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>[]
+          }
+          delete: {
+            args: Prisma.OwnershipDisputeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          update: {
+            args: Prisma.OwnershipDisputeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          deleteMany: {
+            args: Prisma.OwnershipDisputeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OwnershipDisputeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OwnershipDisputeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>[]
+          }
+          upsert: {
+            args: Prisma.OwnershipDisputeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OwnershipDisputePayload>
+          }
+          aggregate: {
+            args: Prisma.OwnershipDisputeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOwnershipDispute>
+          }
+          groupBy: {
+            args: Prisma.OwnershipDisputeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OwnershipDisputeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OwnershipDisputeCountArgs<ExtArgs>
+            result: $Utils.Optional<OwnershipDisputeCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrganizationSecurityState: {
+        payload: Prisma.$OrganizationSecurityStatePayload<ExtArgs>
+        fields: Prisma.OrganizationSecurityStateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationSecurityStateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationSecurityStateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationSecurityStateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationSecurityStateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationSecurityStateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationSecurityStateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationSecurityStateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationSecurityStateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationSecurityStateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          update: {
+            args: Prisma.OrganizationSecurityStateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationSecurityStateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationSecurityStateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationSecurityStateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationSecurityStateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSecurityStatePayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationSecurityStateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationSecurityState>
+          }
+          groupBy: {
+            args: Prisma.OrganizationSecurityStateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationSecurityStateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationSecurityStateCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationSecurityStateCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3036,6 +3261,8 @@ export namespace Prisma {
     partner?: PartnerOmit
     referral?: ReferralOmit
     referralCommission?: ReferralCommissionOmit
+    ownershipDispute?: OwnershipDisputeOmit
+    organizationSecurityState?: OrganizationSecurityStateOmit
   }
 
   /* Types for Logging */
@@ -21014,18 +21241,21 @@ export namespace Prisma {
     id: string | null
     name: string | null
     ownerId: string | null
+    taxIdBlindIndex: string | null
   }
 
   export type OrganizationMaxAggregateOutputType = {
     id: string | null
     name: string | null
     ownerId: string | null
+    taxIdBlindIndex: string | null
   }
 
   export type OrganizationCountAggregateOutputType = {
     id: number
     name: number
     ownerId: number
+    taxIdBlindIndex: number
     _all: number
   }
 
@@ -21034,18 +21264,21 @@ export namespace Prisma {
     id?: true
     name?: true
     ownerId?: true
+    taxIdBlindIndex?: true
   }
 
   export type OrganizationMaxAggregateInputType = {
     id?: true
     name?: true
     ownerId?: true
+    taxIdBlindIndex?: true
   }
 
   export type OrganizationCountAggregateInputType = {
     id?: true
     name?: true
     ownerId?: true
+    taxIdBlindIndex?: true
     _all?: true
   }
 
@@ -21125,6 +21358,7 @@ export namespace Prisma {
     id: string
     name: string
     ownerId: string | null
+    taxIdBlindIndex: string | null
     _count: OrganizationCountAggregateOutputType | null
     _min: OrganizationMinAggregateOutputType | null
     _max: OrganizationMaxAggregateOutputType | null
@@ -21148,27 +21382,31 @@ export namespace Prisma {
     id?: boolean
     name?: boolean
     ownerId?: boolean
+    taxIdBlindIndex?: boolean
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     ownerId?: boolean
+    taxIdBlindIndex?: boolean
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
     ownerId?: boolean
+    taxIdBlindIndex?: boolean
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectScalar = {
     id?: boolean
     name?: boolean
     ownerId?: boolean
+    taxIdBlindIndex?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex", ExtArgs["result"]["organization"]>
 
   export type $OrganizationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Organization"
@@ -21177,6 +21415,7 @@ export namespace Prisma {
       id: string
       name: string
       ownerId: string | null
+      taxIdBlindIndex: string | null
     }, ExtArgs["result"]["organization"]>
     composites: {}
   }
@@ -21603,6 +21842,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Organization", 'String'>
     readonly name: FieldRef<"Organization", 'String'>
     readonly ownerId: FieldRef<"Organization", 'String'>
+    readonly taxIdBlindIndex: FieldRef<"Organization", 'String'>
   }
     
 
@@ -29802,6 +30042,2067 @@ export namespace Prisma {
 
 
   /**
+   * Model OwnershipDispute
+   */
+
+  export type AggregateOwnershipDispute = {
+    _count: OwnershipDisputeCountAggregateOutputType | null
+    _min: OwnershipDisputeMinAggregateOutputType | null
+    _max: OwnershipDisputeMaxAggregateOutputType | null
+  }
+
+  export type OwnershipDisputeMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    claimantUserId: string | null
+    incumbentUserId: string | null
+    status: $Enums.DisputeStatus | null
+    severity: $Enums.DisputeSeverity | null
+    counterClaimNote: string | null
+    createdAt: Date | null
+    executedAt: Date | null
+  }
+
+  export type OwnershipDisputeMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    claimantUserId: string | null
+    incumbentUserId: string | null
+    status: $Enums.DisputeStatus | null
+    severity: $Enums.DisputeSeverity | null
+    counterClaimNote: string | null
+    createdAt: Date | null
+    executedAt: Date | null
+  }
+
+  export type OwnershipDisputeCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    claimantUserId: number
+    incumbentUserId: number
+    status: number
+    severity: number
+    evidenceKeys: number
+    counterClaimNote: number
+    createdAt: number
+    executedAt: number
+    _all: number
+  }
+
+
+  export type OwnershipDisputeMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    claimantUserId?: true
+    incumbentUserId?: true
+    status?: true
+    severity?: true
+    counterClaimNote?: true
+    createdAt?: true
+    executedAt?: true
+  }
+
+  export type OwnershipDisputeMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    claimantUserId?: true
+    incumbentUserId?: true
+    status?: true
+    severity?: true
+    counterClaimNote?: true
+    createdAt?: true
+    executedAt?: true
+  }
+
+  export type OwnershipDisputeCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    claimantUserId?: true
+    incumbentUserId?: true
+    status?: true
+    severity?: true
+    evidenceKeys?: true
+    counterClaimNote?: true
+    createdAt?: true
+    executedAt?: true
+    _all?: true
+  }
+
+  export type OwnershipDisputeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OwnershipDispute to aggregate.
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OwnershipDisputes to fetch.
+     */
+    orderBy?: OwnershipDisputeOrderByWithRelationInput | OwnershipDisputeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OwnershipDisputeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OwnershipDisputes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OwnershipDisputes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OwnershipDisputes
+    **/
+    _count?: true | OwnershipDisputeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OwnershipDisputeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OwnershipDisputeMaxAggregateInputType
+  }
+
+  export type GetOwnershipDisputeAggregateType<T extends OwnershipDisputeAggregateArgs> = {
+        [P in keyof T & keyof AggregateOwnershipDispute]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOwnershipDispute[P]>
+      : GetScalarType<T[P], AggregateOwnershipDispute[P]>
+  }
+
+
+
+
+  export type OwnershipDisputeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OwnershipDisputeWhereInput
+    orderBy?: OwnershipDisputeOrderByWithAggregationInput | OwnershipDisputeOrderByWithAggregationInput[]
+    by: OwnershipDisputeScalarFieldEnum[] | OwnershipDisputeScalarFieldEnum
+    having?: OwnershipDisputeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OwnershipDisputeCountAggregateInputType | true
+    _min?: OwnershipDisputeMinAggregateInputType
+    _max?: OwnershipDisputeMaxAggregateInputType
+  }
+
+  export type OwnershipDisputeGroupByOutputType = {
+    id: string
+    organizationId: string
+    claimantUserId: string
+    incumbentUserId: string
+    status: $Enums.DisputeStatus
+    severity: $Enums.DisputeSeverity
+    evidenceKeys: string[]
+    counterClaimNote: string | null
+    createdAt: Date
+    executedAt: Date | null
+    _count: OwnershipDisputeCountAggregateOutputType | null
+    _min: OwnershipDisputeMinAggregateOutputType | null
+    _max: OwnershipDisputeMaxAggregateOutputType | null
+  }
+
+  type GetOwnershipDisputeGroupByPayload<T extends OwnershipDisputeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OwnershipDisputeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OwnershipDisputeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OwnershipDisputeGroupByOutputType[P]>
+            : GetScalarType<T[P], OwnershipDisputeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OwnershipDisputeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    claimantUserId?: boolean
+    incumbentUserId?: boolean
+    status?: boolean
+    severity?: boolean
+    evidenceKeys?: boolean
+    counterClaimNote?: boolean
+    createdAt?: boolean
+    executedAt?: boolean
+  }, ExtArgs["result"]["ownershipDispute"]>
+
+  export type OwnershipDisputeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    claimantUserId?: boolean
+    incumbentUserId?: boolean
+    status?: boolean
+    severity?: boolean
+    evidenceKeys?: boolean
+    counterClaimNote?: boolean
+    createdAt?: boolean
+    executedAt?: boolean
+  }, ExtArgs["result"]["ownershipDispute"]>
+
+  export type OwnershipDisputeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    claimantUserId?: boolean
+    incumbentUserId?: boolean
+    status?: boolean
+    severity?: boolean
+    evidenceKeys?: boolean
+    counterClaimNote?: boolean
+    createdAt?: boolean
+    executedAt?: boolean
+  }, ExtArgs["result"]["ownershipDispute"]>
+
+  export type OwnershipDisputeSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    claimantUserId?: boolean
+    incumbentUserId?: boolean
+    status?: boolean
+    severity?: boolean
+    evidenceKeys?: boolean
+    counterClaimNote?: boolean
+    createdAt?: boolean
+    executedAt?: boolean
+  }
+
+  export type OwnershipDisputeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "claimantUserId" | "incumbentUserId" | "status" | "severity" | "evidenceKeys" | "counterClaimNote" | "createdAt" | "executedAt", ExtArgs["result"]["ownershipDispute"]>
+
+  export type $OwnershipDisputePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OwnershipDispute"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      claimantUserId: string
+      incumbentUserId: string
+      status: $Enums.DisputeStatus
+      severity: $Enums.DisputeSeverity
+      evidenceKeys: string[]
+      counterClaimNote: string | null
+      createdAt: Date
+      executedAt: Date | null
+    }, ExtArgs["result"]["ownershipDispute"]>
+    composites: {}
+  }
+
+  type OwnershipDisputeGetPayload<S extends boolean | null | undefined | OwnershipDisputeDefaultArgs> = $Result.GetResult<Prisma.$OwnershipDisputePayload, S>
+
+  type OwnershipDisputeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OwnershipDisputeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OwnershipDisputeCountAggregateInputType | true
+    }
+
+  export interface OwnershipDisputeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OwnershipDispute'], meta: { name: 'OwnershipDispute' } }
+    /**
+     * Find zero or one OwnershipDispute that matches the filter.
+     * @param {OwnershipDisputeFindUniqueArgs} args - Arguments to find a OwnershipDispute
+     * @example
+     * // Get one OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OwnershipDisputeFindUniqueArgs>(args: SelectSubset<T, OwnershipDisputeFindUniqueArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OwnershipDispute that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OwnershipDisputeFindUniqueOrThrowArgs} args - Arguments to find a OwnershipDispute
+     * @example
+     * // Get one OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OwnershipDisputeFindUniqueOrThrowArgs>(args: SelectSubset<T, OwnershipDisputeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OwnershipDispute that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeFindFirstArgs} args - Arguments to find a OwnershipDispute
+     * @example
+     * // Get one OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OwnershipDisputeFindFirstArgs>(args?: SelectSubset<T, OwnershipDisputeFindFirstArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OwnershipDispute that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeFindFirstOrThrowArgs} args - Arguments to find a OwnershipDispute
+     * @example
+     * // Get one OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OwnershipDisputeFindFirstOrThrowArgs>(args?: SelectSubset<T, OwnershipDisputeFindFirstOrThrowArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OwnershipDisputes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OwnershipDisputes
+     * const ownershipDisputes = await prisma.ownershipDispute.findMany()
+     * 
+     * // Get first 10 OwnershipDisputes
+     * const ownershipDisputes = await prisma.ownershipDispute.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const ownershipDisputeWithIdOnly = await prisma.ownershipDispute.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OwnershipDisputeFindManyArgs>(args?: SelectSubset<T, OwnershipDisputeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OwnershipDispute.
+     * @param {OwnershipDisputeCreateArgs} args - Arguments to create a OwnershipDispute.
+     * @example
+     * // Create one OwnershipDispute
+     * const OwnershipDispute = await prisma.ownershipDispute.create({
+     *   data: {
+     *     // ... data to create a OwnershipDispute
+     *   }
+     * })
+     * 
+     */
+    create<T extends OwnershipDisputeCreateArgs>(args: SelectSubset<T, OwnershipDisputeCreateArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OwnershipDisputes.
+     * @param {OwnershipDisputeCreateManyArgs} args - Arguments to create many OwnershipDisputes.
+     * @example
+     * // Create many OwnershipDisputes
+     * const ownershipDispute = await prisma.ownershipDispute.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OwnershipDisputeCreateManyArgs>(args?: SelectSubset<T, OwnershipDisputeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OwnershipDisputes and returns the data saved in the database.
+     * @param {OwnershipDisputeCreateManyAndReturnArgs} args - Arguments to create many OwnershipDisputes.
+     * @example
+     * // Create many OwnershipDisputes
+     * const ownershipDispute = await prisma.ownershipDispute.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OwnershipDisputes and only return the `id`
+     * const ownershipDisputeWithIdOnly = await prisma.ownershipDispute.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OwnershipDisputeCreateManyAndReturnArgs>(args?: SelectSubset<T, OwnershipDisputeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OwnershipDispute.
+     * @param {OwnershipDisputeDeleteArgs} args - Arguments to delete one OwnershipDispute.
+     * @example
+     * // Delete one OwnershipDispute
+     * const OwnershipDispute = await prisma.ownershipDispute.delete({
+     *   where: {
+     *     // ... filter to delete one OwnershipDispute
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OwnershipDisputeDeleteArgs>(args: SelectSubset<T, OwnershipDisputeDeleteArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OwnershipDispute.
+     * @param {OwnershipDisputeUpdateArgs} args - Arguments to update one OwnershipDispute.
+     * @example
+     * // Update one OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OwnershipDisputeUpdateArgs>(args: SelectSubset<T, OwnershipDisputeUpdateArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OwnershipDisputes.
+     * @param {OwnershipDisputeDeleteManyArgs} args - Arguments to filter OwnershipDisputes to delete.
+     * @example
+     * // Delete a few OwnershipDisputes
+     * const { count } = await prisma.ownershipDispute.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OwnershipDisputeDeleteManyArgs>(args?: SelectSubset<T, OwnershipDisputeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OwnershipDisputes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OwnershipDisputes
+     * const ownershipDispute = await prisma.ownershipDispute.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OwnershipDisputeUpdateManyArgs>(args: SelectSubset<T, OwnershipDisputeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OwnershipDisputes and returns the data updated in the database.
+     * @param {OwnershipDisputeUpdateManyAndReturnArgs} args - Arguments to update many OwnershipDisputes.
+     * @example
+     * // Update many OwnershipDisputes
+     * const ownershipDispute = await prisma.ownershipDispute.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OwnershipDisputes and only return the `id`
+     * const ownershipDisputeWithIdOnly = await prisma.ownershipDispute.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OwnershipDisputeUpdateManyAndReturnArgs>(args: SelectSubset<T, OwnershipDisputeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OwnershipDispute.
+     * @param {OwnershipDisputeUpsertArgs} args - Arguments to update or create a OwnershipDispute.
+     * @example
+     * // Update or create a OwnershipDispute
+     * const ownershipDispute = await prisma.ownershipDispute.upsert({
+     *   create: {
+     *     // ... data to create a OwnershipDispute
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OwnershipDispute we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OwnershipDisputeUpsertArgs>(args: SelectSubset<T, OwnershipDisputeUpsertArgs<ExtArgs>>): Prisma__OwnershipDisputeClient<$Result.GetResult<Prisma.$OwnershipDisputePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OwnershipDisputes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeCountArgs} args - Arguments to filter OwnershipDisputes to count.
+     * @example
+     * // Count the number of OwnershipDisputes
+     * const count = await prisma.ownershipDispute.count({
+     *   where: {
+     *     // ... the filter for the OwnershipDisputes we want to count
+     *   }
+     * })
+    **/
+    count<T extends OwnershipDisputeCountArgs>(
+      args?: Subset<T, OwnershipDisputeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OwnershipDisputeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OwnershipDispute.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OwnershipDisputeAggregateArgs>(args: Subset<T, OwnershipDisputeAggregateArgs>): Prisma.PrismaPromise<GetOwnershipDisputeAggregateType<T>>
+
+    /**
+     * Group by OwnershipDispute.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OwnershipDisputeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OwnershipDisputeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OwnershipDisputeGroupByArgs['orderBy'] }
+        : { orderBy?: OwnershipDisputeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OwnershipDisputeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOwnershipDisputeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OwnershipDispute model
+   */
+  readonly fields: OwnershipDisputeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OwnershipDispute.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OwnershipDisputeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OwnershipDispute model
+   */
+  interface OwnershipDisputeFieldRefs {
+    readonly id: FieldRef<"OwnershipDispute", 'String'>
+    readonly organizationId: FieldRef<"OwnershipDispute", 'String'>
+    readonly claimantUserId: FieldRef<"OwnershipDispute", 'String'>
+    readonly incumbentUserId: FieldRef<"OwnershipDispute", 'String'>
+    readonly status: FieldRef<"OwnershipDispute", 'DisputeStatus'>
+    readonly severity: FieldRef<"OwnershipDispute", 'DisputeSeverity'>
+    readonly evidenceKeys: FieldRef<"OwnershipDispute", 'String[]'>
+    readonly counterClaimNote: FieldRef<"OwnershipDispute", 'String'>
+    readonly createdAt: FieldRef<"OwnershipDispute", 'DateTime'>
+    readonly executedAt: FieldRef<"OwnershipDispute", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OwnershipDispute findUnique
+   */
+  export type OwnershipDisputeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter, which OwnershipDispute to fetch.
+     */
+    where: OwnershipDisputeWhereUniqueInput
+  }
+
+  /**
+   * OwnershipDispute findUniqueOrThrow
+   */
+  export type OwnershipDisputeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter, which OwnershipDispute to fetch.
+     */
+    where: OwnershipDisputeWhereUniqueInput
+  }
+
+  /**
+   * OwnershipDispute findFirst
+   */
+  export type OwnershipDisputeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter, which OwnershipDispute to fetch.
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OwnershipDisputes to fetch.
+     */
+    orderBy?: OwnershipDisputeOrderByWithRelationInput | OwnershipDisputeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OwnershipDisputes.
+     */
+    cursor?: OwnershipDisputeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OwnershipDisputes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OwnershipDisputes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OwnershipDisputes.
+     */
+    distinct?: OwnershipDisputeScalarFieldEnum | OwnershipDisputeScalarFieldEnum[]
+  }
+
+  /**
+   * OwnershipDispute findFirstOrThrow
+   */
+  export type OwnershipDisputeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter, which OwnershipDispute to fetch.
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OwnershipDisputes to fetch.
+     */
+    orderBy?: OwnershipDisputeOrderByWithRelationInput | OwnershipDisputeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OwnershipDisputes.
+     */
+    cursor?: OwnershipDisputeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OwnershipDisputes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OwnershipDisputes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OwnershipDisputes.
+     */
+    distinct?: OwnershipDisputeScalarFieldEnum | OwnershipDisputeScalarFieldEnum[]
+  }
+
+  /**
+   * OwnershipDispute findMany
+   */
+  export type OwnershipDisputeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter, which OwnershipDisputes to fetch.
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OwnershipDisputes to fetch.
+     */
+    orderBy?: OwnershipDisputeOrderByWithRelationInput | OwnershipDisputeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OwnershipDisputes.
+     */
+    cursor?: OwnershipDisputeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OwnershipDisputes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OwnershipDisputes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OwnershipDisputes.
+     */
+    distinct?: OwnershipDisputeScalarFieldEnum | OwnershipDisputeScalarFieldEnum[]
+  }
+
+  /**
+   * OwnershipDispute create
+   */
+  export type OwnershipDisputeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * The data needed to create a OwnershipDispute.
+     */
+    data: XOR<OwnershipDisputeCreateInput, OwnershipDisputeUncheckedCreateInput>
+  }
+
+  /**
+   * OwnershipDispute createMany
+   */
+  export type OwnershipDisputeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OwnershipDisputes.
+     */
+    data: OwnershipDisputeCreateManyInput | OwnershipDisputeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OwnershipDispute createManyAndReturn
+   */
+  export type OwnershipDisputeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * The data used to create many OwnershipDisputes.
+     */
+    data: OwnershipDisputeCreateManyInput | OwnershipDisputeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OwnershipDispute update
+   */
+  export type OwnershipDisputeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * The data needed to update a OwnershipDispute.
+     */
+    data: XOR<OwnershipDisputeUpdateInput, OwnershipDisputeUncheckedUpdateInput>
+    /**
+     * Choose, which OwnershipDispute to update.
+     */
+    where: OwnershipDisputeWhereUniqueInput
+  }
+
+  /**
+   * OwnershipDispute updateMany
+   */
+  export type OwnershipDisputeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OwnershipDisputes.
+     */
+    data: XOR<OwnershipDisputeUpdateManyMutationInput, OwnershipDisputeUncheckedUpdateManyInput>
+    /**
+     * Filter which OwnershipDisputes to update
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * Limit how many OwnershipDisputes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OwnershipDispute updateManyAndReturn
+   */
+  export type OwnershipDisputeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * The data used to update OwnershipDisputes.
+     */
+    data: XOR<OwnershipDisputeUpdateManyMutationInput, OwnershipDisputeUncheckedUpdateManyInput>
+    /**
+     * Filter which OwnershipDisputes to update
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * Limit how many OwnershipDisputes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OwnershipDispute upsert
+   */
+  export type OwnershipDisputeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * The filter to search for the OwnershipDispute to update in case it exists.
+     */
+    where: OwnershipDisputeWhereUniqueInput
+    /**
+     * In case the OwnershipDispute found by the `where` argument doesn't exist, create a new OwnershipDispute with this data.
+     */
+    create: XOR<OwnershipDisputeCreateInput, OwnershipDisputeUncheckedCreateInput>
+    /**
+     * In case the OwnershipDispute was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OwnershipDisputeUpdateInput, OwnershipDisputeUncheckedUpdateInput>
+  }
+
+  /**
+   * OwnershipDispute delete
+   */
+  export type OwnershipDisputeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+    /**
+     * Filter which OwnershipDispute to delete.
+     */
+    where: OwnershipDisputeWhereUniqueInput
+  }
+
+  /**
+   * OwnershipDispute deleteMany
+   */
+  export type OwnershipDisputeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OwnershipDisputes to delete
+     */
+    where?: OwnershipDisputeWhereInput
+    /**
+     * Limit how many OwnershipDisputes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OwnershipDispute without action
+   */
+  export type OwnershipDisputeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OwnershipDispute
+     */
+    select?: OwnershipDisputeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OwnershipDispute
+     */
+    omit?: OwnershipDisputeOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationSecurityState
+   */
+
+  export type AggregateOrganizationSecurityState = {
+    _count: OrganizationSecurityStateCountAggregateOutputType | null
+    _min: OrganizationSecurityStateMinAggregateOutputType | null
+    _max: OrganizationSecurityStateMaxAggregateOutputType | null
+  }
+
+  export type OrganizationSecurityStateMinAggregateOutputType = {
+    organizationId: string | null
+    mode: $Enums.SecurityMode | null
+    lockUntil: Date | null
+    activeDisputeId: string | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationSecurityStateMaxAggregateOutputType = {
+    organizationId: string | null
+    mode: $Enums.SecurityMode | null
+    lockUntil: Date | null
+    activeDisputeId: string | null
+    updatedAt: Date | null
+  }
+
+  export type OrganizationSecurityStateCountAggregateOutputType = {
+    organizationId: number
+    mode: number
+    lockUntil: number
+    activeDisputeId: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrganizationSecurityStateMinAggregateInputType = {
+    organizationId?: true
+    mode?: true
+    lockUntil?: true
+    activeDisputeId?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationSecurityStateMaxAggregateInputType = {
+    organizationId?: true
+    mode?: true
+    lockUntil?: true
+    activeDisputeId?: true
+    updatedAt?: true
+  }
+
+  export type OrganizationSecurityStateCountAggregateInputType = {
+    organizationId?: true
+    mode?: true
+    lockUntil?: true
+    activeDisputeId?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrganizationSecurityStateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationSecurityState to aggregate.
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSecurityStates to fetch.
+     */
+    orderBy?: OrganizationSecurityStateOrderByWithRelationInput | OrganizationSecurityStateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationSecurityStateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSecurityStates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSecurityStates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationSecurityStates
+    **/
+    _count?: true | OrganizationSecurityStateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationSecurityStateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationSecurityStateMaxAggregateInputType
+  }
+
+  export type GetOrganizationSecurityStateAggregateType<T extends OrganizationSecurityStateAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationSecurityState]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationSecurityState[P]>
+      : GetScalarType<T[P], AggregateOrganizationSecurityState[P]>
+  }
+
+
+
+
+  export type OrganizationSecurityStateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationSecurityStateWhereInput
+    orderBy?: OrganizationSecurityStateOrderByWithAggregationInput | OrganizationSecurityStateOrderByWithAggregationInput[]
+    by: OrganizationSecurityStateScalarFieldEnum[] | OrganizationSecurityStateScalarFieldEnum
+    having?: OrganizationSecurityStateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationSecurityStateCountAggregateInputType | true
+    _min?: OrganizationSecurityStateMinAggregateInputType
+    _max?: OrganizationSecurityStateMaxAggregateInputType
+  }
+
+  export type OrganizationSecurityStateGroupByOutputType = {
+    organizationId: string
+    mode: $Enums.SecurityMode
+    lockUntil: Date | null
+    activeDisputeId: string | null
+    updatedAt: Date
+    _count: OrganizationSecurityStateCountAggregateOutputType | null
+    _min: OrganizationSecurityStateMinAggregateOutputType | null
+    _max: OrganizationSecurityStateMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationSecurityStateGroupByPayload<T extends OrganizationSecurityStateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationSecurityStateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationSecurityStateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationSecurityStateGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationSecurityStateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationSecurityStateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    mode?: boolean
+    lockUntil?: boolean
+    activeDisputeId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["organizationSecurityState"]>
+
+  export type OrganizationSecurityStateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    mode?: boolean
+    lockUntil?: boolean
+    activeDisputeId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["organizationSecurityState"]>
+
+  export type OrganizationSecurityStateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    mode?: boolean
+    lockUntil?: boolean
+    activeDisputeId?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["organizationSecurityState"]>
+
+  export type OrganizationSecurityStateSelectScalar = {
+    organizationId?: boolean
+    mode?: boolean
+    lockUntil?: boolean
+    activeDisputeId?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrganizationSecurityStateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "mode" | "lockUntil" | "activeDisputeId" | "updatedAt", ExtArgs["result"]["organizationSecurityState"]>
+
+  export type $OrganizationSecurityStatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationSecurityState"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      mode: $Enums.SecurityMode
+      lockUntil: Date | null
+      activeDisputeId: string | null
+      updatedAt: Date
+    }, ExtArgs["result"]["organizationSecurityState"]>
+    composites: {}
+  }
+
+  type OrganizationSecurityStateGetPayload<S extends boolean | null | undefined | OrganizationSecurityStateDefaultArgs> = $Result.GetResult<Prisma.$OrganizationSecurityStatePayload, S>
+
+  type OrganizationSecurityStateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationSecurityStateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationSecurityStateCountAggregateInputType | true
+    }
+
+  export interface OrganizationSecurityStateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationSecurityState'], meta: { name: 'OrganizationSecurityState' } }
+    /**
+     * Find zero or one OrganizationSecurityState that matches the filter.
+     * @param {OrganizationSecurityStateFindUniqueArgs} args - Arguments to find a OrganizationSecurityState
+     * @example
+     * // Get one OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationSecurityStateFindUniqueArgs>(args: SelectSubset<T, OrganizationSecurityStateFindUniqueArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationSecurityState that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationSecurityStateFindUniqueOrThrowArgs} args - Arguments to find a OrganizationSecurityState
+     * @example
+     * // Get one OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationSecurityStateFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationSecurityStateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationSecurityState that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateFindFirstArgs} args - Arguments to find a OrganizationSecurityState
+     * @example
+     * // Get one OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationSecurityStateFindFirstArgs>(args?: SelectSubset<T, OrganizationSecurityStateFindFirstArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationSecurityState that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateFindFirstOrThrowArgs} args - Arguments to find a OrganizationSecurityState
+     * @example
+     * // Get one OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationSecurityStateFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationSecurityStateFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationSecurityStates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationSecurityStates
+     * const organizationSecurityStates = await prisma.organizationSecurityState.findMany()
+     * 
+     * // Get first 10 OrganizationSecurityStates
+     * const organizationSecurityStates = await prisma.organizationSecurityState.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const organizationSecurityStateWithOrganizationIdOnly = await prisma.organizationSecurityState.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends OrganizationSecurityStateFindManyArgs>(args?: SelectSubset<T, OrganizationSecurityStateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationSecurityState.
+     * @param {OrganizationSecurityStateCreateArgs} args - Arguments to create a OrganizationSecurityState.
+     * @example
+     * // Create one OrganizationSecurityState
+     * const OrganizationSecurityState = await prisma.organizationSecurityState.create({
+     *   data: {
+     *     // ... data to create a OrganizationSecurityState
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationSecurityStateCreateArgs>(args: SelectSubset<T, OrganizationSecurityStateCreateArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationSecurityStates.
+     * @param {OrganizationSecurityStateCreateManyArgs} args - Arguments to create many OrganizationSecurityStates.
+     * @example
+     * // Create many OrganizationSecurityStates
+     * const organizationSecurityState = await prisma.organizationSecurityState.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationSecurityStateCreateManyArgs>(args?: SelectSubset<T, OrganizationSecurityStateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationSecurityStates and returns the data saved in the database.
+     * @param {OrganizationSecurityStateCreateManyAndReturnArgs} args - Arguments to create many OrganizationSecurityStates.
+     * @example
+     * // Create many OrganizationSecurityStates
+     * const organizationSecurityState = await prisma.organizationSecurityState.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationSecurityStates and only return the `organizationId`
+     * const organizationSecurityStateWithOrganizationIdOnly = await prisma.organizationSecurityState.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationSecurityStateCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationSecurityStateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationSecurityState.
+     * @param {OrganizationSecurityStateDeleteArgs} args - Arguments to delete one OrganizationSecurityState.
+     * @example
+     * // Delete one OrganizationSecurityState
+     * const OrganizationSecurityState = await prisma.organizationSecurityState.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationSecurityState
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationSecurityStateDeleteArgs>(args: SelectSubset<T, OrganizationSecurityStateDeleteArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationSecurityState.
+     * @param {OrganizationSecurityStateUpdateArgs} args - Arguments to update one OrganizationSecurityState.
+     * @example
+     * // Update one OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationSecurityStateUpdateArgs>(args: SelectSubset<T, OrganizationSecurityStateUpdateArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationSecurityStates.
+     * @param {OrganizationSecurityStateDeleteManyArgs} args - Arguments to filter OrganizationSecurityStates to delete.
+     * @example
+     * // Delete a few OrganizationSecurityStates
+     * const { count } = await prisma.organizationSecurityState.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationSecurityStateDeleteManyArgs>(args?: SelectSubset<T, OrganizationSecurityStateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationSecurityStates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationSecurityStates
+     * const organizationSecurityState = await prisma.organizationSecurityState.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationSecurityStateUpdateManyArgs>(args: SelectSubset<T, OrganizationSecurityStateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationSecurityStates and returns the data updated in the database.
+     * @param {OrganizationSecurityStateUpdateManyAndReturnArgs} args - Arguments to update many OrganizationSecurityStates.
+     * @example
+     * // Update many OrganizationSecurityStates
+     * const organizationSecurityState = await prisma.organizationSecurityState.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationSecurityStates and only return the `organizationId`
+     * const organizationSecurityStateWithOrganizationIdOnly = await prisma.organizationSecurityState.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationSecurityStateUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationSecurityStateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationSecurityState.
+     * @param {OrganizationSecurityStateUpsertArgs} args - Arguments to update or create a OrganizationSecurityState.
+     * @example
+     * // Update or create a OrganizationSecurityState
+     * const organizationSecurityState = await prisma.organizationSecurityState.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationSecurityState
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationSecurityState we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationSecurityStateUpsertArgs>(args: SelectSubset<T, OrganizationSecurityStateUpsertArgs<ExtArgs>>): Prisma__OrganizationSecurityStateClient<$Result.GetResult<Prisma.$OrganizationSecurityStatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationSecurityStates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateCountArgs} args - Arguments to filter OrganizationSecurityStates to count.
+     * @example
+     * // Count the number of OrganizationSecurityStates
+     * const count = await prisma.organizationSecurityState.count({
+     *   where: {
+     *     // ... the filter for the OrganizationSecurityStates we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationSecurityStateCountArgs>(
+      args?: Subset<T, OrganizationSecurityStateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationSecurityStateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationSecurityState.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationSecurityStateAggregateArgs>(args: Subset<T, OrganizationSecurityStateAggregateArgs>): Prisma.PrismaPromise<GetOrganizationSecurityStateAggregateType<T>>
+
+    /**
+     * Group by OrganizationSecurityState.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSecurityStateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationSecurityStateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationSecurityStateGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationSecurityStateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationSecurityStateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationSecurityStateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationSecurityState model
+   */
+  readonly fields: OrganizationSecurityStateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationSecurityState.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationSecurityStateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationSecurityState model
+   */
+  interface OrganizationSecurityStateFieldRefs {
+    readonly organizationId: FieldRef<"OrganizationSecurityState", 'String'>
+    readonly mode: FieldRef<"OrganizationSecurityState", 'SecurityMode'>
+    readonly lockUntil: FieldRef<"OrganizationSecurityState", 'DateTime'>
+    readonly activeDisputeId: FieldRef<"OrganizationSecurityState", 'String'>
+    readonly updatedAt: FieldRef<"OrganizationSecurityState", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationSecurityState findUnique
+   */
+  export type OrganizationSecurityStateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSecurityState to fetch.
+     */
+    where: OrganizationSecurityStateWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSecurityState findUniqueOrThrow
+   */
+  export type OrganizationSecurityStateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSecurityState to fetch.
+     */
+    where: OrganizationSecurityStateWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSecurityState findFirst
+   */
+  export type OrganizationSecurityStateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSecurityState to fetch.
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSecurityStates to fetch.
+     */
+    orderBy?: OrganizationSecurityStateOrderByWithRelationInput | OrganizationSecurityStateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationSecurityStates.
+     */
+    cursor?: OrganizationSecurityStateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSecurityStates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSecurityStates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSecurityStates.
+     */
+    distinct?: OrganizationSecurityStateScalarFieldEnum | OrganizationSecurityStateScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSecurityState findFirstOrThrow
+   */
+  export type OrganizationSecurityStateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSecurityState to fetch.
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSecurityStates to fetch.
+     */
+    orderBy?: OrganizationSecurityStateOrderByWithRelationInput | OrganizationSecurityStateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationSecurityStates.
+     */
+    cursor?: OrganizationSecurityStateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSecurityStates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSecurityStates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSecurityStates.
+     */
+    distinct?: OrganizationSecurityStateScalarFieldEnum | OrganizationSecurityStateScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSecurityState findMany
+   */
+  export type OrganizationSecurityStateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSecurityStates to fetch.
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSecurityStates to fetch.
+     */
+    orderBy?: OrganizationSecurityStateOrderByWithRelationInput | OrganizationSecurityStateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationSecurityStates.
+     */
+    cursor?: OrganizationSecurityStateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSecurityStates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSecurityStates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSecurityStates.
+     */
+    distinct?: OrganizationSecurityStateScalarFieldEnum | OrganizationSecurityStateScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSecurityState create
+   */
+  export type OrganizationSecurityStateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationSecurityState.
+     */
+    data: XOR<OrganizationSecurityStateCreateInput, OrganizationSecurityStateUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationSecurityState createMany
+   */
+  export type OrganizationSecurityStateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationSecurityStates.
+     */
+    data: OrganizationSecurityStateCreateManyInput | OrganizationSecurityStateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationSecurityState createManyAndReturn
+   */
+  export type OrganizationSecurityStateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationSecurityStates.
+     */
+    data: OrganizationSecurityStateCreateManyInput | OrganizationSecurityStateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationSecurityState update
+   */
+  export type OrganizationSecurityStateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationSecurityState.
+     */
+    data: XOR<OrganizationSecurityStateUpdateInput, OrganizationSecurityStateUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationSecurityState to update.
+     */
+    where: OrganizationSecurityStateWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSecurityState updateMany
+   */
+  export type OrganizationSecurityStateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationSecurityStates.
+     */
+    data: XOR<OrganizationSecurityStateUpdateManyMutationInput, OrganizationSecurityStateUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationSecurityStates to update
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * Limit how many OrganizationSecurityStates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationSecurityState updateManyAndReturn
+   */
+  export type OrganizationSecurityStateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationSecurityStates.
+     */
+    data: XOR<OrganizationSecurityStateUpdateManyMutationInput, OrganizationSecurityStateUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationSecurityStates to update
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * Limit how many OrganizationSecurityStates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationSecurityState upsert
+   */
+  export type OrganizationSecurityStateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationSecurityState to update in case it exists.
+     */
+    where: OrganizationSecurityStateWhereUniqueInput
+    /**
+     * In case the OrganizationSecurityState found by the `where` argument doesn't exist, create a new OrganizationSecurityState with this data.
+     */
+    create: XOR<OrganizationSecurityStateCreateInput, OrganizationSecurityStateUncheckedCreateInput>
+    /**
+     * In case the OrganizationSecurityState was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationSecurityStateUpdateInput, OrganizationSecurityStateUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationSecurityState delete
+   */
+  export type OrganizationSecurityStateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+    /**
+     * Filter which OrganizationSecurityState to delete.
+     */
+    where: OrganizationSecurityStateWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSecurityState deleteMany
+   */
+  export type OrganizationSecurityStateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationSecurityStates to delete
+     */
+    where?: OrganizationSecurityStateWhereInput
+    /**
+     * Limit how many OrganizationSecurityStates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationSecurityState without action
+   */
+  export type OrganizationSecurityStateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSecurityState
+     */
+    select?: OrganizationSecurityStateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSecurityState
+     */
+    omit?: OrganizationSecurityStateOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -30045,7 +32346,8 @@ export namespace Prisma {
   export const OrganizationScalarFieldEnum: {
     id: 'id',
     name: 'name',
-    ownerId: 'ownerId'
+    ownerId: 'ownerId',
+    taxIdBlindIndex: 'taxIdBlindIndex'
   };
 
   export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
@@ -30153,6 +32455,33 @@ export namespace Prisma {
   };
 
   export type ReferralCommissionScalarFieldEnum = (typeof ReferralCommissionScalarFieldEnum)[keyof typeof ReferralCommissionScalarFieldEnum]
+
+
+  export const OwnershipDisputeScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    claimantUserId: 'claimantUserId',
+    incumbentUserId: 'incumbentUserId',
+    status: 'status',
+    severity: 'severity',
+    evidenceKeys: 'evidenceKeys',
+    counterClaimNote: 'counterClaimNote',
+    createdAt: 'createdAt',
+    executedAt: 'executedAt'
+  };
+
+  export type OwnershipDisputeScalarFieldEnum = (typeof OwnershipDisputeScalarFieldEnum)[keyof typeof OwnershipDisputeScalarFieldEnum]
+
+
+  export const OrganizationSecurityStateScalarFieldEnum: {
+    organizationId: 'organizationId',
+    mode: 'mode',
+    lockUntil: 'lockUntil',
+    activeDisputeId: 'activeDisputeId',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrganizationSecurityStateScalarFieldEnum = (typeof OrganizationSecurityStateScalarFieldEnum)[keyof typeof OrganizationSecurityStateScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -30422,6 +32751,48 @@ export namespace Prisma {
    * Reference to a field of type 'ReferralCommissionStatus[]'
    */
   export type ListEnumReferralCommissionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ReferralCommissionStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DisputeStatus'
+   */
+  export type EnumDisputeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisputeStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'DisputeStatus[]'
+   */
+  export type ListEnumDisputeStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisputeStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DisputeSeverity'
+   */
+  export type EnumDisputeSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisputeSeverity'>
+    
+
+
+  /**
+   * Reference to a field of type 'DisputeSeverity[]'
+   */
+  export type ListEnumDisputeSeverityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DisputeSeverity[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'SecurityMode'
+   */
+  export type EnumSecurityModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SecurityMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'SecurityMode[]'
+   */
+  export type ListEnumSecurityModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SecurityMode[]'>
     
 
 
@@ -31594,27 +33965,31 @@ export namespace Prisma {
     id?: UuidFilter<"Organization"> | string
     name?: StringFilter<"Organization"> | string
     ownerId?: UuidNullableFilter<"Organization"> | string | null
+    taxIdBlindIndex?: StringNullableFilter<"Organization"> | string | null
   }
 
   export type OrganizationOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrderInput | SortOrder
+    taxIdBlindIndex?: SortOrderInput | SortOrder
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    taxIdBlindIndex?: string
     AND?: OrganizationWhereInput | OrganizationWhereInput[]
     OR?: OrganizationWhereInput[]
     NOT?: OrganizationWhereInput | OrganizationWhereInput[]
     name?: StringFilter<"Organization"> | string
     ownerId?: UuidNullableFilter<"Organization"> | string | null
-  }, "id">
+  }, "id" | "taxIdBlindIndex">
 
   export type OrganizationOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrderInput | SortOrder
+    taxIdBlindIndex?: SortOrderInput | SortOrder
     _count?: OrganizationCountOrderByAggregateInput
     _max?: OrganizationMaxOrderByAggregateInput
     _min?: OrganizationMinOrderByAggregateInput
@@ -31627,6 +34002,7 @@ export namespace Prisma {
     id?: UuidWithAggregatesFilter<"Organization"> | string
     name?: StringWithAggregatesFilter<"Organization"> | string
     ownerId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
+    taxIdBlindIndex?: StringNullableWithAggregatesFilter<"Organization"> | string | null
   }
 
   export type UserWhereInput = {
@@ -32153,6 +34529,135 @@ export namespace Prisma {
     status?: EnumReferralCommissionStatusWithAggregatesFilter<"ReferralCommission"> | $Enums.ReferralCommissionStatus
     paidAt?: DateTimeNullableWithAggregatesFilter<"ReferralCommission"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"ReferralCommission"> | Date | string
+  }
+
+  export type OwnershipDisputeWhereInput = {
+    AND?: OwnershipDisputeWhereInput | OwnershipDisputeWhereInput[]
+    OR?: OwnershipDisputeWhereInput[]
+    NOT?: OwnershipDisputeWhereInput | OwnershipDisputeWhereInput[]
+    id?: UuidFilter<"OwnershipDispute"> | string
+    organizationId?: UuidFilter<"OwnershipDispute"> | string
+    claimantUserId?: UuidFilter<"OwnershipDispute"> | string
+    incumbentUserId?: UuidFilter<"OwnershipDispute"> | string
+    status?: EnumDisputeStatusFilter<"OwnershipDispute"> | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFilter<"OwnershipDispute"> | $Enums.DisputeSeverity
+    evidenceKeys?: StringNullableListFilter<"OwnershipDispute">
+    counterClaimNote?: StringNullableFilter<"OwnershipDispute"> | string | null
+    createdAt?: DateTimeFilter<"OwnershipDispute"> | Date | string
+    executedAt?: DateTimeNullableFilter<"OwnershipDispute"> | Date | string | null
+  }
+
+  export type OwnershipDisputeOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    claimantUserId?: SortOrder
+    incumbentUserId?: SortOrder
+    status?: SortOrder
+    severity?: SortOrder
+    evidenceKeys?: SortOrder
+    counterClaimNote?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    executedAt?: SortOrderInput | SortOrder
+  }
+
+  export type OwnershipDisputeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OwnershipDisputeWhereInput | OwnershipDisputeWhereInput[]
+    OR?: OwnershipDisputeWhereInput[]
+    NOT?: OwnershipDisputeWhereInput | OwnershipDisputeWhereInput[]
+    organizationId?: UuidFilter<"OwnershipDispute"> | string
+    claimantUserId?: UuidFilter<"OwnershipDispute"> | string
+    incumbentUserId?: UuidFilter<"OwnershipDispute"> | string
+    status?: EnumDisputeStatusFilter<"OwnershipDispute"> | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFilter<"OwnershipDispute"> | $Enums.DisputeSeverity
+    evidenceKeys?: StringNullableListFilter<"OwnershipDispute">
+    counterClaimNote?: StringNullableFilter<"OwnershipDispute"> | string | null
+    createdAt?: DateTimeFilter<"OwnershipDispute"> | Date | string
+    executedAt?: DateTimeNullableFilter<"OwnershipDispute"> | Date | string | null
+  }, "id">
+
+  export type OwnershipDisputeOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    claimantUserId?: SortOrder
+    incumbentUserId?: SortOrder
+    status?: SortOrder
+    severity?: SortOrder
+    evidenceKeys?: SortOrder
+    counterClaimNote?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    executedAt?: SortOrderInput | SortOrder
+    _count?: OwnershipDisputeCountOrderByAggregateInput
+    _max?: OwnershipDisputeMaxOrderByAggregateInput
+    _min?: OwnershipDisputeMinOrderByAggregateInput
+  }
+
+  export type OwnershipDisputeScalarWhereWithAggregatesInput = {
+    AND?: OwnershipDisputeScalarWhereWithAggregatesInput | OwnershipDisputeScalarWhereWithAggregatesInput[]
+    OR?: OwnershipDisputeScalarWhereWithAggregatesInput[]
+    NOT?: OwnershipDisputeScalarWhereWithAggregatesInput | OwnershipDisputeScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"OwnershipDispute"> | string
+    organizationId?: UuidWithAggregatesFilter<"OwnershipDispute"> | string
+    claimantUserId?: UuidWithAggregatesFilter<"OwnershipDispute"> | string
+    incumbentUserId?: UuidWithAggregatesFilter<"OwnershipDispute"> | string
+    status?: EnumDisputeStatusWithAggregatesFilter<"OwnershipDispute"> | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityWithAggregatesFilter<"OwnershipDispute"> | $Enums.DisputeSeverity
+    evidenceKeys?: StringNullableListFilter<"OwnershipDispute">
+    counterClaimNote?: StringNullableWithAggregatesFilter<"OwnershipDispute"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OwnershipDispute"> | Date | string
+    executedAt?: DateTimeNullableWithAggregatesFilter<"OwnershipDispute"> | Date | string | null
+  }
+
+  export type OrganizationSecurityStateWhereInput = {
+    AND?: OrganizationSecurityStateWhereInput | OrganizationSecurityStateWhereInput[]
+    OR?: OrganizationSecurityStateWhereInput[]
+    NOT?: OrganizationSecurityStateWhereInput | OrganizationSecurityStateWhereInput[]
+    organizationId?: UuidFilter<"OrganizationSecurityState"> | string
+    mode?: EnumSecurityModeFilter<"OrganizationSecurityState"> | $Enums.SecurityMode
+    lockUntil?: DateTimeNullableFilter<"OrganizationSecurityState"> | Date | string | null
+    activeDisputeId?: UuidNullableFilter<"OrganizationSecurityState"> | string | null
+    updatedAt?: DateTimeFilter<"OrganizationSecurityState"> | Date | string
+  }
+
+  export type OrganizationSecurityStateOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    mode?: SortOrder
+    lockUntil?: SortOrderInput | SortOrder
+    activeDisputeId?: SortOrderInput | SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationSecurityStateWhereUniqueInput = Prisma.AtLeast<{
+    organizationId?: string
+    AND?: OrganizationSecurityStateWhereInput | OrganizationSecurityStateWhereInput[]
+    OR?: OrganizationSecurityStateWhereInput[]
+    NOT?: OrganizationSecurityStateWhereInput | OrganizationSecurityStateWhereInput[]
+    mode?: EnumSecurityModeFilter<"OrganizationSecurityState"> | $Enums.SecurityMode
+    lockUntil?: DateTimeNullableFilter<"OrganizationSecurityState"> | Date | string | null
+    activeDisputeId?: UuidNullableFilter<"OrganizationSecurityState"> | string | null
+    updatedAt?: DateTimeFilter<"OrganizationSecurityState"> | Date | string
+  }, "organizationId">
+
+  export type OrganizationSecurityStateOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    mode?: SortOrder
+    lockUntil?: SortOrderInput | SortOrder
+    activeDisputeId?: SortOrderInput | SortOrder
+    updatedAt?: SortOrder
+    _count?: OrganizationSecurityStateCountOrderByAggregateInput
+    _max?: OrganizationSecurityStateMaxOrderByAggregateInput
+    _min?: OrganizationSecurityStateMinOrderByAggregateInput
+  }
+
+  export type OrganizationSecurityStateScalarWhereWithAggregatesInput = {
+    AND?: OrganizationSecurityStateScalarWhereWithAggregatesInput | OrganizationSecurityStateScalarWhereWithAggregatesInput[]
+    OR?: OrganizationSecurityStateScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationSecurityStateScalarWhereWithAggregatesInput | OrganizationSecurityStateScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"OrganizationSecurityState"> | string
+    mode?: EnumSecurityModeWithAggregatesFilter<"OrganizationSecurityState"> | $Enums.SecurityMode
+    lockUntil?: DateTimeNullableWithAggregatesFilter<"OrganizationSecurityState"> | Date | string | null
+    activeDisputeId?: UuidNullableWithAggregatesFilter<"OrganizationSecurityState"> | string | null
+    updatedAt?: DateTimeWithAggregatesFilter<"OrganizationSecurityState"> | Date | string
   }
 
   export type TenantBillingCreateInput = {
@@ -33431,42 +35936,49 @@ export namespace Prisma {
     id?: string
     name: string
     ownerId?: string | null
+    taxIdBlindIndex?: string | null
   }
 
   export type OrganizationUncheckedCreateInput = {
     id?: string
     name: string
     ownerId?: string | null
+    taxIdBlindIndex?: string | null
   }
 
   export type OrganizationUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrganizationUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrganizationCreateManyInput = {
     id?: string
     name: string
     ownerId?: string | null
+    taxIdBlindIndex?: string | null
   }
 
   export type OrganizationUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OrganizationUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UserCreateInput = {
@@ -34056,6 +36568,153 @@ export namespace Prisma {
     status?: EnumReferralCommissionStatusFieldUpdateOperationsInput | $Enums.ReferralCommissionStatus
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OwnershipDisputeCreateInput = {
+    id?: string
+    organizationId: string
+    claimantUserId: string
+    incumbentUserId: string
+    status?: $Enums.DisputeStatus
+    severity?: $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeCreateevidenceKeysInput | string[]
+    counterClaimNote?: string | null
+    createdAt?: Date | string
+    executedAt?: Date | string | null
+  }
+
+  export type OwnershipDisputeUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    claimantUserId: string
+    incumbentUserId: string
+    status?: $Enums.DisputeStatus
+    severity?: $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeCreateevidenceKeysInput | string[]
+    counterClaimNote?: string | null
+    createdAt?: Date | string
+    executedAt?: Date | string | null
+  }
+
+  export type OwnershipDisputeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    claimantUserId?: StringFieldUpdateOperationsInput | string
+    incumbentUserId?: StringFieldUpdateOperationsInput | string
+    status?: EnumDisputeStatusFieldUpdateOperationsInput | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFieldUpdateOperationsInput | $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeUpdateevidenceKeysInput | string[]
+    counterClaimNote?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    executedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OwnershipDisputeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    claimantUserId?: StringFieldUpdateOperationsInput | string
+    incumbentUserId?: StringFieldUpdateOperationsInput | string
+    status?: EnumDisputeStatusFieldUpdateOperationsInput | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFieldUpdateOperationsInput | $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeUpdateevidenceKeysInput | string[]
+    counterClaimNote?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    executedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OwnershipDisputeCreateManyInput = {
+    id?: string
+    organizationId: string
+    claimantUserId: string
+    incumbentUserId: string
+    status?: $Enums.DisputeStatus
+    severity?: $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeCreateevidenceKeysInput | string[]
+    counterClaimNote?: string | null
+    createdAt?: Date | string
+    executedAt?: Date | string | null
+  }
+
+  export type OwnershipDisputeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    claimantUserId?: StringFieldUpdateOperationsInput | string
+    incumbentUserId?: StringFieldUpdateOperationsInput | string
+    status?: EnumDisputeStatusFieldUpdateOperationsInput | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFieldUpdateOperationsInput | $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeUpdateevidenceKeysInput | string[]
+    counterClaimNote?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    executedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OwnershipDisputeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    claimantUserId?: StringFieldUpdateOperationsInput | string
+    incumbentUserId?: StringFieldUpdateOperationsInput | string
+    status?: EnumDisputeStatusFieldUpdateOperationsInput | $Enums.DisputeStatus
+    severity?: EnumDisputeSeverityFieldUpdateOperationsInput | $Enums.DisputeSeverity
+    evidenceKeys?: OwnershipDisputeUpdateevidenceKeysInput | string[]
+    counterClaimNote?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    executedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OrganizationSecurityStateCreateInput = {
+    organizationId: string
+    mode?: $Enums.SecurityMode
+    lockUntil?: Date | string | null
+    activeDisputeId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationSecurityStateUncheckedCreateInput = {
+    organizationId: string
+    mode?: $Enums.SecurityMode
+    lockUntil?: Date | string | null
+    activeDisputeId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationSecurityStateUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    mode?: EnumSecurityModeFieldUpdateOperationsInput | $Enums.SecurityMode
+    lockUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeDisputeId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationSecurityStateUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    mode?: EnumSecurityModeFieldUpdateOperationsInput | $Enums.SecurityMode
+    lockUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeDisputeId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationSecurityStateCreateManyInput = {
+    organizationId: string
+    mode?: $Enums.SecurityMode
+    lockUntil?: Date | string | null
+    activeDisputeId?: string | null
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationSecurityStateUpdateManyMutationInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    mode?: EnumSecurityModeFieldUpdateOperationsInput | $Enums.SecurityMode
+    lockUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeDisputeId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationSecurityStateUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    mode?: EnumSecurityModeFieldUpdateOperationsInput | $Enums.SecurityMode
+    lockUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeDisputeId?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidFilter<$PrismaModel = never> = {
@@ -35279,18 +37938,21 @@ export namespace Prisma {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
   }
 
   export type OrganizationMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
   }
 
   export type OrganizationMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
   }
 
   export type OrganizationMembershipListRelationFilter = {
@@ -35703,6 +38365,118 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumReferralCommissionStatusFilter<$PrismaModel>
     _max?: NestedEnumReferralCommissionStatusFilter<$PrismaModel>
+  }
+
+  export type EnumDisputeStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeStatus | EnumDisputeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeStatusFilter<$PrismaModel> | $Enums.DisputeStatus
+  }
+
+  export type EnumDisputeSeverityFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeSeverity | EnumDisputeSeverityFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeSeverityFilter<$PrismaModel> | $Enums.DisputeSeverity
+  }
+
+  export type OwnershipDisputeCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    claimantUserId?: SortOrder
+    incumbentUserId?: SortOrder
+    status?: SortOrder
+    severity?: SortOrder
+    evidenceKeys?: SortOrder
+    counterClaimNote?: SortOrder
+    createdAt?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type OwnershipDisputeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    claimantUserId?: SortOrder
+    incumbentUserId?: SortOrder
+    status?: SortOrder
+    severity?: SortOrder
+    counterClaimNote?: SortOrder
+    createdAt?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type OwnershipDisputeMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    claimantUserId?: SortOrder
+    incumbentUserId?: SortOrder
+    status?: SortOrder
+    severity?: SortOrder
+    counterClaimNote?: SortOrder
+    createdAt?: SortOrder
+    executedAt?: SortOrder
+  }
+
+  export type EnumDisputeStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeStatus | EnumDisputeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeStatusWithAggregatesFilter<$PrismaModel> | $Enums.DisputeStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDisputeStatusFilter<$PrismaModel>
+    _max?: NestedEnumDisputeStatusFilter<$PrismaModel>
+  }
+
+  export type EnumDisputeSeverityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeSeverity | EnumDisputeSeverityFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeSeverityWithAggregatesFilter<$PrismaModel> | $Enums.DisputeSeverity
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDisputeSeverityFilter<$PrismaModel>
+    _max?: NestedEnumDisputeSeverityFilter<$PrismaModel>
+  }
+
+  export type EnumSecurityModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.SecurityMode | EnumSecurityModeFieldRefInput<$PrismaModel>
+    in?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumSecurityModeFilter<$PrismaModel> | $Enums.SecurityMode
+  }
+
+  export type OrganizationSecurityStateCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    mode?: SortOrder
+    lockUntil?: SortOrder
+    activeDisputeId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationSecurityStateMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    mode?: SortOrder
+    lockUntil?: SortOrder
+    activeDisputeId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationSecurityStateMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    mode?: SortOrder
+    lockUntil?: SortOrder
+    activeDisputeId?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumSecurityModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SecurityMode | EnumSecurityModeFieldRefInput<$PrismaModel>
+    in?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumSecurityModeWithAggregatesFilter<$PrismaModel> | $Enums.SecurityMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSecurityModeFilter<$PrismaModel>
+    _max?: NestedEnumSecurityModeFilter<$PrismaModel>
   }
 
   export type TenantBillingCreateactiveModulesInput = {
@@ -36330,6 +39104,27 @@ export namespace Prisma {
     update?: XOR<XOR<SubscriptionInvoiceUpdateToOneWithWhereWithoutReferralCommissionsInput, SubscriptionInvoiceUpdateWithoutReferralCommissionsInput>, SubscriptionInvoiceUncheckedUpdateWithoutReferralCommissionsInput>
   }
 
+  export type OwnershipDisputeCreateevidenceKeysInput = {
+    set: string[]
+  }
+
+  export type EnumDisputeStatusFieldUpdateOperationsInput = {
+    set?: $Enums.DisputeStatus
+  }
+
+  export type EnumDisputeSeverityFieldUpdateOperationsInput = {
+    set?: $Enums.DisputeSeverity
+  }
+
+  export type OwnershipDisputeUpdateevidenceKeysInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type EnumSecurityModeFieldUpdateOperationsInput = {
+    set?: $Enums.SecurityMode
+  }
+
   export type NestedUuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -36883,6 +39678,57 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumReferralCommissionStatusFilter<$PrismaModel>
     _max?: NestedEnumReferralCommissionStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDisputeStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeStatus | EnumDisputeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeStatusFilter<$PrismaModel> | $Enums.DisputeStatus
+  }
+
+  export type NestedEnumDisputeSeverityFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeSeverity | EnumDisputeSeverityFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeSeverityFilter<$PrismaModel> | $Enums.DisputeSeverity
+  }
+
+  export type NestedEnumDisputeStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeStatus | EnumDisputeStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeStatus[] | ListEnumDisputeStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeStatusWithAggregatesFilter<$PrismaModel> | $Enums.DisputeStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDisputeStatusFilter<$PrismaModel>
+    _max?: NestedEnumDisputeStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumDisputeSeverityWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DisputeSeverity | EnumDisputeSeverityFieldRefInput<$PrismaModel>
+    in?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DisputeSeverity[] | ListEnumDisputeSeverityFieldRefInput<$PrismaModel>
+    not?: NestedEnumDisputeSeverityWithAggregatesFilter<$PrismaModel> | $Enums.DisputeSeverity
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDisputeSeverityFilter<$PrismaModel>
+    _max?: NestedEnumDisputeSeverityFilter<$PrismaModel>
+  }
+
+  export type NestedEnumSecurityModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.SecurityMode | EnumSecurityModeFieldRefInput<$PrismaModel>
+    in?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumSecurityModeFilter<$PrismaModel> | $Enums.SecurityMode
+  }
+
+  export type NestedEnumSecurityModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.SecurityMode | EnumSecurityModeFieldRefInput<$PrismaModel>
+    in?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SecurityMode[] | ListEnumSecurityModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumSecurityModeWithAggregatesFilter<$PrismaModel> | $Enums.SecurityMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumSecurityModeFilter<$PrismaModel>
+    _max?: NestedEnumSecurityModeFilter<$PrismaModel>
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {

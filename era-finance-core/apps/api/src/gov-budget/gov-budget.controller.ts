@@ -19,6 +19,9 @@ import { UserRole } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CheckBudgetLimitDto } from "./dto/check-budget-limit.dto";
 import { CreateBudgetYearDto } from "./dto/create-budget-year.dto";
 import { GovBudgetService } from "./gov-budget.service";
@@ -26,7 +29,8 @@ import { GovBudgetService } from "./gov-budget.service";
 @ApiTags("gov-budget")
 @ApiBearerAuth("bearer")
 @Controller("gov-budget")
-@UseGuards(RolesGuard)
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule(ModuleEntitlement.GOV_BUDGET_PRO)
 export class GovBudgetController {
   constructor(private readonly govBudget: GovBudgetService) {}
 
@@ -65,6 +69,16 @@ export class GovBudgetController {
     @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
   ) {
     return this.govBudget.approveYear(organizationId, id);
+  }
+
+  @Post("years/:id/amend")
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Mark approved budget year as amended (editable cycle)" })
+  amendYear(
+    @OrganizationId() organizationId: string,
+    @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
+  ) {
+    return this.govBudget.amendYear(organizationId, id);
   }
 
   @Get("years/:id/lines")

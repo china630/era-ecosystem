@@ -12,9 +12,9 @@ PRD: [../PRD.md](../PRD.md)
 - [x] Refresh token issued on login
 - [x] `GET /memberships`, `POST /auth/switch-organization`
 - [x] Organization model (`ownerId`) in control-plane schema
-- [ ] Access request API
-- [ ] Transfer ownership API (migrate from Finance)
-- [ ] Ownership dispute API
+- [x] Access request API (`POST /auth/join-org`, `GET/POST /team/access-requests/*`)
+- [x] Transfer ownership API (`POST /organizations/transfer-ownership`; Finance proxies when `ERA_CONTROL_PLANE_RBAC_PROXY=true`)
+- [x] Ownership dispute API (`DisputeModule`: admin + public counter-claim routes)
 
 ## CP2 — Hardening
 

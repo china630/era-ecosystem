@@ -9,6 +9,11 @@ export {
   verifySsoSignature,
 } from "./auth/sso-verify";
 export {
+  executeSatelliteSsoExchange,
+  type SsoExchangePrisma,
+  type SsoExchangeResult,
+} from "./auth/sso-exchange";
+export {
   authCookieName,
   signSatelliteSession,
   verifySatelliteSession,

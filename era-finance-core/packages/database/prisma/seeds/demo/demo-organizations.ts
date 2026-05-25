@@ -29,6 +29,8 @@ const DEMO_ORGS: ReadonlyArray<{
   legalAddress: string;
   phone: string;
   directorName: string;
+  kind?: OrganizationKind;
+  legalForm?: CounterpartyLegalForm;
 }> = [
   {
     name: "Demo MMC Alpha (local)",
@@ -43,6 +45,15 @@ const DEMO_ORGS: ReadonlyArray<{
     legalAddress: "Bakı, Yasamal rayonu (demo)",
     phone: "+994501112244",
     directorName: "Demo Director Beta",
+  },
+  {
+    name: "Demo Budget Agency (local)",
+    taxId: "9900000003",
+    legalAddress: "Bakı, Nəsimi rayonu (demo B2G)",
+    phone: "+994501112255",
+    directorName: "Demo Director Budget",
+    kind: OrganizationKind.BUDGET,
+    legalForm: CounterpartyLegalForm.STATE_AGENCY,
   },
 ];
 
@@ -229,6 +240,8 @@ export async function seedDemoOrganizations(ctx: SeedContext): Promise<void> {
     const taxIdCipher = encryptVoenForSeed(voen);
 
     const org = await ctx.prisma.$transaction(async (tx) => {
+      const orgKind = cfg.kind ?? OrganizationKind.COMMERCIAL;
+      const orgLegalForm = cfg.legalForm ?? CounterpartyLegalForm.LLC;
       const o = await tx.organization.create({
         data: {
           name: cfg.name,
@@ -239,8 +252,8 @@ export async function seedDemoOrganizations(ctx: SeedContext): Promise<void> {
           phone: cfg.phone,
           directorName: cfg.directorName,
           ownerId: owner.id,
-          kind: OrganizationKind.COMMERCIAL,
-          legalForm: CounterpartyLegalForm.LLC,
+          kind: orgKind,
+          legalForm: orgLegalForm,
           activeModules: modules,
           settings: { erafinanceDemoSeed: true } as Prisma.InputJsonValue,
         },
@@ -259,7 +272,11 @@ export async function seedDemoOrganizations(ctx: SeedContext): Promise<void> {
 
     demoOrganizationIds.push(org.id);
     await ensureDemoSubscription(ctx.prisma, org.id, modules);
-    await provisionNasAccountsForOrganization(ctx.prisma, org.id, OrganizationKind.COMMERCIAL);
+    await provisionNasAccountsForOrganization(
+      ctx.prisma,
+      org.id,
+      cfg.kind ?? OrganizationKind.COMMERCIAL,
+    );
     console.info(`[seed:demo-org] created: ${cfg.name} (${org.id}) voen=${voen}`);
   }
 

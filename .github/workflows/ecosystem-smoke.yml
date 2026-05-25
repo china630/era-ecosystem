@@ -46,3 +46,21 @@ jobs:
       - name: Build orchestrator API
         working-directory: era-365-orchestrator/apps/api
         run: npm run build
+
+  build-finance-api:
+    runs-on: ubuntu-latest
+    needs: build-packages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install finance-core API
+        working-directory: era-finance-core
+        run: npm ci
+      - name: Generate Prisma client
+        working-directory: era-finance-core/packages/database
+        run: npx prisma generate
+      - name: Build finance API
+        working-directory: era-finance-core/apps/api
+        run: npm run build

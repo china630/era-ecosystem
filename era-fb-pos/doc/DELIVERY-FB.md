@@ -9,21 +9,21 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 - [x] App in monorepo `era-fb-pos` (port 3200, Docker)
 - [x] UI shell: floor, orders, kds, calendar pages
 - [x] Prisma: Ticket model + related domain schema
-- [x] `POST /api/tickets` + room charge stub API
+- [x] `POST /api/tickets` + room charge bridge API
 - [x] doc/DOCUMENTATION-INDEX.md + UAT-SMOKE.md
 - [ ] Auth FB_WAITER / FB_MANAGER
 - [ ] Menu CRUD admin
-- [ ] PMS bridge client wired + integration test
+- [x] PMS bridge client wired (`HOTEL_PMS_URL` / stub) + `GET /api/health`
 
 ## FB-1 — MVP Nafta (G-FB-1…7)
 
-- [ ] FB-01 Floor + open ticket
-- [ ] FB-02 KDS fire/done
-- [ ] FB-03 Cash/card + KKM mock
-- [ ] FB-04 Room charge → PMS
-- [ ] FB-05 Void line
-- [ ] FB-06 Z-close shift
-- [ ] FB-07 PMS NA block on open shift
+- [x] FB-01 Floor + open ticket — `GET /api/tables`, `POST /api/tickets`, `/floor` page
+- [x] FB-02 KDS fire/done — `POST /api/tickets/{id}/fire`, `PATCH /api/kds/lines/{lineId}`, `/kds` page
+- [x] FB-03 Cash/card + KKM mock — `POST /api/tickets/{id}/pay` (stub fiscal receipt)
+- [x] FB-04 Room charge → PMS — `POST /api/tickets/{id}/room-charge`, `GET /api/in-house`
+- [x] FB-05 Void line — `POST /api/tickets/{id}/lines/{lineId}/void`
+- [x] FB-06 Z-close shift — `POST /api/shifts/open|close` + PMS `pos-shift-status`
+- [x] FB-07 PMS NA block on open shift — shift open pushes `OPEN` to hotel-pms bridge
 
 ## FB-2 — Зрелость
 
@@ -45,5 +45,6 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 ```bash
 cd era-fb-pos && npm run build
 docker compose up -d fb-pos hotel-pms
-# node era-hotel-pms/scripts/test-pos-bridge.mjs  # when added
+node era-hotel-pms/scripts/test-pos-bridge.mjs
+# fb-pos bridge (stub): FB_POS_PMS_STUB=1 npm run dev — then POST /api/tickets/{id}/room-charge
 ```

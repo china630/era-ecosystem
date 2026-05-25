@@ -302,7 +302,8 @@ exports.Prisma.RolePermissionScalarFieldEnum = {
 exports.Prisma.OrganizationScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  ownerId: 'ownerId'
+  ownerId: 'ownerId',
+  taxIdBlindIndex: 'taxIdBlindIndex'
 };
 
 exports.Prisma.UserScalarFieldEnum = {
@@ -386,6 +387,27 @@ exports.Prisma.ReferralCommissionScalarFieldEnum = {
   status: 'status',
   paidAt: 'paidAt',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.OwnershipDisputeScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  claimantUserId: 'claimantUserId',
+  incumbentUserId: 'incumbentUserId',
+  status: 'status',
+  severity: 'severity',
+  evidenceKeys: 'evidenceKeys',
+  counterClaimNote: 'counterClaimNote',
+  createdAt: 'createdAt',
+  executedAt: 'executedAt'
+};
+
+exports.Prisma.OrganizationSecurityStateScalarFieldEnum = {
+  organizationId: 'organizationId',
+  mode: 'mode',
+  lockUntil: 'lockUntil',
+  activeDisputeId: 'activeDisputeId',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -499,6 +521,30 @@ exports.ReferralCommissionStatus = exports.$Enums.ReferralCommissionStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.DisputeStatus = exports.$Enums.DisputeStatus = {
+  EVIDENCE_REQUIRED: 'EVIDENCE_REQUIRED',
+  EVIDENCE_REVIEW: 'EVIDENCE_REVIEW',
+  INCUMBENT_NOTIFIED: 'INCUMBENT_NOTIFIED',
+  COOLDOWN: 'COOLDOWN',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  EXECUTED: 'EXECUTED',
+  REVERTED: 'REVERTED'
+};
+
+exports.DisputeSeverity = exports.$Enums.DisputeSeverity = {
+  SOFT: 'SOFT',
+  HARD: 'HARD'
+};
+
+exports.SecurityMode = exports.$Enums.SecurityMode = {
+  NORMAL: 'NORMAL',
+  DISPUTE: 'DISPUTE',
+  POST_TRANSFER_LOCK: 'POST_TRANSFER_LOCK',
+  ROLLBACK_IN_PROGRESS: 'ROLLBACK_IN_PROGRESS',
+  HARD_BLOCK_PLATFORM: 'HARD_BLOCK_PLATFORM'
+};
+
 exports.Prisma.ModelName = {
   TenantBilling: 'TenantBilling',
   OrganizationSubscription: 'OrganizationSubscription',
@@ -523,7 +569,9 @@ exports.Prisma.ModelName = {
   OrganizationInvite: 'OrganizationInvite',
   Partner: 'Partner',
   Referral: 'Referral',
-  ReferralCommission: 'ReferralCommission'
+  ReferralCommission: 'ReferralCommission',
+  OwnershipDispute: 'OwnershipDispute',
+  OrganizationSecurityState: 'OrganizationSecurityState'
 };
 
 /**

@@ -92,6 +92,17 @@ export class GovBudgetService {
     });
   }
 
+  async amendYear(organizationId: string, id: string) {
+    const row = await this.getYear(organizationId, id);
+    if (row.status !== BudgetYearStatus.APPROVED) {
+      throw new BadRequestException("Only APPROVED budget years can be amended");
+    }
+    return this.prisma.budgetYear.update({
+      where: { id },
+      data: { status: BudgetYearStatus.AMENDED },
+    });
+  }
+
   async listLines(organizationId: string, budgetYearId: string) {
     await this.getYear(organizationId, budgetYearId);
     return this.prisma.budgetLine.findMany({
@@ -145,6 +156,31 @@ export class GovBudgetService {
       remaining: remaining.toFixed(4),
       requested: requested.toFixed(4),
     };
+  }
+
+  /** Records budget commitment against a posted document (purchase invoice, payment, etc.). */
+  async documentUsage(
+    organizationId: string,
+    budgetLineId: string,
+    amount: number | Decimal,
+    referenceType: string,
+    referenceId: string,
+  ) {
+    const line = await this.prisma.budgetLine.findFirst({
+      where: { id: budgetLineId },
+      include: { budgetYear: true },
+    });
+    if (!line || line.budgetYear.organizationId !== organizationId) {
+      throw new NotFoundException("Budget line not found");
+    }
+    return this.prisma.budgetCommitment.create({
+      data: {
+        budgetLineId,
+        amount: new Decimal(amount.toString()),
+        referenceType,
+        referenceId,
+      },
+    });
   }
 
   async execution(organizationId: string, budgetYearId: string) {

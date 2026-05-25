@@ -12,4 +12,4 @@ PRD: [../PRD.md](../PRD.md)
 
 ## A2
 
-- [ ] Appointments (A-05 deferred in PRD as calendar)
+- [x] Appointments (A-05) — `GET/POST /api/appointments`

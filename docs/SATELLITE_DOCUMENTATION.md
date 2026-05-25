@@ -45,10 +45,10 @@ era-{name}/
 | Контур | Что хранит / решает |
 |--------|---------------------|
 | **Orchestrator** | Identity (login, refresh), **organization membership**, роли `OWNER` / `ADMIN` / `ACCOUNTANT` / …, **`organizations.ownerId`**, transfer ownership, **access requests** (join by VÖEN), **ownership dispute / arbitration**, entitlements для satellite SSO |
-| **Finance Core** | Доменный RBAC на API (guards), биллинг платформы, финансовые политики; при `ERA_AUTH_MODE=control-plane` — trust JWT от orchestrator |
+| **Finance Core** | Доменный RBAC на API (guards), биллинг платформы, финансовые политики; при `ERA_AUTH_MODE=control-plane` — trust JWT от orchestrator; RBAC mutations proxied when `ERA_CONTROL_PLANE_RBAC_PROXY=true` |
 | **Satellite** | Только **операционные** роли (кассир, врач, диспетчер…); опционально локальная матрица для offline/dev |
 
-**Миграция (roadmap):** membership и `UserRole` постепенно выносятся из Finance DB в orchestrator как source of truth; Finance API читает claims из JWT (`orgId`, `roles[]`, `ownerId`). До cutover — dual-read (legacy DB + control plane).
+**Cutover (Phase A complete):** membership, access requests, transfer ownership, and disputes are canonical on orchestrator. Finance API forwards matching routes to control plane when `ERA_CONTROL_PLANE_RBAC_PROXY` is enabled (default `true`).
 
 ### Роль `BUSINESS_OWNER` (обязательна в PRD §3 каждого спутника)
 
@@ -60,7 +60,21 @@ era-{name}/
 | **В спутнике** | Сводные дашборды, read-only аудит, утверждение критичных операций (void, скидки, закрытие периода точки), deep link «управление подпиской» → Finance |
 | **Не путать с** | `CLINIC_ADMIN`, `OUTLET_ADMIN` — операционные админы точки без биллинга |
 
-**SSO payload (S1):** JWT / session после `POST /auth/sso/exchange` содержит `organizationId`, `roles: string[]`, `isOwner: boolean`, `financeRole`. `@era/satellite-kit` — `requireRole('BUSINESS_OWNER')` для executive routes (pilot: `era-retail-pos/app/executive`).
+**SSO (Phase A):** all **7 industry satellites** use `@era/satellite-kit` **`executeSatelliteSsoExchange`** in `app/api/auth/sso/exchange/route.ts`. The helper maps `financeRole` → `BUSINESS_OWNER` (when `OWNER`/`DIRECTOR`) or `SATELLITE_OPERATOR`, persists a local SSO user, and signs a session JWT with `organizationId`, `roles[]`, `isOwner`, `financeRole`.
+
+| App | SSO route | `BUSINESS_OWNER` in PRD §3 |
+|-----|-----------|----------------------------|
+| era-retail-pos | `app/api/auth/sso/exchange/route.ts` | yes |
+| era-logistics | same pattern | yes |
+| era-construction | same pattern | yes |
+| era-crm-field | same pattern | yes |
+| era-auto-sto | same pattern | yes |
+| era-wholesale | same pattern | yes |
+| era-clinic | same pattern | yes |
+
+Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
+
+**Out of scope for unified SSO (documented boundary):** `era-fb-pos` and `era-hotel-pms` use local hotel JWT auth; alignment deferred to Phase B SP3.
 
 **Шаблон для PRD §3** (добавить первой строкой в таблицу персон):
 
@@ -93,4 +107,3 @@ UI: [`@era/satellite-kit/ui`](../packages/satellite-kit/ui) (DESIGN.md tokens, P
 | era-auto-sto | [PRD](../era-auto-sto/PRD.md) | [DELIVERY-AUTO](../era-auto-sto/doc/DELIVERY-AUTO.md) | 3304 | auto.era.az |
 | era-wholesale | [PRD](../era-wholesale/PRD.md) | [DELIVERY-WHOLESALE](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 3305 | wholesale.era.az |
 | era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) | 3306 | clinic.era.az |
-

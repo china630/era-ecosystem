@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Req,
@@ -30,6 +31,7 @@ import { RegisterUserDto } from "./dto/register-user.dto";
 import { SwitchOrgDto } from "./dto/switch-org.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import type { AuthUser } from "./types/auth-user";
+import { ControlPlaneClient } from "../control-plane/control-plane.client";
 
 @ApiTags("auth")
 @Controller("auth")
@@ -37,6 +39,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly jwt: JwtService,
+    private readonly controlPlane: ControlPlaneClient,
   ) {}
 
   private stripRefreshWithExp(out: {
@@ -213,7 +216,19 @@ export class AuthController {
   @ApiBearerAuth()
   @Post("join-org")
   @ApiOperation({ summary: "Запрос на вступление в организацию по VÖEN" })
-  joinOrg(@Body() dto: JoinOrgDto, @CurrentUser() user: AuthUser) {
+  joinOrg(
+    @Body() dto: JoinOrgDto,
+    @CurrentUser() user: AuthUser,
+    @Headers("authorization") authorization?: string,
+  ) {
+    if (this.controlPlane.rbacProxyEnabled && authorization) {
+      return this.controlPlane.forward({
+        method: "POST",
+        path: "/auth/join-org",
+        body: dto,
+        authorization,
+      });
+    }
     return this.auth.requestJoinByTaxId(
       user.userId,
       dto.taxId,

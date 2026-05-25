@@ -17,6 +17,8 @@ import { AccessControlService } from "../access/access-control.service";
 import { getClosedPeriodKeys, monthKeyUtc } from "../reporting/reporting-period.util";
 import { randomUUID } from "node:crypto";
 import { AccountingService } from "../accounting/accounting.service";
+import { ContractsService } from "../contracts/contracts.service";
+import { GovBudgetService } from "../gov-budget/gov-budget.service";
 import {
   COGS_ACCOUNT_CODE,
   FINISHED_GOODS_ACCOUNT_CODE,
@@ -58,7 +60,70 @@ export class InventoryService {
     private readonly accounting: AccountingService,
     private readonly stock: StockService,
     private readonly access: AccessControlService,
+    private readonly contracts: ContractsService,
+    private readonly govBudget: GovBudgetService,
   ) {}
+
+  private async assertPurchaseLimitGateways(
+    organizationId: string,
+    dto: PurchaseStockDto,
+    amountAzn: Decimal,
+  ): Promise<void> {
+    if (dto.contractId) {
+      const contract = await this.prisma.contract.findFirst({
+        where: { id: dto.contractId, organizationId },
+        select: { id: true },
+      });
+      if (!contract) throw new NotFoundException("Contract not found");
+      const check = await this.contracts.checkLimit(dto.contractId, amountAzn);
+      if (!check.allowed) {
+        throw new BadRequestException({
+          code: "CONTRACT_LIMIT_EXCEEDED",
+          message: "Contract amount limit exceeded",
+          ...check,
+        });
+      }
+    }
+    if (dto.budgetLineId) {
+      const check = await this.govBudget.checkLimit(organizationId, {
+        budgetLineId: dto.budgetLineId,
+        amount: Number(amountAzn.toString()),
+      });
+      if (!check.allowed) {
+        throw new BadRequestException({
+          code: check.reason ?? "BUDGET_LIMIT_EXCEEDED",
+          message: "Budget line limit exceeded",
+          ...check,
+        });
+      }
+    }
+  }
+
+  private async recordPurchaseLimitUsage(
+    organizationId: string,
+    dto: PurchaseStockDto,
+    amountAzn: Decimal,
+    transactionId: string,
+  ): Promise<void> {
+    if (dto.contractId) {
+      await this.contracts.documentUsage(
+        organizationId,
+        dto.contractId,
+        amountAzn,
+        "PURCHASE_INVOICE",
+        transactionId,
+      );
+    }
+    if (dto.budgetLineId) {
+      await this.govBudget.documentUsage(
+        organizationId,
+        dto.budgetLineId,
+        amountAzn,
+        "PURCHASE_INVOICE",
+        transactionId,
+      );
+    }
+  }
 
   async getInventorySettings(organizationId: string): Promise<
     OrgInventorySettings & {
@@ -632,6 +697,8 @@ export class InventoryService {
         ? `Alış fakturası — mallar və xidmətlər (${cur}, fx=${fx.toString()}, qiymətlər ƏDV daxil)`
         : `Alış fakturası — mallar və xidmətlər (${cur}, fx=${fx.toString()})`;
 
+      await this.assertPurchaseLimitGateways(organizationId, dto, grAz);
+
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: documentDate,
@@ -646,6 +713,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.recordPurchaseLimitUsage(organizationId, dto, grAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),
@@ -761,6 +829,8 @@ export class InventoryService {
             ];
 
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
+      await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
+
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: documentDate,
@@ -777,6 +847,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),
@@ -1823,6 +1894,8 @@ export class InventoryService {
             ];
 
       const journalRef = dto.reference?.trim() || "PURCHASE_INVOICE";
+      await this.assertPurchaseLimitGateways(organizationId, dto, gAz);
+
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: documentDate,
@@ -1839,6 +1912,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
+      await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),

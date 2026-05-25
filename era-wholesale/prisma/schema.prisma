@@ -42,7 +42,28 @@ model B2BOrder {
   amountNet           Decimal        @default(0) @db.Decimal(12, 2)
   lineCount           Int            @default(0)
   confirmedAt         DateTime?
+  pickList            PickList?
   createdAt           DateTime       @default(now())
+}
+
+model PickList {
+  id        String         @id @default(cuid())
+  orderId   String         @unique
+  status    String         @default("OPEN")
+  order     B2BOrder       @relation(fields: [orderId], references: [id])
+  lines     PickListLine[]
+  createdAt DateTime       @default(now())
+}
+
+model PickListLine {
+  id         String   @id @default(cuid())
+  pickListId String
+  skuCode    String
+  qtyOrdered Int
+  qtyPicked  Int      @default(0)
+  pickList   PickList @relation(fields: [pickListId], references: [id], onDelete: Cascade)
+
+  @@index([pickListId])
 }
 
 model Role {

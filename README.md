@@ -4,6 +4,8 @@ Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Do
 
 **Docs:** [`docs/DEVELOPMENT_ROADMAP.md`](./docs/DEVELOPMENT_ROADMAP.md) · [`docs/SATELLITE_DOCUMENTATION.md`](./docs/SATELLITE_DOCUMENTATION.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md)
 
+**Platform-first (Phase A, 2026-05-25):** orchestrator is source of truth for RBAC/ownership; all 7 industry satellites share `executeSatelliteSsoExchange` with `BUSINESS_OWNER` mapping; Finance supports `ERA_AUTH_MODE=control-plane`; contracts and gov-budget modules are complete. **Phase B** satellite depth is in progress — see roadmap.
+
 ## Industry satellites
 
 | App | PRD | Host | Port |

@@ -177,7 +177,8 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] PMS → fb-pos webhook on check-out (`FB_POS_WEBHOOK_URL`, fire-and-forget)
 - [x] Middleware: `POS_BRIDGE_SECRET` на `/api/pms/*` и room-charge без JWT
 - [x] Prisma: `PosBridgeShift`, `PosRoomChargeIdempotency` — migration `20260527100000_stage17_pos_bridge`
-- [ ] E2E script / docker profile `all` — `node scripts/test-pos-bridge.mjs` (manual)
+- [x] E2E script — `node scripts/test-pos-bridge.mjs` (PMS bridge smoke)
+- [x] **SP3 regression:** `era-fb-pos` FB-1 calls `POST /api/pos/room-charge` via `HOTEL_PMS_URL`; re-run script + [UAT-SMOKE §11](UAT-SMOKE.md) after fb-pos changes
 
 ### Stage 16+ — P2-E backlog (без сроков)
 

@@ -20,6 +20,9 @@ import { UserRole } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { PatchContractDto } from "./dto/patch-contract.dto";
 import { ContractsService } from "./contracts.service";
@@ -27,7 +30,8 @@ import { ContractsService } from "./contracts.service";
 @ApiTags("contracts")
 @ApiBearerAuth("bearer")
 @Controller("contracts")
-@UseGuards(RolesGuard)
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule(ModuleEntitlement.CONTRACT_MANAGEMENT_PRO)
 export class ContractsController {
   constructor(private readonly contracts: ContractsService) {}
 

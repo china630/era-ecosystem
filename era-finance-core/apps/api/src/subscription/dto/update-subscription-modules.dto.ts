@@ -62,4 +62,12 @@ export class UpdateSubscriptionModulesDto {
   @IsOptional()
   @IsBoolean()
   compliance_pro?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  contract_management_pro?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  gov_budget_pro?: boolean;
 }

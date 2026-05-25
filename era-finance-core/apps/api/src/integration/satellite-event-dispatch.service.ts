@@ -5,18 +5,22 @@ import {
   isSatelliteClinicVisitCompleted,
   isSatelliteConstructionProgressActApproved,
   isSatelliteCrmLeadConverted,
+  isSatelliteCrmVisitLogged,
   isSatelliteHotelReservationCompleted,
   isSatelliteLogisticsTripCompleted,
   isSatelliteRetailSaleCompleted,
+  isSatelliteRetailShiftClosed,
   isSatelliteWholesaleOrderConfirmed,
   satelliteAutoWorkOrderCompletedSchema,
   satelliteClinicLabOrderCompletedSchema,
   satelliteClinicVisitCompletedSchema,
   satelliteConstructionProgressActSchema,
   satelliteCrmLeadConvertedSchema,
+  satelliteCrmVisitLoggedSchema,
   satelliteHotelReservationCompletedSchema,
   satelliteLogisticsTripCompletedSchema,
   satelliteRetailSaleCompletedSchema,
+  satelliteRetailShiftClosedSchema,
   satelliteWholesaleOrderConfirmedSchema,
 } from "@era/contracts";
 import { LedgerType, Prisma } from "@erafinance/database";
@@ -82,6 +86,14 @@ export class SatelliteEventDispatchService {
     if (isSatelliteWholesaleOrderConfirmed(data)) {
       const event = satelliteWholesaleOrderConfirmedSchema.parse(data);
       return this.handleWholesaleOrder(organizationId, event);
+    }
+    if (isSatelliteRetailShiftClosed(data)) {
+      const event = satelliteRetailShiftClosedSchema.parse(data);
+      return this.handleRetailShiftClosed(organizationId, event);
+    }
+    if (isSatelliteCrmVisitLogged(data)) {
+      const event = satelliteCrmVisitLoggedSchema.parse(data);
+      return this.handleCrmVisitLogged(organizationId, event);
     }
     throw new Error("Unhandled satellite event type");
   }
@@ -364,16 +376,59 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteClinicLabOrderCompletedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    const cpId = await this.resolveCounterpartyId(organizationId);
+    const amount = event.payload.amountNet;
+    const transactionId = await this.prisma.$transaction(async (tx) =>
+      this.postBalancedJournal(tx, organizationId, {
+        amount,
+        reference: `clinic-lab:${event.payload.labOrderId}`,
+        description: `Clinic lab order completed (${event.correlationId})`,
+        counterpartyId: cpId,
+      }),
+    );
+    let invoiceId: string | undefined;
+    if (cpId) {
+      invoiceId = await this.createDraftInvoice(
+        organizationId,
+        cpId,
+        amount,
+        "Clinic lab services",
+        event.payload.labOrderId,
+      );
+    }
+    return {
+      transactionId,
+      invoiceId,
+      meta: { labOrderId: event.payload.labOrderId },
+    };
+  }
+
+  private async handleRetailShiftClosed(
+    organizationId: string,
+    event: ReturnType<typeof satelliteRetailShiftClosedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
     this.logger.log(
-      `Clinic lab order completed stub: ${event.payload.labOrderId} (${event.correlationId})`,
+      `Retail shift closed (cash recon stub): ${event.payload.shiftId} totalSales=${event.payload.totalSales} (${event.correlationId})`,
     );
     return {
       meta: {
-        labOrderId: event.payload.labOrderId,
-        patientRef: event.payload.patientRef,
-        testCode: event.payload.testCode,
-        amountNet: event.payload.amountNet,
-        stub: true,
+        shiftId: event.payload.shiftId,
+        totalSales: event.payload.totalSales,
+      },
+    };
+  }
+
+  private async handleCrmVisitLogged(
+    organizationId: string,
+    event: ReturnType<typeof satelliteCrmVisitLoggedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    this.logger.log(
+      `CRM visit logged: visit=${event.payload.visitId} lead=${event.payload.leadId} (${event.correlationId})`,
+    );
+    return {
+      meta: {
+        visitId: event.payload.visitId,
+        leadId: event.payload.leadId,
       },
     };
   }

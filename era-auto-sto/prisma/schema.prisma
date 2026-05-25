@@ -41,7 +41,21 @@ model WorkOrder {
   laborAmount  Decimal         @default(0) @db.Decimal(12, 2)
   partsAmount  Decimal         @default(0) @db.Decimal(12, 2)
   completedAt  DateTime?
+  appointment  Appointment?
   createdAt    DateTime        @default(now())
+}
+
+model Appointment {
+  id           String    @id @default(cuid())
+  vehiclePlate String
+  customerName String?
+  scheduledAt  DateTime
+  status       String    @default("SCHEDULED")
+  workOrderId  String?   @unique
+  workOrder    WorkOrder? @relation(fields: [workOrderId], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@index([scheduledAt, status])
 }
 
 model Role {

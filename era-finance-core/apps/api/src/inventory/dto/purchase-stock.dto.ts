@@ -140,4 +140,18 @@ export class PurchaseStockDto {
   @IsOptional()
   @IsDateString()
   documentDate?: string;
+
+  @ApiPropertyOptional({
+    description: "Optional commercial contract link — enforces amount limit before posting",
+  })
+  @IsOptional()
+  @IsUUID()
+  contractId?: string;
+
+  @ApiPropertyOptional({
+    description: "Optional budget line link (B2G) — enforces annual limit before posting",
+  })
+  @IsOptional()
+  @IsUUID()
+  budgetLineId?: string;
 }

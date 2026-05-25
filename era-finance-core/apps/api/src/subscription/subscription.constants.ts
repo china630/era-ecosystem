@@ -47,6 +47,10 @@ export const ModuleEntitlement = {
   AUDIT_HUB: "audit_hub",
   /** Risk & Compliance (ERM): automated signals and dashboard. */
   COMPLIANCE_PRO: "compliance_pro",
+  /** Commercial contract registry and limit gateway. */
+  CONTRACT_MANAGEMENT_PRO: "contract_management_pro",
+  /** Annual budget plan and execution for B2G organizations. */
+  GOV_BUDGET_PRO: "gov_budget_pro",
   /** Industry Solutions verticals (beta; explicit tenant toggle). */
   INDUSTRY_RETAIL_ECOM: "industry_retail_ecom",
   INDUSTRY_LOGISTICS_CUSTOMS: "industry_logistics_customs",

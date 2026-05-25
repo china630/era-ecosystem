@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Param,
   Post,
   UseGuards,
@@ -23,13 +24,17 @@ import { RolesGuard } from "./guards/roles.guard";
 import { requireOrgRole } from "./require-org-role";
 import type { AuthUser } from "./types/auth-user";
 import { AuthService } from "./auth.service";
+import { ControlPlaneClient } from "../control-plane/control-plane.client";
 
 @ApiTags("team")
 @ApiBearerAuth("bearer")
 @Controller("team")
 @UseGuards(JwtAuthGuard)
 export class TeamController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly controlPlane: ControlPlaneClient,
+  ) {}
 
   @Get("members")
   @ApiOperation({ summary: "Участники текущей организации" })
@@ -58,7 +63,17 @@ export class TeamController {
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: "Ожидающие запросы на вступление по VÖEN" })
-  accessRequests(@OrganizationId() organizationId: string) {
+  accessRequests(
+    @OrganizationId() organizationId: string,
+    @Headers("authorization") authorization?: string,
+  ) {
+    if (this.controlPlane.rbacProxyEnabled && authorization) {
+      return this.controlPlane.forward({
+        method: "GET",
+        path: "/team/access-requests",
+        authorization,
+      });
+    }
     return this.auth.listPendingAccessRequests(organizationId);
   }
 
@@ -71,7 +86,16 @@ export class TeamController {
     @OrganizationId() organizationId: string,
     @Param("id") requestId: string,
     @Body() dto: ApproveAccessDto,
+    @Headers("authorization") authorization?: string,
   ) {
+    if (this.controlPlane.rbacProxyEnabled && authorization) {
+      return this.controlPlane.forward({
+        method: "POST",
+        path: `/team/access-requests/${requestId}/approve`,
+        body: dto,
+        authorization,
+      });
+    }
     return this.auth.decideAccessRequest(
       organizationId,
       requestId,
@@ -90,7 +114,15 @@ export class TeamController {
     @CurrentUser() user: AuthUser,
     @OrganizationId() organizationId: string,
     @Param("id") requestId: string,
+    @Headers("authorization") authorization?: string,
   ) {
+    if (this.controlPlane.rbacProxyEnabled && authorization) {
+      return this.controlPlane.forward({
+        method: "POST",
+        path: `/team/access-requests/${requestId}/decline`,
+        authorization,
+      });
+    }
     return this.auth.decideAccessRequest(
       organizationId,
       requestId,

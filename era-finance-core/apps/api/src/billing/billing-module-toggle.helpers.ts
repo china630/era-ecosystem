@@ -47,6 +47,8 @@ export function catalogModuleKeyToPatch(
   ifrs_mapping?: boolean;
   audit_hub?: boolean;
   compliance_pro?: boolean;
+  contract_management_pro?: boolean;
+  gov_budget_pro?: boolean;
 } {
   if (moduleKey === PRICING_MODULE_CASH_BANK_PRO || isLegacyCashBankModuleKey(moduleKey)) {
     return { cash_bank_pro: enabled };
@@ -70,6 +72,10 @@ export function catalogModuleKeyToPatch(
       return { audit_hub: enabled };
     case "compliance_pro":
       return { compliance_pro: enabled };
+    case "contract_management_pro":
+      return { contract_management_pro: enabled };
+    case "gov_budget_pro":
+      return { gov_budget_pro: enabled };
     default:
       throw new BadRequestException({
         code: "UNKNOWN_MODULE",

@@ -12,5 +12,5 @@ PRD: [../PRD.md](../PRD.md)
 
 ## W2
 
-- [ ] Pick list UI
-- [ ] Credit limit read API from Finance
+- [x] Pick list API — `GET/POST /api/pick-lists`
+- [x] Credit limit read stub from env — `GET /api/credit-limit?counterpartyId=`

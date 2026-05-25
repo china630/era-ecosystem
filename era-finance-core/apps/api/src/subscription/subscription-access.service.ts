@@ -67,6 +67,10 @@ export type OrganizationModuleEntitlements = {
   auditHub: boolean;
   /** Risk & Compliance (ERM): automated risk alerts and dashboard. */
   compliancePro: boolean;
+  /** Commercial contract registry (PRD §4.15). */
+  contractManagementPro: boolean;
+  /** Annual budget plan and execution (PRD §4.16). */
+  govBudgetPro: boolean;
   industryRetailEcom: boolean;
   industryLogisticsCustoms: boolean;
   industryConstruction: boolean;
@@ -120,6 +124,8 @@ function entitlementsFromConstructorModules(
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
     compliancePro: has("compliance_pro"),
+    contractManagementPro: has("contract_management_pro"),
+    govBudgetPro: has("gov_budget_pro"),
     industryRetailEcom: has("industry_retail_ecom"),
     industryLogisticsCustoms: has("industry_logistics_customs"),
     industryConstruction: has("industry_construction"),
@@ -166,6 +172,8 @@ function emptyOrganizationSnapshot(): {
       tradePro: false,
       auditHub: false,
       compliancePro: false,
+      contractManagementPro: false,
+      govBudgetPro: false,
       industryRetailEcom: false,
       industryLogisticsCustoms: false,
       industryConstruction: false,
@@ -204,6 +212,8 @@ function computeEntitlementsLegacy(sub: {
     tradePro: has("trade_pro"),
     auditHub: has("audit_hub"),
     compliancePro: has("compliance_pro"),
+    contractManagementPro: has("contract_management_pro"),
+    govBudgetPro: has("gov_budget_pro"),
     industryRetailEcom: false,
     industryLogisticsCustoms: false,
     industryConstruction: false,
@@ -238,6 +248,8 @@ function computeEntitlements(sub: {
       tradePro: true,
       auditHub: true,
       compliancePro: true,
+      contractManagementPro: true,
+      govBudgetPro: true,
       industryRetailEcom: false,
       industryLogisticsCustoms: false,
       industryConstruction: false,
@@ -617,6 +629,8 @@ export class SubscriptionAccessService {
       trade_pro?: boolean;
       audit_hub?: boolean;
       compliance_pro?: boolean;
+      contract_management_pro?: boolean;
+      gov_budget_pro?: boolean;
       recovery_pro?: boolean;
       ifrs_mapping?: boolean;
     },
@@ -662,6 +676,8 @@ export class SubscriptionAccessService {
     apply("trade_pro", patch.trade_pro);
     apply("audit_hub", patch.audit_hub);
     apply("compliance_pro", patch.compliance_pro);
+    apply("contract_management_pro", patch.contract_management_pro);
+    apply("gov_budget_pro", patch.gov_budget_pro);
     apply("recovery_pro", patch.recovery_pro);
     apply("ifrs_mapping", patch.ifrs_mapping);
 

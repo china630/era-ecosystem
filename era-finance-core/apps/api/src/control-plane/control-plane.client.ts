@@ -15,6 +15,53 @@ export class ControlPlaneClient {
     this.serviceToken = config.get<string>("CONTROL_PLANE_SERVICE_TOKEN");
   }
 
+  get rbacProxyEnabled(): boolean {
+    return (
+      (process.env.ERA_CONTROL_PLANE_RBAC_PROXY ?? "true").toLowerCase() !==
+      "false"
+    );
+  }
+
+  async forward<T>(input: {
+    method: string;
+    path: string;
+    body?: unknown;
+    authorization?: string;
+  }): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (input.authorization) {
+      headers.Authorization = input.authorization;
+    } else if (this.serviceToken) {
+      headers.Authorization = `Bearer ${this.serviceToken}`;
+    }
+    const res = await fetch(`${this.baseUrl}${input.path}`, {
+      method: input.method,
+      headers,
+      body:
+        input.body !== undefined ? JSON.stringify(input.body) : undefined,
+    });
+    const text = await res.text();
+    let json: unknown = null;
+    if (text) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        json = { message: text };
+      }
+    }
+    if (!res.ok) {
+      const err = new Error(
+        `Control plane ${input.method} ${input.path} failed: ${res.status}`,
+      ) as Error & { status?: number; response?: unknown };
+      err.status = res.status;
+      err.response = json;
+      throw err;
+    }
+    return json as T;
+  }
+
   async validateEntitlement(input: {
     organizationId: string;
     userId?: string;

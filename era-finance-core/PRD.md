@@ -107,15 +107,15 @@
 
 #### 3.2.1. Control plane: RBAC и владение (целевая модель)
 
-**[ ] PLANNED (scope)** — перенос **канонического RBAC**, **владения организацией** и **арбитража аккаунта** в **`era-365-orchestrator`**; Finance и спутники становятся потребителями JWT claims.
+**[x] COMPLETED (Phase A, 2026-05-25)** — **канонический RBAC**, **владение организацией** и **арбитраж аккаунта** реализованы в **`era-365-orchestrator`**; Finance проксирует мутации при `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default); спутники — потребители JWT claims через `executeSatelliteSsoExchange`.
 
 | Ответственность | Orchestrator (source of truth) | Finance / satellite (consumer) |
 |-----------------|--------------------------------|--------------------------------|
-| Login, refresh, SSO exchange | [x] в rollout | Verify JWT (`ControlPlaneAuthGuard`) |
-| `Organization.ownerId`, роль **OWNER** | [ ] migrate | Сегодня: Finance DB + `transfer-ownership` |
-| Membership, `UserRole` per org | [ ] migrate | Сегодня: `OrganizationUser` в Finance |
-| Access request (join by VÖEN) | [ ] migrate | Сегодня: Finance notifications |
-| Ownership dispute / arbitration | [ ] migrate | Сегодня: `ownership-dispute-notification` |
+| Login, refresh, SSO exchange | [x] migrate | Verify JWT (`ControlPlaneAuthGuard`) |
+| `Organization.ownerId`, роль **OWNER** | [x] migrate | Proxy `POST /organizations/transfer-ownership` → orchestrator |
+| Membership, `UserRole` per org | [x] migrate | JWT `roles[]`; legacy `OrganizationUser` dual-read during cutover |
+| Access request (join by VÖEN) | [x] migrate | Proxy `/auth/join-org`, `/team/access-requests/*` → orchestrator |
+| Ownership dispute / arbitration | [x] migrate | Orchestrator `DisputeModule`; Finance freeze guard on legacy paths |
 | Billing / subscription mutations | — | Finance API, guard **OWNER** only |
 | Domain finance policy (Post/Approve, payroll money) | — | Finance guards по `roles[]` из JWT |
 
@@ -535,7 +535,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 ### 4.15. Модуль 11: Contract Management (управление договорами)
 
-**Status:** [~] **PARTIAL** — отдельный платный модуль **`contract_management_pro`** (рабочее имя; каталог `PricingModules` — Super-Admin).
+**Status:** [x] **COMPLETED (Phase A, 2026-05-25)** — платный модуль **`contract_management_pro`**: entitlement gate, REST `/api/contracts`, web `/contracts`, optional `contractId` on purchases, `ContractsService.checkLimit()` before PO post.
 
 **Проблема:** договоры с контрагентами размазаны по заметкам CRM, PSA, закупкам и HR; нет единого реестра, лимитов и связи с исполнением.
 
@@ -569,7 +569,7 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 ### 4.16. Модуль 12: Годовой бюджет и исполнение (B2G / `OrganizationKind.BUDGET`)
 
-**Status:** [~] **PARTIAL** — полный цикл для **государственных и квазибюджетных** организаций; entitlement **`gov_budget_pro`** или включение в B2G bundle.
+**Status:** [x] **COMPLETED (Phase A, 2026-05-25)** — полный цикл для **государственных и квазибюджетных** организаций: entitlement **`gov_budget_pro`**, REST `/api/gov-budget`, web `/gov-budget`, `GovBudgetService.checkLimit()` gateway on purchases for `OrganizationKind.BUDGET`, demo org **Demo Budget Agency** in seed.
 
 **Проблема:** без годового плана и контроля исполнения по статьям невозможен законный расход; разрозненные лимиты в M2 недостаточны.
 
