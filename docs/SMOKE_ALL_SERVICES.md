@@ -267,6 +267,31 @@ curl -s -X POST http://localhost:3200/api/tickets \
   -d '{"outletCode":"BANQUET","beoId":"<beo-uuid>","covers":50}'
 ```
 
+## Hospitality Nafta — Wave 5 (GL, invoices, contract pricing)
+
+Requires hotel-pms @ `:3000`, optional orchestrator @ `:4100` + finance worker for GL journal smoke.
+
+```bash
+# NW-1 — revenue GL mappings + night audit E1
+curl -s http://localhost:3000/api/master/revenue-gl-mappings -H "Cookie: era_hotel_session=..."
+curl -s -X POST http://localhost:3000/api/night-audit/run -H "Cookie: era_hotel_session=..."
+
+# NW-2 — invoice center + agency CL
+curl -s http://localhost:3000/api/reports/invoices -H "Cookie: era_hotel_session=..."
+curl -s -X PATCH http://localhost:3000/api/reports/invoices/<fiscal-doc-id> \
+  -H "Content-Type: application/json" -H "Cookie: era_hotel_session=..." \
+  -d '{"integrateToAccounting":true}'
+curl -s "http://localhost:3000/api/reports/agency-cl-summary?from=2026-05-01&to=2026-05-31" \
+  -H "Cookie: era_hotel_session=..."
+
+# NW-3 — contract pricing quote
+curl -s "http://localhost:3000/api/bookings/quote?ratePlanId=<uuid>&checkInDate=2026-06-01&checkOutDate=2026-06-05&agencyId=<uuid>" \
+  -H "Cookie: era_hotel_session=..."
+
+# NW-4 — stop-sell (regression)
+curl -s http://localhost:3000/api/channel/stop-sell -H "Cookie: era_hotel_session=..."
+```
+
 ## SSO exchange (satellites)
 
 All 7 industry apps use `executeSatelliteSsoExchange` — session includes `BUSINESS_OWNER` when orchestrator SSO body has `financeRole: "OWNER"`.

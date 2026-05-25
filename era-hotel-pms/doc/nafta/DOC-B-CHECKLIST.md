@@ -86,3 +86,23 @@
 - satellite_banquet.plan.md (after HN-8)
 
 **Не** редактировать `hospitality_nafta_orchestrator_a0426e2f.plan.md` во время execution.
+
+## Wave 5 (NW-1 … NW-5)
+
+| Doc | NW-1 GL | NW-2 INV | NW-3 CP | NW-4 CH | NW-5 |
+|-----|:-------:|:--------:|:-------:|:-------:|:----:|
+| doc/DELIVERY.md Stage 22–24 | x | x | x | | x |
+| doc/UAT-SMOKE.md §16–19 | x | x | x | x | x |
+| docs/DEVELOPMENT_ROADMAP.md Wave 5 | | | | | x |
+| docs/SMOKE_ALL_SERVICES.md Wave 5 curls | x | x | x | | x |
+| doc/nafta/README.md Wave 5 table | | | | | x |
+| clone-spec/17-az-compliance.md (invoices) | | x | | | x |
+| clone-spec/18-erp-integration.md (GL/CL) | x | x | | | x |
+| era-finance-core industry-satellite-sync.md | x | | | | x |
+| packages/era-contracts hotel night-audit event | x | | | | x |
+
+Child plans (YAML `completed` after gate):
+
+- satellite_finance_gl_bridge.plan.md
+- satellite_hotel_invoice_agency.plan.md
+- satellite_hotel_contract_pricing.plan.md

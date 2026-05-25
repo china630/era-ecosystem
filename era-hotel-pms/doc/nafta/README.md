@@ -19,7 +19,19 @@ Stock / purchasing, full CRM surveys, loyalty, LIS/HL7, SPA recipes → stock, c
 
 **Wave 4 (done):** transfers (HN-7), banquets (HN-8).
 
-**Wave 5 (active):** finance GL bridge, invoice/agency, contract pricing — [nafta_wave5_master.plan.md](../../../.cursor/plans/nafta_wave5_master.plan.md).
+**Wave 5 (done):** finance GL bridge (NW-1), invoice/agency (NW-2), contract pricing (NW-3) — manifest [screens-manifest-v2-wave5-must.json](./screens-manifest-v2-wave5-must.json).
+
+## Wave 5 screens (WA_ACC_01 … WA_CHAN_02)
+
+| screen_id | Feature | Stage |
+|-----------|---------|-------|
+| WA_ACC_01 | Revenue → GL mapping + finance NAS journal | 22 |
+| WA_INV_01 | `/reports/invoices` | 23 |
+| WA_CASH_02 | Agency CL summary | 23 |
+| WA_CHAN_01 | Stop-sell `/channel` | existing (NW-4 verify) |
+| WA_CHAN_02 | `/admin/contract-pricing` | 24 |
+
+Clone-spec: [17-az-compliance.md](../clone-spec/17-az-compliance.md) (invoices), [18-erp-integration.md](../clone-spec/18-erp-integration.md) (GL + agency CL).
 
 ## Open questions — recorded defaults
 
@@ -66,4 +78,4 @@ Legacy v1: [screens-manifest.csv](./screens-manifest.csv) (292 rows).
 
 ## Baseline
 
-Git: `90d8319` on `origin/master` (post Wave 2). Builds: hotel-pms, fb-pos, clinic.
+Git: `18010b3` on `master` (post Wave 5). Builds: hotel-pms, finance api.

@@ -45,6 +45,16 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 | HN-7 | airport transfers (PMS) | **Done** |
 | HN-8 | banquet BEO + fb-pos service | **Done** |
 
+**Satellite Wave 5 — Hospitality Nafta Finance & Channel** (master: `.cursor/plans/nafta_wave5_master.plan.md`): GL bridge → invoice/agency → contract pricing → channel regression. Manifest: [screens-manifest-v2-wave5-must.json](../era-hotel-pms/doc/nafta/screens-manifest-v2-wave5-must.json).
+
+| NW | Focus | Status |
+|----|-------|--------|
+| NW-1 | finance GL bridge FIN-01 | **Done** |
+| NW-2 | hotel invoice center + agency CL | **Done** |
+| NW-3 | contract discounts PROC-24 | **Done** |
+| NW-4 | channel stop-sell regression PROC-23 | **Done** (verify only) |
+| NW-5 | DOC-B Wave 5 | **Done** |
+
 Priority by value and DELIVERY readiness. Do not start new platform debt here — file issues for CP2 (RS256/JWKS, `permissions[]`).
 
 | SP | Focus | Status |

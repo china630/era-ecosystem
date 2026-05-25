@@ -96,6 +96,30 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 4. `POST http://localhost:3200/api/tickets` with `{ "outletCode": "BANQUET", "beoId": "<event-id>", "guestName": "Corporate dinner" }`.
 5. Add extras line; optional room charge to in-house guest folio.
 
+## 16. GL-BRIDGE (Stage 22 / NW-1 FIN-01)
+
+1. `/admin/integration` — revenue → GL mapping table (ROOM→601, FOOD→602, …).
+2. `PUT /api/master/revenue-gl-mappings` with `{ "revenueCodeId", "glAccountCode" }`.
+3. Run night audit on `/operations` — outbound journal shows `NIGHT_AUDIT_CLOSED` with mapped lines.
+4. With `ERA_EVENT_GATEWAY_MODE=orchestrator`, finance worker posts multi-line NAS journal (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`).
+
+## 17. INVOICE-AGENCY (Stage 23 / NW-2)
+
+1. `/reports/invoices` — list fiscal documents; toggle **Integrate to accounting**.
+2. Issue invoice from folio — row appears with status SENT.
+3. `/reports/agency-ledger` — summary table: city ledger, cash paid, net amount per agency (PROC-21).
+
+## 18. CONTRACT-PRICING (Stage 24 / NW-3 PROC-24)
+
+1. `/admin/contract-pricing` — seed rule: TRAVEL-AZ −10% on STANDARD rate.
+2. `GET /api/bookings/quote?ratePlanId=…&checkInDate=…&checkOutDate=…&agencyId=…` — adjusted nightly.
+3. New booking with agency — `totalAmount` reflects contract discount.
+
+## 19. CHANNEL stop-sell regression (NW-4 / PROC-23)
+
+1. `/channel` — create stop-sell for room type + date; availability returns 0 for that type/range.
+2. Delete stop-sell — availability restores.
+
 ## 11. FB-POS bridge (Stage 17 / SP3)
 
 Requires `era-fb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.
