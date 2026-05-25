@@ -48,6 +48,8 @@ era-{name}/
 
 Publish via `POST {ORCHESTRATOR}/api/v1/satellite-events` with `@era/contracts` Zod types. See [`packages/era-contracts`](../packages/era-contracts).
 
+UI: [`@era/satellite-kit/ui`](../packages/satellite-kit) (DESIGN.md tokens, PageHeader, ModalShell). Auth: `@era/satellite-kit` SSO verify + session helpers.
+
 ## Satellite index
 
 | App | PRD | Port | Host |

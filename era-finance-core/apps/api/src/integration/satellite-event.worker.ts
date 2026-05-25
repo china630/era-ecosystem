@@ -5,22 +5,14 @@ import {
   OnModuleInit,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import {
-  getSatelliteEventType,
-  isSatelliteAutoWorkOrderCompleted,
-  isSatelliteClinicVisitCompleted,
-  isSatelliteConstructionProgressActApproved,
-  isSatelliteCrmLeadConverted,
-  isSatelliteHotelReservationCompleted,
-  isSatelliteLogisticsTripCompleted,
-  isSatelliteRetailSaleCompleted,
-  isSatelliteWholesaleOrderConfirmed,
-} from "@era/contracts";
+import { getSatelliteEventType, isSatelliteEvent } from "@era/contracts";
 import { Job, Worker } from "bullmq";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { PrismaService } from "../prisma/prisma.service";
 import { runWithTenantContextAsync } from "../prisma/tenant-context";
+import { SatelliteEventDispatchService } from "./satellite-event-dispatch.service";
+import { SatelliteEventIdempotencyService } from "./satellite-event-idempotency.service";
 import {
   ERA_SATELLITE_EVENTS_QUEUE,
   type SatelliteEventJobPayload,
@@ -34,6 +26,8 @@ export class SatelliteEventWorker implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     private readonly prisma: PrismaService,
+    private readonly idempotency: SatelliteEventIdempotencyService,
+    private readonly dispatch: SatelliteEventDispatchService,
   ) {}
 
   onModuleInit(): void {
@@ -72,6 +66,11 @@ export class SatelliteEventWorker implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    if (!isSatelliteEvent(data)) {
+      this.logger.warn(`Job ${job.id}: unrecognized event ${eventType}`);
+      return;
+    }
+
     const organizationId =
       typeof data === "object" &&
       data !== null &&
@@ -85,30 +84,38 @@ export class SatelliteEventWorker implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const recognized =
-      isSatelliteHotelReservationCompleted(data) ||
-      isSatelliteRetailSaleCompleted(data) ||
-      isSatelliteLogisticsTripCompleted(data) ||
-      isSatelliteConstructionProgressActApproved(data) ||
-      isSatelliteCrmLeadConverted(data) ||
-      isSatelliteAutoWorkOrderCompleted(data) ||
-      isSatelliteClinicVisitCompleted(data) ||
-      isSatelliteWholesaleOrderConfirmed(data);
-
-    if (!recognized) {
-      this.logger.warn(`Job ${job.id}: unrecognized event ${eventType}`);
-      return;
-    }
+    const correlationId =
+      typeof data === "object" &&
+      data !== null &&
+      "correlationId" in data &&
+      typeof (data as { correlationId: unknown }).correlationId === "string"
+        ? (data as { correlationId: string }).correlationId
+        : String(job.id);
 
     await runWithTenantContextAsync(
       { organizationId, skipTenantFilter: false },
       async () => {
-        this.logger.log(
-          `Satellite event ${eventType} correlation=${(data as { correlationId?: string }).correlationId ?? job.id}`,
+        const existing = await this.idempotency.findExisting(
+          organizationId,
+          correlationId,
         );
-        await this.prisma.$transaction(async () => {
-          // Placeholder: route to GL/stock services per event type
-        });
+        if (existing) {
+          this.logger.log(
+            `Satellite event ${eventType} correlation=${correlationId} already processed transaction=${existing.transactionId ?? "—"}`,
+          );
+          return;
+        }
+
+        const result = await this.dispatch.dispatch(organizationId, data);
+        await this.idempotency.record(
+          organizationId,
+          correlationId,
+          eventType,
+          result,
+        );
+        this.logger.log(
+          `Satellite event ${eventType} correlation=${correlationId} transaction=${result.transactionId ?? "—"} invoice=${result.invoiceId ?? "—"}`,
+        );
       },
     );
   }

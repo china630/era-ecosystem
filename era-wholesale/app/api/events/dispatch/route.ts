@@ -1,17 +1,30 @@
 import { NextResponse } from "next/server";
-import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
 import { randomUUID } from "crypto";
+import { isSatelliteEvent } from "@era/contracts";
+import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
 
 export async function POST(req: Request) {
-  const body = (await req.json()) as { type: string; payload?: Record<string, unknown> };
+  const body = (await req.json()) as Record<string, unknown>;
   const event = {
-    type: body.type,
-    organizationId: satelliteOrganizationId(),
-    correlationId: randomUUID(),
-    occurredAt: new Date().toISOString(),
-    payload: body.payload ?? {},
+    ...body,
+    organizationId:
+      typeof body.organizationId === "string"
+        ? body.organizationId
+        : satelliteOrganizationId(),
+    correlationId:
+      typeof body.correlationId === "string" ? body.correlationId : randomUUID(),
+    occurredAt:
+      typeof body.occurredAt === "string"
+        ? body.occurredAt
+        : new Date().toISOString(),
   };
-  const result = await publishToOrchestratorGateway(event);
+  if (!isSatelliteEvent(event)) {
+    return NextResponse.json(
+      { ok: false, error: "Unknown or invalid satellite event type" },
+      { status: 400 },
+    );
+  }
+  const result = await publishToOrchestratorGateway(event as Record<string, unknown>);
   if (!result.ok) {
     return NextResponse.json({ ok: false, error: result.error }, { status: 502 });
   }

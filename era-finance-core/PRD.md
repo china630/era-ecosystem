@@ -539,12 +539,15 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 | Модуль (ключ) | Сегмент | Ориентир цены (hook) |
 |---------------|---------|----------------------|
-| **RETAIL_ECOM** | Магазины, Instagram-продажи | +15 AZN/мес. за точку продаж |
-| **LOGISTICS_CUSTOMS** | Экспедиторы, перевозчики | +25 AZN/мес. за автопарк (fleet) |
-| **CONSTRUCTION** | Сметы, объекты, акты | +20 AZN/мес. за активный проект |
-| **CRM_WHATSAPP** | Сервис и продажи | +10 AZN/мес. за агента |
+| **RETAIL_ECOM** | Магазины, Instagram-продажи | +15 AZN/мес. за точку продаж → [`era-retail-pos`](../era-retail-pos) |
+| **LOGISTICS_CUSTOMS** | Экспедиторы, перевозчики | +25 AZN/мес. за автопарк → [`era-logistics`](../era-logistics) |
+| **CONSTRUCTION** | Сметы, объекты, акты | +20 AZN/мес. за проект → [`era-construction`](../era-construction) |
+| **CRM_WHATSAPP** | Pre-sale, визиты (не Finance CRM) | +10 AZN/мес. → [`era-crm-field`](../era-crm-field) |
+| **AUTO_STO** | Авто СТО, заказ-наряды | +18 AZN/мес. → [`era-auto-sto`](../era-auto-sto) |
+| **CLINIC** | Запись, приём | +22 AZN/мес. → [`era-clinic`](../era-clinic) |
+| **WHOLESALE** | B2B опт | +20 AZN/мес. → [`era-wholesale`](../era-wholesale) |
 
-- [x] **COMPLETED (entitlement gate, v2026.06):** slugs **`industry_*`** в `customConfig.modules` / Super-Admin; при включении — shell **`/industry/*`**, иначе painted-door модалка (waitlist). Полноценные вертикальные продукты — roadmap.
+- [x] **COMPLETED (entitlement gate, v2026.06):** slugs **`industry_*`** в `customConfig.modules` / Super-Admin; при включении — CTA на live satellite (`NEXT_PUBLIC_SATELLITE_*_URL`), иначе painted-door модалка (waitlist). Синхронизация: [docs/industry-satellite-sync.md](./docs/industry-satellite-sync.md).
 
 ### 5.0.2. Phase 16 — Spend-tier metering + marketplace (актуальная модель)
 

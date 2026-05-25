@@ -9,11 +9,13 @@ import { EARLY_ACCESS_MODULES } from "../../../components/early-access/modules.c
 import { PageHeader } from "../../../components/layout/page-header";
 import {
   CARD_CONTAINER_CLASS,
+  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "../../../lib/design-system";
 import {
   hasIndustryModuleAccess,
   industryItemByVertical,
+  satelliteUrlForItem,
 } from "../../../lib/industry-modules";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { useSubscription } from "../../../lib/subscription-context";
@@ -57,6 +59,13 @@ export default function IndustryVerticalPage() {
   const mod = EARLY_ACCESS_MODULES[item.key];
   const Icon = mod.icon;
   const entitled = hasIndustryModuleAccess(snapshot, item.key);
+  const satelliteUrl = satelliteUrlForItem(item);
+
+  function openSatellite() {
+    if (satelliteUrl) {
+      window.open(satelliteUrl, "_blank", "noopener,noreferrer");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -73,9 +82,24 @@ export default function IndustryVerticalPage() {
         <Icon className="mx-auto h-12 w-12 text-[#2980B9]" aria-hidden />
         <p className="mt-4 text-[13px] text-[#7F8C8D]">{t("industry.betaNotice")}</p>
         {entitled ? (
-          <p className="mt-2 text-sm font-medium text-[#34495E]">
-            {t("industry.entitledHint")}
-          </p>
+          <>
+            <p className="mt-2 text-sm font-medium text-[#34495E]">
+              {t("industry.entitledHint")}
+            </p>
+            {satelliteUrl ? (
+              <button
+                type="button"
+                className={`${PRIMARY_BUTTON_CLASS} mt-6`}
+                onClick={openSatellite}
+              >
+                {t("industry.openSatelliteApp")}
+              </button>
+            ) : (
+              <p className="mt-2 text-xs text-amber-700">
+                {t("industry.satelliteUrlMissing")}
+              </p>
+            )}
+          </>
         ) : (
           <p className="mt-2 text-sm text-[#7F8C8D]">{t("industry.waitlistHint")}</p>
         )}

@@ -56,4 +56,35 @@ curl -X POST http://retail.era.az/api/events/dispatch \
   -d "{\"type\":\"SATELLITE_RETAIL_SALE_COMPLETED\",\"payload\":{\"outletId\":\"o1\",\"registerId\":\"r1\",\"shiftId\":\"s1\",\"receiptId\":\"rc1\",\"preset\":\"grocery\",\"amountNet\":10,\"currency\":\"AZN\",\"paymentMethod\":\"CASH\",\"lineCount\":1}}"
 ```
 
-Check orchestrator and finance-core logs for enqueue/worker log line.
+Check orchestrator and finance-core logs for enqueue/worker log line with `transaction=` / `invoice=`.
+
+## Event dispatch per vertical
+
+Set `ERA_SATELLITE_ORGANIZATION_ID` to a valid finance org UUID and ensure org has at least one counterparty for invoice handlers.
+
+| Host | Example `type` |
+|------|----------------|
+| retail.era.az | `SATELLITE_RETAIL_SALE_COMPLETED` |
+| logistics.era.az | `SATELLITE_LOGISTICS_TRIP_COMPLETED` |
+| construction.era.az | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` |
+| crm.era.az | `SATELLITE_CRM_LEAD_CONVERTED` |
+| auto.era.az | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` |
+| clinic.era.az | `SATELLITE_CLINIC_VISIT_COMPLETED` |
+| wholesale.era.az | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` |
+
+```bash
+curl -X POST http://logistics.era.az/api/events/dispatch \
+  -H "Content-Type: application/json" \
+  -d "{\"type\":\"SATELLITE_LOGISTICS_TRIP_COMPLETED\",\"payload\":{\"tripId\":\"t1\",\"vehicleId\":\"v1\",\"freightAmount\":100,\"currency\":\"AZN\"}}"
+```
+
+Finance worker idempotency: table `satellite_events_processed` — replay same `correlationId` should skip.
+
+## SSO exchange (satellites)
+
+```bash
+# After orchestrator issues signed SSO payload:
+curl -X POST http://retail.era.az/api/auth/sso/exchange \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"user@example.com\",\"fullName\":\"Demo\",\"organizationId\":\"<org-uuid>\",\"expiresAt\":1999999999,\"signature\":\"<hmac>\"}"
+```

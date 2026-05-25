@@ -1,18 +1,32 @@
 import type { LucideIcon } from "lucide-react";
-import { HardHat, MessageSquare, ShoppingBag, Truck } from "lucide-react";
+import {
+  Car,
+  HardHat,
+  MessageSquare,
+  Package,
+  ShoppingBag,
+  Stethoscope,
+  Truck,
+} from "lucide-react";
 
 /** Mirrors Prisma enum `EarlyAccessModuleKey` (painted-door verticals). */
 export type EarlyAccessModuleKey =
   | "RETAIL_ECOM"
   | "LOGISTICS_CUSTOMS"
   | "CONSTRUCTION"
-  | "CRM_WHATSAPP";
+  | "CRM_WHATSAPP"
+  | "AUTO_STO"
+  | "CLINIC"
+  | "WHOLESALE";
 
 export const EARLY_ACCESS_MODULE_ORDER: EarlyAccessModuleKey[] = [
   "RETAIL_ECOM",
   "LOGISTICS_CUSTOMS",
   "CONSTRUCTION",
   "CRM_WHATSAPP",
+  "AUTO_STO",
+  "CLINIC",
+  "WHOLESALE",
 ];
 
 export const EARLY_ACCESS_MODULES: Record<
@@ -23,4 +37,7 @@ export const EARLY_ACCESS_MODULES: Record<
   LOGISTICS_CUSTOMS: { icon: Truck, priceAzn: 25, i18nKey: "logisticsCustoms" },
   CONSTRUCTION: { icon: HardHat, priceAzn: 20, i18nKey: "construction" },
   CRM_WHATSAPP: { icon: MessageSquare, priceAzn: 10, i18nKey: "crmWhatsapp" },
+  AUTO_STO: { icon: Car, priceAzn: 18, i18nKey: "autoSto" },
+  CLINIC: { icon: Stethoscope, priceAzn: 22, i18nKey: "clinic" },
+  WHOLESALE: { icon: Package, priceAzn: 20, i18nKey: "wholesale" },
 };

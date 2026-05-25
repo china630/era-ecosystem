@@ -71,6 +71,9 @@ export type OrganizationModuleEntitlements = {
   industryLogisticsCustoms: boolean;
   industryConstruction: boolean;
   industryCrmWhatsapp: boolean;
+  industryAutoSto: boolean;
+  industryClinic: boolean;
+  industryWholesale: boolean;
 };
 
 /** v8.1: снимок поля custom_config (конструктор тарифа). */
@@ -121,6 +124,9 @@ function entitlementsFromConstructorModules(
     industryLogisticsCustoms: has("industry_logistics_customs"),
     industryConstruction: has("industry_construction"),
     industryCrmWhatsapp: has("industry_crm_whatsapp"),
+    industryAutoSto: has("industry_auto_sto"),
+    industryClinic: has("industry_clinic"),
+    industryWholesale: has("industry_wholesale"),
   };
 }
 
@@ -164,6 +170,9 @@ function emptyOrganizationSnapshot(): {
       industryLogisticsCustoms: false,
       industryConstruction: false,
       industryCrmWhatsapp: false,
+      industryAutoSto: false,
+      industryClinic: false,
+      industryWholesale: false,
     },
     expiresAt: null,
     isTrial: false,
@@ -199,6 +208,9 @@ function computeEntitlementsLegacy(sub: {
     industryLogisticsCustoms: false,
     industryConstruction: false,
     industryCrmWhatsapp: false,
+    industryAutoSto: false,
+    industryClinic: false,
+    industryWholesale: false,
   };
 }
 
@@ -230,6 +242,9 @@ function computeEntitlements(sub: {
       industryLogisticsCustoms: false,
       industryConstruction: false,
       industryCrmWhatsapp: false,
+      industryAutoSto: false,
+      industryClinic: false,
+      industryWholesale: false,
     };
   }
   const customList = parseCustomModules(safe.customConfig);
@@ -279,6 +294,12 @@ function isAllowedByConstructorModules(
       return has("industry_construction");
     case "industry_crm_whatsapp":
       return has("industry_crm_whatsapp");
+    case "industry_auto_sto":
+      return has("industry_auto_sto");
+    case "industry_clinic":
+      return has("industry_clinic");
+    case "industry_wholesale":
+      return has("industry_wholesale");
     case "recovery_pro":
       return has("recovery_pro");
     default:

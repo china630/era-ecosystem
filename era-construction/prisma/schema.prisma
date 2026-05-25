@@ -26,3 +26,25 @@ model Outlet {
 
   @@unique([tenantId, code])
 }
+
+model Role {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  permissionsJson String   @default("[]")
+  users           User[]
+}
+
+model User {
+  id              String    @id @default(cuid())
+  login           String    @unique
+  email           String?
+  fullName        String
+  passwordHash    String
+  roleId          String
+  role            Role      @relation(fields: [roleId], references: [id])
+  status          String    @default("ACTIVE")
+  isCrossSystem   Boolean   @default(false) @map("is_cross_system")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+}

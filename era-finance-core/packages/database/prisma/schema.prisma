@@ -152,6 +152,7 @@ model Organization {
   manufacturingOrderLines      ManufacturingOrderLine[]
   earlyAccessEvents            EarlyAccessEvent[]
   earlyAccessSignups           EarlyAccessSignup[]
+  satelliteEventsProcessed     SatelliteEventProcessed[]
   auditSamples                 AuditSample[]
   auditEngagements             AuditEngagement[]
   auditEngagementInvitesTargets AuditEngagementInvite[] @relation("OrgAuditEngagementInvites")
@@ -1516,6 +1517,9 @@ enum EarlyAccessModuleKey {
   LOGISTICS_CUSTOMS
   CONSTRUCTION
   CRM_WHATSAPP
+  AUTO_STO
+  CLINIC
+  WHOLESALE
 }
 
 enum EarlyAccessEventType {
@@ -1577,6 +1581,23 @@ model EarlyAccessThresholdAlert {
 
   @@id([moduleKey, threshold])
   @@map("early_access_threshold_alerts")
+}
+
+/// Idempotent satellite event processing (orchestrator → finance worker).
+model SatelliteEventProcessed {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  correlationId  String   @map("correlation_id") @db.VarChar(128)
+  eventType      String   @map("event_type") @db.VarChar(64)
+  resultJson     Json?    @map("result_json")
+  transactionId  String?  @map("transaction_id") @db.Uuid
+  invoiceId      String?  @map("invoice_id") @db.Uuid
+  processedAt    DateTime @default(now()) @map("processed_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, correlationId], map: "satellite_events_org_corr_uidx")
+  @@index([organizationId, eventType, processedAt])
+  @@map("satellite_events_processed")
 }
 
 /// Comment classification: normal discussion vs auditor-only audit trail notes.

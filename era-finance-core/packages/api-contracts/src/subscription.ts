@@ -28,6 +28,9 @@ export const OrganizationModuleEntitlementsSchema = z.object({
   industryLogisticsCustoms: z.boolean().optional(),
   industryConstruction: z.boolean().optional(),
   industryCrmWhatsapp: z.boolean().optional(),
+  industryAutoSto: z.boolean().optional(),
+  industryClinic: z.boolean().optional(),
+  industryWholesale: z.boolean().optional(),
 });
 
 export const QuotaSnapshotSchema = z.object({
@@ -84,6 +87,9 @@ export const ModuleEntitlementKeySchema = z.enum([
   "industry_logistics_customs",
   "industry_construction",
   "industry_crm_whatsapp",
+  "industry_auto_sto",
+  "industry_clinic",
+  "industry_wholesale",
 ]);
 
 export type ModuleEntitlementKey = z.infer<typeof ModuleEntitlementKeySchema>;

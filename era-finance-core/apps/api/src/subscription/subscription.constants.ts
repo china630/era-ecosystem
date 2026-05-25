@@ -52,6 +52,9 @@ export const ModuleEntitlement = {
   INDUSTRY_LOGISTICS_CUSTOMS: "industry_logistics_customs",
   INDUSTRY_CONSTRUCTION: "industry_construction",
   INDUSTRY_CRM_WHATSAPP: "industry_crm_whatsapp",
+  INDUSTRY_AUTO_STO: "industry_auto_sto",
+  INDUSTRY_CLINIC: "industry_clinic",
+  INDUSTRY_WHOLESALE: "industry_wholesale",
 } as const;
 
 export type ModuleEntitlementKey =
