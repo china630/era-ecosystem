@@ -41,9 +41,11 @@ model PatientRef {
   refCode      String         @unique
   fullName     String
   phone        String?
+  globalPersonId String?
   appointments Appointment[]
   visits       Visit[]
   labOrders    LabOrder[]
+  episodes     ClinicalEpisode[]
   createdAt    DateTime       @default(now())
 }
 
@@ -99,6 +101,7 @@ model LabOrder {
   id           String         @id @default(cuid())
   patientRefId String
   visitId      String?
+  clinicalEpisodeId String?
   testCode     String
   status       LabOrderStatus @default(ORDERED)
   amountNet    Decimal        @default(0) @db.Decimal(12, 2)
@@ -108,10 +111,52 @@ model LabOrder {
   completedAt  DateTime?
   patientRef   PatientRef     @relation(fields: [patientRefId], references: [id])
   visit        Visit?         @relation(fields: [visitId], references: [id])
+  episode      ClinicalEpisode? @relation(fields: [clinicalEpisodeId], references: [id])
   createdAt    DateTime       @default(now())
 
   @@index([patientRefId, status])
   @@index([visitId])
+  @@index([clinicalEpisodeId])
+}
+
+model ClinicalEpisode {
+  id             String              @id @default(cuid())
+  patientRefId   String?
+  patientRef     PatientRef?         @relation(fields: [patientRefId], references: [id])
+  globalPersonId String?
+  hotelStayId    String?
+  reservationId  String?
+  organizationId String
+  status         String              @default("OPEN")
+  openedAt       DateTime            @default(now())
+  closedAt       DateTime?
+  complaints     ClinicalComplaint[]
+  diagnoses      ClinicalDiagnosis[]
+  labOrders      LabOrder[]
+
+  @@index([reservationId])
+  @@index([organizationId, status])
+}
+
+model ClinicalComplaint {
+  id         String          @id @default(cuid())
+  episodeId  String
+  episode    ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  text       String
+  recordedAt DateTime        @default(now())
+
+  @@index([episodeId])
+}
+
+model ClinicalDiagnosis {
+  id          String          @id @default(cuid())
+  episodeId   String
+  episode     ClinicalEpisode @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  icdCode     String?
+  description String
+  recordedAt  DateTime        @default(now())
+
+  @@index([episodeId])
 }
 
 model VisitDiscountAudit {

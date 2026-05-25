@@ -9,6 +9,9 @@ const bodySchema = z.object({
         code: z.string(),
         value: z.string(),
         unit: z.string().optional(),
+        refMin: z.string().optional(),
+        refMax: z.string().optional(),
+        flag: z.enum(['NORMAL', 'HIGH', 'LOW']).optional(),
       }),
     )
     .min(1),

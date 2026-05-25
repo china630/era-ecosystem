@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api")) {
-    if (isPublicApiPath(pathname)) return NextResponse.next();
+    if (isPublicApiPath(pathname, ["/api/sanatorium/episodes/from-stay"])) return NextResponse.next();
     const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
