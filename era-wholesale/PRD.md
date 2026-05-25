@@ -76,4 +76,4 @@ W0 done · W1 order+confirm E2E · W2 pick lists · W3 EDI export
 ## §8. Changelog
 
 2026-05-24 PRD v1.0
-2026-05-25 SP4 W2: pick list API + credit limit env stub
+2026-05-25 Wave 2 W2: pick list UI + Finance credit fallback

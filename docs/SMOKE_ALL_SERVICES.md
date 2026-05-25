@@ -195,11 +195,36 @@ Finance worker idempotency: table `satellite_events_processed` — replay same `
 | Clinic K2 | `POST /api/lab-orders/:id/complete`, `GET /api/lab-orders?status=` |
 | Clinic K3 | `GET /api/scheduling/slots` |
 | Construction C1 | `POST /api/acts/:id/approve` |
-| Construction C2 | `GET/POST /api/material-requisitions` |
+| Construction C2 | `GET/POST /api/material-requisitions`, `GET /api/projects/:id/plan-vs-actual` |
 | Auto A1 | `POST /api/work-orders/:id/complete` |
-| Auto A2 | `GET/POST /api/appointments` |
+| Auto A2 | `GET/POST /api/appointments`, UI `/appointments` |
 | Wholesale W1 | `POST /api/orders/:id/confirm` |
-| Wholesale W2 | `GET/POST /api/pick-lists`, `GET /api/credit-limit?counterpartyId=` |
+| Wholesale W2 | `GET/POST /api/pick-lists`, `PATCH /api/pick-lists/:id/lines/:lineId`, `GET /api/credit-limit?counterpartyId=` |
+
+## F&B POS + hotel bridge (Wave 2 / SP3)
+
+With `docker compose up -d fb-pos hotel-pms` (or local `:3200` / `:3000`):
+
+```bash
+# FB login (session cookie for RBAC)
+curl -c /tmp/fb-cookies.txt -X POST http://localhost:3200/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"login":"waiter","password":"waiter"}'
+
+curl -b /tmp/fb-cookies.txt http://localhost:3200/api/menu
+
+# Shift + ticket flow
+curl -b /tmp/fb-cookies.txt -X POST http://localhost:3200/api/shifts/open \
+  -H "Content-Type: application/json" \
+  -d '{"outletCode":"RESTAURANT","openingCash":100}'
+
+curl http://localhost:3200/api/tables
+
+# Hotel PMS bridge regression (hotel-pms must be running)
+node era-hotel-pms/scripts/test-pos-bridge.mjs
+```
+
+Room charge from fb-pos uses `HOTEL_PMS_URL`; stub with `FB_POS_PMS_STUB=1` for offline dev.
 
 ## CI checklist (S8 / PP7)
 

@@ -12,5 +12,5 @@ PRD: [../PRD.md](../PRD.md)
 
 ## W2
 
-- [x] Pick list API — `GET/POST /api/pick-lists`
-- [x] Credit limit read stub from env — `GET /api/credit-limit?counterpartyId=`
+- [x] Pick list API — `GET/POST /api/pick-lists`, `/pick-lists` UI + line confirm
+- [x] Credit limit — `GET /api/credit-limit?counterpartyId=` (Finance API with env stub fallback)

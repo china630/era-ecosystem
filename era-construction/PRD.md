@@ -103,4 +103,4 @@ Material purchase → Finance procurement (not satellite GL).
 | Date | Note |
 |------|------|
 | 2026-05-24 | PRD v1.0 |
-| 2026-05-25 | SP4 C2: material requisition API |
+| 2026-05-25 | Wave 2 C2: plan-vs-actual API + project/requisition UI |

@@ -12,4 +12,4 @@ PRD: [../PRD.md](../PRD.md)
 
 ## A2
 
-- [x] Appointments (A-05) — `GET/POST /api/appointments`
+- [x] Appointments (A-05) — `GET/POST /api/appointments`, `/appointments` UI

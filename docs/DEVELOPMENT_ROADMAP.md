@@ -31,14 +31,16 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 
 **Satellite Wave 1** (orchestrator: `.cursor/plans/satellite_wave1_orchestrator.plan.md`): retail R2/R3 → CRM C2 → clinic K2/K3 → logistics L2 — **complete** 2026-05-25.
 
+**Satellite Wave 2** (orchestrator: `.cursor/plans/satellite_wave2_orchestrator.plan.md`): fb-pos FB-0 + hotel regression → construction/auto/wholesale UI — **complete** 2026-05-25.
+
 Priority by value and DELIVERY readiness. Do not start new platform debt here — file issues for CP2 (RS256/JWKS, `permissions[]`).
 
 | SP | Focus | Status |
 |----|-------|--------|
 | **SP1** | Retail R2/R3 + CRM C2 | **Done (Wave 1)** — preset checkout, void/return/shift-close; visits, assign, inbox stub |
 | **SP2** | Logistics L2 + Clinic K2/K3 | **Done (Wave 1)** — POD/fuel UI; lab lifecycle, discount audit, executive |
-| **SP3** | F&B FB-1 + Hotel Stage 17 | **Pending** |
-| **SP4** | Construction C2, Auto A2, Wholesale W2 | **In progress** — material requisitions, appointments, pick-list + credit-limit stub done; plan-vs-actual pending |
+| **SP3** | F&B FB-1 + Hotel Stage 17 | **Done (Wave 2)** — FB-0 auth/menu, UI wired, bridge regression |
+| **SP4** | Construction C2, Auto A2, Wholesale W2 | **Done (Wave 2)** — plan-vs-actual UI, appointments UI, pick lists + Finance credit fallback |
 | **SP5** | UAT-SMOKE pass, PRD/TZ sync | **Pending** |
 
 ### Legacy sprint index (S1–S8 scaffold)
