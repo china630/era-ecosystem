@@ -12,11 +12,28 @@ const createSchema = z.object({
     .enum(["whatsapp", "instagram", "visit", "phone", "other"])
     .optional(),
   estimatedAmount: z.number().optional(),
+  ownerId: z.string().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const ownerId = searchParams.get("ownerId");
+    const mine = searchParams.get("mine") === "true";
+    const userId = req.headers.get("x-user-id");
+
+    const where =
+      mine && userId
+        ? { ownerId: userId }
+        : ownerId
+          ? { ownerId }
+          : undefined;
+
     const leads = await prisma.lead.findMany({
+      where,
+      include: {
+        owner: { select: { id: true, fullName: true, login: true } },
+      },
       orderBy: { updatedAt: "desc" },
       take: 100,
     });
@@ -37,6 +54,7 @@ export async function POST(req: Request) {
         stage,
         channel: body.channel ?? "other",
         estimatedAmount: body.estimatedAmount,
+        ownerId: body.ownerId,
         stageHistory: {
           create: { toStage: stage },
         },

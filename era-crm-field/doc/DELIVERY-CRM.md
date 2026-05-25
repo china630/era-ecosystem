@@ -17,9 +17,11 @@ PRD: [../PRD.md](../PRD.md)
 
 ## C2 — Field & inbox
 
-- [ ] Visit check-in UI (C-03)
-- [ ] Agent assignment (C-06)
-- [ ] Inbox stub (WA/IG metadata only)
+- [x] Visits API — list/create (C-03) — `GET/POST /api/visits`
+- [x] Visit logged event dispatch — `SATELLITE_CRM_VISIT_LOGGED`
+- [x] Visit check-in UI — `/visits` list + log form
+- [x] Agent assignment (C-06) — `PATCH /api/leads/:id/assign`, pipeline filter
+- [x] Inbox stub (WA/IG metadata only) — `/inbox`, `InboxThread` model
 
 ## C3 — Deferred
 

@@ -75,8 +75,8 @@
 | M0 | Shell, SSO, health | — | **MVP** | — |
 | M1 | Lead pipeline | Kommo pipeline | **PLANNED** | — |
 | M2 | Lead card & activities | Bitrix timeline | **PLANNED** | — |
-| M3 | Channel inbox (WA/IG stub) | Respond.io | **PLANNED** | — |
-| M4 | Visit log & geo stub | — | **PLANNED** | — |
+| M3 | Channel inbox (WA/IG stub) | Respond.io | **MVP** | — |
+| M4 | Visit log & geo stub | — | **MVP** | — |
 | M5 | Convert lead | Kommo «won» | **PLANNED** | `SATELLITE_CRM_LEAD_CONVERTED` |
 | M6 | Finance handoff UI | — | **PLANNED** | Link to Finance counterparty |
 | M7 | WA Business API live | Respond.io | **DEFERRED** | Finance sends invoice |
@@ -102,8 +102,7 @@
 | Event | When | Finance |
 |-------|------|---------|
 | `SATELLITE_CRM_LEAD_CONVERTED` | Lead → Won | Link/create counterparty; optional draft invoice |
-
-Planned: `SATELLITE_CRM_VISIT_LOGGED` (Phase 2) — not in contracts yet.
+| `SATELLITE_CRM_VISIT_LOGGED` | Field visit logged | Activity log stub in Finance worker |
 
 ---
 
@@ -124,3 +123,5 @@ Planned: `SATELLITE_CRM_VISIT_LOGGED` (Phase 2) — not in contracts yet.
 |------|------|
 | 2026-05-23 | Scaffold |
 | 2026-05-24 | PRD v1.0 + explicit Finance boundary |
+| 2026-05-25 | SP1 C2: visits API + `SATELLITE_CRM_VISIT_LOGGED` dispatch |
+| 2026-05-25 | SP1 C2 SW2: visit UI, agent assignment, inbox stub (WA/IG metadata) |

@@ -16,7 +16,17 @@ export default function HomePage() {
           </li>
           <li>
             <Link href="/leads" className={PRIMARY_BUTTON_CLASS}>
-              Open main screen
+              Pipeline
+            </Link>
+          </li>
+          <li>
+            <Link href="/visits" className={PRIMARY_BUTTON_CLASS}>
+              Visits
+            </Link>
+          </li>
+          <li>
+            <Link href="/inbox" className={PRIMARY_BUTTON_CLASS}>
+              Inbox
             </Link>
           </li>
         </ul>

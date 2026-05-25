@@ -52,11 +52,16 @@ model Lead {
   channel         LeadChannel        @default(other)
   estimatedAmount Decimal?           @db.Decimal(12, 2)
   counterpartyId  String?
+  ownerId         String?
+  owner           User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   visits          Visit[]
   stageHistory    LeadStageHistory[]
+  inboxThreads    InboxThread[]
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   convertedAt     DateTime?
+
+  @@index([ownerId])
 }
 
 model LeadStageHistory {
@@ -100,4 +105,24 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+  ownedLeads      Lead[]
+}
+
+enum InboxChannel {
+  whatsapp
+  instagram
+}
+
+model InboxThread {
+  id            String       @id @default(cuid())
+  channel       InboxChannel
+  externalRef   String
+  leadId        String?
+  preview       String?
+  lastMessageAt DateTime     @default(now())
+  lead          Lead?        @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+
+  @@index([leadId])
+  @@index([lastMessageAt])
 }
