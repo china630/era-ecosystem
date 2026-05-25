@@ -15,8 +15,10 @@ PRD: [../PRD.md](../PRD.md)
 
 ## L2
 
-- [ ] POD capture (L-04)
-- [ ] Fuel report (L-05)
+- [x] POD capture (L-04) — `GET/POST /api/trips/:id/pod`, form on `/trips/[id]`
+- [x] Fuel report (L-05) — `GET/POST /api/trips/:id/fuel-report`, fleet rollup `GET /api/reports/fuel`
+- [x] Trip detail UI — status PLANNED → IN_TRANSIT → DELIVERED → COMPLETE
+- [x] Fuel summary page `/reports/fuel`
 
 ## L3
 

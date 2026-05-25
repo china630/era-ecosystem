@@ -38,7 +38,19 @@ Tenant → Vehicle → Driver → Trip → TripStop (optional) → PodRecord (L2
 | POST | `/api/events/dispatch` | L-03 |
 | GET/POST | `/api/vehicles` | L-02 |
 | GET/POST | `/api/trips` | L-01 |
+| GET/PATCH | `/api/trips/:id` | L2 status workflow |
+| GET/POST | `/api/trips/:id/pod` | L-04 |
+| GET/POST | `/api/trips/:id/fuel-report` | L-05 |
+| GET | `/api/reports/fuel?from=&to=` | L-05 fleet rollup |
 | POST | `/api/trips/:id/complete` | L-03 → `SATELLITE_LOGISTICS_TRIP_COMPLETED` |
+
+## UI routes (L2)
+
+| Path | Purpose |
+|------|---------|
+| `/trips` | Trip list → detail links |
+| `/trips/[id]` | POD, fuel, status steps, complete |
+| `/reports/fuel` | Date-range fuel summary table |
 
 Event payload: `tripId`, `vehicleId`, `freightAmount`, `currency: AZN` — see [logistics.events.ts](../packages/era-contracts/src/events/logistics.events.ts).
 

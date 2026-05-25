@@ -59,10 +59,10 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 |----|--------|--------|---------|
 | M0 | Platform shell | **MVP** | — |
 | M1 | Fleet (vehicle, driver) | **PLANNED** | — |
-| M2 | Trip planning & status | **PLANNED** | `TRIP_COMPLETED` |
+| M2 | Trip planning & status | **MVP** | `TRIP_COMPLETED` |
 | M3 | Waybill document | **PLANNED** | — |
-| M4 | POD (photo/signature stub) | **PLANNED** | — |
-| M5 | Fuel norm per trip | **PLANNED** | Cost event Phase 2 |
+| M4 | POD (photo/signature stub) | **MVP** | — |
+| M5 | Fuel norm per trip | **MVP** | Cost event Phase 2 |
 | M6 | Customs handoff flag | **DEFERRED** | Finance trade_pro |
 
 ---
@@ -104,3 +104,5 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 |------|------|
 | 2026-05-23 | Scaffold |
 | 2026-05-24 | PRD v1.0 |
+| 2026-05-25 | SP2 L2: POD + fuel report APIs |
+| 2026-05-25 | SW4 L2: trip detail UI, fuel fleet rollup, workflow |

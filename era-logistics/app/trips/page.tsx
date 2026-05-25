@@ -18,60 +18,54 @@ type Trip = {
 
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [message, setMessage] = useState("");
-
-  async function loadTrips() {
-    const res = await fetch("/api/trips");
-    setTrips(await res.json());
-  }
 
   useEffect(() => {
-    void loadTrips();
+    fetch("/api/trips")
+      .then((res) => res.json())
+      .then((data) => setTrips(Array.isArray(data) ? data : []));
   }, []);
-
-  async function completeTrip(id: string) {
-    setMessage("");
-    const res = await fetch(`/api/trips/${id}/complete`, { method: "POST" });
-    const data = await res.json();
-    if (!res.ok) {
-      setMessage(data.error ?? "Failed");
-      return;
-    }
-    setMessage(`Trip ${id.slice(0, 8)} completed`);
-    await loadTrips();
-  }
 
   return (
     <>
       <PageHeader
         title="ERA Logistics"
-        subtitle="Trips — complete to dispatch event"
+        subtitle="Trips — open detail for POD, fuel, workflow"
         actions={
-          <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
-          </Link>
+          <>
+            <Link
+              href="/reports/fuel"
+              className="mr-2 text-[13px] text-[#2980B9] hover:underline"
+            >
+              Fuel report
+            </Link>
+            <Link href="/" className={PRIMARY_BUTTON_CLASS}>
+              Home
+            </Link>
+          </>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-3`}>
-        {message && <p className="text-[13px]">{message}</p>}
-        <ul className="space-y-2 text-[13px]">
-          {trips.map((trip) => (
-            <li key={trip.id} className="flex items-center justify-between rounded border p-2">
-              <span>
-                {trip.vehicle.plate} — {Number(trip.freightAmount).toFixed(2)} AZN ({trip.status})
-              </span>
-              {trip.status !== "COMPLETED" && (
-                <button
-                  type="button"
-                  className="text-[12px] text-[#2980B9] underline"
-                  onClick={() => completeTrip(trip.id)}
+        {trips.length === 0 ? (
+          <p className="text-[13px] text-[#7F8C8D]">No trips yet.</p>
+        ) : (
+          <ul className="space-y-2 text-[13px]">
+            {trips.map((trip) => (
+              <li key={trip.id}>
+                <Link
+                  href={`/trips/${trip.id}`}
+                  className="flex items-center justify-between rounded border p-2 hover:bg-[#F8F9FA]"
                 >
-                  Complete
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
+                  <span>
+                    {trip.vehicle.plate}
+                    {trip.routeCode ? ` · ${trip.routeCode}` : ""} —{" "}
+                    {Number(trip.freightAmount).toFixed(2)} AZN
+                  </span>
+                  <span className="text-[12px] text-[#7F8C8D]">{trip.status}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </>
   );

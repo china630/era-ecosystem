@@ -16,7 +16,12 @@ export default function HomePage() {
           </li>
           <li>
             <Link href="/trips" className={PRIMARY_BUTTON_CLASS}>
-              Open main screen
+              Trips
+            </Link>
+          </li>
+          <li>
+            <Link href="/reports/fuel" className="font-medium text-[#2980B9] hover:underline">
+              Fuel report
             </Link>
           </li>
         </ul>
