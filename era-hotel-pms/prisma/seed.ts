@@ -42,6 +42,7 @@ async function main() {
   await prisma.folioPayment.deleteMany();
   await prisma.folioCharge.deleteMany();
   await prisma.folioRoutingRule.deleteMany();
+  await prisma.hotelRevenueGlMapping.deleteMany();
   await prisma.folio.deleteMany();
   await prisma.stay.deleteMany();
   await prisma.reservation.deleteMany();
@@ -152,6 +153,18 @@ async function main() {
   });
   await prisma.folioRoutingRule.create({
     data: { revenueCodeId: revFood.id, targetFolioType: 'GUEST' },
+  });
+
+  await prisma.hotelRevenueGlMapping.createMany({
+    data: [
+      { revenueCodeId: revRoom.id, glAccountCode: '601' },
+      { revenueCodeId: revFood.id, glAccountCode: '602' },
+      { revenueCodeId: revMedical.id, glAccountCode: '603' },
+      { revenueCodeId: revPkg.id, glAccountCode: '601' },
+      { revenueCodeId: revTreatment.id, glAccountCode: '604' },
+      { revenueCodeId: revBoard.id, glAccountCode: '605' },
+      { revenueCodeId: revTransfer.id, glAccountCode: '606' },
+    ],
   });
 
   const mealHB = await prisma.mealPlan.create({ data: { code: 'HB', name: 'Half board' } });

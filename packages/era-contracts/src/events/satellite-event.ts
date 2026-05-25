@@ -8,7 +8,7 @@ import {
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
 } from "./crm-field.events";
-import { isSatelliteHotelReservationCompleted } from "./hotel.events";
+import { isSatelliteHotelNightAuditClosed, isSatelliteHotelReservationCompleted } from "./hotel.events";
 import { isSatelliteLogisticsTripCompleted } from "./logistics.events";
 import {
   isSatelliteRetailSaleCompleted,
@@ -24,6 +24,7 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
 } {
   return (
     isSatelliteHotelReservationCompleted(data) ||
+    isSatelliteHotelNightAuditClosed(data) ||
     isSatelliteRetailSaleCompleted(data) ||
     isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||

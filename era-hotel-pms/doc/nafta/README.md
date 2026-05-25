@@ -17,7 +17,9 @@ Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full s
 
 Stock / purchasing, full CRM surveys, loyalty, LIS/HL7, SPA recipes → stock, citizen portal UI.
 
-**Wave 4 (done):** transfers (HN-7), banquets (HN-8). Master orchestrator: `.cursor/plans/nafta_wave3_wave4_master.plan.md`.
+**Wave 4 (done):** transfers (HN-7), banquets (HN-8).
+
+**Wave 5 (active):** finance GL bridge, invoice/agency, contract pricing — [nafta_wave5_master.plan.md](../../../.cursor/plans/nafta_wave5_master.plan.md).
 
 ## Open questions — recorded defaults
 

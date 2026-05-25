@@ -418,7 +418,13 @@
     "rejectionDemo": "VÖEN uyğunsuzluğu (demo)",
     "outboundJournal": "Gedən jurnal",
     "attempts": "Cəhdlər",
-    "noEvents": "Hələ hadisə yoxdur"
+    "noEvents": "Hələ hadisə yoxdur",
+    "glMappingTitle": "Gəlir → GL mapinq (FIN-01)",
+    "glMappingHint": "Night audit E1 sətirləri otel gəlir kodlarını finance NAS hesablarına map edir.",
+    "revenueCode": "Gəlir kodu",
+    "glAccount": "GL hesabı",
+    "glMappingSaved": "GL mapinq saxlanıldı",
+    "noGlMappings": "Gəlir kodu yoxdur — Master data-da əlavə edin."
   },
   "stock": {
     "title": "Anbar (faza 2)",

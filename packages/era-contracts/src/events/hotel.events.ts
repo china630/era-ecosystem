@@ -45,3 +45,55 @@ export function isSatelliteHotelReservationCompleted(
 ): data is SatelliteHotelReservationCompletedEvent {
   return satelliteHotelReservationCompletedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED =
+  "SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED" as const;
+
+export interface SatelliteHotelNightAuditClosedEvent {
+  type: typeof SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED;
+  organizationId: string;
+  correlationId: string;
+  occurredAt: string;
+  payload: {
+    businessDate: string;
+    nightAuditId?: string;
+    currency: "AZN";
+    revenueLines: Array<{
+      revenueCode: string;
+      amount: number;
+      glAccountCode: string;
+    }>;
+    paymentLines: Array<{ method: string; amount: number }>;
+  };
+}
+
+const nightAuditRevenueLineSchema = z.object({
+  revenueCode: z.string(),
+  amount: z.number(),
+  glAccountCode: z.string(),
+});
+
+export const satelliteHotelNightAuditClosedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  payload: z.object({
+    businessDate: z.string().min(1),
+    nightAuditId: z.string().optional(),
+    currency: z.literal("AZN"),
+    revenueLines: z.array(nightAuditRevenueLineSchema),
+    paymentLines: z.array(
+      z.object({
+        method: z.string(),
+        amount: z.number(),
+      }),
+    ),
+  }),
+});
+
+export function isSatelliteHotelNightAuditClosed(
+  data: unknown,
+): data is SatelliteHotelNightAuditClosedEvent {
+  return satelliteHotelNightAuditClosedSchema.safeParse(data).success;
+}

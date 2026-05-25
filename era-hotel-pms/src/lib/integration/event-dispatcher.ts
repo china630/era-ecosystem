@@ -14,6 +14,7 @@ import {
 } from './integration-settings';
 import {
   envelopeToReservationCompletedEvent,
+  envelopeToNightAuditClosedEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
 import type {
@@ -111,7 +112,7 @@ export function buildNightAuditEvent(
   input: {
     businessDate: string;
     nightAuditId?: string;
-    revenueLines: Array<{ revenueCode: string; amount: number }>;
+    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
     paymentLines: Array<{ method: string; amount: number }>;
   },
   hotelId: string,
@@ -341,7 +342,8 @@ export async function publishEvent(
   const outboundSettings = settings ?? (await getOutboundSettings());
 
   if (
-    envelope.eventType === 'SATELLITE_HOTEL_RESERVATION_COMPLETED' &&
+    (envelope.eventType === 'SATELLITE_HOTEL_RESERVATION_COMPLETED' ||
+      envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED') &&
     eventGatewayMode() === 'orchestrator'
   ) {
     const organizationId =
@@ -357,10 +359,10 @@ export async function publishEvent(
         attempts: 0,
       };
     }
-    const contractEvent = envelopeToReservationCompletedEvent(
-      envelope,
-      organizationId,
-    );
+    const contractEvent =
+      envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED'
+        ? envelopeToNightAuditClosedEvent(envelope, organizationId)
+        : envelopeToReservationCompletedEvent(envelope, organizationId);
     if (!contractEvent) {
       const msg = 'Failed to map envelope to @era/contracts event';
       await logOutboundEvent(envelope, 'FAILED', 0, msg);
@@ -472,7 +474,9 @@ export async function dispatchNightAuditClosed(input: {
   paymentLines: Array<{ method: string; amount: number }>;
 }): Promise<DispatchResult> {
   const hotelId = await getPropertyCode();
-  const envelope = buildNightAuditEvent(input, hotelId);
+  const { enrichRevenueLinesWithGl } = await import('@/lib/services/revenue-gl-mapping.service');
+  const revenueLines = await enrichRevenueLinesWithGl(input.revenueLines);
+  const envelope = buildNightAuditEvent({ ...input, revenueLines }, hotelId);
   return publishEvent(envelope);
 }
 

@@ -1,6 +1,8 @@
 import axios, { AxiosError } from "axios";
 import {
+  SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED,
   SATELLITE_HOTEL_RESERVATION_COMPLETED,
+  type SatelliteHotelNightAuditClosedEvent,
   type SatelliteHotelReservationCompletedEvent,
 } from "@era/contracts";
 import type { IntegrationEnvelope } from "./event-types";
@@ -46,6 +48,39 @@ export function envelopeToReservationCompletedEvent(
   };
 }
 
+export function envelopeToNightAuditClosedEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelNightAuditClosedEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED) {
+    return null;
+  }
+  const payload = envelope.payload as {
+    businessDate: string;
+    nightAuditId?: string;
+    currency: "AZN";
+    revenueLines: Array<{ revenueCode: string; amount: number; glAccountCode?: string }>;
+    paymentLines: Array<{ method: string; amount: number }>;
+  };
+  return {
+    type: SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    payload: {
+      businessDate: payload.businessDate,
+      nightAuditId: payload.nightAuditId,
+      currency: payload.currency,
+      revenueLines: payload.revenueLines.map((line) => ({
+        revenueCode: line.revenueCode,
+        amount: line.amount,
+        glAccountCode: line.glAccountCode ?? "601",
+      })),
+      paymentLines: payload.paymentLines,
+    },
+  };
+}
+
 export type OrchestratorGatewayResult = {
   ok: boolean;
   status?: number;
@@ -57,7 +92,7 @@ export type OrchestratorGatewayResult = {
  * `POST ${ORCHESTRATOR_EVENT_URL}/api/v1/satellite-events` with service token.
  */
 export async function publishToOrchestratorGateway(
-  event: SatelliteHotelReservationCompletedEvent,
+  event: SatelliteHotelReservationCompletedEvent | SatelliteHotelNightAuditClosedEvent,
 ): Promise<OrchestratorGatewayResult> {
   const baseUrl =
     process.env.ORCHESTRATOR_EVENT_URL ??

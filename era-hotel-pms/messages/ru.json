@@ -418,7 +418,13 @@
     "rejectionDemo": "Несовпадение VÖEN (демо)",
     "outboundJournal": "Журнал исходящих",
     "attempts": "Попытки",
-    "noEvents": "Событий пока нет"
+    "noEvents": "Событий пока нет",
+    "glMappingTitle": "Маппинг выручки → GL (FIN-01)",
+    "glMappingHint": "Строки E1 night audit: коды выручки отеля → счета NAS в finance.",
+    "revenueCode": "Код выручки",
+    "glAccount": "Счёт GL",
+    "glMappingSaved": "Маппинг сохранён",
+    "noGlMappings": "Нет кодов выручки — добавьте в Master data."
   },
   "stock": {
     "title": "Склад (фаза 2)",

@@ -230,3 +230,13 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528130000_wave4_transfer`
 
+### Stage 22 — GL-BRIDGE (Wave 5 Nafta NW-1)
+
+- [x] `HotelRevenueGlMapping` — revenue code → NAS GL account (601–606 seed)
+- [x] Night audit E1 enriches `revenueLines` with `glAccountCode`; orchestrator `@era/contracts` `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`
+- [x] Finance `SatelliteEventDispatchService.handleHotelNightAudit` — multi-line NAS journal
+- [x] Admin `/admin/integration` — GL mapping table + `PUT /api/master/revenue-gl-mappings`
+- [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § GL-BRIDGE
+
+**Migration:** `20260528150000_wave5_gl_bridge`
+

@@ -6,6 +6,7 @@ import {
   isSatelliteConstructionProgressActApproved,
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
+  isSatelliteHotelNightAuditClosed,
   isSatelliteHotelReservationCompleted,
   isSatelliteLogisticsTripCompleted,
   isSatelliteRetailSaleCompleted,
@@ -17,6 +18,7 @@ import {
   satelliteConstructionProgressActSchema,
   satelliteCrmLeadConvertedSchema,
   satelliteCrmVisitLoggedSchema,
+  satelliteHotelNightAuditClosedSchema,
   satelliteHotelReservationCompletedSchema,
   satelliteLogisticsTripCompletedSchema,
   satelliteRetailSaleCompletedSchema,
@@ -51,6 +53,10 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     data: unknown,
   ): Promise<SatelliteDispatchResult> {
+    if (isSatelliteHotelNightAuditClosed(data)) {
+      const event = satelliteHotelNightAuditClosedSchema.parse(data);
+      return this.handleHotelNightAudit(organizationId, event);
+    }
     if (isSatelliteHotelReservationCompleted(data)) {
       const event = satelliteHotelReservationCompletedSchema.parse(data);
       return this.handleHotelReservation(organizationId, event);
@@ -100,6 +106,10 @@ export class SatelliteEventDispatchService {
 
   private receivableAccount(): string {
     return process.env.SATELLITE_GL_RECEIVABLE ?? "201";
+  }
+
+  private cashAccount(): string {
+    return process.env.SATELLITE_GL_CASH ?? "221";
   }
 
   private revenueAccount(): string {
@@ -226,6 +236,76 @@ export class SatelliteEventDispatchService {
       transactionId,
       invoiceId,
       meta: { reservationId: event.payload.reservationId },
+    };
+  }
+
+  private async handleHotelNightAudit(
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelNightAuditClosedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    const revenueLines = event.payload.revenueLines.filter((l) => l.amount > 0);
+    const totalRevenue = revenueLines.reduce((sum, line) => sum + line.amount, 0);
+    const totalPayments = event.payload.paymentLines.reduce((sum, line) => sum + line.amount, 0);
+    if (totalRevenue <= 0) {
+      return {
+        meta: {
+          businessDate: event.payload.businessDate,
+          skipped: true,
+          reason: "zero revenue",
+        },
+      };
+    }
+
+    const lines: PostTransactionLine[] = [];
+    for (const line of revenueLines) {
+      lines.push({
+        accountCode: line.glAccountCode || this.revenueAccount(),
+        debit: 0,
+        credit: line.amount,
+      });
+    }
+    const arAmount = Math.max(0, totalRevenue - totalPayments);
+    if (totalPayments > 0) {
+      lines.push({
+        accountCode: this.cashAccount(),
+        debit: totalPayments,
+        credit: 0,
+      });
+    }
+    if (arAmount > 0) {
+      lines.push({
+        accountCode: this.receivableAccount(),
+        debit: arAmount,
+        credit: 0,
+      });
+    }
+
+    const transactionId = await this.prisma.$transaction(async (tx) => {
+      const debit = lines.reduce((s, l) => s + Number(l.debit), 0);
+      const credit = lines.reduce((s, l) => s + Number(l.credit), 0);
+      if (Math.abs(debit - credit) > 0.01) {
+        throw new Error("Night audit journal is not balanced");
+      }
+      const { transactionId: txId } = await this.accounting.postJournalInTransaction(tx, {
+        organizationId,
+        date: new Date(`${event.payload.businessDate}T12:00:00.000Z`),
+        reference: `hotel-na:${event.payload.businessDate}`,
+        description: `Hotel night audit ${event.payload.businessDate} (${event.correlationId})`,
+        ledgerType: LedgerType.NAS,
+        lines,
+      });
+      return txId;
+    });
+
+    return {
+      transactionId,
+      meta: {
+        businessDate: event.payload.businessDate,
+        nightAuditId: event.payload.nightAuditId,
+        revenueLineCount: revenueLines.length,
+        totalRevenue,
+        totalPayments,
+      },
     };
   }
 

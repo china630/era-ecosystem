@@ -171,6 +171,57 @@ interface OutboundLog {
   createdAt: string;
 }
 
+interface GlMapping {
+  id: string;
+  glAccountCode: string;
+  revenueCode: { id: string; code: string; name: string };
+}
+
+function GlMappingRow({
+  mapping,
+  onSave,
+}: {
+  mapping: GlMapping;
+  onSave: (revenueCodeId: string, glAccountCode: string) => Promise<void>;
+}) {
+  const tc = useTranslations('common');
+  const [code, setCode] = useState(mapping.glAccountCode);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setCode(mapping.glAccountCode);
+  }, [mapping.glAccountCode]);
+
+  return (
+    <tr className={DATA_TABLE_TR_CLASS}>
+      <td className={DATA_TABLE_TD_CLASS}>
+        {mapping.revenueCode.code} — {mapping.revenueCode.name}
+      </td>
+      <td className={DATA_TABLE_TD_CLASS}>
+        <input
+          className={MODAL_INPUT_CLASS}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+      </td>
+      <td className={DATA_TABLE_TD_CLASS}>
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || code === mapping.glAccountCode}
+          onClick={async () => {
+            setBusy(true);
+            await onSave(mapping.revenueCode.id, code);
+            setBusy(false);
+          }}
+        >
+          {tc('save')}
+        </button>
+      </td>
+    </tr>
+  );
+}
+
 const REALTIME_EVENT_KEYS = {
   chargePosted: 'eventChargePosted',
   paymentReceived: 'eventPaymentReceived',
@@ -186,17 +237,20 @@ export default function IntegrationAdminPage() {
   const tc = useTranslations('common');
   const [settings, setSettings] = useState<OutboundSettings | null>(null);
   const [logs, setLogs] = useState<OutboundLog[]>([]);
+  const [glMappings, setGlMappings] = useState<GlMapping[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [posModalOpen, setPosModalOpen] = useState(false);
 
   const load = useCallback(async () => {
-    const [sRes, lRes] = await Promise.all([
+    const [sRes, lRes, glRes] = await Promise.all([
       fetch('/api/hotel/integration-settings'),
       fetch('/api/integration/outbound-log?limit=50'),
+      fetch('/api/master/revenue-gl-mappings'),
     ]);
     if (sRes.ok) setSettings(await sRes.json());
     if (lRes.ok) setLogs(await lRes.json());
+    if (glRes.ok) setGlMappings(await glRes.json());
   }, []);
 
   useEffect(() => {
@@ -235,6 +289,21 @@ export default function IntegrationAdminPage() {
     const res = await fetch('/api/integration/master-data-sync', { method: 'POST' });
     const data = await res.json();
     setMsg(res.ok ? t('e5Sent', { id: data.correlationId }) : data.error);
+    await load();
+  }
+
+  async function saveGlMapping(revenueCodeId: string, glAccountCode: string) {
+    const res = await fetch('/api/master/revenue-gl-mappings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ revenueCodeId, glAccountCode }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      setMsg(data.error ?? tc('updateFailed'));
+      return;
+    }
+    setMsg(t('glMappingSaved'));
     await load();
   }
 
@@ -378,6 +447,34 @@ export default function IntegrationAdminPage() {
         <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('e6Title')}</h2>
         <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('e6Hint')}</p>
         <E6Simulator onDone={() => load()} />
+      </PageSection>
+
+      <PageSection className="mb-6">
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('glMappingTitle')}</h2>
+        <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('glMappingHint')}</p>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('revenueCode')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('glAccount')}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc('actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {glMappings.map((m) => (
+                <GlMappingRow key={m.id} mapping={m} onSave={saveGlMapping} />
+              ))}
+              {glMappings.length === 0 && (
+                <tr className={DATA_TABLE_TR_CLASS}>
+                  <td colSpan={3} className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}>
+                    {t('noGlMappings')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </PageSection>
 
       <PageSection>

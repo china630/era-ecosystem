@@ -419,7 +419,13 @@
     "rejectionDemo": "VÖEN mismatch (demo)",
     "outboundJournal": "Outbound journal",
     "attempts": "Attempts",
-    "noEvents": "No events yet"
+    "noEvents": "No events yet",
+    "glMappingTitle": "Revenue → GL mapping (FIN-01)",
+    "glMappingHint": "Night audit E1 lines map hotel revenue codes to finance NAS account codes.",
+    "revenueCode": "Revenue code",
+    "glAccount": "GL account",
+    "glMappingSaved": "GL mapping saved",
+    "noGlMappings": "No revenue codes — add codes in Master data first."
   },
   "stock": {
     "title": "Stock (phase 2)",

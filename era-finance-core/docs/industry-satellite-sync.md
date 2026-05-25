@@ -25,6 +25,8 @@ Finance **Industry Solutions** (painted-door + entitlements) maps to live umbrel
 
 Satellites emit typed events → orchestrator → finance `SatelliteEventWorker` → `SatelliteEventDispatchService` (GL + draft invoices). Idempotency: `satellite_events_processed` by `(organizationId, correlationId)`.
 
+Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, Wave 5 FIN-01): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
+
 ## CRM boundary
 
 `CRM_WHATSAPP` painted-door / field satellite = **pre-sale** (leads, visits). Finance CRM = counterparty MDM; WhatsApp **invoice** delivery = Finance only.
