@@ -1,12 +1,16 @@
 # DELIVERY-WHOLESALE
 
-## Stage 0 — Docs & scaffold
-- [x] PRD.md / TZ.md
-- [x] Next.js + Prisma scaffold
-- [x] SSO exchange
+PRD: [../PRD.md](../PRD.md)
 
-## Stage 1 — MVP shell
-- [x] Health API
-- [x] Main screen placeholder
-- [x] Event dispatch stub (Zod + orchestrator gateway)
+## W0 (done)
 
+- [x] PRD v1.0, scaffold, `/orders` placeholder
+
+## W1 — MVP
+
+- [ ] B2B order + confirm shipment event E2E
+
+## W2
+
+- [ ] Pick list UI
+- [ ] Credit limit read API from Finance

@@ -1,3 +1,5 @@
-# Vision & boundaries — ERA Clinic
+# Vision — ERA Clinic
 
-Operations in this app. Accounting in era-finance-core.
+Appointment scheduling and visit completion for small clinics. EMR depth deferred.
+
+Event: `SATELLITE_CLINIC_VISIT_COMPLETED`.

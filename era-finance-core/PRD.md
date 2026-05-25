@@ -105,6 +105,22 @@
 - **Шифрование PII at-rest (pre-drop gate):** перед удалением plaintext-колонок введён блокирующий контроль `db:assert:pii-plaintext-zero`.
 - **Интерфейс переключения:** глобальный **селектор организаций (Switcher)** в UI, позволяющий менять контекст без повторного логина.
 
+#### 3.2.1. Control plane: RBAC и владение (целевая модель)
+
+**[ ] PLANNED (scope)** — перенос **канонического RBAC**, **владения организацией** и **арбитража аккаунта** в **`era-365-orchestrator`**; Finance и спутники становятся потребителями JWT claims.
+
+| Ответственность | Orchestrator (source of truth) | Finance / satellite (consumer) |
+|-----------------|--------------------------------|--------------------------------|
+| Login, refresh, SSO exchange | [x] в rollout | Verify JWT (`ControlPlaneAuthGuard`) |
+| `Organization.ownerId`, роль **OWNER** | [ ] migrate | Сегодня: Finance DB + `transfer-ownership` |
+| Membership, `UserRole` per org | [ ] migrate | Сегодня: `OrganizationUser` в Finance |
+| Access request (join by VÖEN) | [ ] migrate | Сегодня: Finance notifications |
+| Ownership dispute / arbitration | [ ] migrate | Сегодня: `ownership-dispute-notification` |
+| Billing / subscription mutations | — | Finance API, guard **OWNER** only |
+| Domain finance policy (Post/Approve, payroll money) | — | Finance guards по `roles[]` из JWT |
+
+**Инвариант:** роль **OWNER** = владелец бизнеса и аккаунта SaaS (биллинг, карта, transfer ownership). В спутниках отображается как **`BUSINESS_OWNER`** (маппинг `OWNER` / `DIRECTOR`) — см. [SATELLITE_DOCUMENTATION.md](../docs/SATELLITE_DOCUMENTATION.md).
+
 ### 3.3. Финансовый движок (Double-Entry Bookkeeping)
 
 **План счетов (Accounts)** — дерево; атрибуты: `code`, `name`, `type` (Asset, Liability, Equity, Revenue, Expense).
@@ -129,6 +145,7 @@
 ### 4.1. Модуль 1: IAM & Multi-tenancy
 
 - Связь **пользователь — организация** в модели **many-to-many**; переключение активной организации без повторного входа (см. §3.2).
+- **Целевая модель IAM:** identity + membership + ownership — **orchestrator** (§3.2.1); Finance — доменные политики и биллинг.
 - Регистрация организации и администратора; при необходимости — запрос доступа к уже существующей организации по VÖEN.
 - На этапе регистрации организации выбор **ОПФ (`legalForm`)** **обязателен**; `kind` больше не вводится вручную и вычисляется сервером: `STATE_AGENCY -> BUDGET`, `NGO -> NGO`, иначе `COMMERCIAL`.
 - RBAC (базовые + операционные роли): **Owner**, **Admin**, **Accountant**, **User**, **PROCUREMENT**, **AUDITOR**, **WAREHOUSE_KEEPER**, **HR_OFFICER**, **HR_MANAGER**, **DEPARTMENT_HEAD**; платформенная роль **SUPER_ADMIN** вынесена отдельно (см. §5.1, §7.6).
@@ -516,6 +533,68 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 Output contract for UI timeline/table: `Date | ProjectedBalance | Inflow | Outflow` (default horizon 30 days).  
 If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk** for proactive decisions.
 
+### 4.15. Модуль 11: Contract Management (управление договорами)
+
+**Status:** [ ] **PLANNED (scope)** — отдельный платный модуль **`contract_management_pro`** (рабочее имя; каталог `PricingModules` — Super-Admin).
+
+**Проблема:** договоры с контрагентами размазаны по заметкам CRM, PSA, закупкам и HR; нет единого реестра, лимитов и связи с исполнением.
+
+**Решение:** централизованный **реестр договоров** в Finance с привязкой к финансовым и операционным документам.
+
+| Сущность | Назначение |
+|----------|------------|
+| **Contract** | Номер, контрагент (`counterpartyId`), тип, валюта, сумма/лимит, даты, статус, ответственный |
+| **ContractLine** | Статьи/номенклатура/услуги в рамках договора (опционально) |
+| **ContractAmendment** | Допсоглашения, изменение лимита и сроков |
+| **ContractCommitment** | Резерв лимита под PO / заявку (для B2G — связь со статьёй бюджета §4.16) |
+
+**Типы договоров (enum):** `SUPPLY`, `SERVICE`, `FRAMEWORK`, `LEASE`, `CONSTRUCTION`, `INTERCOMPANY`, `OTHER`.
+
+**Жизненный цикл:** `DRAFT` → `ACTIVE` → `SUSPENDED` → `CLOSED` / `EXPIRED`.
+
+**Связи (не дублировать в спутниках):**
+
+- Закупки (`Purchase`), счета, платежи — `contractId`
+- PSA (`PsaProject`) — `contractId`
+- Отраслевые события (construction act, wholesale order) — опциональный `contractId` в payload
+- HR / ГПХ — отдельный контур трудовых договоров (§4.6, ƏMAS), не смешивать с коммерческим реестром без явной связи
+
+**RBAC:** создание/изменение — **OWNER / ADMIN**; привязка к проведённым документам — **ACCOUNTANT**; **AUDITOR** — read-only.
+
+**Отчёты:** реестр с фильтром по статусу; остаток лимита; исполнение (заказано / оплачено / закрыто).
+
+**Отличие от `era-construction`:** спутник ведёт **объектную смету и акты**; модуль 11 — **юридико-финансовый договор** с контрагентом и лимитом в ERP.
+
+Техконтракт: [TZ.md](./TZ.md) §22 (планируется).
+
+### 4.16. Модуль 12: Годовой бюджет и исполнение (B2G / `OrganizationKind.BUDGET`)
+
+**Status:** [ ] **PLANNED (scope)** — полный цикл для **государственных и квазибюджетных** организаций; entitlement **`gov_budget_pro`** или включение в B2G bundle.
+
+**Проблема:** без годового плана и контроля исполнения по статьям невозможен законный расход; разрозненные лимиты в M2 недостаточны.
+
+**Решение:** модуль **«Бюджет организации»** — план на финансовый год + исполнение + gateway для расходов.
+
+| Блок | Функции |
+|------|---------|
+| **План** | `BudgetYear` (например 2027), версии `DRAFT` → `APPROVED` → `AMENDED`; строки `BudgetLine`: глава/статья NAS-Gov, ЦФО (`departmentId`), проектный код, лимит на год и помесячно |
+| **Исполнение** | **Обязательство** (commitment при PO/договоре), **Денежное исполнение** (платёж), **Факт** (проводка расхода); остаток лимита по строке в реальном времени |
+| **Gateway** | Блокировка создания/проведения закупки, платежа, payroll (B2G), если **сумма > остаток** по статье/ЦФО; override только **OWNER** + audit reason |
+| **E-Smeta** | Импорт/согласование сметы (Phase 2 интеграция); связь строк сметы с `BudgetLine` |
+| **Отчёты** | План vs факт (год / месяц); кассовое vs обязательства; drill-down до проводки; экспорт для контролирующих органов (форматы — TZ) |
+| **Treasury** | Платёжный календарь в разрезе утверждённого бюджета (стык с §4.14) |
+
+**Инварианты:**
+
+- Для `OrganizationKind.BUDGET` модуль **обязателен** к включению перед массовыми расходами (мягкий режим onboarding → жёсткий gateway).
+- Коммерческие организации (`COMMERCIAL`) — опциональный **управленческий бюджет** (без NAS-Gov статей), тот же движок, упрощённые статьи.
+
+**Связь с roadmap §6.7 M6:** модуль 12 **реализует полностью** продуктовый scope **M6 — Budgeting & Treasury** (ранее краткая строка в таблице v3.2+).
+
+**Отличие от `era-construction`:** объектная BOQ/акт — спутник; **бюджет учреждения на год** — только Finance §4.16.
+
+Техконтракт: [TZ.md](./TZ.md) §23 (планируется).
+
 ## 5. Дорожная карта: расширения (v2 — конкурентный scope)
 
 **[x] Горизонт v2 — 100% COMPLETED.** Ниже сохранён **краткий архив** целей и блоков; детальные спецификации перенесены в **[TZ.md](./TZ.md)** и кодовую базу.
@@ -726,7 +805,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 | **M3 — Production & Costing** | Многоуровневые BOM, возвратные отходы и целевое списание; фоновый расчёт фактической себестоимости при закрытии месяца. |
 | **M4 — Retail & POS** | РМК (кассир), смешанные оплаты, онлайн-ККМ; для B2G-платежей — зачисление на спецсчета NAS-Gov с авто-актом. |
 | **M5 — Advanced HRMS** | Расширенное кадровое делопроизводство, интеграции e-sosial, расчёт стажа/отпусков/льгот, тарифные сетки бюджетников. |
-| **M6 — Budgeting & Treasury** | E-Smeta, платёжный календарь, bank-client; в GOVERNMENT смета является жёстким gateway для расходов M2/M5. |
+| **M6 — Budgeting & Treasury** | **[ ] → см. §4.16 (полный scope):** годовой бюджет, план vs факт, обязательства/касса, E-Smeta, платёжный календарь, gateway для GOVERNMENT; Contract Management — §4.15. |
 | **M7 — WMS Light** | Адресное хранение (склад → зона → ячейка), put-away/picking, зональные инвентаризации без остановки склада. |
 | **M8 — Executive Dashboard** | Near real-time KPI (прибыль, дебиторка, бюджет, кассовые разрывы) с drill-down до проводки в Ledger. |
 
@@ -1671,6 +1750,7 @@ Alerts only from Invoice/Act workflows to verified counterparty profiles.
 | **2026.06.05** | Текущая | **Таможенные ставки AZ / HS:** курируемый справочник `CustomsTariffRate` (приложения к актам КМ, парсинг MD → JSON, импорт, версии по **`effective_from`**); **§7.6.2**; техконтракт — [TZ.md](./TZ.md) §20.2. |
 | **2026.06.06** | Текущая | **Квоты и биллинг (синхрон с кодом):** убран лимит **`maxOrganizations`**; оси квот и предоплата WhatsApp — **§7.12.3**; оценка **`ENTERPRISE`** по всем модулям каталога и запрет toggle — **§7.12.2**; Super-Admin **«Подписка → Квоты»** (Foundation, глобальные лимиты, tier-квоты с пустым = безлимит) — **§7.6**; детали полей и API — [TZ.md](./TZ.md) §14.5, §14.8.2, §15.2. |
 | **2026.06.10** | Текущая | **Super-Admin биллинг UI:** маршруты **`/super-admin/billing/pricing`**, **`/quotas`**, **`/packages`**; bulk-сохранение каталога модулей + Foundation в одной транзакции; глобальные лимиты квот — одним **`PATCH`**; Trial только в модалке пакета; имена **`SubscriptionTier`** в админке без i18n — **§7.6**; [TZ.md](./TZ.md) §15.1–15.2. |
+| **2026.05.24** | Текущая | **§3.2.1** control plane RBAC (orchestrator); **§4.15** Contract Management (`contract_management_pro`); **§4.16** годовой бюджет и исполнение B2G (`gov_budget_pro`); M6 roadmap → полный scope §4.16. |
 | **2026.06.13** | Текущая | **Публичный прайс и лендинг:** **`GET /api/public/pricing`** (read-only, без JWT), веб **`/pricing`**, тип `PublicPricingResponse`, CORS для внешнего маркетинга — **PRD §7.6.4**; техконтракт и реестр — [TZ.md](./TZ.md) §0.0, **§15.3**. |
 | **2026.06.14** | Текущая | **Биллинг UI / i18n:** подписи строк **`pricing_modules`** по ключам **`pricingModule.<key>`** (RU/AZ) с fallback на **`name`** в БД; метка базы **ERA Core**; навигация **Audit Hub** — корень сайдбара над «Администрирование»; зафиксирован смысл **`/audit-invitations`** (§4.8.1); **§7.6**, **§7.6.4** — [TZ.md](./TZ.md) §11.1, §15.2–15.3. |
 | **2026.06.15** | Текущая | **Навигация Audit / настройки org:** сайдбар — секция **«Audit»** (`/audit-hub` + `/audit-invitations`); **`/settings/organization`** — без вкладки банков (реестр **`/settings/bank-accounts`**); подсказки по амортизации ОС — ссылка на **`/fixed-assets`**; **§4.8.1**, **§10** — [TZ.md](./TZ.md) §11.1. |

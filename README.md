@@ -8,7 +8,7 @@ Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Do
 
 | App | PRD | Host | Port |
 |-----|-----|------|------|
-| `era-hotel-pms` | [doc](era-hotel-pms/doc/clone-spec/README.md) | hotel.era.az | 3000 |
+| `era-hotel-pms` | [PRD](era-hotel-pms/PRD.md) | hotel.era.az | 3000 |
 | `era-fb-pos` | [PRD](era-fb-pos/PRD.md) | pos.era.az | 3200 |
 | `era-retail-pos` | [PRD](era-retail-pos/PRD.md) | retail.era.az | 3300 |
 | `era-logistics` | [PRD](era-logistics/PRD.md) | logistics.era.az | 3301 |

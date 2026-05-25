@@ -1,4 +1,8 @@
-# Finance boundary
+# Finance boundary — Logistics
 
-- Catalog, GL, CRM counterparty, WhatsApp invoice delivery → **finance-core**
-- This satellite emits typed events only.
+| Satellite | Finance |
+|-----------|---------|
+| Trip, vehicle, POD, waybill | Freight revenue journal, customs declarations |
+| Driver operational pay stub | Payroll / HR in Finance |
+
+Event: `SATELLITE_LOGISTICS_TRIP_COMPLETED`.

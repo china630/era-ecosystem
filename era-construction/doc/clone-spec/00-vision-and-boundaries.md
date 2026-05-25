@@ -1,3 +1,5 @@
-# Vision & boundaries — ERA Construction
+# Vision — ERA Construction
 
-Operations in this app. Accounting in era-finance-core.
+Projects, BOQ, progress acts. Purchases and full GL in Finance.
+
+Event: `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED`.

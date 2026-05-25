@@ -1,12 +1,17 @@
 # DELIVERY-CONSTRUCTION
 
-## Stage 0 — Docs & scaffold
-- [x] PRD.md / TZ.md
-- [x] Next.js + Prisma scaffold
-- [x] SSO exchange
+PRD: [../PRD.md](../PRD.md)
 
-## Stage 1 — MVP shell
-- [x] Health API
-- [x] Main screen placeholder
-- [x] Event dispatch stub (Zod + orchestrator gateway)
+## C0 (done)
 
+- [x] PRD v1.0, scaffold, SSO, `/projects` placeholder
+
+## C1 — MVP
+
+- [ ] Project + BOQ stub
+- [ ] Progress act approve → event E2E
+
+## C2
+
+- [ ] Material requisition (C-02)
+- [ ] Plan vs actual (C-04)

@@ -1,4 +1,8 @@
-# Finance boundary
+# Finance boundary — Auto STO
 
-- Catalog, GL, CRM counterparty, WhatsApp invoice delivery → **finance-core**
-- This satellite emits typed events only.
+| Satellite | Finance |
+|-----------|---------|
+| Work order, bay schedule, plate | Parts inventory, supplier PO, payroll |
+| Close WO → `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | Journal labor + parts revenue |
+
+Parts stock movements are **not** duplicated in satellite v1.

@@ -1,4 +1,6 @@
-# Finance boundary
+# Finance boundary — Construction
 
-- Catalog, GL, CRM counterparty, WhatsApp invoice delivery → **finance-core**
-- This satellite emits typed events only.
+| Satellite | Finance |
+|-----------|---------|
+| BOQ, act, site photos | Procurement PO, PSA, WIP/revenue journals |
+| Subcontractor MDM | Counterparty in Finance |

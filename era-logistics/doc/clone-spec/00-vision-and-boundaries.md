@@ -1,3 +1,5 @@
-# Vision & boundaries — ERA Logistics
+# Vision — ERA Logistics
 
-Operations in this app. Accounting in era-finance-core.
+Fleet and trip operations. Customs GL in Finance (`trade_pro`).
+
+See [PRD §1–§2](../../PRD.md).

@@ -1,12 +1,23 @@
 # DELIVERY-LOGISTICS
 
-## Stage 0 — Docs & scaffold
-- [x] PRD.md / TZ.md
-- [x] Next.js + Prisma scaffold
-- [x] SSO exchange
+PRD: [../PRD.md](../PRD.md)
 
-## Stage 1 — MVP shell
-- [x] Health API
-- [x] Main screen placeholder
-- [x] Event dispatch stub (Zod + orchestrator gateway)
+## L0 (done)
 
+- [x] PRD v1.0, scaffold, SSO, health, `/trips` placeholder
+- [x] Event dispatch stub
+
+## L1 — MVP
+
+- [ ] Fleet + Trip models
+- [ ] Complete trip → `SATELLITE_LOGISTICS_TRIP_COMPLETED` E2E
+- [ ] UI trip list + close
+
+## L2
+
+- [ ] POD capture (L-04)
+- [ ] Fuel report (L-05)
+
+## L3
+
+- [ ] Customs status read from Finance

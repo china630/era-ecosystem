@@ -1,3 +1,7 @@
-# Vision & boundaries — ERA CRM Field
+# Vision — ERA CRM Field
 
-Operations in this app. Accounting in era-finance-core.
+Pre-sale operations: leads, visits, messenger funnel.
+
+**Not** the system of record for legal counterparties or tax invoices.
+
+See [PRD](../../PRD.md) and [01-finance-boundary](./01-finance-boundary.md).

@@ -1,3 +1,5 @@
-# Vision & boundaries — ERA Auto STO
+# Vision — ERA Auto STO
 
-Operations in this app. Accounting in era-finance-core.
+Service bay operations: work orders, labor/parts split, vehicle plate. Revenue event to Finance.
+
+Benchmark: Shopmonkey, Tekmetric — see [PRD §2](../../PRD.md).

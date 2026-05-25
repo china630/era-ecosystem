@@ -1,6 +1,36 @@
-# ERA CRM Field — TZ
+# ERA CRM Field — Technical specification (TZ)
 
-- Stack: Next.js 15, Prisma 6, PostgreSQL
-- Port: 3303
-- DB: `era_crm_field`
-- Shared: `@era/contracts`, `@era/satellite-kit`
+Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CRM.md](./doc/DELIVERY-CRM.md).
+
+## Stack
+
+| Layer | Choice |
+|-------|--------|
+| Runtime | Next.js 15, Prisma 6, PostgreSQL `era_crm_field` |
+| Port | 3303 · Host `crm.era.az` |
+| Entitlement | `industry_crm_field` (or early-access module key) |
+| Packages | `@era/contracts`, `@era/satellite-kit` |
+
+## Data model (CRM-1 target)
+
+```text
+Tenant → Lead → Visit → LeadStageHistory
+ChannelThread (stub, Phase 2)
+```
+
+## API surface (planned)
+
+| Method | Path | PRD |
+|--------|------|-----|
+| GET/POST | `/api/leads` | CRM-01 |
+| POST | `/api/leads/:id/visits` | CRM-02 |
+| POST | `/api/leads/:id/convert` | CRM-03 → `SATELLITE_CRM_LEAD_CONVERTED` |
+| POST | `/api/events/dispatch` | platform |
+
+## Finance boundary
+
+**No GL in CRM.** Conversion creates counterparty opportunity handoff in Finance via event only — see [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).
+
+## Environment
+
+Same satellite env block as other industry apps — [.env.example](./.env.example).
