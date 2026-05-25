@@ -1,9 +1,7 @@
 import {
   authCookieName,
   buildSsoPayload,
-  mapFinanceRoleToSatellite,
-  SATELLITE_ROLE,
-  signSatelliteSession,
+  executeSatelliteSsoExchange,
   ssoExchangeBodySchema,
   verifySsoSignature,
 } from "@era/satellite-kit";
@@ -21,70 +19,9 @@ export async function POST(request: Request) {
       return jsonError("Invalid SSO signature", 401);
     }
 
-    const financeRole = body.financeRole ?? "USER";
-    const satelliteRole = mapFinanceRoleToSatellite(financeRole);
-    const roleCodes = [
-      satelliteRole,
-      ...(satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER
-        ? [SATELLITE_ROLE.SATELLITE_OPERATOR]
-        : []),
-    ];
+    const { token, user } = await executeSatelliteSsoExchange(body, prisma);
 
-    let role = await prisma.role.findUnique({ where: { code: satelliteRole } });
-    if (!role) {
-      role = await prisma.role.create({
-        data: {
-          code: satelliteRole,
-          name: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER ? "Business Owner" : "Satellite Operator",
-          permissionsJson: "[]",
-        },
-      });
-    }
-
-    const login = `sso_${body.email.split("@")[0]}`;
-    let user = await prisma.user.findUnique({ where: { login }, include: { role: true } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          login,
-          email: body.email,
-          fullName: body.fullName,
-          passwordHash: "sso:no-password",
-          roleId: role.id,
-          isCrossSystem: true,
-        },
-        include: { role: true },
-      });
-    } else {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { lastLoginAt: new Date(), fullName: body.fullName, roleId: role.id },
-        include: { role: true },
-      });
-    }
-
-    const token = await signSatelliteSession({
-      sub: user.id,
-      login: user.login,
-      role: satelliteRole,
-      roles: roleCodes,
-      fullName: user.fullName,
-      organizationId: body.organizationId,
-      isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
-      financeRole,
-    });
-
-    const res = jsonOk({
-      user: {
-        id: user.id,
-        login: user.login,
-        fullName: user.fullName,
-        role: satelliteRole,
-        roles: roleCodes,
-        isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
-      },
-      token,
-    });
+    const res = jsonOk({ user, token });
     res.cookies.set(authCookieName(), token, {
       httpOnly: true,
       sameSite: "lax",

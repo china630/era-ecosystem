@@ -31,6 +31,11 @@ export async function POST(req: Request) {
           preset: body.preset ?? "grocery",
         },
       });
+    } else if (body.preset) {
+      outlet = await prisma.outlet.update({
+        where: { id: outlet.id },
+        data: { preset: body.preset },
+      });
     }
 
     let register = await prisma.register.findFirst({

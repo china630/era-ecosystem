@@ -95,12 +95,12 @@ RBAC: операционные роли в satellite DB; membership/OWNER — or
 | M2 | Register & shift (open/X/Z) | Lightspeed / 1C Z-отчёт | **PLANNED** | Event shift closed (Phase 2) |
 | M3 | Checkout & receipt | Square checkout | **PLANNED** | `SATELLITE_RETAIL_SALE_COMPLETED` |
 | M4 | Payments (cash/card/split) | Lightspeed payments | **PLANNED** | В payload `paymentMethod` |
-| M5 | Returns & void line | Square returns | **PLANNED** | Negative sale event (Phase 2) |
-| M6 | Preset engine | Internal | **IN_PROGRESS** | `preset` в payload |
-| M6a | Preset grocery | LS Retail | **PLANNED** | — |
-| M6b | Preset apparel | Lightspeed variants | **PLANNED** | — |
-| M6c | Preset electronics | Square serial | **PLANNED** | — |
-| M6d | Preset pharmacy | PharmacyKeeper OTC | **PLANNED** | — |
+| M5 | Returns & void line | Square returns | **MVP** | Negative sale event (Phase 2) |
+| M6 | Preset engine | Internal | **MVP** | `preset` в payload |
+| M6a | Preset grocery | LS Retail | **MVP** | — |
+| M6b | Preset apparel | Lightspeed variants | **MVP** | — |
+| M6c | Preset electronics | Square serial | **MVP** | — |
+| M6d | Preset pharmacy | PharmacyKeeper OTC | **MVP** | — |
 | M7 | Product lookup (read cache) | Square catalog search | **PLANNED** | SKU master в Finance |
 | M8 | Offline queue & replay | Square offline | **DEFERRED** | — |
 | M9 | Fiscal device (KKM) | Local AZ providers | **DEFERRED** | Finance kassa module |
@@ -148,7 +148,7 @@ sequenceDiagram
 | Event | Contract | Когда | Finance effect |
 |-------|----------|-------|----------------|
 | `SATELLITE_RETAIL_SALE_COMPLETED` | [@era/contracts](../packages/era-contracts) | Чек оплачен | Revenue journal + draft AR invoice |
-| `SATELLITE_RETAIL_SHIFT_CLOSED` | PLANNED | Z-close смены | Cash reconciliation stub (Phase 2) |
+| `SATELLITE_RETAIL_SHIFT_CLOSED` | [@era/contracts](../packages/era-contracts) | Z-close смены | Cash reconciliation stub |
 
 Env: `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` — см. [.env.example](./.env.example).
 
@@ -187,3 +187,5 @@ Env: `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_O
 |------|---------|------|
 | 2026-05-23 | 0.1 | Initial scaffold |
 | 2026-05-24 | 1.0 | Full PRD: benchmarks, modules, stories, phases |
+| 2026-05-25 | 1.1 | SP1: R2 preset config API, R3 void/return routes, shift close event dispatch |
+| 2026-05-25 | 1.2 | SW1: ReceiptLine preset fields + validation, void line API, return event dispatch, preset-aware `/pos` |

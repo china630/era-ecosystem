@@ -29,6 +29,14 @@ Tenant → Outlet (preset) → Register → Shift → Receipt → ReceiptLine
 
 Preset enum: `grocery | apparel | electronics | pharmacy` — [src/lib/retail-preset.ts](./src/lib/retail-preset.ts).
 
+### ReceiptLine (R2)
+
+Optional preset fields: `plu`, `barcode`, `isWeighted`, `weightKg`, `size`, `color`, `serial`, `batch`, `rxRequired`, `rxApprovedBy`, `lineStatus` (`ACTIVE` | `VOID`).
+
+`Receipt.originalReceiptId` links return receipts to the original sale.
+
+Validation: [src/lib/receipt-line-validation.ts](./src/lib/receipt-line-validation.ts) per outlet preset from shift.
+
 ## API surface (planned)
 
 | Method | Path | PRD |
@@ -36,11 +44,14 @@ Preset enum: `grocery | apparel | electronics | pharmacy` — [src/lib/retail-pr
 | POST | `/api/auth/sso/exchange` | R-14 |
 | POST | `/api/auth/login` | local dev |
 | GET | `/api/health` | R0 |
+| GET | `/api/presets` | R2 |
 | POST | `/api/events/dispatch` | R-05 |
 | POST | `/api/shifts/open` | R-01 |
 | POST | `/api/shifts/close` | R-04 |
 | POST | `/api/receipts` | R-02 |
 | POST | `/api/receipts/:id/pay` | R-03, R-05 |
+| POST | `/api/receipts/:id/lines/:lineId/void` | R-11 |
+| POST | `/api/receipts/:id/return` | R-12 |
 
 ## Environment
 

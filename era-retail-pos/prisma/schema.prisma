@@ -26,6 +26,11 @@ enum ReceiptStatus {
   VOID
 }
 
+enum ReceiptLineStatus {
+  ACTIVE
+  VOID
+}
+
 model Outlet {
   id        String     @id @default(cuid())
   tenantId  String
@@ -66,31 +71,46 @@ model Shift {
 }
 
 model Receipt {
-  id            String        @id @default(cuid())
-  outletId      String
-  registerId    String
-  shiftId       String
-  status        ReceiptStatus @default(OPEN)
-  amountNet     Decimal       @default(0) @db.Decimal(12, 2)
-  paymentMethod String?
-  paidAt        DateTime?
-  outlet        Outlet        @relation(fields: [outletId], references: [id])
-  register      Register      @relation(fields: [registerId], references: [id])
-  shift         Shift         @relation(fields: [shiftId], references: [id])
-  lines         ReceiptLine[]
-  createdAt     DateTime      @default(now())
+  id                String        @id @default(cuid())
+  outletId          String
+  registerId        String
+  shiftId           String
+  status            ReceiptStatus @default(OPEN)
+  amountNet         Decimal       @default(0) @db.Decimal(12, 2)
+  paymentMethod     String?
+  paidAt            DateTime?
+  originalReceiptId String?
+  outlet            Outlet        @relation(fields: [outletId], references: [id])
+  register          Register      @relation(fields: [registerId], references: [id])
+  shift             Shift         @relation(fields: [shiftId], references: [id])
+  originalReceipt   Receipt?      @relation("ReceiptReturn", fields: [originalReceiptId], references: [id])
+  returnReceipts    Receipt[]     @relation("ReceiptReturn")
+  lines             ReceiptLine[]
+  createdAt         DateTime      @default(now())
 
   @@index([shiftId])
+  @@index([originalReceiptId])
 }
 
 model ReceiptLine {
-  id          String  @id @default(cuid())
-  receiptId   String
-  description String
-  qty         Int     @default(1)
-  unitPrice   Decimal @db.Decimal(12, 2)
-  lineTotal   Decimal @db.Decimal(12, 2)
-  receipt     Receipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  id           String            @id @default(cuid())
+  receiptId    String
+  description  String
+  qty          Int               @default(1)
+  unitPrice    Decimal           @db.Decimal(12, 2)
+  lineTotal    Decimal           @db.Decimal(12, 2)
+  plu          String?
+  barcode      String?
+  isWeighted   Boolean           @default(false)
+  weightKg     Decimal?          @db.Decimal(10, 3)
+  size         String?
+  color        String?
+  serial       String?
+  batch        String?
+  rxRequired   Boolean           @default(false)
+  rxApprovedBy String?
+  lineStatus   ReceiptLineStatus @default(ACTIVE)
+  receipt      Receipt           @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 
   @@index([receiptId])
 }
