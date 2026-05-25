@@ -33,6 +33,18 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 
 **Satellite Wave 2** (orchestrator: `.cursor/plans/satellite_wave2_orchestrator.plan.md`): fb-pos FB-0 + hotel regression → construction/auto/wholesale UI — **complete** 2026-05-25.
 
+**Satellite Wave 3+4 — Hospitality Nafta** (master: `.cursor/plans/nafta_wave3_wave4_master.plan.md`; scope: `hospitality_nafta_orchestrator_a0426e2f.plan.md`): SAN-PKG → PROC-SCHED → clinic K5 → MDM → transfers → banquets. DOC-B: [era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md](../era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md).
+
+| HN | Focus | Status |
+|----|-------|--------|
+| HN-1 | hotel-pms SAN-PKG + EOD folio | **Done** |
+| HN-2 | hotel-pms PROC-SCHED | **Done** |
+| HN-3 | clinic sanatorium bridge K5 | **Done** |
+| HN-P | orchestrator era-mdm | **Done** |
+| HN-N | NotebookLM manifest (27 merged + batches) | **Done** |
+| HN-7 | airport transfers (PMS) | **Done** |
+| HN-8 | banquet BEO + fb-pos service | **Done** |
+
 Priority by value and DELIVERY readiness. Do not start new platform debt here — file issues for CP2 (RS256/JWKS, `permissions[]`).
 
 | SP | Focus | Status |

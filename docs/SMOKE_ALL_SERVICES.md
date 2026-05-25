@@ -234,6 +234,39 @@ Run on PR / nightly (see `.github/workflows/ecosystem-smoke.yml`):
 2. `npm run build` in `era-365-orchestrator/apps/api`, `era-finance-core/apps/api`
 3. Health curls against docker-compose stack (optional job)
 
+## Hospitality Nafta — Wave 3 / 4 (hotel, clinic, MDM, fb-pos)
+
+Requires hotel-pms @ `:3000`, clinic @ `:3300`, orchestrator @ `:4100`, fb-pos @ `:3200` after seed.
+
+```bash
+# HN-1 — night audit package EOD (reception session cookie or Bearer)
+curl -s -X POST http://localhost:3000/api/night-audit/run -H "Cookie: era_hotel_session=..."
+
+# HN-2 — procedure schedule
+curl -s http://localhost:3000/api/procedures -H "Cookie: era_hotel_session=..."
+curl -s -X POST http://localhost:3000/api/procedures/appointments \
+  -H "Content-Type: application/json" -H "Cookie: era_hotel_session=..." \
+  -d '{"reservationId":"<id>","serviceId":"<id>","startAt":"2026-06-01T10:00:00Z","endAt":"2026-06-01T11:00:00Z"}'
+
+# HN-3 — clinic episode from stay (bridge secret if set)
+curl -s -X POST http://localhost:3300/api/sanatorium/episodes/from-stay \
+  -H "Content-Type: application/json" \
+  -d '{"reservationId":"<id>","guestName":"Ali","passportNumber":"AA123","organizationId":"nafta-sanatorium-org"}'
+curl -s http://localhost:3300/api/sanatorium/episodes -H "Cookie: era_clinic_session=..."
+
+# HN-P — MDM health + org register (internal)
+curl -s http://localhost:4100/internal/v1/mdm/health
+
+# HN-7 — transfers
+curl -s http://localhost:3000/api/transfers -H "Cookie: era_hotel_session=..."
+
+# HN-8 — banquets + fb-pos ticket
+curl -s http://localhost:3000/api/banquets -H "Cookie: era_hotel_session=..."
+curl -s -X POST http://localhost:3200/api/tickets \
+  -H "Content-Type: application/json" -H "Cookie: era_fb_session=..." \
+  -d '{"outletCode":"BANQUET","beoId":"<beo-uuid>","covers":50}'
+```
+
 ## SSO exchange (satellites)
 
 All 7 industry apps use `executeSatelliteSsoExchange` — session includes `BUSINESS_OWNER` when orchestrator SSO body has `financeRole: "OWNER"`.
