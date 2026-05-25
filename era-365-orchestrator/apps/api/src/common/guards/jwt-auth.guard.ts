@@ -4,14 +4,25 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import { AuthService } from "../../auth/auth.service";
+import { IS_PUBLIC_KEY } from "../../auth/constants";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const req = context.switchToHttp().getRequest<{
       headers: { authorization?: string };
       user?: EraJwtPayload;

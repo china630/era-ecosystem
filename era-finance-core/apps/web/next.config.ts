@@ -6,6 +6,12 @@ const apiDest = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000").rep
   "",
 );
 
+const controlPlaneDest = (
+  process.env.NEXT_PUBLIC_CONTROL_PLANE_URL ??
+  process.env.CONTROL_PLANE_URL ??
+  "http://127.0.0.1:4100"
+).replace(/\/$/, "");
+
 /** Проксирование событий через тот же origin (обход adblock / фильтров по ingest.sentry.io). См. tunnel.js в @sentry/nextjs. */
 function resolveSentryTunnelRoute(): string | boolean | undefined {
   const raw = process.env.SENTRY_TUNNEL_PATH?.trim();
@@ -24,6 +30,10 @@ const nextConfig: NextConfig = {
   /** Клиент ходит на тот же origin (`/api/...`), Next проксирует на бэкенд — меньше проблем с CORS и блокировками. */
   async rewrites() {
     return [
+      {
+        source: "/cp/:path*",
+        destination: `${controlPlaneDest}/:path*`,
+      },
       {
         source: "/api/:path*",
         destination: `${apiDest}/api/:path*`,

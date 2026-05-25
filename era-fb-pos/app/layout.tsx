@@ -1,18 +1,28 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { SHELL_CLASS } from "@/lib/design-system";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "ERA F&B POS",
-  description: "Restaurant floor, orders, and kitchen display",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return {
+    title: t("title"),
+    description: t("description"),
+  };
+}
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={SHELL_CLASS}>
-        <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
+        <NextIntlClientProvider messages={messages}>
+          <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

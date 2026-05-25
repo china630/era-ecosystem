@@ -93,6 +93,16 @@ Priority by value and DELIVERY readiness. Do not start new platform debt here �
 5. UAT-SMOKE steps documented
 6. `SMOKE_ALL_SERVICES.md` section if service touched
 
+## Platform Master Plan — Billing, Notifications, Vertical Add-ons (2026-05)
+
+| Program | Status |
+|---------|--------|
+| **CP-BILLING** (billing + referrals + early-access → orchestrator) | **Done** — [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) checklist 1–10 |
+| **CP-B2** Notifications Pack | **Live** — `/platform/notifications/v1/*`; Finance opt-in `ERA_NOTIFICATIONS_PACK` |
+| **CP-B3…B8** Platform APIs | **Stub** — booking, portal, payments, loyalty, domains, delivery on orchestrator |
+| **CP-VERTICAL-GROWTH** | **Wave A–C clients** — `control-plane-platform.client.ts` in each satellite |
+| **DOC-B** | Wave 1 done; Wave 2–3 + final audit synced in MODULES_CATALOG / PLATFORM_ADDONS / UAT-SMOKE-PLATFORM |
+
 ## Satellite index
 
 See [SATELLITE_DOCUMENTATION.md § Satellite index](./SATELLITE_DOCUMENTATION.md).

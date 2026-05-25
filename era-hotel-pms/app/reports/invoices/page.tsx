@@ -16,6 +16,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
 import AppShell, { PageSection } from '@/components/layout/AppShell';
+import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -104,6 +105,8 @@ export default function InvoicesReportPage() {
           </button>
         }
       />
+
+      <FinanceBoundaryBanner target="salesInvoices" />
 
       <PageSection className="p-0">
         <div className={DATA_TABLE_VIEWPORT_CLASS}>

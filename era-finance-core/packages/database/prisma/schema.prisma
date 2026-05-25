@@ -1524,6 +1524,8 @@ enum EarlyAccessModuleKey {
   AUTO_STO
   CLINIC
   WHOLESALE
+  HOTEL_PMS
+  FB_POS
 }
 
 enum EarlyAccessEventType {

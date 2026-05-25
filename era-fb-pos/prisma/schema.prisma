@@ -124,6 +124,7 @@ model Ticket {
   beoId                   String?      @map("beo_id")
   roomChargeReservationId String?      @map("room_charge_reservation_id")
   subtotalAzn             Decimal      @default(0) @map("subtotal_azn") @db.Decimal(12, 2)
+  discountPercent         Decimal      @default(0) @map("discount_percent") @db.Decimal(5, 2)
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
   openedAt                DateTime     @default(now()) @map("opened_at")
   closedAt                DateTime?    @map("closed_at")

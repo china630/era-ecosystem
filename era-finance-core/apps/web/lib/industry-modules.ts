@@ -9,6 +9,8 @@ export const INDUSTRY_MODULE_SLUGS = [
   "industry_auto_sto",
   "industry_clinic",
   "industry_wholesale",
+  "industry_hotel_pms",
+  "industry_fb_pos",
 ] as const;
 
 export type IndustryModuleSlug = (typeof INDUSTRY_MODULE_SLUGS)[number];
@@ -26,7 +28,9 @@ export const INDUSTRY_NAV_ITEMS: Array<{
     | "industryCrmWhatsapp"
     | "industryAutoSto"
     | "industryClinic"
-    | "industryWholesale";
+    | "industryWholesale"
+    | "industryHotelPms"
+    | "industryFbPos";
   labelKey:
     | "nav.industryRetailEcom"
     | "nav.industryLogisticsCustoms"
@@ -34,7 +38,9 @@ export const INDUSTRY_NAV_ITEMS: Array<{
     | "nav.industryCrmWhatsapp"
     | "nav.industryAutoSto"
     | "nav.industryClinic"
-    | "nav.industryWholesale";
+    | "nav.industryWholesale"
+    | "nav.industryHotelPms"
+    | "nav.industryFbPos";
 }> = [
   {
     key: "RETAIL_ECOM",
@@ -99,6 +105,24 @@ export const INDUSTRY_NAV_ITEMS: Array<{
     moduleField: "industryWholesale",
     labelKey: "nav.industryWholesale",
   },
+  {
+    key: "HOTEL_PMS",
+    slug: "industry_hotel_pms",
+    href: "/industry/hotel",
+    vertical: "hotel",
+    satelliteUrlEnv: "NEXT_PUBLIC_SATELLITE_HOTEL_URL",
+    moduleField: "industryHotelPms",
+    labelKey: "nav.industryHotelPms",
+  },
+  {
+    key: "FB_POS",
+    slug: "industry_fb_pos",
+    href: "/industry/fb-pos",
+    vertical: "fb-pos",
+    satelliteUrlEnv: "NEXT_PUBLIC_SATELLITE_FB_POS_URL",
+    moduleField: "industryFbPos",
+    labelKey: "nav.industryFbPos",
+  },
 ];
 
 export function industryItemByVertical(
@@ -121,6 +145,8 @@ export function satelliteUrlForItem(
     NEXT_PUBLIC_SATELLITE_CLINIC_URL: process.env.NEXT_PUBLIC_SATELLITE_CLINIC_URL,
     NEXT_PUBLIC_SATELLITE_WHOLESALE_URL:
       process.env.NEXT_PUBLIC_SATELLITE_WHOLESALE_URL,
+    NEXT_PUBLIC_SATELLITE_HOTEL_URL: process.env.NEXT_PUBLIC_SATELLITE_HOTEL_URL,
+    NEXT_PUBLIC_SATELLITE_FB_POS_URL: process.env.NEXT_PUBLIC_SATELLITE_FB_POS_URL,
   };
   return map[item.satelliteUrlEnv] ?? null;
 }

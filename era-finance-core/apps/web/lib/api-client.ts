@@ -12,6 +12,65 @@ export function apiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
 }
 
+/** Control plane (era-365-orchestrator) — billing, subscription, referrals, early-access. */
+export function controlPlaneBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  return (
+    process.env.NEXT_PUBLIC_CONTROL_PLANE_URL ??
+    process.env.CONTROL_PLANE_URL ??
+    "http://127.0.0.1:4100"
+  ).replace(/\/$/, "");
+}
+
+const CP_API_PREFIXES = [
+  "/api/subscription",
+  "/api/billing",
+  "/api/partner",
+  "/api/early-access",
+  "/api/public/pricing",
+  "/api/admin/config/billing",
+  "/api/admin/pricing-bundles",
+  "/api/admin/pricing-modules",
+  "/api/admin/referrals",
+  "/api/admin/early-access",
+  "/api/platform/notifications",
+  "/api/admin/platform/notifications",
+] as const;
+
+function isControlPlaneApiPath(pathname: string): boolean {
+  if (
+    CP_API_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+    )
+  ) {
+    return true;
+  }
+  return /^\/api\/admin\/organizations\/[^/]+\/subscription$/.test(pathname);
+}
+
+/** Maps Finance `/api/...` routes to orchestrator (`/cp/...` in browser). */
+export function resolveApiUrl(path: string): string {
+  if (path.startsWith("http")) return path;
+  const qIndex = path.indexOf("?");
+  const pathname = qIndex >= 0 ? path.slice(0, qIndex) : path;
+  const search = qIndex >= 0 ? path.slice(qIndex) : "";
+  if (!isControlPlaneApiPath(pathname)) {
+    return `${apiBaseUrl()}${path}`;
+  }
+  let cpPath: string;
+  if (pathname.startsWith("/api/platform/")) {
+    cpPath = pathname.replace(/^\/api\//, "/");
+  } else {
+    cpPath = pathname.replace(/^\/api\//, "/v1/");
+  }
+  if (typeof window !== "undefined") {
+    return `/cp${cpPath}${search}`;
+  }
+  return `${controlPlaneBaseUrl()}${cpPath}${search}`;
+}
+
 function parseApiErrorMessage(text: string): string {
   const trimmed = text.trim().slice(0, 800);
   if (!trimmed) return "";
@@ -70,7 +129,7 @@ export function apiFetch(path: string, init: RequestInit = {}): Promise<Response
       headers.set("Authorization", `Bearer ${token}`);
     }
   }
-  const url = path.startsWith("http") ? path : `${apiBaseUrl()}${path}`;
+  const url = resolveApiUrl(path);
 
   return fetch(url, {
     ...init,
@@ -187,7 +246,7 @@ export function apiPostKeepalive(path: string, body: unknown): void {
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  const url = path.startsWith("http") ? path : `${apiBaseUrl()}${path}`;
+  const url = resolveApiUrl(path);
   void fetch(url, {
     method: "POST",
     headers,

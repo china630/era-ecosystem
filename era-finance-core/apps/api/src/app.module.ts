@@ -44,8 +44,6 @@ import { PrepaidModule } from "./prepaid/prepaid.module";
 import { ProductsModule } from "./products/products.module";
 import { StorageModule } from "./storage/storage.module";
 import { TaxModule } from "./tax/tax.module";
-import { BillingModule } from "./billing/billing.module";
-import { ReferralsModule } from "./referrals/referrals.module";
 import { AdminModule } from "./admin/admin.module";
 import { OrganizationsModule } from "./organizations/organizations.module";
 import { TenantContextInterceptor } from "./prisma/tenant-context.interceptor";
@@ -56,7 +54,6 @@ import { NotificationModule } from "./notifications/notification.module";
 import { OcrModule } from "./ocr/ocr.module";
 import { CustomsModule } from "./customs/customs.module";
 import { SystemCatalogModule } from "./system-catalog/system-catalog.module";
-import { EarlyAccessModule } from "./early-access/early-access.module";
 import { PlatformRecoveryModule } from "./platform-recovery/platform-recovery.module";
 import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.guard";
 import { SatelliteIntegrationModule } from "./integration/integration.module";
@@ -81,8 +78,6 @@ const useControlPlaneAuth =
     PrismaModule,
     ControlPlaneModule,
     SubscriptionModule,
-    BillingModule,
-    ReferralsModule,
     QuotaModule,
     StorageModule,
     AccountingModule,
@@ -117,7 +112,6 @@ const useControlPlaneAuth =
     OcrModule,
     CustomsModule,
     SystemCatalogModule,
-    EarlyAccessModule,
     PlatformRecoveryModule,
     SatelliteIntegrationModule,
   ],

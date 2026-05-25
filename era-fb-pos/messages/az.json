@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Restoran zalı, sifarişlər və KDS"
+  },
+  "nav": {
+    "dashboard": "İcmal",
+    "floor": "Zal",
+    "orders": "Sifarişlər",
+    "kds": "KDS",
+    "menu": "Menyu",
+    "calendar": "Stol rezervasiyası",
+    "brand": "ERA F&B POS"
+  },
+  "orders": {
+    "title": "Aktiv sifarişlər",
+    "openTickets": "Açıq çeklər",
+    "ticketActions": "Əməliyyatlar",
+    "loading": "Yüklənir…",
+    "noTickets": "Açıq çek yoxdur.",
+    "selectTicket": "Çek seçin",
+    "fireKitchen": "Mətbəxə",
+    "payCash": "Nağd ödəniş",
+    "openKds": "KDS aç",
+    "void": "Ləğv",
+    "applyDiscount": "Endirim %",
+    "splitSelected": "Seçilmişləri ayır",
+    "selectLinesToSplit": "Ayırmaq üçün sətirləri seçin",
+    "roleHint": "Ofisiant — fire/ödəniş; menecer — ləğv, endirim və Z-close."
+  },
+  "calendar": {
+    "title": "Stol rezervasiyası",
+    "table": "Stol",
+    "time": "Vaxt",
+    "guest": "Qonaq",
+    "pax": "Nəfər",
+    "book": "Rezerv et",
+    "openTicket": "Çek aç",
+    "reserved": "Rezerv edildi",
+    "failed": "Xəta"
+  },
+  "common": {
+    "azn": "AZN"
+  }
+}

@@ -67,6 +67,8 @@ const INDUSTRY_MODULE_SLUG_PRESETS = [
   "industry_auto_sto",
   "industry_clinic",
   "industry_wholesale",
+  "industry_hotel_pms",
+  "industry_fb_pos",
 ] as const;
 
 const ALL_MODULE_SLUG_PRESETS = [

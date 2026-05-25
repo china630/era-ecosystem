@@ -13,3 +13,5 @@ PRD: [../PRD.md](../PRD.md)
 ## A2
 
 - [x] Appointments (A-05) — `GET/POST /api/appointments`, `/appointments` UI
+
+Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).

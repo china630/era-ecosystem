@@ -37,3 +37,4 @@ export type SatelliteHotelEvent = {
 };
 
 export * from "./events";
+export * from "./subscription";

@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Restaurant floor, orders, and kitchen display"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "floor": "Floor",
+    "orders": "Orders",
+    "kds": "KDS",
+    "menu": "Menu",
+    "calendar": "Reservations",
+    "brand": "ERA F&B POS"
+  },
+  "orders": {
+    "title": "Active orders",
+    "openTickets": "Open tickets",
+    "ticketActions": "Ticket actions",
+    "loading": "Loading…",
+    "noTickets": "No open tickets.",
+    "selectTicket": "Select a ticket",
+    "fireKitchen": "Fire kitchen",
+    "payCash": "Pay cash",
+    "openKds": "Open KDS",
+    "void": "Void",
+    "applyDiscount": "Apply discount %",
+    "splitSelected": "Split selected lines",
+    "selectLinesToSplit": "Select lines to split",
+    "roleHint": "Sign in as waiter for fire/pay; manager for void, discount and Z-close."
+  },
+  "calendar": {
+    "title": "Table reservations",
+    "table": "Table",
+    "time": "Time",
+    "guest": "Guest",
+    "pax": "Pax",
+    "book": "Book",
+    "openTicket": "Open ticket",
+    "reserved": "Reserved",
+    "failed": "Failed"
+  },
+  "common": {
+    "azn": "AZN"
+  }
+}

@@ -143,6 +143,41 @@ export type OwnershipDispute = $Result.DefaultSelection<Prisma.$OwnershipDispute
  * 
  */
 export type OrganizationSecurityState = $Result.DefaultSelection<Prisma.$OrganizationSecurityStatePayload>
+/**
+ * Model EarlyAccessEvent
+ * 
+ */
+export type EarlyAccessEvent = $Result.DefaultSelection<Prisma.$EarlyAccessEventPayload>
+/**
+ * Model EarlyAccessSignup
+ * 
+ */
+export type EarlyAccessSignup = $Result.DefaultSelection<Prisma.$EarlyAccessSignupPayload>
+/**
+ * Model EarlyAccessThresholdAlert
+ * 
+ */
+export type EarlyAccessThresholdAlert = $Result.DefaultSelection<Prisma.$EarlyAccessThresholdAlertPayload>
+/**
+ * Model AuditLog
+ * 
+ */
+export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
+/**
+ * Model NotificationTemplate
+ * 
+ */
+export type NotificationTemplate = $Result.DefaultSelection<Prisma.$NotificationTemplatePayload>
+/**
+ * Model NotificationOutbox
+ * 
+ */
+export type NotificationOutbox = $Result.DefaultSelection<Prisma.$NotificationOutboxPayload>
+/**
+ * Model NotificationDeliveryLog
+ * 
+ */
+export type NotificationDeliveryLog = $Result.DefaultSelection<Prisma.$NotificationDeliveryLogPayload>
 
 /**
  * Enums
@@ -275,6 +310,35 @@ export const SecurityMode: {
 export type SecurityMode = (typeof SecurityMode)[keyof typeof SecurityMode]
 
 
+export const NotificationMessageClass: {
+  FINANCIAL: 'FINANCIAL',
+  TRANSACTIONAL: 'TRANSACTIONAL',
+  LIFECYCLE: 'LIFECYCLE',
+  MARKETING: 'MARKETING'
+};
+
+export type NotificationMessageClass = (typeof NotificationMessageClass)[keyof typeof NotificationMessageClass]
+
+
+export const NotificationChannel: {
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP',
+  SMS: 'SMS'
+};
+
+export type NotificationChannel = (typeof NotificationChannel)[keyof typeof NotificationChannel]
+
+
+export const NotificationOutboxStatus: {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type NotificationOutboxStatus = (typeof NotificationOutboxStatus)[keyof typeof NotificationOutboxStatus]
+
+
 export const PermissionCategory: {
   CORE: 'CORE',
   BILLING: 'BILLING',
@@ -291,6 +355,32 @@ export const PermissionCategory: {
 };
 
 export type PermissionCategory = (typeof PermissionCategory)[keyof typeof PermissionCategory]
+
+
+export const EarlyAccessModuleKey: {
+  RETAIL_ECOM: 'RETAIL_ECOM',
+  LOGISTICS_CUSTOMS: 'LOGISTICS_CUSTOMS',
+  CONSTRUCTION: 'CONSTRUCTION',
+  CRM_WHATSAPP: 'CRM_WHATSAPP',
+  AUTO_STO: 'AUTO_STO',
+  CLINIC: 'CLINIC',
+  WHOLESALE: 'WHOLESALE',
+  HOTEL_PMS: 'HOTEL_PMS',
+  FB_POS: 'FB_POS'
+};
+
+export type EarlyAccessModuleKey = (typeof EarlyAccessModuleKey)[keyof typeof EarlyAccessModuleKey]
+
+
+export const EarlyAccessEventType: {
+  VIEW_CLICK: 'VIEW_CLICK',
+  MODAL_OPEN: 'MODAL_OPEN',
+  MODAL_CLOSE: 'MODAL_CLOSE',
+  CTA_CLICK: 'CTA_CLICK',
+  SURVEY_SUBMIT: 'SURVEY_SUBMIT'
+};
+
+export type EarlyAccessEventType = (typeof EarlyAccessEventType)[keyof typeof EarlyAccessEventType]
 
 }
 
@@ -342,9 +432,29 @@ export type SecurityMode = $Enums.SecurityMode
 
 export const SecurityMode: typeof $Enums.SecurityMode
 
+export type NotificationMessageClass = $Enums.NotificationMessageClass
+
+export const NotificationMessageClass: typeof $Enums.NotificationMessageClass
+
+export type NotificationChannel = $Enums.NotificationChannel
+
+export const NotificationChannel: typeof $Enums.NotificationChannel
+
+export type NotificationOutboxStatus = $Enums.NotificationOutboxStatus
+
+export const NotificationOutboxStatus: typeof $Enums.NotificationOutboxStatus
+
 export type PermissionCategory = $Enums.PermissionCategory
 
 export const PermissionCategory: typeof $Enums.PermissionCategory
+
+export type EarlyAccessModuleKey = $Enums.EarlyAccessModuleKey
+
+export const EarlyAccessModuleKey: typeof $Enums.EarlyAccessModuleKey
+
+export type EarlyAccessEventType = $Enums.EarlyAccessEventType
+
+export const EarlyAccessEventType: typeof $Enums.EarlyAccessEventType
 
 /**
  * ##  Prisma Client ʲˢ
@@ -726,6 +836,76 @@ export class PrismaClient<
     * ```
     */
   get organizationSecurityState(): Prisma.OrganizationSecurityStateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.earlyAccessEvent`: Exposes CRUD operations for the **EarlyAccessEvent** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EarlyAccessEvents
+    * const earlyAccessEvents = await prisma.earlyAccessEvent.findMany()
+    * ```
+    */
+  get earlyAccessEvent(): Prisma.EarlyAccessEventDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.earlyAccessSignup`: Exposes CRUD operations for the **EarlyAccessSignup** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EarlyAccessSignups
+    * const earlyAccessSignups = await prisma.earlyAccessSignup.findMany()
+    * ```
+    */
+  get earlyAccessSignup(): Prisma.EarlyAccessSignupDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.earlyAccessThresholdAlert`: Exposes CRUD operations for the **EarlyAccessThresholdAlert** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EarlyAccessThresholdAlerts
+    * const earlyAccessThresholdAlerts = await prisma.earlyAccessThresholdAlert.findMany()
+    * ```
+    */
+  get earlyAccessThresholdAlert(): Prisma.EarlyAccessThresholdAlertDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.auditLog`: Exposes CRUD operations for the **AuditLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AuditLogs
+    * const auditLogs = await prisma.auditLog.findMany()
+    * ```
+    */
+  get auditLog(): Prisma.AuditLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.notificationTemplate`: Exposes CRUD operations for the **NotificationTemplate** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NotificationTemplates
+    * const notificationTemplates = await prisma.notificationTemplate.findMany()
+    * ```
+    */
+  get notificationTemplate(): Prisma.NotificationTemplateDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.notificationOutbox`: Exposes CRUD operations for the **NotificationOutbox** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NotificationOutboxes
+    * const notificationOutboxes = await prisma.notificationOutbox.findMany()
+    * ```
+    */
+  get notificationOutbox(): Prisma.NotificationOutboxDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.notificationDeliveryLog`: Exposes CRUD operations for the **NotificationDeliveryLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NotificationDeliveryLogs
+    * const notificationDeliveryLogs = await prisma.notificationDeliveryLog.findMany()
+    * ```
+    */
+  get notificationDeliveryLog(): Prisma.NotificationDeliveryLogDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1185,7 +1365,14 @@ export namespace Prisma {
     Referral: 'Referral',
     ReferralCommission: 'ReferralCommission',
     OwnershipDispute: 'OwnershipDispute',
-    OrganizationSecurityState: 'OrganizationSecurityState'
+    OrganizationSecurityState: 'OrganizationSecurityState',
+    EarlyAccessEvent: 'EarlyAccessEvent',
+    EarlyAccessSignup: 'EarlyAccessSignup',
+    EarlyAccessThresholdAlert: 'EarlyAccessThresholdAlert',
+    AuditLog: 'AuditLog',
+    NotificationTemplate: 'NotificationTemplate',
+    NotificationOutbox: 'NotificationOutbox',
+    NotificationDeliveryLog: 'NotificationDeliveryLog'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1201,7 +1388,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3129,6 +3316,524 @@ export namespace Prisma {
           }
         }
       }
+      EarlyAccessEvent: {
+        payload: Prisma.$EarlyAccessEventPayload<ExtArgs>
+        fields: Prisma.EarlyAccessEventFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EarlyAccessEventFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EarlyAccessEventFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          findFirst: {
+            args: Prisma.EarlyAccessEventFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EarlyAccessEventFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          findMany: {
+            args: Prisma.EarlyAccessEventFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>[]
+          }
+          create: {
+            args: Prisma.EarlyAccessEventCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          createMany: {
+            args: Prisma.EarlyAccessEventCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EarlyAccessEventCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>[]
+          }
+          delete: {
+            args: Prisma.EarlyAccessEventDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          update: {
+            args: Prisma.EarlyAccessEventUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          deleteMany: {
+            args: Prisma.EarlyAccessEventDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EarlyAccessEventUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EarlyAccessEventUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>[]
+          }
+          upsert: {
+            args: Prisma.EarlyAccessEventUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessEventPayload>
+          }
+          aggregate: {
+            args: Prisma.EarlyAccessEventAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEarlyAccessEvent>
+          }
+          groupBy: {
+            args: Prisma.EarlyAccessEventGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessEventGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EarlyAccessEventCountArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessEventCountAggregateOutputType> | number
+          }
+        }
+      }
+      EarlyAccessSignup: {
+        payload: Prisma.$EarlyAccessSignupPayload<ExtArgs>
+        fields: Prisma.EarlyAccessSignupFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EarlyAccessSignupFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EarlyAccessSignupFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          findFirst: {
+            args: Prisma.EarlyAccessSignupFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EarlyAccessSignupFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          findMany: {
+            args: Prisma.EarlyAccessSignupFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>[]
+          }
+          create: {
+            args: Prisma.EarlyAccessSignupCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          createMany: {
+            args: Prisma.EarlyAccessSignupCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EarlyAccessSignupCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>[]
+          }
+          delete: {
+            args: Prisma.EarlyAccessSignupDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          update: {
+            args: Prisma.EarlyAccessSignupUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          deleteMany: {
+            args: Prisma.EarlyAccessSignupDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EarlyAccessSignupUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EarlyAccessSignupUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>[]
+          }
+          upsert: {
+            args: Prisma.EarlyAccessSignupUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessSignupPayload>
+          }
+          aggregate: {
+            args: Prisma.EarlyAccessSignupAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEarlyAccessSignup>
+          }
+          groupBy: {
+            args: Prisma.EarlyAccessSignupGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessSignupGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EarlyAccessSignupCountArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessSignupCountAggregateOutputType> | number
+          }
+        }
+      }
+      EarlyAccessThresholdAlert: {
+        payload: Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>
+        fields: Prisma.EarlyAccessThresholdAlertFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EarlyAccessThresholdAlertFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EarlyAccessThresholdAlertFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          findFirst: {
+            args: Prisma.EarlyAccessThresholdAlertFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EarlyAccessThresholdAlertFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          findMany: {
+            args: Prisma.EarlyAccessThresholdAlertFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>[]
+          }
+          create: {
+            args: Prisma.EarlyAccessThresholdAlertCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          createMany: {
+            args: Prisma.EarlyAccessThresholdAlertCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EarlyAccessThresholdAlertCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>[]
+          }
+          delete: {
+            args: Prisma.EarlyAccessThresholdAlertDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          update: {
+            args: Prisma.EarlyAccessThresholdAlertUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          deleteMany: {
+            args: Prisma.EarlyAccessThresholdAlertDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EarlyAccessThresholdAlertUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EarlyAccessThresholdAlertUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>[]
+          }
+          upsert: {
+            args: Prisma.EarlyAccessThresholdAlertUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EarlyAccessThresholdAlertPayload>
+          }
+          aggregate: {
+            args: Prisma.EarlyAccessThresholdAlertAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEarlyAccessThresholdAlert>
+          }
+          groupBy: {
+            args: Prisma.EarlyAccessThresholdAlertGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessThresholdAlertGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EarlyAccessThresholdAlertCountArgs<ExtArgs>
+            result: $Utils.Optional<EarlyAccessThresholdAlertCountAggregateOutputType> | number
+          }
+        }
+      }
+      AuditLog: {
+        payload: Prisma.$AuditLogPayload<ExtArgs>
+        fields: Prisma.AuditLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AuditLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuditLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          findFirst: {
+            args: Prisma.AuditLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuditLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          findMany: {
+            args: Prisma.AuditLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+          }
+          create: {
+            args: Prisma.AuditLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          createMany: {
+            args: Prisma.AuditLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AuditLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+          }
+          delete: {
+            args: Prisma.AuditLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          update: {
+            args: Prisma.AuditLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuditLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuditLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AuditLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.AuditLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditLogPayload>
+          }
+          aggregate: {
+            args: Prisma.AuditLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAuditLog>
+          }
+          groupBy: {
+            args: Prisma.AuditLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AuditLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuditLogCountArgs<ExtArgs>
+            result: $Utils.Optional<AuditLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      NotificationTemplate: {
+        payload: Prisma.$NotificationTemplatePayload<ExtArgs>
+        fields: Prisma.NotificationTemplateFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NotificationTemplateFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NotificationTemplateFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          findFirst: {
+            args: Prisma.NotificationTemplateFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NotificationTemplateFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          findMany: {
+            args: Prisma.NotificationTemplateFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>[]
+          }
+          create: {
+            args: Prisma.NotificationTemplateCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          createMany: {
+            args: Prisma.NotificationTemplateCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NotificationTemplateCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>[]
+          }
+          delete: {
+            args: Prisma.NotificationTemplateDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          update: {
+            args: Prisma.NotificationTemplateUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          deleteMany: {
+            args: Prisma.NotificationTemplateDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NotificationTemplateUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NotificationTemplateUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>[]
+          }
+          upsert: {
+            args: Prisma.NotificationTemplateUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationTemplatePayload>
+          }
+          aggregate: {
+            args: Prisma.NotificationTemplateAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNotificationTemplate>
+          }
+          groupBy: {
+            args: Prisma.NotificationTemplateGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NotificationTemplateGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NotificationTemplateCountArgs<ExtArgs>
+            result: $Utils.Optional<NotificationTemplateCountAggregateOutputType> | number
+          }
+        }
+      }
+      NotificationOutbox: {
+        payload: Prisma.$NotificationOutboxPayload<ExtArgs>
+        fields: Prisma.NotificationOutboxFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NotificationOutboxFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NotificationOutboxFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          findFirst: {
+            args: Prisma.NotificationOutboxFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NotificationOutboxFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          findMany: {
+            args: Prisma.NotificationOutboxFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>[]
+          }
+          create: {
+            args: Prisma.NotificationOutboxCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          createMany: {
+            args: Prisma.NotificationOutboxCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NotificationOutboxCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>[]
+          }
+          delete: {
+            args: Prisma.NotificationOutboxDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          update: {
+            args: Prisma.NotificationOutboxUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          deleteMany: {
+            args: Prisma.NotificationOutboxDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NotificationOutboxUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NotificationOutboxUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>[]
+          }
+          upsert: {
+            args: Prisma.NotificationOutboxUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationOutboxPayload>
+          }
+          aggregate: {
+            args: Prisma.NotificationOutboxAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNotificationOutbox>
+          }
+          groupBy: {
+            args: Prisma.NotificationOutboxGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NotificationOutboxGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NotificationOutboxCountArgs<ExtArgs>
+            result: $Utils.Optional<NotificationOutboxCountAggregateOutputType> | number
+          }
+        }
+      }
+      NotificationDeliveryLog: {
+        payload: Prisma.$NotificationDeliveryLogPayload<ExtArgs>
+        fields: Prisma.NotificationDeliveryLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NotificationDeliveryLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NotificationDeliveryLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          findFirst: {
+            args: Prisma.NotificationDeliveryLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NotificationDeliveryLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          findMany: {
+            args: Prisma.NotificationDeliveryLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>[]
+          }
+          create: {
+            args: Prisma.NotificationDeliveryLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          createMany: {
+            args: Prisma.NotificationDeliveryLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NotificationDeliveryLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>[]
+          }
+          delete: {
+            args: Prisma.NotificationDeliveryLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          update: {
+            args: Prisma.NotificationDeliveryLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.NotificationDeliveryLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NotificationDeliveryLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NotificationDeliveryLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.NotificationDeliveryLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationDeliveryLogPayload>
+          }
+          aggregate: {
+            args: Prisma.NotificationDeliveryLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNotificationDeliveryLog>
+          }
+          groupBy: {
+            args: Prisma.NotificationDeliveryLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NotificationDeliveryLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NotificationDeliveryLogCountArgs<ExtArgs>
+            result: $Utils.Optional<NotificationDeliveryLogCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3263,6 +3968,13 @@ export namespace Prisma {
     referralCommission?: ReferralCommissionOmit
     ownershipDispute?: OwnershipDisputeOmit
     organizationSecurityState?: OrganizationSecurityStateOmit
+    earlyAccessEvent?: EarlyAccessEventOmit
+    earlyAccessSignup?: EarlyAccessSignupOmit
+    earlyAccessThresholdAlert?: EarlyAccessThresholdAlertOmit
+    auditLog?: AuditLogOmit
+    notificationTemplate?: NotificationTemplateOmit
+    notificationOutbox?: NotificationOutboxOmit
+    notificationDeliveryLog?: NotificationDeliveryLogOmit
   }
 
   /* Types for Logging */
@@ -3472,15 +4184,135 @@ export namespace Prisma {
 
 
   /**
+   * Count Type OrganizationCountOutputType
+   */
+
+  export type OrganizationCountOutputType = {
+    usageMeterEvents: number
+    earlyAccessEvents: number
+    earlyAccessSignups: number
+    auditLogs: number
+    paymentOrders: number
+    memberships: number
+    billingInvoiceItems: number
+    notificationTemplates: number
+    notificationOutboxEntries: number
+    notificationDeliveryLogs: number
+  }
+
+  export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    usageMeterEvents?: boolean | OrganizationCountOutputTypeCountUsageMeterEventsArgs
+    earlyAccessEvents?: boolean | OrganizationCountOutputTypeCountEarlyAccessEventsArgs
+    earlyAccessSignups?: boolean | OrganizationCountOutputTypeCountEarlyAccessSignupsArgs
+    auditLogs?: boolean | OrganizationCountOutputTypeCountAuditLogsArgs
+    paymentOrders?: boolean | OrganizationCountOutputTypeCountPaymentOrdersArgs
+    memberships?: boolean | OrganizationCountOutputTypeCountMembershipsArgs
+    billingInvoiceItems?: boolean | OrganizationCountOutputTypeCountBillingInvoiceItemsArgs
+    notificationTemplates?: boolean | OrganizationCountOutputTypeCountNotificationTemplatesArgs
+    notificationOutboxEntries?: boolean | OrganizationCountOutputTypeCountNotificationOutboxEntriesArgs
+    notificationDeliveryLogs?: boolean | OrganizationCountOutputTypeCountNotificationDeliveryLogsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationCountOutputType
+     */
+    select?: OrganizationCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountUsageMeterEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UsageMeterEventWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountEarlyAccessEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessEventWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountEarlyAccessSignupsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessSignupWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditLogWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPaymentOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PaymentOrderWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationMembershipWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountBillingInvoiceItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BillingInvoiceItemWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountNotificationTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationTemplateWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountNotificationOutboxEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationOutboxWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountNotificationDeliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationDeliveryLogWhereInput
+  }
+
+
+  /**
    * Count Type UserCountOutputType
    */
 
   export type UserCountOutputType = {
     memberships: number
+    earlyAccessEvents: number
+    earlyAccessSignups: number
+    auditLogs: number
+    ownedOrganizations: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     memberships?: boolean | UserCountOutputTypeCountMembershipsArgs
+    earlyAccessEvents?: boolean | UserCountOutputTypeCountEarlyAccessEventsArgs
+    earlyAccessSignups?: boolean | UserCountOutputTypeCountEarlyAccessSignupsArgs
+    auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
+    ownedOrganizations?: boolean | UserCountOutputTypeCountOwnedOrganizationsArgs
   }
 
   // Custom InputTypes
@@ -3499,6 +4331,34 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationMembershipWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountEarlyAccessEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessEventWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountEarlyAccessSignupsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessSignupWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountOwnedOrganizationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationWhereInput
   }
 
 
@@ -3561,6 +4421,68 @@ export namespace Prisma {
    */
   export type ReferralCountOutputTypeCountCommissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReferralCommissionWhereInput
+  }
+
+
+  /**
+   * Count Type NotificationTemplateCountOutputType
+   */
+
+  export type NotificationTemplateCountOutputType = {
+    outboxEntries: number
+  }
+
+  export type NotificationTemplateCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    outboxEntries?: boolean | NotificationTemplateCountOutputTypeCountOutboxEntriesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * NotificationTemplateCountOutputType without action
+   */
+  export type NotificationTemplateCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplateCountOutputType
+     */
+    select?: NotificationTemplateCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * NotificationTemplateCountOutputType without action
+   */
+  export type NotificationTemplateCountOutputTypeCountOutboxEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationOutboxWhereInput
+  }
+
+
+  /**
+   * Count Type NotificationOutboxCountOutputType
+   */
+
+  export type NotificationOutboxCountOutputType = {
+    deliveryLogs: number
+  }
+
+  export type NotificationOutboxCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    deliveryLogs?: boolean | NotificationOutboxCountOutputTypeCountDeliveryLogsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * NotificationOutboxCountOutputType without action
+   */
+  export type NotificationOutboxCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutboxCountOutputType
+     */
+    select?: NotificationOutboxCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * NotificationOutboxCountOutputType without action
+   */
+  export type NotificationOutboxCountOutputTypeCountDeliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationDeliveryLogWhereInput
   }
 
 
@@ -4887,6 +5809,7 @@ export namespace Prisma {
     updatedAt?: boolean
     isBlocked?: boolean
     customConfig?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
 
   export type OrganizationSubscriptionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4903,6 +5826,7 @@ export namespace Prisma {
     updatedAt?: boolean
     isBlocked?: boolean
     customConfig?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
 
   export type OrganizationSubscriptionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -4919,6 +5843,7 @@ export namespace Prisma {
     updatedAt?: boolean
     isBlocked?: boolean
     customConfig?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationSubscription"]>
 
   export type OrganizationSubscriptionSelectScalar = {
@@ -4938,10 +5863,21 @@ export namespace Prisma {
   }
 
   export type OrganizationSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "currentTier" | "isTrial" | "trialExpiresAt" | "activatedPremiumModules" | "billingPeriodKey" | "expiresAt" | "activeModules" | "createdAt" | "updatedAt" | "isBlocked" | "customConfig", ExtArgs["result"]["organizationSubscription"]>
+  export type OrganizationSubscriptionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type OrganizationSubscriptionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type OrganizationSubscriptionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
 
   export type $OrganizationSubscriptionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "OrganizationSubscription"
-    objects: {}
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       organizationId: string
@@ -5350,6 +6286,7 @@ export namespace Prisma {
    */
   export interface Prisma__OrganizationSubscriptionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5409,6 +6346,10 @@ export namespace Prisma {
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
+    /**
      * Filter, which OrganizationSubscription to fetch.
      */
     where: OrganizationSubscriptionWhereUniqueInput
@@ -5427,6 +6368,10 @@ export namespace Prisma {
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
+    /**
      * Filter, which OrganizationSubscription to fetch.
      */
     where: OrganizationSubscriptionWhereUniqueInput
@@ -5444,6 +6389,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which OrganizationSubscription to fetch.
      */
@@ -5493,6 +6442,10 @@ export namespace Prisma {
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
+    /**
      * Filter, which OrganizationSubscription to fetch.
      */
     where?: OrganizationSubscriptionWhereInput
@@ -5540,6 +6493,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
     /**
      * Filter, which OrganizationSubscriptions to fetch.
      */
@@ -5589,6 +6546,10 @@ export namespace Prisma {
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
+    /**
      * The data needed to create a OrganizationSubscription.
      */
     data: XOR<OrganizationSubscriptionCreateInput, OrganizationSubscriptionUncheckedCreateInput>
@@ -5622,6 +6583,10 @@ export namespace Prisma {
      */
     data: OrganizationSubscriptionCreateManyInput | OrganizationSubscriptionCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -5636,6 +6601,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
     /**
      * The data needed to update a OrganizationSubscription.
      */
@@ -5688,6 +6657,10 @@ export namespace Prisma {
      * Limit how many OrganizationSubscriptions to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -5702,6 +6675,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
     /**
      * The filter to search for the OrganizationSubscription to update in case it exists.
      */
@@ -5728,6 +6705,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
     /**
      * Filter which OrganizationSubscription to delete.
      */
@@ -5760,6 +6741,10 @@ export namespace Prisma {
      * Omit specific fields from the OrganizationSubscription
      */
     omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
   }
 
 
@@ -7227,6 +8212,7 @@ export namespace Prisma {
     description?: boolean
     amount?: boolean
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["billingInvoiceItem"]>
 
   export type BillingInvoiceItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7236,6 +8222,7 @@ export namespace Prisma {
     description?: boolean
     amount?: boolean
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["billingInvoiceItem"]>
 
   export type BillingInvoiceItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7245,6 +8232,7 @@ export namespace Prisma {
     description?: boolean
     amount?: boolean
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["billingInvoiceItem"]>
 
   export type BillingInvoiceItemSelectScalar = {
@@ -7258,18 +8246,22 @@ export namespace Prisma {
   export type BillingInvoiceItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "subscriptionInvoiceId" | "organizationId" | "description" | "amount", ExtArgs["result"]["billingInvoiceItem"]>
   export type BillingInvoiceItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
   export type BillingInvoiceItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
   export type BillingInvoiceItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     subscriptionInvoice?: boolean | SubscriptionInvoiceDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
 
   export type $BillingInvoiceItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BillingInvoiceItem"
     objects: {
       subscriptionInvoice: Prisma.$SubscriptionInvoicePayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -7672,6 +8664,7 @@ export namespace Prisma {
   export interface Prisma__BillingInvoiceItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     subscriptionInvoice<T extends SubscriptionInvoiceDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SubscriptionInvoiceDefaultArgs<ExtArgs>>): Prisma__SubscriptionInvoiceClient<$Result.GetResult<Prisma.$SubscriptionInvoicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8347,6 +9340,7 @@ export namespace Prisma {
     unitCostAzn?: boolean
     balanceAfter?: boolean
     createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["usageMeterEvent"]>
 
   export type UsageMeterEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8357,6 +9351,7 @@ export namespace Prisma {
     unitCostAzn?: boolean
     balanceAfter?: boolean
     createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["usageMeterEvent"]>
 
   export type UsageMeterEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8367,6 +9362,7 @@ export namespace Prisma {
     unitCostAzn?: boolean
     balanceAfter?: boolean
     createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["usageMeterEvent"]>
 
   export type UsageMeterEventSelectScalar = {
@@ -8380,10 +9376,21 @@ export namespace Prisma {
   }
 
   export type UsageMeterEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "actionType" | "quantity" | "unitCostAzn" | "balanceAfter" | "createdAt", ExtArgs["result"]["usageMeterEvent"]>
+  export type UsageMeterEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type UsageMeterEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type UsageMeterEventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
 
   export type $UsageMeterEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "UsageMeterEvent"
-    objects: {}
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       organizationId: string
@@ -8786,6 +9793,7 @@ export namespace Prisma {
    */
   export interface Prisma__UsageMeterEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -8839,6 +9847,10 @@ export namespace Prisma {
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
+    /**
      * Filter, which UsageMeterEvent to fetch.
      */
     where: UsageMeterEventWhereUniqueInput
@@ -8857,6 +9869,10 @@ export namespace Prisma {
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
+    /**
      * Filter, which UsageMeterEvent to fetch.
      */
     where: UsageMeterEventWhereUniqueInput
@@ -8874,6 +9890,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
     /**
      * Filter, which UsageMeterEvent to fetch.
      */
@@ -8923,6 +9943,10 @@ export namespace Prisma {
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
+    /**
      * Filter, which UsageMeterEvent to fetch.
      */
     where?: UsageMeterEventWhereInput
@@ -8970,6 +9994,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
     /**
      * Filter, which UsageMeterEvents to fetch.
      */
@@ -9019,6 +10047,10 @@ export namespace Prisma {
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
+    /**
      * The data needed to create a UsageMeterEvent.
      */
     data: XOR<UsageMeterEventCreateInput, UsageMeterEventUncheckedCreateInput>
@@ -9052,6 +10084,10 @@ export namespace Prisma {
      */
     data: UsageMeterEventCreateManyInput | UsageMeterEventCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -9066,6 +10102,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
     /**
      * The data needed to update a UsageMeterEvent.
      */
@@ -9118,6 +10158,10 @@ export namespace Prisma {
      * Limit how many UsageMeterEvents to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -9132,6 +10176,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
     /**
      * The filter to search for the UsageMeterEvent to update in case it exists.
      */
@@ -9158,6 +10206,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
     /**
      * Filter which UsageMeterEvent to delete.
      */
@@ -9190,6 +10242,10 @@ export namespace Prisma {
      * Omit specific fields from the UsageMeterEvent
      */
     omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
   }
 
 
@@ -16040,6 +17096,7 @@ export namespace Prisma {
     metadata?: boolean
     createdAt?: boolean
     paidAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     subscriptionInvoice?: boolean | PaymentOrder$subscriptionInvoiceArgs<ExtArgs>
   }, ExtArgs["result"]["paymentOrder"]>
 
@@ -16057,6 +17114,7 @@ export namespace Prisma {
     metadata?: boolean
     createdAt?: boolean
     paidAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["paymentOrder"]>
 
   export type PaymentOrderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -16073,6 +17131,7 @@ export namespace Prisma {
     metadata?: boolean
     createdAt?: boolean
     paidAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["paymentOrder"]>
 
   export type PaymentOrderSelectScalar = {
@@ -16093,14 +17152,20 @@ export namespace Prisma {
 
   export type PaymentOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "amountAzn" | "currency" | "status" | "provider" | "providerTxnId" | "monthsApplied" | "description" | "idempotencyKey" | "metadata" | "createdAt" | "paidAt", ExtArgs["result"]["paymentOrder"]>
   export type PaymentOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     subscriptionInvoice?: boolean | PaymentOrder$subscriptionInvoiceArgs<ExtArgs>
   }
-  export type PaymentOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type PaymentOrderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type PaymentOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PaymentOrderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
 
   export type $PaymentOrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "PaymentOrder"
     objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
       subscriptionInvoice: Prisma.$SubscriptionInvoicePayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -16511,6 +17576,7 @@ export namespace Prisma {
    */
   export interface Prisma__PaymentOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     subscriptionInvoice<T extends PaymentOrder$subscriptionInvoiceArgs<ExtArgs> = {}>(args?: Subset<T, PaymentOrder$subscriptionInvoiceArgs<ExtArgs>>): Prisma__SubscriptionInvoiceClient<$Result.GetResult<Prisma.$SubscriptionInvoicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -16808,6 +17874,10 @@ export namespace Prisma {
      */
     data: PaymentOrderCreateManyInput | PaymentOrderCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PaymentOrderIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -16878,6 +17948,10 @@ export namespace Prisma {
      * Limit how many PaymentOrders to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PaymentOrderIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -21233,8 +22307,24 @@ export namespace Prisma {
 
   export type AggregateOrganization = {
     _count: OrganizationCountAggregateOutputType | null
+    _avg: OrganizationAvgAggregateOutputType | null
+    _sum: OrganizationSumAggregateOutputType | null
     _min: OrganizationMinAggregateOutputType | null
     _max: OrganizationMaxAggregateOutputType | null
+  }
+
+  export type OrganizationAvgAggregateOutputType = {
+    storageUsedBytes: number | null
+    accumulatedBalance: Decimal | null
+    whatsappAlertsUsed: number | null
+    ocrPagesUsed: number | null
+  }
+
+  export type OrganizationSumAggregateOutputType = {
+    storageUsedBytes: bigint | null
+    accumulatedBalance: Decimal | null
+    whatsappAlertsUsed: number | null
+    ocrPagesUsed: number | null
   }
 
   export type OrganizationMinAggregateOutputType = {
@@ -21242,6 +22332,20 @@ export namespace Prisma {
     name: string | null
     ownerId: string | null
     taxIdBlindIndex: string | null
+    taxIdCipher: string | null
+    subscriptionPlan: string | null
+    billingStatus: $Enums.BillingStatus | null
+    storageUsedBytes: bigint | null
+    currentCreditTier: $Enums.TariffTier | null
+    accumulatedBalance: Decimal | null
+    billingPeriodKey: string | null
+    whatsappAlertsUsed: number | null
+    ocrPagesUsed: number | null
+    currency: string | null
+    drakarisClientId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type OrganizationMaxAggregateOutputType = {
@@ -21249,6 +22353,20 @@ export namespace Prisma {
     name: string | null
     ownerId: string | null
     taxIdBlindIndex: string | null
+    taxIdCipher: string | null
+    subscriptionPlan: string | null
+    billingStatus: $Enums.BillingStatus | null
+    storageUsedBytes: bigint | null
+    currentCreditTier: $Enums.TariffTier | null
+    accumulatedBalance: Decimal | null
+    billingPeriodKey: string | null
+    whatsappAlertsUsed: number | null
+    ocrPagesUsed: number | null
+    currency: string | null
+    drakarisClientId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type OrganizationCountAggregateOutputType = {
@@ -21256,15 +22374,59 @@ export namespace Prisma {
     name: number
     ownerId: number
     taxIdBlindIndex: number
+    taxIdCipher: number
+    subscriptionPlan: number
+    billingStatus: number
+    activeModules: number
+    storageUsedBytes: number
+    currentCreditTier: number
+    accumulatedBalance: number
+    billingPeriodKey: number
+    whatsappAlertsUsed: number
+    ocrPagesUsed: number
+    currency: number
+    settings: number
+    drakarisClientId: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
     _all: number
   }
 
+
+  export type OrganizationAvgAggregateInputType = {
+    storageUsedBytes?: true
+    accumulatedBalance?: true
+    whatsappAlertsUsed?: true
+    ocrPagesUsed?: true
+  }
+
+  export type OrganizationSumAggregateInputType = {
+    storageUsedBytes?: true
+    accumulatedBalance?: true
+    whatsappAlertsUsed?: true
+    ocrPagesUsed?: true
+  }
 
   export type OrganizationMinAggregateInputType = {
     id?: true
     name?: true
     ownerId?: true
     taxIdBlindIndex?: true
+    taxIdCipher?: true
+    subscriptionPlan?: true
+    billingStatus?: true
+    storageUsedBytes?: true
+    currentCreditTier?: true
+    accumulatedBalance?: true
+    billingPeriodKey?: true
+    whatsappAlertsUsed?: true
+    ocrPagesUsed?: true
+    currency?: true
+    drakarisClientId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type OrganizationMaxAggregateInputType = {
@@ -21272,6 +22434,20 @@ export namespace Prisma {
     name?: true
     ownerId?: true
     taxIdBlindIndex?: true
+    taxIdCipher?: true
+    subscriptionPlan?: true
+    billingStatus?: true
+    storageUsedBytes?: true
+    currentCreditTier?: true
+    accumulatedBalance?: true
+    billingPeriodKey?: true
+    whatsappAlertsUsed?: true
+    ocrPagesUsed?: true
+    currency?: true
+    drakarisClientId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
   }
 
   export type OrganizationCountAggregateInputType = {
@@ -21279,6 +22455,22 @@ export namespace Prisma {
     name?: true
     ownerId?: true
     taxIdBlindIndex?: true
+    taxIdCipher?: true
+    subscriptionPlan?: true
+    billingStatus?: true
+    activeModules?: true
+    storageUsedBytes?: true
+    currentCreditTier?: true
+    accumulatedBalance?: true
+    billingPeriodKey?: true
+    whatsappAlertsUsed?: true
+    ocrPagesUsed?: true
+    currency?: true
+    settings?: true
+    drakarisClientId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -21320,6 +22512,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: OrganizationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrganizationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: OrganizationMinAggregateInputType
@@ -21350,6 +22554,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: OrganizationCountAggregateInputType | true
+    _avg?: OrganizationAvgAggregateInputType
+    _sum?: OrganizationSumAggregateInputType
     _min?: OrganizationMinAggregateInputType
     _max?: OrganizationMaxAggregateInputType
   }
@@ -21359,7 +22565,25 @@ export namespace Prisma {
     name: string
     ownerId: string | null
     taxIdBlindIndex: string | null
+    taxIdCipher: string | null
+    subscriptionPlan: string | null
+    billingStatus: $Enums.BillingStatus
+    activeModules: string[]
+    storageUsedBytes: bigint
+    currentCreditTier: $Enums.TariffTier | null
+    accumulatedBalance: Decimal
+    billingPeriodKey: string | null
+    whatsappAlertsUsed: number
+    ocrPagesUsed: number
+    currency: string
+    settings: JsonValue
+    drakarisClientId: string | null
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
     _count: OrganizationCountAggregateOutputType | null
+    _avg: OrganizationAvgAggregateOutputType | null
+    _sum: OrganizationSumAggregateOutputType | null
     _min: OrganizationMinAggregateOutputType | null
     _max: OrganizationMaxAggregateOutputType | null
   }
@@ -21383,6 +22607,35 @@ export namespace Prisma {
     name?: boolean
     ownerId?: boolean
     taxIdBlindIndex?: boolean
+    taxIdCipher?: boolean
+    subscriptionPlan?: boolean
+    billingStatus?: boolean
+    activeModules?: boolean
+    storageUsedBytes?: boolean
+    currentCreditTier?: boolean
+    accumulatedBalance?: boolean
+    billingPeriodKey?: boolean
+    whatsappAlertsUsed?: boolean
+    ocrPagesUsed?: boolean
+    currency?: boolean
+    settings?: boolean
+    drakarisClientId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    usageMeterEvents?: boolean | Organization$usageMeterEventsArgs<ExtArgs>
+    earlyAccessEvents?: boolean | Organization$earlyAccessEventsArgs<ExtArgs>
+    earlyAccessSignups?: boolean | Organization$earlyAccessSignupsArgs<ExtArgs>
+    auditLogs?: boolean | Organization$auditLogsArgs<ExtArgs>
+    subscription?: boolean | Organization$subscriptionArgs<ExtArgs>
+    paymentOrders?: boolean | Organization$paymentOrdersArgs<ExtArgs>
+    memberships?: boolean | Organization$membershipsArgs<ExtArgs>
+    billingInvoiceItems?: boolean | Organization$billingInvoiceItemsArgs<ExtArgs>
+    notificationTemplates?: boolean | Organization$notificationTemplatesArgs<ExtArgs>
+    notificationOutboxEntries?: boolean | Organization$notificationOutboxEntriesArgs<ExtArgs>
+    notificationDeliveryLogs?: boolean | Organization$notificationDeliveryLogsArgs<ExtArgs>
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
+    _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -21390,6 +22643,23 @@ export namespace Prisma {
     name?: boolean
     ownerId?: boolean
     taxIdBlindIndex?: boolean
+    taxIdCipher?: boolean
+    subscriptionPlan?: boolean
+    billingStatus?: boolean
+    activeModules?: boolean
+    storageUsedBytes?: boolean
+    currentCreditTier?: boolean
+    accumulatedBalance?: boolean
+    billingPeriodKey?: boolean
+    whatsappAlertsUsed?: boolean
+    ocrPagesUsed?: boolean
+    currency?: boolean
+    settings?: boolean
+    drakarisClientId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -21397,6 +22667,23 @@ export namespace Prisma {
     name?: boolean
     ownerId?: boolean
     taxIdBlindIndex?: boolean
+    taxIdCipher?: boolean
+    subscriptionPlan?: boolean
+    billingStatus?: boolean
+    activeModules?: boolean
+    storageUsedBytes?: boolean
+    currentCreditTier?: boolean
+    accumulatedBalance?: boolean
+    billingPeriodKey?: boolean
+    whatsappAlertsUsed?: boolean
+    ocrPagesUsed?: boolean
+    currency?: boolean
+    settings?: boolean
+    drakarisClientId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectScalar = {
@@ -21404,18 +22691,84 @@ export namespace Prisma {
     name?: boolean
     ownerId?: boolean
     taxIdBlindIndex?: boolean
+    taxIdCipher?: boolean
+    subscriptionPlan?: boolean
+    billingStatus?: boolean
+    activeModules?: boolean
+    storageUsedBytes?: boolean
+    currentCreditTier?: boolean
+    accumulatedBalance?: boolean
+    billingPeriodKey?: boolean
+    whatsappAlertsUsed?: boolean
+    ocrPagesUsed?: boolean
+    currency?: boolean
+    settings?: boolean
+    drakarisClientId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+  export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    usageMeterEvents?: boolean | Organization$usageMeterEventsArgs<ExtArgs>
+    earlyAccessEvents?: boolean | Organization$earlyAccessEventsArgs<ExtArgs>
+    earlyAccessSignups?: boolean | Organization$earlyAccessSignupsArgs<ExtArgs>
+    auditLogs?: boolean | Organization$auditLogsArgs<ExtArgs>
+    subscription?: boolean | Organization$subscriptionArgs<ExtArgs>
+    paymentOrders?: boolean | Organization$paymentOrdersArgs<ExtArgs>
+    memberships?: boolean | Organization$membershipsArgs<ExtArgs>
+    billingInvoiceItems?: boolean | Organization$billingInvoiceItemsArgs<ExtArgs>
+    notificationTemplates?: boolean | Organization$notificationTemplatesArgs<ExtArgs>
+    notificationOutboxEntries?: boolean | Organization$notificationOutboxEntriesArgs<ExtArgs>
+    notificationDeliveryLogs?: boolean | Organization$notificationDeliveryLogsArgs<ExtArgs>
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
+    _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
+  }
+  export type OrganizationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | Organization$ownerArgs<ExtArgs>
+  }
 
   export type $OrganizationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Organization"
-    objects: {}
+    objects: {
+      usageMeterEvents: Prisma.$UsageMeterEventPayload<ExtArgs>[]
+      earlyAccessEvents: Prisma.$EarlyAccessEventPayload<ExtArgs>[]
+      earlyAccessSignups: Prisma.$EarlyAccessSignupPayload<ExtArgs>[]
+      auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+      subscription: Prisma.$OrganizationSubscriptionPayload<ExtArgs> | null
+      paymentOrders: Prisma.$PaymentOrderPayload<ExtArgs>[]
+      memberships: Prisma.$OrganizationMembershipPayload<ExtArgs>[]
+      billingInvoiceItems: Prisma.$BillingInvoiceItemPayload<ExtArgs>[]
+      notificationTemplates: Prisma.$NotificationTemplatePayload<ExtArgs>[]
+      notificationOutboxEntries: Prisma.$NotificationOutboxPayload<ExtArgs>[]
+      notificationDeliveryLogs: Prisma.$NotificationDeliveryLogPayload<ExtArgs>[]
+      owner: Prisma.$UserPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       ownerId: string | null
       taxIdBlindIndex: string | null
+      taxIdCipher: string | null
+      subscriptionPlan: string | null
+      billingStatus: $Enums.BillingStatus
+      activeModules: string[]
+      storageUsedBytes: bigint
+      currentCreditTier: $Enums.TariffTier | null
+      accumulatedBalance: Prisma.Decimal
+      billingPeriodKey: string | null
+      whatsappAlertsUsed: number
+      ocrPagesUsed: number
+      currency: string
+      settings: Prisma.JsonValue
+      drakarisClientId: string | null
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["organization"]>
     composites: {}
   }
@@ -21810,6 +23163,18 @@ export namespace Prisma {
    */
   export interface Prisma__OrganizationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    usageMeterEvents<T extends Organization$usageMeterEventsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$usageMeterEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UsageMeterEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    earlyAccessEvents<T extends Organization$earlyAccessEventsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$earlyAccessEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    earlyAccessSignups<T extends Organization$earlyAccessSignupsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$earlyAccessSignupsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditLogs<T extends Organization$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    subscription<T extends Organization$subscriptionArgs<ExtArgs> = {}>(args?: Subset<T, Organization$subscriptionArgs<ExtArgs>>): Prisma__OrganizationSubscriptionClient<$Result.GetResult<Prisma.$OrganizationSubscriptionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    paymentOrders<T extends Organization$paymentOrdersArgs<ExtArgs> = {}>(args?: Subset<T, Organization$paymentOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    memberships<T extends Organization$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    billingInvoiceItems<T extends Organization$billingInvoiceItemsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$billingInvoiceItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BillingInvoiceItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    notificationTemplates<T extends Organization$notificationTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    notificationOutboxEntries<T extends Organization$notificationOutboxEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationOutboxEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    notificationDeliveryLogs<T extends Organization$notificationDeliveryLogsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationDeliveryLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -21843,6 +23208,22 @@ export namespace Prisma {
     readonly name: FieldRef<"Organization", 'String'>
     readonly ownerId: FieldRef<"Organization", 'String'>
     readonly taxIdBlindIndex: FieldRef<"Organization", 'String'>
+    readonly taxIdCipher: FieldRef<"Organization", 'String'>
+    readonly subscriptionPlan: FieldRef<"Organization", 'String'>
+    readonly billingStatus: FieldRef<"Organization", 'BillingStatus'>
+    readonly activeModules: FieldRef<"Organization", 'String[]'>
+    readonly storageUsedBytes: FieldRef<"Organization", 'BigInt'>
+    readonly currentCreditTier: FieldRef<"Organization", 'TariffTier'>
+    readonly accumulatedBalance: FieldRef<"Organization", 'Decimal'>
+    readonly billingPeriodKey: FieldRef<"Organization", 'String'>
+    readonly whatsappAlertsUsed: FieldRef<"Organization", 'Int'>
+    readonly ocrPagesUsed: FieldRef<"Organization", 'Int'>
+    readonly currency: FieldRef<"Organization", 'String'>
+    readonly settings: FieldRef<"Organization", 'Json'>
+    readonly drakarisClientId: FieldRef<"Organization", 'String'>
+    readonly deletedAt: FieldRef<"Organization", 'DateTime'>
+    readonly createdAt: FieldRef<"Organization", 'DateTime'>
+    readonly updatedAt: FieldRef<"Organization", 'DateTime'>
   }
     
 
@@ -21859,6 +23240,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
     /**
      * Filter, which Organization to fetch.
      */
@@ -21878,6 +23263,10 @@ export namespace Prisma {
      */
     omit?: OrganizationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
      * Filter, which Organization to fetch.
      */
     where: OrganizationWhereUniqueInput
@@ -21895,6 +23284,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
     /**
      * Filter, which Organization to fetch.
      */
@@ -21944,6 +23337,10 @@ export namespace Prisma {
      */
     omit?: OrganizationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
      * Filter, which Organization to fetch.
      */
     where?: OrganizationWhereInput
@@ -21991,6 +23388,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
     /**
      * Filter, which Organizations to fetch.
      */
@@ -22040,6 +23441,10 @@ export namespace Prisma {
      */
     omit?: OrganizationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
      * The data needed to create a Organization.
      */
     data: XOR<OrganizationCreateInput, OrganizationUncheckedCreateInput>
@@ -22073,6 +23478,10 @@ export namespace Prisma {
      */
     data: OrganizationCreateManyInput | OrganizationCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -22087,6 +23496,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
     /**
      * The data needed to update a Organization.
      */
@@ -22139,6 +23552,10 @@ export namespace Prisma {
      * Limit how many Organizations to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -22153,6 +23570,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
     /**
      * The filter to search for the Organization to update in case it exists.
      */
@@ -22180,6 +23601,10 @@ export namespace Prisma {
      */
     omit?: OrganizationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    /**
      * Filter which Organization to delete.
      */
     where: OrganizationWhereUniqueInput
@@ -22200,6 +23625,284 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.usageMeterEvents
+   */
+  export type Organization$usageMeterEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UsageMeterEvent
+     */
+    select?: UsageMeterEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UsageMeterEvent
+     */
+    omit?: UsageMeterEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UsageMeterEventInclude<ExtArgs> | null
+    where?: UsageMeterEventWhereInput
+    orderBy?: UsageMeterEventOrderByWithRelationInput | UsageMeterEventOrderByWithRelationInput[]
+    cursor?: UsageMeterEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UsageMeterEventScalarFieldEnum | UsageMeterEventScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.earlyAccessEvents
+   */
+  export type Organization$earlyAccessEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    where?: EarlyAccessEventWhereInput
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    cursor?: EarlyAccessEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EarlyAccessEventScalarFieldEnum | EarlyAccessEventScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.earlyAccessSignups
+   */
+  export type Organization$earlyAccessSignupsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    where?: EarlyAccessSignupWhereInput
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EarlyAccessSignupScalarFieldEnum | EarlyAccessSignupScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.auditLogs
+   */
+  export type Organization$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    where?: AuditLogWhereInput
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    cursor?: AuditLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.subscription
+   */
+  export type Organization$subscriptionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSubscription
+     */
+    select?: OrganizationSubscriptionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSubscription
+     */
+    omit?: OrganizationSubscriptionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSubscriptionInclude<ExtArgs> | null
+    where?: OrganizationSubscriptionWhereInput
+  }
+
+  /**
+   * Organization.paymentOrders
+   */
+  export type Organization$paymentOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentOrder
+     */
+    select?: PaymentOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentOrder
+     */
+    omit?: PaymentOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PaymentOrderInclude<ExtArgs> | null
+    where?: PaymentOrderWhereInput
+    orderBy?: PaymentOrderOrderByWithRelationInput | PaymentOrderOrderByWithRelationInput[]
+    cursor?: PaymentOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PaymentOrderScalarFieldEnum | PaymentOrderScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.memberships
+   */
+  export type Organization$membershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationMembership
+     */
+    select?: OrganizationMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationMembership
+     */
+    omit?: OrganizationMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationMembershipInclude<ExtArgs> | null
+    where?: OrganizationMembershipWhereInput
+    orderBy?: OrganizationMembershipOrderByWithRelationInput | OrganizationMembershipOrderByWithRelationInput[]
+    cursor?: OrganizationMembershipWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationMembershipScalarFieldEnum | OrganizationMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.billingInvoiceItems
+   */
+  export type Organization$billingInvoiceItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BillingInvoiceItem
+     */
+    select?: BillingInvoiceItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BillingInvoiceItem
+     */
+    omit?: BillingInvoiceItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BillingInvoiceItemInclude<ExtArgs> | null
+    where?: BillingInvoiceItemWhereInput
+    orderBy?: BillingInvoiceItemOrderByWithRelationInput | BillingInvoiceItemOrderByWithRelationInput[]
+    cursor?: BillingInvoiceItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BillingInvoiceItemScalarFieldEnum | BillingInvoiceItemScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.notificationTemplates
+   */
+  export type Organization$notificationTemplatesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    where?: NotificationTemplateWhereInput
+    orderBy?: NotificationTemplateOrderByWithRelationInput | NotificationTemplateOrderByWithRelationInput[]
+    cursor?: NotificationTemplateWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NotificationTemplateScalarFieldEnum | NotificationTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.notificationOutboxEntries
+   */
+  export type Organization$notificationOutboxEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    where?: NotificationOutboxWhereInput
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    cursor?: NotificationOutboxWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NotificationOutboxScalarFieldEnum | NotificationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.notificationDeliveryLogs
+   */
+  export type Organization$notificationDeliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    where?: NotificationDeliveryLogWhereInput
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.owner
+   */
+  export type Organization$ownerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
    * Organization without action
    */
   export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -22211,6 +23914,10 @@ export namespace Prisma {
      * Omit specific fields from the Organization
      */
     omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
   }
 
 
@@ -22229,6 +23936,8 @@ export namespace Prisma {
     email: string | null
     passwordHash: string | null
     isSuperAdmin: boolean | null
+    firstNameCipher: string | null
+    lastNameCipher: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -22238,6 +23947,8 @@ export namespace Prisma {
     email: string | null
     passwordHash: string | null
     isSuperAdmin: boolean | null
+    firstNameCipher: string | null
+    lastNameCipher: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -22247,6 +23958,8 @@ export namespace Prisma {
     email: number
     passwordHash: number
     isSuperAdmin: number
+    firstNameCipher: number
+    lastNameCipher: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -22258,6 +23971,8 @@ export namespace Prisma {
     email?: true
     passwordHash?: true
     isSuperAdmin?: true
+    firstNameCipher?: true
+    lastNameCipher?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -22267,6 +23982,8 @@ export namespace Prisma {
     email?: true
     passwordHash?: true
     isSuperAdmin?: true
+    firstNameCipher?: true
+    lastNameCipher?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -22276,6 +23993,8 @@ export namespace Prisma {
     email?: true
     passwordHash?: true
     isSuperAdmin?: true
+    firstNameCipher?: true
+    lastNameCipher?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -22358,6 +24077,8 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin: boolean
+    firstNameCipher: string | null
+    lastNameCipher: string | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -22384,9 +24105,15 @@ export namespace Prisma {
     email?: boolean
     passwordHash?: boolean
     isSuperAdmin?: boolean
+    firstNameCipher?: boolean
+    lastNameCipher?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     memberships?: boolean | User$membershipsArgs<ExtArgs>
+    earlyAccessEvents?: boolean | User$earlyAccessEventsArgs<ExtArgs>
+    earlyAccessSignups?: boolean | User$earlyAccessSignupsArgs<ExtArgs>
+    auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
+    ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -22395,6 +24122,8 @@ export namespace Prisma {
     email?: boolean
     passwordHash?: boolean
     isSuperAdmin?: boolean
+    firstNameCipher?: boolean
+    lastNameCipher?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -22404,6 +24133,8 @@ export namespace Prisma {
     email?: boolean
     passwordHash?: boolean
     isSuperAdmin?: boolean
+    firstNameCipher?: boolean
+    lastNameCipher?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["user"]>
@@ -22413,13 +24144,19 @@ export namespace Prisma {
     email?: boolean
     passwordHash?: boolean
     isSuperAdmin?: boolean
+    firstNameCipher?: boolean
+    lastNameCipher?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "isSuperAdmin" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "passwordHash" | "isSuperAdmin" | "firstNameCipher" | "lastNameCipher" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     memberships?: boolean | User$membershipsArgs<ExtArgs>
+    earlyAccessEvents?: boolean | User$earlyAccessEventsArgs<ExtArgs>
+    earlyAccessSignups?: boolean | User$earlyAccessSignupsArgs<ExtArgs>
+    auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
+    ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -22429,12 +24166,18 @@ export namespace Prisma {
     name: "User"
     objects: {
       memberships: Prisma.$OrganizationMembershipPayload<ExtArgs>[]
+      earlyAccessEvents: Prisma.$EarlyAccessEventPayload<ExtArgs>[]
+      earlyAccessSignups: Prisma.$EarlyAccessSignupPayload<ExtArgs>[]
+      auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
+      ownedOrganizations: Prisma.$OrganizationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       email: string
       passwordHash: string
       isSuperAdmin: boolean
+      firstNameCipher: string | null
+      lastNameCipher: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -22832,6 +24575,10 @@ export namespace Prisma {
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     memberships<T extends User$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, User$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    earlyAccessEvents<T extends User$earlyAccessEventsArgs<ExtArgs> = {}>(args?: Subset<T, User$earlyAccessEventsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    earlyAccessSignups<T extends User$earlyAccessSignupsArgs<ExtArgs> = {}>(args?: Subset<T, User$earlyAccessSignupsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    ownedOrganizations<T extends User$ownedOrganizationsArgs<ExtArgs> = {}>(args?: Subset<T, User$ownedOrganizationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -22865,6 +24612,8 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly passwordHash: FieldRef<"User", 'String'>
     readonly isSuperAdmin: FieldRef<"User", 'Boolean'>
+    readonly firstNameCipher: FieldRef<"User", 'String'>
+    readonly lastNameCipher: FieldRef<"User", 'String'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -23284,6 +25033,102 @@ export namespace Prisma {
   }
 
   /**
+   * User.earlyAccessEvents
+   */
+  export type User$earlyAccessEventsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    where?: EarlyAccessEventWhereInput
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    cursor?: EarlyAccessEventWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EarlyAccessEventScalarFieldEnum | EarlyAccessEventScalarFieldEnum[]
+  }
+
+  /**
+   * User.earlyAccessSignups
+   */
+  export type User$earlyAccessSignupsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    where?: EarlyAccessSignupWhereInput
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EarlyAccessSignupScalarFieldEnum | EarlyAccessSignupScalarFieldEnum[]
+  }
+
+  /**
+   * User.auditLogs
+   */
+  export type User$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    where?: AuditLogWhereInput
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    cursor?: AuditLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * User.ownedOrganizations
+   */
+  export type User$ownedOrganizationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    cursor?: OrganizationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -23483,6 +25328,7 @@ export namespace Prisma {
     deletedByUserId?: boolean
     deletedReason?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationMembership"]>
 
   export type OrganizationMembershipSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -23494,6 +25340,7 @@ export namespace Prisma {
     deletedByUserId?: boolean
     deletedReason?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationMembership"]>
 
   export type OrganizationMembershipSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -23505,6 +25352,7 @@ export namespace Prisma {
     deletedByUserId?: boolean
     deletedReason?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organizationMembership"]>
 
   export type OrganizationMembershipSelectScalar = {
@@ -23520,18 +25368,22 @@ export namespace Prisma {
   export type OrganizationMembershipOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "organizationId" | "role" | "joinedAt" | "deletedAt" | "deletedByUserId" | "deletedReason", ExtArgs["result"]["organizationMembership"]>
   export type OrganizationMembershipInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
   export type OrganizationMembershipIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
   export type OrganizationMembershipIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
 
   export type $OrganizationMembershipPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "OrganizationMembership"
     objects: {
       user: Prisma.$UserPayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
       userId: string
@@ -23936,6 +25788,7 @@ export namespace Prisma {
   export interface Prisma__OrganizationMembershipClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -32103,6 +33956,8127 @@ export namespace Prisma {
 
 
   /**
+   * Model EarlyAccessEvent
+   */
+
+  export type AggregateEarlyAccessEvent = {
+    _count: EarlyAccessEventCountAggregateOutputType | null
+    _avg: EarlyAccessEventAvgAggregateOutputType | null
+    _sum: EarlyAccessEventSumAggregateOutputType | null
+    _min: EarlyAccessEventMinAggregateOutputType | null
+    _max: EarlyAccessEventMaxAggregateOutputType | null
+  }
+
+  export type EarlyAccessEventAvgAggregateOutputType = {
+    durationMs: number | null
+  }
+
+  export type EarlyAccessEventSumAggregateOutputType = {
+    durationMs: number | null
+  }
+
+  export type EarlyAccessEventMinAggregateOutputType = {
+    id: string | null
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    eventType: $Enums.EarlyAccessEventType | null
+    userId: string | null
+    organizationId: string | null
+    subscriptionTier: string | null
+    industrySnapshot: string | null
+    sessionId: string | null
+    durationMs: number | null
+    createdAt: Date | null
+    clientIp: string | null
+    userAgent: string | null
+  }
+
+  export type EarlyAccessEventMaxAggregateOutputType = {
+    id: string | null
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    eventType: $Enums.EarlyAccessEventType | null
+    userId: string | null
+    organizationId: string | null
+    subscriptionTier: string | null
+    industrySnapshot: string | null
+    sessionId: string | null
+    durationMs: number | null
+    createdAt: Date | null
+    clientIp: string | null
+    userAgent: string | null
+  }
+
+  export type EarlyAccessEventCountAggregateOutputType = {
+    id: number
+    moduleKey: number
+    eventType: number
+    userId: number
+    organizationId: number
+    subscriptionTier: number
+    industrySnapshot: number
+    sessionId: number
+    durationMs: number
+    metadata: number
+    createdAt: number
+    clientIp: number
+    userAgent: number
+    _all: number
+  }
+
+
+  export type EarlyAccessEventAvgAggregateInputType = {
+    durationMs?: true
+  }
+
+  export type EarlyAccessEventSumAggregateInputType = {
+    durationMs?: true
+  }
+
+  export type EarlyAccessEventMinAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    eventType?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industrySnapshot?: true
+    sessionId?: true
+    durationMs?: true
+    createdAt?: true
+    clientIp?: true
+    userAgent?: true
+  }
+
+  export type EarlyAccessEventMaxAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    eventType?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industrySnapshot?: true
+    sessionId?: true
+    durationMs?: true
+    createdAt?: true
+    clientIp?: true
+    userAgent?: true
+  }
+
+  export type EarlyAccessEventCountAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    eventType?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industrySnapshot?: true
+    sessionId?: true
+    durationMs?: true
+    metadata?: true
+    createdAt?: true
+    clientIp?: true
+    userAgent?: true
+    _all?: true
+  }
+
+  export type EarlyAccessEventAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessEvent to aggregate.
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessEvents to fetch.
+     */
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EarlyAccessEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EarlyAccessEvents
+    **/
+    _count?: true | EarlyAccessEventCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EarlyAccessEventAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EarlyAccessEventSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EarlyAccessEventMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EarlyAccessEventMaxAggregateInputType
+  }
+
+  export type GetEarlyAccessEventAggregateType<T extends EarlyAccessEventAggregateArgs> = {
+        [P in keyof T & keyof AggregateEarlyAccessEvent]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEarlyAccessEvent[P]>
+      : GetScalarType<T[P], AggregateEarlyAccessEvent[P]>
+  }
+
+
+
+
+  export type EarlyAccessEventGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessEventWhereInput
+    orderBy?: EarlyAccessEventOrderByWithAggregationInput | EarlyAccessEventOrderByWithAggregationInput[]
+    by: EarlyAccessEventScalarFieldEnum[] | EarlyAccessEventScalarFieldEnum
+    having?: EarlyAccessEventScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EarlyAccessEventCountAggregateInputType | true
+    _avg?: EarlyAccessEventAvgAggregateInputType
+    _sum?: EarlyAccessEventSumAggregateInputType
+    _min?: EarlyAccessEventMinAggregateInputType
+    _max?: EarlyAccessEventMaxAggregateInputType
+  }
+
+  export type EarlyAccessEventGroupByOutputType = {
+    id: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    userId: string | null
+    organizationId: string | null
+    subscriptionTier: string | null
+    industrySnapshot: string | null
+    sessionId: string
+    durationMs: number | null
+    metadata: JsonValue | null
+    createdAt: Date
+    clientIp: string | null
+    userAgent: string | null
+    _count: EarlyAccessEventCountAggregateOutputType | null
+    _avg: EarlyAccessEventAvgAggregateOutputType | null
+    _sum: EarlyAccessEventSumAggregateOutputType | null
+    _min: EarlyAccessEventMinAggregateOutputType | null
+    _max: EarlyAccessEventMaxAggregateOutputType | null
+  }
+
+  type GetEarlyAccessEventGroupByPayload<T extends EarlyAccessEventGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EarlyAccessEventGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EarlyAccessEventGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EarlyAccessEventGroupByOutputType[P]>
+            : GetScalarType<T[P], EarlyAccessEventGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EarlyAccessEventSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    eventType?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industrySnapshot?: boolean
+    sessionId?: boolean
+    durationMs?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessEvent"]>
+
+  export type EarlyAccessEventSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    eventType?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industrySnapshot?: boolean
+    sessionId?: boolean
+    durationMs?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessEvent"]>
+
+  export type EarlyAccessEventSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    eventType?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industrySnapshot?: boolean
+    sessionId?: boolean
+    durationMs?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessEvent"]>
+
+  export type EarlyAccessEventSelectScalar = {
+    id?: boolean
+    moduleKey?: boolean
+    eventType?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industrySnapshot?: boolean
+    sessionId?: boolean
+    durationMs?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+  }
+
+  export type EarlyAccessEventOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "moduleKey" | "eventType" | "userId" | "organizationId" | "subscriptionTier" | "industrySnapshot" | "sessionId" | "durationMs" | "metadata" | "createdAt" | "clientIp" | "userAgent", ExtArgs["result"]["earlyAccessEvent"]>
+  export type EarlyAccessEventInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }
+  export type EarlyAccessEventIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }
+  export type EarlyAccessEventIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | EarlyAccessEvent$organizationArgs<ExtArgs>
+    user?: boolean | EarlyAccessEvent$userArgs<ExtArgs>
+  }
+
+  export type $EarlyAccessEventPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EarlyAccessEvent"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
+      user: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      moduleKey: $Enums.EarlyAccessModuleKey
+      eventType: $Enums.EarlyAccessEventType
+      userId: string | null
+      organizationId: string | null
+      subscriptionTier: string | null
+      industrySnapshot: string | null
+      sessionId: string
+      durationMs: number | null
+      metadata: Prisma.JsonValue | null
+      createdAt: Date
+      clientIp: string | null
+      userAgent: string | null
+    }, ExtArgs["result"]["earlyAccessEvent"]>
+    composites: {}
+  }
+
+  type EarlyAccessEventGetPayload<S extends boolean | null | undefined | EarlyAccessEventDefaultArgs> = $Result.GetResult<Prisma.$EarlyAccessEventPayload, S>
+
+  type EarlyAccessEventCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EarlyAccessEventFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EarlyAccessEventCountAggregateInputType | true
+    }
+
+  export interface EarlyAccessEventDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EarlyAccessEvent'], meta: { name: 'EarlyAccessEvent' } }
+    /**
+     * Find zero or one EarlyAccessEvent that matches the filter.
+     * @param {EarlyAccessEventFindUniqueArgs} args - Arguments to find a EarlyAccessEvent
+     * @example
+     * // Get one EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EarlyAccessEventFindUniqueArgs>(args: SelectSubset<T, EarlyAccessEventFindUniqueArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EarlyAccessEvent that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EarlyAccessEventFindUniqueOrThrowArgs} args - Arguments to find a EarlyAccessEvent
+     * @example
+     * // Get one EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EarlyAccessEventFindUniqueOrThrowArgs>(args: SelectSubset<T, EarlyAccessEventFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessEvent that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventFindFirstArgs} args - Arguments to find a EarlyAccessEvent
+     * @example
+     * // Get one EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EarlyAccessEventFindFirstArgs>(args?: SelectSubset<T, EarlyAccessEventFindFirstArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessEvent that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventFindFirstOrThrowArgs} args - Arguments to find a EarlyAccessEvent
+     * @example
+     * // Get one EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EarlyAccessEventFindFirstOrThrowArgs>(args?: SelectSubset<T, EarlyAccessEventFindFirstOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EarlyAccessEvents that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EarlyAccessEvents
+     * const earlyAccessEvents = await prisma.earlyAccessEvent.findMany()
+     * 
+     * // Get first 10 EarlyAccessEvents
+     * const earlyAccessEvents = await prisma.earlyAccessEvent.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const earlyAccessEventWithIdOnly = await prisma.earlyAccessEvent.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EarlyAccessEventFindManyArgs>(args?: SelectSubset<T, EarlyAccessEventFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EarlyAccessEvent.
+     * @param {EarlyAccessEventCreateArgs} args - Arguments to create a EarlyAccessEvent.
+     * @example
+     * // Create one EarlyAccessEvent
+     * const EarlyAccessEvent = await prisma.earlyAccessEvent.create({
+     *   data: {
+     *     // ... data to create a EarlyAccessEvent
+     *   }
+     * })
+     * 
+     */
+    create<T extends EarlyAccessEventCreateArgs>(args: SelectSubset<T, EarlyAccessEventCreateArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EarlyAccessEvents.
+     * @param {EarlyAccessEventCreateManyArgs} args - Arguments to create many EarlyAccessEvents.
+     * @example
+     * // Create many EarlyAccessEvents
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EarlyAccessEventCreateManyArgs>(args?: SelectSubset<T, EarlyAccessEventCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EarlyAccessEvents and returns the data saved in the database.
+     * @param {EarlyAccessEventCreateManyAndReturnArgs} args - Arguments to create many EarlyAccessEvents.
+     * @example
+     * // Create many EarlyAccessEvents
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EarlyAccessEvents and only return the `id`
+     * const earlyAccessEventWithIdOnly = await prisma.earlyAccessEvent.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EarlyAccessEventCreateManyAndReturnArgs>(args?: SelectSubset<T, EarlyAccessEventCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EarlyAccessEvent.
+     * @param {EarlyAccessEventDeleteArgs} args - Arguments to delete one EarlyAccessEvent.
+     * @example
+     * // Delete one EarlyAccessEvent
+     * const EarlyAccessEvent = await prisma.earlyAccessEvent.delete({
+     *   where: {
+     *     // ... filter to delete one EarlyAccessEvent
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EarlyAccessEventDeleteArgs>(args: SelectSubset<T, EarlyAccessEventDeleteArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EarlyAccessEvent.
+     * @param {EarlyAccessEventUpdateArgs} args - Arguments to update one EarlyAccessEvent.
+     * @example
+     * // Update one EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EarlyAccessEventUpdateArgs>(args: SelectSubset<T, EarlyAccessEventUpdateArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EarlyAccessEvents.
+     * @param {EarlyAccessEventDeleteManyArgs} args - Arguments to filter EarlyAccessEvents to delete.
+     * @example
+     * // Delete a few EarlyAccessEvents
+     * const { count } = await prisma.earlyAccessEvent.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EarlyAccessEventDeleteManyArgs>(args?: SelectSubset<T, EarlyAccessEventDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EarlyAccessEvents
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EarlyAccessEventUpdateManyArgs>(args: SelectSubset<T, EarlyAccessEventUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessEvents and returns the data updated in the database.
+     * @param {EarlyAccessEventUpdateManyAndReturnArgs} args - Arguments to update many EarlyAccessEvents.
+     * @example
+     * // Update many EarlyAccessEvents
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EarlyAccessEvents and only return the `id`
+     * const earlyAccessEventWithIdOnly = await prisma.earlyAccessEvent.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EarlyAccessEventUpdateManyAndReturnArgs>(args: SelectSubset<T, EarlyAccessEventUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EarlyAccessEvent.
+     * @param {EarlyAccessEventUpsertArgs} args - Arguments to update or create a EarlyAccessEvent.
+     * @example
+     * // Update or create a EarlyAccessEvent
+     * const earlyAccessEvent = await prisma.earlyAccessEvent.upsert({
+     *   create: {
+     *     // ... data to create a EarlyAccessEvent
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EarlyAccessEvent we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EarlyAccessEventUpsertArgs>(args: SelectSubset<T, EarlyAccessEventUpsertArgs<ExtArgs>>): Prisma__EarlyAccessEventClient<$Result.GetResult<Prisma.$EarlyAccessEventPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EarlyAccessEvents.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventCountArgs} args - Arguments to filter EarlyAccessEvents to count.
+     * @example
+     * // Count the number of EarlyAccessEvents
+     * const count = await prisma.earlyAccessEvent.count({
+     *   where: {
+     *     // ... the filter for the EarlyAccessEvents we want to count
+     *   }
+     * })
+    **/
+    count<T extends EarlyAccessEventCountArgs>(
+      args?: Subset<T, EarlyAccessEventCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EarlyAccessEventCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EarlyAccessEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EarlyAccessEventAggregateArgs>(args: Subset<T, EarlyAccessEventAggregateArgs>): Prisma.PrismaPromise<GetEarlyAccessEventAggregateType<T>>
+
+    /**
+     * Group by EarlyAccessEvent.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessEventGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EarlyAccessEventGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EarlyAccessEventGroupByArgs['orderBy'] }
+        : { orderBy?: EarlyAccessEventGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EarlyAccessEventGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEarlyAccessEventGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EarlyAccessEvent model
+   */
+  readonly fields: EarlyAccessEventFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EarlyAccessEvent.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EarlyAccessEventClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends EarlyAccessEvent$organizationArgs<ExtArgs> = {}>(args?: Subset<T, EarlyAccessEvent$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    user<T extends EarlyAccessEvent$userArgs<ExtArgs> = {}>(args?: Subset<T, EarlyAccessEvent$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EarlyAccessEvent model
+   */
+  interface EarlyAccessEventFieldRefs {
+    readonly id: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly moduleKey: FieldRef<"EarlyAccessEvent", 'EarlyAccessModuleKey'>
+    readonly eventType: FieldRef<"EarlyAccessEvent", 'EarlyAccessEventType'>
+    readonly userId: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly organizationId: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly subscriptionTier: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly industrySnapshot: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly sessionId: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly durationMs: FieldRef<"EarlyAccessEvent", 'Int'>
+    readonly metadata: FieldRef<"EarlyAccessEvent", 'Json'>
+    readonly createdAt: FieldRef<"EarlyAccessEvent", 'DateTime'>
+    readonly clientIp: FieldRef<"EarlyAccessEvent", 'String'>
+    readonly userAgent: FieldRef<"EarlyAccessEvent", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EarlyAccessEvent findUnique
+   */
+  export type EarlyAccessEventFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessEvent to fetch.
+     */
+    where: EarlyAccessEventWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessEvent findUniqueOrThrow
+   */
+  export type EarlyAccessEventFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessEvent to fetch.
+     */
+    where: EarlyAccessEventWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessEvent findFirst
+   */
+  export type EarlyAccessEventFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessEvent to fetch.
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessEvents to fetch.
+     */
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessEvents.
+     */
+    cursor?: EarlyAccessEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessEvents.
+     */
+    distinct?: EarlyAccessEventScalarFieldEnum | EarlyAccessEventScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessEvent findFirstOrThrow
+   */
+  export type EarlyAccessEventFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessEvent to fetch.
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessEvents to fetch.
+     */
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessEvents.
+     */
+    cursor?: EarlyAccessEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessEvents.
+     */
+    distinct?: EarlyAccessEventScalarFieldEnum | EarlyAccessEventScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessEvent findMany
+   */
+  export type EarlyAccessEventFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessEvents to fetch.
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessEvents to fetch.
+     */
+    orderBy?: EarlyAccessEventOrderByWithRelationInput | EarlyAccessEventOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EarlyAccessEvents.
+     */
+    cursor?: EarlyAccessEventWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessEvents from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessEvents.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessEvents.
+     */
+    distinct?: EarlyAccessEventScalarFieldEnum | EarlyAccessEventScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessEvent create
+   */
+  export type EarlyAccessEventCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EarlyAccessEvent.
+     */
+    data: XOR<EarlyAccessEventCreateInput, EarlyAccessEventUncheckedCreateInput>
+  }
+
+  /**
+   * EarlyAccessEvent createMany
+   */
+  export type EarlyAccessEventCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EarlyAccessEvents.
+     */
+    data: EarlyAccessEventCreateManyInput | EarlyAccessEventCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EarlyAccessEvent createManyAndReturn
+   */
+  export type EarlyAccessEventCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * The data used to create many EarlyAccessEvents.
+     */
+    data: EarlyAccessEventCreateManyInput | EarlyAccessEventCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EarlyAccessEvent update
+   */
+  export type EarlyAccessEventUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EarlyAccessEvent.
+     */
+    data: XOR<EarlyAccessEventUpdateInput, EarlyAccessEventUncheckedUpdateInput>
+    /**
+     * Choose, which EarlyAccessEvent to update.
+     */
+    where: EarlyAccessEventWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessEvent updateMany
+   */
+  export type EarlyAccessEventUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EarlyAccessEvents.
+     */
+    data: XOR<EarlyAccessEventUpdateManyMutationInput, EarlyAccessEventUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessEvents to update
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * Limit how many EarlyAccessEvents to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessEvent updateManyAndReturn
+   */
+  export type EarlyAccessEventUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * The data used to update EarlyAccessEvents.
+     */
+    data: XOR<EarlyAccessEventUpdateManyMutationInput, EarlyAccessEventUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessEvents to update
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * Limit how many EarlyAccessEvents to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EarlyAccessEvent upsert
+   */
+  export type EarlyAccessEventUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EarlyAccessEvent to update in case it exists.
+     */
+    where: EarlyAccessEventWhereUniqueInput
+    /**
+     * In case the EarlyAccessEvent found by the `where` argument doesn't exist, create a new EarlyAccessEvent with this data.
+     */
+    create: XOR<EarlyAccessEventCreateInput, EarlyAccessEventUncheckedCreateInput>
+    /**
+     * In case the EarlyAccessEvent was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EarlyAccessEventUpdateInput, EarlyAccessEventUncheckedUpdateInput>
+  }
+
+  /**
+   * EarlyAccessEvent delete
+   */
+  export type EarlyAccessEventDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+    /**
+     * Filter which EarlyAccessEvent to delete.
+     */
+    where: EarlyAccessEventWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessEvent deleteMany
+   */
+  export type EarlyAccessEventDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessEvents to delete
+     */
+    where?: EarlyAccessEventWhereInput
+    /**
+     * Limit how many EarlyAccessEvents to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessEvent.organization
+   */
+  export type EarlyAccessEvent$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * EarlyAccessEvent.user
+   */
+  export type EarlyAccessEvent$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * EarlyAccessEvent without action
+   */
+  export type EarlyAccessEventDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessEvent
+     */
+    select?: EarlyAccessEventSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessEvent
+     */
+    omit?: EarlyAccessEventOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessEventInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EarlyAccessSignup
+   */
+
+  export type AggregateEarlyAccessSignup = {
+    _count: EarlyAccessSignupCountAggregateOutputType | null
+    _min: EarlyAccessSignupMinAggregateOutputType | null
+    _max: EarlyAccessSignupMaxAggregateOutputType | null
+  }
+
+  export type EarlyAccessSignupMinAggregateOutputType = {
+    id: string | null
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    userId: string | null
+    organizationId: string | null
+    subscriptionTier: string | null
+    industry: string | null
+    surveyAnswer: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EarlyAccessSignupMaxAggregateOutputType = {
+    id: string | null
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    userId: string | null
+    organizationId: string | null
+    subscriptionTier: string | null
+    industry: string | null
+    surveyAnswer: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EarlyAccessSignupCountAggregateOutputType = {
+    id: number
+    moduleKey: number
+    userId: number
+    organizationId: number
+    subscriptionTier: number
+    industry: number
+    surveyAnswer: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type EarlyAccessSignupMinAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industry?: true
+    surveyAnswer?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EarlyAccessSignupMaxAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industry?: true
+    surveyAnswer?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EarlyAccessSignupCountAggregateInputType = {
+    id?: true
+    moduleKey?: true
+    userId?: true
+    organizationId?: true
+    subscriptionTier?: true
+    industry?: true
+    surveyAnswer?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type EarlyAccessSignupAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessSignup to aggregate.
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessSignups to fetch.
+     */
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessSignups from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessSignups.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EarlyAccessSignups
+    **/
+    _count?: true | EarlyAccessSignupCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EarlyAccessSignupMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EarlyAccessSignupMaxAggregateInputType
+  }
+
+  export type GetEarlyAccessSignupAggregateType<T extends EarlyAccessSignupAggregateArgs> = {
+        [P in keyof T & keyof AggregateEarlyAccessSignup]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEarlyAccessSignup[P]>
+      : GetScalarType<T[P], AggregateEarlyAccessSignup[P]>
+  }
+
+
+
+
+  export type EarlyAccessSignupGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessSignupWhereInput
+    orderBy?: EarlyAccessSignupOrderByWithAggregationInput | EarlyAccessSignupOrderByWithAggregationInput[]
+    by: EarlyAccessSignupScalarFieldEnum[] | EarlyAccessSignupScalarFieldEnum
+    having?: EarlyAccessSignupScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EarlyAccessSignupCountAggregateInputType | true
+    _min?: EarlyAccessSignupMinAggregateInputType
+    _max?: EarlyAccessSignupMaxAggregateInputType
+  }
+
+  export type EarlyAccessSignupGroupByOutputType = {
+    id: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    userId: string
+    organizationId: string
+    subscriptionTier: string | null
+    industry: string | null
+    surveyAnswer: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: EarlyAccessSignupCountAggregateOutputType | null
+    _min: EarlyAccessSignupMinAggregateOutputType | null
+    _max: EarlyAccessSignupMaxAggregateOutputType | null
+  }
+
+  type GetEarlyAccessSignupGroupByPayload<T extends EarlyAccessSignupGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EarlyAccessSignupGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EarlyAccessSignupGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EarlyAccessSignupGroupByOutputType[P]>
+            : GetScalarType<T[P], EarlyAccessSignupGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EarlyAccessSignupSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industry?: boolean
+    surveyAnswer?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessSignup"]>
+
+  export type EarlyAccessSignupSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industry?: boolean
+    surveyAnswer?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessSignup"]>
+
+  export type EarlyAccessSignupSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    moduleKey?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industry?: boolean
+    surveyAnswer?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["earlyAccessSignup"]>
+
+  export type EarlyAccessSignupSelectScalar = {
+    id?: boolean
+    moduleKey?: boolean
+    userId?: boolean
+    organizationId?: boolean
+    subscriptionTier?: boolean
+    industry?: boolean
+    surveyAnswer?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type EarlyAccessSignupOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "moduleKey" | "userId" | "organizationId" | "subscriptionTier" | "industry" | "surveyAnswer" | "createdAt" | "updatedAt", ExtArgs["result"]["earlyAccessSignup"]>
+  export type EarlyAccessSignupInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type EarlyAccessSignupIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type EarlyAccessSignupIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $EarlyAccessSignupPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EarlyAccessSignup"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      moduleKey: $Enums.EarlyAccessModuleKey
+      userId: string
+      organizationId: string
+      subscriptionTier: string | null
+      industry: string | null
+      surveyAnswer: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["earlyAccessSignup"]>
+    composites: {}
+  }
+
+  type EarlyAccessSignupGetPayload<S extends boolean | null | undefined | EarlyAccessSignupDefaultArgs> = $Result.GetResult<Prisma.$EarlyAccessSignupPayload, S>
+
+  type EarlyAccessSignupCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EarlyAccessSignupFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EarlyAccessSignupCountAggregateInputType | true
+    }
+
+  export interface EarlyAccessSignupDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EarlyAccessSignup'], meta: { name: 'EarlyAccessSignup' } }
+    /**
+     * Find zero or one EarlyAccessSignup that matches the filter.
+     * @param {EarlyAccessSignupFindUniqueArgs} args - Arguments to find a EarlyAccessSignup
+     * @example
+     * // Get one EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EarlyAccessSignupFindUniqueArgs>(args: SelectSubset<T, EarlyAccessSignupFindUniqueArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EarlyAccessSignup that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EarlyAccessSignupFindUniqueOrThrowArgs} args - Arguments to find a EarlyAccessSignup
+     * @example
+     * // Get one EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EarlyAccessSignupFindUniqueOrThrowArgs>(args: SelectSubset<T, EarlyAccessSignupFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessSignup that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupFindFirstArgs} args - Arguments to find a EarlyAccessSignup
+     * @example
+     * // Get one EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EarlyAccessSignupFindFirstArgs>(args?: SelectSubset<T, EarlyAccessSignupFindFirstArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessSignup that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupFindFirstOrThrowArgs} args - Arguments to find a EarlyAccessSignup
+     * @example
+     * // Get one EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EarlyAccessSignupFindFirstOrThrowArgs>(args?: SelectSubset<T, EarlyAccessSignupFindFirstOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EarlyAccessSignups that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EarlyAccessSignups
+     * const earlyAccessSignups = await prisma.earlyAccessSignup.findMany()
+     * 
+     * // Get first 10 EarlyAccessSignups
+     * const earlyAccessSignups = await prisma.earlyAccessSignup.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const earlyAccessSignupWithIdOnly = await prisma.earlyAccessSignup.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EarlyAccessSignupFindManyArgs>(args?: SelectSubset<T, EarlyAccessSignupFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EarlyAccessSignup.
+     * @param {EarlyAccessSignupCreateArgs} args - Arguments to create a EarlyAccessSignup.
+     * @example
+     * // Create one EarlyAccessSignup
+     * const EarlyAccessSignup = await prisma.earlyAccessSignup.create({
+     *   data: {
+     *     // ... data to create a EarlyAccessSignup
+     *   }
+     * })
+     * 
+     */
+    create<T extends EarlyAccessSignupCreateArgs>(args: SelectSubset<T, EarlyAccessSignupCreateArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EarlyAccessSignups.
+     * @param {EarlyAccessSignupCreateManyArgs} args - Arguments to create many EarlyAccessSignups.
+     * @example
+     * // Create many EarlyAccessSignups
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EarlyAccessSignupCreateManyArgs>(args?: SelectSubset<T, EarlyAccessSignupCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EarlyAccessSignups and returns the data saved in the database.
+     * @param {EarlyAccessSignupCreateManyAndReturnArgs} args - Arguments to create many EarlyAccessSignups.
+     * @example
+     * // Create many EarlyAccessSignups
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EarlyAccessSignups and only return the `id`
+     * const earlyAccessSignupWithIdOnly = await prisma.earlyAccessSignup.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EarlyAccessSignupCreateManyAndReturnArgs>(args?: SelectSubset<T, EarlyAccessSignupCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EarlyAccessSignup.
+     * @param {EarlyAccessSignupDeleteArgs} args - Arguments to delete one EarlyAccessSignup.
+     * @example
+     * // Delete one EarlyAccessSignup
+     * const EarlyAccessSignup = await prisma.earlyAccessSignup.delete({
+     *   where: {
+     *     // ... filter to delete one EarlyAccessSignup
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EarlyAccessSignupDeleteArgs>(args: SelectSubset<T, EarlyAccessSignupDeleteArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EarlyAccessSignup.
+     * @param {EarlyAccessSignupUpdateArgs} args - Arguments to update one EarlyAccessSignup.
+     * @example
+     * // Update one EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EarlyAccessSignupUpdateArgs>(args: SelectSubset<T, EarlyAccessSignupUpdateArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EarlyAccessSignups.
+     * @param {EarlyAccessSignupDeleteManyArgs} args - Arguments to filter EarlyAccessSignups to delete.
+     * @example
+     * // Delete a few EarlyAccessSignups
+     * const { count } = await prisma.earlyAccessSignup.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EarlyAccessSignupDeleteManyArgs>(args?: SelectSubset<T, EarlyAccessSignupDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessSignups.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EarlyAccessSignups
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EarlyAccessSignupUpdateManyArgs>(args: SelectSubset<T, EarlyAccessSignupUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessSignups and returns the data updated in the database.
+     * @param {EarlyAccessSignupUpdateManyAndReturnArgs} args - Arguments to update many EarlyAccessSignups.
+     * @example
+     * // Update many EarlyAccessSignups
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EarlyAccessSignups and only return the `id`
+     * const earlyAccessSignupWithIdOnly = await prisma.earlyAccessSignup.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EarlyAccessSignupUpdateManyAndReturnArgs>(args: SelectSubset<T, EarlyAccessSignupUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EarlyAccessSignup.
+     * @param {EarlyAccessSignupUpsertArgs} args - Arguments to update or create a EarlyAccessSignup.
+     * @example
+     * // Update or create a EarlyAccessSignup
+     * const earlyAccessSignup = await prisma.earlyAccessSignup.upsert({
+     *   create: {
+     *     // ... data to create a EarlyAccessSignup
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EarlyAccessSignup we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EarlyAccessSignupUpsertArgs>(args: SelectSubset<T, EarlyAccessSignupUpsertArgs<ExtArgs>>): Prisma__EarlyAccessSignupClient<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EarlyAccessSignups.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupCountArgs} args - Arguments to filter EarlyAccessSignups to count.
+     * @example
+     * // Count the number of EarlyAccessSignups
+     * const count = await prisma.earlyAccessSignup.count({
+     *   where: {
+     *     // ... the filter for the EarlyAccessSignups we want to count
+     *   }
+     * })
+    **/
+    count<T extends EarlyAccessSignupCountArgs>(
+      args?: Subset<T, EarlyAccessSignupCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EarlyAccessSignupCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EarlyAccessSignup.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EarlyAccessSignupAggregateArgs>(args: Subset<T, EarlyAccessSignupAggregateArgs>): Prisma.PrismaPromise<GetEarlyAccessSignupAggregateType<T>>
+
+    /**
+     * Group by EarlyAccessSignup.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessSignupGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EarlyAccessSignupGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EarlyAccessSignupGroupByArgs['orderBy'] }
+        : { orderBy?: EarlyAccessSignupGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EarlyAccessSignupGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEarlyAccessSignupGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EarlyAccessSignup model
+   */
+  readonly fields: EarlyAccessSignupFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EarlyAccessSignup.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EarlyAccessSignupClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EarlyAccessSignup model
+   */
+  interface EarlyAccessSignupFieldRefs {
+    readonly id: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly moduleKey: FieldRef<"EarlyAccessSignup", 'EarlyAccessModuleKey'>
+    readonly userId: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly organizationId: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly subscriptionTier: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly industry: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly surveyAnswer: FieldRef<"EarlyAccessSignup", 'String'>
+    readonly createdAt: FieldRef<"EarlyAccessSignup", 'DateTime'>
+    readonly updatedAt: FieldRef<"EarlyAccessSignup", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EarlyAccessSignup findUnique
+   */
+  export type EarlyAccessSignupFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessSignup to fetch.
+     */
+    where: EarlyAccessSignupWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessSignup findUniqueOrThrow
+   */
+  export type EarlyAccessSignupFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessSignup to fetch.
+     */
+    where: EarlyAccessSignupWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessSignup findFirst
+   */
+  export type EarlyAccessSignupFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessSignup to fetch.
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessSignups to fetch.
+     */
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessSignups.
+     */
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessSignups from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessSignups.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessSignups.
+     */
+    distinct?: EarlyAccessSignupScalarFieldEnum | EarlyAccessSignupScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessSignup findFirstOrThrow
+   */
+  export type EarlyAccessSignupFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessSignup to fetch.
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessSignups to fetch.
+     */
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessSignups.
+     */
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessSignups from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessSignups.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessSignups.
+     */
+    distinct?: EarlyAccessSignupScalarFieldEnum | EarlyAccessSignupScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessSignup findMany
+   */
+  export type EarlyAccessSignupFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessSignups to fetch.
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessSignups to fetch.
+     */
+    orderBy?: EarlyAccessSignupOrderByWithRelationInput | EarlyAccessSignupOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EarlyAccessSignups.
+     */
+    cursor?: EarlyAccessSignupWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessSignups from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessSignups.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessSignups.
+     */
+    distinct?: EarlyAccessSignupScalarFieldEnum | EarlyAccessSignupScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessSignup create
+   */
+  export type EarlyAccessSignupCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EarlyAccessSignup.
+     */
+    data: XOR<EarlyAccessSignupCreateInput, EarlyAccessSignupUncheckedCreateInput>
+  }
+
+  /**
+   * EarlyAccessSignup createMany
+   */
+  export type EarlyAccessSignupCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EarlyAccessSignups.
+     */
+    data: EarlyAccessSignupCreateManyInput | EarlyAccessSignupCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EarlyAccessSignup createManyAndReturn
+   */
+  export type EarlyAccessSignupCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * The data used to create many EarlyAccessSignups.
+     */
+    data: EarlyAccessSignupCreateManyInput | EarlyAccessSignupCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EarlyAccessSignup update
+   */
+  export type EarlyAccessSignupUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EarlyAccessSignup.
+     */
+    data: XOR<EarlyAccessSignupUpdateInput, EarlyAccessSignupUncheckedUpdateInput>
+    /**
+     * Choose, which EarlyAccessSignup to update.
+     */
+    where: EarlyAccessSignupWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessSignup updateMany
+   */
+  export type EarlyAccessSignupUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EarlyAccessSignups.
+     */
+    data: XOR<EarlyAccessSignupUpdateManyMutationInput, EarlyAccessSignupUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessSignups to update
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * Limit how many EarlyAccessSignups to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessSignup updateManyAndReturn
+   */
+  export type EarlyAccessSignupUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * The data used to update EarlyAccessSignups.
+     */
+    data: XOR<EarlyAccessSignupUpdateManyMutationInput, EarlyAccessSignupUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessSignups to update
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * Limit how many EarlyAccessSignups to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EarlyAccessSignup upsert
+   */
+  export type EarlyAccessSignupUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EarlyAccessSignup to update in case it exists.
+     */
+    where: EarlyAccessSignupWhereUniqueInput
+    /**
+     * In case the EarlyAccessSignup found by the `where` argument doesn't exist, create a new EarlyAccessSignup with this data.
+     */
+    create: XOR<EarlyAccessSignupCreateInput, EarlyAccessSignupUncheckedCreateInput>
+    /**
+     * In case the EarlyAccessSignup was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EarlyAccessSignupUpdateInput, EarlyAccessSignupUncheckedUpdateInput>
+  }
+
+  /**
+   * EarlyAccessSignup delete
+   */
+  export type EarlyAccessSignupDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+    /**
+     * Filter which EarlyAccessSignup to delete.
+     */
+    where: EarlyAccessSignupWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessSignup deleteMany
+   */
+  export type EarlyAccessSignupDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessSignups to delete
+     */
+    where?: EarlyAccessSignupWhereInput
+    /**
+     * Limit how many EarlyAccessSignups to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessSignup without action
+   */
+  export type EarlyAccessSignupDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessSignup
+     */
+    select?: EarlyAccessSignupSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessSignup
+     */
+    omit?: EarlyAccessSignupOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EarlyAccessSignupInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EarlyAccessThresholdAlert
+   */
+
+  export type AggregateEarlyAccessThresholdAlert = {
+    _count: EarlyAccessThresholdAlertCountAggregateOutputType | null
+    _avg: EarlyAccessThresholdAlertAvgAggregateOutputType | null
+    _sum: EarlyAccessThresholdAlertSumAggregateOutputType | null
+    _min: EarlyAccessThresholdAlertMinAggregateOutputType | null
+    _max: EarlyAccessThresholdAlertMaxAggregateOutputType | null
+  }
+
+  export type EarlyAccessThresholdAlertAvgAggregateOutputType = {
+    threshold: number | null
+    firedToCount: number | null
+  }
+
+  export type EarlyAccessThresholdAlertSumAggregateOutputType = {
+    threshold: number | null
+    firedToCount: number | null
+  }
+
+  export type EarlyAccessThresholdAlertMinAggregateOutputType = {
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    threshold: number | null
+    firedAt: Date | null
+    firedToCount: number | null
+  }
+
+  export type EarlyAccessThresholdAlertMaxAggregateOutputType = {
+    moduleKey: $Enums.EarlyAccessModuleKey | null
+    threshold: number | null
+    firedAt: Date | null
+    firedToCount: number | null
+  }
+
+  export type EarlyAccessThresholdAlertCountAggregateOutputType = {
+    moduleKey: number
+    threshold: number
+    firedAt: number
+    firedToCount: number
+    _all: number
+  }
+
+
+  export type EarlyAccessThresholdAlertAvgAggregateInputType = {
+    threshold?: true
+    firedToCount?: true
+  }
+
+  export type EarlyAccessThresholdAlertSumAggregateInputType = {
+    threshold?: true
+    firedToCount?: true
+  }
+
+  export type EarlyAccessThresholdAlertMinAggregateInputType = {
+    moduleKey?: true
+    threshold?: true
+    firedAt?: true
+    firedToCount?: true
+  }
+
+  export type EarlyAccessThresholdAlertMaxAggregateInputType = {
+    moduleKey?: true
+    threshold?: true
+    firedAt?: true
+    firedToCount?: true
+  }
+
+  export type EarlyAccessThresholdAlertCountAggregateInputType = {
+    moduleKey?: true
+    threshold?: true
+    firedAt?: true
+    firedToCount?: true
+    _all?: true
+  }
+
+  export type EarlyAccessThresholdAlertAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessThresholdAlert to aggregate.
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessThresholdAlerts to fetch.
+     */
+    orderBy?: EarlyAccessThresholdAlertOrderByWithRelationInput | EarlyAccessThresholdAlertOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EarlyAccessThresholdAlertWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessThresholdAlerts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessThresholdAlerts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EarlyAccessThresholdAlerts
+    **/
+    _count?: true | EarlyAccessThresholdAlertCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EarlyAccessThresholdAlertAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EarlyAccessThresholdAlertSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EarlyAccessThresholdAlertMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EarlyAccessThresholdAlertMaxAggregateInputType
+  }
+
+  export type GetEarlyAccessThresholdAlertAggregateType<T extends EarlyAccessThresholdAlertAggregateArgs> = {
+        [P in keyof T & keyof AggregateEarlyAccessThresholdAlert]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEarlyAccessThresholdAlert[P]>
+      : GetScalarType<T[P], AggregateEarlyAccessThresholdAlert[P]>
+  }
+
+
+
+
+  export type EarlyAccessThresholdAlertGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EarlyAccessThresholdAlertWhereInput
+    orderBy?: EarlyAccessThresholdAlertOrderByWithAggregationInput | EarlyAccessThresholdAlertOrderByWithAggregationInput[]
+    by: EarlyAccessThresholdAlertScalarFieldEnum[] | EarlyAccessThresholdAlertScalarFieldEnum
+    having?: EarlyAccessThresholdAlertScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EarlyAccessThresholdAlertCountAggregateInputType | true
+    _avg?: EarlyAccessThresholdAlertAvgAggregateInputType
+    _sum?: EarlyAccessThresholdAlertSumAggregateInputType
+    _min?: EarlyAccessThresholdAlertMinAggregateInputType
+    _max?: EarlyAccessThresholdAlertMaxAggregateInputType
+  }
+
+  export type EarlyAccessThresholdAlertGroupByOutputType = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    threshold: number
+    firedAt: Date
+    firedToCount: number
+    _count: EarlyAccessThresholdAlertCountAggregateOutputType | null
+    _avg: EarlyAccessThresholdAlertAvgAggregateOutputType | null
+    _sum: EarlyAccessThresholdAlertSumAggregateOutputType | null
+    _min: EarlyAccessThresholdAlertMinAggregateOutputType | null
+    _max: EarlyAccessThresholdAlertMaxAggregateOutputType | null
+  }
+
+  type GetEarlyAccessThresholdAlertGroupByPayload<T extends EarlyAccessThresholdAlertGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EarlyAccessThresholdAlertGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EarlyAccessThresholdAlertGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EarlyAccessThresholdAlertGroupByOutputType[P]>
+            : GetScalarType<T[P], EarlyAccessThresholdAlertGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EarlyAccessThresholdAlertSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    threshold?: boolean
+    firedAt?: boolean
+    firedToCount?: boolean
+  }, ExtArgs["result"]["earlyAccessThresholdAlert"]>
+
+  export type EarlyAccessThresholdAlertSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    threshold?: boolean
+    firedAt?: boolean
+    firedToCount?: boolean
+  }, ExtArgs["result"]["earlyAccessThresholdAlert"]>
+
+  export type EarlyAccessThresholdAlertSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    moduleKey?: boolean
+    threshold?: boolean
+    firedAt?: boolean
+    firedToCount?: boolean
+  }, ExtArgs["result"]["earlyAccessThresholdAlert"]>
+
+  export type EarlyAccessThresholdAlertSelectScalar = {
+    moduleKey?: boolean
+    threshold?: boolean
+    firedAt?: boolean
+    firedToCount?: boolean
+  }
+
+  export type EarlyAccessThresholdAlertOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"moduleKey" | "threshold" | "firedAt" | "firedToCount", ExtArgs["result"]["earlyAccessThresholdAlert"]>
+
+  export type $EarlyAccessThresholdAlertPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EarlyAccessThresholdAlert"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      moduleKey: $Enums.EarlyAccessModuleKey
+      threshold: number
+      firedAt: Date
+      firedToCount: number
+    }, ExtArgs["result"]["earlyAccessThresholdAlert"]>
+    composites: {}
+  }
+
+  type EarlyAccessThresholdAlertGetPayload<S extends boolean | null | undefined | EarlyAccessThresholdAlertDefaultArgs> = $Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload, S>
+
+  type EarlyAccessThresholdAlertCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EarlyAccessThresholdAlertFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EarlyAccessThresholdAlertCountAggregateInputType | true
+    }
+
+  export interface EarlyAccessThresholdAlertDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EarlyAccessThresholdAlert'], meta: { name: 'EarlyAccessThresholdAlert' } }
+    /**
+     * Find zero or one EarlyAccessThresholdAlert that matches the filter.
+     * @param {EarlyAccessThresholdAlertFindUniqueArgs} args - Arguments to find a EarlyAccessThresholdAlert
+     * @example
+     * // Get one EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EarlyAccessThresholdAlertFindUniqueArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertFindUniqueArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EarlyAccessThresholdAlert that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EarlyAccessThresholdAlertFindUniqueOrThrowArgs} args - Arguments to find a EarlyAccessThresholdAlert
+     * @example
+     * // Get one EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EarlyAccessThresholdAlertFindUniqueOrThrowArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessThresholdAlert that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertFindFirstArgs} args - Arguments to find a EarlyAccessThresholdAlert
+     * @example
+     * // Get one EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EarlyAccessThresholdAlertFindFirstArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertFindFirstArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EarlyAccessThresholdAlert that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertFindFirstOrThrowArgs} args - Arguments to find a EarlyAccessThresholdAlert
+     * @example
+     * // Get one EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EarlyAccessThresholdAlertFindFirstOrThrowArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertFindFirstOrThrowArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EarlyAccessThresholdAlerts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlerts = await prisma.earlyAccessThresholdAlert.findMany()
+     * 
+     * // Get first 10 EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlerts = await prisma.earlyAccessThresholdAlert.findMany({ take: 10 })
+     * 
+     * // Only select the `threshold`
+     * const earlyAccessThresholdAlertWithThresholdOnly = await prisma.earlyAccessThresholdAlert.findMany({ select: { threshold: true } })
+     * 
+     */
+    findMany<T extends EarlyAccessThresholdAlertFindManyArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EarlyAccessThresholdAlert.
+     * @param {EarlyAccessThresholdAlertCreateArgs} args - Arguments to create a EarlyAccessThresholdAlert.
+     * @example
+     * // Create one EarlyAccessThresholdAlert
+     * const EarlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.create({
+     *   data: {
+     *     // ... data to create a EarlyAccessThresholdAlert
+     *   }
+     * })
+     * 
+     */
+    create<T extends EarlyAccessThresholdAlertCreateArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertCreateArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EarlyAccessThresholdAlerts.
+     * @param {EarlyAccessThresholdAlertCreateManyArgs} args - Arguments to create many EarlyAccessThresholdAlerts.
+     * @example
+     * // Create many EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EarlyAccessThresholdAlertCreateManyArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EarlyAccessThresholdAlerts and returns the data saved in the database.
+     * @param {EarlyAccessThresholdAlertCreateManyAndReturnArgs} args - Arguments to create many EarlyAccessThresholdAlerts.
+     * @example
+     * // Create many EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EarlyAccessThresholdAlerts and only return the `threshold`
+     * const earlyAccessThresholdAlertWithThresholdOnly = await prisma.earlyAccessThresholdAlert.createManyAndReturn({
+     *   select: { threshold: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EarlyAccessThresholdAlertCreateManyAndReturnArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EarlyAccessThresholdAlert.
+     * @param {EarlyAccessThresholdAlertDeleteArgs} args - Arguments to delete one EarlyAccessThresholdAlert.
+     * @example
+     * // Delete one EarlyAccessThresholdAlert
+     * const EarlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.delete({
+     *   where: {
+     *     // ... filter to delete one EarlyAccessThresholdAlert
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EarlyAccessThresholdAlertDeleteArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertDeleteArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EarlyAccessThresholdAlert.
+     * @param {EarlyAccessThresholdAlertUpdateArgs} args - Arguments to update one EarlyAccessThresholdAlert.
+     * @example
+     * // Update one EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EarlyAccessThresholdAlertUpdateArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertUpdateArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EarlyAccessThresholdAlerts.
+     * @param {EarlyAccessThresholdAlertDeleteManyArgs} args - Arguments to filter EarlyAccessThresholdAlerts to delete.
+     * @example
+     * // Delete a few EarlyAccessThresholdAlerts
+     * const { count } = await prisma.earlyAccessThresholdAlert.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EarlyAccessThresholdAlertDeleteManyArgs>(args?: SelectSubset<T, EarlyAccessThresholdAlertDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessThresholdAlerts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EarlyAccessThresholdAlertUpdateManyArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EarlyAccessThresholdAlerts and returns the data updated in the database.
+     * @param {EarlyAccessThresholdAlertUpdateManyAndReturnArgs} args - Arguments to update many EarlyAccessThresholdAlerts.
+     * @example
+     * // Update many EarlyAccessThresholdAlerts
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EarlyAccessThresholdAlerts and only return the `threshold`
+     * const earlyAccessThresholdAlertWithThresholdOnly = await prisma.earlyAccessThresholdAlert.updateManyAndReturn({
+     *   select: { threshold: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EarlyAccessThresholdAlertUpdateManyAndReturnArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EarlyAccessThresholdAlert.
+     * @param {EarlyAccessThresholdAlertUpsertArgs} args - Arguments to update or create a EarlyAccessThresholdAlert.
+     * @example
+     * // Update or create a EarlyAccessThresholdAlert
+     * const earlyAccessThresholdAlert = await prisma.earlyAccessThresholdAlert.upsert({
+     *   create: {
+     *     // ... data to create a EarlyAccessThresholdAlert
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EarlyAccessThresholdAlert we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EarlyAccessThresholdAlertUpsertArgs>(args: SelectSubset<T, EarlyAccessThresholdAlertUpsertArgs<ExtArgs>>): Prisma__EarlyAccessThresholdAlertClient<$Result.GetResult<Prisma.$EarlyAccessThresholdAlertPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EarlyAccessThresholdAlerts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertCountArgs} args - Arguments to filter EarlyAccessThresholdAlerts to count.
+     * @example
+     * // Count the number of EarlyAccessThresholdAlerts
+     * const count = await prisma.earlyAccessThresholdAlert.count({
+     *   where: {
+     *     // ... the filter for the EarlyAccessThresholdAlerts we want to count
+     *   }
+     * })
+    **/
+    count<T extends EarlyAccessThresholdAlertCountArgs>(
+      args?: Subset<T, EarlyAccessThresholdAlertCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EarlyAccessThresholdAlertCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EarlyAccessThresholdAlert.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EarlyAccessThresholdAlertAggregateArgs>(args: Subset<T, EarlyAccessThresholdAlertAggregateArgs>): Prisma.PrismaPromise<GetEarlyAccessThresholdAlertAggregateType<T>>
+
+    /**
+     * Group by EarlyAccessThresholdAlert.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EarlyAccessThresholdAlertGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EarlyAccessThresholdAlertGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EarlyAccessThresholdAlertGroupByArgs['orderBy'] }
+        : { orderBy?: EarlyAccessThresholdAlertGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EarlyAccessThresholdAlertGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEarlyAccessThresholdAlertGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EarlyAccessThresholdAlert model
+   */
+  readonly fields: EarlyAccessThresholdAlertFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EarlyAccessThresholdAlert.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EarlyAccessThresholdAlertClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EarlyAccessThresholdAlert model
+   */
+  interface EarlyAccessThresholdAlertFieldRefs {
+    readonly moduleKey: FieldRef<"EarlyAccessThresholdAlert", 'EarlyAccessModuleKey'>
+    readonly threshold: FieldRef<"EarlyAccessThresholdAlert", 'Int'>
+    readonly firedAt: FieldRef<"EarlyAccessThresholdAlert", 'DateTime'>
+    readonly firedToCount: FieldRef<"EarlyAccessThresholdAlert", 'Int'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EarlyAccessThresholdAlert findUnique
+   */
+  export type EarlyAccessThresholdAlertFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessThresholdAlert to fetch.
+     */
+    where: EarlyAccessThresholdAlertWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessThresholdAlert findUniqueOrThrow
+   */
+  export type EarlyAccessThresholdAlertFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessThresholdAlert to fetch.
+     */
+    where: EarlyAccessThresholdAlertWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessThresholdAlert findFirst
+   */
+  export type EarlyAccessThresholdAlertFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessThresholdAlert to fetch.
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessThresholdAlerts to fetch.
+     */
+    orderBy?: EarlyAccessThresholdAlertOrderByWithRelationInput | EarlyAccessThresholdAlertOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessThresholdAlerts.
+     */
+    cursor?: EarlyAccessThresholdAlertWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessThresholdAlerts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessThresholdAlerts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessThresholdAlerts.
+     */
+    distinct?: EarlyAccessThresholdAlertScalarFieldEnum | EarlyAccessThresholdAlertScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessThresholdAlert findFirstOrThrow
+   */
+  export type EarlyAccessThresholdAlertFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessThresholdAlert to fetch.
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessThresholdAlerts to fetch.
+     */
+    orderBy?: EarlyAccessThresholdAlertOrderByWithRelationInput | EarlyAccessThresholdAlertOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EarlyAccessThresholdAlerts.
+     */
+    cursor?: EarlyAccessThresholdAlertWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessThresholdAlerts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessThresholdAlerts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessThresholdAlerts.
+     */
+    distinct?: EarlyAccessThresholdAlertScalarFieldEnum | EarlyAccessThresholdAlertScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessThresholdAlert findMany
+   */
+  export type EarlyAccessThresholdAlertFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter, which EarlyAccessThresholdAlerts to fetch.
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EarlyAccessThresholdAlerts to fetch.
+     */
+    orderBy?: EarlyAccessThresholdAlertOrderByWithRelationInput | EarlyAccessThresholdAlertOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EarlyAccessThresholdAlerts.
+     */
+    cursor?: EarlyAccessThresholdAlertWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EarlyAccessThresholdAlerts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EarlyAccessThresholdAlerts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EarlyAccessThresholdAlerts.
+     */
+    distinct?: EarlyAccessThresholdAlertScalarFieldEnum | EarlyAccessThresholdAlertScalarFieldEnum[]
+  }
+
+  /**
+   * EarlyAccessThresholdAlert create
+   */
+  export type EarlyAccessThresholdAlertCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * The data needed to create a EarlyAccessThresholdAlert.
+     */
+    data: XOR<EarlyAccessThresholdAlertCreateInput, EarlyAccessThresholdAlertUncheckedCreateInput>
+  }
+
+  /**
+   * EarlyAccessThresholdAlert createMany
+   */
+  export type EarlyAccessThresholdAlertCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EarlyAccessThresholdAlerts.
+     */
+    data: EarlyAccessThresholdAlertCreateManyInput | EarlyAccessThresholdAlertCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EarlyAccessThresholdAlert createManyAndReturn
+   */
+  export type EarlyAccessThresholdAlertCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * The data used to create many EarlyAccessThresholdAlerts.
+     */
+    data: EarlyAccessThresholdAlertCreateManyInput | EarlyAccessThresholdAlertCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EarlyAccessThresholdAlert update
+   */
+  export type EarlyAccessThresholdAlertUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * The data needed to update a EarlyAccessThresholdAlert.
+     */
+    data: XOR<EarlyAccessThresholdAlertUpdateInput, EarlyAccessThresholdAlertUncheckedUpdateInput>
+    /**
+     * Choose, which EarlyAccessThresholdAlert to update.
+     */
+    where: EarlyAccessThresholdAlertWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessThresholdAlert updateMany
+   */
+  export type EarlyAccessThresholdAlertUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EarlyAccessThresholdAlerts.
+     */
+    data: XOR<EarlyAccessThresholdAlertUpdateManyMutationInput, EarlyAccessThresholdAlertUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessThresholdAlerts to update
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * Limit how many EarlyAccessThresholdAlerts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessThresholdAlert updateManyAndReturn
+   */
+  export type EarlyAccessThresholdAlertUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * The data used to update EarlyAccessThresholdAlerts.
+     */
+    data: XOR<EarlyAccessThresholdAlertUpdateManyMutationInput, EarlyAccessThresholdAlertUncheckedUpdateManyInput>
+    /**
+     * Filter which EarlyAccessThresholdAlerts to update
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * Limit how many EarlyAccessThresholdAlerts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessThresholdAlert upsert
+   */
+  export type EarlyAccessThresholdAlertUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * The filter to search for the EarlyAccessThresholdAlert to update in case it exists.
+     */
+    where: EarlyAccessThresholdAlertWhereUniqueInput
+    /**
+     * In case the EarlyAccessThresholdAlert found by the `where` argument doesn't exist, create a new EarlyAccessThresholdAlert with this data.
+     */
+    create: XOR<EarlyAccessThresholdAlertCreateInput, EarlyAccessThresholdAlertUncheckedCreateInput>
+    /**
+     * In case the EarlyAccessThresholdAlert was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EarlyAccessThresholdAlertUpdateInput, EarlyAccessThresholdAlertUncheckedUpdateInput>
+  }
+
+  /**
+   * EarlyAccessThresholdAlert delete
+   */
+  export type EarlyAccessThresholdAlertDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+    /**
+     * Filter which EarlyAccessThresholdAlert to delete.
+     */
+    where: EarlyAccessThresholdAlertWhereUniqueInput
+  }
+
+  /**
+   * EarlyAccessThresholdAlert deleteMany
+   */
+  export type EarlyAccessThresholdAlertDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EarlyAccessThresholdAlerts to delete
+     */
+    where?: EarlyAccessThresholdAlertWhereInput
+    /**
+     * Limit how many EarlyAccessThresholdAlerts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EarlyAccessThresholdAlert without action
+   */
+  export type EarlyAccessThresholdAlertDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EarlyAccessThresholdAlert
+     */
+    select?: EarlyAccessThresholdAlertSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EarlyAccessThresholdAlert
+     */
+    omit?: EarlyAccessThresholdAlertOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AuditLog
+   */
+
+  export type AggregateAuditLog = {
+    _count: AuditLogCountAggregateOutputType | null
+    _min: AuditLogMinAggregateOutputType | null
+    _max: AuditLogMaxAggregateOutputType | null
+  }
+
+  export type AuditLogMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    userId: string | null
+    entityType: string | null
+    entityId: string | null
+    action: string | null
+    createdAt: Date | null
+    clientIp: string | null
+    userAgent: string | null
+    hash: string | null
+  }
+
+  export type AuditLogMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    userId: string | null
+    entityType: string | null
+    entityId: string | null
+    action: string | null
+    createdAt: Date | null
+    clientIp: string | null
+    userAgent: string | null
+    hash: string | null
+  }
+
+  export type AuditLogCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    userId: number
+    entityType: number
+    entityId: number
+    action: number
+    changes: number
+    createdAt: number
+    oldValues: number
+    newValues: number
+    clientIp: number
+    userAgent: number
+    hash: number
+    _all: number
+  }
+
+
+  export type AuditLogMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    entityType?: true
+    entityId?: true
+    action?: true
+    createdAt?: true
+    clientIp?: true
+    userAgent?: true
+    hash?: true
+  }
+
+  export type AuditLogMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    entityType?: true
+    entityId?: true
+    action?: true
+    createdAt?: true
+    clientIp?: true
+    userAgent?: true
+    hash?: true
+  }
+
+  export type AuditLogCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    userId?: true
+    entityType?: true
+    entityId?: true
+    action?: true
+    changes?: true
+    createdAt?: true
+    oldValues?: true
+    newValues?: true
+    clientIp?: true
+    userAgent?: true
+    hash?: true
+    _all?: true
+  }
+
+  export type AuditLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditLog to aggregate.
+     */
+    where?: AuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditLogs to fetch.
+     */
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AuditLogs
+    **/
+    _count?: true | AuditLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AuditLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AuditLogMaxAggregateInputType
+  }
+
+  export type GetAuditLogAggregateType<T extends AuditLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateAuditLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAuditLog[P]>
+      : GetScalarType<T[P], AggregateAuditLog[P]>
+  }
+
+
+
+
+  export type AuditLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditLogWhereInput
+    orderBy?: AuditLogOrderByWithAggregationInput | AuditLogOrderByWithAggregationInput[]
+    by: AuditLogScalarFieldEnum[] | AuditLogScalarFieldEnum
+    having?: AuditLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AuditLogCountAggregateInputType | true
+    _min?: AuditLogMinAggregateInputType
+    _max?: AuditLogMaxAggregateInputType
+  }
+
+  export type AuditLogGroupByOutputType = {
+    id: string
+    organizationId: string | null
+    userId: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes: JsonValue | null
+    createdAt: Date
+    oldValues: JsonValue | null
+    newValues: JsonValue | null
+    clientIp: string | null
+    userAgent: string | null
+    hash: string | null
+    _count: AuditLogCountAggregateOutputType | null
+    _min: AuditLogMinAggregateOutputType | null
+    _max: AuditLogMaxAggregateOutputType | null
+  }
+
+  type GetAuditLogGroupByPayload<T extends AuditLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AuditLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AuditLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AuditLogGroupByOutputType[P]>
+            : GetScalarType<T[P], AuditLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AuditLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    action?: boolean
+    changes?: boolean
+    createdAt?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    hash?: boolean
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }, ExtArgs["result"]["auditLog"]>
+
+  export type AuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    action?: boolean
+    changes?: boolean
+    createdAt?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    hash?: boolean
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }, ExtArgs["result"]["auditLog"]>
+
+  export type AuditLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    action?: boolean
+    changes?: boolean
+    createdAt?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    hash?: boolean
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }, ExtArgs["result"]["auditLog"]>
+
+  export type AuditLogSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    userId?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    action?: boolean
+    changes?: boolean
+    createdAt?: boolean
+    oldValues?: boolean
+    newValues?: boolean
+    clientIp?: boolean
+    userAgent?: boolean
+    hash?: boolean
+  }
+
+  export type AuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "userId" | "entityType" | "entityId" | "action" | "changes" | "createdAt" | "oldValues" | "newValues" | "clientIp" | "userAgent" | "hash", ExtArgs["result"]["auditLog"]>
+  export type AuditLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
+  export type AuditLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
+  export type AuditLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | AuditLog$organizationArgs<ExtArgs>
+    user?: boolean | AuditLog$userArgs<ExtArgs>
+  }
+
+  export type $AuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AuditLog"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
+      user: Prisma.$UserPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string | null
+      userId: string | null
+      entityType: string
+      entityId: string
+      action: string
+      changes: Prisma.JsonValue | null
+      createdAt: Date
+      oldValues: Prisma.JsonValue | null
+      newValues: Prisma.JsonValue | null
+      clientIp: string | null
+      userAgent: string | null
+      hash: string | null
+    }, ExtArgs["result"]["auditLog"]>
+    composites: {}
+  }
+
+  type AuditLogGetPayload<S extends boolean | null | undefined | AuditLogDefaultArgs> = $Result.GetResult<Prisma.$AuditLogPayload, S>
+
+  type AuditLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AuditLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AuditLogCountAggregateInputType | true
+    }
+
+  export interface AuditLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuditLog'], meta: { name: 'AuditLog' } }
+    /**
+     * Find zero or one AuditLog that matches the filter.
+     * @param {AuditLogFindUniqueArgs} args - Arguments to find a AuditLog
+     * @example
+     * // Get one AuditLog
+     * const auditLog = await prisma.auditLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AuditLogFindUniqueArgs>(args: SelectSubset<T, AuditLogFindUniqueArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AuditLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AuditLogFindUniqueOrThrowArgs} args - Arguments to find a AuditLog
+     * @example
+     * // Get one AuditLog
+     * const auditLog = await prisma.auditLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AuditLogFindUniqueOrThrowArgs>(args: SelectSubset<T, AuditLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuditLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogFindFirstArgs} args - Arguments to find a AuditLog
+     * @example
+     * // Get one AuditLog
+     * const auditLog = await prisma.auditLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AuditLogFindFirstArgs>(args?: SelectSubset<T, AuditLogFindFirstArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuditLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogFindFirstOrThrowArgs} args - Arguments to find a AuditLog
+     * @example
+     * // Get one AuditLog
+     * const auditLog = await prisma.auditLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AuditLogFindFirstOrThrowArgs>(args?: SelectSubset<T, AuditLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AuditLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AuditLogs
+     * const auditLogs = await prisma.auditLog.findMany()
+     * 
+     * // Get first 10 AuditLogs
+     * const auditLogs = await prisma.auditLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const auditLogWithIdOnly = await prisma.auditLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AuditLogFindManyArgs>(args?: SelectSubset<T, AuditLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AuditLog.
+     * @param {AuditLogCreateArgs} args - Arguments to create a AuditLog.
+     * @example
+     * // Create one AuditLog
+     * const AuditLog = await prisma.auditLog.create({
+     *   data: {
+     *     // ... data to create a AuditLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends AuditLogCreateArgs>(args: SelectSubset<T, AuditLogCreateArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AuditLogs.
+     * @param {AuditLogCreateManyArgs} args - Arguments to create many AuditLogs.
+     * @example
+     * // Create many AuditLogs
+     * const auditLog = await prisma.auditLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AuditLogCreateManyArgs>(args?: SelectSubset<T, AuditLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AuditLogs and returns the data saved in the database.
+     * @param {AuditLogCreateManyAndReturnArgs} args - Arguments to create many AuditLogs.
+     * @example
+     * // Create many AuditLogs
+     * const auditLog = await prisma.auditLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AuditLogs and only return the `id`
+     * const auditLogWithIdOnly = await prisma.auditLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AuditLogCreateManyAndReturnArgs>(args?: SelectSubset<T, AuditLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AuditLog.
+     * @param {AuditLogDeleteArgs} args - Arguments to delete one AuditLog.
+     * @example
+     * // Delete one AuditLog
+     * const AuditLog = await prisma.auditLog.delete({
+     *   where: {
+     *     // ... filter to delete one AuditLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AuditLogDeleteArgs>(args: SelectSubset<T, AuditLogDeleteArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AuditLog.
+     * @param {AuditLogUpdateArgs} args - Arguments to update one AuditLog.
+     * @example
+     * // Update one AuditLog
+     * const auditLog = await prisma.auditLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AuditLogUpdateArgs>(args: SelectSubset<T, AuditLogUpdateArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AuditLogs.
+     * @param {AuditLogDeleteManyArgs} args - Arguments to filter AuditLogs to delete.
+     * @example
+     * // Delete a few AuditLogs
+     * const { count } = await prisma.auditLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AuditLogDeleteManyArgs>(args?: SelectSubset<T, AuditLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AuditLogs
+     * const auditLog = await prisma.auditLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AuditLogUpdateManyArgs>(args: SelectSubset<T, AuditLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuditLogs and returns the data updated in the database.
+     * @param {AuditLogUpdateManyAndReturnArgs} args - Arguments to update many AuditLogs.
+     * @example
+     * // Update many AuditLogs
+     * const auditLog = await prisma.auditLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AuditLogs and only return the `id`
+     * const auditLogWithIdOnly = await prisma.auditLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AuditLogUpdateManyAndReturnArgs>(args: SelectSubset<T, AuditLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AuditLog.
+     * @param {AuditLogUpsertArgs} args - Arguments to update or create a AuditLog.
+     * @example
+     * // Update or create a AuditLog
+     * const auditLog = await prisma.auditLog.upsert({
+     *   create: {
+     *     // ... data to create a AuditLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AuditLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AuditLogUpsertArgs>(args: SelectSubset<T, AuditLogUpsertArgs<ExtArgs>>): Prisma__AuditLogClient<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AuditLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogCountArgs} args - Arguments to filter AuditLogs to count.
+     * @example
+     * // Count the number of AuditLogs
+     * const count = await prisma.auditLog.count({
+     *   where: {
+     *     // ... the filter for the AuditLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends AuditLogCountArgs>(
+      args?: Subset<T, AuditLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AuditLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AuditLogAggregateArgs>(args: Subset<T, AuditLogAggregateArgs>): Prisma.PrismaPromise<GetAuditLogAggregateType<T>>
+
+    /**
+     * Group by AuditLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AuditLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AuditLogGroupByArgs['orderBy'] }
+        : { orderBy?: AuditLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AuditLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AuditLog model
+   */
+  readonly fields: AuditLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AuditLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AuditLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends AuditLog$organizationArgs<ExtArgs> = {}>(args?: Subset<T, AuditLog$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    user<T extends AuditLog$userArgs<ExtArgs> = {}>(args?: Subset<T, AuditLog$userArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AuditLog model
+   */
+  interface AuditLogFieldRefs {
+    readonly id: FieldRef<"AuditLog", 'String'>
+    readonly organizationId: FieldRef<"AuditLog", 'String'>
+    readonly userId: FieldRef<"AuditLog", 'String'>
+    readonly entityType: FieldRef<"AuditLog", 'String'>
+    readonly entityId: FieldRef<"AuditLog", 'String'>
+    readonly action: FieldRef<"AuditLog", 'String'>
+    readonly changes: FieldRef<"AuditLog", 'Json'>
+    readonly createdAt: FieldRef<"AuditLog", 'DateTime'>
+    readonly oldValues: FieldRef<"AuditLog", 'Json'>
+    readonly newValues: FieldRef<"AuditLog", 'Json'>
+    readonly clientIp: FieldRef<"AuditLog", 'String'>
+    readonly userAgent: FieldRef<"AuditLog", 'String'>
+    readonly hash: FieldRef<"AuditLog", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AuditLog findUnique
+   */
+  export type AuditLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditLog to fetch.
+     */
+    where: AuditLogWhereUniqueInput
+  }
+
+  /**
+   * AuditLog findUniqueOrThrow
+   */
+  export type AuditLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditLog to fetch.
+     */
+    where: AuditLogWhereUniqueInput
+  }
+
+  /**
+   * AuditLog findFirst
+   */
+  export type AuditLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditLog to fetch.
+     */
+    where?: AuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditLogs to fetch.
+     */
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditLogs.
+     */
+    cursor?: AuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditLogs.
+     */
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * AuditLog findFirstOrThrow
+   */
+  export type AuditLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditLog to fetch.
+     */
+    where?: AuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditLogs to fetch.
+     */
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditLogs.
+     */
+    cursor?: AuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditLogs.
+     */
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * AuditLog findMany
+   */
+  export type AuditLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditLogs to fetch.
+     */
+    where?: AuditLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditLogs to fetch.
+     */
+    orderBy?: AuditLogOrderByWithRelationInput | AuditLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AuditLogs.
+     */
+    cursor?: AuditLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditLogs.
+     */
+    distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
+  }
+
+  /**
+   * AuditLog create
+   */
+  export type AuditLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AuditLog.
+     */
+    data: XOR<AuditLogCreateInput, AuditLogUncheckedCreateInput>
+  }
+
+  /**
+   * AuditLog createMany
+   */
+  export type AuditLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AuditLogs.
+     */
+    data: AuditLogCreateManyInput | AuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuditLog createManyAndReturn
+   */
+  export type AuditLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many AuditLogs.
+     */
+    data: AuditLogCreateManyInput | AuditLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuditLog update
+   */
+  export type AuditLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AuditLog.
+     */
+    data: XOR<AuditLogUpdateInput, AuditLogUncheckedUpdateInput>
+    /**
+     * Choose, which AuditLog to update.
+     */
+    where: AuditLogWhereUniqueInput
+  }
+
+  /**
+   * AuditLog updateMany
+   */
+  export type AuditLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AuditLogs.
+     */
+    data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which AuditLogs to update
+     */
+    where?: AuditLogWhereInput
+    /**
+     * Limit how many AuditLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuditLog updateManyAndReturn
+   */
+  export type AuditLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * The data used to update AuditLogs.
+     */
+    data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyInput>
+    /**
+     * Filter which AuditLogs to update
+     */
+    where?: AuditLogWhereInput
+    /**
+     * Limit how many AuditLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuditLog upsert
+   */
+  export type AuditLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AuditLog to update in case it exists.
+     */
+    where: AuditLogWhereUniqueInput
+    /**
+     * In case the AuditLog found by the `where` argument doesn't exist, create a new AuditLog with this data.
+     */
+    create: XOR<AuditLogCreateInput, AuditLogUncheckedCreateInput>
+    /**
+     * In case the AuditLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AuditLogUpdateInput, AuditLogUncheckedUpdateInput>
+  }
+
+  /**
+   * AuditLog delete
+   */
+  export type AuditLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+    /**
+     * Filter which AuditLog to delete.
+     */
+    where: AuditLogWhereUniqueInput
+  }
+
+  /**
+   * AuditLog deleteMany
+   */
+  export type AuditLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditLogs to delete
+     */
+    where?: AuditLogWhereInput
+    /**
+     * Limit how many AuditLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuditLog.organization
+   */
+  export type AuditLog$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * AuditLog.user
+   */
+  export type AuditLog$userArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * AuditLog without action
+   */
+  export type AuditLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: AuditLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: AuditLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NotificationTemplate
+   */
+
+  export type AggregateNotificationTemplate = {
+    _count: NotificationTemplateCountAggregateOutputType | null
+    _min: NotificationTemplateMinAggregateOutputType | null
+    _max: NotificationTemplateMaxAggregateOutputType | null
+  }
+
+  export type NotificationTemplateMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    templateKey: string | null
+    messageClass: $Enums.NotificationMessageClass | null
+    channel: $Enums.NotificationChannel | null
+    subject: string | null
+    bodyTemplate: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationTemplateMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    templateKey: string | null
+    messageClass: $Enums.NotificationMessageClass | null
+    channel: $Enums.NotificationChannel | null
+    subject: string | null
+    bodyTemplate: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationTemplateCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    templateKey: number
+    messageClass: number
+    channel: number
+    subject: number
+    bodyTemplate: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NotificationTemplateMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    messageClass?: true
+    channel?: true
+    subject?: true
+    bodyTemplate?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationTemplateMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    messageClass?: true
+    channel?: true
+    subject?: true
+    bodyTemplate?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationTemplateCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    messageClass?: true
+    channel?: true
+    subject?: true
+    bodyTemplate?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NotificationTemplateAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationTemplate to aggregate.
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationTemplates to fetch.
+     */
+    orderBy?: NotificationTemplateOrderByWithRelationInput | NotificationTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NotificationTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NotificationTemplates
+    **/
+    _count?: true | NotificationTemplateCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NotificationTemplateMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NotificationTemplateMaxAggregateInputType
+  }
+
+  export type GetNotificationTemplateAggregateType<T extends NotificationTemplateAggregateArgs> = {
+        [P in keyof T & keyof AggregateNotificationTemplate]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNotificationTemplate[P]>
+      : GetScalarType<T[P], AggregateNotificationTemplate[P]>
+  }
+
+
+
+
+  export type NotificationTemplateGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationTemplateWhereInput
+    orderBy?: NotificationTemplateOrderByWithAggregationInput | NotificationTemplateOrderByWithAggregationInput[]
+    by: NotificationTemplateScalarFieldEnum[] | NotificationTemplateScalarFieldEnum
+    having?: NotificationTemplateScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NotificationTemplateCountAggregateInputType | true
+    _min?: NotificationTemplateMinAggregateInputType
+    _max?: NotificationTemplateMaxAggregateInputType
+  }
+
+  export type NotificationTemplateGroupByOutputType = {
+    id: string
+    organizationId: string | null
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject: string | null
+    bodyTemplate: string
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: NotificationTemplateCountAggregateOutputType | null
+    _min: NotificationTemplateMinAggregateOutputType | null
+    _max: NotificationTemplateMaxAggregateOutputType | null
+  }
+
+  type GetNotificationTemplateGroupByPayload<T extends NotificationTemplateGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NotificationTemplateGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NotificationTemplateGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NotificationTemplateGroupByOutputType[P]>
+            : GetScalarType<T[P], NotificationTemplateGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NotificationTemplateSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    subject?: boolean
+    bodyTemplate?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+    outboxEntries?: boolean | NotificationTemplate$outboxEntriesArgs<ExtArgs>
+    _count?: boolean | NotificationTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationTemplate"]>
+
+  export type NotificationTemplateSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    subject?: boolean
+    bodyTemplate?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationTemplate"]>
+
+  export type NotificationTemplateSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    subject?: boolean
+    bodyTemplate?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationTemplate"]>
+
+  export type NotificationTemplateSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    subject?: boolean
+    bodyTemplate?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NotificationTemplateOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "templateKey" | "messageClass" | "channel" | "subject" | "bodyTemplate" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationTemplate"]>
+  export type NotificationTemplateInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+    outboxEntries?: boolean | NotificationTemplate$outboxEntriesArgs<ExtArgs>
+    _count?: boolean | NotificationTemplateCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type NotificationTemplateIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+  }
+  export type NotificationTemplateIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | NotificationTemplate$organizationArgs<ExtArgs>
+  }
+
+  export type $NotificationTemplatePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NotificationTemplate"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs> | null
+      outboxEntries: Prisma.$NotificationOutboxPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string | null
+      templateKey: string
+      messageClass: $Enums.NotificationMessageClass
+      channel: $Enums.NotificationChannel
+      subject: string | null
+      bodyTemplate: string
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["notificationTemplate"]>
+    composites: {}
+  }
+
+  type NotificationTemplateGetPayload<S extends boolean | null | undefined | NotificationTemplateDefaultArgs> = $Result.GetResult<Prisma.$NotificationTemplatePayload, S>
+
+  type NotificationTemplateCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NotificationTemplateFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NotificationTemplateCountAggregateInputType | true
+    }
+
+  export interface NotificationTemplateDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NotificationTemplate'], meta: { name: 'NotificationTemplate' } }
+    /**
+     * Find zero or one NotificationTemplate that matches the filter.
+     * @param {NotificationTemplateFindUniqueArgs} args - Arguments to find a NotificationTemplate
+     * @example
+     * // Get one NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NotificationTemplateFindUniqueArgs>(args: SelectSubset<T, NotificationTemplateFindUniqueArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NotificationTemplate that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NotificationTemplateFindUniqueOrThrowArgs} args - Arguments to find a NotificationTemplate
+     * @example
+     * // Get one NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NotificationTemplateFindUniqueOrThrowArgs>(args: SelectSubset<T, NotificationTemplateFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationTemplate that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateFindFirstArgs} args - Arguments to find a NotificationTemplate
+     * @example
+     * // Get one NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NotificationTemplateFindFirstArgs>(args?: SelectSubset<T, NotificationTemplateFindFirstArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationTemplate that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateFindFirstOrThrowArgs} args - Arguments to find a NotificationTemplate
+     * @example
+     * // Get one NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NotificationTemplateFindFirstOrThrowArgs>(args?: SelectSubset<T, NotificationTemplateFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NotificationTemplates that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NotificationTemplates
+     * const notificationTemplates = await prisma.notificationTemplate.findMany()
+     * 
+     * // Get first 10 NotificationTemplates
+     * const notificationTemplates = await prisma.notificationTemplate.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const notificationTemplateWithIdOnly = await prisma.notificationTemplate.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NotificationTemplateFindManyArgs>(args?: SelectSubset<T, NotificationTemplateFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NotificationTemplate.
+     * @param {NotificationTemplateCreateArgs} args - Arguments to create a NotificationTemplate.
+     * @example
+     * // Create one NotificationTemplate
+     * const NotificationTemplate = await prisma.notificationTemplate.create({
+     *   data: {
+     *     // ... data to create a NotificationTemplate
+     *   }
+     * })
+     * 
+     */
+    create<T extends NotificationTemplateCreateArgs>(args: SelectSubset<T, NotificationTemplateCreateArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NotificationTemplates.
+     * @param {NotificationTemplateCreateManyArgs} args - Arguments to create many NotificationTemplates.
+     * @example
+     * // Create many NotificationTemplates
+     * const notificationTemplate = await prisma.notificationTemplate.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NotificationTemplateCreateManyArgs>(args?: SelectSubset<T, NotificationTemplateCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NotificationTemplates and returns the data saved in the database.
+     * @param {NotificationTemplateCreateManyAndReturnArgs} args - Arguments to create many NotificationTemplates.
+     * @example
+     * // Create many NotificationTemplates
+     * const notificationTemplate = await prisma.notificationTemplate.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NotificationTemplates and only return the `id`
+     * const notificationTemplateWithIdOnly = await prisma.notificationTemplate.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NotificationTemplateCreateManyAndReturnArgs>(args?: SelectSubset<T, NotificationTemplateCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NotificationTemplate.
+     * @param {NotificationTemplateDeleteArgs} args - Arguments to delete one NotificationTemplate.
+     * @example
+     * // Delete one NotificationTemplate
+     * const NotificationTemplate = await prisma.notificationTemplate.delete({
+     *   where: {
+     *     // ... filter to delete one NotificationTemplate
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NotificationTemplateDeleteArgs>(args: SelectSubset<T, NotificationTemplateDeleteArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NotificationTemplate.
+     * @param {NotificationTemplateUpdateArgs} args - Arguments to update one NotificationTemplate.
+     * @example
+     * // Update one NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NotificationTemplateUpdateArgs>(args: SelectSubset<T, NotificationTemplateUpdateArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NotificationTemplates.
+     * @param {NotificationTemplateDeleteManyArgs} args - Arguments to filter NotificationTemplates to delete.
+     * @example
+     * // Delete a few NotificationTemplates
+     * const { count } = await prisma.notificationTemplate.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NotificationTemplateDeleteManyArgs>(args?: SelectSubset<T, NotificationTemplateDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NotificationTemplates
+     * const notificationTemplate = await prisma.notificationTemplate.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NotificationTemplateUpdateManyArgs>(args: SelectSubset<T, NotificationTemplateUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationTemplates and returns the data updated in the database.
+     * @param {NotificationTemplateUpdateManyAndReturnArgs} args - Arguments to update many NotificationTemplates.
+     * @example
+     * // Update many NotificationTemplates
+     * const notificationTemplate = await prisma.notificationTemplate.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NotificationTemplates and only return the `id`
+     * const notificationTemplateWithIdOnly = await prisma.notificationTemplate.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NotificationTemplateUpdateManyAndReturnArgs>(args: SelectSubset<T, NotificationTemplateUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NotificationTemplate.
+     * @param {NotificationTemplateUpsertArgs} args - Arguments to update or create a NotificationTemplate.
+     * @example
+     * // Update or create a NotificationTemplate
+     * const notificationTemplate = await prisma.notificationTemplate.upsert({
+     *   create: {
+     *     // ... data to create a NotificationTemplate
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NotificationTemplate we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NotificationTemplateUpsertArgs>(args: SelectSubset<T, NotificationTemplateUpsertArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NotificationTemplates.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateCountArgs} args - Arguments to filter NotificationTemplates to count.
+     * @example
+     * // Count the number of NotificationTemplates
+     * const count = await prisma.notificationTemplate.count({
+     *   where: {
+     *     // ... the filter for the NotificationTemplates we want to count
+     *   }
+     * })
+    **/
+    count<T extends NotificationTemplateCountArgs>(
+      args?: Subset<T, NotificationTemplateCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NotificationTemplateCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NotificationTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NotificationTemplateAggregateArgs>(args: Subset<T, NotificationTemplateAggregateArgs>): Prisma.PrismaPromise<GetNotificationTemplateAggregateType<T>>
+
+    /**
+     * Group by NotificationTemplate.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationTemplateGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NotificationTemplateGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NotificationTemplateGroupByArgs['orderBy'] }
+        : { orderBy?: NotificationTemplateGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NotificationTemplateGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotificationTemplateGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NotificationTemplate model
+   */
+  readonly fields: NotificationTemplateFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NotificationTemplate.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NotificationTemplateClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends NotificationTemplate$organizationArgs<ExtArgs> = {}>(args?: Subset<T, NotificationTemplate$organizationArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    outboxEntries<T extends NotificationTemplate$outboxEntriesArgs<ExtArgs> = {}>(args?: Subset<T, NotificationTemplate$outboxEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NotificationTemplate model
+   */
+  interface NotificationTemplateFieldRefs {
+    readonly id: FieldRef<"NotificationTemplate", 'String'>
+    readonly organizationId: FieldRef<"NotificationTemplate", 'String'>
+    readonly templateKey: FieldRef<"NotificationTemplate", 'String'>
+    readonly messageClass: FieldRef<"NotificationTemplate", 'NotificationMessageClass'>
+    readonly channel: FieldRef<"NotificationTemplate", 'NotificationChannel'>
+    readonly subject: FieldRef<"NotificationTemplate", 'String'>
+    readonly bodyTemplate: FieldRef<"NotificationTemplate", 'String'>
+    readonly isActive: FieldRef<"NotificationTemplate", 'Boolean'>
+    readonly createdAt: FieldRef<"NotificationTemplate", 'DateTime'>
+    readonly updatedAt: FieldRef<"NotificationTemplate", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NotificationTemplate findUnique
+   */
+  export type NotificationTemplateFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationTemplate to fetch.
+     */
+    where: NotificationTemplateWhereUniqueInput
+  }
+
+  /**
+   * NotificationTemplate findUniqueOrThrow
+   */
+  export type NotificationTemplateFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationTemplate to fetch.
+     */
+    where: NotificationTemplateWhereUniqueInput
+  }
+
+  /**
+   * NotificationTemplate findFirst
+   */
+  export type NotificationTemplateFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationTemplate to fetch.
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationTemplates to fetch.
+     */
+    orderBy?: NotificationTemplateOrderByWithRelationInput | NotificationTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationTemplates.
+     */
+    cursor?: NotificationTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationTemplates.
+     */
+    distinct?: NotificationTemplateScalarFieldEnum | NotificationTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationTemplate findFirstOrThrow
+   */
+  export type NotificationTemplateFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationTemplate to fetch.
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationTemplates to fetch.
+     */
+    orderBy?: NotificationTemplateOrderByWithRelationInput | NotificationTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationTemplates.
+     */
+    cursor?: NotificationTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationTemplates.
+     */
+    distinct?: NotificationTemplateScalarFieldEnum | NotificationTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationTemplate findMany
+   */
+  export type NotificationTemplateFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationTemplates to fetch.
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationTemplates to fetch.
+     */
+    orderBy?: NotificationTemplateOrderByWithRelationInput | NotificationTemplateOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NotificationTemplates.
+     */
+    cursor?: NotificationTemplateWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationTemplates from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationTemplates.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationTemplates.
+     */
+    distinct?: NotificationTemplateScalarFieldEnum | NotificationTemplateScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationTemplate create
+   */
+  export type NotificationTemplateCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NotificationTemplate.
+     */
+    data: XOR<NotificationTemplateCreateInput, NotificationTemplateUncheckedCreateInput>
+  }
+
+  /**
+   * NotificationTemplate createMany
+   */
+  export type NotificationTemplateCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NotificationTemplates.
+     */
+    data: NotificationTemplateCreateManyInput | NotificationTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NotificationTemplate createManyAndReturn
+   */
+  export type NotificationTemplateCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * The data used to create many NotificationTemplates.
+     */
+    data: NotificationTemplateCreateManyInput | NotificationTemplateCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationTemplate update
+   */
+  export type NotificationTemplateUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NotificationTemplate.
+     */
+    data: XOR<NotificationTemplateUpdateInput, NotificationTemplateUncheckedUpdateInput>
+    /**
+     * Choose, which NotificationTemplate to update.
+     */
+    where: NotificationTemplateWhereUniqueInput
+  }
+
+  /**
+   * NotificationTemplate updateMany
+   */
+  export type NotificationTemplateUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NotificationTemplates.
+     */
+    data: XOR<NotificationTemplateUpdateManyMutationInput, NotificationTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationTemplates to update
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * Limit how many NotificationTemplates to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationTemplate updateManyAndReturn
+   */
+  export type NotificationTemplateUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * The data used to update NotificationTemplates.
+     */
+    data: XOR<NotificationTemplateUpdateManyMutationInput, NotificationTemplateUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationTemplates to update
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * Limit how many NotificationTemplates to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationTemplate upsert
+   */
+  export type NotificationTemplateUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NotificationTemplate to update in case it exists.
+     */
+    where: NotificationTemplateWhereUniqueInput
+    /**
+     * In case the NotificationTemplate found by the `where` argument doesn't exist, create a new NotificationTemplate with this data.
+     */
+    create: XOR<NotificationTemplateCreateInput, NotificationTemplateUncheckedCreateInput>
+    /**
+     * In case the NotificationTemplate was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NotificationTemplateUpdateInput, NotificationTemplateUncheckedUpdateInput>
+  }
+
+  /**
+   * NotificationTemplate delete
+   */
+  export type NotificationTemplateDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    /**
+     * Filter which NotificationTemplate to delete.
+     */
+    where: NotificationTemplateWhereUniqueInput
+  }
+
+  /**
+   * NotificationTemplate deleteMany
+   */
+  export type NotificationTemplateDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationTemplates to delete
+     */
+    where?: NotificationTemplateWhereInput
+    /**
+     * Limit how many NotificationTemplates to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationTemplate.organization
+   */
+  export type NotificationTemplate$organizationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * NotificationTemplate.outboxEntries
+   */
+  export type NotificationTemplate$outboxEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    where?: NotificationOutboxWhereInput
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    cursor?: NotificationOutboxWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NotificationOutboxScalarFieldEnum | NotificationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationTemplate without action
+   */
+  export type NotificationTemplateDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NotificationOutbox
+   */
+
+  export type AggregateNotificationOutbox = {
+    _count: NotificationOutboxCountAggregateOutputType | null
+    _min: NotificationOutboxMinAggregateOutputType | null
+    _max: NotificationOutboxMaxAggregateOutputType | null
+  }
+
+  export type NotificationOutboxMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    templateKey: string | null
+    templateId: string | null
+    messageClass: $Enums.NotificationMessageClass | null
+    channel: $Enums.NotificationChannel | null
+    recipient: string | null
+    status: $Enums.NotificationOutboxStatus | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    errorMessage: string | null
+    sentAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationOutboxMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    templateKey: string | null
+    templateId: string | null
+    messageClass: $Enums.NotificationMessageClass | null
+    channel: $Enums.NotificationChannel | null
+    recipient: string | null
+    status: $Enums.NotificationOutboxStatus | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    errorMessage: string | null
+    sentAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationOutboxCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    templateKey: number
+    templateId: number
+    messageClass: number
+    channel: number
+    recipient: number
+    payload: number
+    status: number
+    sourceEntityType: number
+    sourceEntityId: number
+    errorMessage: number
+    sentAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NotificationOutboxMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    templateId?: true
+    messageClass?: true
+    channel?: true
+    recipient?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    errorMessage?: true
+    sentAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationOutboxMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    templateId?: true
+    messageClass?: true
+    channel?: true
+    recipient?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    errorMessage?: true
+    sentAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationOutboxCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    templateKey?: true
+    templateId?: true
+    messageClass?: true
+    channel?: true
+    recipient?: true
+    payload?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    errorMessage?: true
+    sentAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NotificationOutboxAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationOutbox to aggregate.
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationOutboxes to fetch.
+     */
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NotificationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NotificationOutboxes
+    **/
+    _count?: true | NotificationOutboxCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NotificationOutboxMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NotificationOutboxMaxAggregateInputType
+  }
+
+  export type GetNotificationOutboxAggregateType<T extends NotificationOutboxAggregateArgs> = {
+        [P in keyof T & keyof AggregateNotificationOutbox]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNotificationOutbox[P]>
+      : GetScalarType<T[P], AggregateNotificationOutbox[P]>
+  }
+
+
+
+
+  export type NotificationOutboxGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationOutboxWhereInput
+    orderBy?: NotificationOutboxOrderByWithAggregationInput | NotificationOutboxOrderByWithAggregationInput[]
+    by: NotificationOutboxScalarFieldEnum[] | NotificationOutboxScalarFieldEnum
+    having?: NotificationOutboxScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NotificationOutboxCountAggregateInputType | true
+    _min?: NotificationOutboxMinAggregateInputType
+    _max?: NotificationOutboxMaxAggregateInputType
+  }
+
+  export type NotificationOutboxGroupByOutputType = {
+    id: string
+    organizationId: string
+    templateKey: string
+    templateId: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload: JsonValue
+    status: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage: string | null
+    sentAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: NotificationOutboxCountAggregateOutputType | null
+    _min: NotificationOutboxMinAggregateOutputType | null
+    _max: NotificationOutboxMaxAggregateOutputType | null
+  }
+
+  type GetNotificationOutboxGroupByPayload<T extends NotificationOutboxGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NotificationOutboxGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NotificationOutboxGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NotificationOutboxGroupByOutputType[P]>
+            : GetScalarType<T[P], NotificationOutboxGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NotificationOutboxSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    templateId?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    recipient?: boolean
+    payload?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    errorMessage?: boolean
+    sentAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+    deliveryLogs?: boolean | NotificationOutbox$deliveryLogsArgs<ExtArgs>
+    _count?: boolean | NotificationOutboxCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationOutbox"]>
+
+  export type NotificationOutboxSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    templateId?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    recipient?: boolean
+    payload?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    errorMessage?: boolean
+    sentAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationOutbox"]>
+
+  export type NotificationOutboxSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    templateId?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    recipient?: boolean
+    payload?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    errorMessage?: boolean
+    sentAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationOutbox"]>
+
+  export type NotificationOutboxSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    templateKey?: boolean
+    templateId?: boolean
+    messageClass?: boolean
+    channel?: boolean
+    recipient?: boolean
+    payload?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    errorMessage?: boolean
+    sentAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NotificationOutboxOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "templateKey" | "templateId" | "messageClass" | "channel" | "recipient" | "payload" | "status" | "sourceEntityType" | "sourceEntityId" | "errorMessage" | "sentAt" | "createdAt" | "updatedAt", ExtArgs["result"]["notificationOutbox"]>
+  export type NotificationOutboxInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+    deliveryLogs?: boolean | NotificationOutbox$deliveryLogsArgs<ExtArgs>
+    _count?: boolean | NotificationOutboxCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type NotificationOutboxIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+  }
+  export type NotificationOutboxIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    template?: boolean | NotificationOutbox$templateArgs<ExtArgs>
+  }
+
+  export type $NotificationOutboxPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NotificationOutbox"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      template: Prisma.$NotificationTemplatePayload<ExtArgs> | null
+      deliveryLogs: Prisma.$NotificationDeliveryLogPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      templateKey: string
+      templateId: string | null
+      messageClass: $Enums.NotificationMessageClass
+      channel: $Enums.NotificationChannel
+      recipient: string
+      payload: Prisma.JsonValue
+      status: $Enums.NotificationOutboxStatus
+      sourceEntityType: string
+      sourceEntityId: string
+      errorMessage: string | null
+      sentAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["notificationOutbox"]>
+    composites: {}
+  }
+
+  type NotificationOutboxGetPayload<S extends boolean | null | undefined | NotificationOutboxDefaultArgs> = $Result.GetResult<Prisma.$NotificationOutboxPayload, S>
+
+  type NotificationOutboxCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NotificationOutboxFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NotificationOutboxCountAggregateInputType | true
+    }
+
+  export interface NotificationOutboxDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NotificationOutbox'], meta: { name: 'NotificationOutbox' } }
+    /**
+     * Find zero or one NotificationOutbox that matches the filter.
+     * @param {NotificationOutboxFindUniqueArgs} args - Arguments to find a NotificationOutbox
+     * @example
+     * // Get one NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NotificationOutboxFindUniqueArgs>(args: SelectSubset<T, NotificationOutboxFindUniqueArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NotificationOutbox that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NotificationOutboxFindUniqueOrThrowArgs} args - Arguments to find a NotificationOutbox
+     * @example
+     * // Get one NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NotificationOutboxFindUniqueOrThrowArgs>(args: SelectSubset<T, NotificationOutboxFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationOutbox that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxFindFirstArgs} args - Arguments to find a NotificationOutbox
+     * @example
+     * // Get one NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NotificationOutboxFindFirstArgs>(args?: SelectSubset<T, NotificationOutboxFindFirstArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationOutbox that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxFindFirstOrThrowArgs} args - Arguments to find a NotificationOutbox
+     * @example
+     * // Get one NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NotificationOutboxFindFirstOrThrowArgs>(args?: SelectSubset<T, NotificationOutboxFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NotificationOutboxes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NotificationOutboxes
+     * const notificationOutboxes = await prisma.notificationOutbox.findMany()
+     * 
+     * // Get first 10 NotificationOutboxes
+     * const notificationOutboxes = await prisma.notificationOutbox.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const notificationOutboxWithIdOnly = await prisma.notificationOutbox.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NotificationOutboxFindManyArgs>(args?: SelectSubset<T, NotificationOutboxFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NotificationOutbox.
+     * @param {NotificationOutboxCreateArgs} args - Arguments to create a NotificationOutbox.
+     * @example
+     * // Create one NotificationOutbox
+     * const NotificationOutbox = await prisma.notificationOutbox.create({
+     *   data: {
+     *     // ... data to create a NotificationOutbox
+     *   }
+     * })
+     * 
+     */
+    create<T extends NotificationOutboxCreateArgs>(args: SelectSubset<T, NotificationOutboxCreateArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NotificationOutboxes.
+     * @param {NotificationOutboxCreateManyArgs} args - Arguments to create many NotificationOutboxes.
+     * @example
+     * // Create many NotificationOutboxes
+     * const notificationOutbox = await prisma.notificationOutbox.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NotificationOutboxCreateManyArgs>(args?: SelectSubset<T, NotificationOutboxCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NotificationOutboxes and returns the data saved in the database.
+     * @param {NotificationOutboxCreateManyAndReturnArgs} args - Arguments to create many NotificationOutboxes.
+     * @example
+     * // Create many NotificationOutboxes
+     * const notificationOutbox = await prisma.notificationOutbox.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NotificationOutboxes and only return the `id`
+     * const notificationOutboxWithIdOnly = await prisma.notificationOutbox.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NotificationOutboxCreateManyAndReturnArgs>(args?: SelectSubset<T, NotificationOutboxCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NotificationOutbox.
+     * @param {NotificationOutboxDeleteArgs} args - Arguments to delete one NotificationOutbox.
+     * @example
+     * // Delete one NotificationOutbox
+     * const NotificationOutbox = await prisma.notificationOutbox.delete({
+     *   where: {
+     *     // ... filter to delete one NotificationOutbox
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NotificationOutboxDeleteArgs>(args: SelectSubset<T, NotificationOutboxDeleteArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NotificationOutbox.
+     * @param {NotificationOutboxUpdateArgs} args - Arguments to update one NotificationOutbox.
+     * @example
+     * // Update one NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NotificationOutboxUpdateArgs>(args: SelectSubset<T, NotificationOutboxUpdateArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NotificationOutboxes.
+     * @param {NotificationOutboxDeleteManyArgs} args - Arguments to filter NotificationOutboxes to delete.
+     * @example
+     * // Delete a few NotificationOutboxes
+     * const { count } = await prisma.notificationOutbox.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NotificationOutboxDeleteManyArgs>(args?: SelectSubset<T, NotificationOutboxDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationOutboxes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NotificationOutboxes
+     * const notificationOutbox = await prisma.notificationOutbox.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NotificationOutboxUpdateManyArgs>(args: SelectSubset<T, NotificationOutboxUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationOutboxes and returns the data updated in the database.
+     * @param {NotificationOutboxUpdateManyAndReturnArgs} args - Arguments to update many NotificationOutboxes.
+     * @example
+     * // Update many NotificationOutboxes
+     * const notificationOutbox = await prisma.notificationOutbox.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NotificationOutboxes and only return the `id`
+     * const notificationOutboxWithIdOnly = await prisma.notificationOutbox.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NotificationOutboxUpdateManyAndReturnArgs>(args: SelectSubset<T, NotificationOutboxUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NotificationOutbox.
+     * @param {NotificationOutboxUpsertArgs} args - Arguments to update or create a NotificationOutbox.
+     * @example
+     * // Update or create a NotificationOutbox
+     * const notificationOutbox = await prisma.notificationOutbox.upsert({
+     *   create: {
+     *     // ... data to create a NotificationOutbox
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NotificationOutbox we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NotificationOutboxUpsertArgs>(args: SelectSubset<T, NotificationOutboxUpsertArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NotificationOutboxes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxCountArgs} args - Arguments to filter NotificationOutboxes to count.
+     * @example
+     * // Count the number of NotificationOutboxes
+     * const count = await prisma.notificationOutbox.count({
+     *   where: {
+     *     // ... the filter for the NotificationOutboxes we want to count
+     *   }
+     * })
+    **/
+    count<T extends NotificationOutboxCountArgs>(
+      args?: Subset<T, NotificationOutboxCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NotificationOutboxCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NotificationOutbox.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NotificationOutboxAggregateArgs>(args: Subset<T, NotificationOutboxAggregateArgs>): Prisma.PrismaPromise<GetNotificationOutboxAggregateType<T>>
+
+    /**
+     * Group by NotificationOutbox.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationOutboxGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NotificationOutboxGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NotificationOutboxGroupByArgs['orderBy'] }
+        : { orderBy?: NotificationOutboxGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NotificationOutboxGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotificationOutboxGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NotificationOutbox model
+   */
+  readonly fields: NotificationOutboxFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NotificationOutbox.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NotificationOutboxClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    template<T extends NotificationOutbox$templateArgs<ExtArgs> = {}>(args?: Subset<T, NotificationOutbox$templateArgs<ExtArgs>>): Prisma__NotificationTemplateClient<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    deliveryLogs<T extends NotificationOutbox$deliveryLogsArgs<ExtArgs> = {}>(args?: Subset<T, NotificationOutbox$deliveryLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NotificationOutbox model
+   */
+  interface NotificationOutboxFieldRefs {
+    readonly id: FieldRef<"NotificationOutbox", 'String'>
+    readonly organizationId: FieldRef<"NotificationOutbox", 'String'>
+    readonly templateKey: FieldRef<"NotificationOutbox", 'String'>
+    readonly templateId: FieldRef<"NotificationOutbox", 'String'>
+    readonly messageClass: FieldRef<"NotificationOutbox", 'NotificationMessageClass'>
+    readonly channel: FieldRef<"NotificationOutbox", 'NotificationChannel'>
+    readonly recipient: FieldRef<"NotificationOutbox", 'String'>
+    readonly payload: FieldRef<"NotificationOutbox", 'Json'>
+    readonly status: FieldRef<"NotificationOutbox", 'NotificationOutboxStatus'>
+    readonly sourceEntityType: FieldRef<"NotificationOutbox", 'String'>
+    readonly sourceEntityId: FieldRef<"NotificationOutbox", 'String'>
+    readonly errorMessage: FieldRef<"NotificationOutbox", 'String'>
+    readonly sentAt: FieldRef<"NotificationOutbox", 'DateTime'>
+    readonly createdAt: FieldRef<"NotificationOutbox", 'DateTime'>
+    readonly updatedAt: FieldRef<"NotificationOutbox", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NotificationOutbox findUnique
+   */
+  export type NotificationOutboxFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationOutbox to fetch.
+     */
+    where: NotificationOutboxWhereUniqueInput
+  }
+
+  /**
+   * NotificationOutbox findUniqueOrThrow
+   */
+  export type NotificationOutboxFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationOutbox to fetch.
+     */
+    where: NotificationOutboxWhereUniqueInput
+  }
+
+  /**
+   * NotificationOutbox findFirst
+   */
+  export type NotificationOutboxFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationOutbox to fetch.
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationOutboxes to fetch.
+     */
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationOutboxes.
+     */
+    cursor?: NotificationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationOutboxes.
+     */
+    distinct?: NotificationOutboxScalarFieldEnum | NotificationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationOutbox findFirstOrThrow
+   */
+  export type NotificationOutboxFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationOutbox to fetch.
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationOutboxes to fetch.
+     */
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationOutboxes.
+     */
+    cursor?: NotificationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationOutboxes.
+     */
+    distinct?: NotificationOutboxScalarFieldEnum | NotificationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationOutbox findMany
+   */
+  export type NotificationOutboxFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationOutboxes to fetch.
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationOutboxes to fetch.
+     */
+    orderBy?: NotificationOutboxOrderByWithRelationInput | NotificationOutboxOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NotificationOutboxes.
+     */
+    cursor?: NotificationOutboxWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationOutboxes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationOutboxes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationOutboxes.
+     */
+    distinct?: NotificationOutboxScalarFieldEnum | NotificationOutboxScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationOutbox create
+   */
+  export type NotificationOutboxCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NotificationOutbox.
+     */
+    data: XOR<NotificationOutboxCreateInput, NotificationOutboxUncheckedCreateInput>
+  }
+
+  /**
+   * NotificationOutbox createMany
+   */
+  export type NotificationOutboxCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NotificationOutboxes.
+     */
+    data: NotificationOutboxCreateManyInput | NotificationOutboxCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NotificationOutbox createManyAndReturn
+   */
+  export type NotificationOutboxCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * The data used to create many NotificationOutboxes.
+     */
+    data: NotificationOutboxCreateManyInput | NotificationOutboxCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationOutbox update
+   */
+  export type NotificationOutboxUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NotificationOutbox.
+     */
+    data: XOR<NotificationOutboxUpdateInput, NotificationOutboxUncheckedUpdateInput>
+    /**
+     * Choose, which NotificationOutbox to update.
+     */
+    where: NotificationOutboxWhereUniqueInput
+  }
+
+  /**
+   * NotificationOutbox updateMany
+   */
+  export type NotificationOutboxUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NotificationOutboxes.
+     */
+    data: XOR<NotificationOutboxUpdateManyMutationInput, NotificationOutboxUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationOutboxes to update
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * Limit how many NotificationOutboxes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationOutbox updateManyAndReturn
+   */
+  export type NotificationOutboxUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * The data used to update NotificationOutboxes.
+     */
+    data: XOR<NotificationOutboxUpdateManyMutationInput, NotificationOutboxUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationOutboxes to update
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * Limit how many NotificationOutboxes to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationOutbox upsert
+   */
+  export type NotificationOutboxUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NotificationOutbox to update in case it exists.
+     */
+    where: NotificationOutboxWhereUniqueInput
+    /**
+     * In case the NotificationOutbox found by the `where` argument doesn't exist, create a new NotificationOutbox with this data.
+     */
+    create: XOR<NotificationOutboxCreateInput, NotificationOutboxUncheckedCreateInput>
+    /**
+     * In case the NotificationOutbox was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NotificationOutboxUpdateInput, NotificationOutboxUncheckedUpdateInput>
+  }
+
+  /**
+   * NotificationOutbox delete
+   */
+  export type NotificationOutboxDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+    /**
+     * Filter which NotificationOutbox to delete.
+     */
+    where: NotificationOutboxWhereUniqueInput
+  }
+
+  /**
+   * NotificationOutbox deleteMany
+   */
+  export type NotificationOutboxDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationOutboxes to delete
+     */
+    where?: NotificationOutboxWhereInput
+    /**
+     * Limit how many NotificationOutboxes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationOutbox.template
+   */
+  export type NotificationOutbox$templateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationTemplate
+     */
+    select?: NotificationTemplateSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationTemplate
+     */
+    omit?: NotificationTemplateOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationTemplateInclude<ExtArgs> | null
+    where?: NotificationTemplateWhereInput
+  }
+
+  /**
+   * NotificationOutbox.deliveryLogs
+   */
+  export type NotificationOutbox$deliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    where?: NotificationDeliveryLogWhereInput
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationOutbox without action
+   */
+  export type NotificationOutboxDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationOutbox
+     */
+    select?: NotificationOutboxSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationOutbox
+     */
+    omit?: NotificationOutboxOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationOutboxInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model NotificationDeliveryLog
+   */
+
+  export type AggregateNotificationDeliveryLog = {
+    _count: NotificationDeliveryLogCountAggregateOutputType | null
+    _min: NotificationDeliveryLogMinAggregateOutputType | null
+    _max: NotificationDeliveryLogMaxAggregateOutputType | null
+  }
+
+  export type NotificationDeliveryLogMinAggregateOutputType = {
+    id: string | null
+    outboxId: string | null
+    organizationId: string | null
+    channel: $Enums.NotificationChannel | null
+    status: $Enums.NotificationOutboxStatus | null
+    errorMessage: string | null
+    attemptedAt: Date | null
+  }
+
+  export type NotificationDeliveryLogMaxAggregateOutputType = {
+    id: string | null
+    outboxId: string | null
+    organizationId: string | null
+    channel: $Enums.NotificationChannel | null
+    status: $Enums.NotificationOutboxStatus | null
+    errorMessage: string | null
+    attemptedAt: Date | null
+  }
+
+  export type NotificationDeliveryLogCountAggregateOutputType = {
+    id: number
+    outboxId: number
+    organizationId: number
+    channel: number
+    status: number
+    providerPayload: number
+    errorMessage: number
+    attemptedAt: number
+    _all: number
+  }
+
+
+  export type NotificationDeliveryLogMinAggregateInputType = {
+    id?: true
+    outboxId?: true
+    organizationId?: true
+    channel?: true
+    status?: true
+    errorMessage?: true
+    attemptedAt?: true
+  }
+
+  export type NotificationDeliveryLogMaxAggregateInputType = {
+    id?: true
+    outboxId?: true
+    organizationId?: true
+    channel?: true
+    status?: true
+    errorMessage?: true
+    attemptedAt?: true
+  }
+
+  export type NotificationDeliveryLogCountAggregateInputType = {
+    id?: true
+    outboxId?: true
+    organizationId?: true
+    channel?: true
+    status?: true
+    providerPayload?: true
+    errorMessage?: true
+    attemptedAt?: true
+    _all?: true
+  }
+
+  export type NotificationDeliveryLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationDeliveryLog to aggregate.
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationDeliveryLogs to fetch.
+     */
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationDeliveryLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationDeliveryLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NotificationDeliveryLogs
+    **/
+    _count?: true | NotificationDeliveryLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NotificationDeliveryLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NotificationDeliveryLogMaxAggregateInputType
+  }
+
+  export type GetNotificationDeliveryLogAggregateType<T extends NotificationDeliveryLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateNotificationDeliveryLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNotificationDeliveryLog[P]>
+      : GetScalarType<T[P], AggregateNotificationDeliveryLog[P]>
+  }
+
+
+
+
+  export type NotificationDeliveryLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationDeliveryLogWhereInput
+    orderBy?: NotificationDeliveryLogOrderByWithAggregationInput | NotificationDeliveryLogOrderByWithAggregationInput[]
+    by: NotificationDeliveryLogScalarFieldEnum[] | NotificationDeliveryLogScalarFieldEnum
+    having?: NotificationDeliveryLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NotificationDeliveryLogCountAggregateInputType | true
+    _min?: NotificationDeliveryLogMinAggregateInputType
+    _max?: NotificationDeliveryLogMaxAggregateInputType
+  }
+
+  export type NotificationDeliveryLogGroupByOutputType = {
+    id: string
+    outboxId: string
+    organizationId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload: JsonValue | null
+    errorMessage: string | null
+    attemptedAt: Date
+    _count: NotificationDeliveryLogCountAggregateOutputType | null
+    _min: NotificationDeliveryLogMinAggregateOutputType | null
+    _max: NotificationDeliveryLogMaxAggregateOutputType | null
+  }
+
+  type GetNotificationDeliveryLogGroupByPayload<T extends NotificationDeliveryLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NotificationDeliveryLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NotificationDeliveryLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NotificationDeliveryLogGroupByOutputType[P]>
+            : GetScalarType<T[P], NotificationDeliveryLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NotificationDeliveryLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    outboxId?: boolean
+    organizationId?: boolean
+    channel?: boolean
+    status?: boolean
+    providerPayload?: boolean
+    errorMessage?: boolean
+    attemptedAt?: boolean
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationDeliveryLog"]>
+
+  export type NotificationDeliveryLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    outboxId?: boolean
+    organizationId?: boolean
+    channel?: boolean
+    status?: boolean
+    providerPayload?: boolean
+    errorMessage?: boolean
+    attemptedAt?: boolean
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationDeliveryLog"]>
+
+  export type NotificationDeliveryLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    outboxId?: boolean
+    organizationId?: boolean
+    channel?: boolean
+    status?: boolean
+    providerPayload?: boolean
+    errorMessage?: boolean
+    attemptedAt?: boolean
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["notificationDeliveryLog"]>
+
+  export type NotificationDeliveryLogSelectScalar = {
+    id?: boolean
+    outboxId?: boolean
+    organizationId?: boolean
+    channel?: boolean
+    status?: boolean
+    providerPayload?: boolean
+    errorMessage?: boolean
+    attemptedAt?: boolean
+  }
+
+  export type NotificationDeliveryLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "outboxId" | "organizationId" | "channel" | "status" | "providerPayload" | "errorMessage" | "attemptedAt", ExtArgs["result"]["notificationDeliveryLog"]>
+  export type NotificationDeliveryLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type NotificationDeliveryLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type NotificationDeliveryLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    outbox?: boolean | NotificationOutboxDefaultArgs<ExtArgs>
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $NotificationDeliveryLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NotificationDeliveryLog"
+    objects: {
+      outbox: Prisma.$NotificationOutboxPayload<ExtArgs>
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      outboxId: string
+      organizationId: string
+      channel: $Enums.NotificationChannel
+      status: $Enums.NotificationOutboxStatus
+      providerPayload: Prisma.JsonValue | null
+      errorMessage: string | null
+      attemptedAt: Date
+    }, ExtArgs["result"]["notificationDeliveryLog"]>
+    composites: {}
+  }
+
+  type NotificationDeliveryLogGetPayload<S extends boolean | null | undefined | NotificationDeliveryLogDefaultArgs> = $Result.GetResult<Prisma.$NotificationDeliveryLogPayload, S>
+
+  type NotificationDeliveryLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NotificationDeliveryLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NotificationDeliveryLogCountAggregateInputType | true
+    }
+
+  export interface NotificationDeliveryLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NotificationDeliveryLog'], meta: { name: 'NotificationDeliveryLog' } }
+    /**
+     * Find zero or one NotificationDeliveryLog that matches the filter.
+     * @param {NotificationDeliveryLogFindUniqueArgs} args - Arguments to find a NotificationDeliveryLog
+     * @example
+     * // Get one NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NotificationDeliveryLogFindUniqueArgs>(args: SelectSubset<T, NotificationDeliveryLogFindUniqueArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NotificationDeliveryLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NotificationDeliveryLogFindUniqueOrThrowArgs} args - Arguments to find a NotificationDeliveryLog
+     * @example
+     * // Get one NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NotificationDeliveryLogFindUniqueOrThrowArgs>(args: SelectSubset<T, NotificationDeliveryLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationDeliveryLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogFindFirstArgs} args - Arguments to find a NotificationDeliveryLog
+     * @example
+     * // Get one NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NotificationDeliveryLogFindFirstArgs>(args?: SelectSubset<T, NotificationDeliveryLogFindFirstArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotificationDeliveryLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogFindFirstOrThrowArgs} args - Arguments to find a NotificationDeliveryLog
+     * @example
+     * // Get one NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NotificationDeliveryLogFindFirstOrThrowArgs>(args?: SelectSubset<T, NotificationDeliveryLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NotificationDeliveryLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NotificationDeliveryLogs
+     * const notificationDeliveryLogs = await prisma.notificationDeliveryLog.findMany()
+     * 
+     * // Get first 10 NotificationDeliveryLogs
+     * const notificationDeliveryLogs = await prisma.notificationDeliveryLog.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const notificationDeliveryLogWithIdOnly = await prisma.notificationDeliveryLog.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NotificationDeliveryLogFindManyArgs>(args?: SelectSubset<T, NotificationDeliveryLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NotificationDeliveryLog.
+     * @param {NotificationDeliveryLogCreateArgs} args - Arguments to create a NotificationDeliveryLog.
+     * @example
+     * // Create one NotificationDeliveryLog
+     * const NotificationDeliveryLog = await prisma.notificationDeliveryLog.create({
+     *   data: {
+     *     // ... data to create a NotificationDeliveryLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends NotificationDeliveryLogCreateArgs>(args: SelectSubset<T, NotificationDeliveryLogCreateArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NotificationDeliveryLogs.
+     * @param {NotificationDeliveryLogCreateManyArgs} args - Arguments to create many NotificationDeliveryLogs.
+     * @example
+     * // Create many NotificationDeliveryLogs
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NotificationDeliveryLogCreateManyArgs>(args?: SelectSubset<T, NotificationDeliveryLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NotificationDeliveryLogs and returns the data saved in the database.
+     * @param {NotificationDeliveryLogCreateManyAndReturnArgs} args - Arguments to create many NotificationDeliveryLogs.
+     * @example
+     * // Create many NotificationDeliveryLogs
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NotificationDeliveryLogs and only return the `id`
+     * const notificationDeliveryLogWithIdOnly = await prisma.notificationDeliveryLog.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NotificationDeliveryLogCreateManyAndReturnArgs>(args?: SelectSubset<T, NotificationDeliveryLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NotificationDeliveryLog.
+     * @param {NotificationDeliveryLogDeleteArgs} args - Arguments to delete one NotificationDeliveryLog.
+     * @example
+     * // Delete one NotificationDeliveryLog
+     * const NotificationDeliveryLog = await prisma.notificationDeliveryLog.delete({
+     *   where: {
+     *     // ... filter to delete one NotificationDeliveryLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NotificationDeliveryLogDeleteArgs>(args: SelectSubset<T, NotificationDeliveryLogDeleteArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NotificationDeliveryLog.
+     * @param {NotificationDeliveryLogUpdateArgs} args - Arguments to update one NotificationDeliveryLog.
+     * @example
+     * // Update one NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NotificationDeliveryLogUpdateArgs>(args: SelectSubset<T, NotificationDeliveryLogUpdateArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NotificationDeliveryLogs.
+     * @param {NotificationDeliveryLogDeleteManyArgs} args - Arguments to filter NotificationDeliveryLogs to delete.
+     * @example
+     * // Delete a few NotificationDeliveryLogs
+     * const { count } = await prisma.notificationDeliveryLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NotificationDeliveryLogDeleteManyArgs>(args?: SelectSubset<T, NotificationDeliveryLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationDeliveryLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NotificationDeliveryLogs
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NotificationDeliveryLogUpdateManyArgs>(args: SelectSubset<T, NotificationDeliveryLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotificationDeliveryLogs and returns the data updated in the database.
+     * @param {NotificationDeliveryLogUpdateManyAndReturnArgs} args - Arguments to update many NotificationDeliveryLogs.
+     * @example
+     * // Update many NotificationDeliveryLogs
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NotificationDeliveryLogs and only return the `id`
+     * const notificationDeliveryLogWithIdOnly = await prisma.notificationDeliveryLog.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NotificationDeliveryLogUpdateManyAndReturnArgs>(args: SelectSubset<T, NotificationDeliveryLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NotificationDeliveryLog.
+     * @param {NotificationDeliveryLogUpsertArgs} args - Arguments to update or create a NotificationDeliveryLog.
+     * @example
+     * // Update or create a NotificationDeliveryLog
+     * const notificationDeliveryLog = await prisma.notificationDeliveryLog.upsert({
+     *   create: {
+     *     // ... data to create a NotificationDeliveryLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NotificationDeliveryLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NotificationDeliveryLogUpsertArgs>(args: SelectSubset<T, NotificationDeliveryLogUpsertArgs<ExtArgs>>): Prisma__NotificationDeliveryLogClient<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NotificationDeliveryLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogCountArgs} args - Arguments to filter NotificationDeliveryLogs to count.
+     * @example
+     * // Count the number of NotificationDeliveryLogs
+     * const count = await prisma.notificationDeliveryLog.count({
+     *   where: {
+     *     // ... the filter for the NotificationDeliveryLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends NotificationDeliveryLogCountArgs>(
+      args?: Subset<T, NotificationDeliveryLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NotificationDeliveryLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NotificationDeliveryLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NotificationDeliveryLogAggregateArgs>(args: Subset<T, NotificationDeliveryLogAggregateArgs>): Prisma.PrismaPromise<GetNotificationDeliveryLogAggregateType<T>>
+
+    /**
+     * Group by NotificationDeliveryLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationDeliveryLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NotificationDeliveryLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NotificationDeliveryLogGroupByArgs['orderBy'] }
+        : { orderBy?: NotificationDeliveryLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NotificationDeliveryLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotificationDeliveryLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NotificationDeliveryLog model
+   */
+  readonly fields: NotificationDeliveryLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NotificationDeliveryLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NotificationDeliveryLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    outbox<T extends NotificationOutboxDefaultArgs<ExtArgs> = {}>(args?: Subset<T, NotificationOutboxDefaultArgs<ExtArgs>>): Prisma__NotificationOutboxClient<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NotificationDeliveryLog model
+   */
+  interface NotificationDeliveryLogFieldRefs {
+    readonly id: FieldRef<"NotificationDeliveryLog", 'String'>
+    readonly outboxId: FieldRef<"NotificationDeliveryLog", 'String'>
+    readonly organizationId: FieldRef<"NotificationDeliveryLog", 'String'>
+    readonly channel: FieldRef<"NotificationDeliveryLog", 'NotificationChannel'>
+    readonly status: FieldRef<"NotificationDeliveryLog", 'NotificationOutboxStatus'>
+    readonly providerPayload: FieldRef<"NotificationDeliveryLog", 'Json'>
+    readonly errorMessage: FieldRef<"NotificationDeliveryLog", 'String'>
+    readonly attemptedAt: FieldRef<"NotificationDeliveryLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NotificationDeliveryLog findUnique
+   */
+  export type NotificationDeliveryLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationDeliveryLog to fetch.
+     */
+    where: NotificationDeliveryLogWhereUniqueInput
+  }
+
+  /**
+   * NotificationDeliveryLog findUniqueOrThrow
+   */
+  export type NotificationDeliveryLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationDeliveryLog to fetch.
+     */
+    where: NotificationDeliveryLogWhereUniqueInput
+  }
+
+  /**
+   * NotificationDeliveryLog findFirst
+   */
+  export type NotificationDeliveryLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationDeliveryLog to fetch.
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationDeliveryLogs to fetch.
+     */
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationDeliveryLogs.
+     */
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationDeliveryLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationDeliveryLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationDeliveryLogs.
+     */
+    distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationDeliveryLog findFirstOrThrow
+   */
+  export type NotificationDeliveryLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationDeliveryLog to fetch.
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationDeliveryLogs to fetch.
+     */
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotificationDeliveryLogs.
+     */
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationDeliveryLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationDeliveryLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationDeliveryLogs.
+     */
+    distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationDeliveryLog findMany
+   */
+  export type NotificationDeliveryLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter, which NotificationDeliveryLogs to fetch.
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotificationDeliveryLogs to fetch.
+     */
+    orderBy?: NotificationDeliveryLogOrderByWithRelationInput | NotificationDeliveryLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NotificationDeliveryLogs.
+     */
+    cursor?: NotificationDeliveryLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotificationDeliveryLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotificationDeliveryLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotificationDeliveryLogs.
+     */
+    distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * NotificationDeliveryLog create
+   */
+  export type NotificationDeliveryLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a NotificationDeliveryLog.
+     */
+    data: XOR<NotificationDeliveryLogCreateInput, NotificationDeliveryLogUncheckedCreateInput>
+  }
+
+  /**
+   * NotificationDeliveryLog createMany
+   */
+  export type NotificationDeliveryLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NotificationDeliveryLogs.
+     */
+    data: NotificationDeliveryLogCreateManyInput | NotificationDeliveryLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NotificationDeliveryLog createManyAndReturn
+   */
+  export type NotificationDeliveryLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many NotificationDeliveryLogs.
+     */
+    data: NotificationDeliveryLogCreateManyInput | NotificationDeliveryLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationDeliveryLog update
+   */
+  export type NotificationDeliveryLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a NotificationDeliveryLog.
+     */
+    data: XOR<NotificationDeliveryLogUpdateInput, NotificationDeliveryLogUncheckedUpdateInput>
+    /**
+     * Choose, which NotificationDeliveryLog to update.
+     */
+    where: NotificationDeliveryLogWhereUniqueInput
+  }
+
+  /**
+   * NotificationDeliveryLog updateMany
+   */
+  export type NotificationDeliveryLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NotificationDeliveryLogs.
+     */
+    data: XOR<NotificationDeliveryLogUpdateManyMutationInput, NotificationDeliveryLogUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationDeliveryLogs to update
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * Limit how many NotificationDeliveryLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationDeliveryLog updateManyAndReturn
+   */
+  export type NotificationDeliveryLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * The data used to update NotificationDeliveryLogs.
+     */
+    data: XOR<NotificationDeliveryLogUpdateManyMutationInput, NotificationDeliveryLogUncheckedUpdateManyInput>
+    /**
+     * Filter which NotificationDeliveryLogs to update
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * Limit how many NotificationDeliveryLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * NotificationDeliveryLog upsert
+   */
+  export type NotificationDeliveryLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the NotificationDeliveryLog to update in case it exists.
+     */
+    where: NotificationDeliveryLogWhereUniqueInput
+    /**
+     * In case the NotificationDeliveryLog found by the `where` argument doesn't exist, create a new NotificationDeliveryLog with this data.
+     */
+    create: XOR<NotificationDeliveryLogCreateInput, NotificationDeliveryLogUncheckedCreateInput>
+    /**
+     * In case the NotificationDeliveryLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NotificationDeliveryLogUpdateInput, NotificationDeliveryLogUncheckedUpdateInput>
+  }
+
+  /**
+   * NotificationDeliveryLog delete
+   */
+  export type NotificationDeliveryLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+    /**
+     * Filter which NotificationDeliveryLog to delete.
+     */
+    where: NotificationDeliveryLogWhereUniqueInput
+  }
+
+  /**
+   * NotificationDeliveryLog deleteMany
+   */
+  export type NotificationDeliveryLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotificationDeliveryLogs to delete
+     */
+    where?: NotificationDeliveryLogWhereInput
+    /**
+     * Limit how many NotificationDeliveryLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotificationDeliveryLog without action
+   */
+  export type NotificationDeliveryLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotificationDeliveryLog
+     */
+    select?: NotificationDeliveryLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotificationDeliveryLog
+     */
+    omit?: NotificationDeliveryLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NotificationDeliveryLogInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -32347,7 +42321,23 @@ export namespace Prisma {
     id: 'id',
     name: 'name',
     ownerId: 'ownerId',
-    taxIdBlindIndex: 'taxIdBlindIndex'
+    taxIdBlindIndex: 'taxIdBlindIndex',
+    taxIdCipher: 'taxIdCipher',
+    subscriptionPlan: 'subscriptionPlan',
+    billingStatus: 'billingStatus',
+    activeModules: 'activeModules',
+    storageUsedBytes: 'storageUsedBytes',
+    currentCreditTier: 'currentCreditTier',
+    accumulatedBalance: 'accumulatedBalance',
+    billingPeriodKey: 'billingPeriodKey',
+    whatsappAlertsUsed: 'whatsappAlertsUsed',
+    ocrPagesUsed: 'ocrPagesUsed',
+    currency: 'currency',
+    settings: 'settings',
+    drakarisClientId: 'drakarisClientId',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type OrganizationScalarFieldEnum = (typeof OrganizationScalarFieldEnum)[keyof typeof OrganizationScalarFieldEnum]
@@ -32358,6 +42348,8 @@ export namespace Prisma {
     email: 'email',
     passwordHash: 'passwordHash',
     isSuperAdmin: 'isSuperAdmin',
+    firstNameCipher: 'firstNameCipher',
+    lastNameCipher: 'lastNameCipher',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -32482,6 +42474,120 @@ export namespace Prisma {
   };
 
   export type OrganizationSecurityStateScalarFieldEnum = (typeof OrganizationSecurityStateScalarFieldEnum)[keyof typeof OrganizationSecurityStateScalarFieldEnum]
+
+
+  export const EarlyAccessEventScalarFieldEnum: {
+    id: 'id',
+    moduleKey: 'moduleKey',
+    eventType: 'eventType',
+    userId: 'userId',
+    organizationId: 'organizationId',
+    subscriptionTier: 'subscriptionTier',
+    industrySnapshot: 'industrySnapshot',
+    sessionId: 'sessionId',
+    durationMs: 'durationMs',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    clientIp: 'clientIp',
+    userAgent: 'userAgent'
+  };
+
+  export type EarlyAccessEventScalarFieldEnum = (typeof EarlyAccessEventScalarFieldEnum)[keyof typeof EarlyAccessEventScalarFieldEnum]
+
+
+  export const EarlyAccessSignupScalarFieldEnum: {
+    id: 'id',
+    moduleKey: 'moduleKey',
+    userId: 'userId',
+    organizationId: 'organizationId',
+    subscriptionTier: 'subscriptionTier',
+    industry: 'industry',
+    surveyAnswer: 'surveyAnswer',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type EarlyAccessSignupScalarFieldEnum = (typeof EarlyAccessSignupScalarFieldEnum)[keyof typeof EarlyAccessSignupScalarFieldEnum]
+
+
+  export const EarlyAccessThresholdAlertScalarFieldEnum: {
+    moduleKey: 'moduleKey',
+    threshold: 'threshold',
+    firedAt: 'firedAt',
+    firedToCount: 'firedToCount'
+  };
+
+  export type EarlyAccessThresholdAlertScalarFieldEnum = (typeof EarlyAccessThresholdAlertScalarFieldEnum)[keyof typeof EarlyAccessThresholdAlertScalarFieldEnum]
+
+
+  export const AuditLogScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    userId: 'userId',
+    entityType: 'entityType',
+    entityId: 'entityId',
+    action: 'action',
+    changes: 'changes',
+    createdAt: 'createdAt',
+    oldValues: 'oldValues',
+    newValues: 'newValues',
+    clientIp: 'clientIp',
+    userAgent: 'userAgent',
+    hash: 'hash'
+  };
+
+  export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum]
+
+
+  export const NotificationTemplateScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    templateKey: 'templateKey',
+    messageClass: 'messageClass',
+    channel: 'channel',
+    subject: 'subject',
+    bodyTemplate: 'bodyTemplate',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NotificationTemplateScalarFieldEnum = (typeof NotificationTemplateScalarFieldEnum)[keyof typeof NotificationTemplateScalarFieldEnum]
+
+
+  export const NotificationOutboxScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    templateKey: 'templateKey',
+    templateId: 'templateId',
+    messageClass: 'messageClass',
+    channel: 'channel',
+    recipient: 'recipient',
+    payload: 'payload',
+    status: 'status',
+    sourceEntityType: 'sourceEntityType',
+    sourceEntityId: 'sourceEntityId',
+    errorMessage: 'errorMessage',
+    sentAt: 'sentAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NotificationOutboxScalarFieldEnum = (typeof NotificationOutboxScalarFieldEnum)[keyof typeof NotificationOutboxScalarFieldEnum]
+
+
+  export const NotificationDeliveryLogScalarFieldEnum: {
+    id: 'id',
+    outboxId: 'outboxId',
+    organizationId: 'organizationId',
+    channel: 'channel',
+    status: 'status',
+    providerPayload: 'providerPayload',
+    errorMessage: 'errorMessage',
+    attemptedAt: 'attemptedAt'
+  };
+
+  export type NotificationDeliveryLogScalarFieldEnum = (typeof NotificationDeliveryLogScalarFieldEnum)[keyof typeof NotificationDeliveryLogScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -32713,6 +42819,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt[]'
+   */
+  export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+  /**
    * Reference to a field of type 'AccessRequestStatus'
    */
   export type EnumAccessRequestStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccessRequestStatus'>
@@ -32793,6 +42913,76 @@ export namespace Prisma {
    * Reference to a field of type 'SecurityMode[]'
    */
   export type ListEnumSecurityModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SecurityMode[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EarlyAccessModuleKey'
+   */
+  export type EnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EarlyAccessModuleKey'>
+    
+
+
+  /**
+   * Reference to a field of type 'EarlyAccessModuleKey[]'
+   */
+  export type ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EarlyAccessModuleKey[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EarlyAccessEventType'
+   */
+  export type EnumEarlyAccessEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EarlyAccessEventType'>
+    
+
+
+  /**
+   * Reference to a field of type 'EarlyAccessEventType[]'
+   */
+  export type ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EarlyAccessEventType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationMessageClass'
+   */
+  export type EnumNotificationMessageClassFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationMessageClass'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationMessageClass[]'
+   */
+  export type ListEnumNotificationMessageClassFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationMessageClass[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationChannel'
+   */
+  export type EnumNotificationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationChannel'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationChannel[]'
+   */
+  export type ListEnumNotificationChannelFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationChannel[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationOutboxStatus'
+   */
+  export type EnumNotificationOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOutboxStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'NotificationOutboxStatus[]'
+   */
+  export type ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOutboxStatus[]'>
     
 
 
@@ -32909,6 +43099,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
     customConfig?: JsonNullableFilter<"OrganizationSubscription">
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
 
   export type OrganizationSubscriptionOrderByWithRelationInput = {
@@ -32925,6 +43116,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     isBlocked?: SortOrder
     customConfig?: SortOrderInput | SortOrder
+    organization?: OrganizationOrderByWithRelationInput
   }
 
   export type OrganizationSubscriptionWhereUniqueInput = Prisma.AtLeast<{
@@ -32944,6 +43136,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
     customConfig?: JsonNullableFilter<"OrganizationSubscription">
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "id" | "organizationId">
 
   export type OrganizationSubscriptionOrderByWithAggregationInput = {
@@ -33092,6 +43285,7 @@ export namespace Prisma {
     description?: StringFilter<"BillingInvoiceItem"> | string
     amount?: DecimalFilter<"BillingInvoiceItem"> | Decimal | DecimalJsLike | number | string
     subscriptionInvoice?: XOR<SubscriptionInvoiceScalarRelationFilter, SubscriptionInvoiceWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
 
   export type BillingInvoiceItemOrderByWithRelationInput = {
@@ -33101,6 +43295,7 @@ export namespace Prisma {
     description?: SortOrder
     amount?: SortOrder
     subscriptionInvoice?: SubscriptionInvoiceOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
   }
 
   export type BillingInvoiceItemWhereUniqueInput = Prisma.AtLeast<{
@@ -33113,6 +43308,7 @@ export namespace Prisma {
     description?: StringFilter<"BillingInvoiceItem"> | string
     amount?: DecimalFilter<"BillingInvoiceItem"> | Decimal | DecimalJsLike | number | string
     subscriptionInvoice?: XOR<SubscriptionInvoiceScalarRelationFilter, SubscriptionInvoiceWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "id">
 
   export type BillingInvoiceItemOrderByWithAggregationInput = {
@@ -33150,6 +43346,7 @@ export namespace Prisma {
     unitCostAzn?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
     balanceAfter?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFilter<"UsageMeterEvent"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
 
   export type UsageMeterEventOrderByWithRelationInput = {
@@ -33160,6 +43357,7 @@ export namespace Prisma {
     unitCostAzn?: SortOrder
     balanceAfter?: SortOrder
     createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
   }
 
   export type UsageMeterEventWhereUniqueInput = Prisma.AtLeast<{
@@ -33173,6 +43371,7 @@ export namespace Prisma {
     unitCostAzn?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
     balanceAfter?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFilter<"UsageMeterEvent"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "id">
 
   export type UsageMeterEventOrderByWithAggregationInput = {
@@ -33647,6 +43846,7 @@ export namespace Prisma {
     metadata?: JsonFilter<"PaymentOrder">
     createdAt?: DateTimeFilter<"PaymentOrder"> | Date | string
     paidAt?: DateTimeNullableFilter<"PaymentOrder"> | Date | string | null
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     subscriptionInvoice?: XOR<SubscriptionInvoiceNullableScalarRelationFilter, SubscriptionInvoiceWhereInput> | null
   }
 
@@ -33664,6 +43864,7 @@ export namespace Prisma {
     metadata?: SortOrder
     createdAt?: SortOrder
     paidAt?: SortOrderInput | SortOrder
+    organization?: OrganizationOrderByWithRelationInput
     subscriptionInvoice?: SubscriptionInvoiceOrderByWithRelationInput
   }
 
@@ -33684,6 +43885,7 @@ export namespace Prisma {
     metadata?: JsonFilter<"PaymentOrder">
     createdAt?: DateTimeFilter<"PaymentOrder"> | Date | string
     paidAt?: DateTimeNullableFilter<"PaymentOrder"> | Date | string | null
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     subscriptionInvoice?: XOR<SubscriptionInvoiceNullableScalarRelationFilter, SubscriptionInvoiceWhereInput> | null
   }, "id" | "idempotencyKey">
 
@@ -33966,6 +44168,34 @@ export namespace Prisma {
     name?: StringFilter<"Organization"> | string
     ownerId?: UuidNullableFilter<"Organization"> | string | null
     taxIdBlindIndex?: StringNullableFilter<"Organization"> | string | null
+    taxIdCipher?: StringNullableFilter<"Organization"> | string | null
+    subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
+    billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    activeModules?: StringNullableListFilter<"Organization">
+    storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
+    currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFilter<"Organization"> | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: StringNullableFilter<"Organization"> | string | null
+    whatsappAlertsUsed?: IntFilter<"Organization"> | number
+    ocrPagesUsed?: IntFilter<"Organization"> | number
+    currency?: StringFilter<"Organization"> | string
+    settings?: JsonFilter<"Organization">
+    drakarisClientId?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    usageMeterEvents?: UsageMeterEventListRelationFilter
+    earlyAccessEvents?: EarlyAccessEventListRelationFilter
+    earlyAccessSignups?: EarlyAccessSignupListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    subscription?: XOR<OrganizationSubscriptionNullableScalarRelationFilter, OrganizationSubscriptionWhereInput> | null
+    paymentOrders?: PaymentOrderListRelationFilter
+    memberships?: OrganizationMembershipListRelationFilter
+    billingInvoiceItems?: BillingInvoiceItemListRelationFilter
+    notificationTemplates?: NotificationTemplateListRelationFilter
+    notificationOutboxEntries?: NotificationOutboxListRelationFilter
+    notificationDeliveryLogs?: NotificationDeliveryLogListRelationFilter
+    owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -33973,26 +44203,100 @@ export namespace Prisma {
     name?: SortOrder
     ownerId?: SortOrderInput | SortOrder
     taxIdBlindIndex?: SortOrderInput | SortOrder
+    taxIdCipher?: SortOrderInput | SortOrder
+    subscriptionPlan?: SortOrderInput | SortOrder
+    billingStatus?: SortOrder
+    activeModules?: SortOrder
+    storageUsedBytes?: SortOrder
+    currentCreditTier?: SortOrderInput | SortOrder
+    accumulatedBalance?: SortOrder
+    billingPeriodKey?: SortOrderInput | SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+    currency?: SortOrder
+    settings?: SortOrder
+    drakarisClientId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    usageMeterEvents?: UsageMeterEventOrderByRelationAggregateInput
+    earlyAccessEvents?: EarlyAccessEventOrderByRelationAggregateInput
+    earlyAccessSignups?: EarlyAccessSignupOrderByRelationAggregateInput
+    auditLogs?: AuditLogOrderByRelationAggregateInput
+    subscription?: OrganizationSubscriptionOrderByWithRelationInput
+    paymentOrders?: PaymentOrderOrderByRelationAggregateInput
+    memberships?: OrganizationMembershipOrderByRelationAggregateInput
+    billingInvoiceItems?: BillingInvoiceItemOrderByRelationAggregateInput
+    notificationTemplates?: NotificationTemplateOrderByRelationAggregateInput
+    notificationOutboxEntries?: NotificationOutboxOrderByRelationAggregateInput
+    notificationDeliveryLogs?: NotificationDeliveryLogOrderByRelationAggregateInput
+    owner?: UserOrderByWithRelationInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     taxIdBlindIndex?: string
+    drakarisClientId?: string
     AND?: OrganizationWhereInput | OrganizationWhereInput[]
     OR?: OrganizationWhereInput[]
     NOT?: OrganizationWhereInput | OrganizationWhereInput[]
     name?: StringFilter<"Organization"> | string
     ownerId?: UuidNullableFilter<"Organization"> | string | null
-  }, "id" | "taxIdBlindIndex">
+    taxIdCipher?: StringNullableFilter<"Organization"> | string | null
+    subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
+    billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    activeModules?: StringNullableListFilter<"Organization">
+    storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
+    currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFilter<"Organization"> | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: StringNullableFilter<"Organization"> | string | null
+    whatsappAlertsUsed?: IntFilter<"Organization"> | number
+    ocrPagesUsed?: IntFilter<"Organization"> | number
+    currency?: StringFilter<"Organization"> | string
+    settings?: JsonFilter<"Organization">
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
+    usageMeterEvents?: UsageMeterEventListRelationFilter
+    earlyAccessEvents?: EarlyAccessEventListRelationFilter
+    earlyAccessSignups?: EarlyAccessSignupListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    subscription?: XOR<OrganizationSubscriptionNullableScalarRelationFilter, OrganizationSubscriptionWhereInput> | null
+    paymentOrders?: PaymentOrderListRelationFilter
+    memberships?: OrganizationMembershipListRelationFilter
+    billingInvoiceItems?: BillingInvoiceItemListRelationFilter
+    notificationTemplates?: NotificationTemplateListRelationFilter
+    notificationOutboxEntries?: NotificationOutboxListRelationFilter
+    notificationDeliveryLogs?: NotificationDeliveryLogListRelationFilter
+    owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     ownerId?: SortOrderInput | SortOrder
     taxIdBlindIndex?: SortOrderInput | SortOrder
+    taxIdCipher?: SortOrderInput | SortOrder
+    subscriptionPlan?: SortOrderInput | SortOrder
+    billingStatus?: SortOrder
+    activeModules?: SortOrder
+    storageUsedBytes?: SortOrder
+    currentCreditTier?: SortOrderInput | SortOrder
+    accumulatedBalance?: SortOrder
+    billingPeriodKey?: SortOrderInput | SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+    currency?: SortOrder
+    settings?: SortOrder
+    drakarisClientId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: OrganizationCountOrderByAggregateInput
+    _avg?: OrganizationAvgOrderByAggregateInput
     _max?: OrganizationMaxOrderByAggregateInput
     _min?: OrganizationMinOrderByAggregateInput
+    _sum?: OrganizationSumOrderByAggregateInput
   }
 
   export type OrganizationScalarWhereWithAggregatesInput = {
@@ -34003,6 +44307,22 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"Organization"> | string
     ownerId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
     taxIdBlindIndex?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    taxIdCipher?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    subscriptionPlan?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    billingStatus?: EnumBillingStatusWithAggregatesFilter<"Organization"> | $Enums.BillingStatus
+    activeModules?: StringNullableListFilter<"Organization">
+    storageUsedBytes?: BigIntWithAggregatesFilter<"Organization"> | bigint | number
+    currentCreditTier?: EnumTariffTierNullableWithAggregatesFilter<"Organization"> | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalWithAggregatesFilter<"Organization"> | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    whatsappAlertsUsed?: IntWithAggregatesFilter<"Organization"> | number
+    ocrPagesUsed?: IntWithAggregatesFilter<"Organization"> | number
+    currency?: StringWithAggregatesFilter<"Organization"> | string
+    settings?: JsonWithAggregatesFilter<"Organization">
+    drakarisClientId?: StringNullableWithAggregatesFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Organization"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Organization"> | Date | string
   }
 
   export type UserWhereInput = {
@@ -34013,9 +44333,15 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     passwordHash?: StringFilter<"User"> | string
     isSuperAdmin?: BoolFilter<"User"> | boolean
+    firstNameCipher?: StringNullableFilter<"User"> | string | null
+    lastNameCipher?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     memberships?: OrganizationMembershipListRelationFilter
+    earlyAccessEvents?: EarlyAccessEventListRelationFilter
+    earlyAccessSignups?: EarlyAccessSignupListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    ownedOrganizations?: OrganizationListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -34023,9 +44349,15 @@ export namespace Prisma {
     email?: SortOrder
     passwordHash?: SortOrder
     isSuperAdmin?: SortOrder
+    firstNameCipher?: SortOrderInput | SortOrder
+    lastNameCipher?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     memberships?: OrganizationMembershipOrderByRelationAggregateInput
+    earlyAccessEvents?: EarlyAccessEventOrderByRelationAggregateInput
+    earlyAccessSignups?: EarlyAccessSignupOrderByRelationAggregateInput
+    auditLogs?: AuditLogOrderByRelationAggregateInput
+    ownedOrganizations?: OrganizationOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -34036,9 +44368,15 @@ export namespace Prisma {
     NOT?: UserWhereInput | UserWhereInput[]
     passwordHash?: StringFilter<"User"> | string
     isSuperAdmin?: BoolFilter<"User"> | boolean
+    firstNameCipher?: StringNullableFilter<"User"> | string | null
+    lastNameCipher?: StringNullableFilter<"User"> | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     memberships?: OrganizationMembershipListRelationFilter
+    earlyAccessEvents?: EarlyAccessEventListRelationFilter
+    earlyAccessSignups?: EarlyAccessSignupListRelationFilter
+    auditLogs?: AuditLogListRelationFilter
+    ownedOrganizations?: OrganizationListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -34046,6 +44384,8 @@ export namespace Prisma {
     email?: SortOrder
     passwordHash?: SortOrder
     isSuperAdmin?: SortOrder
+    firstNameCipher?: SortOrderInput | SortOrder
+    lastNameCipher?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -34061,6 +44401,8 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     passwordHash?: StringWithAggregatesFilter<"User"> | string
     isSuperAdmin?: BoolWithAggregatesFilter<"User"> | boolean
+    firstNameCipher?: StringNullableWithAggregatesFilter<"User"> | string | null
+    lastNameCipher?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -34077,6 +44419,7 @@ export namespace Prisma {
     deletedByUserId?: UuidNullableFilter<"OrganizationMembership"> | string | null
     deletedReason?: StringNullableFilter<"OrganizationMembership"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }
 
   export type OrganizationMembershipOrderByWithRelationInput = {
@@ -34088,6 +44431,7 @@ export namespace Prisma {
     deletedByUserId?: SortOrderInput | SortOrder
     deletedReason?: SortOrderInput | SortOrder
     user?: UserOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
   }
 
   export type OrganizationMembershipWhereUniqueInput = Prisma.AtLeast<{
@@ -34103,6 +44447,7 @@ export namespace Prisma {
     deletedByUserId?: UuidNullableFilter<"OrganizationMembership"> | string | null
     deletedReason?: StringNullableFilter<"OrganizationMembership"> | string | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
   }, "userId_organizationId">
 
   export type OrganizationMembershipOrderByWithAggregationInput = {
@@ -34660,6 +45005,602 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"OrganizationSecurityState"> | Date | string
   }
 
+  export type EarlyAccessEventWhereInput = {
+    AND?: EarlyAccessEventWhereInput | EarlyAccessEventWhereInput[]
+    OR?: EarlyAccessEventWhereInput[]
+    NOT?: EarlyAccessEventWhereInput | EarlyAccessEventWhereInput[]
+    id?: UuidFilter<"EarlyAccessEvent"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessEventType
+    userId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    organizationId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    subscriptionTier?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    industrySnapshot?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    sessionId?: UuidFilter<"EarlyAccessEvent"> | string
+    durationMs?: IntNullableFilter<"EarlyAccessEvent"> | number | null
+    metadata?: JsonNullableFilter<"EarlyAccessEvent">
+    createdAt?: DateTimeFilter<"EarlyAccessEvent"> | Date | string
+    clientIp?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    userAgent?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }
+
+  export type EarlyAccessEventOrderByWithRelationInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    eventType?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    subscriptionTier?: SortOrderInput | SortOrder
+    industrySnapshot?: SortOrderInput | SortOrder
+    sessionId?: SortOrder
+    durationMs?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type EarlyAccessEventWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: EarlyAccessEventWhereInput | EarlyAccessEventWhereInput[]
+    OR?: EarlyAccessEventWhereInput[]
+    NOT?: EarlyAccessEventWhereInput | EarlyAccessEventWhereInput[]
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessEventType
+    userId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    organizationId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    subscriptionTier?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    industrySnapshot?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    sessionId?: UuidFilter<"EarlyAccessEvent"> | string
+    durationMs?: IntNullableFilter<"EarlyAccessEvent"> | number | null
+    metadata?: JsonNullableFilter<"EarlyAccessEvent">
+    createdAt?: DateTimeFilter<"EarlyAccessEvent"> | Date | string
+    clientIp?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    userAgent?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type EarlyAccessEventOrderByWithAggregationInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    eventType?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    subscriptionTier?: SortOrderInput | SortOrder
+    industrySnapshot?: SortOrderInput | SortOrder
+    sessionId?: SortOrder
+    durationMs?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    _count?: EarlyAccessEventCountOrderByAggregateInput
+    _avg?: EarlyAccessEventAvgOrderByAggregateInput
+    _max?: EarlyAccessEventMaxOrderByAggregateInput
+    _min?: EarlyAccessEventMinOrderByAggregateInput
+    _sum?: EarlyAccessEventSumOrderByAggregateInput
+  }
+
+  export type EarlyAccessEventScalarWhereWithAggregatesInput = {
+    AND?: EarlyAccessEventScalarWhereWithAggregatesInput | EarlyAccessEventScalarWhereWithAggregatesInput[]
+    OR?: EarlyAccessEventScalarWhereWithAggregatesInput[]
+    NOT?: EarlyAccessEventScalarWhereWithAggregatesInput | EarlyAccessEventScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"EarlyAccessEvent"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyWithAggregatesFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeWithAggregatesFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessEventType
+    userId?: UuidNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+    organizationId?: UuidNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+    subscriptionTier?: StringNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+    industrySnapshot?: StringNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+    sessionId?: UuidWithAggregatesFilter<"EarlyAccessEvent"> | string
+    durationMs?: IntNullableWithAggregatesFilter<"EarlyAccessEvent"> | number | null
+    metadata?: JsonNullableWithAggregatesFilter<"EarlyAccessEvent">
+    createdAt?: DateTimeWithAggregatesFilter<"EarlyAccessEvent"> | Date | string
+    clientIp?: StringNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+    userAgent?: StringNullableWithAggregatesFilter<"EarlyAccessEvent"> | string | null
+  }
+
+  export type EarlyAccessSignupWhereInput = {
+    AND?: EarlyAccessSignupWhereInput | EarlyAccessSignupWhereInput[]
+    OR?: EarlyAccessSignupWhereInput[]
+    NOT?: EarlyAccessSignupWhereInput | EarlyAccessSignupWhereInput[]
+    id?: UuidFilter<"EarlyAccessSignup"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessSignup"> | $Enums.EarlyAccessModuleKey
+    userId?: UuidFilter<"EarlyAccessSignup"> | string
+    organizationId?: UuidFilter<"EarlyAccessSignup"> | string
+    subscriptionTier?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    industry?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    surveyAnswer?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    createdAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+    updatedAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type EarlyAccessSignupOrderByWithRelationInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrderInput | SortOrder
+    industry?: SortOrderInput | SortOrder
+    surveyAnswer?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type EarlyAccessSignupWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    moduleKey_organizationId?: EarlyAccessSignupModuleKeyOrganizationIdCompoundUniqueInput
+    AND?: EarlyAccessSignupWhereInput | EarlyAccessSignupWhereInput[]
+    OR?: EarlyAccessSignupWhereInput[]
+    NOT?: EarlyAccessSignupWhereInput | EarlyAccessSignupWhereInput[]
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessSignup"> | $Enums.EarlyAccessModuleKey
+    userId?: UuidFilter<"EarlyAccessSignup"> | string
+    organizationId?: UuidFilter<"EarlyAccessSignup"> | string
+    subscriptionTier?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    industry?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    surveyAnswer?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    createdAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+    updatedAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "moduleKey_organizationId">
+
+  export type EarlyAccessSignupOrderByWithAggregationInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrderInput | SortOrder
+    industry?: SortOrderInput | SortOrder
+    surveyAnswer?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: EarlyAccessSignupCountOrderByAggregateInput
+    _max?: EarlyAccessSignupMaxOrderByAggregateInput
+    _min?: EarlyAccessSignupMinOrderByAggregateInput
+  }
+
+  export type EarlyAccessSignupScalarWhereWithAggregatesInput = {
+    AND?: EarlyAccessSignupScalarWhereWithAggregatesInput | EarlyAccessSignupScalarWhereWithAggregatesInput[]
+    OR?: EarlyAccessSignupScalarWhereWithAggregatesInput[]
+    NOT?: EarlyAccessSignupScalarWhereWithAggregatesInput | EarlyAccessSignupScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"EarlyAccessSignup"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyWithAggregatesFilter<"EarlyAccessSignup"> | $Enums.EarlyAccessModuleKey
+    userId?: UuidWithAggregatesFilter<"EarlyAccessSignup"> | string
+    organizationId?: UuidWithAggregatesFilter<"EarlyAccessSignup"> | string
+    subscriptionTier?: StringNullableWithAggregatesFilter<"EarlyAccessSignup"> | string | null
+    industry?: StringNullableWithAggregatesFilter<"EarlyAccessSignup"> | string | null
+    surveyAnswer?: StringNullableWithAggregatesFilter<"EarlyAccessSignup"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"EarlyAccessSignup"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"EarlyAccessSignup"> | Date | string
+  }
+
+  export type EarlyAccessThresholdAlertWhereInput = {
+    AND?: EarlyAccessThresholdAlertWhereInput | EarlyAccessThresholdAlertWhereInput[]
+    OR?: EarlyAccessThresholdAlertWhereInput[]
+    NOT?: EarlyAccessThresholdAlertWhereInput | EarlyAccessThresholdAlertWhereInput[]
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessThresholdAlert"> | $Enums.EarlyAccessModuleKey
+    threshold?: IntFilter<"EarlyAccessThresholdAlert"> | number
+    firedAt?: DateTimeFilter<"EarlyAccessThresholdAlert"> | Date | string
+    firedToCount?: IntFilter<"EarlyAccessThresholdAlert"> | number
+  }
+
+  export type EarlyAccessThresholdAlertOrderByWithRelationInput = {
+    moduleKey?: SortOrder
+    threshold?: SortOrder
+    firedAt?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertWhereUniqueInput = Prisma.AtLeast<{
+    moduleKey_threshold?: EarlyAccessThresholdAlertModuleKeyThresholdCompoundUniqueInput
+    AND?: EarlyAccessThresholdAlertWhereInput | EarlyAccessThresholdAlertWhereInput[]
+    OR?: EarlyAccessThresholdAlertWhereInput[]
+    NOT?: EarlyAccessThresholdAlertWhereInput | EarlyAccessThresholdAlertWhereInput[]
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessThresholdAlert"> | $Enums.EarlyAccessModuleKey
+    threshold?: IntFilter<"EarlyAccessThresholdAlert"> | number
+    firedAt?: DateTimeFilter<"EarlyAccessThresholdAlert"> | Date | string
+    firedToCount?: IntFilter<"EarlyAccessThresholdAlert"> | number
+  }, "moduleKey_threshold">
+
+  export type EarlyAccessThresholdAlertOrderByWithAggregationInput = {
+    moduleKey?: SortOrder
+    threshold?: SortOrder
+    firedAt?: SortOrder
+    firedToCount?: SortOrder
+    _count?: EarlyAccessThresholdAlertCountOrderByAggregateInput
+    _avg?: EarlyAccessThresholdAlertAvgOrderByAggregateInput
+    _max?: EarlyAccessThresholdAlertMaxOrderByAggregateInput
+    _min?: EarlyAccessThresholdAlertMinOrderByAggregateInput
+    _sum?: EarlyAccessThresholdAlertSumOrderByAggregateInput
+  }
+
+  export type EarlyAccessThresholdAlertScalarWhereWithAggregatesInput = {
+    AND?: EarlyAccessThresholdAlertScalarWhereWithAggregatesInput | EarlyAccessThresholdAlertScalarWhereWithAggregatesInput[]
+    OR?: EarlyAccessThresholdAlertScalarWhereWithAggregatesInput[]
+    NOT?: EarlyAccessThresholdAlertScalarWhereWithAggregatesInput | EarlyAccessThresholdAlertScalarWhereWithAggregatesInput[]
+    moduleKey?: EnumEarlyAccessModuleKeyWithAggregatesFilter<"EarlyAccessThresholdAlert"> | $Enums.EarlyAccessModuleKey
+    threshold?: IntWithAggregatesFilter<"EarlyAccessThresholdAlert"> | number
+    firedAt?: DateTimeWithAggregatesFilter<"EarlyAccessThresholdAlert"> | Date | string
+    firedToCount?: IntWithAggregatesFilter<"EarlyAccessThresholdAlert"> | number
+  }
+
+  export type AuditLogWhereInput = {
+    AND?: AuditLogWhereInput | AuditLogWhereInput[]
+    OR?: AuditLogWhereInput[]
+    NOT?: AuditLogWhereInput | AuditLogWhereInput[]
+    id?: UuidFilter<"AuditLog"> | string
+    organizationId?: UuidNullableFilter<"AuditLog"> | string | null
+    userId?: UuidNullableFilter<"AuditLog"> | string | null
+    entityType?: StringFilter<"AuditLog"> | string
+    entityId?: StringFilter<"AuditLog"> | string
+    action?: StringFilter<"AuditLog"> | string
+    changes?: JsonNullableFilter<"AuditLog">
+    createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    clientIp?: StringNullableFilter<"AuditLog"> | string | null
+    userAgent?: StringNullableFilter<"AuditLog"> | string | null
+    hash?: StringNullableFilter<"AuditLog"> | string | null
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }
+
+  export type AuditLogOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    action?: SortOrder
+    changes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    oldValues?: SortOrderInput | SortOrder
+    newValues?: SortOrderInput | SortOrder
+    clientIp?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    hash?: SortOrderInput | SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type AuditLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: AuditLogWhereInput | AuditLogWhereInput[]
+    OR?: AuditLogWhereInput[]
+    NOT?: AuditLogWhereInput | AuditLogWhereInput[]
+    organizationId?: UuidNullableFilter<"AuditLog"> | string | null
+    userId?: UuidNullableFilter<"AuditLog"> | string | null
+    entityType?: StringFilter<"AuditLog"> | string
+    entityId?: StringFilter<"AuditLog"> | string
+    action?: StringFilter<"AuditLog"> | string
+    changes?: JsonNullableFilter<"AuditLog">
+    createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    clientIp?: StringNullableFilter<"AuditLog"> | string | null
+    userAgent?: StringNullableFilter<"AuditLog"> | string | null
+    hash?: StringNullableFilter<"AuditLog"> | string | null
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    user?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+  }, "id">
+
+  export type AuditLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    userId?: SortOrderInput | SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    action?: SortOrder
+    changes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    oldValues?: SortOrderInput | SortOrder
+    newValues?: SortOrderInput | SortOrder
+    clientIp?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    hash?: SortOrderInput | SortOrder
+    _count?: AuditLogCountOrderByAggregateInput
+    _max?: AuditLogMaxOrderByAggregateInput
+    _min?: AuditLogMinOrderByAggregateInput
+  }
+
+  export type AuditLogScalarWhereWithAggregatesInput = {
+    AND?: AuditLogScalarWhereWithAggregatesInput | AuditLogScalarWhereWithAggregatesInput[]
+    OR?: AuditLogScalarWhereWithAggregatesInput[]
+    NOT?: AuditLogScalarWhereWithAggregatesInput | AuditLogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"AuditLog"> | string
+    organizationId?: UuidNullableWithAggregatesFilter<"AuditLog"> | string | null
+    userId?: UuidNullableWithAggregatesFilter<"AuditLog"> | string | null
+    entityType?: StringWithAggregatesFilter<"AuditLog"> | string
+    entityId?: StringWithAggregatesFilter<"AuditLog"> | string
+    action?: StringWithAggregatesFilter<"AuditLog"> | string
+    changes?: JsonNullableWithAggregatesFilter<"AuditLog">
+    createdAt?: DateTimeWithAggregatesFilter<"AuditLog"> | Date | string
+    oldValues?: JsonNullableWithAggregatesFilter<"AuditLog">
+    newValues?: JsonNullableWithAggregatesFilter<"AuditLog">
+    clientIp?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    userAgent?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+    hash?: StringNullableWithAggregatesFilter<"AuditLog"> | string | null
+  }
+
+  export type NotificationTemplateWhereInput = {
+    AND?: NotificationTemplateWhereInput | NotificationTemplateWhereInput[]
+    OR?: NotificationTemplateWhereInput[]
+    NOT?: NotificationTemplateWhereInput | NotificationTemplateWhereInput[]
+    id?: UuidFilter<"NotificationTemplate"> | string
+    organizationId?: UuidNullableFilter<"NotificationTemplate"> | string | null
+    templateKey?: StringFilter<"NotificationTemplate"> | string
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationTemplate"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationTemplate"> | $Enums.NotificationChannel
+    subject?: StringNullableFilter<"NotificationTemplate"> | string | null
+    bodyTemplate?: StringFilter<"NotificationTemplate"> | string
+    isActive?: BoolFilter<"NotificationTemplate"> | boolean
+    createdAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    outboxEntries?: NotificationOutboxListRelationFilter
+  }
+
+  export type NotificationTemplateOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    templateKey?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    subject?: SortOrderInput | SortOrder
+    bodyTemplate?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    outboxEntries?: NotificationOutboxOrderByRelationAggregateInput
+  }
+
+  export type NotificationTemplateWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_templateKey_channel?: NotificationTemplateOrganizationIdTemplateKeyChannelCompoundUniqueInput
+    AND?: NotificationTemplateWhereInput | NotificationTemplateWhereInput[]
+    OR?: NotificationTemplateWhereInput[]
+    NOT?: NotificationTemplateWhereInput | NotificationTemplateWhereInput[]
+    organizationId?: UuidNullableFilter<"NotificationTemplate"> | string | null
+    templateKey?: StringFilter<"NotificationTemplate"> | string
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationTemplate"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationTemplate"> | $Enums.NotificationChannel
+    subject?: StringNullableFilter<"NotificationTemplate"> | string | null
+    bodyTemplate?: StringFilter<"NotificationTemplate"> | string
+    isActive?: BoolFilter<"NotificationTemplate"> | boolean
+    createdAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+    organization?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    outboxEntries?: NotificationOutboxListRelationFilter
+  }, "id" | "organizationId_templateKey_channel">
+
+  export type NotificationTemplateOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrderInput | SortOrder
+    templateKey?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    subject?: SortOrderInput | SortOrder
+    bodyTemplate?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NotificationTemplateCountOrderByAggregateInput
+    _max?: NotificationTemplateMaxOrderByAggregateInput
+    _min?: NotificationTemplateMinOrderByAggregateInput
+  }
+
+  export type NotificationTemplateScalarWhereWithAggregatesInput = {
+    AND?: NotificationTemplateScalarWhereWithAggregatesInput | NotificationTemplateScalarWhereWithAggregatesInput[]
+    OR?: NotificationTemplateScalarWhereWithAggregatesInput[]
+    NOT?: NotificationTemplateScalarWhereWithAggregatesInput | NotificationTemplateScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"NotificationTemplate"> | string
+    organizationId?: UuidNullableWithAggregatesFilter<"NotificationTemplate"> | string | null
+    templateKey?: StringWithAggregatesFilter<"NotificationTemplate"> | string
+    messageClass?: EnumNotificationMessageClassWithAggregatesFilter<"NotificationTemplate"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelWithAggregatesFilter<"NotificationTemplate"> | $Enums.NotificationChannel
+    subject?: StringNullableWithAggregatesFilter<"NotificationTemplate"> | string | null
+    bodyTemplate?: StringWithAggregatesFilter<"NotificationTemplate"> | string
+    isActive?: BoolWithAggregatesFilter<"NotificationTemplate"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"NotificationTemplate"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"NotificationTemplate"> | Date | string
+  }
+
+  export type NotificationOutboxWhereInput = {
+    AND?: NotificationOutboxWhereInput | NotificationOutboxWhereInput[]
+    OR?: NotificationOutboxWhereInput[]
+    NOT?: NotificationOutboxWhereInput | NotificationOutboxWhereInput[]
+    id?: UuidFilter<"NotificationOutbox"> | string
+    organizationId?: UuidFilter<"NotificationOutbox"> | string
+    templateKey?: StringFilter<"NotificationOutbox"> | string
+    templateId?: UuidNullableFilter<"NotificationOutbox"> | string | null
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationOutbox"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationOutbox"> | $Enums.NotificationChannel
+    recipient?: StringFilter<"NotificationOutbox"> | string
+    payload?: JsonFilter<"NotificationOutbox">
+    status?: EnumNotificationOutboxStatusFilter<"NotificationOutbox"> | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFilter<"NotificationOutbox"> | string
+    sourceEntityId?: StringFilter<"NotificationOutbox"> | string
+    errorMessage?: StringNullableFilter<"NotificationOutbox"> | string | null
+    sentAt?: DateTimeNullableFilter<"NotificationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    template?: XOR<NotificationTemplateNullableScalarRelationFilter, NotificationTemplateWhereInput> | null
+    deliveryLogs?: NotificationDeliveryLogListRelationFilter
+  }
+
+  export type NotificationOutboxOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    templateId?: SortOrderInput | SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    sentAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    template?: NotificationTemplateOrderByWithRelationInput
+    deliveryLogs?: NotificationDeliveryLogOrderByRelationAggregateInput
+  }
+
+  export type NotificationOutboxWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_sourceEntityType_sourceEntityId_templateKey?: NotificationOutboxOrganizationIdSourceEntityTypeSourceEntityIdTemplateKeyCompoundUniqueInput
+    AND?: NotificationOutboxWhereInput | NotificationOutboxWhereInput[]
+    OR?: NotificationOutboxWhereInput[]
+    NOT?: NotificationOutboxWhereInput | NotificationOutboxWhereInput[]
+    organizationId?: UuidFilter<"NotificationOutbox"> | string
+    templateKey?: StringFilter<"NotificationOutbox"> | string
+    templateId?: UuidNullableFilter<"NotificationOutbox"> | string | null
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationOutbox"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationOutbox"> | $Enums.NotificationChannel
+    recipient?: StringFilter<"NotificationOutbox"> | string
+    payload?: JsonFilter<"NotificationOutbox">
+    status?: EnumNotificationOutboxStatusFilter<"NotificationOutbox"> | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFilter<"NotificationOutbox"> | string
+    sourceEntityId?: StringFilter<"NotificationOutbox"> | string
+    errorMessage?: StringNullableFilter<"NotificationOutbox"> | string | null
+    sentAt?: DateTimeNullableFilter<"NotificationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    template?: XOR<NotificationTemplateNullableScalarRelationFilter, NotificationTemplateWhereInput> | null
+    deliveryLogs?: NotificationDeliveryLogListRelationFilter
+  }, "id" | "organizationId_sourceEntityType_sourceEntityId_templateKey">
+
+  export type NotificationOutboxOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    templateId?: SortOrderInput | SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    sentAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NotificationOutboxCountOrderByAggregateInput
+    _max?: NotificationOutboxMaxOrderByAggregateInput
+    _min?: NotificationOutboxMinOrderByAggregateInput
+  }
+
+  export type NotificationOutboxScalarWhereWithAggregatesInput = {
+    AND?: NotificationOutboxScalarWhereWithAggregatesInput | NotificationOutboxScalarWhereWithAggregatesInput[]
+    OR?: NotificationOutboxScalarWhereWithAggregatesInput[]
+    NOT?: NotificationOutboxScalarWhereWithAggregatesInput | NotificationOutboxScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"NotificationOutbox"> | string
+    organizationId?: UuidWithAggregatesFilter<"NotificationOutbox"> | string
+    templateKey?: StringWithAggregatesFilter<"NotificationOutbox"> | string
+    templateId?: UuidNullableWithAggregatesFilter<"NotificationOutbox"> | string | null
+    messageClass?: EnumNotificationMessageClassWithAggregatesFilter<"NotificationOutbox"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelWithAggregatesFilter<"NotificationOutbox"> | $Enums.NotificationChannel
+    recipient?: StringWithAggregatesFilter<"NotificationOutbox"> | string
+    payload?: JsonWithAggregatesFilter<"NotificationOutbox">
+    status?: EnumNotificationOutboxStatusWithAggregatesFilter<"NotificationOutbox"> | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringWithAggregatesFilter<"NotificationOutbox"> | string
+    sourceEntityId?: StringWithAggregatesFilter<"NotificationOutbox"> | string
+    errorMessage?: StringNullableWithAggregatesFilter<"NotificationOutbox"> | string | null
+    sentAt?: DateTimeNullableWithAggregatesFilter<"NotificationOutbox"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"NotificationOutbox"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"NotificationOutbox"> | Date | string
+  }
+
+  export type NotificationDeliveryLogWhereInput = {
+    AND?: NotificationDeliveryLogWhereInput | NotificationDeliveryLogWhereInput[]
+    OR?: NotificationDeliveryLogWhereInput[]
+    NOT?: NotificationDeliveryLogWhereInput | NotificationDeliveryLogWhereInput[]
+    id?: UuidFilter<"NotificationDeliveryLog"> | string
+    outboxId?: UuidFilter<"NotificationDeliveryLog"> | string
+    organizationId?: UuidFilter<"NotificationDeliveryLog"> | string
+    channel?: EnumNotificationChannelFilter<"NotificationDeliveryLog"> | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFilter<"NotificationDeliveryLog"> | $Enums.NotificationOutboxStatus
+    providerPayload?: JsonNullableFilter<"NotificationDeliveryLog">
+    errorMessage?: StringNullableFilter<"NotificationDeliveryLog"> | string | null
+    attemptedAt?: DateTimeFilter<"NotificationDeliveryLog"> | Date | string
+    outbox?: XOR<NotificationOutboxScalarRelationFilter, NotificationOutboxWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type NotificationDeliveryLogOrderByWithRelationInput = {
+    id?: SortOrder
+    outboxId?: SortOrder
+    organizationId?: SortOrder
+    channel?: SortOrder
+    status?: SortOrder
+    providerPayload?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    attemptedAt?: SortOrder
+    outbox?: NotificationOutboxOrderByWithRelationInput
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type NotificationDeliveryLogWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: NotificationDeliveryLogWhereInput | NotificationDeliveryLogWhereInput[]
+    OR?: NotificationDeliveryLogWhereInput[]
+    NOT?: NotificationDeliveryLogWhereInput | NotificationDeliveryLogWhereInput[]
+    outboxId?: UuidFilter<"NotificationDeliveryLog"> | string
+    organizationId?: UuidFilter<"NotificationDeliveryLog"> | string
+    channel?: EnumNotificationChannelFilter<"NotificationDeliveryLog"> | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFilter<"NotificationDeliveryLog"> | $Enums.NotificationOutboxStatus
+    providerPayload?: JsonNullableFilter<"NotificationDeliveryLog">
+    errorMessage?: StringNullableFilter<"NotificationDeliveryLog"> | string | null
+    attemptedAt?: DateTimeFilter<"NotificationDeliveryLog"> | Date | string
+    outbox?: XOR<NotificationOutboxScalarRelationFilter, NotificationOutboxWhereInput>
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id">
+
+  export type NotificationDeliveryLogOrderByWithAggregationInput = {
+    id?: SortOrder
+    outboxId?: SortOrder
+    organizationId?: SortOrder
+    channel?: SortOrder
+    status?: SortOrder
+    providerPayload?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    attemptedAt?: SortOrder
+    _count?: NotificationDeliveryLogCountOrderByAggregateInput
+    _max?: NotificationDeliveryLogMaxOrderByAggregateInput
+    _min?: NotificationDeliveryLogMinOrderByAggregateInput
+  }
+
+  export type NotificationDeliveryLogScalarWhereWithAggregatesInput = {
+    AND?: NotificationDeliveryLogScalarWhereWithAggregatesInput | NotificationDeliveryLogScalarWhereWithAggregatesInput[]
+    OR?: NotificationDeliveryLogScalarWhereWithAggregatesInput[]
+    NOT?: NotificationDeliveryLogScalarWhereWithAggregatesInput | NotificationDeliveryLogScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"NotificationDeliveryLog"> | string
+    outboxId?: UuidWithAggregatesFilter<"NotificationDeliveryLog"> | string
+    organizationId?: UuidWithAggregatesFilter<"NotificationDeliveryLog"> | string
+    channel?: EnumNotificationChannelWithAggregatesFilter<"NotificationDeliveryLog"> | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusWithAggregatesFilter<"NotificationDeliveryLog"> | $Enums.NotificationOutboxStatus
+    providerPayload?: JsonNullableWithAggregatesFilter<"NotificationDeliveryLog">
+    errorMessage?: StringNullableWithAggregatesFilter<"NotificationDeliveryLog"> | string | null
+    attemptedAt?: DateTimeWithAggregatesFilter<"NotificationDeliveryLog"> | Date | string
+  }
+
   export type TenantBillingCreateInput = {
     organizationId: string
     billingStatus?: $Enums.BillingStatus
@@ -34753,7 +45694,6 @@ export namespace Prisma {
 
   export type OrganizationSubscriptionCreateInput = {
     id?: string
-    organizationId: string
     currentTier?: $Enums.TariffTier
     isTrial?: boolean
     trialExpiresAt?: Date | string | null
@@ -34765,6 +45705,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     isBlocked?: boolean
     customConfig?: NullableJsonNullValueInput | InputJsonValue
+    organization: OrganizationCreateNestedOneWithoutSubscriptionInput
   }
 
   export type OrganizationSubscriptionUncheckedCreateInput = {
@@ -34785,7 +45726,6 @@ export namespace Prisma {
 
   export type OrganizationSubscriptionUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     currentTier?: EnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier
     isTrial?: BoolFieldUpdateOperationsInput | boolean
     trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -34797,6 +45737,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
     customConfig?: NullableJsonNullValueInput | InputJsonValue
+    organization?: OrganizationUpdateOneRequiredWithoutSubscriptionNestedInput
   }
 
   export type OrganizationSubscriptionUncheckedUpdateInput = {
@@ -34833,7 +45774,6 @@ export namespace Prisma {
 
   export type OrganizationSubscriptionUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     currentTier?: EnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier
     isTrial?: BoolFieldUpdateOperationsInput | boolean
     trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -34977,10 +45917,10 @@ export namespace Prisma {
 
   export type BillingInvoiceItemCreateInput = {
     id?: string
-    organizationId: string
     description: string
     amount: Decimal | DecimalJsLike | number | string
     subscriptionInvoice: SubscriptionInvoiceCreateNestedOneWithoutItemsInput
+    organization: OrganizationCreateNestedOneWithoutBillingInvoiceItemsInput
   }
 
   export type BillingInvoiceItemUncheckedCreateInput = {
@@ -34993,10 +45933,10 @@ export namespace Prisma {
 
   export type BillingInvoiceItemUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     subscriptionInvoice?: SubscriptionInvoiceUpdateOneRequiredWithoutItemsNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutBillingInvoiceItemsNestedInput
   }
 
   export type BillingInvoiceItemUncheckedUpdateInput = {
@@ -35017,7 +45957,6 @@ export namespace Prisma {
 
   export type BillingInvoiceItemUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
   }
@@ -35032,12 +45971,12 @@ export namespace Prisma {
 
   export type UsageMeterEventCreateInput = {
     id?: string
-    organizationId: string
     actionType: string
     quantity?: number
     unitCostAzn: Decimal | DecimalJsLike | number | string
     balanceAfter: Decimal | DecimalJsLike | number | string
     createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutUsageMeterEventsInput
   }
 
   export type UsageMeterEventUncheckedCreateInput = {
@@ -35052,12 +45991,12 @@ export namespace Prisma {
 
   export type UsageMeterEventUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     actionType?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
     unitCostAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     balanceAfter?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutUsageMeterEventsNestedInput
   }
 
   export type UsageMeterEventUncheckedUpdateInput = {
@@ -35082,7 +46021,6 @@ export namespace Prisma {
 
   export type UsageMeterEventUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     actionType?: StringFieldUpdateOperationsInput | string
     quantity?: IntFieldUpdateOperationsInput | number
     unitCostAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -35574,7 +46512,6 @@ export namespace Prisma {
 
   export type PaymentOrderCreateInput = {
     id?: string
-    organizationId: string
     amountAzn: Decimal | DecimalJsLike | number | string
     currency?: string
     status?: $Enums.PaymentOrderStatus
@@ -35586,6 +46523,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     paidAt?: Date | string | null
+    organization: OrganizationCreateNestedOneWithoutPaymentOrdersInput
     subscriptionInvoice?: SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput
   }
 
@@ -35608,7 +46546,6 @@ export namespace Prisma {
 
   export type PaymentOrderUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: StringFieldUpdateOperationsInput | string
     status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
@@ -35620,6 +46557,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    organization?: OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput
     subscriptionInvoice?: SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput
   }
 
@@ -35658,7 +46596,6 @@ export namespace Prisma {
 
   export type PaymentOrderUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: StringFieldUpdateOperationsInput | string
     status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
@@ -35935,8 +46872,35 @@ export namespace Prisma {
   export type OrganizationCreateInput = {
     id?: string
     name: string
-    ownerId?: string | null
     taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -35944,13 +46908,67 @@ export namespace Prisma {
     name: string
     ownerId?: string | null
     taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -35958,6 +46976,33 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -35965,13 +47010,44 @@ export namespace Prisma {
     name: string
     ownerId?: string | null
     taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type OrganizationUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
-    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationUncheckedUpdateManyInput = {
@@ -35979,6 +47055,22 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UserCreateInput = {
@@ -35986,9 +47078,15 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -35996,9 +47094,15 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUpdateInput = {
@@ -36006,9 +47110,15 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -36016,9 +47126,15 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -36026,6 +47142,8 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -36035,6 +47153,8 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -36044,18 +47164,20 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationMembershipCreateInput = {
-    organizationId: string
     role: $Enums.UserRole
     joinedAt?: Date | string
     deletedAt?: Date | string | null
     deletedByUserId?: string | null
     deletedReason?: string | null
     user: UserCreateNestedOneWithoutMembershipsInput
+    organization: OrganizationCreateNestedOneWithoutMembershipsInput
   }
 
   export type OrganizationMembershipUncheckedCreateInput = {
@@ -36069,13 +47191,13 @@ export namespace Prisma {
   }
 
   export type OrganizationMembershipUpdateInput = {
-    organizationId?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
     user?: UserUpdateOneRequiredWithoutMembershipsNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutMembershipsNestedInput
   }
 
   export type OrganizationMembershipUncheckedUpdateInput = {
@@ -36099,7 +47221,6 @@ export namespace Prisma {
   }
 
   export type OrganizationMembershipUpdateManyMutationInput = {
-    organizationId?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -36717,6 +47838,654 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type EarlyAccessEventCreateInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+    organization?: OrganizationCreateNestedOneWithoutEarlyAccessEventsInput
+    user?: UserCreateNestedOneWithoutEarlyAccessEventsInput
+  }
+
+  export type EarlyAccessEventUncheckedCreateInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    userId?: string | null
+    organizationId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessEventUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    organization?: OrganizationUpdateOneWithoutEarlyAccessEventsNestedInput
+    user?: UserUpdateOneWithoutEarlyAccessEventsNestedInput
+  }
+
+  export type EarlyAccessEventUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessEventCreateManyInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    userId?: string | null
+    organizationId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessEventUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessEventUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessSignupCreateInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutEarlyAccessSignupsInput
+    user: UserCreateNestedOneWithoutEarlyAccessSignupsInput
+  }
+
+  export type EarlyAccessSignupUncheckedCreateInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    userId: string
+    organizationId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EarlyAccessSignupUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput
+    user?: UserUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    userId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessSignupCreateManyInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    userId: string
+    organizationId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EarlyAccessSignupUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    userId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessThresholdAlertCreateInput = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    threshold: number
+    firedAt?: Date | string
+    firedToCount: number
+  }
+
+  export type EarlyAccessThresholdAlertUncheckedCreateInput = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    threshold: number
+    firedAt?: Date | string
+    firedToCount: number
+  }
+
+  export type EarlyAccessThresholdAlertUpdateInput = {
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    threshold?: IntFieldUpdateOperationsInput | number
+    firedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firedToCount?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type EarlyAccessThresholdAlertUncheckedUpdateInput = {
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    threshold?: IntFieldUpdateOperationsInput | number
+    firedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firedToCount?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type EarlyAccessThresholdAlertCreateManyInput = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    threshold: number
+    firedAt?: Date | string
+    firedToCount: number
+  }
+
+  export type EarlyAccessThresholdAlertUpdateManyMutationInput = {
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    threshold?: IntFieldUpdateOperationsInput | number
+    firedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firedToCount?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type EarlyAccessThresholdAlertUncheckedUpdateManyInput = {
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    threshold?: IntFieldUpdateOperationsInput | number
+    firedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    firedToCount?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type AuditLogCreateInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+    organization?: OrganizationCreateNestedOneWithoutAuditLogsInput
+    user?: UserCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type AuditLogUncheckedCreateInput = {
+    id?: string
+    organizationId?: string | null
+    userId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type AuditLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+    organization?: OrganizationUpdateOneWithoutAuditLogsNestedInput
+    user?: UserUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type AuditLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AuditLogCreateManyInput = {
+    id?: string
+    organizationId?: string | null
+    userId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type AuditLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AuditLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type NotificationTemplateCreateInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutNotificationTemplatesInput
+    outboxEntries?: NotificationOutboxCreateNestedManyWithoutTemplateInput
+  }
+
+  export type NotificationTemplateUncheckedCreateInput = {
+    id?: string
+    organizationId?: string | null
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    outboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutTemplateInput
+  }
+
+  export type NotificationTemplateUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutNotificationTemplatesNestedInput
+    outboxEntries?: NotificationOutboxUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type NotificationTemplateUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    outboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type NotificationTemplateCreateManyInput = {
+    id?: string
+    organizationId?: string | null
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationTemplateUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationTemplateUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationOutboxCreateInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutNotificationOutboxEntriesInput
+    template?: NotificationTemplateCreateNestedOneWithoutOutboxEntriesInput
+    deliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    templateKey: string
+    templateId?: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutNotificationOutboxEntriesNestedInput
+    template?: NotificationTemplateUpdateOneWithoutOutboxEntriesNestedInput
+    deliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    templateId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxCreateManyInput = {
+    id?: string
+    organizationId: string
+    templateKey: string
+    templateId?: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationOutboxUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationOutboxUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    templateId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogCreateInput = {
+    id?: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+    outbox: NotificationOutboxCreateNestedOneWithoutDeliveryLogsInput
+    organization: OrganizationCreateNestedOneWithoutNotificationDeliveryLogsInput
+  }
+
+  export type NotificationDeliveryLogUncheckedCreateInput = {
+    id?: string
+    outboxId: string
+    organizationId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    outbox?: NotificationOutboxUpdateOneRequiredWithoutDeliveryLogsNestedInput
+    organization?: OrganizationUpdateOneRequiredWithoutNotificationDeliveryLogsNestedInput
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    outboxId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogCreateManyInput = {
+    id?: string
+    outboxId: string
+    organizationId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    outboxId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -36996,6 +48765,11 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type OrganizationScalarRelationFilter = {
+    is?: OrganizationWhereInput
+    isNot?: OrganizationWhereInput
   }
 
   export type OrganizationSubscriptionCountOrderByAggregateInput = {
@@ -37934,25 +49708,50 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
-  export type OrganizationCountOrderByAggregateInput = {
-    id?: SortOrder
-    name?: SortOrder
-    ownerId?: SortOrder
-    taxIdBlindIndex?: SortOrder
+  export type BigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
-  export type OrganizationMaxOrderByAggregateInput = {
-    id?: SortOrder
-    name?: SortOrder
-    ownerId?: SortOrder
-    taxIdBlindIndex?: SortOrder
+  export type UsageMeterEventListRelationFilter = {
+    every?: UsageMeterEventWhereInput
+    some?: UsageMeterEventWhereInput
+    none?: UsageMeterEventWhereInput
   }
 
-  export type OrganizationMinOrderByAggregateInput = {
-    id?: SortOrder
-    name?: SortOrder
-    ownerId?: SortOrder
-    taxIdBlindIndex?: SortOrder
+  export type EarlyAccessEventListRelationFilter = {
+    every?: EarlyAccessEventWhereInput
+    some?: EarlyAccessEventWhereInput
+    none?: EarlyAccessEventWhereInput
+  }
+
+  export type EarlyAccessSignupListRelationFilter = {
+    every?: EarlyAccessSignupWhereInput
+    some?: EarlyAccessSignupWhereInput
+    none?: EarlyAccessSignupWhereInput
+  }
+
+  export type AuditLogListRelationFilter = {
+    every?: AuditLogWhereInput
+    some?: AuditLogWhereInput
+    none?: AuditLogWhereInput
+  }
+
+  export type OrganizationSubscriptionNullableScalarRelationFilter = {
+    is?: OrganizationSubscriptionWhereInput | null
+    isNot?: OrganizationSubscriptionWhereInput | null
+  }
+
+  export type PaymentOrderListRelationFilter = {
+    every?: PaymentOrderWhereInput
+    some?: PaymentOrderWhereInput
+    none?: PaymentOrderWhereInput
   }
 
   export type OrganizationMembershipListRelationFilter = {
@@ -37961,7 +49760,167 @@ export namespace Prisma {
     none?: OrganizationMembershipWhereInput
   }
 
+  export type NotificationTemplateListRelationFilter = {
+    every?: NotificationTemplateWhereInput
+    some?: NotificationTemplateWhereInput
+    none?: NotificationTemplateWhereInput
+  }
+
+  export type NotificationOutboxListRelationFilter = {
+    every?: NotificationOutboxWhereInput
+    some?: NotificationOutboxWhereInput
+    none?: NotificationOutboxWhereInput
+  }
+
+  export type NotificationDeliveryLogListRelationFilter = {
+    every?: NotificationDeliveryLogWhereInput
+    some?: NotificationDeliveryLogWhereInput
+    none?: NotificationDeliveryLogWhereInput
+  }
+
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
+  }
+
+  export type UsageMeterEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EarlyAccessEventOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EarlyAccessSignupOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuditLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PaymentOrderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type OrganizationMembershipOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NotificationTemplateOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NotificationOutboxOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NotificationDeliveryLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrganizationCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
+    taxIdCipher?: SortOrder
+    subscriptionPlan?: SortOrder
+    billingStatus?: SortOrder
+    activeModules?: SortOrder
+    storageUsedBytes?: SortOrder
+    currentCreditTier?: SortOrder
+    accumulatedBalance?: SortOrder
+    billingPeriodKey?: SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+    currency?: SortOrder
+    settings?: SortOrder
+    drakarisClientId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationAvgOrderByAggregateInput = {
+    storageUsedBytes?: SortOrder
+    accumulatedBalance?: SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+  }
+
+  export type OrganizationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
+    taxIdCipher?: SortOrder
+    subscriptionPlan?: SortOrder
+    billingStatus?: SortOrder
+    storageUsedBytes?: SortOrder
+    currentCreditTier?: SortOrder
+    accumulatedBalance?: SortOrder
+    billingPeriodKey?: SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+    currency?: SortOrder
+    drakarisClientId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    taxIdBlindIndex?: SortOrder
+    taxIdCipher?: SortOrder
+    subscriptionPlan?: SortOrder
+    billingStatus?: SortOrder
+    storageUsedBytes?: SortOrder
+    currentCreditTier?: SortOrder
+    accumulatedBalance?: SortOrder
+    billingPeriodKey?: SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+    currency?: SortOrder
+    drakarisClientId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganizationSumOrderByAggregateInput = {
+    storageUsedBytes?: SortOrder
+    accumulatedBalance?: SortOrder
+    whatsappAlertsUsed?: SortOrder
+    ocrPagesUsed?: SortOrder
+  }
+
+  export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type OrganizationListRelationFilter = {
+    every?: OrganizationWhereInput
+    some?: OrganizationWhereInput
+    none?: OrganizationWhereInput
+  }
+
+  export type OrganizationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -37970,6 +49929,8 @@ export namespace Prisma {
     email?: SortOrder
     passwordHash?: SortOrder
     isSuperAdmin?: SortOrder
+    firstNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -37979,6 +49940,8 @@ export namespace Prisma {
     email?: SortOrder
     passwordHash?: SortOrder
     isSuperAdmin?: SortOrder
+    firstNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -37988,6 +49951,8 @@ export namespace Prisma {
     email?: SortOrder
     passwordHash?: SortOrder
     isSuperAdmin?: SortOrder
+    firstNameCipher?: SortOrder
+    lastNameCipher?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -38479,6 +50444,414 @@ export namespace Prisma {
     _max?: NestedEnumSecurityModeFilter<$PrismaModel>
   }
 
+  export type EnumEarlyAccessModuleKeyFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessModuleKey | EnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel> | $Enums.EarlyAccessModuleKey
+  }
+
+  export type EnumEarlyAccessEventTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessEventType | EnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel> | $Enums.EarlyAccessEventType
+  }
+
+  export type OrganizationNullableScalarRelationFilter = {
+    is?: OrganizationWhereInput | null
+    isNot?: OrganizationWhereInput | null
+  }
+
+  export type EarlyAccessEventCountOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    eventType?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industrySnapshot?: SortOrder
+    sessionId?: SortOrder
+    durationMs?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+  }
+
+  export type EarlyAccessEventAvgOrderByAggregateInput = {
+    durationMs?: SortOrder
+  }
+
+  export type EarlyAccessEventMaxOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    eventType?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industrySnapshot?: SortOrder
+    sessionId?: SortOrder
+    durationMs?: SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+  }
+
+  export type EarlyAccessEventMinOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    eventType?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industrySnapshot?: SortOrder
+    sessionId?: SortOrder
+    durationMs?: SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+  }
+
+  export type EarlyAccessEventSumOrderByAggregateInput = {
+    durationMs?: SortOrder
+  }
+
+  export type EnumEarlyAccessModuleKeyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessModuleKey | EnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessModuleKeyWithAggregatesFilter<$PrismaModel> | $Enums.EarlyAccessModuleKey
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel>
+    _max?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel>
+  }
+
+  export type EnumEarlyAccessEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessEventType | EnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.EarlyAccessEventType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel>
+    _max?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel>
+  }
+
+  export type EarlyAccessSignupModuleKeyOrganizationIdCompoundUniqueInput = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    organizationId: string
+  }
+
+  export type EarlyAccessSignupCountOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industry?: SortOrder
+    surveyAnswer?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EarlyAccessSignupMaxOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industry?: SortOrder
+    surveyAnswer?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EarlyAccessSignupMinOrderByAggregateInput = {
+    id?: SortOrder
+    moduleKey?: SortOrder
+    userId?: SortOrder
+    organizationId?: SortOrder
+    subscriptionTier?: SortOrder
+    industry?: SortOrder
+    surveyAnswer?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertModuleKeyThresholdCompoundUniqueInput = {
+    moduleKey: $Enums.EarlyAccessModuleKey
+    threshold: number
+  }
+
+  export type EarlyAccessThresholdAlertCountOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    threshold?: SortOrder
+    firedAt?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertAvgOrderByAggregateInput = {
+    threshold?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertMaxOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    threshold?: SortOrder
+    firedAt?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertMinOrderByAggregateInput = {
+    moduleKey?: SortOrder
+    threshold?: SortOrder
+    firedAt?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type EarlyAccessThresholdAlertSumOrderByAggregateInput = {
+    threshold?: SortOrder
+    firedToCount?: SortOrder
+  }
+
+  export type AuditLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    action?: SortOrder
+    changes?: SortOrder
+    createdAt?: SortOrder
+    oldValues?: SortOrder
+    newValues?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+    hash?: SortOrder
+  }
+
+  export type AuditLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    action?: SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+    hash?: SortOrder
+  }
+
+  export type AuditLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    userId?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    action?: SortOrder
+    createdAt?: SortOrder
+    clientIp?: SortOrder
+    userAgent?: SortOrder
+    hash?: SortOrder
+  }
+
+  export type EnumNotificationMessageClassFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationMessageClass | EnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationMessageClassFilter<$PrismaModel> | $Enums.NotificationMessageClass
+  }
+
+  export type EnumNotificationChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
+  }
+
+  export type NotificationTemplateOrganizationIdTemplateKeyChannelCompoundUniqueInput = {
+    organizationId: string
+    templateKey: string
+    channel: $Enums.NotificationChannel
+  }
+
+  export type NotificationTemplateCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    subject?: SortOrder
+    bodyTemplate?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationTemplateMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    subject?: SortOrder
+    bodyTemplate?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationTemplateMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    subject?: SortOrder
+    bodyTemplate?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumNotificationMessageClassWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationMessageClass | EnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationMessageClassWithAggregatesFilter<$PrismaModel> | $Enums.NotificationMessageClass
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationMessageClassFilter<$PrismaModel>
+    _max?: NestedEnumNotificationMessageClassFilter<$PrismaModel>
+  }
+
+  export type EnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
+    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
+  }
+
+  export type EnumNotificationOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationOutboxStatus | EnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel> | $Enums.NotificationOutboxStatus
+  }
+
+  export type NotificationTemplateNullableScalarRelationFilter = {
+    is?: NotificationTemplateWhereInput | null
+    isNot?: NotificationTemplateWhereInput | null
+  }
+
+  export type NotificationOutboxOrganizationIdSourceEntityTypeSourceEntityIdTemplateKeyCompoundUniqueInput = {
+    organizationId: string
+    sourceEntityType: string
+    sourceEntityId: string
+    templateKey: string
+  }
+
+  export type NotificationOutboxCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    templateId?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    payload?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    errorMessage?: SortOrder
+    sentAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationOutboxMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    templateId?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    errorMessage?: SortOrder
+    sentAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationOutboxMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    templateKey?: SortOrder
+    templateId?: SortOrder
+    messageClass?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    errorMessage?: SortOrder
+    sentAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumNotificationOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationOutboxStatus | EnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationOutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel>
+  }
+
+  export type NotificationOutboxScalarRelationFilter = {
+    is?: NotificationOutboxWhereInput
+    isNot?: NotificationOutboxWhereInput
+  }
+
+  export type NotificationDeliveryLogCountOrderByAggregateInput = {
+    id?: SortOrder
+    outboxId?: SortOrder
+    organizationId?: SortOrder
+    channel?: SortOrder
+    status?: SortOrder
+    providerPayload?: SortOrder
+    errorMessage?: SortOrder
+    attemptedAt?: SortOrder
+  }
+
+  export type NotificationDeliveryLogMaxOrderByAggregateInput = {
+    id?: SortOrder
+    outboxId?: SortOrder
+    organizationId?: SortOrder
+    channel?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    attemptedAt?: SortOrder
+  }
+
+  export type NotificationDeliveryLogMinOrderByAggregateInput = {
+    id?: SortOrder
+    outboxId?: SortOrder
+    organizationId?: SortOrder
+    channel?: SortOrder
+    status?: SortOrder
+    errorMessage?: SortOrder
+    attemptedAt?: SortOrder
+  }
+
   export type TenantBillingCreateactiveModulesInput = {
     set: string[]
   }
@@ -38532,6 +50905,12 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type OrganizationCreateNestedOneWithoutSubscriptionInput = {
+    create?: XOR<OrganizationCreateWithoutSubscriptionInput, OrganizationUncheckedCreateWithoutSubscriptionInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSubscriptionInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
   export type EnumTariffTierFieldUpdateOperationsInput = {
     set?: $Enums.TariffTier
   }
@@ -38552,6 +50931,14 @@ export namespace Prisma {
   export type OrganizationSubscriptionUpdateactiveModulesInput = {
     set?: string[]
     push?: string | string[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutSubscriptionNestedInput = {
+    create?: XOR<OrganizationCreateWithoutSubscriptionInput, OrganizationUncheckedCreateWithoutSubscriptionInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSubscriptionInput
+    upsert?: OrganizationUpsertWithoutSubscriptionInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutSubscriptionInput, OrganizationUpdateWithoutSubscriptionInput>, OrganizationUncheckedUpdateWithoutSubscriptionInput>
   }
 
   export type BillingInvoiceItemCreateNestedManyWithoutSubscriptionInvoiceInput = {
@@ -38664,12 +51051,40 @@ export namespace Prisma {
     connect?: SubscriptionInvoiceWhereUniqueInput
   }
 
+  export type OrganizationCreateNestedOneWithoutBillingInvoiceItemsInput = {
+    create?: XOR<OrganizationCreateWithoutBillingInvoiceItemsInput, OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
   export type SubscriptionInvoiceUpdateOneRequiredWithoutItemsNestedInput = {
     create?: XOR<SubscriptionInvoiceCreateWithoutItemsInput, SubscriptionInvoiceUncheckedCreateWithoutItemsInput>
     connectOrCreate?: SubscriptionInvoiceCreateOrConnectWithoutItemsInput
     upsert?: SubscriptionInvoiceUpsertWithoutItemsInput
     connect?: SubscriptionInvoiceWhereUniqueInput
     update?: XOR<XOR<SubscriptionInvoiceUpdateToOneWithWhereWithoutItemsInput, SubscriptionInvoiceUpdateWithoutItemsInput>, SubscriptionInvoiceUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutBillingInvoiceItemsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutBillingInvoiceItemsInput, OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput
+    upsert?: OrganizationUpsertWithoutBillingInvoiceItemsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutBillingInvoiceItemsInput, OrganizationUpdateWithoutBillingInvoiceItemsInput>, OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutUsageMeterEventsInput = {
+    create?: XOR<OrganizationCreateWithoutUsageMeterEventsInput, OrganizationUncheckedCreateWithoutUsageMeterEventsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutUsageMeterEventsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutUsageMeterEventsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutUsageMeterEventsInput, OrganizationUncheckedCreateWithoutUsageMeterEventsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutUsageMeterEventsInput
+    upsert?: OrganizationUpsertWithoutUsageMeterEventsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutUsageMeterEventsInput, OrganizationUpdateWithoutUsageMeterEventsInput>, OrganizationUncheckedUpdateWithoutUsageMeterEventsInput>
   }
 
   export type PricingBundleCreateNestedOneWithoutOrganizationBundlesInput = {
@@ -38740,6 +51155,12 @@ export namespace Prisma {
     deleteMany?: OrganizationBundleScalarWhereInput | OrganizationBundleScalarWhereInput[]
   }
 
+  export type OrganizationCreateNestedOneWithoutPaymentOrdersInput = {
+    create?: XOR<OrganizationCreateWithoutPaymentOrdersInput, OrganizationUncheckedCreateWithoutPaymentOrdersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPaymentOrdersInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
   export type SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput = {
     create?: XOR<SubscriptionInvoiceCreateWithoutPaymentOrderInput, SubscriptionInvoiceUncheckedCreateWithoutPaymentOrderInput>
     connectOrCreate?: SubscriptionInvoiceCreateOrConnectWithoutPaymentOrderInput
@@ -38754,6 +51175,14 @@ export namespace Prisma {
 
   export type EnumPaymentOrderStatusFieldUpdateOperationsInput = {
     set?: $Enums.PaymentOrderStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPaymentOrdersInput, OrganizationUncheckedCreateWithoutPaymentOrdersInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPaymentOrdersInput
+    upsert?: OrganizationUpsertWithoutPaymentOrdersInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPaymentOrdersInput, OrganizationUpdateWithoutPaymentOrdersInput>, OrganizationUncheckedUpdateWithoutPaymentOrdersInput>
   }
 
   export type SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput = {
@@ -38896,6 +51325,491 @@ export namespace Prisma {
     update?: XOR<XOR<PermissionUpdateToOneWithWhereWithoutRolesInput, PermissionUpdateWithoutRolesInput>, PermissionUncheckedUpdateWithoutRolesInput>
   }
 
+  export type OrganizationCreateactiveModulesInput = {
+    set: string[]
+  }
+
+  export type UsageMeterEventCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
+    createMany?: UsageMeterEventCreateManyOrganizationInputEnvelope
+    connect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessEventCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput> | EarlyAccessEventCreateWithoutOrganizationInput[] | EarlyAccessEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutOrganizationInput | EarlyAccessEventCreateOrConnectWithoutOrganizationInput[]
+    createMany?: EarlyAccessEventCreateManyOrganizationInputEnvelope
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessSignupCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput> | EarlyAccessSignupCreateWithoutOrganizationInput[] | EarlyAccessSignupUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutOrganizationInput | EarlyAccessSignupCreateOrConnectWithoutOrganizationInput[]
+    createMany?: EarlyAccessSignupCreateManyOrganizationInputEnvelope
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+  }
+
+  export type AuditLogCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput> | AuditLogCreateWithoutOrganizationInput[] | AuditLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutOrganizationInput | AuditLogCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AuditLogCreateManyOrganizationInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationSubscriptionCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationSubscriptionWhereUniqueInput
+  }
+
+  export type PaymentOrderCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput> | PaymentOrderCreateWithoutOrganizationInput[] | PaymentOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutOrganizationInput | PaymentOrderCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PaymentOrderCreateManyOrganizationInputEnvelope
+    connect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+  }
+
+  export type OrganizationMembershipCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput> | OrganizationMembershipCreateWithoutOrganizationInput[] | OrganizationMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutOrganizationInput | OrganizationMembershipCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrganizationMembershipCreateManyOrganizationInputEnvelope
+    connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+  }
+
+  export type BillingInvoiceItemCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput> | BillingInvoiceItemCreateWithoutOrganizationInput[] | BillingInvoiceItemUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BillingInvoiceItemCreateOrConnectWithoutOrganizationInput | BillingInvoiceItemCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BillingInvoiceItemCreateManyOrganizationInputEnvelope
+    connect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+  }
+
+  export type NotificationTemplateCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput> | NotificationTemplateCreateWithoutOrganizationInput[] | NotificationTemplateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOrganizationInput | NotificationTemplateCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationTemplateCreateManyOrganizationInputEnvelope
+    connect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+  }
+
+  export type NotificationOutboxCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput> | NotificationOutboxCreateWithoutOrganizationInput[] | NotificationOutboxUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutOrganizationInput | NotificationOutboxCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationOutboxCreateManyOrganizationInputEnvelope
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+  }
+
+  export type NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput> | NotificationDeliveryLogCreateWithoutOrganizationInput[] | NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput | NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationDeliveryLogCreateManyOrganizationInputEnvelope
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
+    create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
+    createMany?: UsageMeterEventCreateManyOrganizationInputEnvelope
+    connect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput> | EarlyAccessEventCreateWithoutOrganizationInput[] | EarlyAccessEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutOrganizationInput | EarlyAccessEventCreateOrConnectWithoutOrganizationInput[]
+    createMany?: EarlyAccessEventCreateManyOrganizationInputEnvelope
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput> | EarlyAccessSignupCreateWithoutOrganizationInput[] | EarlyAccessSignupUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutOrganizationInput | EarlyAccessSignupCreateOrConnectWithoutOrganizationInput[]
+    createMany?: EarlyAccessSignupCreateManyOrganizationInputEnvelope
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+  }
+
+  export type AuditLogUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput> | AuditLogCreateWithoutOrganizationInput[] | AuditLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutOrganizationInput | AuditLogCreateOrConnectWithoutOrganizationInput[]
+    createMany?: AuditLogCreateManyOrganizationInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput = {
+    create?: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationSubscriptionCreateOrConnectWithoutOrganizationInput
+    connect?: OrganizationSubscriptionWhereUniqueInput
+  }
+
+  export type PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput> | PaymentOrderCreateWithoutOrganizationInput[] | PaymentOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutOrganizationInput | PaymentOrderCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PaymentOrderCreateManyOrganizationInputEnvelope
+    connect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+  }
+
+  export type OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput> | OrganizationMembershipCreateWithoutOrganizationInput[] | OrganizationMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutOrganizationInput | OrganizationMembershipCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrganizationMembershipCreateManyOrganizationInputEnvelope
+    connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+  }
+
+  export type BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput> | BillingInvoiceItemCreateWithoutOrganizationInput[] | BillingInvoiceItemUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BillingInvoiceItemCreateOrConnectWithoutOrganizationInput | BillingInvoiceItemCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BillingInvoiceItemCreateManyOrganizationInputEnvelope
+    connect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+  }
+
+  export type NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput> | NotificationTemplateCreateWithoutOrganizationInput[] | NotificationTemplateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOrganizationInput | NotificationTemplateCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationTemplateCreateManyOrganizationInputEnvelope
+    connect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+  }
+
+  export type NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput> | NotificationOutboxCreateWithoutOrganizationInput[] | NotificationOutboxUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutOrganizationInput | NotificationOutboxCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationOutboxCreateManyOrganizationInputEnvelope
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+  }
+
+  export type NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput> | NotificationDeliveryLogCreateWithoutOrganizationInput[] | NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput | NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput[]
+    createMany?: NotificationDeliveryLogCreateManyOrganizationInputEnvelope
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateactiveModulesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number
+    increment?: bigint | number
+    decrement?: bigint | number
+    multiply?: bigint | number
+    divide?: bigint | number
+  }
+
+  export type UsageMeterEventUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
+    upsert?: UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput | UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: UsageMeterEventCreateManyOrganizationInputEnvelope
+    set?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    disconnect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    delete?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    connect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    update?: UsageMeterEventUpdateWithWhereUniqueWithoutOrganizationInput | UsageMeterEventUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: UsageMeterEventUpdateManyWithWhereWithoutOrganizationInput | UsageMeterEventUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: UsageMeterEventScalarWhereInput | UsageMeterEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessEventUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput> | EarlyAccessEventCreateWithoutOrganizationInput[] | EarlyAccessEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutOrganizationInput | EarlyAccessEventCreateOrConnectWithoutOrganizationInput[]
+    upsert?: EarlyAccessEventUpsertWithWhereUniqueWithoutOrganizationInput | EarlyAccessEventUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: EarlyAccessEventCreateManyOrganizationInputEnvelope
+    set?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    disconnect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    delete?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    update?: EarlyAccessEventUpdateWithWhereUniqueWithoutOrganizationInput | EarlyAccessEventUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: EarlyAccessEventUpdateManyWithWhereWithoutOrganizationInput | EarlyAccessEventUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput> | EarlyAccessSignupCreateWithoutOrganizationInput[] | EarlyAccessSignupUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutOrganizationInput | EarlyAccessSignupCreateOrConnectWithoutOrganizationInput[]
+    upsert?: EarlyAccessSignupUpsertWithWhereUniqueWithoutOrganizationInput | EarlyAccessSignupUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: EarlyAccessSignupCreateManyOrganizationInputEnvelope
+    set?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    disconnect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    delete?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    update?: EarlyAccessSignupUpdateWithWhereUniqueWithoutOrganizationInput | EarlyAccessSignupUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: EarlyAccessSignupUpdateManyWithWhereWithoutOrganizationInput | EarlyAccessSignupUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+  }
+
+  export type AuditLogUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput> | AuditLogCreateWithoutOrganizationInput[] | AuditLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutOrganizationInput | AuditLogCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutOrganizationInput | AuditLogUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AuditLogCreateManyOrganizationInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutOrganizationInput | AuditLogUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutOrganizationInput | AuditLogUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationSubscriptionCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationSubscriptionUpsertWithoutOrganizationInput
+    disconnect?: OrganizationSubscriptionWhereInput | boolean
+    delete?: OrganizationSubscriptionWhereInput | boolean
+    connect?: OrganizationSubscriptionWhereUniqueInput
+    update?: XOR<XOR<OrganizationSubscriptionUpdateToOneWithWhereWithoutOrganizationInput, OrganizationSubscriptionUpdateWithoutOrganizationInput>, OrganizationSubscriptionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput> | PaymentOrderCreateWithoutOrganizationInput[] | PaymentOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutOrganizationInput | PaymentOrderCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PaymentOrderUpsertWithWhereUniqueWithoutOrganizationInput | PaymentOrderUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PaymentOrderCreateManyOrganizationInputEnvelope
+    set?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    disconnect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    delete?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    connect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    update?: PaymentOrderUpdateWithWhereUniqueWithoutOrganizationInput | PaymentOrderUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PaymentOrderUpdateManyWithWhereWithoutOrganizationInput | PaymentOrderUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PaymentOrderScalarWhereInput | PaymentOrderScalarWhereInput[]
+  }
+
+  export type OrganizationMembershipUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput> | OrganizationMembershipCreateWithoutOrganizationInput[] | OrganizationMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutOrganizationInput | OrganizationMembershipCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationInput | OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrganizationMembershipCreateManyOrganizationInputEnvelope
+    set?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    disconnect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    delete?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    update?: OrganizationMembershipUpdateWithWhereUniqueWithoutOrganizationInput | OrganizationMembershipUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrganizationMembershipUpdateManyWithWhereWithoutOrganizationInput | OrganizationMembershipUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
+  }
+
+  export type BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput> | BillingInvoiceItemCreateWithoutOrganizationInput[] | BillingInvoiceItemUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BillingInvoiceItemCreateOrConnectWithoutOrganizationInput | BillingInvoiceItemCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BillingInvoiceItemUpsertWithWhereUniqueWithoutOrganizationInput | BillingInvoiceItemUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BillingInvoiceItemCreateManyOrganizationInputEnvelope
+    set?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    disconnect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    delete?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    connect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    update?: BillingInvoiceItemUpdateWithWhereUniqueWithoutOrganizationInput | BillingInvoiceItemUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BillingInvoiceItemUpdateManyWithWhereWithoutOrganizationInput | BillingInvoiceItemUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BillingInvoiceItemScalarWhereInput | BillingInvoiceItemScalarWhereInput[]
+  }
+
+  export type NotificationTemplateUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput> | NotificationTemplateCreateWithoutOrganizationInput[] | NotificationTemplateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOrganizationInput | NotificationTemplateCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationTemplateUpsertWithWhereUniqueWithoutOrganizationInput | NotificationTemplateUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationTemplateCreateManyOrganizationInputEnvelope
+    set?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    disconnect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    delete?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    connect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    update?: NotificationTemplateUpdateWithWhereUniqueWithoutOrganizationInput | NotificationTemplateUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationTemplateUpdateManyWithWhereWithoutOrganizationInput | NotificationTemplateUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationTemplateScalarWhereInput | NotificationTemplateScalarWhereInput[]
+  }
+
+  export type NotificationOutboxUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput> | NotificationOutboxCreateWithoutOrganizationInput[] | NotificationOutboxUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutOrganizationInput | NotificationOutboxCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationOutboxUpsertWithWhereUniqueWithoutOrganizationInput | NotificationOutboxUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationOutboxCreateManyOrganizationInputEnvelope
+    set?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    disconnect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    delete?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    update?: NotificationOutboxUpdateWithWhereUniqueWithoutOrganizationInput | NotificationOutboxUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationOutboxUpdateManyWithWhereWithoutOrganizationInput | NotificationOutboxUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+  }
+
+  export type NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput> | NotificationDeliveryLogCreateWithoutOrganizationInput[] | NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput | NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationDeliveryLogUpsertWithWhereUniqueWithoutOrganizationInput | NotificationDeliveryLogUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationDeliveryLogCreateManyOrganizationInputEnvelope
+    set?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    disconnect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    delete?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    update?: NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput | NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput | NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+  }
+
+  export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
+    create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
+    upsert?: UserUpsertWithoutOwnedOrganizationsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutOwnedOrganizationsInput, UserUpdateWithoutOwnedOrganizationsInput>, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
+  }
+
+  export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
+    upsert?: UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput | UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: UsageMeterEventCreateManyOrganizationInputEnvelope
+    set?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    disconnect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    delete?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    connect?: UsageMeterEventWhereUniqueInput | UsageMeterEventWhereUniqueInput[]
+    update?: UsageMeterEventUpdateWithWhereUniqueWithoutOrganizationInput | UsageMeterEventUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: UsageMeterEventUpdateManyWithWhereWithoutOrganizationInput | UsageMeterEventUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: UsageMeterEventScalarWhereInput | UsageMeterEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput> | EarlyAccessEventCreateWithoutOrganizationInput[] | EarlyAccessEventUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutOrganizationInput | EarlyAccessEventCreateOrConnectWithoutOrganizationInput[]
+    upsert?: EarlyAccessEventUpsertWithWhereUniqueWithoutOrganizationInput | EarlyAccessEventUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: EarlyAccessEventCreateManyOrganizationInputEnvelope
+    set?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    disconnect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    delete?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    update?: EarlyAccessEventUpdateWithWhereUniqueWithoutOrganizationInput | EarlyAccessEventUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: EarlyAccessEventUpdateManyWithWhereWithoutOrganizationInput | EarlyAccessEventUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput> | EarlyAccessSignupCreateWithoutOrganizationInput[] | EarlyAccessSignupUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutOrganizationInput | EarlyAccessSignupCreateOrConnectWithoutOrganizationInput[]
+    upsert?: EarlyAccessSignupUpsertWithWhereUniqueWithoutOrganizationInput | EarlyAccessSignupUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: EarlyAccessSignupCreateManyOrganizationInputEnvelope
+    set?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    disconnect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    delete?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    update?: EarlyAccessSignupUpdateWithWhereUniqueWithoutOrganizationInput | EarlyAccessSignupUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: EarlyAccessSignupUpdateManyWithWhereWithoutOrganizationInput | EarlyAccessSignupUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput> | AuditLogCreateWithoutOrganizationInput[] | AuditLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutOrganizationInput | AuditLogCreateOrConnectWithoutOrganizationInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutOrganizationInput | AuditLogUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: AuditLogCreateManyOrganizationInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutOrganizationInput | AuditLogUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutOrganizationInput | AuditLogUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+    connectOrCreate?: OrganizationSubscriptionCreateOrConnectWithoutOrganizationInput
+    upsert?: OrganizationSubscriptionUpsertWithoutOrganizationInput
+    disconnect?: OrganizationSubscriptionWhereInput | boolean
+    delete?: OrganizationSubscriptionWhereInput | boolean
+    connect?: OrganizationSubscriptionWhereUniqueInput
+    update?: XOR<XOR<OrganizationSubscriptionUpdateToOneWithWhereWithoutOrganizationInput, OrganizationSubscriptionUpdateWithoutOrganizationInput>, OrganizationSubscriptionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput> | PaymentOrderCreateWithoutOrganizationInput[] | PaymentOrderUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutOrganizationInput | PaymentOrderCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PaymentOrderUpsertWithWhereUniqueWithoutOrganizationInput | PaymentOrderUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PaymentOrderCreateManyOrganizationInputEnvelope
+    set?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    disconnect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    delete?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    connect?: PaymentOrderWhereUniqueInput | PaymentOrderWhereUniqueInput[]
+    update?: PaymentOrderUpdateWithWhereUniqueWithoutOrganizationInput | PaymentOrderUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PaymentOrderUpdateManyWithWhereWithoutOrganizationInput | PaymentOrderUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PaymentOrderScalarWhereInput | PaymentOrderScalarWhereInput[]
+  }
+
+  export type OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput> | OrganizationMembershipCreateWithoutOrganizationInput[] | OrganizationMembershipUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutOrganizationInput | OrganizationMembershipCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationInput | OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrganizationMembershipCreateManyOrganizationInputEnvelope
+    set?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    disconnect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    delete?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+    update?: OrganizationMembershipUpdateWithWhereUniqueWithoutOrganizationInput | OrganizationMembershipUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrganizationMembershipUpdateManyWithWhereWithoutOrganizationInput | OrganizationMembershipUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
+  }
+
+  export type BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput> | BillingInvoiceItemCreateWithoutOrganizationInput[] | BillingInvoiceItemUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BillingInvoiceItemCreateOrConnectWithoutOrganizationInput | BillingInvoiceItemCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BillingInvoiceItemUpsertWithWhereUniqueWithoutOrganizationInput | BillingInvoiceItemUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BillingInvoiceItemCreateManyOrganizationInputEnvelope
+    set?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    disconnect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    delete?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    connect?: BillingInvoiceItemWhereUniqueInput | BillingInvoiceItemWhereUniqueInput[]
+    update?: BillingInvoiceItemUpdateWithWhereUniqueWithoutOrganizationInput | BillingInvoiceItemUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BillingInvoiceItemUpdateManyWithWhereWithoutOrganizationInput | BillingInvoiceItemUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BillingInvoiceItemScalarWhereInput | BillingInvoiceItemScalarWhereInput[]
+  }
+
+  export type NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput> | NotificationTemplateCreateWithoutOrganizationInput[] | NotificationTemplateUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOrganizationInput | NotificationTemplateCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationTemplateUpsertWithWhereUniqueWithoutOrganizationInput | NotificationTemplateUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationTemplateCreateManyOrganizationInputEnvelope
+    set?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    disconnect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    delete?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    connect?: NotificationTemplateWhereUniqueInput | NotificationTemplateWhereUniqueInput[]
+    update?: NotificationTemplateUpdateWithWhereUniqueWithoutOrganizationInput | NotificationTemplateUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationTemplateUpdateManyWithWhereWithoutOrganizationInput | NotificationTemplateUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationTemplateScalarWhereInput | NotificationTemplateScalarWhereInput[]
+  }
+
+  export type NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput> | NotificationOutboxCreateWithoutOrganizationInput[] | NotificationOutboxUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutOrganizationInput | NotificationOutboxCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationOutboxUpsertWithWhereUniqueWithoutOrganizationInput | NotificationOutboxUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationOutboxCreateManyOrganizationInputEnvelope
+    set?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    disconnect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    delete?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    update?: NotificationOutboxUpdateWithWhereUniqueWithoutOrganizationInput | NotificationOutboxUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationOutboxUpdateManyWithWhereWithoutOrganizationInput | NotificationOutboxUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput> | NotificationDeliveryLogCreateWithoutOrganizationInput[] | NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput | NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput[]
+    upsert?: NotificationDeliveryLogUpsertWithWhereUniqueWithoutOrganizationInput | NotificationDeliveryLogUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: NotificationDeliveryLogCreateManyOrganizationInputEnvelope
+    set?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    disconnect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    delete?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    update?: NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput | NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput | NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+  }
+
   export type OrganizationMembershipCreateNestedManyWithoutUserInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -38903,11 +51817,67 @@ export namespace Prisma {
     connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
   }
 
+  export type EarlyAccessEventCreateNestedManyWithoutUserInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput> | EarlyAccessEventCreateWithoutUserInput[] | EarlyAccessEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutUserInput | EarlyAccessEventCreateOrConnectWithoutUserInput[]
+    createMany?: EarlyAccessEventCreateManyUserInputEnvelope
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessSignupCreateNestedManyWithoutUserInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput> | EarlyAccessSignupCreateWithoutUserInput[] | EarlyAccessSignupUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutUserInput | EarlyAccessSignupCreateOrConnectWithoutUserInput[]
+    createMany?: EarlyAccessSignupCreateManyUserInputEnvelope
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+  }
+
+  export type AuditLogCreateNestedManyWithoutUserInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type OrganizationCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput> | OrganizationCreateWithoutOwnerInput[] | OrganizationUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutOwnerInput | OrganizationCreateOrConnectWithoutOwnerInput[]
+    createMany?: OrganizationCreateManyOwnerInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
   export type OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
     createMany?: OrganizationMembershipCreateManyUserInputEnvelope
     connect?: OrganizationMembershipWhereUniqueInput | OrganizationMembershipWhereUniqueInput[]
+  }
+
+  export type EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput> | EarlyAccessEventCreateWithoutUserInput[] | EarlyAccessEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutUserInput | EarlyAccessEventCreateOrConnectWithoutUserInput[]
+    createMany?: EarlyAccessEventCreateManyUserInputEnvelope
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+  }
+
+  export type EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput> | EarlyAccessSignupCreateWithoutUserInput[] | EarlyAccessSignupUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutUserInput | EarlyAccessSignupCreateOrConnectWithoutUserInput[]
+    createMany?: EarlyAccessSignupCreateManyUserInputEnvelope
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+  }
+
+  export type AuditLogUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+  }
+
+  export type OrganizationUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput> | OrganizationCreateWithoutOwnerInput[] | OrganizationUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutOwnerInput | OrganizationCreateOrConnectWithoutOwnerInput[]
+    createMany?: OrganizationCreateManyOwnerInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
   }
 
   export type OrganizationMembershipUpdateManyWithoutUserNestedInput = {
@@ -38924,6 +51894,62 @@ export namespace Prisma {
     deleteMany?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
   }
 
+  export type EarlyAccessEventUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput> | EarlyAccessEventCreateWithoutUserInput[] | EarlyAccessEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutUserInput | EarlyAccessEventCreateOrConnectWithoutUserInput[]
+    upsert?: EarlyAccessEventUpsertWithWhereUniqueWithoutUserInput | EarlyAccessEventUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EarlyAccessEventCreateManyUserInputEnvelope
+    set?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    disconnect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    delete?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    update?: EarlyAccessEventUpdateWithWhereUniqueWithoutUserInput | EarlyAccessEventUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EarlyAccessEventUpdateManyWithWhereWithoutUserInput | EarlyAccessEventUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessSignupUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput> | EarlyAccessSignupCreateWithoutUserInput[] | EarlyAccessSignupUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutUserInput | EarlyAccessSignupCreateOrConnectWithoutUserInput[]
+    upsert?: EarlyAccessSignupUpsertWithWhereUniqueWithoutUserInput | EarlyAccessSignupUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EarlyAccessSignupCreateManyUserInputEnvelope
+    set?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    disconnect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    delete?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    update?: EarlyAccessSignupUpdateWithWhereUniqueWithoutUserInput | EarlyAccessSignupUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EarlyAccessSignupUpdateManyWithWhereWithoutUserInput | EarlyAccessSignupUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+  }
+
+  export type AuditLogUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutUserInput | AuditLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutUserInput | AuditLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutUserInput | AuditLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type OrganizationUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput> | OrganizationCreateWithoutOwnerInput[] | OrganizationUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutOwnerInput | OrganizationCreateOrConnectWithoutOwnerInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutOwnerInput | OrganizationUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: OrganizationCreateManyOwnerInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutOwnerInput | OrganizationUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutOwnerInput | OrganizationUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
   export type OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -38938,10 +51964,72 @@ export namespace Prisma {
     deleteMany?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
   }
 
+  export type EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput> | EarlyAccessEventCreateWithoutUserInput[] | EarlyAccessEventUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessEventCreateOrConnectWithoutUserInput | EarlyAccessEventCreateOrConnectWithoutUserInput[]
+    upsert?: EarlyAccessEventUpsertWithWhereUniqueWithoutUserInput | EarlyAccessEventUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EarlyAccessEventCreateManyUserInputEnvelope
+    set?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    disconnect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    delete?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    connect?: EarlyAccessEventWhereUniqueInput | EarlyAccessEventWhereUniqueInput[]
+    update?: EarlyAccessEventUpdateWithWhereUniqueWithoutUserInput | EarlyAccessEventUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EarlyAccessEventUpdateManyWithWhereWithoutUserInput | EarlyAccessEventUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput> | EarlyAccessSignupCreateWithoutUserInput[] | EarlyAccessSignupUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: EarlyAccessSignupCreateOrConnectWithoutUserInput | EarlyAccessSignupCreateOrConnectWithoutUserInput[]
+    upsert?: EarlyAccessSignupUpsertWithWhereUniqueWithoutUserInput | EarlyAccessSignupUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: EarlyAccessSignupCreateManyUserInputEnvelope
+    set?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    disconnect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    delete?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    connect?: EarlyAccessSignupWhereUniqueInput | EarlyAccessSignupWhereUniqueInput[]
+    update?: EarlyAccessSignupUpdateWithWhereUniqueWithoutUserInput | EarlyAccessSignupUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: EarlyAccessSignupUpdateManyWithWhereWithoutUserInput | EarlyAccessSignupUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput> | AuditLogCreateWithoutUserInput[] | AuditLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: AuditLogCreateOrConnectWithoutUserInput | AuditLogCreateOrConnectWithoutUserInput[]
+    upsert?: AuditLogUpsertWithWhereUniqueWithoutUserInput | AuditLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: AuditLogCreateManyUserInputEnvelope
+    set?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    disconnect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    delete?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    connect?: AuditLogWhereUniqueInput | AuditLogWhereUniqueInput[]
+    update?: AuditLogUpdateWithWhereUniqueWithoutUserInput | AuditLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: AuditLogUpdateManyWithWhereWithoutUserInput | AuditLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput> | OrganizationCreateWithoutOwnerInput[] | OrganizationUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutOwnerInput | OrganizationCreateOrConnectWithoutOwnerInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutOwnerInput | OrganizationUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: OrganizationCreateManyOwnerInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutOwnerInput | OrganizationUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutOwnerInput | OrganizationUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutMembershipsInput = {
     create?: XOR<UserCreateWithoutMembershipsInput, UserUncheckedCreateWithoutMembershipsInput>
     connectOrCreate?: UserCreateOrConnectWithoutMembershipsInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutMembershipsInput = {
+    create?: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutMembershipsInput
+    connect?: OrganizationWhereUniqueInput
   }
 
   export type EnumUserRoleFieldUpdateOperationsInput = {
@@ -38954,6 +52042,14 @@ export namespace Prisma {
     upsert?: UserUpsertWithoutMembershipsInput
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutMembershipsInput, UserUpdateWithoutMembershipsInput>, UserUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutMembershipsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutMembershipsInput
+    upsert?: OrganizationUpsertWithoutMembershipsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutMembershipsInput, OrganizationUpdateWithoutMembershipsInput>, OrganizationUncheckedUpdateWithoutMembershipsInput>
   }
 
   export type EnumAccessRequestStatusFieldUpdateOperationsInput = {
@@ -39123,6 +52219,276 @@ export namespace Prisma {
 
   export type EnumSecurityModeFieldUpdateOperationsInput = {
     set?: $Enums.SecurityMode
+  }
+
+  export type OrganizationCreateNestedOneWithoutEarlyAccessEventsInput = {
+    create?: XOR<OrganizationCreateWithoutEarlyAccessEventsInput, OrganizationUncheckedCreateWithoutEarlyAccessEventsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutEarlyAccessEventsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutEarlyAccessEventsInput = {
+    create?: XOR<UserCreateWithoutEarlyAccessEventsInput, UserUncheckedCreateWithoutEarlyAccessEventsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEarlyAccessEventsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumEarlyAccessModuleKeyFieldUpdateOperationsInput = {
+    set?: $Enums.EarlyAccessModuleKey
+  }
+
+  export type EnumEarlyAccessEventTypeFieldUpdateOperationsInput = {
+    set?: $Enums.EarlyAccessEventType
+  }
+
+  export type OrganizationUpdateOneWithoutEarlyAccessEventsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutEarlyAccessEventsInput, OrganizationUncheckedCreateWithoutEarlyAccessEventsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutEarlyAccessEventsInput
+    upsert?: OrganizationUpsertWithoutEarlyAccessEventsInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutEarlyAccessEventsInput, OrganizationUpdateWithoutEarlyAccessEventsInput>, OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput>
+  }
+
+  export type UserUpdateOneWithoutEarlyAccessEventsNestedInput = {
+    create?: XOR<UserCreateWithoutEarlyAccessEventsInput, UserUncheckedCreateWithoutEarlyAccessEventsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEarlyAccessEventsInput
+    upsert?: UserUpsertWithoutEarlyAccessEventsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEarlyAccessEventsInput, UserUpdateWithoutEarlyAccessEventsInput>, UserUncheckedUpdateWithoutEarlyAccessEventsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutEarlyAccessSignupsInput = {
+    create?: XOR<OrganizationCreateWithoutEarlyAccessSignupsInput, OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutEarlyAccessSignupsInput = {
+    create?: XOR<UserCreateWithoutEarlyAccessSignupsInput, UserUncheckedCreateWithoutEarlyAccessSignupsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEarlyAccessSignupsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutEarlyAccessSignupsInput, OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput
+    upsert?: OrganizationUpsertWithoutEarlyAccessSignupsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutEarlyAccessSignupsInput, OrganizationUpdateWithoutEarlyAccessSignupsInput>, OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput = {
+    create?: XOR<UserCreateWithoutEarlyAccessSignupsInput, UserUncheckedCreateWithoutEarlyAccessSignupsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutEarlyAccessSignupsInput
+    upsert?: UserUpsertWithoutEarlyAccessSignupsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutEarlyAccessSignupsInput, UserUpdateWithoutEarlyAccessSignupsInput>, UserUncheckedUpdateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutAuditLogsInput = {
+    create?: XOR<OrganizationCreateWithoutAuditLogsInput, OrganizationUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAuditLogsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutAuditLogsInput = {
+    create?: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAuditLogsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneWithoutAuditLogsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutAuditLogsInput, OrganizationUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutAuditLogsInput
+    upsert?: OrganizationUpsertWithoutAuditLogsInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutAuditLogsInput, OrganizationUpdateWithoutAuditLogsInput>, OrganizationUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type UserUpdateOneWithoutAuditLogsNestedInput = {
+    create?: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutAuditLogsInput
+    upsert?: UserUpsertWithoutAuditLogsInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutAuditLogsInput, UserUpdateWithoutAuditLogsInput>, UserUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutNotificationTemplatesInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationTemplatesInput, OrganizationUncheckedCreateWithoutNotificationTemplatesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationTemplatesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type NotificationOutboxCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput> | NotificationOutboxCreateWithoutTemplateInput[] | NotificationOutboxUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutTemplateInput | NotificationOutboxCreateOrConnectWithoutTemplateInput[]
+    createMany?: NotificationOutboxCreateManyTemplateInputEnvelope
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+  }
+
+  export type NotificationOutboxUncheckedCreateNestedManyWithoutTemplateInput = {
+    create?: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput> | NotificationOutboxCreateWithoutTemplateInput[] | NotificationOutboxUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutTemplateInput | NotificationOutboxCreateOrConnectWithoutTemplateInput[]
+    createMany?: NotificationOutboxCreateManyTemplateInputEnvelope
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+  }
+
+  export type EnumNotificationMessageClassFieldUpdateOperationsInput = {
+    set?: $Enums.NotificationMessageClass
+  }
+
+  export type EnumNotificationChannelFieldUpdateOperationsInput = {
+    set?: $Enums.NotificationChannel
+  }
+
+  export type OrganizationUpdateOneWithoutNotificationTemplatesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationTemplatesInput, OrganizationUncheckedCreateWithoutNotificationTemplatesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationTemplatesInput
+    upsert?: OrganizationUpsertWithoutNotificationTemplatesInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutNotificationTemplatesInput, OrganizationUpdateWithoutNotificationTemplatesInput>, OrganizationUncheckedUpdateWithoutNotificationTemplatesInput>
+  }
+
+  export type NotificationOutboxUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput> | NotificationOutboxCreateWithoutTemplateInput[] | NotificationOutboxUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutTemplateInput | NotificationOutboxCreateOrConnectWithoutTemplateInput[]
+    upsert?: NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput | NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: NotificationOutboxCreateManyTemplateInputEnvelope
+    set?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    disconnect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    delete?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    update?: NotificationOutboxUpdateWithWhereUniqueWithoutTemplateInput | NotificationOutboxUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: NotificationOutboxUpdateManyWithWhereWithoutTemplateInput | NotificationOutboxUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+  }
+
+  export type NotificationOutboxUncheckedUpdateManyWithoutTemplateNestedInput = {
+    create?: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput> | NotificationOutboxCreateWithoutTemplateInput[] | NotificationOutboxUncheckedCreateWithoutTemplateInput[]
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutTemplateInput | NotificationOutboxCreateOrConnectWithoutTemplateInput[]
+    upsert?: NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput | NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput[]
+    createMany?: NotificationOutboxCreateManyTemplateInputEnvelope
+    set?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    disconnect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    delete?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    connect?: NotificationOutboxWhereUniqueInput | NotificationOutboxWhereUniqueInput[]
+    update?: NotificationOutboxUpdateWithWhereUniqueWithoutTemplateInput | NotificationOutboxUpdateWithWhereUniqueWithoutTemplateInput[]
+    updateMany?: NotificationOutboxUpdateManyWithWhereWithoutTemplateInput | NotificationOutboxUpdateManyWithWhereWithoutTemplateInput[]
+    deleteMany?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutNotificationOutboxEntriesInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type NotificationTemplateCreateNestedOneWithoutOutboxEntriesInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOutboxEntriesInput, NotificationTemplateUncheckedCreateWithoutOutboxEntriesInput>
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOutboxEntriesInput
+    connect?: NotificationTemplateWhereUniqueInput
+  }
+
+  export type NotificationDeliveryLogCreateNestedManyWithoutOutboxInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput> | NotificationDeliveryLogCreateWithoutOutboxInput[] | NotificationDeliveryLogUncheckedCreateWithoutOutboxInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOutboxInput | NotificationDeliveryLogCreateOrConnectWithoutOutboxInput[]
+    createMany?: NotificationDeliveryLogCreateManyOutboxInputEnvelope
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+  }
+
+  export type NotificationDeliveryLogUncheckedCreateNestedManyWithoutOutboxInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput> | NotificationDeliveryLogCreateWithoutOutboxInput[] | NotificationDeliveryLogUncheckedCreateWithoutOutboxInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOutboxInput | NotificationDeliveryLogCreateOrConnectWithoutOutboxInput[]
+    createMany?: NotificationDeliveryLogCreateManyOutboxInputEnvelope
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+  }
+
+  export type EnumNotificationOutboxStatusFieldUpdateOperationsInput = {
+    set?: $Enums.NotificationOutboxStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutNotificationOutboxEntriesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput
+    upsert?: OrganizationUpsertWithoutNotificationOutboxEntriesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutNotificationOutboxEntriesInput, OrganizationUpdateWithoutNotificationOutboxEntriesInput>, OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput>
+  }
+
+  export type NotificationTemplateUpdateOneWithoutOutboxEntriesNestedInput = {
+    create?: XOR<NotificationTemplateCreateWithoutOutboxEntriesInput, NotificationTemplateUncheckedCreateWithoutOutboxEntriesInput>
+    connectOrCreate?: NotificationTemplateCreateOrConnectWithoutOutboxEntriesInput
+    upsert?: NotificationTemplateUpsertWithoutOutboxEntriesInput
+    disconnect?: NotificationTemplateWhereInput | boolean
+    delete?: NotificationTemplateWhereInput | boolean
+    connect?: NotificationTemplateWhereUniqueInput
+    update?: XOR<XOR<NotificationTemplateUpdateToOneWithWhereWithoutOutboxEntriesInput, NotificationTemplateUpdateWithoutOutboxEntriesInput>, NotificationTemplateUncheckedUpdateWithoutOutboxEntriesInput>
+  }
+
+  export type NotificationDeliveryLogUpdateManyWithoutOutboxNestedInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput> | NotificationDeliveryLogCreateWithoutOutboxInput[] | NotificationDeliveryLogUncheckedCreateWithoutOutboxInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOutboxInput | NotificationDeliveryLogCreateOrConnectWithoutOutboxInput[]
+    upsert?: NotificationDeliveryLogUpsertWithWhereUniqueWithoutOutboxInput | NotificationDeliveryLogUpsertWithWhereUniqueWithoutOutboxInput[]
+    createMany?: NotificationDeliveryLogCreateManyOutboxInputEnvelope
+    set?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    disconnect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    delete?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    update?: NotificationDeliveryLogUpdateWithWhereUniqueWithoutOutboxInput | NotificationDeliveryLogUpdateWithWhereUniqueWithoutOutboxInput[]
+    updateMany?: NotificationDeliveryLogUpdateManyWithWhereWithoutOutboxInput | NotificationDeliveryLogUpdateManyWithWhereWithoutOutboxInput[]
+    deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxNestedInput = {
+    create?: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput> | NotificationDeliveryLogCreateWithoutOutboxInput[] | NotificationDeliveryLogUncheckedCreateWithoutOutboxInput[]
+    connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOutboxInput | NotificationDeliveryLogCreateOrConnectWithoutOutboxInput[]
+    upsert?: NotificationDeliveryLogUpsertWithWhereUniqueWithoutOutboxInput | NotificationDeliveryLogUpsertWithWhereUniqueWithoutOutboxInput[]
+    createMany?: NotificationDeliveryLogCreateManyOutboxInputEnvelope
+    set?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    disconnect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    delete?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+    update?: NotificationDeliveryLogUpdateWithWhereUniqueWithoutOutboxInput | NotificationDeliveryLogUpdateWithWhereUniqueWithoutOutboxInput[]
+    updateMany?: NotificationDeliveryLogUpdateManyWithWhereWithoutOutboxInput | NotificationDeliveryLogUpdateManyWithWhereWithoutOutboxInput[]
+    deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+  }
+
+  export type NotificationOutboxCreateNestedOneWithoutDeliveryLogsInput = {
+    create?: XOR<NotificationOutboxCreateWithoutDeliveryLogsInput, NotificationOutboxUncheckedCreateWithoutDeliveryLogsInput>
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutDeliveryLogsInput
+    connect?: NotificationOutboxWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutNotificationDeliveryLogsInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type NotificationOutboxUpdateOneRequiredWithoutDeliveryLogsNestedInput = {
+    create?: XOR<NotificationOutboxCreateWithoutDeliveryLogsInput, NotificationOutboxUncheckedCreateWithoutDeliveryLogsInput>
+    connectOrCreate?: NotificationOutboxCreateOrConnectWithoutDeliveryLogsInput
+    upsert?: NotificationOutboxUpsertWithoutDeliveryLogsInput
+    connect?: NotificationOutboxWhereUniqueInput
+    update?: XOR<XOR<NotificationOutboxUpdateToOneWithWhereWithoutDeliveryLogsInput, NotificationOutboxUpdateWithoutDeliveryLogsInput>, NotificationOutboxUncheckedUpdateWithoutDeliveryLogsInput>
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutNotificationDeliveryLogsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput
+    upsert?: OrganizationUpsertWithoutNotificationDeliveryLogsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutNotificationDeliveryLogsInput, OrganizationUpdateWithoutNotificationDeliveryLogsInput>, OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -39585,6 +52951,33 @@ export namespace Prisma {
     _max?: NestedEnumPermissionCategoryFilter<$PrismaModel>
   }
 
+  export type NestedBigIntFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    notIn?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
+    lt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    lte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
+    not?: NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedBigIntFilter<$PrismaModel>
+    _min?: NestedBigIntFilter<$PrismaModel>
+    _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
   export type NestedEnumUserRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.UserRole | EnumUserRoleFieldRefInput<$PrismaModel>
     in?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
@@ -39731,11 +53124,244 @@ export namespace Prisma {
     _max?: NestedEnumSecurityModeFilter<$PrismaModel>
   }
 
+  export type NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessModuleKey | EnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel> | $Enums.EarlyAccessModuleKey
+  }
+
+  export type NestedEnumEarlyAccessEventTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessEventType | EnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel> | $Enums.EarlyAccessEventType
+  }
+
+  export type NestedEnumEarlyAccessModuleKeyWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessModuleKey | EnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessModuleKey[] | ListEnumEarlyAccessModuleKeyFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessModuleKeyWithAggregatesFilter<$PrismaModel> | $Enums.EarlyAccessModuleKey
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel>
+    _max?: NestedEnumEarlyAccessModuleKeyFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEarlyAccessEventTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EarlyAccessEventType | EnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumEarlyAccessEventTypeWithAggregatesFilter<$PrismaModel> | $Enums.EarlyAccessEventType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel>
+    _max?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNotificationMessageClassFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationMessageClass | EnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationMessageClassFilter<$PrismaModel> | $Enums.NotificationMessageClass
+  }
+
+  export type NestedEnumNotificationChannelFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationChannelFilter<$PrismaModel> | $Enums.NotificationChannel
+  }
+
+  export type NestedEnumNotificationMessageClassWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationMessageClass | EnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationMessageClass[] | ListEnumNotificationMessageClassFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationMessageClassWithAggregatesFilter<$PrismaModel> | $Enums.NotificationMessageClass
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationMessageClassFilter<$PrismaModel>
+    _max?: NestedEnumNotificationMessageClassFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationChannel | EnumNotificationChannelFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationChannel[] | ListEnumNotificationChannelFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationChannelWithAggregatesFilter<$PrismaModel> | $Enums.NotificationChannel
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationChannelFilter<$PrismaModel>
+    _max?: NestedEnumNotificationChannelFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNotificationOutboxStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationOutboxStatus | EnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel> | $Enums.NotificationOutboxStatus
+  }
+
+  export type NestedEnumNotificationOutboxStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NotificationOutboxStatus | EnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NotificationOutboxStatus[] | ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumNotificationOutboxStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationOutboxStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel>
+    _max?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel>
+  }
+
+  export type OrganizationCreateWithoutSubscriptionInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutSubscriptionInput, OrganizationUncheckedCreateWithoutSubscriptionInput>
+  }
+
+  export type OrganizationUpsertWithoutSubscriptionInput = {
+    update: XOR<OrganizationUpdateWithoutSubscriptionInput, OrganizationUncheckedUpdateWithoutSubscriptionInput>
+    create: XOR<OrganizationCreateWithoutSubscriptionInput, OrganizationUncheckedCreateWithoutSubscriptionInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutSubscriptionInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutSubscriptionInput, OrganizationUncheckedUpdateWithoutSubscriptionInput>
+  }
+
+  export type OrganizationUpdateWithoutSubscriptionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
     id?: string
-    organizationId: string
     description: string
     amount: Decimal | DecimalJsLike | number | string
+    organization: OrganizationCreateNestedOneWithoutBillingInvoiceItemsInput
   }
 
   export type BillingInvoiceItemUncheckedCreateWithoutSubscriptionInvoiceInput = {
@@ -39757,7 +53383,6 @@ export namespace Prisma {
 
   export type PaymentOrderCreateWithoutSubscriptionInvoiceInput = {
     id?: string
-    organizationId: string
     amountAzn: Decimal | DecimalJsLike | number | string
     currency?: string
     status?: $Enums.PaymentOrderStatus
@@ -39769,6 +53394,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     paidAt?: Date | string | null
+    organization: OrganizationCreateNestedOneWithoutPaymentOrdersInput
   }
 
   export type PaymentOrderUncheckedCreateWithoutSubscriptionInvoiceInput = {
@@ -39866,7 +53492,6 @@ export namespace Prisma {
 
   export type PaymentOrderUpdateWithoutSubscriptionInvoiceInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     currency?: StringFieldUpdateOperationsInput | string
     status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
@@ -39878,6 +53503,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    organization?: OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput
   }
 
   export type PaymentOrderUncheckedUpdateWithoutSubscriptionInvoiceInput = {
@@ -39965,6 +53591,77 @@ export namespace Prisma {
     create: XOR<SubscriptionInvoiceCreateWithoutItemsInput, SubscriptionInvoiceUncheckedCreateWithoutItemsInput>
   }
 
+  export type OrganizationCreateWithoutBillingInvoiceItemsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutBillingInvoiceItemsInput, OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput>
+  }
+
   export type SubscriptionInvoiceUpsertWithoutItemsInput = {
     update: XOR<SubscriptionInvoiceUpdateWithoutItemsInput, SubscriptionInvoiceUncheckedUpdateWithoutItemsInput>
     create: XOR<SubscriptionInvoiceCreateWithoutItemsInput, SubscriptionInvoiceUncheckedCreateWithoutItemsInput>
@@ -40006,6 +53703,231 @@ export namespace Prisma {
     pdfLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentOrderId?: NullableStringFieldUpdateOperationsInput | string | null
     referralCommissions?: ReferralCommissionUncheckedUpdateManyWithoutSubscriptionInvoiceNestedInput
+  }
+
+  export type OrganizationUpsertWithoutBillingInvoiceItemsInput = {
+    update: XOR<OrganizationUpdateWithoutBillingInvoiceItemsInput, OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput>
+    create: XOR<OrganizationCreateWithoutBillingInvoiceItemsInput, OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutBillingInvoiceItemsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutBillingInvoiceItemsInput, OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput>
+  }
+
+  export type OrganizationUpdateWithoutBillingInvoiceItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutUsageMeterEventsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutUsageMeterEventsInput, OrganizationUncheckedCreateWithoutUsageMeterEventsInput>
+  }
+
+  export type OrganizationUpsertWithoutUsageMeterEventsInput = {
+    update: XOR<OrganizationUpdateWithoutUsageMeterEventsInput, OrganizationUncheckedUpdateWithoutUsageMeterEventsInput>
+    create: XOR<OrganizationCreateWithoutUsageMeterEventsInput, OrganizationUncheckedCreateWithoutUsageMeterEventsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutUsageMeterEventsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutUsageMeterEventsInput, OrganizationUncheckedUpdateWithoutUsageMeterEventsInput>
+  }
+
+  export type OrganizationUpdateWithoutUsageMeterEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -40133,6 +54055,77 @@ export namespace Prisma {
     accessUntil?: DateTimeNullableFilter<"OrganizationBundle"> | Date | string | null
   }
 
+  export type OrganizationCreateWithoutPaymentOrdersInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPaymentOrdersInput, OrganizationUncheckedCreateWithoutPaymentOrdersInput>
+  }
+
   export type SubscriptionInvoiceCreateWithoutPaymentOrderInput = {
     id?: string
     userId: string
@@ -40168,6 +54161,83 @@ export namespace Prisma {
   export type SubscriptionInvoiceCreateOrConnectWithoutPaymentOrderInput = {
     where: SubscriptionInvoiceWhereUniqueInput
     create: XOR<SubscriptionInvoiceCreateWithoutPaymentOrderInput, SubscriptionInvoiceUncheckedCreateWithoutPaymentOrderInput>
+  }
+
+  export type OrganizationUpsertWithoutPaymentOrdersInput = {
+    update: XOR<OrganizationUpdateWithoutPaymentOrdersInput, OrganizationUncheckedUpdateWithoutPaymentOrdersInput>
+    create: XOR<OrganizationCreateWithoutPaymentOrdersInput, OrganizationUncheckedCreateWithoutPaymentOrdersInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPaymentOrdersInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPaymentOrdersInput, OrganizationUncheckedUpdateWithoutPaymentOrdersInput>
+  }
+
+  export type OrganizationUpdateWithoutPaymentOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -40410,13 +54480,820 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type OrganizationMembershipCreateWithoutUserInput = {
-    organizationId: string
+  export type UsageMeterEventCreateWithoutOrganizationInput = {
+    id?: string
+    actionType: string
+    quantity?: number
+    unitCostAzn: Decimal | DecimalJsLike | number | string
+    balanceAfter: Decimal | DecimalJsLike | number | string
+    createdAt?: Date | string
+  }
+
+  export type UsageMeterEventUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    actionType: string
+    quantity?: number
+    unitCostAzn: Decimal | DecimalJsLike | number | string
+    balanceAfter: Decimal | DecimalJsLike | number | string
+    createdAt?: Date | string
+  }
+
+  export type UsageMeterEventCreateOrConnectWithoutOrganizationInput = {
+    where: UsageMeterEventWhereUniqueInput
+    create: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type UsageMeterEventCreateManyOrganizationInputEnvelope = {
+    data: UsageMeterEventCreateManyOrganizationInput | UsageMeterEventCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EarlyAccessEventCreateWithoutOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+    user?: UserCreateNestedOneWithoutEarlyAccessEventsInput
+  }
+
+  export type EarlyAccessEventUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    userId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessEventCreateOrConnectWithoutOrganizationInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    create: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessEventCreateManyOrganizationInputEnvelope = {
+    data: EarlyAccessEventCreateManyOrganizationInput | EarlyAccessEventCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EarlyAccessSignupCreateWithoutOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutEarlyAccessSignupsInput
+  }
+
+  export type EarlyAccessSignupUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    userId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EarlyAccessSignupCreateOrConnectWithoutOrganizationInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    create: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessSignupCreateManyOrganizationInputEnvelope = {
+    data: EarlyAccessSignupCreateManyOrganizationInput | EarlyAccessSignupCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuditLogCreateWithoutOrganizationInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+    user?: UserCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type AuditLogUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    userId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type AuditLogCreateOrConnectWithoutOrganizationInput = {
+    where: AuditLogWhereUniqueInput
+    create: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AuditLogCreateManyOrganizationInputEnvelope = {
+    data: AuditLogCreateManyOrganizationInput | AuditLogCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationSubscriptionCreateWithoutOrganizationInput = {
+    id?: string
+    currentTier?: $Enums.TariffTier
+    isTrial?: boolean
+    trialExpiresAt?: Date | string | null
+    activatedPremiumModules?: OrganizationSubscriptionCreateactivatedPremiumModulesInput | string[]
+    billingPeriodKey?: string | null
+    expiresAt?: Date | string | null
+    activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isBlocked?: boolean
+    customConfig?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    currentTier?: $Enums.TariffTier
+    isTrial?: boolean
+    trialExpiresAt?: Date | string | null
+    activatedPremiumModules?: OrganizationSubscriptionCreateactivatedPremiumModulesInput | string[]
+    billingPeriodKey?: string | null
+    expiresAt?: Date | string | null
+    activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    isBlocked?: boolean
+    customConfig?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type OrganizationSubscriptionCreateOrConnectWithoutOrganizationInput = {
+    where: OrganizationSubscriptionWhereUniqueInput
+    create: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderCreateWithoutOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    status?: $Enums.PaymentOrderStatus
+    provider?: string
+    providerTxnId?: string | null
+    monthsApplied?: number
+    description?: string
+    idempotencyKey?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    paidAt?: Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput
+  }
+
+  export type PaymentOrderUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    status?: $Enums.PaymentOrderStatus
+    provider?: string
+    providerTxnId?: string | null
+    monthsApplied?: number
+    description?: string
+    idempotencyKey?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    paidAt?: Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceUncheckedCreateNestedOneWithoutPaymentOrderInput
+  }
+
+  export type PaymentOrderCreateOrConnectWithoutOrganizationInput = {
+    where: PaymentOrderWhereUniqueInput
+    create: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderCreateManyOrganizationInputEnvelope = {
+    data: PaymentOrderCreateManyOrganizationInput | PaymentOrderCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationMembershipCreateWithoutOrganizationInput = {
     role: $Enums.UserRole
     joinedAt?: Date | string
     deletedAt?: Date | string | null
     deletedByUserId?: string | null
     deletedReason?: string | null
+    user: UserCreateNestedOneWithoutMembershipsInput
+  }
+
+  export type OrganizationMembershipUncheckedCreateWithoutOrganizationInput = {
+    userId: string
+    role: $Enums.UserRole
+    joinedAt?: Date | string
+    deletedAt?: Date | string | null
+    deletedByUserId?: string | null
+    deletedReason?: string | null
+  }
+
+  export type OrganizationMembershipCreateOrConnectWithoutOrganizationInput = {
+    where: OrganizationMembershipWhereUniqueInput
+    create: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrganizationMembershipCreateManyOrganizationInputEnvelope = {
+    data: OrganizationMembershipCreateManyOrganizationInput | OrganizationMembershipCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BillingInvoiceItemCreateWithoutOrganizationInput = {
+    id?: string
+    description: string
+    amount: Decimal | DecimalJsLike | number | string
+    subscriptionInvoice: SubscriptionInvoiceCreateNestedOneWithoutItemsInput
+  }
+
+  export type BillingInvoiceItemUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    subscriptionInvoiceId: string
+    description: string
+    amount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type BillingInvoiceItemCreateOrConnectWithoutOrganizationInput = {
+    where: BillingInvoiceItemWhereUniqueInput
+    create: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BillingInvoiceItemCreateManyOrganizationInputEnvelope = {
+    data: BillingInvoiceItemCreateManyOrganizationInput | BillingInvoiceItemCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NotificationTemplateCreateWithoutOrganizationInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    outboxEntries?: NotificationOutboxCreateNestedManyWithoutTemplateInput
+  }
+
+  export type NotificationTemplateUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    outboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutTemplateInput
+  }
+
+  export type NotificationTemplateCreateOrConnectWithoutOrganizationInput = {
+    where: NotificationTemplateWhereUniqueInput
+    create: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationTemplateCreateManyOrganizationInputEnvelope = {
+    data: NotificationTemplateCreateManyOrganizationInput | NotificationTemplateCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NotificationOutboxCreateWithoutOrganizationInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    template?: NotificationTemplateCreateNestedOneWithoutOutboxEntriesInput
+    deliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    templateKey: string
+    templateId?: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxCreateOrConnectWithoutOrganizationInput = {
+    where: NotificationOutboxWhereUniqueInput
+    create: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationOutboxCreateManyOrganizationInputEnvelope = {
+    data: NotificationOutboxCreateManyOrganizationInput | NotificationOutboxCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type NotificationDeliveryLogCreateWithoutOrganizationInput = {
+    id?: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+    outbox: NotificationOutboxCreateNestedOneWithoutDeliveryLogsInput
+  }
+
+  export type NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    outboxId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    create: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationDeliveryLogCreateManyOrganizationInputEnvelope = {
+    data: NotificationDeliveryLogCreateManyOrganizationInput | NotificationDeliveryLogCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutOwnedOrganizationsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutOwnedOrganizationsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutOwnedOrganizationsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
+  }
+
+  export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: UsageMeterEventWhereUniqueInput
+    update: XOR<UsageMeterEventUpdateWithoutOrganizationInput, UsageMeterEventUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type UsageMeterEventUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: UsageMeterEventWhereUniqueInput
+    data: XOR<UsageMeterEventUpdateWithoutOrganizationInput, UsageMeterEventUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type UsageMeterEventUpdateManyWithWhereWithoutOrganizationInput = {
+    where: UsageMeterEventScalarWhereInput
+    data: XOR<UsageMeterEventUpdateManyMutationInput, UsageMeterEventUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type UsageMeterEventScalarWhereInput = {
+    AND?: UsageMeterEventScalarWhereInput | UsageMeterEventScalarWhereInput[]
+    OR?: UsageMeterEventScalarWhereInput[]
+    NOT?: UsageMeterEventScalarWhereInput | UsageMeterEventScalarWhereInput[]
+    id?: UuidFilter<"UsageMeterEvent"> | string
+    organizationId?: UuidFilter<"UsageMeterEvent"> | string
+    actionType?: StringFilter<"UsageMeterEvent"> | string
+    quantity?: IntFilter<"UsageMeterEvent"> | number
+    unitCostAzn?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
+    balanceAfter?: DecimalFilter<"UsageMeterEvent"> | Decimal | DecimalJsLike | number | string
+    createdAt?: DateTimeFilter<"UsageMeterEvent"> | Date | string
+  }
+
+  export type EarlyAccessEventUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    update: XOR<EarlyAccessEventUpdateWithoutOrganizationInput, EarlyAccessEventUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<EarlyAccessEventCreateWithoutOrganizationInput, EarlyAccessEventUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessEventUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    data: XOR<EarlyAccessEventUpdateWithoutOrganizationInput, EarlyAccessEventUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessEventUpdateManyWithWhereWithoutOrganizationInput = {
+    where: EarlyAccessEventScalarWhereInput
+    data: XOR<EarlyAccessEventUpdateManyMutationInput, EarlyAccessEventUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessEventScalarWhereInput = {
+    AND?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+    OR?: EarlyAccessEventScalarWhereInput[]
+    NOT?: EarlyAccessEventScalarWhereInput | EarlyAccessEventScalarWhereInput[]
+    id?: UuidFilter<"EarlyAccessEvent"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFilter<"EarlyAccessEvent"> | $Enums.EarlyAccessEventType
+    userId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    organizationId?: UuidNullableFilter<"EarlyAccessEvent"> | string | null
+    subscriptionTier?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    industrySnapshot?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    sessionId?: UuidFilter<"EarlyAccessEvent"> | string
+    durationMs?: IntNullableFilter<"EarlyAccessEvent"> | number | null
+    metadata?: JsonNullableFilter<"EarlyAccessEvent">
+    createdAt?: DateTimeFilter<"EarlyAccessEvent"> | Date | string
+    clientIp?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+    userAgent?: StringNullableFilter<"EarlyAccessEvent"> | string | null
+  }
+
+  export type EarlyAccessSignupUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    update: XOR<EarlyAccessSignupUpdateWithoutOrganizationInput, EarlyAccessSignupUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<EarlyAccessSignupCreateWithoutOrganizationInput, EarlyAccessSignupUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessSignupUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    data: XOR<EarlyAccessSignupUpdateWithoutOrganizationInput, EarlyAccessSignupUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessSignupUpdateManyWithWhereWithoutOrganizationInput = {
+    where: EarlyAccessSignupScalarWhereInput
+    data: XOR<EarlyAccessSignupUpdateManyMutationInput, EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type EarlyAccessSignupScalarWhereInput = {
+    AND?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+    OR?: EarlyAccessSignupScalarWhereInput[]
+    NOT?: EarlyAccessSignupScalarWhereInput | EarlyAccessSignupScalarWhereInput[]
+    id?: UuidFilter<"EarlyAccessSignup"> | string
+    moduleKey?: EnumEarlyAccessModuleKeyFilter<"EarlyAccessSignup"> | $Enums.EarlyAccessModuleKey
+    userId?: UuidFilter<"EarlyAccessSignup"> | string
+    organizationId?: UuidFilter<"EarlyAccessSignup"> | string
+    subscriptionTier?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    industry?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    surveyAnswer?: StringNullableFilter<"EarlyAccessSignup"> | string | null
+    createdAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+    updatedAt?: DateTimeFilter<"EarlyAccessSignup"> | Date | string
+  }
+
+  export type AuditLogUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: AuditLogWhereUniqueInput
+    update: XOR<AuditLogUpdateWithoutOrganizationInput, AuditLogUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<AuditLogCreateWithoutOrganizationInput, AuditLogUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type AuditLogUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: AuditLogWhereUniqueInput
+    data: XOR<AuditLogUpdateWithoutOrganizationInput, AuditLogUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type AuditLogUpdateManyWithWhereWithoutOrganizationInput = {
+    where: AuditLogScalarWhereInput
+    data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type AuditLogScalarWhereInput = {
+    AND?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+    OR?: AuditLogScalarWhereInput[]
+    NOT?: AuditLogScalarWhereInput | AuditLogScalarWhereInput[]
+    id?: UuidFilter<"AuditLog"> | string
+    organizationId?: UuidNullableFilter<"AuditLog"> | string | null
+    userId?: UuidNullableFilter<"AuditLog"> | string | null
+    entityType?: StringFilter<"AuditLog"> | string
+    entityId?: StringFilter<"AuditLog"> | string
+    action?: StringFilter<"AuditLog"> | string
+    changes?: JsonNullableFilter<"AuditLog">
+    createdAt?: DateTimeFilter<"AuditLog"> | Date | string
+    oldValues?: JsonNullableFilter<"AuditLog">
+    newValues?: JsonNullableFilter<"AuditLog">
+    clientIp?: StringNullableFilter<"AuditLog"> | string | null
+    userAgent?: StringNullableFilter<"AuditLog"> | string | null
+    hash?: StringNullableFilter<"AuditLog"> | string | null
+  }
+
+  export type OrganizationSubscriptionUpsertWithoutOrganizationInput = {
+    update: XOR<OrganizationSubscriptionUpdateWithoutOrganizationInput, OrganizationSubscriptionUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrganizationSubscriptionCreateWithoutOrganizationInput, OrganizationSubscriptionUncheckedCreateWithoutOrganizationInput>
+    where?: OrganizationSubscriptionWhereInput
+  }
+
+  export type OrganizationSubscriptionUpdateToOneWithWhereWithoutOrganizationInput = {
+    where?: OrganizationSubscriptionWhereInput
+    data: XOR<OrganizationSubscriptionUpdateWithoutOrganizationInput, OrganizationSubscriptionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationSubscriptionUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    currentTier?: EnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activatedPremiumModules?: OrganizationSubscriptionUpdateactivatedPremiumModulesInput | string[]
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    customConfig?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type OrganizationSubscriptionUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    currentTier?: EnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activatedPremiumModules?: OrganizationSubscriptionUpdateactivatedPremiumModulesInput | string[]
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isBlocked?: BoolFieldUpdateOperationsInput | boolean
+    customConfig?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PaymentOrderUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PaymentOrderWhereUniqueInput
+    update: XOR<PaymentOrderUpdateWithoutOrganizationInput, PaymentOrderUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PaymentOrderCreateWithoutOrganizationInput, PaymentOrderUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PaymentOrderWhereUniqueInput
+    data: XOR<PaymentOrderUpdateWithoutOrganizationInput, PaymentOrderUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PaymentOrderScalarWhereInput
+    data: XOR<PaymentOrderUpdateManyMutationInput, PaymentOrderUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PaymentOrderScalarWhereInput = {
+    AND?: PaymentOrderScalarWhereInput | PaymentOrderScalarWhereInput[]
+    OR?: PaymentOrderScalarWhereInput[]
+    NOT?: PaymentOrderScalarWhereInput | PaymentOrderScalarWhereInput[]
+    id?: UuidFilter<"PaymentOrder"> | string
+    organizationId?: UuidFilter<"PaymentOrder"> | string
+    amountAzn?: DecimalFilter<"PaymentOrder"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"PaymentOrder"> | string
+    status?: EnumPaymentOrderStatusFilter<"PaymentOrder"> | $Enums.PaymentOrderStatus
+    provider?: StringFilter<"PaymentOrder"> | string
+    providerTxnId?: StringNullableFilter<"PaymentOrder"> | string | null
+    monthsApplied?: IntFilter<"PaymentOrder"> | number
+    description?: StringFilter<"PaymentOrder"> | string
+    idempotencyKey?: StringNullableFilter<"PaymentOrder"> | string | null
+    metadata?: JsonFilter<"PaymentOrder">
+    createdAt?: DateTimeFilter<"PaymentOrder"> | Date | string
+    paidAt?: DateTimeNullableFilter<"PaymentOrder"> | Date | string | null
+  }
+
+  export type OrganizationMembershipUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: OrganizationMembershipWhereUniqueInput
+    update: XOR<OrganizationMembershipUpdateWithoutOrganizationInput, OrganizationMembershipUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrganizationMembershipCreateWithoutOrganizationInput, OrganizationMembershipUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrganizationMembershipUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: OrganizationMembershipWhereUniqueInput
+    data: XOR<OrganizationMembershipUpdateWithoutOrganizationInput, OrganizationMembershipUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationMembershipUpdateManyWithWhereWithoutOrganizationInput = {
+    where: OrganizationMembershipScalarWhereInput
+    data: XOR<OrganizationMembershipUpdateManyMutationInput, OrganizationMembershipUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type OrganizationMembershipScalarWhereInput = {
+    AND?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
+    OR?: OrganizationMembershipScalarWhereInput[]
+    NOT?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
+    userId?: UuidFilter<"OrganizationMembership"> | string
+    organizationId?: UuidFilter<"OrganizationMembership"> | string
+    role?: EnumUserRoleFilter<"OrganizationMembership"> | $Enums.UserRole
+    joinedAt?: DateTimeFilter<"OrganizationMembership"> | Date | string
+    deletedAt?: DateTimeNullableFilter<"OrganizationMembership"> | Date | string | null
+    deletedByUserId?: UuidNullableFilter<"OrganizationMembership"> | string | null
+    deletedReason?: StringNullableFilter<"OrganizationMembership"> | string | null
+  }
+
+  export type BillingInvoiceItemUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: BillingInvoiceItemWhereUniqueInput
+    update: XOR<BillingInvoiceItemUpdateWithoutOrganizationInput, BillingInvoiceItemUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<BillingInvoiceItemCreateWithoutOrganizationInput, BillingInvoiceItemUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BillingInvoiceItemUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: BillingInvoiceItemWhereUniqueInput
+    data: XOR<BillingInvoiceItemUpdateWithoutOrganizationInput, BillingInvoiceItemUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type BillingInvoiceItemUpdateManyWithWhereWithoutOrganizationInput = {
+    where: BillingInvoiceItemScalarWhereInput
+    data: XOR<BillingInvoiceItemUpdateManyMutationInput, BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type NotificationTemplateUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationTemplateWhereUniqueInput
+    update: XOR<NotificationTemplateUpdateWithoutOrganizationInput, NotificationTemplateUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<NotificationTemplateCreateWithoutOrganizationInput, NotificationTemplateUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationTemplateUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationTemplateWhereUniqueInput
+    data: XOR<NotificationTemplateUpdateWithoutOrganizationInput, NotificationTemplateUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type NotificationTemplateUpdateManyWithWhereWithoutOrganizationInput = {
+    where: NotificationTemplateScalarWhereInput
+    data: XOR<NotificationTemplateUpdateManyMutationInput, NotificationTemplateUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type NotificationTemplateScalarWhereInput = {
+    AND?: NotificationTemplateScalarWhereInput | NotificationTemplateScalarWhereInput[]
+    OR?: NotificationTemplateScalarWhereInput[]
+    NOT?: NotificationTemplateScalarWhereInput | NotificationTemplateScalarWhereInput[]
+    id?: UuidFilter<"NotificationTemplate"> | string
+    organizationId?: UuidNullableFilter<"NotificationTemplate"> | string | null
+    templateKey?: StringFilter<"NotificationTemplate"> | string
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationTemplate"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationTemplate"> | $Enums.NotificationChannel
+    subject?: StringNullableFilter<"NotificationTemplate"> | string | null
+    bodyTemplate?: StringFilter<"NotificationTemplate"> | string
+    isActive?: BoolFilter<"NotificationTemplate"> | boolean
+    createdAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationTemplate"> | Date | string
+  }
+
+  export type NotificationOutboxUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationOutboxWhereUniqueInput
+    update: XOR<NotificationOutboxUpdateWithoutOrganizationInput, NotificationOutboxUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<NotificationOutboxCreateWithoutOrganizationInput, NotificationOutboxUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationOutboxUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationOutboxWhereUniqueInput
+    data: XOR<NotificationOutboxUpdateWithoutOrganizationInput, NotificationOutboxUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type NotificationOutboxUpdateManyWithWhereWithoutOrganizationInput = {
+    where: NotificationOutboxScalarWhereInput
+    data: XOR<NotificationOutboxUpdateManyMutationInput, NotificationOutboxUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type NotificationOutboxScalarWhereInput = {
+    AND?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+    OR?: NotificationOutboxScalarWhereInput[]
+    NOT?: NotificationOutboxScalarWhereInput | NotificationOutboxScalarWhereInput[]
+    id?: UuidFilter<"NotificationOutbox"> | string
+    organizationId?: UuidFilter<"NotificationOutbox"> | string
+    templateKey?: StringFilter<"NotificationOutbox"> | string
+    templateId?: UuidNullableFilter<"NotificationOutbox"> | string | null
+    messageClass?: EnumNotificationMessageClassFilter<"NotificationOutbox"> | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFilter<"NotificationOutbox"> | $Enums.NotificationChannel
+    recipient?: StringFilter<"NotificationOutbox"> | string
+    payload?: JsonFilter<"NotificationOutbox">
+    status?: EnumNotificationOutboxStatusFilter<"NotificationOutbox"> | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFilter<"NotificationOutbox"> | string
+    sourceEntityId?: StringFilter<"NotificationOutbox"> | string
+    errorMessage?: StringNullableFilter<"NotificationOutbox"> | string | null
+    sentAt?: DateTimeNullableFilter<"NotificationOutbox"> | Date | string | null
+    createdAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+    updatedAt?: DateTimeFilter<"NotificationOutbox"> | Date | string
+  }
+
+  export type NotificationDeliveryLogUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    update: XOR<NotificationDeliveryLogUpdateWithoutOrganizationInput, NotificationDeliveryLogUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<NotificationDeliveryLogCreateWithoutOrganizationInput, NotificationDeliveryLogUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    data: XOR<NotificationDeliveryLogUpdateWithoutOrganizationInput, NotificationDeliveryLogUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput = {
+    where: NotificationDeliveryLogScalarWhereInput
+    data: XOR<NotificationDeliveryLogUpdateManyMutationInput, NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type NotificationDeliveryLogScalarWhereInput = {
+    AND?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+    OR?: NotificationDeliveryLogScalarWhereInput[]
+    NOT?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+    id?: UuidFilter<"NotificationDeliveryLog"> | string
+    outboxId?: UuidFilter<"NotificationDeliveryLog"> | string
+    organizationId?: UuidFilter<"NotificationDeliveryLog"> | string
+    channel?: EnumNotificationChannelFilter<"NotificationDeliveryLog"> | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFilter<"NotificationDeliveryLog"> | $Enums.NotificationOutboxStatus
+    providerPayload?: JsonNullableFilter<"NotificationDeliveryLog">
+    errorMessage?: StringNullableFilter<"NotificationDeliveryLog"> | string | null
+    attemptedAt?: DateTimeFilter<"NotificationDeliveryLog"> | Date | string
+  }
+
+  export type UserUpsertWithoutOwnedOrganizationsInput = {
+    update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
+    create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutOwnedOrganizationsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
+  }
+
+  export type UserUpdateWithoutOwnedOrganizationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutOwnedOrganizationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type OrganizationMembershipCreateWithoutUserInput = {
+    role: $Enums.UserRole
+    joinedAt?: Date | string
+    deletedAt?: Date | string | null
+    deletedByUserId?: string | null
+    deletedReason?: string | null
+    organization: OrganizationCreateNestedOneWithoutMembershipsInput
   }
 
   export type OrganizationMembershipUncheckedCreateWithoutUserInput = {
@@ -40438,6 +55315,194 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type EarlyAccessEventCreateWithoutUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+    organization?: OrganizationCreateNestedOneWithoutEarlyAccessEventsInput
+  }
+
+  export type EarlyAccessEventUncheckedCreateWithoutUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    organizationId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessEventCreateOrConnectWithoutUserInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    create: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput>
+  }
+
+  export type EarlyAccessEventCreateManyUserInputEnvelope = {
+    data: EarlyAccessEventCreateManyUserInput | EarlyAccessEventCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EarlyAccessSignupCreateWithoutUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutEarlyAccessSignupsInput
+  }
+
+  export type EarlyAccessSignupUncheckedCreateWithoutUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    organizationId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EarlyAccessSignupCreateOrConnectWithoutUserInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    create: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput>
+  }
+
+  export type EarlyAccessSignupCreateManyUserInputEnvelope = {
+    data: EarlyAccessSignupCreateManyUserInput | EarlyAccessSignupCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuditLogCreateWithoutUserInput = {
+    id?: string
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+    organization?: OrganizationCreateNestedOneWithoutAuditLogsInput
+  }
+
+  export type AuditLogUncheckedCreateWithoutUserInput = {
+    id?: string
+    organizationId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type AuditLogCreateOrConnectWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    create: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AuditLogCreateManyUserInputEnvelope = {
+    data: AuditLogCreateManyUserInput | AuditLogCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutOwnerInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type OrganizationCreateManyOwnerInputEnvelope = {
+    data: OrganizationCreateManyOwnerInput | OrganizationCreateManyOwnerInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrganizationMembershipUpsertWithWhereUniqueWithoutUserInput = {
     where: OrganizationMembershipWhereUniqueInput
     update: XOR<OrganizationMembershipUpdateWithoutUserInput, OrganizationMembershipUncheckedUpdateWithoutUserInput>
@@ -40454,17 +55519,94 @@ export namespace Prisma {
     data: XOR<OrganizationMembershipUpdateManyMutationInput, OrganizationMembershipUncheckedUpdateManyWithoutUserInput>
   }
 
-  export type OrganizationMembershipScalarWhereInput = {
-    AND?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
-    OR?: OrganizationMembershipScalarWhereInput[]
-    NOT?: OrganizationMembershipScalarWhereInput | OrganizationMembershipScalarWhereInput[]
-    userId?: UuidFilter<"OrganizationMembership"> | string
-    organizationId?: UuidFilter<"OrganizationMembership"> | string
-    role?: EnumUserRoleFilter<"OrganizationMembership"> | $Enums.UserRole
-    joinedAt?: DateTimeFilter<"OrganizationMembership"> | Date | string
-    deletedAt?: DateTimeNullableFilter<"OrganizationMembership"> | Date | string | null
-    deletedByUserId?: UuidNullableFilter<"OrganizationMembership"> | string | null
-    deletedReason?: StringNullableFilter<"OrganizationMembership"> | string | null
+  export type EarlyAccessEventUpsertWithWhereUniqueWithoutUserInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    update: XOR<EarlyAccessEventUpdateWithoutUserInput, EarlyAccessEventUncheckedUpdateWithoutUserInput>
+    create: XOR<EarlyAccessEventCreateWithoutUserInput, EarlyAccessEventUncheckedCreateWithoutUserInput>
+  }
+
+  export type EarlyAccessEventUpdateWithWhereUniqueWithoutUserInput = {
+    where: EarlyAccessEventWhereUniqueInput
+    data: XOR<EarlyAccessEventUpdateWithoutUserInput, EarlyAccessEventUncheckedUpdateWithoutUserInput>
+  }
+
+  export type EarlyAccessEventUpdateManyWithWhereWithoutUserInput = {
+    where: EarlyAccessEventScalarWhereInput
+    data: XOR<EarlyAccessEventUpdateManyMutationInput, EarlyAccessEventUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type EarlyAccessSignupUpsertWithWhereUniqueWithoutUserInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    update: XOR<EarlyAccessSignupUpdateWithoutUserInput, EarlyAccessSignupUncheckedUpdateWithoutUserInput>
+    create: XOR<EarlyAccessSignupCreateWithoutUserInput, EarlyAccessSignupUncheckedCreateWithoutUserInput>
+  }
+
+  export type EarlyAccessSignupUpdateWithWhereUniqueWithoutUserInput = {
+    where: EarlyAccessSignupWhereUniqueInput
+    data: XOR<EarlyAccessSignupUpdateWithoutUserInput, EarlyAccessSignupUncheckedUpdateWithoutUserInput>
+  }
+
+  export type EarlyAccessSignupUpdateManyWithWhereWithoutUserInput = {
+    where: EarlyAccessSignupScalarWhereInput
+    data: XOR<EarlyAccessSignupUpdateManyMutationInput, EarlyAccessSignupUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type AuditLogUpsertWithWhereUniqueWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    update: XOR<AuditLogUpdateWithoutUserInput, AuditLogUncheckedUpdateWithoutUserInput>
+    create: XOR<AuditLogCreateWithoutUserInput, AuditLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type AuditLogUpdateWithWhereUniqueWithoutUserInput = {
+    where: AuditLogWhereUniqueInput
+    data: XOR<AuditLogUpdateWithoutUserInput, AuditLogUncheckedUpdateWithoutUserInput>
+  }
+
+  export type AuditLogUpdateManyWithWhereWithoutUserInput = {
+    where: AuditLogScalarWhereInput
+    data: XOR<AuditLogUpdateManyMutationInput, AuditLogUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type OrganizationUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: OrganizationWhereUniqueInput
+    update: XOR<OrganizationUpdateWithoutOwnerInput, OrganizationUncheckedUpdateWithoutOwnerInput>
+    create: XOR<OrganizationCreateWithoutOwnerInput, OrganizationUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type OrganizationUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: OrganizationWhereUniqueInput
+    data: XOR<OrganizationUpdateWithoutOwnerInput, OrganizationUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type OrganizationUpdateManyWithWhereWithoutOwnerInput = {
+    where: OrganizationScalarWhereInput
+    data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type OrganizationScalarWhereInput = {
+    AND?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+    OR?: OrganizationScalarWhereInput[]
+    NOT?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+    id?: UuidFilter<"Organization"> | string
+    name?: StringFilter<"Organization"> | string
+    ownerId?: UuidNullableFilter<"Organization"> | string | null
+    taxIdBlindIndex?: StringNullableFilter<"Organization"> | string | null
+    taxIdCipher?: StringNullableFilter<"Organization"> | string | null
+    subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
+    billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    activeModules?: StringNullableListFilter<"Organization">
+    storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
+    currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFilter<"Organization"> | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: StringNullableFilter<"Organization"> | string | null
+    whatsappAlertsUsed?: IntFilter<"Organization"> | number
+    ocrPagesUsed?: IntFilter<"Organization"> | number
+    currency?: StringFilter<"Organization"> | string
+    settings?: JsonFilter<"Organization">
+    drakarisClientId?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
   }
 
   export type UserCreateWithoutMembershipsInput = {
@@ -40472,8 +55614,14 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
   }
 
   export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -40481,13 +55629,90 @@ export namespace Prisma {
     email: string
     passwordHash: string
     isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
   }
 
   export type UserCreateOrConnectWithoutMembershipsInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutMembershipsInput, UserUncheckedCreateWithoutMembershipsInput>
+  }
+
+  export type OrganizationCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutMembershipsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
   }
 
   export type UserUpsertWithoutMembershipsInput = {
@@ -40506,8 +55731,14 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -40515,8 +55746,91 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     passwordHash?: StringFieldUpdateOperationsInput | string
     isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type OrganizationUpsertWithoutMembershipsInput = {
+    update: XOR<OrganizationUpdateWithoutMembershipsInput, OrganizationUncheckedUpdateWithoutMembershipsInput>
+    create: XOR<OrganizationCreateWithoutMembershipsInput, OrganizationUncheckedCreateWithoutMembershipsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutMembershipsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutMembershipsInput, OrganizationUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type OrganizationUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type ReferralCreateWithoutPartnerInput = {
@@ -40832,6 +56146,1386 @@ export namespace Prisma {
     items?: BillingInvoiceItemUncheckedUpdateManyWithoutSubscriptionInvoiceNestedInput
   }
 
+  export type OrganizationCreateWithoutEarlyAccessEventsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutEarlyAccessEventsInput, OrganizationUncheckedCreateWithoutEarlyAccessEventsInput>
+  }
+
+  export type UserCreateWithoutEarlyAccessEventsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutEarlyAccessEventsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutEarlyAccessEventsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutEarlyAccessEventsInput, UserUncheckedCreateWithoutEarlyAccessEventsInput>
+  }
+
+  export type OrganizationUpsertWithoutEarlyAccessEventsInput = {
+    update: XOR<OrganizationUpdateWithoutEarlyAccessEventsInput, OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput>
+    create: XOR<OrganizationCreateWithoutEarlyAccessEventsInput, OrganizationUncheckedCreateWithoutEarlyAccessEventsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutEarlyAccessEventsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutEarlyAccessEventsInput, OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput>
+  }
+
+  export type OrganizationUpdateWithoutEarlyAccessEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type UserUpsertWithoutEarlyAccessEventsInput = {
+    update: XOR<UserUpdateWithoutEarlyAccessEventsInput, UserUncheckedUpdateWithoutEarlyAccessEventsInput>
+    create: XOR<UserCreateWithoutEarlyAccessEventsInput, UserUncheckedCreateWithoutEarlyAccessEventsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutEarlyAccessEventsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutEarlyAccessEventsInput, UserUncheckedUpdateWithoutEarlyAccessEventsInput>
+  }
+
+  export type UserUpdateWithoutEarlyAccessEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutEarlyAccessEventsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type OrganizationCreateWithoutEarlyAccessSignupsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutEarlyAccessSignupsInput, OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type UserCreateWithoutEarlyAccessSignupsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutEarlyAccessSignupsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutEarlyAccessSignupsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutEarlyAccessSignupsInput, UserUncheckedCreateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type OrganizationUpsertWithoutEarlyAccessSignupsInput = {
+    update: XOR<OrganizationUpdateWithoutEarlyAccessSignupsInput, OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput>
+    create: XOR<OrganizationCreateWithoutEarlyAccessSignupsInput, OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutEarlyAccessSignupsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutEarlyAccessSignupsInput, OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type OrganizationUpdateWithoutEarlyAccessSignupsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type UserUpsertWithoutEarlyAccessSignupsInput = {
+    update: XOR<UserUpdateWithoutEarlyAccessSignupsInput, UserUncheckedUpdateWithoutEarlyAccessSignupsInput>
+    create: XOR<UserCreateWithoutEarlyAccessSignupsInput, UserUncheckedCreateWithoutEarlyAccessSignupsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutEarlyAccessSignupsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutEarlyAccessSignupsInput, UserUncheckedUpdateWithoutEarlyAccessSignupsInput>
+  }
+
+  export type UserUpdateWithoutEarlyAccessSignupsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutEarlyAccessSignupsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type OrganizationCreateWithoutAuditLogsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutAuditLogsInput, OrganizationUncheckedCreateWithoutAuditLogsInput>
+  }
+
+  export type UserCreateWithoutAuditLogsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutAuditLogsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutAuditLogsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+  }
+
+  export type OrganizationUpsertWithoutAuditLogsInput = {
+    update: XOR<OrganizationUpdateWithoutAuditLogsInput, OrganizationUncheckedUpdateWithoutAuditLogsInput>
+    create: XOR<OrganizationCreateWithoutAuditLogsInput, OrganizationUncheckedCreateWithoutAuditLogsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutAuditLogsInput, OrganizationUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type OrganizationUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type UserUpsertWithoutAuditLogsInput = {
+    update: XOR<UserUpdateWithoutAuditLogsInput, UserUncheckedUpdateWithoutAuditLogsInput>
+    create: XOR<UserCreateWithoutAuditLogsInput, UserUncheckedCreateWithoutAuditLogsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutAuditLogsInput, UserUncheckedUpdateWithoutAuditLogsInput>
+  }
+
+  export type UserUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutAuditLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type OrganizationCreateWithoutNotificationTemplatesInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutNotificationTemplatesInput, OrganizationUncheckedCreateWithoutNotificationTemplatesInput>
+  }
+
+  export type NotificationOutboxCreateWithoutTemplateInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutNotificationOutboxEntriesInput
+    deliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxUncheckedCreateWithoutTemplateInput = {
+    id?: string
+    organizationId: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOutboxInput
+  }
+
+  export type NotificationOutboxCreateOrConnectWithoutTemplateInput = {
+    where: NotificationOutboxWhereUniqueInput
+    create: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type NotificationOutboxCreateManyTemplateInputEnvelope = {
+    data: NotificationOutboxCreateManyTemplateInput | NotificationOutboxCreateManyTemplateInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutNotificationTemplatesInput = {
+    update: XOR<OrganizationUpdateWithoutNotificationTemplatesInput, OrganizationUncheckedUpdateWithoutNotificationTemplatesInput>
+    create: XOR<OrganizationCreateWithoutNotificationTemplatesInput, OrganizationUncheckedCreateWithoutNotificationTemplatesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutNotificationTemplatesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutNotificationTemplatesInput, OrganizationUncheckedUpdateWithoutNotificationTemplatesInput>
+  }
+
+  export type OrganizationUpdateWithoutNotificationTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
+    where: NotificationOutboxWhereUniqueInput
+    update: XOR<NotificationOutboxUpdateWithoutTemplateInput, NotificationOutboxUncheckedUpdateWithoutTemplateInput>
+    create: XOR<NotificationOutboxCreateWithoutTemplateInput, NotificationOutboxUncheckedCreateWithoutTemplateInput>
+  }
+
+  export type NotificationOutboxUpdateWithWhereUniqueWithoutTemplateInput = {
+    where: NotificationOutboxWhereUniqueInput
+    data: XOR<NotificationOutboxUpdateWithoutTemplateInput, NotificationOutboxUncheckedUpdateWithoutTemplateInput>
+  }
+
+  export type NotificationOutboxUpdateManyWithWhereWithoutTemplateInput = {
+    where: NotificationOutboxScalarWhereInput
+    data: XOR<NotificationOutboxUpdateManyMutationInput, NotificationOutboxUncheckedUpdateManyWithoutTemplateInput>
+  }
+
+  export type OrganizationCreateWithoutNotificationOutboxEntriesInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput>
+  }
+
+  export type NotificationTemplateCreateWithoutOutboxEntriesInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization?: OrganizationCreateNestedOneWithoutNotificationTemplatesInput
+  }
+
+  export type NotificationTemplateUncheckedCreateWithoutOutboxEntriesInput = {
+    id?: string
+    organizationId?: string | null
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationTemplateCreateOrConnectWithoutOutboxEntriesInput = {
+    where: NotificationTemplateWhereUniqueInput
+    create: XOR<NotificationTemplateCreateWithoutOutboxEntriesInput, NotificationTemplateUncheckedCreateWithoutOutboxEntriesInput>
+  }
+
+  export type NotificationDeliveryLogCreateWithoutOutboxInput = {
+    id?: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutNotificationDeliveryLogsInput
+  }
+
+  export type NotificationDeliveryLogUncheckedCreateWithoutOutboxInput = {
+    id?: string
+    organizationId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogCreateOrConnectWithoutOutboxInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    create: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput>
+  }
+
+  export type NotificationDeliveryLogCreateManyOutboxInputEnvelope = {
+    data: NotificationDeliveryLogCreateManyOutboxInput | NotificationDeliveryLogCreateManyOutboxInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutNotificationOutboxEntriesInput = {
+    update: XOR<OrganizationUpdateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput>
+    create: XOR<OrganizationCreateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutNotificationOutboxEntriesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutNotificationOutboxEntriesInput, OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput>
+  }
+
+  export type OrganizationUpdateWithoutNotificationOutboxEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
+    update: XOR<NotificationTemplateUpdateWithoutOutboxEntriesInput, NotificationTemplateUncheckedUpdateWithoutOutboxEntriesInput>
+    create: XOR<NotificationTemplateCreateWithoutOutboxEntriesInput, NotificationTemplateUncheckedCreateWithoutOutboxEntriesInput>
+    where?: NotificationTemplateWhereInput
+  }
+
+  export type NotificationTemplateUpdateToOneWithWhereWithoutOutboxEntriesInput = {
+    where?: NotificationTemplateWhereInput
+    data: XOR<NotificationTemplateUpdateWithoutOutboxEntriesInput, NotificationTemplateUncheckedUpdateWithoutOutboxEntriesInput>
+  }
+
+  export type NotificationTemplateUpdateWithoutOutboxEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneWithoutNotificationTemplatesNestedInput
+  }
+
+  export type NotificationTemplateUncheckedUpdateWithoutOutboxEntriesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogUpsertWithWhereUniqueWithoutOutboxInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    update: XOR<NotificationDeliveryLogUpdateWithoutOutboxInput, NotificationDeliveryLogUncheckedUpdateWithoutOutboxInput>
+    create: XOR<NotificationDeliveryLogCreateWithoutOutboxInput, NotificationDeliveryLogUncheckedCreateWithoutOutboxInput>
+  }
+
+  export type NotificationDeliveryLogUpdateWithWhereUniqueWithoutOutboxInput = {
+    where: NotificationDeliveryLogWhereUniqueInput
+    data: XOR<NotificationDeliveryLogUpdateWithoutOutboxInput, NotificationDeliveryLogUncheckedUpdateWithoutOutboxInput>
+  }
+
+  export type NotificationDeliveryLogUpdateManyWithWhereWithoutOutboxInput = {
+    where: NotificationDeliveryLogScalarWhereInput
+    data: XOR<NotificationDeliveryLogUpdateManyMutationInput, NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxInput>
+  }
+
+  export type NotificationOutboxCreateWithoutDeliveryLogsInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutNotificationOutboxEntriesInput
+    template?: NotificationTemplateCreateNestedOneWithoutOutboxEntriesInput
+  }
+
+  export type NotificationOutboxUncheckedCreateWithoutDeliveryLogsInput = {
+    id?: string
+    organizationId: string
+    templateKey: string
+    templateId?: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationOutboxCreateOrConnectWithoutDeliveryLogsInput = {
+    where: NotificationOutboxWhereUniqueInput
+    create: XOR<NotificationOutboxCreateWithoutDeliveryLogsInput, NotificationOutboxUncheckedCreateWithoutDeliveryLogsInput>
+  }
+
+  export type OrganizationCreateWithoutNotificationDeliveryLogsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput>
+  }
+
+  export type NotificationOutboxUpsertWithoutDeliveryLogsInput = {
+    update: XOR<NotificationOutboxUpdateWithoutDeliveryLogsInput, NotificationOutboxUncheckedUpdateWithoutDeliveryLogsInput>
+    create: XOR<NotificationOutboxCreateWithoutDeliveryLogsInput, NotificationOutboxUncheckedCreateWithoutDeliveryLogsInput>
+    where?: NotificationOutboxWhereInput
+  }
+
+  export type NotificationOutboxUpdateToOneWithWhereWithoutDeliveryLogsInput = {
+    where?: NotificationOutboxWhereInput
+    data: XOR<NotificationOutboxUpdateWithoutDeliveryLogsInput, NotificationOutboxUncheckedUpdateWithoutDeliveryLogsInput>
+  }
+
+  export type NotificationOutboxUpdateWithoutDeliveryLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutNotificationOutboxEntriesNestedInput
+    template?: NotificationTemplateUpdateOneWithoutOutboxEntriesNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateWithoutDeliveryLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    templateId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpsertWithoutNotificationDeliveryLogsInput = {
+    update: XOR<OrganizationUpdateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput>
+    create: XOR<OrganizationCreateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutNotificationDeliveryLogsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutNotificationDeliveryLogsInput, OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput>
+  }
+
+  export type OrganizationUpdateWithoutNotificationDeliveryLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
   export type BillingInvoiceItemCreateManySubscriptionInvoiceInput = {
     id?: string
     organizationId: string
@@ -40853,9 +57547,9 @@ export namespace Prisma {
 
   export type BillingInvoiceItemUpdateWithoutSubscriptionInvoiceInput = {
     id?: StringFieldUpdateOperationsInput | string
-    organizationId?: StringFieldUpdateOperationsInput | string
     description?: StringFieldUpdateOperationsInput | string
     amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    organization?: OrganizationUpdateOneRequiredWithoutBillingInvoiceItemsNestedInput
   }
 
   export type BillingInvoiceItemUncheckedUpdateWithoutSubscriptionInvoiceInput = {
@@ -40984,6 +57678,492 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type UsageMeterEventCreateManyOrganizationInput = {
+    id?: string
+    actionType: string
+    quantity?: number
+    unitCostAzn: Decimal | DecimalJsLike | number | string
+    balanceAfter: Decimal | DecimalJsLike | number | string
+    createdAt?: Date | string
+  }
+
+  export type EarlyAccessEventCreateManyOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    userId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessSignupCreateManyOrganizationInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    userId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuditLogCreateManyOrganizationInput = {
+    id?: string
+    userId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type PaymentOrderCreateManyOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    status?: $Enums.PaymentOrderStatus
+    provider?: string
+    providerTxnId?: string | null
+    monthsApplied?: number
+    description?: string
+    idempotencyKey?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    paidAt?: Date | string | null
+  }
+
+  export type OrganizationMembershipCreateManyOrganizationInput = {
+    userId: string
+    role: $Enums.UserRole
+    joinedAt?: Date | string
+    deletedAt?: Date | string | null
+    deletedByUserId?: string | null
+    deletedReason?: string | null
+  }
+
+  export type BillingInvoiceItemCreateManyOrganizationInput = {
+    id?: string
+    subscriptionInvoiceId: string
+    description: string
+    amount: Decimal | DecimalJsLike | number | string
+  }
+
+  export type NotificationTemplateCreateManyOrganizationInput = {
+    id?: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    subject?: string | null
+    bodyTemplate: string
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationOutboxCreateManyOrganizationInput = {
+    id?: string
+    templateKey: string
+    templateId?: string | null
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogCreateManyOrganizationInput = {
+    id?: string
+    outboxId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type UsageMeterEventUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    actionType?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    unitCostAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    balanceAfter?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UsageMeterEventUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    actionType?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    unitCostAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    balanceAfter?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    actionType?: StringFieldUpdateOperationsInput | string
+    quantity?: IntFieldUpdateOperationsInput | number
+    unitCostAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    balanceAfter?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessEventUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    user?: UserUpdateOneWithoutEarlyAccessEventsNestedInput
+  }
+
+  export type EarlyAccessEventUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessEventUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessSignupUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    userId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    userId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditLogUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+    user?: UserUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type AuditLogUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentOrderUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
+    provider?: StringFieldUpdateOperationsInput | string
+    providerTxnId?: NullableStringFieldUpdateOperationsInput | string | null
+    monthsApplied?: IntFieldUpdateOperationsInput | number
+    description?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput
+  }
+
+  export type PaymentOrderUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
+    provider?: StringFieldUpdateOperationsInput | string
+    providerTxnId?: NullableStringFieldUpdateOperationsInput | string | null
+    monthsApplied?: IntFieldUpdateOperationsInput | number
+    description?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceUncheckedUpdateOneWithoutPaymentOrderNestedInput
+  }
+
+  export type PaymentOrderUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
+    provider?: StringFieldUpdateOperationsInput | string
+    providerTxnId?: NullableStringFieldUpdateOperationsInput | string | null
+    monthsApplied?: IntFieldUpdateOperationsInput | number
+    description?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OrganizationMembershipUpdateWithoutOrganizationInput = {
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    user?: UserUpdateOneRequiredWithoutMembershipsNestedInput
+  }
+
+  export type OrganizationMembershipUncheckedUpdateWithoutOrganizationInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OrganizationMembershipUncheckedUpdateManyWithoutOrganizationInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
+    joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type BillingInvoiceItemUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    subscriptionInvoice?: SubscriptionInvoiceUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type BillingInvoiceItemUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionInvoiceId?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    subscriptionInvoiceId?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type NotificationTemplateUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    outboxEntries?: NotificationOutboxUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type NotificationTemplateUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    outboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutTemplateNestedInput
+  }
+
+  export type NotificationTemplateUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    subject?: NullableStringFieldUpdateOperationsInput | string | null
+    bodyTemplate?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationOutboxUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    template?: NotificationTemplateUpdateOneWithoutOutboxEntriesNestedInput
+    deliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    templateId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    templateId?: NullableStringFieldUpdateOperationsInput | string | null
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    outbox?: NotificationOutboxUpdateOneRequiredWithoutDeliveryLogsNestedInput
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    outboxId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    outboxId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationMembershipCreateManyUserInput = {
     organizationId: string
     role: $Enums.UserRole
@@ -40993,13 +58173,76 @@ export namespace Prisma {
     deletedReason?: string | null
   }
 
+  export type EarlyAccessEventCreateManyUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    eventType: $Enums.EarlyAccessEventType
+    organizationId?: string | null
+    subscriptionTier?: string | null
+    industrySnapshot?: string | null
+    sessionId: string
+    durationMs?: number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    clientIp?: string | null
+    userAgent?: string | null
+  }
+
+  export type EarlyAccessSignupCreateManyUserInput = {
+    id?: string
+    moduleKey: $Enums.EarlyAccessModuleKey
+    organizationId: string
+    subscriptionTier?: string | null
+    industry?: string | null
+    surveyAnswer?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AuditLogCreateManyUserInput = {
+    id?: string
+    organizationId?: string | null
+    entityType: string
+    entityId: string
+    action: string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: string | null
+    userAgent?: string | null
+    hash?: string | null
+  }
+
+  export type OrganizationCreateManyOwnerInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrganizationMembershipUpdateWithoutUserInput = {
-    organizationId?: StringFieldUpdateOperationsInput | string
     role?: EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole
     joinedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
+    organization?: OrganizationUpdateOneRequiredWithoutMembershipsNestedInput
   }
 
   export type OrganizationMembershipUncheckedUpdateWithoutUserInput = {
@@ -41018,6 +58261,217 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     deletedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
     deletedReason?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessEventUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    organization?: OrganizationUpdateOneWithoutEarlyAccessEventsNestedInput
+  }
+
+  export type EarlyAccessEventUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessEventUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    eventType?: EnumEarlyAccessEventTypeFieldUpdateOperationsInput | $Enums.EarlyAccessEventType
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industrySnapshot?: NullableStringFieldUpdateOperationsInput | string | null
+    sessionId?: StringFieldUpdateOperationsInput | string
+    durationMs?: NullableIntFieldUpdateOperationsInput | number | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type EarlyAccessSignupUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutEarlyAccessSignupsNestedInput
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EarlyAccessSignupUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    moduleKey?: EnumEarlyAccessModuleKeyFieldUpdateOperationsInput | $Enums.EarlyAccessModuleKey
+    organizationId?: StringFieldUpdateOperationsInput | string
+    subscriptionTier?: NullableStringFieldUpdateOperationsInput | string | null
+    industry?: NullableStringFieldUpdateOperationsInput | string | null
+    surveyAnswer?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditLogUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+    organization?: OrganizationUpdateOneWithoutAuditLogsNestedInput
+  }
+
+  export type AuditLogUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AuditLogUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    changes?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    oldValues?: NullableJsonNullValueInput | InputJsonValue
+    newValues?: NullableJsonNullValueInput | InputJsonValue
+    clientIp?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    hash?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type OrganizationUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReferralCreateManyPartnerInput = {
@@ -41104,6 +58558,116 @@ export namespace Prisma {
     status?: EnumReferralCommissionStatusFieldUpdateOperationsInput | $Enums.ReferralCommissionStatus
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationOutboxCreateManyTemplateInput = {
+    id?: string
+    organizationId: string
+    templateKey: string
+    messageClass: $Enums.NotificationMessageClass
+    channel: $Enums.NotificationChannel
+    recipient: string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: $Enums.NotificationOutboxStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    errorMessage?: string | null
+    sentAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationOutboxUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutNotificationOutboxEntriesNestedInput
+    deliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxNestedInput
+  }
+
+  export type NotificationOutboxUncheckedUpdateManyWithoutTemplateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    templateKey?: StringFieldUpdateOperationsInput | string
+    messageClass?: EnumNotificationMessageClassFieldUpdateOperationsInput | $Enums.NotificationMessageClass
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    recipient?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogCreateManyOutboxInput = {
+    id?: string
+    organizationId: string
+    channel: $Enums.NotificationChannel
+    status: $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: string | null
+    attemptedAt?: Date | string
+  }
+
+  export type NotificationDeliveryLogUpdateWithoutOutboxInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutNotificationDeliveryLogsNestedInput
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateWithoutOutboxInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationDeliveryLogUncheckedUpdateManyWithoutOutboxInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    channel?: EnumNotificationChannelFieldUpdateOperationsInput | $Enums.NotificationChannel
+    status?: EnumNotificationOutboxStatusFieldUpdateOperationsInput | $Enums.NotificationOutboxStatus
+    providerPayload?: NullableJsonNullValueInput | InputJsonValue
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

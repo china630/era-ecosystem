@@ -11,7 +11,9 @@
     "dev:api": "npm run start:dev -w @era365/api",
     "dev:web": "npm run dev -w @era365/web",
     "build": "npm run build -w @era365/database && npm run build -w @era365/mdm-database && npm run build -w @era365/api && npm run build -w @era365/web",
-    "db:generate": "npm run db:generate -w @era365/database && npm run db:generate -w @era365/mdm-database"
+    "db:generate": "npm run db:generate -w @era365/database && npm run db:generate -w @era365/mdm-database",
+    "platform:billing-reconcile": "npx tsx scripts/billing-reconciliation.ts",
+    "test:api": "npm run test -w @era365/api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

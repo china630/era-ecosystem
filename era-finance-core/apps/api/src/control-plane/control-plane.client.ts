@@ -62,6 +62,57 @@ export class ControlPlaneClient {
     return json as T;
   }
 
+  async assertQuota(input: {
+    organizationId: string;
+    kind: "employee" | "storage" | "invoice" | "whatsapp" | "ocr";
+    quantity?: number;
+    additionalBytes?: number;
+  }): Promise<void> {
+    await this.forward({
+      method: "POST",
+      path: "/internal/v1/quota/assert",
+      body: input,
+    });
+  }
+
+  async attachReferralOnSignup(input: {
+    organizationId: string;
+    organizationCreatedAt: string;
+    referralCode?: string | null;
+  }): Promise<void> {
+    await this.forward({
+      method: "POST",
+      path: "/internal/v1/referrals/attach-on-signup",
+      body: input,
+    });
+  }
+
+  async provisionTrialSubscription(input: {
+    organizationId: string;
+    organizationCreatedAt: string;
+  }): Promise<void> {
+    await this.forward({
+      method: "POST",
+      path: "/internal/v1/subscription/provision-trial",
+      body: input,
+    });
+  }
+
+  async getSubscriptionSnapshot(organizationId: string): Promise<{
+    tier: string;
+    activeModules: string[];
+    customConfig: unknown | null;
+    modules: Record<string, boolean>;
+    expiresAt: string | null;
+    isTrial: boolean;
+  }> {
+    const q = encodeURIComponent(organizationId);
+    return this.forward({
+      method: "GET",
+      path: `/internal/v1/subscription/snapshot?organizationId=${q}`,
+    });
+  }
+
   async validateEntitlement(input: {
     organizationId: string;
     userId?: string;

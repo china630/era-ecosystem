@@ -481,5 +481,11 @@
     "SENT": "SENT",
     "ACCEPTED": "ACCEPTED",
     "REJECTED": "REJECTED"
+  },
+  "finance": {
+    "boundaryNote": "Операционный экран в PMS. Счета, сверка с агентствами, закупки и склад — в ERA Finance.",
+    "openInFinance": "Открыть в ERA Finance",
+    "openInventoryInFinance": "Открыть склад в ERA Finance",
+    "openPurchasesInFinance": "Открыть закупки в ERA Finance"
   }
 }

@@ -481,5 +481,11 @@
     "SENT": "SENT",
     "ACCEPTED": "ACCEPTED",
     "REJECTED": "REJECTED"
+  },
+  "finance": {
+    "boundaryNote": "PMS-də əməliyyat görünüşü. Hesab-fakturalar, agentlik aktları, satınalma və anbar ERA Finance-dədir.",
+    "openInFinance": "ERA Finance-də aç",
+    "openInventoryInFinance": "Anbarı ERA Finance-də aç",
+    "openPurchasesInFinance": "Satınalmanı ERA Finance-də aç"
   }
 }

@@ -32,6 +32,10 @@ import {
 } from "./invoice-pdf.build";
 import { generateInvoicePublicToken } from "./invoice-portal-token";
 import { renderInvoicePdf } from "./invoice-pdf.render";
+import {
+  notificationsPackEnabled,
+  sendControlPlaneNotification,
+} from "../integration/control-plane-notifications.client";
 import { MailService } from "../mail/mail.service";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { createInvoicePaymentMirrorLine } from "../banking/banking-registry.helper";
@@ -1167,6 +1171,25 @@ export class InvoicesService {
     }
 
     const key = `orgs/${organizationId}/invoices/${id}.pdf`;
+
+    if (notificationsPackEnabled()) {
+      await sendControlPlaneNotification(organizationId, {
+        templateKey: "finance.invoice.email",
+        channel: "EMAIL",
+        messageClass: "FINANCIAL",
+        recipient: email,
+        sourceEntityType: "invoice",
+        sourceEntityId: id,
+        subject: `Invoice ${inv.number}`,
+        body: `Счёт ${inv.number} во вложении.`,
+        payload: {
+          invoiceNumber: inv.number,
+          pdfStorageKey: key,
+        },
+      });
+      return { ok: true, sentTo: email, via: "platform-notifications" };
+    }
+
     let pdf: Buffer;
     try {
       pdf = await this.storage.getObject(key);

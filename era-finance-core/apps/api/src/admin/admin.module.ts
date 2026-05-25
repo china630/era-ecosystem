@@ -11,7 +11,6 @@ import { AdminService } from "./admin.service";
 import { AdminAuditLogsService } from "./audit.service";
 import { PricingService } from "./pricing.service";
 import { PublicLandingController } from "./public-landing.controller";
-import { PublicPricingController } from "./public-pricing.controller";
 import { PublicTranslationsController } from "./public-translations.controller";
 
 @Module({
@@ -21,7 +20,6 @@ import { PublicTranslationsController } from "./public-translations.controller";
     AdminAuditLogsController,
     AdminCustomsTariffRatesController,
     PublicLandingController,
-    PublicPricingController,
     PublicTranslationsController,
   ],
   providers: [AdminService, AdminCatalogService, AdminAuditLogsService, PricingService],

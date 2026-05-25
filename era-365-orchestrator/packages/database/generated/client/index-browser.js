@@ -303,7 +303,23 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   id: 'id',
   name: 'name',
   ownerId: 'ownerId',
-  taxIdBlindIndex: 'taxIdBlindIndex'
+  taxIdBlindIndex: 'taxIdBlindIndex',
+  taxIdCipher: 'taxIdCipher',
+  subscriptionPlan: 'subscriptionPlan',
+  billingStatus: 'billingStatus',
+  activeModules: 'activeModules',
+  storageUsedBytes: 'storageUsedBytes',
+  currentCreditTier: 'currentCreditTier',
+  accumulatedBalance: 'accumulatedBalance',
+  billingPeriodKey: 'billingPeriodKey',
+  whatsappAlertsUsed: 'whatsappAlertsUsed',
+  ocrPagesUsed: 'ocrPagesUsed',
+  currency: 'currency',
+  settings: 'settings',
+  drakarisClientId: 'drakarisClientId',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.UserScalarFieldEnum = {
@@ -311,6 +327,8 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   passwordHash: 'passwordHash',
   isSuperAdmin: 'isSuperAdmin',
+  firstNameCipher: 'firstNameCipher',
+  lastNameCipher: 'lastNameCipher',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -408,6 +426,99 @@ exports.Prisma.OrganizationSecurityStateScalarFieldEnum = {
   lockUntil: 'lockUntil',
   activeDisputeId: 'activeDisputeId',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EarlyAccessEventScalarFieldEnum = {
+  id: 'id',
+  moduleKey: 'moduleKey',
+  eventType: 'eventType',
+  userId: 'userId',
+  organizationId: 'organizationId',
+  subscriptionTier: 'subscriptionTier',
+  industrySnapshot: 'industrySnapshot',
+  sessionId: 'sessionId',
+  durationMs: 'durationMs',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  clientIp: 'clientIp',
+  userAgent: 'userAgent'
+};
+
+exports.Prisma.EarlyAccessSignupScalarFieldEnum = {
+  id: 'id',
+  moduleKey: 'moduleKey',
+  userId: 'userId',
+  organizationId: 'organizationId',
+  subscriptionTier: 'subscriptionTier',
+  industry: 'industry',
+  surveyAnswer: 'surveyAnswer',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EarlyAccessThresholdAlertScalarFieldEnum = {
+  moduleKey: 'moduleKey',
+  threshold: 'threshold',
+  firedAt: 'firedAt',
+  firedToCount: 'firedToCount'
+};
+
+exports.Prisma.AuditLogScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  userId: 'userId',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  action: 'action',
+  changes: 'changes',
+  createdAt: 'createdAt',
+  oldValues: 'oldValues',
+  newValues: 'newValues',
+  clientIp: 'clientIp',
+  userAgent: 'userAgent',
+  hash: 'hash'
+};
+
+exports.Prisma.NotificationTemplateScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  templateKey: 'templateKey',
+  messageClass: 'messageClass',
+  channel: 'channel',
+  subject: 'subject',
+  bodyTemplate: 'bodyTemplate',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.NotificationOutboxScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  templateKey: 'templateKey',
+  templateId: 'templateId',
+  messageClass: 'messageClass',
+  channel: 'channel',
+  recipient: 'recipient',
+  payload: 'payload',
+  status: 'status',
+  sourceEntityType: 'sourceEntityType',
+  sourceEntityId: 'sourceEntityId',
+  errorMessage: 'errorMessage',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.NotificationDeliveryLogScalarFieldEnum = {
+  id: 'id',
+  outboxId: 'outboxId',
+  organizationId: 'organizationId',
+  channel: 'channel',
+  status: 'status',
+  providerPayload: 'providerPayload',
+  errorMessage: 'errorMessage',
+  attemptedAt: 'attemptedAt'
 };
 
 exports.Prisma.SortOrder = {
@@ -545,6 +656,46 @@ exports.SecurityMode = exports.$Enums.SecurityMode = {
   HARD_BLOCK_PLATFORM: 'HARD_BLOCK_PLATFORM'
 };
 
+exports.EarlyAccessModuleKey = exports.$Enums.EarlyAccessModuleKey = {
+  RETAIL_ECOM: 'RETAIL_ECOM',
+  LOGISTICS_CUSTOMS: 'LOGISTICS_CUSTOMS',
+  CONSTRUCTION: 'CONSTRUCTION',
+  CRM_WHATSAPP: 'CRM_WHATSAPP',
+  AUTO_STO: 'AUTO_STO',
+  CLINIC: 'CLINIC',
+  WHOLESALE: 'WHOLESALE',
+  HOTEL_PMS: 'HOTEL_PMS',
+  FB_POS: 'FB_POS'
+};
+
+exports.EarlyAccessEventType = exports.$Enums.EarlyAccessEventType = {
+  VIEW_CLICK: 'VIEW_CLICK',
+  MODAL_OPEN: 'MODAL_OPEN',
+  MODAL_CLOSE: 'MODAL_CLOSE',
+  CTA_CLICK: 'CTA_CLICK',
+  SURVEY_SUBMIT: 'SURVEY_SUBMIT'
+};
+
+exports.NotificationMessageClass = exports.$Enums.NotificationMessageClass = {
+  FINANCIAL: 'FINANCIAL',
+  TRANSACTIONAL: 'TRANSACTIONAL',
+  LIFECYCLE: 'LIFECYCLE',
+  MARKETING: 'MARKETING'
+};
+
+exports.NotificationChannel = exports.$Enums.NotificationChannel = {
+  EMAIL: 'EMAIL',
+  WHATSAPP: 'WHATSAPP',
+  SMS: 'SMS'
+};
+
+exports.NotificationOutboxStatus = exports.$Enums.NotificationOutboxStatus = {
+  PENDING: 'PENDING',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   TenantBilling: 'TenantBilling',
   OrganizationSubscription: 'OrganizationSubscription',
@@ -571,7 +722,14 @@ exports.Prisma.ModelName = {
   Referral: 'Referral',
   ReferralCommission: 'ReferralCommission',
   OwnershipDispute: 'OwnershipDispute',
-  OrganizationSecurityState: 'OrganizationSecurityState'
+  OrganizationSecurityState: 'OrganizationSecurityState',
+  EarlyAccessEvent: 'EarlyAccessEvent',
+  EarlyAccessSignup: 'EarlyAccessSignup',
+  EarlyAccessThresholdAlert: 'EarlyAccessThresholdAlert',
+  AuditLog: 'AuditLog',
+  NotificationTemplate: 'NotificationTemplate',
+  NotificationOutbox: 'NotificationOutbox',
+  NotificationDeliveryLog: 'NotificationDeliveryLog'
 };
 
 /**

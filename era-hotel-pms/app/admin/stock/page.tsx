@@ -13,6 +13,7 @@ import {
 import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -85,6 +86,7 @@ export default function StockAdminPage() {
           </button>
         }
       />
+      <FinanceBoundaryBanner target="inventory" labelKey="openInventoryInFinance" />
       <StatusMessage>{msg}</StatusMessage>
       <PageSection>
         <ul className="space-y-1 text-[13px] text-[#7F8C8D]">

@@ -32,7 +32,7 @@ import { resolveNewOrganizationTrialSubscription } from "../subscription/trial-p
 import { MailService } from "../mail/mail.service";
 import { PiiCryptoService } from "../security/pii-crypto.service";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
-import { ReferralsService } from "../referrals/referrals.service";
+import { ControlPlaneClient } from "../control-plane/control-plane.client";
 import {
   decodeOrganizationTaxId,
   decryptText,
@@ -88,7 +88,7 @@ export class AuthService {
     private readonly mail: MailService,
     private readonly piiCrypto: PiiCryptoService,
     private readonly directory: GlobalCompanyDirectoryService,
-    private readonly referrals: ReferralsService,
+    private readonly controlPlane: ControlPlaneClient,
   ) {}
 
   private inviteTokenSecret(): string {
@@ -96,6 +96,27 @@ export class AuthService {
       this.config.get<string>("INVITE_TOKEN_SECRET") ??
       this.config.getOrThrow<string>("JWT_SECRET")
     );
+  }
+
+  private async attachReferralOnControlPlane(input: {
+    organizationId: string;
+    organizationCreatedAt: Date;
+    referralCode?: string | null;
+  }): Promise<void> {
+    if (!input.referralCode?.trim()) return;
+    try {
+      await this.controlPlane.attachReferralOnSignup({
+        organizationId: input.organizationId,
+        organizationCreatedAt: input.organizationCreatedAt.toISOString(),
+        referralCode: input.referralCode,
+      });
+    } catch (e) {
+      this.logger.warn(
+        `Control plane referral attach failed for org ${input.organizationId}: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    }
   }
 
   private get refreshSecret(): string {
@@ -315,18 +336,6 @@ export class AuthService {
           data: { activeModules: trial.activeModules },
         });
 
-        await tx.organizationSubscription.create({
-          data: {
-            organizationId: o.id,
-            currentTier: TariffTier.TIER_0,
-            activeModules: trial.activeModules,
-            isTrial: true,
-            trialExpiresAt: trial.expiresAt,
-            expiresAt: trial.expiresAt,
-            billingPeriodKey: billingPeriodKeyBaku(o.createdAt),
-            customConfig: trial.customConfig,
-          },
-        });
         const u = await tx.user.create({
           data: {
             email: dto.adminEmail.toLowerCase(),
@@ -344,15 +353,19 @@ export class AuthService {
           },
         });
         await this.organizations.provisionChartOfAccountsFromTemplate(tx, o.id, kind);
-        await this.referrals.attachReferralOnSignupTx(tx, {
-          organizationId: o.id,
-          organizationCreatedAt: o.createdAt,
-          referralCode: dto.referralCode,
-        });
-        return { org: o, userId: u.id };
+        return { org: o, userId: u.id, organizationCreatedAt: o.createdAt };
       });
       org = created.org;
       userId = created.userId;
+      await this.controlPlane.provisionTrialSubscription({
+        organizationId: org.id,
+        organizationCreatedAt: created.organizationCreatedAt.toISOString(),
+      });
+      await this.attachReferralOnControlPlane({
+        organizationId: org.id,
+        organizationCreatedAt: created.organizationCreatedAt,
+        referralCode: dto.referralCode,
+      });
     } catch (e) {
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&
@@ -454,18 +467,6 @@ export class AuthService {
           data: { activeModules: trial.activeModules },
         });
 
-        await tx.organizationSubscription.create({
-          data: {
-            organizationId: o.id,
-            currentTier: TariffTier.TIER_0,
-            activeModules: trial.activeModules,
-            isTrial: true,
-            trialExpiresAt: trial.expiresAt,
-            expiresAt: trial.expiresAt,
-            billingPeriodKey: billingPeriodKeyBaku(o.createdAt),
-            customConfig: trial.customConfig,
-          },
-        });
         await tx.organizationMembership.create({
           data: {
             userId,
@@ -474,14 +475,18 @@ export class AuthService {
           },
         });
         await this.organizations.provisionChartOfAccountsFromTemplate(tx, o.id, kind);
-        await this.referrals.attachReferralOnSignupTx(tx, {
-          organizationId: o.id,
-          organizationCreatedAt: o.createdAt,
-          referralCode: dto.referralCode,
-        });
-        return { org: o };
+        return { org: o, organizationCreatedAt: o.createdAt };
       });
       org = created.org;
+      await this.controlPlane.provisionTrialSubscription({
+        organizationId: org.id,
+        organizationCreatedAt: created.organizationCreatedAt.toISOString(),
+      });
+      await this.attachReferralOnControlPlane({
+        organizationId: org.id,
+        organizationCreatedAt: created.organizationCreatedAt,
+        referralCode: dto.referralCode,
+      });
     } catch (e) {
       if (
         e instanceof Prisma.PrismaClientKnownRequestError &&

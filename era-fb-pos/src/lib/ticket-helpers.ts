@@ -7,17 +7,30 @@ export function isUuid(value: string): boolean {
   return UUID_RE.test(value);
 }
 
+function applyDiscount(subtotal: number, discountPercent: number): number {
+  const pct = Math.min(100, Math.max(0, discountPercent));
+  return Math.round(subtotal * (1 - pct / 100) * 100) / 100;
+}
+
 export async function recalculateTicketTotals(ticketId: string) {
-  const lines = await prisma.ticketLine.findMany({
-    where: { ticketId, kitchenStatus: { not: "VOID" } },
-  });
+  const [lines, ticket] = await Promise.all([
+    prisma.ticketLine.findMany({
+      where: { ticketId, kitchenStatus: { not: "VOID" } },
+    }),
+    prisma.ticket.findUnique({
+      where: { id: ticketId },
+      select: { discountPercent: true },
+    }),
+  ]);
   const subtotal = lines.reduce(
     (sum, line) => sum + line.qty * Number(line.unitPriceAzn),
     0,
   );
+  const discountPercent = Number(ticket?.discountPercent ?? 0);
+  const total = applyDiscount(subtotal, discountPercent);
   return prisma.ticket.update({
     where: { id: ticketId },
-    data: { subtotalAzn: subtotal, totalAzn: subtotal },
+    data: { subtotalAzn: subtotal, totalAzn: total },
   });
 }
 

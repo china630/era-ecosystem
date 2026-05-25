@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma, TariffTier } from "@erafinance/database";
+import { Prisma as CpPrisma } from "@era365/database";
 import {
   isOrganizationUuid,
   parseOrganizationId,
@@ -14,7 +15,7 @@ import {
   normalizeCashBankActiveModules,
   PRICING_MODULE_CASH_BANK_PRO,
 } from "@erafinance/database";
-import { PrismaService } from "../prisma/prisma.service";
+import { ControlPlanePrismaService } from "../control-plane/control-plane-prisma.service";
 import { PricingService } from "../admin/pricing.service";
 import { type ModuleEntitlementKey } from "./subscription.constants";
 
@@ -78,6 +79,8 @@ export type OrganizationModuleEntitlements = {
   industryAutoSto: boolean;
   industryClinic: boolean;
   industryWholesale: boolean;
+  industryHotelPms: boolean;
+  industryFbPos: boolean;
 };
 
 /** v8.1: снимок поля custom_config (конструктор тарифа). */
@@ -133,6 +136,8 @@ function entitlementsFromConstructorModules(
     industryAutoSto: has("industry_auto_sto"),
     industryClinic: has("industry_clinic"),
     industryWholesale: has("industry_wholesale"),
+    industryHotelPms: has("industry_hotel_pms"),
+    industryFbPos: has("industry_fb_pos"),
   };
 }
 
@@ -181,6 +186,8 @@ function emptyOrganizationSnapshot(): {
       industryAutoSto: false,
       industryClinic: false,
       industryWholesale: false,
+      industryHotelPms: false,
+      industryFbPos: false,
     },
     expiresAt: null,
     isTrial: false,
@@ -221,6 +228,8 @@ function computeEntitlementsLegacy(sub: {
     industryAutoSto: false,
     industryClinic: false,
     industryWholesale: false,
+    industryHotelPms: false,
+    industryFbPos: false,
   };
 }
 
@@ -257,6 +266,8 @@ function computeEntitlements(sub: {
       industryAutoSto: false,
       industryClinic: false,
       industryWholesale: false,
+      industryHotelPms: false,
+      industryFbPos: false,
     };
   }
   const customList = parseCustomModules(safe.customConfig);
@@ -312,6 +323,10 @@ function isAllowedByConstructorModules(
       return has("industry_clinic");
     case "industry_wholesale":
       return has("industry_wholesale");
+    case "industry_hotel_pms":
+      return has("industry_hotel_pms");
+    case "industry_fb_pos":
+      return has("industry_fb_pos");
     case "recovery_pro":
       return has("recovery_pro");
     default:
@@ -324,7 +339,7 @@ export class SubscriptionAccessService {
   private readonly logger = new Logger(SubscriptionAccessService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly cp: ControlPlanePrismaService,
     private readonly pricing: PricingService,
   ) {}
 
@@ -343,7 +358,7 @@ export class SubscriptionAccessService {
     if (isEmergencyModuleAccessEmail(userEmail)) {
       return true;
     }
-    const sub = await this.prisma.organizationSubscription.findUnique({
+    const sub = await this.cp.organizationSubscription.findUnique({
       where: { organizationId },
     });
     if (!sub) return false;
@@ -367,7 +382,7 @@ export class SubscriptionAccessService {
     if (isEmergencyModuleAccessEmail(opts?.userEmail)) {
       return;
     }
-    const sub = await this.prisma.organizationSubscription.findUnique({
+    const sub = await this.cp.organizationSubscription.findUnique({
       where: { organizationId },
     });
     if (!sub) {
@@ -406,7 +421,7 @@ export class SubscriptionAccessService {
       }
     }
 
-    const om = await this.prisma.organizationModule.findUnique({
+    const om = await this.cp.organizationModule.findUnique({
       where: {
         organizationId_moduleKey: {
           organizationId,
@@ -531,10 +546,10 @@ export class SubscriptionAccessService {
 
     try {
       let sub: Awaited<
-        ReturnType<PrismaService["organizationSubscription"]["findUnique"]>
+        ReturnType<ControlPlanePrismaService["organizationSubscription"]["findUnique"]>
       >;
       try {
-        sub = await this.prisma.organizationSubscription.findUnique({
+        sub = await this.cp.organizationSubscription.findUnique({
           where: { organizationId: id },
         });
       } catch (e) {
@@ -557,14 +572,14 @@ export class SubscriptionAccessService {
         sub.expiresAt.getTime() < now.getTime() &&
         sub.isTrial
       ) {
-        await this.prisma.organizationSubscription.update({
+        await this.cp.organizationSubscription.update({
           where: { organizationId: id },
           data: {
             isTrial: false,
-            customConfig: Prisma.DbNull,
+            customConfig: CpPrisma.DbNull,
           },
         });
-        const refreshed = await this.prisma.organizationSubscription.findUnique({
+        const refreshed = await this.cp.organizationSubscription.findUnique({
           where: { organizationId: id },
         });
         if (!refreshed) {
@@ -606,7 +621,7 @@ export class SubscriptionAccessService {
     organizationId: string,
     tier: TariffTier,
   ): Promise<void> {
-    await this.prisma.organizationSubscription.update({
+    await this.cp.organizationSubscription.update({
       where: { organizationId },
       data: { currentTier: tier },
     });
@@ -634,9 +649,9 @@ export class SubscriptionAccessService {
       recovery_pro?: boolean;
       ifrs_mapping?: boolean;
     },
-    tx?: Prisma.TransactionClient,
+    _tx?: Prisma.TransactionClient,
   ): Promise<{ activeModules: string[] }> {
-    const db = tx ?? this.prisma;
+    const db = this.cp;
     const sub = await db.organizationSubscription.findUnique({
       where: { organizationId },
     });
@@ -703,7 +718,7 @@ export class SubscriptionAccessService {
       set.delete("ifrs");
     }
 
-    const activeModules = normalizeCashBankActiveModules(Array.from(set));
+    const activeModules = normalizeCashBankActiveModules(Array.from(set) as string[]);
 
     const customList = parseCustomModules(sub.customConfig);
     let customConfigData: Prisma.InputJsonValue | undefined;

@@ -482,5 +482,11 @@
     "SENT": "SENT",
     "ACCEPTED": "ACCEPTED",
     "REJECTED": "REJECTED"
+  },
+  "finance": {
+    "boundaryNote": "Operational view in PMS. Sales invoices, agency reconciliation, purchases and warehouse live in ERA Finance.",
+    "openInFinance": "Open in ERA Finance",
+    "openInventoryInFinance": "Open warehouse in ERA Finance",
+    "openPurchasesInFinance": "Open purchases in ERA Finance"
   }
 }

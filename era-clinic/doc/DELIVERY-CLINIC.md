@@ -48,3 +48,5 @@ PRD: [../PRD.md](../PRD.md)
 **Migration:** `20260528110000_k5_sanatorium`
 
 **Hotel hook env:** `CLINIC_API_URL`, `CLINIC_BRIDGE_SECRET`, `HOTEL_ORGANIZATION_ID` on era-hotel-pms.
+
+Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).

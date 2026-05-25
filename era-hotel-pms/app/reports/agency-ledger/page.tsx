@@ -14,6 +14,7 @@ import {
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
 import AppShell, { PageSection } from '@/components/layout/AppShell';
+import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -90,6 +91,8 @@ export default function AgencyLedgerPage() {
           </>
         }
       />
+
+      <FinanceBoundaryBanner target="counterparties" />
 
       <PageSection className="mb-6 p-0">
         <h2 className="mb-2 px-4 pt-4 text-sm font-semibold text-[#34495E]">{t('agencyClSummary')}</h2>

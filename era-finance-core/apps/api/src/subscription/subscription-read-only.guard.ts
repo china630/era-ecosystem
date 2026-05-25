@@ -7,14 +7,14 @@ import {
 import { Reflector } from "@nestjs/core";
 import { IS_PUBLIC_KEY } from "../auth/constants";
 import type { AuthUser } from "../auth/types/auth-user";
-import { PrismaService } from "../prisma/prisma.service";
+import { ControlPlanePrismaService } from "../control-plane/control-plane-prisma.service";
 
 const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 @Injectable()
 export class SubscriptionReadOnlyGuard implements CanActivate {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly cp: ControlPlanePrismaService,
     private readonly reflector: Reflector,
   ) {}
 
@@ -45,7 +45,7 @@ export class SubscriptionReadOnlyGuard implements CanActivate {
     if (!orgForBlock || user?.isSuperAdmin) return true;
     if (READ_METHODS.has(method) || this.isWhitelistedPath(path)) return true;
 
-    const sub = await this.prisma.organizationSubscription.findUnique({
+    const sub = await this.cp.organizationSubscription.findUnique({
       where: { organizationId: orgForBlock },
       select: { isBlocked: true },
     });

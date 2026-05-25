@@ -23,3 +23,5 @@ PRD: [../PRD.md](../PRD.md)
 ## L3
 
 - [ ] Customs status read from Finance
+
+Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).

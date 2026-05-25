@@ -34,11 +34,12 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 ## FB-2 — Зрелость
 
-- [ ] FB-08 Split bill
-- [ ] FB-09 Calendar → ticket
+- [x] FB-08 Split bill — `POST /api/tickets/{id}/split` + UI checkboxes on `/orders`
+- [x] FB-09 Calendar → ticket — `POST /api/reservations/{id}/open-ticket` on `/calendar`
 - [ ] FB-10 E8 consumption → ERP
 - [ ] Real KKM NBC/Cybernet
-- [ ] i18n en/ru/az
+- [x] i18n en/ru/az — `next-intl` + `messages/{en,ru,az}.json`
+- [x] FB-08 Manager discount — `POST /api/tickets/{id}/discount` + UI on `/orders`
 
 ## FB-3 — Backlog
 
@@ -55,3 +56,5 @@ docker compose up -d fb-pos hotel-pms
 node era-hotel-pms/scripts/test-pos-bridge.mjs
 # fb-pos bridge (stub): FB_POS_PMS_STUB=1 npm run dev — then POST /api/tickets/{id}/room-charge
 ```
+
+Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).

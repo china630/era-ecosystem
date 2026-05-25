@@ -1,10 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { TariffTier } from "@erafinance/database";
-import { BillingMeterService } from "../billing/billing-meter.service";
 import { bakuMonthBounds, billingPeriodKeyBaku } from "../billing/baku-billing.util";
+import { DEFAULT_TIER_SPEND_CEILINGS_AZN } from "../billing/tier-spend-ceiling";
 import { TARIFF_TIER_LIMITS } from "../billing/tariff-limits";
+import { ControlPlaneClient } from "../control-plane/control-plane.client";
 import { resolveOrganizationUuid } from "../common/organization-id.util";
-import type { TierQuotas } from "../constants/quotas";
+import { ControlPlanePrismaService } from "../control-plane/control-plane-prisma.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
 import { QuotaExceededException } from "./quota-exceeded.exception";
@@ -15,14 +16,15 @@ export class QuotaService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly cp: ControlPlanePrismaService,
     private readonly systemConfig: SystemConfigService,
-    private readonly billingMeter: BillingMeterService,
+    private readonly controlPlane: ControlPlaneClient,
   ) {}
 
   private async getSubscriptionTier(organizationId: string): Promise<TariffTier> {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return TariffTier.TIER_0;
-    const sub = await this.prisma.organizationSubscription.findUnique({
+    const sub = await this.cp.organizationSubscription.findUnique({
       where: { organizationId: orgId },
       select: { currentTier: true },
     });
@@ -30,37 +32,32 @@ export class QuotaService {
   }
 
   async assertEmployeeQuota(organizationId: string): Promise<void> {
-    await this.billingMeter.assertBillingNotHardBlocked(organizationId);
+    await this.controlPlane.assertQuota({ organizationId, kind: "employee" });
   }
 
   async assertStorageQuota(
     organizationId: string,
     additionalBytes: number,
   ): Promise<void> {
-    await this.billingMeter.assertBillingNotHardBlocked(organizationId);
-    if (additionalBytes <= 0) return;
-    const gb = additionalBytes / 1024 ** 3;
-    if (gb > 0) {
-      await this.billingMeter.recordUsage(
-        organizationId,
-        "STORAGE_GB_MONTHLY",
-        Math.ceil(gb * 100) / 100,
-      );
-    }
+    await this.controlPlane.assertQuota({
+      organizationId,
+      kind: "storage",
+      additionalBytes,
+    });
   }
 
   async assertInvoiceQuota(organizationId: string): Promise<void> {
-    await this.billingMeter.recordUsage(organizationId, "INVOICE_CREATED", 1);
+    await this.controlPlane.assertQuota({ organizationId, kind: "invoice" });
   }
 
   async assertWhatsappQuota(organizationId: string, quantity = 1): Promise<void> {
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return;
-    await this.billingMeter.recordUsage(
+    await this.controlPlane.assertQuota({
       organizationId,
-      "WHATSAPP_ALERT",
+      kind: "whatsapp",
       quantity,
-    );
+    });
     const periodKey = billingPeriodKeyBaku();
     const org = await this.prisma.organization.findUnique({
       where: { id: orgId },
@@ -74,7 +71,11 @@ export class QuotaService {
   }
 
   async assertOcrQuota(organizationId: string, pages = 1): Promise<void> {
-    await this.billingMeter.recordUsage(organizationId, "OCR_PAGE", pages);
+    await this.controlPlane.assertQuota({
+      organizationId,
+      kind: "ocr",
+      quantity: pages,
+    });
     const orgId = resolveOrganizationUuid(organizationId);
     if (!orgId) return;
     const org = await this.prisma.organization.findUnique({
@@ -94,8 +95,8 @@ export class QuotaService {
     const tier = await this.getSubscriptionTier(orgId);
     const limits = TARIFF_TIER_LIMITS[tier];
     const meterUnitPricing = await this.systemConfig.getMeterUnitPricing();
-    const tierSpendCeilings = await this.billingMeter.getAllTierSpendCeilings();
-    const monthlySpendAzn = await this.billingMeter.getMonthlySpendAzn(orgId);
+    const tierSpendCeilings = { ...DEFAULT_TIER_SPEND_CEILINGS_AZN };
+    const monthlySpendAzn = 0;
 
     const periodKey = billingPeriodKeyBaku();
     const { from, to } = bakuMonthBounds(periodKey);

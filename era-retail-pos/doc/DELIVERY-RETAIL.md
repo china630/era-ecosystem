@@ -39,3 +39,5 @@ Source of truth for checkboxes. Summary for PM: [PRD §4](../PRD.md).
 - [ ] Offline queue (M8)
 - [ ] KKM integration (M9)
 - [ ] Umico/Kaspi sync (M10)
+
+Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).

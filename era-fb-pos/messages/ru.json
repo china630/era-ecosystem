@@ -1,0 +1,45 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Зал, заказы и KDS ресторана"
+  },
+  "nav": {
+    "dashboard": "Главная",
+    "floor": "Зал",
+    "orders": "Заказы",
+    "kds": "KDS",
+    "menu": "Меню",
+    "calendar": "Бронь столов",
+    "brand": "ERA F&B POS"
+  },
+  "orders": {
+    "title": "Активные заказы",
+    "openTickets": "Открытые чеки",
+    "ticketActions": "Действия",
+    "loading": "Загрузка…",
+    "noTickets": "Нет открытых чеков.",
+    "selectTicket": "Выберите чек",
+    "fireKitchen": "На кухню",
+    "payCash": "Оплата наличными",
+    "openKds": "Открыть KDS",
+    "void": "Сторно",
+    "applyDiscount": "Скидка %",
+    "splitSelected": "Разделить выбранные",
+    "selectLinesToSplit": "Выберите строки для разделения",
+    "roleHint": "Официант — fire/оплата; менеджер — void, скидка и Z-close."
+  },
+  "calendar": {
+    "title": "Бронь столов",
+    "table": "Стол",
+    "time": "Время",
+    "guest": "Гость",
+    "pax": "Гостей",
+    "book": "Забронировать",
+    "openTicket": "Открыть чек",
+    "reserved": "Забронировано",
+    "failed": "Ошибка"
+  },
+  "common": {
+    "azn": "AZN"
+  }
+}
