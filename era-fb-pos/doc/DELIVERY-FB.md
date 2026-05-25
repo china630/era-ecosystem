@@ -25,6 +25,13 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 - [x] FB-06 Z-close shift — `POST /api/shifts/open|close` + PMS `pos-shift-status`
 - [x] FB-07 PMS NA block on open shift — shift open pushes `OPEN` to hotel-pms bridge
 
+## FB-4 — Banquet service day (HN-8)
+
+- [x] Outlet `BANQUET` in seed + menu extra PLU
+- [x] `beoId` optional on `Ticket`; filter `GET /api/tickets?beoId=`
+- [x] Create banquet ticket: `POST /api/tickets` with `outletCode: "BANQUET"` and hotel BEO id
+- [x] Room charge bridge for extras — same `POST /api/tickets/{id}/room-charge` as FB-04
+
 ## FB-2 — Зрелость
 
 - [ ] FB-08 Split bill

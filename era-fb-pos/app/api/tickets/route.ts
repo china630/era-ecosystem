@@ -3,9 +3,15 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const beoId = url.searchParams.get("beoId");
+
   const tickets = await prisma.ticket.findMany({
-    where: { status: { in: ["OPEN", "HELD"] } },
+    where: {
+      status: { in: ["OPEN", "HELD"] },
+      ...(beoId ? { beoId } : {}),
+    },
     include: { table: true, lines: true },
     orderBy: { openedAt: "desc" },
     take: 100,
@@ -16,6 +22,7 @@ export async function GET() {
 const createSchema = z.object({
   outletCode: z.string().default("RESTAURANT"),
   tableId: z.string().optional(),
+  beoId: z.string().optional(),
   covers: z.number().int().positive().optional(),
   guestName: z.string().optional(),
   lines: z
@@ -57,6 +64,7 @@ export async function POST(request: Request) {
       tableId: body.tableId,
       covers: body.covers ?? 1,
       guestName: body.guestName,
+      beoId: body.beoId,
       subtotalAzn: subtotal,
       totalAzn: subtotal,
       lines: {

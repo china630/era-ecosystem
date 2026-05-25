@@ -88,6 +88,36 @@ async function main() {
     },
   });
 
+  const banquetOutlet = await prisma.outlet.upsert({
+    where: { code: "BANQUET" },
+    update: {},
+    create: {
+      code: "BANQUET",
+      name: "Banquet service",
+      revenueCenterCode: "FOOD",
+    },
+  });
+
+  let banquetCat = await prisma.menuCategory.findFirst({
+    where: { outletId: banquetOutlet.id, name: "Extras" },
+  });
+  if (!banquetCat) {
+    banquetCat = await prisma.menuCategory.create({
+      data: { outletId: banquetOutlet.id, name: "Extras", sortOrder: 1 },
+    });
+  }
+
+  await prisma.menuItem.upsert({
+    where: { categoryId_plu: { categoryId: banquetCat.id, plu: "BQ-EXTRA-01" } },
+    update: {},
+    create: {
+      categoryId: banquetCat.id,
+      plu: "BQ-EXTRA-01",
+      name: "Banquet extra course",
+      priceAzn: 15.0,
+    },
+  });
+
   console.log("era-fb-pos seed OK");
 }
 

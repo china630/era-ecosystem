@@ -18,7 +18,7 @@ export async function listPosResources() {
 export async function createPosResource(input: {
   code: string;
   name: string;
-  resourceType: 'TABLE' | 'SPA_CABIN';
+  resourceType: 'TABLE' | 'SPA_CABIN' | 'BANQUET_HALL';
   outletCode?: string;
 }) {
   return prisma.posResource.create({ data: input });
