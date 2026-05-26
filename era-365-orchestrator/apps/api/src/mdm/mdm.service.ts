@@ -9,6 +9,7 @@ import {
   blindIndexFin,
   encryptText,
 } from "../common/utils/mdm-crypto.util";
+import { decryptText } from "../security/pii-crypto.util";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
 
 @Injectable()
@@ -107,8 +108,92 @@ export class MdmService {
     });
   }
 
+  async linkExistingOrganization(input: {
+    organizationId: string;
+    name: string;
+    taxId: string;
+  }) {
+    const taxId = input.taxId.trim();
+    const name = input.name.trim();
+    if (!taxId || !name || !input.organizationId) {
+      throw new BadRequestException("organizationId, name, taxId required");
+    }
+    const taxIdBlindIndex = blindIndexForVoen(
+      taxId,
+      process.env.PII_BLIND_INDEX_KEY,
+    );
+    const legalEntity = await this.mdm.globalLegalEntity.upsert({
+      where: { taxIdBlindIndex },
+      create: {
+        taxIdBlindIndex,
+        taxIdCipher: encryptText(taxId),
+        nameCipher: encryptText(name),
+        organizationId: input.organizationId,
+      },
+      update: {
+        nameCipher: encryptText(name),
+        organizationId: input.organizationId,
+      },
+    });
+    return {
+      organizationId: input.organizationId,
+      globalLegalEntityId: legalEntity.id,
+    };
+  }
+
+  async lookupOrganizationByVoen(taxId: string) {
+    const normalized = taxId.trim();
+    if (!normalized) {
+      throw new BadRequestException("taxId required");
+    }
+    const taxIdBlindIndex = blindIndexForVoen(
+      normalized,
+      process.env.PII_BLIND_INDEX_KEY,
+    );
+    const legalEntity = await this.mdm.globalLegalEntity.findUnique({
+      where: { taxIdBlindIndex },
+      select: { id: true, organizationId: true },
+    });
+    if (!legalEntity) {
+      return { organizationId: null, globalLegalEntityId: null };
+    }
+    return {
+      organizationId: legalEntity.organizationId,
+      globalLegalEntityId: legalEntity.id,
+    };
+  }
+
   async healthCheck() {
     const count = await this.mdm.globalLegalEntity.count();
     return { ok: true, legalEntityCount: count };
+  }
+
+  async listLegalEntities(input: { page: number; pageSize: number }) {
+    const page = Math.max(1, input.page);
+    const pageSize = Math.min(100, Math.max(1, input.pageSize));
+    const [total, rows] = await Promise.all([
+      this.mdm.globalLegalEntity.count(),
+      this.mdm.globalLegalEntity.findMany({
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true,
+          organizationId: true,
+          taxIdBlindIndex: true,
+          nameCipher: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+    const items = rows.map((r) => ({
+      id: r.id,
+      organizationId: r.organizationId,
+      taxId: r.taxIdBlindIndex.slice(0, 12) + "…",
+      name: decryptText(r.nameCipher) ?? "(encrypted)",
+      updatedAt: r.updatedAt.toISOString(),
+    }));
+    return { total, page, pageSize, items };
   }
 }

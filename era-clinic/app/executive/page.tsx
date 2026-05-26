@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   authCookieName,
-  SATELLITE_ROLE,
+  hasPlatformCapability,
   verifySatelliteSession,
 } from "@era/satellite-kit";
 import {
@@ -31,8 +31,7 @@ export default async function ExecutivePage() {
     redirect("/login");
   }
 
-  const isOwner =
-    session.role === SATELLITE_ROLE.BUSINESS_OWNER || session.isOwner;
+  const canView = hasPlatformCapability(session, "canViewExecutive");
 
   let summary: {
     date: string;
@@ -41,7 +40,7 @@ export default async function ExecutivePage() {
     openLabOrders: number;
   } | null = null;
 
-  if (isOwner) {
+  if (canView) {
     const today = startOfToday();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -85,7 +84,7 @@ export default async function ExecutivePage() {
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6`}>
-        {!isOwner ? (
+        {!canView ? (
           <p className="text-[13px] text-red-600">
             Access restricted to BUSINESS_OWNER (Finance OWNER/DIRECTOR via SSO).
           </p>

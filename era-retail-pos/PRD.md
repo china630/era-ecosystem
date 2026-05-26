@@ -92,9 +92,9 @@ RBAC: операционные роли в satellite DB; membership/OWNER — or
 |----|--------|-----------|--------|-----------------|
 | M0 | Platform shell (health, SSO, layout) | Square shell | **MVP** | — |
 | M1 | Tenant & outlet setup | Lightspeed locations | **PLANNED** | — |
-| M2 | Register & shift (open/X/Z) | Lightspeed / 1C Z-отчёт | **PLANNED** | Event shift closed (Phase 2) |
-| M3 | Checkout & receipt | Square checkout | **PLANNED** | `SATELLITE_RETAIL_SALE_COMPLETED` |
-| M4 | Payments (cash/card/split) | Lightspeed payments | **PLANNED** | В payload `paymentMethod` |
+| M2 | Register & shift (open/X/Z) | Lightspeed / 1C Z-отчёт | **MVP** | `SATELLITE_RETAIL_SHIFT_CLOSED` |
+| M3 | Checkout & receipt | Square checkout | **MVP** | `SATELLITE_RETAIL_SALE_COMPLETED` |
+| M4 | Payments (cash/card/split) | Lightspeed payments | **MVP** | В payload `paymentMethod` |
 | M5 | Returns & void line | Square returns | **MVP** | Negative sale event (Phase 2) |
 | M6 | Preset engine | Internal | **MVP** | `preset` в payload |
 | M6a | Preset grocery | LS Retail | **MVP** | — |

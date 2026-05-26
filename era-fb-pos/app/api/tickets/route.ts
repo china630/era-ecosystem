@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getSelectedOutletId } from "@/lib/outlet-session";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const beoId = url.searchParams.get("beoId");
+  const serviceChannel = url.searchParams.get("serviceChannel");
+  const outletIdParam = url.searchParams.get("outletId");
+  const selectedOutlet = outletIdParam ?? (await getSelectedOutletId());
 
   const tickets = await prisma.ticket.findMany({
     where: {
       status: { in: ["OPEN", "HELD"] },
       ...(beoId ? { beoId } : {}),
+      ...(serviceChannel ? { serviceChannel } : {}),
+      ...(selectedOutlet ? { outletId: selectedOutlet } : {}),
     },
     include: { table: true, lines: true },
     orderBy: { openedAt: "desc" },
@@ -23,6 +29,8 @@ const createSchema = z.object({
   outletCode: z.string().default("RESTAURANT"),
   tableId: z.string().optional(),
   beoId: z.string().optional(),
+  serviceChannel: z.enum(["DINE_IN", "ROOM_SERVICE", "WALK_IN", "TAKEAWAY"]).optional(),
+  walkInLabel: z.string().max(120).optional(),
   covers: z.number().int().positive().optional(),
   guestName: z.string().optional(),
   lines: z
@@ -58,12 +66,18 @@ export async function POST(request: Request) {
     0,
   );
 
+  const channel =
+    body.serviceChannel ??
+    (body.walkInLabel ? "WALK_IN" : body.tableId ? "DINE_IN" : undefined);
+
   const ticket = await prisma.ticket.create({
     data: {
       outletId: outlet.id,
       tableId: body.tableId,
       covers: body.covers ?? 1,
       guestName: body.guestName,
+      serviceChannel: channel,
+      walkInLabel: body.walkInLabel,
       beoId: body.beoId,
       subtotalAzn: subtotal,
       totalAzn: subtotal,

@@ -48,6 +48,9 @@ export default function NewBookingModal({
   const [newGuestName, setNewGuestName] = useState('');
   const [newGuestPassport, setNewGuestPassport] = useState('');
   const [newGuestPhone, setNewGuestPhone] = useState('');
+  const [newGuestFin, setNewGuestFin] = useState('');
+  const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
+  const [mdmMsg, setMdmMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -111,6 +114,7 @@ export default function NewBookingModal({
           fullName: newGuestName,
           passportNumber: newGuestPassport,
           phone: newGuestPhone,
+          globalPersonId: globalPersonId ?? undefined,
         }),
       });
       const data = await res.json();
@@ -356,6 +360,53 @@ export default function NewBookingModal({
               onChange={(e) => setNewGuestPhone(e.target.value)}
               required
             />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="guestFin">
+              FIN (MDM lookup)
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="guestFin"
+                className={MODAL_INPUT_CLASS}
+                value={newGuestFin}
+                onChange={(e) => setNewGuestFin(e.target.value)}
+                placeholder="Optional — link to global person"
+              />
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                disabled={busy || !newGuestFin.trim()}
+                onClick={() => {
+                  setMdmMsg(null);
+                  void (async () => {
+                    const res = await fetch('/api/mdm/person-lookup', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ fin: newGuestFin.trim() }),
+                    });
+                    const data = (await res.json()) as {
+                      globalPersonId?: string | null;
+                      error?: string;
+                    };
+                    if (!res.ok) {
+                      setMdmMsg(data.error ?? tc('failed'));
+                      return;
+                    }
+                    if (data.globalPersonId) {
+                      setGlobalPersonId(data.globalPersonId);
+                      setMdmMsg(`Linked: ${data.globalPersonId.slice(0, 8)}…`);
+                    } else {
+                      setGlobalPersonId(null);
+                      setMdmMsg('No MDM person found (service token or FIN)');
+                    }
+                  })();
+                }}
+              >
+                Lookup
+              </button>
+            </div>
+            {mdmMsg ? <p className="text-xs text-[#7F8C8D]">{mdmMsg}</p> : null}
           </div>
         </form>
       </EraModal>

@@ -71,7 +71,7 @@
 | M2 | Practitioners, rooms, schedule | **PLANNED** | — |
 | M3 | Appointment & check-in | **PLANNED** | — |
 | M4 | Visit card & clinical services | **PLANNED** | `VISIT_COMPLETED` |
-| M5 | **Laboratory orders & results** | **MVP** | `LAB_ORDER_COMPLETED`, invoice lines |
+| M5 | **Laboratory orders & results** | **MVP** | `LAB_ORDER_COMPLETED`; portal on publish |
 | M6 | Service catalog cache (codes, prices) | **PLANNED** | Master prices in Finance |
 | M7 | Notifications (SMS/email stub) | **DEFERRED** | — |
 | M8 | Patient portal (results, booking) | **DEFERRED** | — |

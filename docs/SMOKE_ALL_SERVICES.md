@@ -2,7 +2,7 @@
 
 Run from umbrella root after `cp .env.example .env`.
 
-**Phase A gate:** platform smoke (orchestrator RBAC, control-plane auth, 11 event types, contracts/gov-budget) + vertical E2E samples below.
+**Phase A gate:** platform smoke (orchestrator RBAC, control-plane auth, 13 ingress event types, contracts/gov-budget) + vertical E2E samples below.
 
 ## Hosts file
 
@@ -129,7 +129,7 @@ curl -X POST http://retail.era.az/api/events/dispatch \
 
 Check orchestrator and finance-core logs for enqueue/worker log line with `transaction=` / `invoice=`.
 
-## All 11 event types — dispatch smoke
+## All 13 ingress event types — dispatch smoke
 
 Set `ERA_SATELLITE_ORGANIZATION_ID` to a valid finance org UUID and ensure org has at least one counterparty for invoice handlers.
 
@@ -146,6 +146,14 @@ Set `ERA_SATELLITE_ORGANIZATION_ID` to a valid finance org UUID and ensure org h
 | 9 | clinic.era.az | `SATELLITE_CLINIC_VISIT_COMPLETED` | `transaction=` + `invoice=` |
 | 10 | clinic.era.az | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | `transaction=` + `invoice=` |
 | 11 | wholesale.era.az | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | `transaction=` + `invoice=` |
+| 12 | hotel.era.az | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | multi-line NAS journal |
+| 13 | hotel.era.az | `SATELLITE_HOTEL_INVOICE_ISSUED` | draft sales invoice |
+| 14 | hotel.era.az | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | agency CL meta |
+
+### Idempotency replay
+
+1. Dispatch any handler row above with `correlationId: "smoke-idem-001"`.
+2. Replay the **same** payload and `correlationId` — Finance must log skip (no second GL line / invoice).
 
 Example payloads:
 
@@ -304,3 +312,55 @@ curl -X POST http://retail.era.az/api/auth/sso/exchange \
 ```
 
 Verify response `user.role` is `BUSINESS_OWNER` and `user.isOwner` is `true`.
+
+## Wave E — Platform commerce + booking (SP5)
+
+With `ERA_SATELLITE_ORGANIZATION_ID` and orchestrator `@ :4100`:
+
+| Satellite | Smoke trigger | CP APIs exercised |
+|-----------|---------------|-------------------|
+| construction | `POST /api/progress-acts/{id}/approve` | portal, pay, booking `site-visit` |
+| crm-field | `POST /api/leads/{id}/convert` | portal, pay, shipment, appointment |
+| wholesale | `POST /api/orders/{id}/confirm` | portal, pay, shipment, pickup slot |
+| logistics | `POST /api/trips/{id}/complete` | portal, pay, shipment, delivery slot |
+| fb-pos | `POST /api/tickets/{id}/pay` | portal, pay, `fb-table-{id}` slot |
+| hotel-pms | issue folio invoice | portal, pay; `GET /api/hotel/integration-settings` → `platformSubscription` |
+
+Orchestrator: `GET /platform/booking/v1/slots?resourceKey=pickup` (Bearer org token). Full checklist: [UAT-SMOKE-PLATFORM.md](../era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md) § Wave E.
+
+## Wave F — §4 coverage (delivery, loyalty, domains)
+
+| Satellite | Trigger | Body flags | CP APIs |
+|-----------|---------|------------|---------|
+| hotel-pms | folio invoice + `PATCH /api/hotel/integration-settings` | `customHostname` | delivery, loyalty, domain |
+| fb-pos | `POST /api/tickets/{id}/pay` | `delivery`, `customHostname` | shipment, promotion, domain |
+| auto-sto | work order complete | `partsDelivered`, `customHostname` | shipment, promotion, domain |
+| clinic | lab publish | `homeDelivery`, `customHostname` | shipment, promotion, domain |
+| retail / wholesale / logistics / construction / crm | pay or confirm routes | `customHostname` (where applicable) | promotion, domain |
+
+Regenerate matrix §4: `node scripts/readiness-coverage.mjs`. Consumer-only %: `node scripts/readiness-coverage.mjs --consumer-only`.
+
+## Quartet E2E — Finance · Orchestrator · Hotel · FB (SP6 Track A)
+
+Product core for Nafta F&B + PMS. Full checklist: [QUARTET_UAT.md](./QUARTET_UAT.md).
+
+```bash
+# Health (no auth)
+node scripts/quartet-smoke.mjs
+
+# PMS ↔ FB bridge
+node era-hotel-pms/scripts/test-pos-bridge.mjs
+
+# Finance CP (local)
+# ERA_AUTH_MODE=control-plane on finance-core → login → GET billing summary
+
+# Platform Wave E/F on staging with ERA_SATELLITE_ORGANIZATION_ID
+# See era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md
+```
+
+| Service | Dev URL | Health |
+|---------|---------|--------|
+| orchestrator | http://127.0.0.1:4100 | `/health` |
+| finance-api | http://127.0.0.1:4000 | `/api/health` |
+| hotel-pms | http://127.0.0.1:3000 | `/api/health` |
+| fb-pos | http://127.0.0.1:3200 | `/api/health` |

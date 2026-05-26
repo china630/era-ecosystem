@@ -19,13 +19,13 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 
 | Slug (draft) | Name | Primary users | Monetization | Status |
 |--------------|------|---------------|--------------|--------|
-| `platform_notifications` | **Notifications Pack** | All verticals + Finance | Tier-included WA/email alerts + meter overlimit; SMS as Pro | **Live (CP-B2)** on orchestrator |
-| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | +AZN/mo per bookable resource group | **Stub API** (CP-B3) |
-| `platform_portal` | **Customer Portal** | All B2C-facing verticals | Basic included; white-label + custom domain premium | **Stub API** (CP-B4) |
-| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | % or fixed per successful payment | **Stub API** (CP-B5) |
-| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | +AZN/mo; marketing messages use Notifications meter | **Stub API** (CP-B6) |
-| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **Stub API** (CP-B7) |
-| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **Stub API** (CP-B8) |
+| `platform_notifications` | **Notifications Pack** | All verticals + Finance | Tier-included WA/email alerts + meter overlimit; SMS as Pro | **Production-ready (CP-B2)** on orchestrator |
+| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | +AZN/mo per bookable resource group | **MVP API** (CP-B3) |
+| `platform_portal` | **Customer Portal** | All B2C-facing verticals | Basic included; white-label + custom domain premium | **MVP API** (CP-B4) |
+| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | % or fixed per successful payment | **MVP API** (CP-B5) |
+| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | +AZN/mo; marketing messages use Notifications meter | **MVP API** (CP-B6) |
+| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **MVP API** (CP-B7) |
+| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **MVP API** (CP-B8) |
 
 **Bundles (commercial packaging):**
 

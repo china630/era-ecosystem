@@ -33,7 +33,7 @@ PRD: [../PRD.md](../PRD.md)
 
 ## K4
 
-- [ ] LIS file import stub
+- [ ] LIS file import — **Phase 2 defer** (Wave E-D; not blocking §4 portal/pay hooks)
 - [ ] Patient portal (deferred module M8)
 
 ## K5 — Sanatorium bridge (Wave 3 Nafta)
@@ -49,4 +49,23 @@ PRD: [../PRD.md](../PRD.md)
 
 **Hotel hook env:** `CLINIC_API_URL`, `CLINIC_BRIDGE_SECRET`, `HOTEL_ORGANIZATION_ID` on era-hotel-pms.
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## K6 — Platform (Wave B3)
+
+- [x] Notifications + booking cron (T-24h) — Live
+- [x] Portal link on lab publish — `createPortalLink` MVP
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
+- [x] Wave E-A commerce — payment link on visit/lab complete (MVP)
+- [x] Wave F §4 — delivery/loyalty/domains on lab publish
+
+Client: `@era/satellite-kit`.
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Platform session via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
+- [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A); MDM N/A on satellite
+
+## SP7 — Depth (post-quartet)
+
+- [x] K2/K3 lab lifecycle + executive summary (Wave 1)
+- [x] Sanatorium bridge K5 (Nafta HN-3)
+- [x] Admin settings UI playbook `/admin/settings`

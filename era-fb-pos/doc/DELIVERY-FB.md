@@ -19,7 +19,7 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 - [x] FB-01 Floor + open ticket — `/floor` wired to `POST /api/tickets`
 - [x] FB-02 KDS fire/done — `/orders` fire + `/kds` mark done via API
-- [x] FB-03 Cash/card + KKM mock — `POST /api/tickets/{id}/pay` (stub fiscal receipt)
+- [x] FB-03 Cash/card + KKM — `POST /api/tickets/{id}/pay` + `src/lib/kkm/` (`KKM_DRIVER=mock`)
 - [x] FB-04 Room charge → PMS — `POST /api/tickets/{id}/room-charge`, `GET /api/in-house`
 - [x] FB-05 Void line — `POST /api/tickets/{id}/lines/{lineId}/void`
 - [x] FB-06 Z-close shift — `POST /api/shifts/open|close` + PMS `pos-shift-status`
@@ -36,17 +36,17 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 - [x] FB-08 Split bill — `POST /api/tickets/{id}/split` + UI checkboxes on `/orders`
 - [x] FB-09 Calendar → ticket — `POST /api/reservations/{id}/open-ticket` on `/calendar`
-- [ ] FB-10 E8 consumption → ERP
-- [ ] Real KKM NBC/Cybernet
+- [x] FB-10 E8 consumption → ERP — `STOCK_CONSUMPTION_ENABLED=true` + `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED`
+- [x] KKM adapter + mock — `src/lib/kkm/`; vendor NBC/Cybernet = separate driver when hardware available
 - [x] i18n en/ru/az — `next-intl` + `messages/{en,ru,az}.json`
 - [x] FB-08 Manager discount — `POST /api/tickets/{id}/discount` + UI on `/orders`
 
-## FB-3 — Backlog
+## FB-3 — Product depth (quartet Track C)
 
-- [ ] Multi-outlet
-- [ ] Standalone walk-in profile
-- [ ] Room service
-- [ ] Offline queue
+- [x] Multi-outlet — `GET /api/outlets`, `POST /api/outlets/select`, cookie `era_fb_outlet_id`, ticket filter
+- [x] Standalone walk-in — `serviceChannel: WALK_IN`, `walkInLabel` on `POST /api/tickets`
+- [x] Room service — `POST /api/tickets/room-service`, `serviceChannel: ROOM_SERVICE`
+- [x] Offline queue — `src/lib/offline-queue.ts` + `POST /api/offline/replay`
 
 ## Verify
 
@@ -54,7 +54,24 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 cd era-fb-pos && npm run build
 docker compose up -d fb-pos hotel-pms
 node era-hotel-pms/scripts/test-pos-bridge.mjs
-# fb-pos bridge (stub): FB_POS_PMS_STUB=1 npm run dev — then POST /api/tickets/{id}/room-charge
+node scripts/quartet-smoke.mjs
 ```
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## FB-5 — Platform (Wave B/C)
+
+- [x] Notifications on ticket pay — `@era/satellite-kit`
+- [x] Entitlement-gated hooks — `runPlatformCommerceHooks` on pay (portal/pay/delivery/loyalty/domain/booking)
+- [x] Billing snapshot UI — `GET /api/admin/integration-settings` + `/admin/integration`
+- [x] Wave E-B booking — booking slot gated by `platform_booking` module
+
+## FB-6 — Quartet smoke (Track A)
+
+- [x] Health in `scripts/quartet-smoke.mjs`
+- [x] UAT steps in [UAT-SMOKE.md](./UAT-SMOKE.md) § Quartet
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Hybrid: local `FB_WAITER` / `FB_MANAGER`; platform OWNER/ACCOUNTANT via SSO (`financeRole`)
+- [x] `/admin/integration` — platform SSO only (`PLATFORM_SESSION_REQUIRED` without `financeRole`)
+- [x] `PlatformSessionBarServer` — Finance team/billing deep links
+- [x] No local Orch RBAC API (N/A matrix)

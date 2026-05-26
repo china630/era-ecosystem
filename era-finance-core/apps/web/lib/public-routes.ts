@@ -5,6 +5,7 @@
 export function isPublicWebPath(pathname: string): boolean {
   if (pathname === "/") return true;
   if (pathname === "/login") return true;
+  if (pathname === "/auth/cp-handoff") return true;
   if (pathname === "/register") return true;
   if (pathname === "/register-org") return true;
   if (pathname === "/help") return true;

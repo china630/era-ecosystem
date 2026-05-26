@@ -23,8 +23,8 @@ Single source of truth for login, organization membership, **OWNER** / `isOwner`
 | M4 | Satellite events ingress | **MVP** |
 | M5 | Access request / transfer ownership | **MVP** (CP1) |
 | M6 | Ownership dispute | **MVP** (CP1) |
-| M7 | Billing & subscription SoT | **PLANNED** (CP-BILLING) |
-| M8 | Platform add-ons (Notifications, Booking, …) | **PLANNED** (CP-PLATFORM) |
+| M7 | Billing & subscription SoT | **DONE** (CP-BILLING) |
+| M8 | Platform add-ons (Notifications, Booking, …) | **Live / MVP** (CP-B2 Live; CP-B3–B5 MVP; B6–B8 Stub) |
 | M9 | Launcher web | **PLANNED** |
 
 ## §3 JWT claims

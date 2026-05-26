@@ -22,6 +22,25 @@ PRD: [../PRD.md](../PRD.md)
 
 ## L3
 
-- [ ] Customs status read from Finance
+- [x] Customs status read from Finance — `/customs` hub + Finance deep link (SP7)
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## L4 — Platform (Wave B3)
+
+- [x] Notifications on trip complete — `@era/satellite-kit` `trySendPlatformNotification`
+- [x] Portal + delivery on trip complete — `createPortalLink`, `createShipment` (Wave D)
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
+- [x] Wave E-A commerce — portal/pay/delivery on trip complete (MVP)
+- [x] Wave E-B booking — delivery window slot on trip complete (MVP)
+- [x] Wave F §4 — loyalty/domains on trip complete
+
+Client: `@era/satellite-kit`.
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Platform session via SSO — `PlatformSessionBarServer`
+- [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A)
+
+## SP7 — Depth (post-quartet)
+
+- [x] L2 POD + fuel reports (Wave 1)
+- [x] L3 customs status hub `/customs` + Finance deep link

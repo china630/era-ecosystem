@@ -1,6 +1,7 @@
 import { SATELLITE_CLINIC_LAB_ORDER_COMPLETED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { createPaymentLink } from "@/integration/control-plane-platform.client";
 import { prisma } from "@/lib/prisma";
 
 function testCodesFromOrder(testCode: string): string[] {
@@ -47,6 +48,24 @@ export async function POST(
         currency: "AZN",
       },
     });
+
+    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
+    const amountNet = Number(completed.amountNet);
+    if (organizationId && amountNet > 0) {
+      try {
+        await createPaymentLink(
+          {
+            amountAzn: amountNet,
+            sourceEntityType: "clinic_lab_order",
+            sourceEntityId: completed.id,
+            description: `Lab ${completed.testCode}`,
+          },
+          { organizationId },
+        );
+      } catch {
+        // optional payment link
+      }
+    }
 
     return jsonOk(completed);
   } catch (err) {

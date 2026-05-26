@@ -138,6 +138,53 @@ export async function issueFolioInvoice(folioId: string) {
     console.error('Invoice issued dispatch failed', err),
   );
 
+  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const amountAzn = folio.charges.reduce(
+    (sum, c) => sum + Number(c.amount ?? 0),
+    0,
+  );
+  let payUrl: string | undefined;
+  if (organizationId && amountAzn > 0) {
+    const { runPlatformCommerceHooks } = await import('@era/satellite-kit');
+    const hooks = await runPlatformCommerceHooks({
+      organizationId,
+      portal: { entityType: 'folio', entityId: folioId },
+      payment: {
+        amountAzn,
+        sourceEntityType: 'fiscal_document',
+        sourceEntityId: doc.id,
+        description: `Invoice ${invoiceNumber}`,
+      },
+      delivery: {
+        sourceEntityType: 'fiscal_document',
+        sourceEntityId: doc.id,
+        externalRef: folioId,
+      },
+      loyalty: {
+        code: `HOTEL-FOLIO-${doc.id.slice(0, 8)}`,
+        name: 'Hotel folio promotion',
+        discountValue: 5,
+        metadata: { folioId, fiscalDocumentId: doc.id },
+      },
+    });
+    payUrl = hooks.payUrl;
+  }
+
+  const guestPhone = folio.reservation.guest.phone?.trim();
+  if (guestPhone) {
+    const { trySendPlatformNotification } = await import('@/lib/platform-notify');
+    void trySendPlatformNotification({
+      templateKey: 'hotel.invoice.issued',
+      channel: 'WHATSAPP',
+      messageClass: 'FINANCIAL',
+      recipient: guestPhone,
+      sourceEntityType: 'fiscal_document',
+      sourceEntityId: doc.id,
+      body: `Invoice ${invoiceNumber} issued for your stay.${payUrl ? ` Pay: ${payUrl}` : ''}`,
+      payload: { folioId, invoiceNumber, payUrl },
+    });
+  }
+
   return prisma.fiscalDocument.findUniqueOrThrow({
     where: { id: doc.id },
     include: { folio: true },

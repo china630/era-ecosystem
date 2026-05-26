@@ -56,16 +56,6 @@ import {
   Handshake,
 } from "lucide-react";
 import type { AuthUser } from "../../lib/auth-context";
-import { useEarlyAccess } from "../early-access/early-access-context";
-import {
-  EARLY_ACCESS_MODULES,
-  type EarlyAccessModuleKey,
-} from "../early-access/modules.config";
-import {
-  INDUSTRY_NAV_ITEMS,
-  hasIndustryModuleAccess,
-} from "../../lib/industry-modules";
-import { useSubscription } from "../../lib/subscription-context";
 
 type SidebarLayout = {
   /** Collapsed rail только на lg+; на мобильном выезде — всегда полная ширина. */
@@ -468,8 +458,6 @@ export function MainSidebar({
 }) {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { open: openEarlyAccess } = useEarlyAccess();
-  const { effectiveSnapshot: subscriptionSnapshot } = useSubscription();
   const canSeeAuditHubNav =
     user?.role === "OWNER" ||
     user?.role === "ADMIN" ||
@@ -617,46 +605,6 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
         </CollapsibleNavSection>
-
-        {token ? (
-          <CollapsibleNavSection
-            sectionKey="industrySolutions"
-            title={t("nav.sectionIndustrySolutions")}
-            icon={Briefcase}
-            sectionActive={false}
-          >
-            {INDUSTRY_NAV_ITEMS.map((item) => {
-              const mod = EARLY_ACCESS_MODULES[item.key];
-              const entitled = hasIndustryModuleAccess(
-                subscriptionSnapshot,
-                item.key,
-              );
-              if (entitled) {
-                return (
-                  <SideNavItem
-                    key={item.key}
-                    href={item.href}
-                    label={t(item.labelKey)}
-                    icon={mod.icon}
-                    isActive={pathname.startsWith(item.href)}
-                    nested
-                    onNavClick={onNavClick}
-                  />
-                );
-              }
-              return (
-                <SideNavTeaser
-                  key={item.key}
-                  label={t(item.labelKey)}
-                  icon={mod.icon}
-                  badge={t("earlyAccess.beta")}
-                  onClick={() => openEarlyAccess(item.key)}
-                  onNavClick={onNavClick}
-                />
-              );
-            })}
-          </CollapsibleNavSection>
-        ) : null}
 
         <CollapsibleNavSection
           sectionKey="sales"

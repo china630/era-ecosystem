@@ -8,10 +8,13 @@ import {
   isSatelliteCrmVisitLogged,
   isSatelliteHotelNightAuditClosed,
   isSatelliteHotelReservationCompleted,
+  isSatelliteHotelInvoiceIssued,
+  isSatelliteHotelCityLedgerSnapshot,
   isSatelliteLogisticsTripCompleted,
   isSatelliteRetailSaleCompleted,
   isSatelliteRetailShiftClosed,
   isSatelliteWholesaleOrderConfirmed,
+  isSatelliteFbStockConsumptionCompleted,
   satelliteAutoWorkOrderCompletedSchema,
   satelliteClinicLabOrderCompletedSchema,
   satelliteClinicVisitCompletedSchema,
@@ -20,10 +23,13 @@ import {
   satelliteCrmVisitLoggedSchema,
   satelliteHotelNightAuditClosedSchema,
   satelliteHotelReservationCompletedSchema,
+  satelliteHotelInvoiceIssuedSchema,
+  satelliteHotelCityLedgerSnapshotSchema,
   satelliteLogisticsTripCompletedSchema,
   satelliteRetailSaleCompletedSchema,
   satelliteRetailShiftClosedSchema,
   satelliteWholesaleOrderConfirmedSchema,
+  satelliteFbStockConsumptionCompletedSchema,
 } from "@era/contracts";
 import { LedgerType, Prisma } from "@erafinance/database";
 import {
@@ -56,6 +62,14 @@ export class SatelliteEventDispatchService {
     if (isSatelliteHotelNightAuditClosed(data)) {
       const event = satelliteHotelNightAuditClosedSchema.parse(data);
       return this.handleHotelNightAudit(organizationId, event);
+    }
+    if (isSatelliteHotelInvoiceIssued(data)) {
+      const event = satelliteHotelInvoiceIssuedSchema.parse(data);
+      return this.handleHotelInvoiceIssued(organizationId, event);
+    }
+    if (isSatelliteHotelCityLedgerSnapshot(data)) {
+      const event = satelliteHotelCityLedgerSnapshotSchema.parse(data);
+      return this.handleHotelCityLedgerSnapshot(organizationId, event);
     }
     if (isSatelliteHotelReservationCompleted(data)) {
       const event = satelliteHotelReservationCompletedSchema.parse(data);
@@ -100,6 +114,10 @@ export class SatelliteEventDispatchService {
     if (isSatelliteCrmVisitLogged(data)) {
       const event = satelliteCrmVisitLoggedSchema.parse(data);
       return this.handleCrmVisitLogged(organizationId, event);
+    }
+    if (isSatelliteFbStockConsumptionCompleted(data)) {
+      const event = satelliteFbStockConsumptionCompletedSchema.parse(data);
+      return this.handleFbStockConsumption(organizationId, event);
     }
     throw new Error("Unhandled satellite event type");
   }
@@ -207,6 +225,70 @@ export class SatelliteEventDispatchService {
       vatInclusive: false,
     });
     return inv.id;
+  }
+
+  private async handleHotelInvoiceIssued(
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelInvoiceIssuedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    const total = event.payload.lines.reduce(
+      (sum, line) => sum + line.amount * line.qty,
+      0,
+    );
+    let counterpartyId = await this.resolveCounterpartyId(organizationId);
+    if (!counterpartyId) {
+      this.logger.warn(
+        `Hotel invoice ${event.payload.invoiceNumber}: no counterparty; skipping invoice`,
+      );
+      return {
+        meta: {
+          folioId: event.payload.folioId,
+          skipped: true,
+          reason: "no counterparty",
+        },
+      };
+    }
+    const invoiceId = await this.invoices.create(organizationId, {
+      counterpartyId,
+      dueDate: event.payload.issueDate,
+      debitAccountCode: "101",
+      items: event.payload.lines.map((line: { description: string; qty: number; amount: number; vatRate?: number }) => ({
+        description: `${line.description} (${event.payload.invoiceNumber})`,
+        quantity: line.qty,
+        unitPrice: line.amount,
+        vatRate: line.vatRate ?? 18,
+      })),
+      currency: "AZN",
+      vatInclusive: false,
+    });
+    return {
+      invoiceId: invoiceId.id,
+      meta: {
+        folioId: event.payload.folioId,
+        invoiceNumber: event.payload.invoiceNumber,
+        total,
+      },
+    };
+  }
+
+  private async handleHotelCityLedgerSnapshot(
+    organizationId: string,
+    event: ReturnType<typeof satelliteHotelCityLedgerSnapshotSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    this.logger.log(
+      `City ledger snapshot agency=${event.payload.agencyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
+    );
+    return {
+      meta: {
+        agencyId: event.payload.agencyId,
+        agencyCode: event.payload.agencyCode,
+        asOfDate: event.payload.asOfDate,
+        balance: event.payload.balance,
+        periodCharges: event.payload.periodCharges,
+        periodPayments: event.payload.periodPayments,
+        reconciliationNote: `Hotel agency ${event.payload.agencyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
+      },
+    };
   }
 
   private async handleHotelReservation(
@@ -550,5 +632,35 @@ export class SatelliteEventDispatchService {
       event.payload.orderId,
     );
     return { transactionId, invoiceId, meta: { orderId: event.payload.orderId } };
+  }
+
+  private async handleFbStockConsumption(
+    organizationId: string,
+    event: ReturnType<typeof satelliteFbStockConsumptionCompletedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    const cpId = await this.resolveCounterpartyId(organizationId);
+    const cogsAmount = event.payload.lines.reduce(
+      (sum, line) => sum + line.qty,
+      0,
+    );
+    const amount = Math.max(event.payload.amountAzn, cogsAmount);
+    const transactionId = await this.prisma.$transaction(async (tx) =>
+      this.postBalancedJournal(tx, organizationId, {
+        amount,
+        reference: `fb-consumption:${event.payload.ticketId}`,
+        description: `F&B stock consumption ${event.payload.outletCode ?? event.payload.outletId} (${event.correlationId})`,
+        counterpartyId: cpId,
+        debitAccount: this.wipAccount(),
+        creditAccount: process.env.SATELLITE_GL_COGS ?? "701",
+      }),
+    );
+    return {
+      transactionId,
+      meta: {
+        ticketId: event.payload.ticketId,
+        outletId: event.payload.outletId,
+        lineCount: event.payload.lines.length,
+      },
+    };
   }
 }

@@ -168,8 +168,16 @@ export class AuthController {
   @ApiBearerAuth()
   @Get("me")
   @ApiOperation({ summary: "Текущий пользователь и список организаций" })
-  me(@CurrentUser() user: AuthUser) {
-    return this.auth.me(user.userId, user.organizationId, user.role);
+  me(
+    @CurrentUser() user: AuthUser,
+    @Headers("authorization") authorization?: string,
+  ) {
+    return this.auth.me(
+      user.userId,
+      user.organizationId,
+      user.role,
+      authorization,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -201,11 +209,13 @@ export class AuthController {
   async switchOrganization(
     @Body() dto: SwitchOrgDto,
     @CurrentUser() user: AuthUser,
+    @Headers("authorization") authorization: string | undefined,
     @Res({ passthrough: true }) res: Response,
   ) {
     const out = await this.auth.switchOrganization(
       user.userId,
       dto.organizationId,
+      authorization,
     );
     this.auth.setRefreshCookie(res, out.refreshToken);
     const { refreshToken: _r, ...body } = out;

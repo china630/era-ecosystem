@@ -44,7 +44,7 @@ SMB СТО ведут заказ-наряды в Excel; запчасти и вы
 |----|--------|--------|---------|
 | M0 | Shell | **MVP** | — |
 | M1 | Customer vehicle card | **PLANNED** | Counterparty in Finance |
-| M2 | Work order | **PLANNED** | `WORK_ORDER_CLOSED` |
+| M2 | Work order | **MVP** | `WORK_ORDER_CLOSED` |
 | M3 | Labor lines | **PLANNED** | laborAmount |
 | M4 | Parts lines (SKU ref) | **PLANNED** | partsAmount + stock OUT |
 | M5 | Appointment calendar | **DEFERRED** | — |

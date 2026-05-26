@@ -97,3 +97,105 @@ export function isSatelliteHotelNightAuditClosed(
 ): data is SatelliteHotelNightAuditClosedEvent {
   return satelliteHotelNightAuditClosedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_HOTEL_INVOICE_ISSUED =
+  "SATELLITE_HOTEL_INVOICE_ISSUED" as const;
+
+export interface SatelliteHotelInvoiceIssuedEvent {
+  type: typeof SATELLITE_HOTEL_INVOICE_ISSUED;
+  organizationId: string;
+  correlationId: string;
+  occurredAt: string;
+  payload: {
+    invoiceNumber: string;
+    issueDate: string;
+    counterpartyType: "guest" | "company" | "agency";
+    counterpartyTaxId: string | null;
+    reservationId: string;
+    folioId: string;
+    folioType: string;
+    fiscalStatus: string;
+    currency: "AZN";
+    lines: Array<{
+      description: string;
+      revenueCode: string;
+      qty: number;
+      amount: number;
+      vatRate?: number;
+    }>;
+  };
+}
+
+export const satelliteHotelInvoiceIssuedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_INVOICE_ISSUED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  payload: z.object({
+    invoiceNumber: z.string().min(1),
+    issueDate: z.string().min(1),
+    counterpartyType: z.enum(["guest", "company", "agency"]),
+    counterpartyTaxId: z.string().nullable(),
+    reservationId: z.string().min(1),
+    folioId: z.string().min(1),
+    folioType: z.string().min(1),
+    fiscalStatus: z.string().min(1),
+    currency: z.literal("AZN"),
+    lines: z.array(
+      z.object({
+        description: z.string(),
+        revenueCode: z.string(),
+        qty: z.number(),
+        amount: z.number(),
+        vatRate: z.number().optional(),
+      }),
+    ),
+  }),
+});
+
+export function isSatelliteHotelInvoiceIssued(
+  data: unknown,
+): data is SatelliteHotelInvoiceIssuedEvent {
+  return satelliteHotelInvoiceIssuedSchema.safeParse(data).success;
+}
+
+export const SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT =
+  "SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT" as const;
+
+export interface SatelliteHotelCityLedgerSnapshotEvent {
+  type: typeof SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT;
+  organizationId: string;
+  correlationId: string;
+  occurredAt: string;
+  payload: {
+    agencyId: string;
+    agencyCode: string;
+    asOfDate: string;
+    balance: number;
+    periodCharges: number;
+    periodPayments: number;
+    currency: "AZN";
+  };
+}
+
+export const satelliteHotelCityLedgerSnapshotSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  payload: z.object({
+    agencyId: z.string().min(1),
+    agencyCode: z.string().min(1),
+    asOfDate: z.string().min(1),
+    balance: z.number(),
+    periodCharges: z.number(),
+    periodPayments: z.number(),
+    currency: z.literal("AZN"),
+  }),
+});
+
+export function isSatelliteHotelCityLedgerSnapshot(
+  data: unknown,
+): data is SatelliteHotelCityLedgerSnapshotEvent {
+  return satelliteHotelCityLedgerSnapshotSchema.safeParse(data).success;
+}

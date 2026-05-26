@@ -70,11 +70,10 @@ export class PaymentProviderService {
     const webApp = this.config
       .get<string>("WEB_APP_PUBLIC_URL", "http://localhost:3000")
       .replace(/\/$/, "");
-    const apiPublic = this.config
-      .get<string>("API_PUBLIC_URL", "http://127.0.0.1:4000")
-      .replace(/\/$/, "");
 
     const paymentKind = dto.provider ?? "pasha_bank";
+    const webhookProvider =
+      paymentKind === "drakaris" ? "drakaris" : "pasha_bank";
 
     const order = await this.prisma.paymentOrder.create({
       data: {
@@ -90,7 +89,7 @@ export class PaymentProviderService {
     });
 
     const returnUrl = `${webApp}/billing/success?orderId=${encodeURIComponent(order.id)}`;
-    const callbackUrl = `${apiPublic}/api/billing/webhooks/pasha_bank`;
+    const callbackUrl = this.resolveBillingWebhookUrl(webhookProvider);
 
     if (paymentKind === "drakaris") {
       const session = await this.drakaris.createPaymentSession({
@@ -185,7 +184,7 @@ export class PaymentProviderService {
     });
 
     const returnUrl = `${webApp}/billing/success?orderId=${encodeURIComponent(order.id)}`;
-    const callbackUrl = `${apiPublic}/api/billing/webhooks/pasha_bank`;
+    const callbackUrl = this.resolveBillingWebhookUrl("pasha_bank");
 
     const session = await this.pasha.createPaymentSession({
       internalOrderId: order.id,
@@ -473,6 +472,20 @@ export class PaymentProviderService {
           : undefined,
       });
     });
+  }
+
+  /** Public callback URL registered with payment providers (orchestrator v1 webhooks). */
+  private resolveBillingWebhookUrl(provider: string): string {
+    const normalized = provider.trim().toLowerCase();
+    const explicit = this.config
+      .get<string>("BILLING_WEBHOOK_PUBLIC_URL")
+      ?.replace(/\/$/, "");
+    const base =
+      explicit ??
+      this.config
+        .get<string>("API_PUBLIC_URL", "http://127.0.0.1:4100")
+        .replace(/\/$/, "");
+    return `${base}/v1/billing/webhooks/${normalized}`;
   }
 
   /** Intraday tier-ceiling unlock: pay → bump tier (metadata.tierIntradyUnlock). */

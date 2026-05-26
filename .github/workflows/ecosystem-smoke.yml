@@ -29,6 +29,20 @@ jobs:
           npm ci
           npm run build
 
+  build-orchestrator-web:
+    runs-on: ubuntu-latest
+    needs: build-packages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install and build orchestrator web
+        working-directory: era-365-orchestrator/apps/web
+        run: |
+          npm install
+          npm run build
+
   build-orchestrator-api:
     runs-on: ubuntu-latest
     needs: build-packages
@@ -64,3 +78,40 @@ jobs:
       - name: Build finance API
         working-directory: era-finance-core/apps/api
         run: npm run build
+
+  build-quartet-satellites:
+    runs-on: ubuntu-latest
+    needs: build-packages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build hotel-pms
+        working-directory: era-hotel-pms
+        run: |
+          npm ci
+          npx prisma generate
+          npm run build
+      - name: Build fb-pos
+        working-directory: era-fb-pos
+        run: |
+          npm ci
+          npx prisma generate
+          npm run build
+
+  quartet-smoke:
+    runs-on: ubuntu-latest
+    needs: [build-orchestrator-api, build-finance-api, build-quartet-satellites]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Quartet health script (services optional in CI)
+        run: node scripts/quartet-smoke.mjs
+      - name: POS bridge script (compile check)
+        working-directory: era-hotel-pms
+        run: node --check scripts/test-pos-bridge.mjs
+      - name: SSO launch smoke script (compile check)
+        run: node --check scripts/sso-launch-smoke.mjs

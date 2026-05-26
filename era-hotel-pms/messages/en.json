@@ -441,6 +441,8 @@
     "processRetry": "Process retry queue",
     "pushMasterData": "Push master data (E5)",
     "e5Sent": "E5 sent ({id})",
+    "platformSubscription": "Platform subscription (Orch)",
+    "platformSubscriptionHint": "Read-only billing snapshot for entitlement-gated platform hooks.",
     "posBridgeTest": "POS bridge test",
     "roomChargeFood": "Room charge FOOD",
     "roomChargePosted": "Room charge posted",

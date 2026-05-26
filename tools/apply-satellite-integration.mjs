@@ -167,7 +167,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname === "/login") return NextResponse.next();
+  if (pathname === "/login" || pathname === "/sso/callback") return NextResponse.next();
   const token = getBearerOrCookieToken(request, COOKIE);
   if (!token) {
     const url = request.nextUrl.clone();
@@ -303,6 +303,22 @@ for (const app of apps) {
   write(path.join(base, "app/api/auth/login/route.ts"), loginRoute);
   write(path.join(base, "middleware.ts"), middlewareTs);
   write(path.join(base, "app/login/page.tsx"), loginPage);
+  write(
+    path.join(base, "app/sso/callback/page.tsx"),
+    `"use client";
+
+import { Suspense } from "react";
+import { SsoCallbackPage } from "@era/satellite-kit/ui";
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="p-6 text-sm text-[#7F8C8D]">Signing you in…</p>}>
+      <SsoCallbackPage />
+    </Suspense>
+  );
+}
+`,
+  );
   write(path.join(base, "app/api/events/dispatch/route.ts"), eventDispatch);
 
   const pkgPath = path.join(base, "package.json");

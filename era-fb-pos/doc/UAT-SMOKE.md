@@ -1,5 +1,22 @@
 # UAT smoke — era-fb-pos
 
+
+
+
+
+## SSO paths (platform entry - SP9/P2)
+
+### Owner path (Orchestrator)
+1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+2. Home → industry tile → **Open** → satellite `/sso/callback` session.
+3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
+
+### Ops path (local)
+1. Use this app's `/login` and seed users in sections below.
+2. Billing, team, register → Orchestrator only (no satellite `/register`).
+
+
+
 ## FB-0 — Scaffold
 
 - [x] `GET /api/health` → 200
@@ -28,6 +45,21 @@
    - `POST /api/tickets/{id}/room-charge`
 8. Void: open new ticket + line → `POST /api/tickets/{id}/lines/{lineId}/void` `{ "reason": "wrong item" }`
 9. Z-close: `POST /api/shifts/close` (fails if open tickets remain)
+
+## Quartet (Track A)
+
+1. `node scripts/quartet-smoke.mjs` — FB health 200 when dev server up
+2. `node era-hotel-pms/scripts/test-pos-bridge.mjs` — bridge regression
+3. KKM: pay returns `fiscal.driver` = `mock` (not stub flag)
+4. Entitlement: pay without `platform_loyalty` in snapshot → no promotion created in Orch (hooks gated)
+
+## Quartet (Track C)
+
+1. `GET /api/outlets` + `POST /api/outlets/select` — multi-outlet session
+2. `POST /api/tickets/room-service` — room service ticket without table
+3. Walk-in: `POST /api/tickets` `{ "walkInLabel": "Guest", "serviceChannel": "WALK_IN" }`
+4. E8: `STOCK_CONSUMPTION_ENABLED=true` → pay dispatches consumption event
+5. `/admin/integration` — billing snapshot read-only
 
 ## Pass criteria
 

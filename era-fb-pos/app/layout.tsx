@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import { PlatformSessionBarServer } from "@era/satellite-kit/ui";
 import { SHELL_CLASS } from "@/lib/design-system";
 import "./globals.css";
 
@@ -21,7 +22,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     <html lang={locale}>
       <body className={SHELL_CLASS}>
         <NextIntlClientProvider messages={messages}>
-          <div className="mx-auto max-w-6xl px-4 py-6">{children}</div>
+          <div className="mx-auto max-w-6xl px-4 py-6">
+            <PlatformSessionBarServer />
+            {children}
+          </div>
         </NextIntlClientProvider>
       </body>
     </html>

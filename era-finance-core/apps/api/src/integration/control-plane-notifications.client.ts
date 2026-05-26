@@ -1,4 +1,4 @@
-﻿/** CP-VERTICAL-GROWTH — Finance to control plane Notifications Pack (ERA_NOTIFICATIONS_PACK). */
+/** CP-VERTICAL-GROWTH - Finance to control plane Notifications Pack (ERA_NOTIFICATIONS_PACK). */
 
 export type SendNotificationInput = {
   templateKey: string;
@@ -54,4 +54,36 @@ export async function sendControlPlaneNotification(
 
 export function notificationsPackEnabled(): boolean {
   return (process.env.ERA_NOTIFICATIONS_PACK ?? "").toLowerCase() === "true";
+}
+
+export type CreatePaymentLinkInput = {
+  amountAzn: number;
+  counterpartyRef?: string;
+  sourceEntityType: string;
+  sourceEntityId: string;
+  description?: string;
+  expiresInHours?: number;
+};
+
+export async function createControlPlanePaymentLink(
+  organizationId: string,
+  body: CreatePaymentLinkInput,
+): Promise<{ paymentUrl?: string; portalPayUrl?: string }> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "x-organization-id": organizationId,
+  };
+  const token = serviceBearerToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${controlPlaneBaseUrl()}/platform/payments/v1/payment-links`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Control plane payment link failed: ${res.status} ${text}`);
+  }
+  return JSON.parse(text) as { paymentUrl?: string; portalPayUrl?: string };
 }

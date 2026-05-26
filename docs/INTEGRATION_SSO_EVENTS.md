@@ -5,6 +5,21 @@
 - **Issuer:** `era-365-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`)
 - **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` verifies HS256 JWT (`ERA_JWT_SECRET`, `iss`, `aud`)
 - **Rollout:** set `ERA_AUTH_MODE=control-plane` on finance-core API (default `legacy` keeps `JwtAuthGuard` + DB validation)
+
+### CP2 RS256 cutover (staging)
+
+| Env | Orchestrator | Consumers (Finance, satellites) |
+|-----|--------------|----------------------------------|
+| Local dev | `ERA_JWT_SIGNING_MODE=hs256` (default), `ERA_JWT_SECRET` | `ERA_JWT_VERIFY_MODE=dual`, same secret fallback |
+| Staging/prod | `ERA_JWT_SIGNING_MODE=rs256` or `dual`, `ERA_JWT_RS256_JWK` (private JWK JSON) | `ERA_JWT_JWKS_URL=http://orchestrator:4100/.well-known/jwks.json` on Finance API |
+
+**Smoke (staging):**
+
+1. Orchestrator: configure `ERA_JWT_RS256_JWK`; login returns RS256 `accessToken` (when cutover flag enabled).
+2. Finance: `ERA_JWT_RS256_JWKS_URL=http://orchestrator:4100/.well-known/jwks.json` (or equivalent) — CP guard accepts RS256 tokens.
+3. HS256 remains valid during dual-sign period if both secrets/keys configured.
+
+JWKS endpoint: `era-365-orchestrator/apps/api/src/auth/well-known.controller.ts`. DELIVERY checkbox: [DELIVERY-ORCHESTRATOR.md](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) CP2.
 - **Billing:** `ControlPlaneEntitlementGuard` runs after auth; `isOwner` from JWT for owner-only routes
 
 ## RBAC (Epic A2 — orchestrator source of truth)
@@ -78,6 +93,19 @@ After `POST /api/auth/sso/exchange` on a satellite, session JWT includes:
 
 Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
 
+### RBAC / memberships on industry satellites (hybrid)
+
+Industry apps **do not** expose orchestrator RBAC routes locally (`join-org`, `access-requests`, `transfer-ownership`, `GET /memberships` → **N/A** in matrix §2.1).
+
+| Контур | Где | Пример |
+|--------|-----|--------|
+| **Платформа** | Orch membership → Finance SSO → `executeSatelliteSsoExchange` | OWNER/DIRECTOR → `BUSINESS_OWNER`; ADMIN/ACCOUNTANT → `PLATFORM_MEMBER` + `financeRole` in JWT |
+| **Операции** | Локальная БД спутника | FB `FB_WAITER`, hotel reception — без `financeRole` |
+
+`@era/satellite-kit`: `resolvePlatformCapabilities`, `PlatformAccountBar` (deep links to Finance team/billing), `assertIndustryModuleActive`. Локальный официант **не** получает join-org / billing UI.
+
+Hot + FB: гибрид — local login для ops; SSO для владельца/бухгалтера с Finance launcher.
+
 ## Events (Epic B — Phase A complete)
 
 1. Satellite domain action → typed event in `@era/contracts`
@@ -89,11 +117,16 @@ Local dev stub: each industry app exposes `POST /api/events/dispatch` (forwards 
 
 Env: see root `.env.example` (`SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`, etc.).
 
-### All 11 event types — worker status
+### All 13 ingress event types — worker status
+
+Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-contracts/src/events/satellite-event.ts`](../packages/era-contracts/src/events/satellite-event.ts). Finance routes each `type` in `SatelliteEventDispatchService`.
 
 | Type | Satellite | Finance worker | Result |
 |------|-----------|----------------|--------|
 | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | era-hotel-pms | `handleHotelReservation` | GL + draft invoice |
+| `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | era-hotel-pms | `handleHotelNightAudit` | Multi-line NAS journal from `revenueLines` + GL map |
+| `SATELLITE_HOTEL_INVOICE_ISSUED` | era-hotel-pms | `handleHotelInvoiceIssued` | Draft sales invoice in Finance |
+| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger reconciliation meta |
 | `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | era-logistics | `handleLogisticsTrip` | GL posting |
@@ -105,6 +138,10 @@ Env: see root `.env.example` (`SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_OR
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |
 
+**Hotel outbound only** (custom ERP webhooks on `HotelProfile.integrationSettingsJson`; not in `isSatelliteEvent`): `SATELLITE_HOTEL_FOLIO_CHARGE_POSTED`, `SATELLITE_HOTEL_FOLIO_PAYMENT_RECEIVED`, `SATELLITE_HOTEL_FOLIO_CHARGE_VOIDED`, `SATELLITE_HOTEL_MASTER_DATA_SYNC`, `SATELLITE_HOTEL_PAYMENT_FISCALIZED`. See [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md).
+
 Idempotency: table `satellite_events_processed` — replay same `correlationId` → skip (no duplicate postings).
 
 Implementation: [`satellite-event-dispatch.service.ts`](../era-finance-core/apps/api/src/integration/satellite-event-dispatch.service.ts).
+
+Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).

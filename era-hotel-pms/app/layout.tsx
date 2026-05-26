@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
+import { PlatformSessionBarServer } from '@era/satellite-kit/ui';
 import './globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,7 +23,12 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body>
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider messages={messages}>
+          <div className="mx-auto max-w-6xl px-4 py-2">
+            <PlatformSessionBarServer />
+          </div>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

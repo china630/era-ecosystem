@@ -521,6 +521,109 @@ exports.Prisma.NotificationDeliveryLogScalarFieldEnum = {
   attemptedAt: 'attemptedAt'
 };
 
+exports.Prisma.PlatformPaymentLinkScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  amountAzn: 'amountAzn',
+  currency: 'currency',
+  counterpartyRef: 'counterpartyRef',
+  sourceEntityType: 'sourceEntityType',
+  sourceEntityId: 'sourceEntityId',
+  paymentOrderId: 'paymentOrderId',
+  token: 'token',
+  paymentUrl: 'paymentUrl',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PlatformPortalLinkScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  token: 'token',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BookableResourceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  resourceKey: 'resourceKey',
+  name: 'name',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BookingSlotScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  resourceId: 'resourceId',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  capacity: 'capacity',
+  bookedCount: 'bookedCount',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BookingAppointmentScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  resourceId: 'resourceId',
+  slotId: 'slotId',
+  customerRef: 'customerRef',
+  customerPhone: 'customerPhone',
+  customerName: 'customerName',
+  scheduledAt: 'scheduledAt',
+  status: 'status',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.PlatformPromotionScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  code: 'code',
+  name: 'name',
+  discountType: 'discountType',
+  discountValue: 'discountValue',
+  validFrom: 'validFrom',
+  validUntil: 'validUntil',
+  status: 'status',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PlatformCustomDomainScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  hostname: 'hostname',
+  status: 'status',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PlatformShipmentScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  externalRef: 'externalRef',
+  trackingToken: 'trackingToken',
+  status: 'status',
+  sourceEntityType: 'sourceEntityType',
+  sourceEntityId: 'sourceEntityId',
+  recipientPhone: 'recipientPhone',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -696,6 +799,49 @@ exports.NotificationOutboxStatus = exports.$Enums.NotificationOutboxStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.PlatformPaymentLinkStatus = exports.$Enums.PlatformPaymentLinkStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PlatformPortalLinkStatus = exports.$Enums.PlatformPortalLinkStatus = {
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+  EXPIRED: 'EXPIRED'
+};
+
+exports.BookingAppointmentStatus = exports.$Enums.BookingAppointmentStatus = {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+};
+
+exports.PlatformPromotionDiscountType = exports.$Enums.PlatformPromotionDiscountType = {
+  PERCENT: 'PERCENT',
+  FIXED_AZN: 'FIXED_AZN'
+};
+
+exports.PlatformPromotionStatus = exports.$Enums.PlatformPromotionStatus = {
+  ACTIVE: 'ACTIVE',
+  DISABLED: 'DISABLED'
+};
+
+exports.PlatformCustomDomainStatus = exports.$Enums.PlatformCustomDomainStatus = {
+  PENDING_DNS: 'PENDING_DNS',
+  ACTIVE: 'ACTIVE',
+  DISABLED: 'DISABLED'
+};
+
+exports.PlatformShipmentStatus = exports.$Enums.PlatformShipmentStatus = {
+  CREATED: 'CREATED',
+  IN_TRANSIT: 'IN_TRANSIT',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
   TenantBilling: 'TenantBilling',
   OrganizationSubscription: 'OrganizationSubscription',
@@ -729,7 +875,15 @@ exports.Prisma.ModelName = {
   AuditLog: 'AuditLog',
   NotificationTemplate: 'NotificationTemplate',
   NotificationOutbox: 'NotificationOutbox',
-  NotificationDeliveryLog: 'NotificationDeliveryLog'
+  NotificationDeliveryLog: 'NotificationDeliveryLog',
+  PlatformPaymentLink: 'PlatformPaymentLink',
+  PlatformPortalLink: 'PlatformPortalLink',
+  BookableResource: 'BookableResource',
+  BookingSlot: 'BookingSlot',
+  BookingAppointment: 'BookingAppointment',
+  PlatformPromotion: 'PlatformPromotion',
+  PlatformCustomDomain: 'PlatformCustomDomain',
+  PlatformShipment: 'PlatformShipment'
 };
 
 /**

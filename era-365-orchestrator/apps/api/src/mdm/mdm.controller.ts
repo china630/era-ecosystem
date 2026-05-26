@@ -26,6 +26,19 @@ export class MdmController {
     return this.mdm.upsertNaturalPerson(body);
   }
 
+  @Post("organizations/lookup-by-voen")
+  lookupByVoen(@Body() body: { taxId: string }) {
+    return this.mdm.lookupOrganizationByVoen(body.taxId ?? "");
+  }
+
+  @Post("organizations/link")
+  linkOrg(
+    @Body()
+    body: { organizationId: string; name: string; taxId: string },
+  ) {
+    return this.mdm.linkExistingOrganization(body);
+  }
+
   @Post("access-requests")
   accessRequest(
     @Body()

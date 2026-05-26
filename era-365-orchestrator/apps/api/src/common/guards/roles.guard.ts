@@ -26,9 +26,26 @@ export class RolesGuard implements CanActivate {
 
     if (user.isSuperAdmin) return true;
     const role = user.role;
-    if (!role || !required.includes(role)) {
-      throw new ForbiddenException("Insufficient role");
-    }
-    return true;
+    if (role && required.includes(role)) return true;
+    const perms = user.permissions ?? [];
+    const roleFallback: Record<UserRole, string> = {
+      OWNER: "billing.manage",
+      ADMIN: "reporting.view",
+      ACCOUNTANT: "accounting.post",
+      USER: "reporting.view",
+      PROCUREMENT: "purchases.manage",
+      AUDITOR: "reporting.view",
+      WAREHOUSE_KEEPER: "inventory.manage",
+      HR_OFFICER: "hr.manage",
+      HR_MANAGER: "hr.manage",
+      DEPARTMENT_HEAD: "reporting.view",
+      DIRECTOR: "billing.manage",
+      PARTNER: "reporting.view",
+    };
+    const needed = required
+      .map((r) => roleFallback[r])
+      .filter((p): p is string => Boolean(p));
+    if (needed.some((p) => perms.includes(p))) return true;
+    throw new ForbiddenException("Insufficient role");
   }
 }

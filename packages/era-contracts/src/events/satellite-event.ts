@@ -8,13 +8,14 @@ import {
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
 } from "./crm-field.events";
-import { isSatelliteHotelNightAuditClosed, isSatelliteHotelReservationCompleted } from "./hotel.events";
+import { isSatelliteHotelNightAuditClosed, isSatelliteHotelReservationCompleted, isSatelliteHotelInvoiceIssued, isSatelliteHotelCityLedgerSnapshot } from "./hotel.events";
 import { isSatelliteLogisticsTripCompleted } from "./logistics.events";
 import {
   isSatelliteRetailSaleCompleted,
   isSatelliteRetailShiftClosed,
 } from "./retail.events";
 import { isSatelliteWholesaleOrderConfirmed } from "./wholesale.events";
+import { isSatelliteFbStockConsumptionCompleted } from "./fb.events";
 
 export type KnownSatelliteEvent = { type: string };
 
@@ -25,6 +26,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
   return (
     isSatelliteHotelReservationCompleted(data) ||
     isSatelliteHotelNightAuditClosed(data) ||
+    isSatelliteHotelInvoiceIssued(data) ||
+    isSatelliteHotelCityLedgerSnapshot(data) ||
     isSatelliteRetailSaleCompleted(data) ||
     isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||
@@ -34,7 +37,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteAutoWorkOrderCompleted(data) ||
     isSatelliteClinicVisitCompleted(data) ||
     isSatelliteClinicLabOrderCompleted(data) ||
-    isSatelliteWholesaleOrderConfirmed(data)
+    isSatelliteWholesaleOrderConfirmed(data) ||
+    isSatelliteFbStockConsumptionCompleted(data)
   );
 }
 

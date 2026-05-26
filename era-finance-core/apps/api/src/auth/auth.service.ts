@@ -357,6 +357,11 @@ export class AuthService {
       });
       org = created.org;
       userId = created.userId;
+      await this.controlPlane.linkOrganizationMdm({
+        organizationId: org.id,
+        name: org.name,
+        taxId: normalizedTaxId,
+      });
       await this.controlPlane.provisionTrialSubscription({
         organizationId: org.id,
         organizationCreatedAt: created.organizationCreatedAt.toISOString(),
@@ -478,6 +483,11 @@ export class AuthService {
         return { org: o, organizationCreatedAt: o.createdAt };
       });
       org = created.org;
+      await this.controlPlane.linkOrganizationMdm({
+        organizationId: org.id,
+        name: org.name,
+        taxId: normalizedTaxId,
+      });
       await this.controlPlane.provisionTrialSubscription({
         organizationId: org.id,
         organizationCreatedAt: created.organizationCreatedAt.toISOString(),
@@ -642,7 +652,81 @@ export class AuthService {
     };
   }
 
-  async switchOrganization(userId: string, organizationId: string) {
+  private controlPlaneAuthEnabled(authorization?: string): boolean {
+    return (
+      (process.env.ERA_AUTH_MODE ?? "legacy").toLowerCase() ===
+        "control-plane" &&
+      this.controlPlane.rbacProxyEnabled &&
+      Boolean(authorization?.startsWith("Bearer "))
+    );
+  }
+
+  private async listOrganizationsViaControlPlane(authorization: string) {
+    const rows = await this.controlPlane.forward<
+      Array<{
+        organizationId: string;
+        organizationName: string | null;
+        role: UserRole;
+        isOwner: boolean;
+      }>
+    >({
+      method: "GET",
+      path: "/memberships",
+      authorization,
+    });
+    return rows.map((m) => ({
+      id: m.organizationId,
+      name: m.organizationName ?? m.organizationId,
+      taxId: "",
+      currency: "AZN",
+      role: m.role,
+      kind: OrganizationKind.COMMERCIAL,
+    }));
+  }
+
+  async switchOrganization(
+    userId: string,
+    organizationId: string,
+    authorization?: string,
+  ) {
+    if (this.controlPlaneAuthEnabled(authorization)) {
+      const out = await this.controlPlane.forward<{
+        accessToken: string;
+        refreshToken: string;
+        claims: {
+          organizationId: string;
+          role: UserRole;
+          sub: string;
+          email: string;
+          isOwner?: boolean;
+        };
+      }>({
+        method: "POST",
+        path: "/auth/switch-organization",
+        body: { organizationId },
+        authorization: authorization!,
+      });
+      const user = await this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+      });
+      const orgs = await this.listOrganizationsViaControlPlane(authorization!);
+      const role = out.claims.role;
+      const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
+        userId,
+      );
+      return {
+        accessToken: out.accessToken,
+        refreshToken: out.refreshToken,
+        user: this.toPublicUser(user, organizationId, role),
+        organizations: orgs,
+        access: this.sessionAccessFlags(
+          organizationId,
+          role,
+          canViewHoldingReports,
+        ),
+      };
+    }
+
     const m = await this.prisma.organizationMembership.findUnique({
       where: {
         userId_organizationId: { userId, organizationId },
@@ -675,11 +759,14 @@ export class AuthService {
     userId: string,
     organizationId: string | null,
     role: UserRole | null,
+    authorization?: string,
   ) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
-    const orgs = await this.listOrganizationsForUser(userId);
+    const orgs = this.controlPlaneAuthEnabled(authorization)
+      ? await this.listOrganizationsViaControlPlane(authorization!)
+      : await this.listOrganizationsForUser(userId);
     const canViewHoldingReports = await this.userMayViewAnyHoldingReport(
       userId,
     );

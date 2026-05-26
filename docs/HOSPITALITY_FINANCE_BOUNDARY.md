@@ -40,7 +40,8 @@ Banner component: `FinanceBoundaryBanner` — shows when `NEXT_PUBLIC_FINANCE_WE
 | Event | Status | Effect |
 |-------|--------|--------|
 | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | **Live** (Wave 5) | Multi-line NAS journal from `revenueLines` + GL map |
-| `SATELLITE_HOTEL_INVOICE_ISSUED` | Planned | Draft sales invoice in Finance |
+| `SATELLITE_HOTEL_INVOICE_ISSUED` | **Live** | Draft sales invoice in Finance via orchestrator satellite-events |
+| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | **Live** | Reconciliation snapshot meta in Finance dispatch |
 | City ledger snapshot | Planned | Agency balance sync for reconciliation |
 | fb-pos consumption (E8) | Planned | Inventory movement in Finance |
 

@@ -11,6 +11,7 @@ const createSchema = z.object({
   voen: z.string().nullable().optional(),
   passportNumber: z.string().min(1),
   phone: z.string().min(1),
+  globalPersonId: z.string().nullable().optional(),
 });
 
 export async function GET() {

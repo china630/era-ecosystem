@@ -9,6 +9,7 @@ export async function createGuest(input: {
   voen?: string | null;
   passportNumber: string;
   phone: string;
+  globalPersonId?: string | null;
 }) {
   return prisma.guest.create({
     data: {
@@ -16,6 +17,7 @@ export async function createGuest(input: {
       voen: input.voen ?? null,
       passportNumber: input.passportNumber,
       phone: input.phone,
+      globalPersonId: input.globalPersonId ?? null,
     },
   });
 }

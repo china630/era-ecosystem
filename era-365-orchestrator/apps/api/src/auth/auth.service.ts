@@ -1,21 +1,31 @@
 import {
+  ConflictException,
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
-import { createHmac, timingSafeEqual } from "crypto";
-import type { UserRole } from "@era365/database";
+import { createHmac, randomUUID, timingSafeEqual } from "crypto";
+import { UserRole } from "@era365/database";
+import { MdmService } from "../mdm/mdm.service";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
+import { encryptText } from "../common/utils/mdm-crypto.util";
 import type { LoginDto } from "./dto/login.dto";
+import type { RegisterUserDto } from "./dto/register-user.dto";
 import type { SsoExchangeDto } from "./dto/sso-exchange.dto";
 import type { EraJwtPayload } from "./jwt-payload.type";
+import { resolvePermissionsForRole } from "./role-permissions";
+import {
+  accessTokenSignOptions,
+  jwksPublicKeys,
+} from "./jwt-signing.util";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: ControlPlanePrismaService,
+    private readonly mdm: MdmService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
   ) {}
@@ -87,6 +97,67 @@ export class AuthService {
         isOwner: claims.isOwner,
       },
       claims,
+    };
+  }
+
+  async registerOrganizationForUser(
+    userId: string,
+    body: { name: string; taxId: string },
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException("User not found");
+    const { organizationId } = await this.mdm.registerOrganization({
+      name: body.name,
+      taxId: body.taxId,
+      ownerUserId: userId,
+    });
+    await this.prisma.organizationMembership.upsert({
+      where: {
+        userId_organizationId: { userId, organizationId },
+      },
+      create: {
+        userId,
+        organizationId,
+        role: UserRole.OWNER,
+      },
+      update: { deletedAt: null, role: UserRole.OWNER },
+    });
+    return this.switchOrganization(userId, organizationId);
+  }
+
+  async registerUser(dto: RegisterUserDto) {
+    const email = dto.email.toLowerCase().trim();
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new ConflictException("Email already registered");
+    }
+    const fn = dto.firstName.trim();
+    const ln = dto.lastName.trim();
+    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        firstNameCipher: encryptText(fn),
+        lastNameCipher: encryptText(ln),
+      },
+    });
+    const claims = await this.buildClaims({
+      sub: user.id,
+      email: user.email,
+      organizationId: null,
+      role: null,
+      isSuperAdmin: user.isSuperAdmin,
+    });
+    const accessToken = await this.issueAccessToken(claims);
+    const refreshToken = await this.issueRefreshToken(user.id, null);
+    const memberships = await this.listMemberships(user.id);
+    return {
+      accessToken,
+      refreshToken,
+      user: { id: user.id, email: user.email, organizationId: null },
+      claims,
+      memberships,
     };
   }
 
@@ -285,12 +356,16 @@ export class AuthService {
       isOwner = org?.ownerId === input.sub;
     }
     const roles = input.role ? [input.role] : [];
+    const permissions = resolvePermissionsForRole(input.role, {
+      isSuperAdmin: input.isSuperAdmin,
+    });
     return {
       sub: input.sub,
       email: input.email,
       organizationId: input.organizationId,
       role: input.role,
       roles,
+      permissions,
       isOwner,
       isSuperAdmin: input.isSuperAdmin,
     };
@@ -302,14 +377,30 @@ export class AuthService {
     const audience =
       this.config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ??
       "era-finance-core";
+    const sign = accessTokenSignOptions(this.config);
+    const expiresIn = (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
+      "12h") as `${number}h`;
+    if (sign.algorithm === "RS256" && sign.privateKey) {
+      return this.jwt.signAsync(
+        { ...claims },
+        {
+          issuer,
+          audience,
+          algorithm: "RS256",
+          privateKey: sign.privateKey,
+          keyid: sign.keyid,
+          expiresIn,
+        },
+      );
+    }
     return this.jwt.signAsync(
       { ...claims },
       {
         issuer,
         audience,
         algorithm: "HS256",
-        expiresIn: (this.config.get<string>("ERA_JWT_ACCESS_EXPIRES") ??
-          "12h") as `${number}h`,
+        secret: sign.secret,
+        expiresIn,
       },
     );
   }
@@ -335,9 +426,63 @@ export class AuthService {
   }
 
   jwksStub() {
+    const { keys } = jwksPublicKeys(this.config);
+    if (keys.length > 0) return { keys };
     return {
       keys: [],
-      note: "RS256 JWKS — phase A+; HS256 shared secret in use",
+      note: "RS256 JWKS — set ERA_JWT_RS256_JWK + ERA_JWT_SIGNING_MODE=rs256|dual",
     };
+  }
+
+  private readonly handoffTickets = new Map<
+    string,
+    { userId: string; organizationId: string | null; expiresAt: number }
+  >();
+
+  createFinanceHandoffTicket(input: {
+    userId: string;
+    organizationId: string | null;
+  }): { ticket: string; expiresAt: string } {
+    const ticket = `fh_${randomUUID().replace(/-/g, "")}`;
+    const expiresAt = Date.now() + 60_000;
+    this.handoffTickets.set(ticket, { ...input, expiresAt });
+    return { ticket, expiresAt: new Date(expiresAt).toISOString() };
+  }
+
+  async redeemFinanceHandoffTicket(ticket: string): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const row = this.handoffTickets.get(ticket);
+    this.handoffTickets.delete(ticket);
+    if (!row || row.expiresAt < Date.now()) {
+      throw new UnauthorizedException("Handoff ticket invalid or expired");
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: row.userId },
+    });
+    if (!user) throw new UnauthorizedException("User not found");
+    const membership = row.organizationId
+      ? await this.prisma.organizationMembership.findFirst({
+          where: {
+            userId: row.userId,
+            organizationId: row.organizationId,
+            deletedAt: null,
+          },
+        })
+      : null;
+    const claims = await this.buildClaims({
+      sub: user.id,
+      email: user.email,
+      organizationId: row.organizationId,
+      role: membership?.role ?? null,
+      isSuperAdmin: user.isSuperAdmin,
+    });
+    const accessToken = await this.issueAccessToken(claims);
+    const refreshToken = await this.issueRefreshToken(
+      user.id,
+      row.organizationId,
+    );
+    return { accessToken, refreshToken };
   }
 }

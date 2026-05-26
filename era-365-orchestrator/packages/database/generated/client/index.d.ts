@@ -178,6 +178,46 @@ export type NotificationOutbox = $Result.DefaultSelection<Prisma.$NotificationOu
  * 
  */
 export type NotificationDeliveryLog = $Result.DefaultSelection<Prisma.$NotificationDeliveryLogPayload>
+/**
+ * Model PlatformPaymentLink
+ * 
+ */
+export type PlatformPaymentLink = $Result.DefaultSelection<Prisma.$PlatformPaymentLinkPayload>
+/**
+ * Model PlatformPortalLink
+ * 
+ */
+export type PlatformPortalLink = $Result.DefaultSelection<Prisma.$PlatformPortalLinkPayload>
+/**
+ * Model BookableResource
+ * 
+ */
+export type BookableResource = $Result.DefaultSelection<Prisma.$BookableResourcePayload>
+/**
+ * Model BookingSlot
+ * 
+ */
+export type BookingSlot = $Result.DefaultSelection<Prisma.$BookingSlotPayload>
+/**
+ * Model BookingAppointment
+ * 
+ */
+export type BookingAppointment = $Result.DefaultSelection<Prisma.$BookingAppointmentPayload>
+/**
+ * Model PlatformPromotion
+ * 
+ */
+export type PlatformPromotion = $Result.DefaultSelection<Prisma.$PlatformPromotionPayload>
+/**
+ * Model PlatformCustomDomain
+ * 
+ */
+export type PlatformCustomDomain = $Result.DefaultSelection<Prisma.$PlatformCustomDomainPayload>
+/**
+ * Model PlatformShipment
+ * 
+ */
+export type PlatformShipment = $Result.DefaultSelection<Prisma.$PlatformShipmentPayload>
 
 /**
  * Enums
@@ -339,6 +379,70 @@ export const NotificationOutboxStatus: {
 export type NotificationOutboxStatus = (typeof NotificationOutboxStatus)[keyof typeof NotificationOutboxStatus]
 
 
+export const PlatformPaymentLinkStatus: {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type PlatformPaymentLinkStatus = (typeof PlatformPaymentLinkStatus)[keyof typeof PlatformPaymentLinkStatus]
+
+
+export const PlatformPortalLinkStatus: {
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED',
+  EXPIRED: 'EXPIRED'
+};
+
+export type PlatformPortalLinkStatus = (typeof PlatformPortalLinkStatus)[keyof typeof PlatformPortalLinkStatus]
+
+
+export const BookingAppointmentStatus: {
+  PENDING: 'PENDING',
+  CONFIRMED: 'CONFIRMED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+};
+
+export type BookingAppointmentStatus = (typeof BookingAppointmentStatus)[keyof typeof BookingAppointmentStatus]
+
+
+export const PlatformPromotionDiscountType: {
+  PERCENT: 'PERCENT',
+  FIXED_AZN: 'FIXED_AZN'
+};
+
+export type PlatformPromotionDiscountType = (typeof PlatformPromotionDiscountType)[keyof typeof PlatformPromotionDiscountType]
+
+
+export const PlatformPromotionStatus: {
+  ACTIVE: 'ACTIVE',
+  DISABLED: 'DISABLED'
+};
+
+export type PlatformPromotionStatus = (typeof PlatformPromotionStatus)[keyof typeof PlatformPromotionStatus]
+
+
+export const PlatformCustomDomainStatus: {
+  PENDING_DNS: 'PENDING_DNS',
+  ACTIVE: 'ACTIVE',
+  DISABLED: 'DISABLED'
+};
+
+export type PlatformCustomDomainStatus = (typeof PlatformCustomDomainStatus)[keyof typeof PlatformCustomDomainStatus]
+
+
+export const PlatformShipmentStatus: {
+  CREATED: 'CREATED',
+  IN_TRANSIT: 'IN_TRANSIT',
+  DELIVERED: 'DELIVERED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type PlatformShipmentStatus = (typeof PlatformShipmentStatus)[keyof typeof PlatformShipmentStatus]
+
+
 export const PermissionCategory: {
   CORE: 'CORE',
   BILLING: 'BILLING',
@@ -443,6 +547,34 @@ export const NotificationChannel: typeof $Enums.NotificationChannel
 export type NotificationOutboxStatus = $Enums.NotificationOutboxStatus
 
 export const NotificationOutboxStatus: typeof $Enums.NotificationOutboxStatus
+
+export type PlatformPaymentLinkStatus = $Enums.PlatformPaymentLinkStatus
+
+export const PlatformPaymentLinkStatus: typeof $Enums.PlatformPaymentLinkStatus
+
+export type PlatformPortalLinkStatus = $Enums.PlatformPortalLinkStatus
+
+export const PlatformPortalLinkStatus: typeof $Enums.PlatformPortalLinkStatus
+
+export type BookingAppointmentStatus = $Enums.BookingAppointmentStatus
+
+export const BookingAppointmentStatus: typeof $Enums.BookingAppointmentStatus
+
+export type PlatformPromotionDiscountType = $Enums.PlatformPromotionDiscountType
+
+export const PlatformPromotionDiscountType: typeof $Enums.PlatformPromotionDiscountType
+
+export type PlatformPromotionStatus = $Enums.PlatformPromotionStatus
+
+export const PlatformPromotionStatus: typeof $Enums.PlatformPromotionStatus
+
+export type PlatformCustomDomainStatus = $Enums.PlatformCustomDomainStatus
+
+export const PlatformCustomDomainStatus: typeof $Enums.PlatformCustomDomainStatus
+
+export type PlatformShipmentStatus = $Enums.PlatformShipmentStatus
+
+export const PlatformShipmentStatus: typeof $Enums.PlatformShipmentStatus
 
 export type PermissionCategory = $Enums.PermissionCategory
 
@@ -906,6 +1038,86 @@ export class PrismaClient<
     * ```
     */
   get notificationDeliveryLog(): Prisma.NotificationDeliveryLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformPaymentLink`: Exposes CRUD operations for the **PlatformPaymentLink** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformPaymentLinks
+    * const platformPaymentLinks = await prisma.platformPaymentLink.findMany()
+    * ```
+    */
+  get platformPaymentLink(): Prisma.PlatformPaymentLinkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformPortalLink`: Exposes CRUD operations for the **PlatformPortalLink** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformPortalLinks
+    * const platformPortalLinks = await prisma.platformPortalLink.findMany()
+    * ```
+    */
+  get platformPortalLink(): Prisma.PlatformPortalLinkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bookableResource`: Exposes CRUD operations for the **BookableResource** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BookableResources
+    * const bookableResources = await prisma.bookableResource.findMany()
+    * ```
+    */
+  get bookableResource(): Prisma.BookableResourceDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bookingSlot`: Exposes CRUD operations for the **BookingSlot** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BookingSlots
+    * const bookingSlots = await prisma.bookingSlot.findMany()
+    * ```
+    */
+  get bookingSlot(): Prisma.BookingSlotDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bookingAppointment`: Exposes CRUD operations for the **BookingAppointment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BookingAppointments
+    * const bookingAppointments = await prisma.bookingAppointment.findMany()
+    * ```
+    */
+  get bookingAppointment(): Prisma.BookingAppointmentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformPromotion`: Exposes CRUD operations for the **PlatformPromotion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformPromotions
+    * const platformPromotions = await prisma.platformPromotion.findMany()
+    * ```
+    */
+  get platformPromotion(): Prisma.PlatformPromotionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformCustomDomain`: Exposes CRUD operations for the **PlatformCustomDomain** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformCustomDomains
+    * const platformCustomDomains = await prisma.platformCustomDomain.findMany()
+    * ```
+    */
+  get platformCustomDomain(): Prisma.PlatformCustomDomainDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.platformShipment`: Exposes CRUD operations for the **PlatformShipment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PlatformShipments
+    * const platformShipments = await prisma.platformShipment.findMany()
+    * ```
+    */
+  get platformShipment(): Prisma.PlatformShipmentDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1372,7 +1584,15 @@ export namespace Prisma {
     AuditLog: 'AuditLog',
     NotificationTemplate: 'NotificationTemplate',
     NotificationOutbox: 'NotificationOutbox',
-    NotificationDeliveryLog: 'NotificationDeliveryLog'
+    NotificationDeliveryLog: 'NotificationDeliveryLog',
+    PlatformPaymentLink: 'PlatformPaymentLink',
+    PlatformPortalLink: 'PlatformPortalLink',
+    BookableResource: 'BookableResource',
+    BookingSlot: 'BookingSlot',
+    BookingAppointment: 'BookingAppointment',
+    PlatformPromotion: 'PlatformPromotion',
+    PlatformCustomDomain: 'PlatformCustomDomain',
+    PlatformShipment: 'PlatformShipment'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1388,7 +1608,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3834,6 +4054,598 @@ export namespace Prisma {
           }
         }
       }
+      PlatformPaymentLink: {
+        payload: Prisma.$PlatformPaymentLinkPayload<ExtArgs>
+        fields: Prisma.PlatformPaymentLinkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformPaymentLinkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformPaymentLinkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformPaymentLinkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformPaymentLinkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformPaymentLinkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformPaymentLinkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformPaymentLinkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformPaymentLinkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformPaymentLinkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          update: {
+            args: Prisma.PlatformPaymentLinkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformPaymentLinkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformPaymentLinkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformPaymentLinkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformPaymentLinkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPaymentLinkPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformPaymentLinkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformPaymentLink>
+          }
+          groupBy: {
+            args: Prisma.PlatformPaymentLinkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPaymentLinkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformPaymentLinkCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPaymentLinkCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlatformPortalLink: {
+        payload: Prisma.$PlatformPortalLinkPayload<ExtArgs>
+        fields: Prisma.PlatformPortalLinkFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformPortalLinkFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformPortalLinkFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformPortalLinkFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformPortalLinkFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformPortalLinkFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformPortalLinkCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformPortalLinkCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformPortalLinkCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformPortalLinkDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          update: {
+            args: Prisma.PlatformPortalLinkUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformPortalLinkDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformPortalLinkUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformPortalLinkUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformPortalLinkUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPortalLinkPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformPortalLinkAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformPortalLink>
+          }
+          groupBy: {
+            args: Prisma.PlatformPortalLinkGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPortalLinkGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformPortalLinkCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPortalLinkCountAggregateOutputType> | number
+          }
+        }
+      }
+      BookableResource: {
+        payload: Prisma.$BookableResourcePayload<ExtArgs>
+        fields: Prisma.BookableResourceFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BookableResourceFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BookableResourceFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          findFirst: {
+            args: Prisma.BookableResourceFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BookableResourceFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          findMany: {
+            args: Prisma.BookableResourceFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>[]
+          }
+          create: {
+            args: Prisma.BookableResourceCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          createMany: {
+            args: Prisma.BookableResourceCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BookableResourceCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>[]
+          }
+          delete: {
+            args: Prisma.BookableResourceDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          update: {
+            args: Prisma.BookableResourceUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          deleteMany: {
+            args: Prisma.BookableResourceDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BookableResourceUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BookableResourceUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>[]
+          }
+          upsert: {
+            args: Prisma.BookableResourceUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookableResourcePayload>
+          }
+          aggregate: {
+            args: Prisma.BookableResourceAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBookableResource>
+          }
+          groupBy: {
+            args: Prisma.BookableResourceGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BookableResourceGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BookableResourceCountArgs<ExtArgs>
+            result: $Utils.Optional<BookableResourceCountAggregateOutputType> | number
+          }
+        }
+      }
+      BookingSlot: {
+        payload: Prisma.$BookingSlotPayload<ExtArgs>
+        fields: Prisma.BookingSlotFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BookingSlotFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BookingSlotFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          findFirst: {
+            args: Prisma.BookingSlotFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BookingSlotFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          findMany: {
+            args: Prisma.BookingSlotFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>[]
+          }
+          create: {
+            args: Prisma.BookingSlotCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          createMany: {
+            args: Prisma.BookingSlotCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BookingSlotCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>[]
+          }
+          delete: {
+            args: Prisma.BookingSlotDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          update: {
+            args: Prisma.BookingSlotUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          deleteMany: {
+            args: Prisma.BookingSlotDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BookingSlotUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BookingSlotUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>[]
+          }
+          upsert: {
+            args: Prisma.BookingSlotUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingSlotPayload>
+          }
+          aggregate: {
+            args: Prisma.BookingSlotAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBookingSlot>
+          }
+          groupBy: {
+            args: Prisma.BookingSlotGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BookingSlotGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BookingSlotCountArgs<ExtArgs>
+            result: $Utils.Optional<BookingSlotCountAggregateOutputType> | number
+          }
+        }
+      }
+      BookingAppointment: {
+        payload: Prisma.$BookingAppointmentPayload<ExtArgs>
+        fields: Prisma.BookingAppointmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BookingAppointmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BookingAppointmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          findFirst: {
+            args: Prisma.BookingAppointmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BookingAppointmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          findMany: {
+            args: Prisma.BookingAppointmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>[]
+          }
+          create: {
+            args: Prisma.BookingAppointmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          createMany: {
+            args: Prisma.BookingAppointmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BookingAppointmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>[]
+          }
+          delete: {
+            args: Prisma.BookingAppointmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          update: {
+            args: Prisma.BookingAppointmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.BookingAppointmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BookingAppointmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BookingAppointmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.BookingAppointmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BookingAppointmentPayload>
+          }
+          aggregate: {
+            args: Prisma.BookingAppointmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBookingAppointment>
+          }
+          groupBy: {
+            args: Prisma.BookingAppointmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BookingAppointmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BookingAppointmentCountArgs<ExtArgs>
+            result: $Utils.Optional<BookingAppointmentCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlatformPromotion: {
+        payload: Prisma.$PlatformPromotionPayload<ExtArgs>
+        fields: Prisma.PlatformPromotionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformPromotionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformPromotionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformPromotionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformPromotionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformPromotionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformPromotionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformPromotionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformPromotionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformPromotionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          update: {
+            args: Prisma.PlatformPromotionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformPromotionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformPromotionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformPromotionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformPromotionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformPromotionPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformPromotionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformPromotion>
+          }
+          groupBy: {
+            args: Prisma.PlatformPromotionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPromotionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformPromotionCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformPromotionCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlatformCustomDomain: {
+        payload: Prisma.$PlatformCustomDomainPayload<ExtArgs>
+        fields: Prisma.PlatformCustomDomainFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformCustomDomainFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformCustomDomainFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformCustomDomainFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformCustomDomainFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformCustomDomainFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformCustomDomainCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformCustomDomainCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformCustomDomainCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformCustomDomainDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          update: {
+            args: Prisma.PlatformCustomDomainUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformCustomDomainDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformCustomDomainUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformCustomDomainUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformCustomDomainUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformCustomDomainPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformCustomDomainAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformCustomDomain>
+          }
+          groupBy: {
+            args: Prisma.PlatformCustomDomainGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformCustomDomainGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformCustomDomainCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformCustomDomainCountAggregateOutputType> | number
+          }
+        }
+      }
+      PlatformShipment: {
+        payload: Prisma.$PlatformShipmentPayload<ExtArgs>
+        fields: Prisma.PlatformShipmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PlatformShipmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PlatformShipmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          findFirst: {
+            args: Prisma.PlatformShipmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PlatformShipmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          findMany: {
+            args: Prisma.PlatformShipmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>[]
+          }
+          create: {
+            args: Prisma.PlatformShipmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          createMany: {
+            args: Prisma.PlatformShipmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PlatformShipmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>[]
+          }
+          delete: {
+            args: Prisma.PlatformShipmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          update: {
+            args: Prisma.PlatformShipmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.PlatformShipmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PlatformShipmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PlatformShipmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.PlatformShipmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PlatformShipmentPayload>
+          }
+          aggregate: {
+            args: Prisma.PlatformShipmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePlatformShipment>
+          }
+          groupBy: {
+            args: Prisma.PlatformShipmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PlatformShipmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PlatformShipmentCountArgs<ExtArgs>
+            result: $Utils.Optional<PlatformShipmentCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -3975,6 +4787,14 @@ export namespace Prisma {
     notificationTemplate?: NotificationTemplateOmit
     notificationOutbox?: NotificationOutboxOmit
     notificationDeliveryLog?: NotificationDeliveryLogOmit
+    platformPaymentLink?: PlatformPaymentLinkOmit
+    platformPortalLink?: PlatformPortalLinkOmit
+    bookableResource?: BookableResourceOmit
+    bookingSlot?: BookingSlotOmit
+    bookingAppointment?: BookingAppointmentOmit
+    platformPromotion?: PlatformPromotionOmit
+    platformCustomDomain?: PlatformCustomDomainOmit
+    platformShipment?: PlatformShipmentOmit
   }
 
   /* Types for Logging */
@@ -4122,6 +4942,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type PaymentOrderCountOutputType
+   */
+
+  export type PaymentOrderCountOutputType = {
+    platformPaymentLinks: number
+  }
+
+  export type PaymentOrderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    platformPaymentLinks?: boolean | PaymentOrderCountOutputTypeCountPlatformPaymentLinksArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PaymentOrderCountOutputType without action
+   */
+  export type PaymentOrderCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentOrderCountOutputType
+     */
+    select?: PaymentOrderCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PaymentOrderCountOutputType without action
+   */
+  export type PaymentOrderCountOutputTypeCountPlatformPaymentLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPaymentLinkWhereInput
+  }
+
+
+  /**
    * Count Type RoleCountOutputType
    */
 
@@ -4198,6 +5049,14 @@ export namespace Prisma {
     notificationTemplates: number
     notificationOutboxEntries: number
     notificationDeliveryLogs: number
+    platformPaymentLinks: number
+    platformPortalLinks: number
+    bookableResources: number
+    bookingSlots: number
+    bookingAppointments: number
+    platformPromotions: number
+    platformCustomDomains: number
+    platformShipments: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4211,6 +5070,14 @@ export namespace Prisma {
     notificationTemplates?: boolean | OrganizationCountOutputTypeCountNotificationTemplatesArgs
     notificationOutboxEntries?: boolean | OrganizationCountOutputTypeCountNotificationOutboxEntriesArgs
     notificationDeliveryLogs?: boolean | OrganizationCountOutputTypeCountNotificationDeliveryLogsArgs
+    platformPaymentLinks?: boolean | OrganizationCountOutputTypeCountPlatformPaymentLinksArgs
+    platformPortalLinks?: boolean | OrganizationCountOutputTypeCountPlatformPortalLinksArgs
+    bookableResources?: boolean | OrganizationCountOutputTypeCountBookableResourcesArgs
+    bookingSlots?: boolean | OrganizationCountOutputTypeCountBookingSlotsArgs
+    bookingAppointments?: boolean | OrganizationCountOutputTypeCountBookingAppointmentsArgs
+    platformPromotions?: boolean | OrganizationCountOutputTypeCountPlatformPromotionsArgs
+    platformCustomDomains?: boolean | OrganizationCountOutputTypeCountPlatformCustomDomainsArgs
+    platformShipments?: boolean | OrganizationCountOutputTypeCountPlatformShipmentsArgs
   }
 
   // Custom InputTypes
@@ -4292,6 +5159,62 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountNotificationDeliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: NotificationDeliveryLogWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlatformPaymentLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPaymentLinkWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlatformPortalLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPortalLinkWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountBookableResourcesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookableResourceWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountBookingSlotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingSlotWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountBookingAppointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingAppointmentWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlatformPromotionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPromotionWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlatformCustomDomainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformCustomDomainWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountPlatformShipmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformShipmentWhereInput
   }
 
 
@@ -4483,6 +5406,77 @@ export namespace Prisma {
    */
   export type NotificationOutboxCountOutputTypeCountDeliveryLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: NotificationDeliveryLogWhereInput
+  }
+
+
+  /**
+   * Count Type BookableResourceCountOutputType
+   */
+
+  export type BookableResourceCountOutputType = {
+    slots: number
+    appointments: number
+  }
+
+  export type BookableResourceCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    slots?: boolean | BookableResourceCountOutputTypeCountSlotsArgs
+    appointments?: boolean | BookableResourceCountOutputTypeCountAppointmentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * BookableResourceCountOutputType without action
+   */
+  export type BookableResourceCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResourceCountOutputType
+     */
+    select?: BookableResourceCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * BookableResourceCountOutputType without action
+   */
+  export type BookableResourceCountOutputTypeCountSlotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingSlotWhereInput
+  }
+
+  /**
+   * BookableResourceCountOutputType without action
+   */
+  export type BookableResourceCountOutputTypeCountAppointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingAppointmentWhereInput
+  }
+
+
+  /**
+   * Count Type BookingSlotCountOutputType
+   */
+
+  export type BookingSlotCountOutputType = {
+    appointments: number
+  }
+
+  export type BookingSlotCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    appointments?: boolean | BookingSlotCountOutputTypeCountAppointmentsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * BookingSlotCountOutputType without action
+   */
+  export type BookingSlotCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlotCountOutputType
+     */
+    select?: BookingSlotCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * BookingSlotCountOutputType without action
+   */
+  export type BookingSlotCountOutputTypeCountAppointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingAppointmentWhereInput
   }
 
 
@@ -17098,6 +18092,8 @@ export namespace Prisma {
     paidAt?: boolean
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     subscriptionInvoice?: boolean | PaymentOrder$subscriptionInvoiceArgs<ExtArgs>
+    platformPaymentLinks?: boolean | PaymentOrder$platformPaymentLinksArgs<ExtArgs>
+    _count?: boolean | PaymentOrderCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["paymentOrder"]>
 
   export type PaymentOrderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -17154,6 +18150,8 @@ export namespace Prisma {
   export type PaymentOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
     subscriptionInvoice?: boolean | PaymentOrder$subscriptionInvoiceArgs<ExtArgs>
+    platformPaymentLinks?: boolean | PaymentOrder$platformPaymentLinksArgs<ExtArgs>
+    _count?: boolean | PaymentOrderCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PaymentOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
@@ -17167,6 +18165,7 @@ export namespace Prisma {
     objects: {
       organization: Prisma.$OrganizationPayload<ExtArgs>
       subscriptionInvoice: Prisma.$SubscriptionInvoicePayload<ExtArgs> | null
+      platformPaymentLinks: Prisma.$PlatformPaymentLinkPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -17578,6 +18577,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     subscriptionInvoice<T extends PaymentOrder$subscriptionInvoiceArgs<ExtArgs> = {}>(args?: Subset<T, PaymentOrder$subscriptionInvoiceArgs<ExtArgs>>): Prisma__SubscriptionInvoiceClient<$Result.GetResult<Prisma.$SubscriptionInvoicePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    platformPaymentLinks<T extends PaymentOrder$platformPaymentLinksArgs<ExtArgs> = {}>(args?: Subset<T, PaymentOrder$platformPaymentLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -18037,6 +19037,30 @@ export namespace Prisma {
      */
     include?: SubscriptionInvoiceInclude<ExtArgs> | null
     where?: SubscriptionInvoiceWhereInput
+  }
+
+  /**
+   * PaymentOrder.platformPaymentLinks
+   */
+  export type PaymentOrder$platformPaymentLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    where?: PlatformPaymentLinkWhereInput
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformPaymentLinkScalarFieldEnum | PlatformPaymentLinkScalarFieldEnum[]
   }
 
   /**
@@ -22634,6 +23658,14 @@ export namespace Prisma {
     notificationTemplates?: boolean | Organization$notificationTemplatesArgs<ExtArgs>
     notificationOutboxEntries?: boolean | Organization$notificationOutboxEntriesArgs<ExtArgs>
     notificationDeliveryLogs?: boolean | Organization$notificationDeliveryLogsArgs<ExtArgs>
+    platformPaymentLinks?: boolean | Organization$platformPaymentLinksArgs<ExtArgs>
+    platformPortalLinks?: boolean | Organization$platformPortalLinksArgs<ExtArgs>
+    bookableResources?: boolean | Organization$bookableResourcesArgs<ExtArgs>
+    bookingSlots?: boolean | Organization$bookingSlotsArgs<ExtArgs>
+    bookingAppointments?: boolean | Organization$bookingAppointmentsArgs<ExtArgs>
+    platformPromotions?: boolean | Organization$platformPromotionsArgs<ExtArgs>
+    platformCustomDomains?: boolean | Organization$platformCustomDomainsArgs<ExtArgs>
+    platformShipments?: boolean | Organization$platformShipmentsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
@@ -22722,6 +23754,14 @@ export namespace Prisma {
     notificationTemplates?: boolean | Organization$notificationTemplatesArgs<ExtArgs>
     notificationOutboxEntries?: boolean | Organization$notificationOutboxEntriesArgs<ExtArgs>
     notificationDeliveryLogs?: boolean | Organization$notificationDeliveryLogsArgs<ExtArgs>
+    platformPaymentLinks?: boolean | Organization$platformPaymentLinksArgs<ExtArgs>
+    platformPortalLinks?: boolean | Organization$platformPortalLinksArgs<ExtArgs>
+    bookableResources?: boolean | Organization$bookableResourcesArgs<ExtArgs>
+    bookingSlots?: boolean | Organization$bookingSlotsArgs<ExtArgs>
+    bookingAppointments?: boolean | Organization$bookingAppointmentsArgs<ExtArgs>
+    platformPromotions?: boolean | Organization$platformPromotionsArgs<ExtArgs>
+    platformCustomDomains?: boolean | Organization$platformCustomDomainsArgs<ExtArgs>
+    platformShipments?: boolean | Organization$platformShipmentsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -22746,6 +23786,14 @@ export namespace Prisma {
       notificationTemplates: Prisma.$NotificationTemplatePayload<ExtArgs>[]
       notificationOutboxEntries: Prisma.$NotificationOutboxPayload<ExtArgs>[]
       notificationDeliveryLogs: Prisma.$NotificationDeliveryLogPayload<ExtArgs>[]
+      platformPaymentLinks: Prisma.$PlatformPaymentLinkPayload<ExtArgs>[]
+      platformPortalLinks: Prisma.$PlatformPortalLinkPayload<ExtArgs>[]
+      bookableResources: Prisma.$BookableResourcePayload<ExtArgs>[]
+      bookingSlots: Prisma.$BookingSlotPayload<ExtArgs>[]
+      bookingAppointments: Prisma.$BookingAppointmentPayload<ExtArgs>[]
+      platformPromotions: Prisma.$PlatformPromotionPayload<ExtArgs>[]
+      platformCustomDomains: Prisma.$PlatformCustomDomainPayload<ExtArgs>[]
+      platformShipments: Prisma.$PlatformShipmentPayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -23174,6 +24222,14 @@ export namespace Prisma {
     notificationTemplates<T extends Organization$notificationTemplatesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationTemplatesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationTemplatePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notificationOutboxEntries<T extends Organization$notificationOutboxEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationOutboxEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationOutboxPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notificationDeliveryLogs<T extends Organization$notificationDeliveryLogsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$notificationDeliveryLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationDeliveryLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    platformPaymentLinks<T extends Organization$platformPaymentLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformPaymentLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    platformPortalLinks<T extends Organization$platformPortalLinksArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformPortalLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    bookableResources<T extends Organization$bookableResourcesArgs<ExtArgs> = {}>(args?: Subset<T, Organization$bookableResourcesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    bookingSlots<T extends Organization$bookingSlotsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$bookingSlotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    bookingAppointments<T extends Organization$bookingAppointmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$bookingAppointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    platformPromotions<T extends Organization$platformPromotionsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformPromotionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    platformCustomDomains<T extends Organization$platformCustomDomainsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformCustomDomainsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    platformShipments<T extends Organization$platformShipmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformShipmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -23881,6 +24937,198 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: NotificationDeliveryLogScalarFieldEnum | NotificationDeliveryLogScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.platformPaymentLinks
+   */
+  export type Organization$platformPaymentLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    where?: PlatformPaymentLinkWhereInput
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformPaymentLinkScalarFieldEnum | PlatformPaymentLinkScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.platformPortalLinks
+   */
+  export type Organization$platformPortalLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    where?: PlatformPortalLinkWhereInput
+    orderBy?: PlatformPortalLinkOrderByWithRelationInput | PlatformPortalLinkOrderByWithRelationInput[]
+    cursor?: PlatformPortalLinkWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformPortalLinkScalarFieldEnum | PlatformPortalLinkScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.bookableResources
+   */
+  export type Organization$bookableResourcesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    where?: BookableResourceWhereInput
+    orderBy?: BookableResourceOrderByWithRelationInput | BookableResourceOrderByWithRelationInput[]
+    cursor?: BookableResourceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookableResourceScalarFieldEnum | BookableResourceScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.bookingSlots
+   */
+  export type Organization$bookingSlotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    where?: BookingSlotWhereInput
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    cursor?: BookingSlotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingSlotScalarFieldEnum | BookingSlotScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.bookingAppointments
+   */
+  export type Organization$bookingAppointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    where?: BookingAppointmentWhereInput
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    cursor?: BookingAppointmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.platformPromotions
+   */
+  export type Organization$platformPromotionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    where?: PlatformPromotionWhereInput
+    orderBy?: PlatformPromotionOrderByWithRelationInput | PlatformPromotionOrderByWithRelationInput[]
+    cursor?: PlatformPromotionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformPromotionScalarFieldEnum | PlatformPromotionScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.platformCustomDomains
+   */
+  export type Organization$platformCustomDomainsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    where?: PlatformCustomDomainWhereInput
+    orderBy?: PlatformCustomDomainOrderByWithRelationInput | PlatformCustomDomainOrderByWithRelationInput[]
+    cursor?: PlatformCustomDomainWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformCustomDomainScalarFieldEnum | PlatformCustomDomainScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.platformShipments
+   */
+  export type Organization$platformShipmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    where?: PlatformShipmentWhereInput
+    orderBy?: PlatformShipmentOrderByWithRelationInput | PlatformShipmentOrderByWithRelationInput[]
+    cursor?: PlatformShipmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PlatformShipmentScalarFieldEnum | PlatformShipmentScalarFieldEnum[]
   }
 
   /**
@@ -42077,6 +43325,9272 @@ export namespace Prisma {
 
 
   /**
+   * Model PlatformPaymentLink
+   */
+
+  export type AggregatePlatformPaymentLink = {
+    _count: PlatformPaymentLinkCountAggregateOutputType | null
+    _avg: PlatformPaymentLinkAvgAggregateOutputType | null
+    _sum: PlatformPaymentLinkSumAggregateOutputType | null
+    _min: PlatformPaymentLinkMinAggregateOutputType | null
+    _max: PlatformPaymentLinkMaxAggregateOutputType | null
+  }
+
+  export type PlatformPaymentLinkAvgAggregateOutputType = {
+    amountAzn: Decimal | null
+  }
+
+  export type PlatformPaymentLinkSumAggregateOutputType = {
+    amountAzn: Decimal | null
+  }
+
+  export type PlatformPaymentLinkMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    amountAzn: Decimal | null
+    currency: string | null
+    counterpartyRef: string | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    paymentOrderId: string | null
+    token: string | null
+    paymentUrl: string | null
+    status: $Enums.PlatformPaymentLinkStatus | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformPaymentLinkMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    amountAzn: Decimal | null
+    currency: string | null
+    counterpartyRef: string | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    paymentOrderId: string | null
+    token: string | null
+    paymentUrl: string | null
+    status: $Enums.PlatformPaymentLinkStatus | null
+    expiresAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformPaymentLinkCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    amountAzn: number
+    currency: number
+    counterpartyRef: number
+    sourceEntityType: number
+    sourceEntityId: number
+    paymentOrderId: number
+    token: number
+    paymentUrl: number
+    status: number
+    expiresAt: number
+    metadata: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlatformPaymentLinkAvgAggregateInputType = {
+    amountAzn?: true
+  }
+
+  export type PlatformPaymentLinkSumAggregateInputType = {
+    amountAzn?: true
+  }
+
+  export type PlatformPaymentLinkMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    amountAzn?: true
+    currency?: true
+    counterpartyRef?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    paymentOrderId?: true
+    token?: true
+    paymentUrl?: true
+    status?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformPaymentLinkMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    amountAzn?: true
+    currency?: true
+    counterpartyRef?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    paymentOrderId?: true
+    token?: true
+    paymentUrl?: true
+    status?: true
+    expiresAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformPaymentLinkCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    amountAzn?: true
+    currency?: true
+    counterpartyRef?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    paymentOrderId?: true
+    token?: true
+    paymentUrl?: true
+    status?: true
+    expiresAt?: true
+    metadata?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlatformPaymentLinkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPaymentLink to aggregate.
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPaymentLinks to fetch.
+     */
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPaymentLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPaymentLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformPaymentLinks
+    **/
+    _count?: true | PlatformPaymentLinkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PlatformPaymentLinkAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PlatformPaymentLinkSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformPaymentLinkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformPaymentLinkMaxAggregateInputType
+  }
+
+  export type GetPlatformPaymentLinkAggregateType<T extends PlatformPaymentLinkAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformPaymentLink]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformPaymentLink[P]>
+      : GetScalarType<T[P], AggregatePlatformPaymentLink[P]>
+  }
+
+
+
+
+  export type PlatformPaymentLinkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPaymentLinkWhereInput
+    orderBy?: PlatformPaymentLinkOrderByWithAggregationInput | PlatformPaymentLinkOrderByWithAggregationInput[]
+    by: PlatformPaymentLinkScalarFieldEnum[] | PlatformPaymentLinkScalarFieldEnum
+    having?: PlatformPaymentLinkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformPaymentLinkCountAggregateInputType | true
+    _avg?: PlatformPaymentLinkAvgAggregateInputType
+    _sum?: PlatformPaymentLinkSumAggregateInputType
+    _min?: PlatformPaymentLinkMinAggregateInputType
+    _max?: PlatformPaymentLinkMaxAggregateInputType
+  }
+
+  export type PlatformPaymentLinkGroupByOutputType = {
+    id: string
+    organizationId: string
+    amountAzn: Decimal
+    currency: string
+    counterpartyRef: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    paymentOrderId: string | null
+    token: string
+    paymentUrl: string | null
+    status: $Enums.PlatformPaymentLinkStatus
+    expiresAt: Date | null
+    metadata: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: PlatformPaymentLinkCountAggregateOutputType | null
+    _avg: PlatformPaymentLinkAvgAggregateOutputType | null
+    _sum: PlatformPaymentLinkSumAggregateOutputType | null
+    _min: PlatformPaymentLinkMinAggregateOutputType | null
+    _max: PlatformPaymentLinkMaxAggregateOutputType | null
+  }
+
+  type GetPlatformPaymentLinkGroupByPayload<T extends PlatformPaymentLinkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformPaymentLinkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformPaymentLinkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformPaymentLinkGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformPaymentLinkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformPaymentLinkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    amountAzn?: boolean
+    currency?: boolean
+    counterpartyRef?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    paymentOrderId?: boolean
+    token?: boolean
+    paymentUrl?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPaymentLink"]>
+
+  export type PlatformPaymentLinkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    amountAzn?: boolean
+    currency?: boolean
+    counterpartyRef?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    paymentOrderId?: boolean
+    token?: boolean
+    paymentUrl?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPaymentLink"]>
+
+  export type PlatformPaymentLinkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    amountAzn?: boolean
+    currency?: boolean
+    counterpartyRef?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    paymentOrderId?: boolean
+    token?: boolean
+    paymentUrl?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPaymentLink"]>
+
+  export type PlatformPaymentLinkSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    amountAzn?: boolean
+    currency?: boolean
+    counterpartyRef?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    paymentOrderId?: boolean
+    token?: boolean
+    paymentUrl?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlatformPaymentLinkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "amountAzn" | "currency" | "counterpartyRef" | "sourceEntityType" | "sourceEntityId" | "paymentOrderId" | "token" | "paymentUrl" | "status" | "expiresAt" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["platformPaymentLink"]>
+  export type PlatformPaymentLinkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }
+  export type PlatformPaymentLinkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }
+  export type PlatformPaymentLinkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    paymentOrder?: boolean | PlatformPaymentLink$paymentOrderArgs<ExtArgs>
+  }
+
+  export type $PlatformPaymentLinkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformPaymentLink"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      paymentOrder: Prisma.$PaymentOrderPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      amountAzn: Prisma.Decimal
+      currency: string
+      counterpartyRef: string | null
+      sourceEntityType: string
+      sourceEntityId: string
+      paymentOrderId: string | null
+      token: string
+      paymentUrl: string | null
+      status: $Enums.PlatformPaymentLinkStatus
+      expiresAt: Date | null
+      metadata: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["platformPaymentLink"]>
+    composites: {}
+  }
+
+  type PlatformPaymentLinkGetPayload<S extends boolean | null | undefined | PlatformPaymentLinkDefaultArgs> = $Result.GetResult<Prisma.$PlatformPaymentLinkPayload, S>
+
+  type PlatformPaymentLinkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformPaymentLinkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformPaymentLinkCountAggregateInputType | true
+    }
+
+  export interface PlatformPaymentLinkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformPaymentLink'], meta: { name: 'PlatformPaymentLink' } }
+    /**
+     * Find zero or one PlatformPaymentLink that matches the filter.
+     * @param {PlatformPaymentLinkFindUniqueArgs} args - Arguments to find a PlatformPaymentLink
+     * @example
+     * // Get one PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformPaymentLinkFindUniqueArgs>(args: SelectSubset<T, PlatformPaymentLinkFindUniqueArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformPaymentLink that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformPaymentLinkFindUniqueOrThrowArgs} args - Arguments to find a PlatformPaymentLink
+     * @example
+     * // Get one PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformPaymentLinkFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformPaymentLinkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPaymentLink that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkFindFirstArgs} args - Arguments to find a PlatformPaymentLink
+     * @example
+     * // Get one PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformPaymentLinkFindFirstArgs>(args?: SelectSubset<T, PlatformPaymentLinkFindFirstArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPaymentLink that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkFindFirstOrThrowArgs} args - Arguments to find a PlatformPaymentLink
+     * @example
+     * // Get one PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformPaymentLinkFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformPaymentLinkFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformPaymentLinks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformPaymentLinks
+     * const platformPaymentLinks = await prisma.platformPaymentLink.findMany()
+     * 
+     * // Get first 10 PlatformPaymentLinks
+     * const platformPaymentLinks = await prisma.platformPaymentLink.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformPaymentLinkWithIdOnly = await prisma.platformPaymentLink.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformPaymentLinkFindManyArgs>(args?: SelectSubset<T, PlatformPaymentLinkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformPaymentLink.
+     * @param {PlatformPaymentLinkCreateArgs} args - Arguments to create a PlatformPaymentLink.
+     * @example
+     * // Create one PlatformPaymentLink
+     * const PlatformPaymentLink = await prisma.platformPaymentLink.create({
+     *   data: {
+     *     // ... data to create a PlatformPaymentLink
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformPaymentLinkCreateArgs>(args: SelectSubset<T, PlatformPaymentLinkCreateArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformPaymentLinks.
+     * @param {PlatformPaymentLinkCreateManyArgs} args - Arguments to create many PlatformPaymentLinks.
+     * @example
+     * // Create many PlatformPaymentLinks
+     * const platformPaymentLink = await prisma.platformPaymentLink.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformPaymentLinkCreateManyArgs>(args?: SelectSubset<T, PlatformPaymentLinkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformPaymentLinks and returns the data saved in the database.
+     * @param {PlatformPaymentLinkCreateManyAndReturnArgs} args - Arguments to create many PlatformPaymentLinks.
+     * @example
+     * // Create many PlatformPaymentLinks
+     * const platformPaymentLink = await prisma.platformPaymentLink.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformPaymentLinks and only return the `id`
+     * const platformPaymentLinkWithIdOnly = await prisma.platformPaymentLink.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformPaymentLinkCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformPaymentLinkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformPaymentLink.
+     * @param {PlatformPaymentLinkDeleteArgs} args - Arguments to delete one PlatformPaymentLink.
+     * @example
+     * // Delete one PlatformPaymentLink
+     * const PlatformPaymentLink = await prisma.platformPaymentLink.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformPaymentLink
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformPaymentLinkDeleteArgs>(args: SelectSubset<T, PlatformPaymentLinkDeleteArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformPaymentLink.
+     * @param {PlatformPaymentLinkUpdateArgs} args - Arguments to update one PlatformPaymentLink.
+     * @example
+     * // Update one PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformPaymentLinkUpdateArgs>(args: SelectSubset<T, PlatformPaymentLinkUpdateArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformPaymentLinks.
+     * @param {PlatformPaymentLinkDeleteManyArgs} args - Arguments to filter PlatformPaymentLinks to delete.
+     * @example
+     * // Delete a few PlatformPaymentLinks
+     * const { count } = await prisma.platformPaymentLink.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformPaymentLinkDeleteManyArgs>(args?: SelectSubset<T, PlatformPaymentLinkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPaymentLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformPaymentLinks
+     * const platformPaymentLink = await prisma.platformPaymentLink.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformPaymentLinkUpdateManyArgs>(args: SelectSubset<T, PlatformPaymentLinkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPaymentLinks and returns the data updated in the database.
+     * @param {PlatformPaymentLinkUpdateManyAndReturnArgs} args - Arguments to update many PlatformPaymentLinks.
+     * @example
+     * // Update many PlatformPaymentLinks
+     * const platformPaymentLink = await prisma.platformPaymentLink.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformPaymentLinks and only return the `id`
+     * const platformPaymentLinkWithIdOnly = await prisma.platformPaymentLink.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformPaymentLinkUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformPaymentLinkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformPaymentLink.
+     * @param {PlatformPaymentLinkUpsertArgs} args - Arguments to update or create a PlatformPaymentLink.
+     * @example
+     * // Update or create a PlatformPaymentLink
+     * const platformPaymentLink = await prisma.platformPaymentLink.upsert({
+     *   create: {
+     *     // ... data to create a PlatformPaymentLink
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformPaymentLink we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformPaymentLinkUpsertArgs>(args: SelectSubset<T, PlatformPaymentLinkUpsertArgs<ExtArgs>>): Prisma__PlatformPaymentLinkClient<$Result.GetResult<Prisma.$PlatformPaymentLinkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformPaymentLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkCountArgs} args - Arguments to filter PlatformPaymentLinks to count.
+     * @example
+     * // Count the number of PlatformPaymentLinks
+     * const count = await prisma.platformPaymentLink.count({
+     *   where: {
+     *     // ... the filter for the PlatformPaymentLinks we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformPaymentLinkCountArgs>(
+      args?: Subset<T, PlatformPaymentLinkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformPaymentLinkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformPaymentLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformPaymentLinkAggregateArgs>(args: Subset<T, PlatformPaymentLinkAggregateArgs>): Prisma.PrismaPromise<GetPlatformPaymentLinkAggregateType<T>>
+
+    /**
+     * Group by PlatformPaymentLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPaymentLinkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformPaymentLinkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformPaymentLinkGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformPaymentLinkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformPaymentLinkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformPaymentLinkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformPaymentLink model
+   */
+  readonly fields: PlatformPaymentLinkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformPaymentLink.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformPaymentLinkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    paymentOrder<T extends PlatformPaymentLink$paymentOrderArgs<ExtArgs> = {}>(args?: Subset<T, PlatformPaymentLink$paymentOrderArgs<ExtArgs>>): Prisma__PaymentOrderClient<$Result.GetResult<Prisma.$PaymentOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformPaymentLink model
+   */
+  interface PlatformPaymentLinkFieldRefs {
+    readonly id: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly organizationId: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly amountAzn: FieldRef<"PlatformPaymentLink", 'Decimal'>
+    readonly currency: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly counterpartyRef: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly sourceEntityType: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly sourceEntityId: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly paymentOrderId: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly token: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly paymentUrl: FieldRef<"PlatformPaymentLink", 'String'>
+    readonly status: FieldRef<"PlatformPaymentLink", 'PlatformPaymentLinkStatus'>
+    readonly expiresAt: FieldRef<"PlatformPaymentLink", 'DateTime'>
+    readonly metadata: FieldRef<"PlatformPaymentLink", 'Json'>
+    readonly createdAt: FieldRef<"PlatformPaymentLink", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlatformPaymentLink", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformPaymentLink findUnique
+   */
+  export type PlatformPaymentLinkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPaymentLink to fetch.
+     */
+    where: PlatformPaymentLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPaymentLink findUniqueOrThrow
+   */
+  export type PlatformPaymentLinkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPaymentLink to fetch.
+     */
+    where: PlatformPaymentLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPaymentLink findFirst
+   */
+  export type PlatformPaymentLinkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPaymentLink to fetch.
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPaymentLinks to fetch.
+     */
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPaymentLinks.
+     */
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPaymentLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPaymentLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPaymentLinks.
+     */
+    distinct?: PlatformPaymentLinkScalarFieldEnum | PlatformPaymentLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPaymentLink findFirstOrThrow
+   */
+  export type PlatformPaymentLinkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPaymentLink to fetch.
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPaymentLinks to fetch.
+     */
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPaymentLinks.
+     */
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPaymentLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPaymentLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPaymentLinks.
+     */
+    distinct?: PlatformPaymentLinkScalarFieldEnum | PlatformPaymentLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPaymentLink findMany
+   */
+  export type PlatformPaymentLinkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPaymentLinks to fetch.
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPaymentLinks to fetch.
+     */
+    orderBy?: PlatformPaymentLinkOrderByWithRelationInput | PlatformPaymentLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformPaymentLinks.
+     */
+    cursor?: PlatformPaymentLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPaymentLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPaymentLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPaymentLinks.
+     */
+    distinct?: PlatformPaymentLinkScalarFieldEnum | PlatformPaymentLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPaymentLink create
+   */
+  export type PlatformPaymentLinkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformPaymentLink.
+     */
+    data: XOR<PlatformPaymentLinkCreateInput, PlatformPaymentLinkUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformPaymentLink createMany
+   */
+  export type PlatformPaymentLinkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformPaymentLinks.
+     */
+    data: PlatformPaymentLinkCreateManyInput | PlatformPaymentLinkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformPaymentLink createManyAndReturn
+   */
+  export type PlatformPaymentLinkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformPaymentLinks.
+     */
+    data: PlatformPaymentLinkCreateManyInput | PlatformPaymentLinkCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPaymentLink update
+   */
+  export type PlatformPaymentLinkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformPaymentLink.
+     */
+    data: XOR<PlatformPaymentLinkUpdateInput, PlatformPaymentLinkUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformPaymentLink to update.
+     */
+    where: PlatformPaymentLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPaymentLink updateMany
+   */
+  export type PlatformPaymentLinkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformPaymentLinks.
+     */
+    data: XOR<PlatformPaymentLinkUpdateManyMutationInput, PlatformPaymentLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPaymentLinks to update
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * Limit how many PlatformPaymentLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPaymentLink updateManyAndReturn
+   */
+  export type PlatformPaymentLinkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformPaymentLinks.
+     */
+    data: XOR<PlatformPaymentLinkUpdateManyMutationInput, PlatformPaymentLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPaymentLinks to update
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * Limit how many PlatformPaymentLinks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPaymentLink upsert
+   */
+  export type PlatformPaymentLinkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformPaymentLink to update in case it exists.
+     */
+    where: PlatformPaymentLinkWhereUniqueInput
+    /**
+     * In case the PlatformPaymentLink found by the `where` argument doesn't exist, create a new PlatformPaymentLink with this data.
+     */
+    create: XOR<PlatformPaymentLinkCreateInput, PlatformPaymentLinkUncheckedCreateInput>
+    /**
+     * In case the PlatformPaymentLink was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformPaymentLinkUpdateInput, PlatformPaymentLinkUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformPaymentLink delete
+   */
+  export type PlatformPaymentLinkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+    /**
+     * Filter which PlatformPaymentLink to delete.
+     */
+    where: PlatformPaymentLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPaymentLink deleteMany
+   */
+  export type PlatformPaymentLinkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPaymentLinks to delete
+     */
+    where?: PlatformPaymentLinkWhereInput
+    /**
+     * Limit how many PlatformPaymentLinks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPaymentLink.paymentOrder
+   */
+  export type PlatformPaymentLink$paymentOrderArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentOrder
+     */
+    select?: PaymentOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentOrder
+     */
+    omit?: PaymentOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PaymentOrderInclude<ExtArgs> | null
+    where?: PaymentOrderWhereInput
+  }
+
+  /**
+   * PlatformPaymentLink without action
+   */
+  export type PlatformPaymentLinkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPaymentLink
+     */
+    select?: PlatformPaymentLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPaymentLink
+     */
+    omit?: PlatformPaymentLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPaymentLinkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlatformPortalLink
+   */
+
+  export type AggregatePlatformPortalLink = {
+    _count: PlatformPortalLinkCountAggregateOutputType | null
+    _min: PlatformPortalLinkMinAggregateOutputType | null
+    _max: PlatformPortalLinkMaxAggregateOutputType | null
+  }
+
+  export type PlatformPortalLinkMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    token: string | null
+    entityType: string | null
+    entityId: string | null
+    status: $Enums.PlatformPortalLinkStatus | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type PlatformPortalLinkMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    token: string | null
+    entityType: string | null
+    entityId: string | null
+    status: $Enums.PlatformPortalLinkStatus | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type PlatformPortalLinkCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    token: number
+    entityType: number
+    entityId: number
+    status: number
+    expiresAt: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PlatformPortalLinkMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    token?: true
+    entityType?: true
+    entityId?: true
+    status?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type PlatformPortalLinkMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    token?: true
+    entityType?: true
+    entityId?: true
+    status?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type PlatformPortalLinkCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    token?: true
+    entityType?: true
+    entityId?: true
+    status?: true
+    expiresAt?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PlatformPortalLinkAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPortalLink to aggregate.
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPortalLinks to fetch.
+     */
+    orderBy?: PlatformPortalLinkOrderByWithRelationInput | PlatformPortalLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformPortalLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPortalLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPortalLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformPortalLinks
+    **/
+    _count?: true | PlatformPortalLinkCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformPortalLinkMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformPortalLinkMaxAggregateInputType
+  }
+
+  export type GetPlatformPortalLinkAggregateType<T extends PlatformPortalLinkAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformPortalLink]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformPortalLink[P]>
+      : GetScalarType<T[P], AggregatePlatformPortalLink[P]>
+  }
+
+
+
+
+  export type PlatformPortalLinkGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPortalLinkWhereInput
+    orderBy?: PlatformPortalLinkOrderByWithAggregationInput | PlatformPortalLinkOrderByWithAggregationInput[]
+    by: PlatformPortalLinkScalarFieldEnum[] | PlatformPortalLinkScalarFieldEnum
+    having?: PlatformPortalLinkScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformPortalLinkCountAggregateInputType | true
+    _min?: PlatformPortalLinkMinAggregateInputType
+    _max?: PlatformPortalLinkMaxAggregateInputType
+  }
+
+  export type PlatformPortalLinkGroupByOutputType = {
+    id: string
+    organizationId: string
+    token: string
+    entityType: string
+    entityId: string
+    status: $Enums.PlatformPortalLinkStatus
+    expiresAt: Date | null
+    metadata: JsonValue
+    createdAt: Date
+    _count: PlatformPortalLinkCountAggregateOutputType | null
+    _min: PlatformPortalLinkMinAggregateOutputType | null
+    _max: PlatformPortalLinkMaxAggregateOutputType | null
+  }
+
+  type GetPlatformPortalLinkGroupByPayload<T extends PlatformPortalLinkGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformPortalLinkGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformPortalLinkGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformPortalLinkGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformPortalLinkGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformPortalLinkSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    token?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPortalLink"]>
+
+  export type PlatformPortalLinkSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    token?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPortalLink"]>
+
+  export type PlatformPortalLinkSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    token?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPortalLink"]>
+
+  export type PlatformPortalLinkSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    token?: boolean
+    entityType?: boolean
+    entityId?: boolean
+    status?: boolean
+    expiresAt?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type PlatformPortalLinkOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "token" | "entityType" | "entityId" | "status" | "expiresAt" | "metadata" | "createdAt", ExtArgs["result"]["platformPortalLink"]>
+  export type PlatformPortalLinkInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformPortalLinkIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformPortalLinkIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlatformPortalLinkPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformPortalLink"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      token: string
+      entityType: string
+      entityId: string
+      status: $Enums.PlatformPortalLinkStatus
+      expiresAt: Date | null
+      metadata: Prisma.JsonValue
+      createdAt: Date
+    }, ExtArgs["result"]["platformPortalLink"]>
+    composites: {}
+  }
+
+  type PlatformPortalLinkGetPayload<S extends boolean | null | undefined | PlatformPortalLinkDefaultArgs> = $Result.GetResult<Prisma.$PlatformPortalLinkPayload, S>
+
+  type PlatformPortalLinkCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformPortalLinkFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformPortalLinkCountAggregateInputType | true
+    }
+
+  export interface PlatformPortalLinkDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformPortalLink'], meta: { name: 'PlatformPortalLink' } }
+    /**
+     * Find zero or one PlatformPortalLink that matches the filter.
+     * @param {PlatformPortalLinkFindUniqueArgs} args - Arguments to find a PlatformPortalLink
+     * @example
+     * // Get one PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformPortalLinkFindUniqueArgs>(args: SelectSubset<T, PlatformPortalLinkFindUniqueArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformPortalLink that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformPortalLinkFindUniqueOrThrowArgs} args - Arguments to find a PlatformPortalLink
+     * @example
+     * // Get one PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformPortalLinkFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformPortalLinkFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPortalLink that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkFindFirstArgs} args - Arguments to find a PlatformPortalLink
+     * @example
+     * // Get one PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformPortalLinkFindFirstArgs>(args?: SelectSubset<T, PlatformPortalLinkFindFirstArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPortalLink that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkFindFirstOrThrowArgs} args - Arguments to find a PlatformPortalLink
+     * @example
+     * // Get one PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformPortalLinkFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformPortalLinkFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformPortalLinks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformPortalLinks
+     * const platformPortalLinks = await prisma.platformPortalLink.findMany()
+     * 
+     * // Get first 10 PlatformPortalLinks
+     * const platformPortalLinks = await prisma.platformPortalLink.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformPortalLinkWithIdOnly = await prisma.platformPortalLink.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformPortalLinkFindManyArgs>(args?: SelectSubset<T, PlatformPortalLinkFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformPortalLink.
+     * @param {PlatformPortalLinkCreateArgs} args - Arguments to create a PlatformPortalLink.
+     * @example
+     * // Create one PlatformPortalLink
+     * const PlatformPortalLink = await prisma.platformPortalLink.create({
+     *   data: {
+     *     // ... data to create a PlatformPortalLink
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformPortalLinkCreateArgs>(args: SelectSubset<T, PlatformPortalLinkCreateArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformPortalLinks.
+     * @param {PlatformPortalLinkCreateManyArgs} args - Arguments to create many PlatformPortalLinks.
+     * @example
+     * // Create many PlatformPortalLinks
+     * const platformPortalLink = await prisma.platformPortalLink.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformPortalLinkCreateManyArgs>(args?: SelectSubset<T, PlatformPortalLinkCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformPortalLinks and returns the data saved in the database.
+     * @param {PlatformPortalLinkCreateManyAndReturnArgs} args - Arguments to create many PlatformPortalLinks.
+     * @example
+     * // Create many PlatformPortalLinks
+     * const platformPortalLink = await prisma.platformPortalLink.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformPortalLinks and only return the `id`
+     * const platformPortalLinkWithIdOnly = await prisma.platformPortalLink.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformPortalLinkCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformPortalLinkCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformPortalLink.
+     * @param {PlatformPortalLinkDeleteArgs} args - Arguments to delete one PlatformPortalLink.
+     * @example
+     * // Delete one PlatformPortalLink
+     * const PlatformPortalLink = await prisma.platformPortalLink.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformPortalLink
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformPortalLinkDeleteArgs>(args: SelectSubset<T, PlatformPortalLinkDeleteArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformPortalLink.
+     * @param {PlatformPortalLinkUpdateArgs} args - Arguments to update one PlatformPortalLink.
+     * @example
+     * // Update one PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformPortalLinkUpdateArgs>(args: SelectSubset<T, PlatformPortalLinkUpdateArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformPortalLinks.
+     * @param {PlatformPortalLinkDeleteManyArgs} args - Arguments to filter PlatformPortalLinks to delete.
+     * @example
+     * // Delete a few PlatformPortalLinks
+     * const { count } = await prisma.platformPortalLink.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformPortalLinkDeleteManyArgs>(args?: SelectSubset<T, PlatformPortalLinkDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPortalLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformPortalLinks
+     * const platformPortalLink = await prisma.platformPortalLink.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformPortalLinkUpdateManyArgs>(args: SelectSubset<T, PlatformPortalLinkUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPortalLinks and returns the data updated in the database.
+     * @param {PlatformPortalLinkUpdateManyAndReturnArgs} args - Arguments to update many PlatformPortalLinks.
+     * @example
+     * // Update many PlatformPortalLinks
+     * const platformPortalLink = await prisma.platformPortalLink.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformPortalLinks and only return the `id`
+     * const platformPortalLinkWithIdOnly = await prisma.platformPortalLink.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformPortalLinkUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformPortalLinkUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformPortalLink.
+     * @param {PlatformPortalLinkUpsertArgs} args - Arguments to update or create a PlatformPortalLink.
+     * @example
+     * // Update or create a PlatformPortalLink
+     * const platformPortalLink = await prisma.platformPortalLink.upsert({
+     *   create: {
+     *     // ... data to create a PlatformPortalLink
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformPortalLink we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformPortalLinkUpsertArgs>(args: SelectSubset<T, PlatformPortalLinkUpsertArgs<ExtArgs>>): Prisma__PlatformPortalLinkClient<$Result.GetResult<Prisma.$PlatformPortalLinkPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformPortalLinks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkCountArgs} args - Arguments to filter PlatformPortalLinks to count.
+     * @example
+     * // Count the number of PlatformPortalLinks
+     * const count = await prisma.platformPortalLink.count({
+     *   where: {
+     *     // ... the filter for the PlatformPortalLinks we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformPortalLinkCountArgs>(
+      args?: Subset<T, PlatformPortalLinkCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformPortalLinkCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformPortalLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformPortalLinkAggregateArgs>(args: Subset<T, PlatformPortalLinkAggregateArgs>): Prisma.PrismaPromise<GetPlatformPortalLinkAggregateType<T>>
+
+    /**
+     * Group by PlatformPortalLink.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPortalLinkGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformPortalLinkGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformPortalLinkGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformPortalLinkGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformPortalLinkGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformPortalLinkGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformPortalLink model
+   */
+  readonly fields: PlatformPortalLinkFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformPortalLink.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformPortalLinkClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformPortalLink model
+   */
+  interface PlatformPortalLinkFieldRefs {
+    readonly id: FieldRef<"PlatformPortalLink", 'String'>
+    readonly organizationId: FieldRef<"PlatformPortalLink", 'String'>
+    readonly token: FieldRef<"PlatformPortalLink", 'String'>
+    readonly entityType: FieldRef<"PlatformPortalLink", 'String'>
+    readonly entityId: FieldRef<"PlatformPortalLink", 'String'>
+    readonly status: FieldRef<"PlatformPortalLink", 'PlatformPortalLinkStatus'>
+    readonly expiresAt: FieldRef<"PlatformPortalLink", 'DateTime'>
+    readonly metadata: FieldRef<"PlatformPortalLink", 'Json'>
+    readonly createdAt: FieldRef<"PlatformPortalLink", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformPortalLink findUnique
+   */
+  export type PlatformPortalLinkFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPortalLink to fetch.
+     */
+    where: PlatformPortalLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPortalLink findUniqueOrThrow
+   */
+  export type PlatformPortalLinkFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPortalLink to fetch.
+     */
+    where: PlatformPortalLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPortalLink findFirst
+   */
+  export type PlatformPortalLinkFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPortalLink to fetch.
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPortalLinks to fetch.
+     */
+    orderBy?: PlatformPortalLinkOrderByWithRelationInput | PlatformPortalLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPortalLinks.
+     */
+    cursor?: PlatformPortalLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPortalLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPortalLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPortalLinks.
+     */
+    distinct?: PlatformPortalLinkScalarFieldEnum | PlatformPortalLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPortalLink findFirstOrThrow
+   */
+  export type PlatformPortalLinkFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPortalLink to fetch.
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPortalLinks to fetch.
+     */
+    orderBy?: PlatformPortalLinkOrderByWithRelationInput | PlatformPortalLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPortalLinks.
+     */
+    cursor?: PlatformPortalLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPortalLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPortalLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPortalLinks.
+     */
+    distinct?: PlatformPortalLinkScalarFieldEnum | PlatformPortalLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPortalLink findMany
+   */
+  export type PlatformPortalLinkFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPortalLinks to fetch.
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPortalLinks to fetch.
+     */
+    orderBy?: PlatformPortalLinkOrderByWithRelationInput | PlatformPortalLinkOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformPortalLinks.
+     */
+    cursor?: PlatformPortalLinkWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPortalLinks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPortalLinks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPortalLinks.
+     */
+    distinct?: PlatformPortalLinkScalarFieldEnum | PlatformPortalLinkScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPortalLink create
+   */
+  export type PlatformPortalLinkCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformPortalLink.
+     */
+    data: XOR<PlatformPortalLinkCreateInput, PlatformPortalLinkUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformPortalLink createMany
+   */
+  export type PlatformPortalLinkCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformPortalLinks.
+     */
+    data: PlatformPortalLinkCreateManyInput | PlatformPortalLinkCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformPortalLink createManyAndReturn
+   */
+  export type PlatformPortalLinkCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformPortalLinks.
+     */
+    data: PlatformPortalLinkCreateManyInput | PlatformPortalLinkCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPortalLink update
+   */
+  export type PlatformPortalLinkUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformPortalLink.
+     */
+    data: XOR<PlatformPortalLinkUpdateInput, PlatformPortalLinkUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformPortalLink to update.
+     */
+    where: PlatformPortalLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPortalLink updateMany
+   */
+  export type PlatformPortalLinkUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformPortalLinks.
+     */
+    data: XOR<PlatformPortalLinkUpdateManyMutationInput, PlatformPortalLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPortalLinks to update
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * Limit how many PlatformPortalLinks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPortalLink updateManyAndReturn
+   */
+  export type PlatformPortalLinkUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformPortalLinks.
+     */
+    data: XOR<PlatformPortalLinkUpdateManyMutationInput, PlatformPortalLinkUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPortalLinks to update
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * Limit how many PlatformPortalLinks to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPortalLink upsert
+   */
+  export type PlatformPortalLinkUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformPortalLink to update in case it exists.
+     */
+    where: PlatformPortalLinkWhereUniqueInput
+    /**
+     * In case the PlatformPortalLink found by the `where` argument doesn't exist, create a new PlatformPortalLink with this data.
+     */
+    create: XOR<PlatformPortalLinkCreateInput, PlatformPortalLinkUncheckedCreateInput>
+    /**
+     * In case the PlatformPortalLink was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformPortalLinkUpdateInput, PlatformPortalLinkUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformPortalLink delete
+   */
+  export type PlatformPortalLinkDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+    /**
+     * Filter which PlatformPortalLink to delete.
+     */
+    where: PlatformPortalLinkWhereUniqueInput
+  }
+
+  /**
+   * PlatformPortalLink deleteMany
+   */
+  export type PlatformPortalLinkDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPortalLinks to delete
+     */
+    where?: PlatformPortalLinkWhereInput
+    /**
+     * Limit how many PlatformPortalLinks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPortalLink without action
+   */
+  export type PlatformPortalLinkDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPortalLink
+     */
+    select?: PlatformPortalLinkSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPortalLink
+     */
+    omit?: PlatformPortalLinkOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPortalLinkInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BookableResource
+   */
+
+  export type AggregateBookableResource = {
+    _count: BookableResourceCountAggregateOutputType | null
+    _min: BookableResourceMinAggregateOutputType | null
+    _max: BookableResourceMaxAggregateOutputType | null
+  }
+
+  export type BookableResourceMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceKey: string | null
+    name: string | null
+    createdAt: Date | null
+  }
+
+  export type BookableResourceMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceKey: string | null
+    name: string | null
+    createdAt: Date | null
+  }
+
+  export type BookableResourceCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    resourceKey: number
+    name: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BookableResourceMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceKey?: true
+    name?: true
+    createdAt?: true
+  }
+
+  export type BookableResourceMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceKey?: true
+    name?: true
+    createdAt?: true
+  }
+
+  export type BookableResourceCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceKey?: true
+    name?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BookableResourceAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookableResource to aggregate.
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookableResources to fetch.
+     */
+    orderBy?: BookableResourceOrderByWithRelationInput | BookableResourceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BookableResourceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookableResources from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookableResources.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BookableResources
+    **/
+    _count?: true | BookableResourceCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BookableResourceMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BookableResourceMaxAggregateInputType
+  }
+
+  export type GetBookableResourceAggregateType<T extends BookableResourceAggregateArgs> = {
+        [P in keyof T & keyof AggregateBookableResource]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBookableResource[P]>
+      : GetScalarType<T[P], AggregateBookableResource[P]>
+  }
+
+
+
+
+  export type BookableResourceGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookableResourceWhereInput
+    orderBy?: BookableResourceOrderByWithAggregationInput | BookableResourceOrderByWithAggregationInput[]
+    by: BookableResourceScalarFieldEnum[] | BookableResourceScalarFieldEnum
+    having?: BookableResourceScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BookableResourceCountAggregateInputType | true
+    _min?: BookableResourceMinAggregateInputType
+    _max?: BookableResourceMaxAggregateInputType
+  }
+
+  export type BookableResourceGroupByOutputType = {
+    id: string
+    organizationId: string
+    resourceKey: string
+    name: string
+    metadata: JsonValue
+    createdAt: Date
+    _count: BookableResourceCountAggregateOutputType | null
+    _min: BookableResourceMinAggregateOutputType | null
+    _max: BookableResourceMaxAggregateOutputType | null
+  }
+
+  type GetBookableResourceGroupByPayload<T extends BookableResourceGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BookableResourceGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BookableResourceGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BookableResourceGroupByOutputType[P]>
+            : GetScalarType<T[P], BookableResourceGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BookableResourceSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceKey?: boolean
+    name?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    slots?: boolean | BookableResource$slotsArgs<ExtArgs>
+    appointments?: boolean | BookableResource$appointmentsArgs<ExtArgs>
+    _count?: boolean | BookableResourceCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookableResource"]>
+
+  export type BookableResourceSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceKey?: boolean
+    name?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookableResource"]>
+
+  export type BookableResourceSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceKey?: boolean
+    name?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookableResource"]>
+
+  export type BookableResourceSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    resourceKey?: boolean
+    name?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type BookableResourceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "resourceKey" | "name" | "metadata" | "createdAt", ExtArgs["result"]["bookableResource"]>
+  export type BookableResourceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    slots?: boolean | BookableResource$slotsArgs<ExtArgs>
+    appointments?: boolean | BookableResource$appointmentsArgs<ExtArgs>
+    _count?: boolean | BookableResourceCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type BookableResourceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type BookableResourceIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $BookableResourcePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BookableResource"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      slots: Prisma.$BookingSlotPayload<ExtArgs>[]
+      appointments: Prisma.$BookingAppointmentPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      resourceKey: string
+      name: string
+      metadata: Prisma.JsonValue
+      createdAt: Date
+    }, ExtArgs["result"]["bookableResource"]>
+    composites: {}
+  }
+
+  type BookableResourceGetPayload<S extends boolean | null | undefined | BookableResourceDefaultArgs> = $Result.GetResult<Prisma.$BookableResourcePayload, S>
+
+  type BookableResourceCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BookableResourceFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BookableResourceCountAggregateInputType | true
+    }
+
+  export interface BookableResourceDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BookableResource'], meta: { name: 'BookableResource' } }
+    /**
+     * Find zero or one BookableResource that matches the filter.
+     * @param {BookableResourceFindUniqueArgs} args - Arguments to find a BookableResource
+     * @example
+     * // Get one BookableResource
+     * const bookableResource = await prisma.bookableResource.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BookableResourceFindUniqueArgs>(args: SelectSubset<T, BookableResourceFindUniqueArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BookableResource that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BookableResourceFindUniqueOrThrowArgs} args - Arguments to find a BookableResource
+     * @example
+     * // Get one BookableResource
+     * const bookableResource = await prisma.bookableResource.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BookableResourceFindUniqueOrThrowArgs>(args: SelectSubset<T, BookableResourceFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookableResource that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceFindFirstArgs} args - Arguments to find a BookableResource
+     * @example
+     * // Get one BookableResource
+     * const bookableResource = await prisma.bookableResource.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BookableResourceFindFirstArgs>(args?: SelectSubset<T, BookableResourceFindFirstArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookableResource that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceFindFirstOrThrowArgs} args - Arguments to find a BookableResource
+     * @example
+     * // Get one BookableResource
+     * const bookableResource = await prisma.bookableResource.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BookableResourceFindFirstOrThrowArgs>(args?: SelectSubset<T, BookableResourceFindFirstOrThrowArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BookableResources that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BookableResources
+     * const bookableResources = await prisma.bookableResource.findMany()
+     * 
+     * // Get first 10 BookableResources
+     * const bookableResources = await prisma.bookableResource.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bookableResourceWithIdOnly = await prisma.bookableResource.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BookableResourceFindManyArgs>(args?: SelectSubset<T, BookableResourceFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BookableResource.
+     * @param {BookableResourceCreateArgs} args - Arguments to create a BookableResource.
+     * @example
+     * // Create one BookableResource
+     * const BookableResource = await prisma.bookableResource.create({
+     *   data: {
+     *     // ... data to create a BookableResource
+     *   }
+     * })
+     * 
+     */
+    create<T extends BookableResourceCreateArgs>(args: SelectSubset<T, BookableResourceCreateArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BookableResources.
+     * @param {BookableResourceCreateManyArgs} args - Arguments to create many BookableResources.
+     * @example
+     * // Create many BookableResources
+     * const bookableResource = await prisma.bookableResource.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BookableResourceCreateManyArgs>(args?: SelectSubset<T, BookableResourceCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BookableResources and returns the data saved in the database.
+     * @param {BookableResourceCreateManyAndReturnArgs} args - Arguments to create many BookableResources.
+     * @example
+     * // Create many BookableResources
+     * const bookableResource = await prisma.bookableResource.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BookableResources and only return the `id`
+     * const bookableResourceWithIdOnly = await prisma.bookableResource.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BookableResourceCreateManyAndReturnArgs>(args?: SelectSubset<T, BookableResourceCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BookableResource.
+     * @param {BookableResourceDeleteArgs} args - Arguments to delete one BookableResource.
+     * @example
+     * // Delete one BookableResource
+     * const BookableResource = await prisma.bookableResource.delete({
+     *   where: {
+     *     // ... filter to delete one BookableResource
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BookableResourceDeleteArgs>(args: SelectSubset<T, BookableResourceDeleteArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BookableResource.
+     * @param {BookableResourceUpdateArgs} args - Arguments to update one BookableResource.
+     * @example
+     * // Update one BookableResource
+     * const bookableResource = await prisma.bookableResource.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BookableResourceUpdateArgs>(args: SelectSubset<T, BookableResourceUpdateArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BookableResources.
+     * @param {BookableResourceDeleteManyArgs} args - Arguments to filter BookableResources to delete.
+     * @example
+     * // Delete a few BookableResources
+     * const { count } = await prisma.bookableResource.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BookableResourceDeleteManyArgs>(args?: SelectSubset<T, BookableResourceDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookableResources.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BookableResources
+     * const bookableResource = await prisma.bookableResource.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BookableResourceUpdateManyArgs>(args: SelectSubset<T, BookableResourceUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookableResources and returns the data updated in the database.
+     * @param {BookableResourceUpdateManyAndReturnArgs} args - Arguments to update many BookableResources.
+     * @example
+     * // Update many BookableResources
+     * const bookableResource = await prisma.bookableResource.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BookableResources and only return the `id`
+     * const bookableResourceWithIdOnly = await prisma.bookableResource.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BookableResourceUpdateManyAndReturnArgs>(args: SelectSubset<T, BookableResourceUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BookableResource.
+     * @param {BookableResourceUpsertArgs} args - Arguments to update or create a BookableResource.
+     * @example
+     * // Update or create a BookableResource
+     * const bookableResource = await prisma.bookableResource.upsert({
+     *   create: {
+     *     // ... data to create a BookableResource
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BookableResource we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BookableResourceUpsertArgs>(args: SelectSubset<T, BookableResourceUpsertArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BookableResources.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceCountArgs} args - Arguments to filter BookableResources to count.
+     * @example
+     * // Count the number of BookableResources
+     * const count = await prisma.bookableResource.count({
+     *   where: {
+     *     // ... the filter for the BookableResources we want to count
+     *   }
+     * })
+    **/
+    count<T extends BookableResourceCountArgs>(
+      args?: Subset<T, BookableResourceCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BookableResourceCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BookableResource.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BookableResourceAggregateArgs>(args: Subset<T, BookableResourceAggregateArgs>): Prisma.PrismaPromise<GetBookableResourceAggregateType<T>>
+
+    /**
+     * Group by BookableResource.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookableResourceGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BookableResourceGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BookableResourceGroupByArgs['orderBy'] }
+        : { orderBy?: BookableResourceGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BookableResourceGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBookableResourceGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BookableResource model
+   */
+  readonly fields: BookableResourceFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BookableResource.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BookableResourceClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    slots<T extends BookableResource$slotsArgs<ExtArgs> = {}>(args?: Subset<T, BookableResource$slotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    appointments<T extends BookableResource$appointmentsArgs<ExtArgs> = {}>(args?: Subset<T, BookableResource$appointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BookableResource model
+   */
+  interface BookableResourceFieldRefs {
+    readonly id: FieldRef<"BookableResource", 'String'>
+    readonly organizationId: FieldRef<"BookableResource", 'String'>
+    readonly resourceKey: FieldRef<"BookableResource", 'String'>
+    readonly name: FieldRef<"BookableResource", 'String'>
+    readonly metadata: FieldRef<"BookableResource", 'Json'>
+    readonly createdAt: FieldRef<"BookableResource", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BookableResource findUnique
+   */
+  export type BookableResourceFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter, which BookableResource to fetch.
+     */
+    where: BookableResourceWhereUniqueInput
+  }
+
+  /**
+   * BookableResource findUniqueOrThrow
+   */
+  export type BookableResourceFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter, which BookableResource to fetch.
+     */
+    where: BookableResourceWhereUniqueInput
+  }
+
+  /**
+   * BookableResource findFirst
+   */
+  export type BookableResourceFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter, which BookableResource to fetch.
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookableResources to fetch.
+     */
+    orderBy?: BookableResourceOrderByWithRelationInput | BookableResourceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookableResources.
+     */
+    cursor?: BookableResourceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookableResources from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookableResources.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookableResources.
+     */
+    distinct?: BookableResourceScalarFieldEnum | BookableResourceScalarFieldEnum[]
+  }
+
+  /**
+   * BookableResource findFirstOrThrow
+   */
+  export type BookableResourceFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter, which BookableResource to fetch.
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookableResources to fetch.
+     */
+    orderBy?: BookableResourceOrderByWithRelationInput | BookableResourceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookableResources.
+     */
+    cursor?: BookableResourceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookableResources from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookableResources.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookableResources.
+     */
+    distinct?: BookableResourceScalarFieldEnum | BookableResourceScalarFieldEnum[]
+  }
+
+  /**
+   * BookableResource findMany
+   */
+  export type BookableResourceFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter, which BookableResources to fetch.
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookableResources to fetch.
+     */
+    orderBy?: BookableResourceOrderByWithRelationInput | BookableResourceOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BookableResources.
+     */
+    cursor?: BookableResourceWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookableResources from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookableResources.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookableResources.
+     */
+    distinct?: BookableResourceScalarFieldEnum | BookableResourceScalarFieldEnum[]
+  }
+
+  /**
+   * BookableResource create
+   */
+  export type BookableResourceCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BookableResource.
+     */
+    data: XOR<BookableResourceCreateInput, BookableResourceUncheckedCreateInput>
+  }
+
+  /**
+   * BookableResource createMany
+   */
+  export type BookableResourceCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BookableResources.
+     */
+    data: BookableResourceCreateManyInput | BookableResourceCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BookableResource createManyAndReturn
+   */
+  export type BookableResourceCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * The data used to create many BookableResources.
+     */
+    data: BookableResourceCreateManyInput | BookableResourceCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookableResource update
+   */
+  export type BookableResourceUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BookableResource.
+     */
+    data: XOR<BookableResourceUpdateInput, BookableResourceUncheckedUpdateInput>
+    /**
+     * Choose, which BookableResource to update.
+     */
+    where: BookableResourceWhereUniqueInput
+  }
+
+  /**
+   * BookableResource updateMany
+   */
+  export type BookableResourceUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BookableResources.
+     */
+    data: XOR<BookableResourceUpdateManyMutationInput, BookableResourceUncheckedUpdateManyInput>
+    /**
+     * Filter which BookableResources to update
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * Limit how many BookableResources to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookableResource updateManyAndReturn
+   */
+  export type BookableResourceUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * The data used to update BookableResources.
+     */
+    data: XOR<BookableResourceUpdateManyMutationInput, BookableResourceUncheckedUpdateManyInput>
+    /**
+     * Filter which BookableResources to update
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * Limit how many BookableResources to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookableResource upsert
+   */
+  export type BookableResourceUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BookableResource to update in case it exists.
+     */
+    where: BookableResourceWhereUniqueInput
+    /**
+     * In case the BookableResource found by the `where` argument doesn't exist, create a new BookableResource with this data.
+     */
+    create: XOR<BookableResourceCreateInput, BookableResourceUncheckedCreateInput>
+    /**
+     * In case the BookableResource was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BookableResourceUpdateInput, BookableResourceUncheckedUpdateInput>
+  }
+
+  /**
+   * BookableResource delete
+   */
+  export type BookableResourceDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    /**
+     * Filter which BookableResource to delete.
+     */
+    where: BookableResourceWhereUniqueInput
+  }
+
+  /**
+   * BookableResource deleteMany
+   */
+  export type BookableResourceDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookableResources to delete
+     */
+    where?: BookableResourceWhereInput
+    /**
+     * Limit how many BookableResources to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookableResource.slots
+   */
+  export type BookableResource$slotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    where?: BookingSlotWhereInput
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    cursor?: BookingSlotWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingSlotScalarFieldEnum | BookingSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BookableResource.appointments
+   */
+  export type BookableResource$appointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    where?: BookingAppointmentWhereInput
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    cursor?: BookingAppointmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * BookableResource without action
+   */
+  export type BookableResourceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BookingSlot
+   */
+
+  export type AggregateBookingSlot = {
+    _count: BookingSlotCountAggregateOutputType | null
+    _avg: BookingSlotAvgAggregateOutputType | null
+    _sum: BookingSlotSumAggregateOutputType | null
+    _min: BookingSlotMinAggregateOutputType | null
+    _max: BookingSlotMaxAggregateOutputType | null
+  }
+
+  export type BookingSlotAvgAggregateOutputType = {
+    capacity: number | null
+    bookedCount: number | null
+  }
+
+  export type BookingSlotSumAggregateOutputType = {
+    capacity: number | null
+    bookedCount: number | null
+  }
+
+  export type BookingSlotMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceId: string | null
+    startsAt: Date | null
+    endsAt: Date | null
+    capacity: number | null
+    bookedCount: number | null
+    createdAt: Date | null
+  }
+
+  export type BookingSlotMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceId: string | null
+    startsAt: Date | null
+    endsAt: Date | null
+    capacity: number | null
+    bookedCount: number | null
+    createdAt: Date | null
+  }
+
+  export type BookingSlotCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    resourceId: number
+    startsAt: number
+    endsAt: number
+    capacity: number
+    bookedCount: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BookingSlotAvgAggregateInputType = {
+    capacity?: true
+    bookedCount?: true
+  }
+
+  export type BookingSlotSumAggregateInputType = {
+    capacity?: true
+    bookedCount?: true
+  }
+
+  export type BookingSlotMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    startsAt?: true
+    endsAt?: true
+    capacity?: true
+    bookedCount?: true
+    createdAt?: true
+  }
+
+  export type BookingSlotMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    startsAt?: true
+    endsAt?: true
+    capacity?: true
+    bookedCount?: true
+    createdAt?: true
+  }
+
+  export type BookingSlotCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    startsAt?: true
+    endsAt?: true
+    capacity?: true
+    bookedCount?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BookingSlotAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookingSlot to aggregate.
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingSlots to fetch.
+     */
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BookingSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BookingSlots
+    **/
+    _count?: true | BookingSlotCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BookingSlotAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BookingSlotSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BookingSlotMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BookingSlotMaxAggregateInputType
+  }
+
+  export type GetBookingSlotAggregateType<T extends BookingSlotAggregateArgs> = {
+        [P in keyof T & keyof AggregateBookingSlot]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBookingSlot[P]>
+      : GetScalarType<T[P], AggregateBookingSlot[P]>
+  }
+
+
+
+
+  export type BookingSlotGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingSlotWhereInput
+    orderBy?: BookingSlotOrderByWithAggregationInput | BookingSlotOrderByWithAggregationInput[]
+    by: BookingSlotScalarFieldEnum[] | BookingSlotScalarFieldEnum
+    having?: BookingSlotScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BookingSlotCountAggregateInputType | true
+    _avg?: BookingSlotAvgAggregateInputType
+    _sum?: BookingSlotSumAggregateInputType
+    _min?: BookingSlotMinAggregateInputType
+    _max?: BookingSlotMaxAggregateInputType
+  }
+
+  export type BookingSlotGroupByOutputType = {
+    id: string
+    organizationId: string
+    resourceId: string
+    startsAt: Date
+    endsAt: Date
+    capacity: number
+    bookedCount: number
+    createdAt: Date
+    _count: BookingSlotCountAggregateOutputType | null
+    _avg: BookingSlotAvgAggregateOutputType | null
+    _sum: BookingSlotSumAggregateOutputType | null
+    _min: BookingSlotMinAggregateOutputType | null
+    _max: BookingSlotMaxAggregateOutputType | null
+  }
+
+  type GetBookingSlotGroupByPayload<T extends BookingSlotGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BookingSlotGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BookingSlotGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BookingSlotGroupByOutputType[P]>
+            : GetScalarType<T[P], BookingSlotGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BookingSlotSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    startsAt?: boolean
+    endsAt?: boolean
+    capacity?: boolean
+    bookedCount?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+    appointments?: boolean | BookingSlot$appointmentsArgs<ExtArgs>
+    _count?: boolean | BookingSlotCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingSlot"]>
+
+  export type BookingSlotSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    startsAt?: boolean
+    endsAt?: boolean
+    capacity?: boolean
+    bookedCount?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingSlot"]>
+
+  export type BookingSlotSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    startsAt?: boolean
+    endsAt?: boolean
+    capacity?: boolean
+    bookedCount?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingSlot"]>
+
+  export type BookingSlotSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    startsAt?: boolean
+    endsAt?: boolean
+    capacity?: boolean
+    bookedCount?: boolean
+    createdAt?: boolean
+  }
+
+  export type BookingSlotOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "resourceId" | "startsAt" | "endsAt" | "capacity" | "bookedCount" | "createdAt", ExtArgs["result"]["bookingSlot"]>
+  export type BookingSlotInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+    appointments?: boolean | BookingSlot$appointmentsArgs<ExtArgs>
+    _count?: boolean | BookingSlotCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type BookingSlotIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+  }
+  export type BookingSlotIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookableResourceDefaultArgs<ExtArgs>
+  }
+
+  export type $BookingSlotPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BookingSlot"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      resource: Prisma.$BookableResourcePayload<ExtArgs>
+      appointments: Prisma.$BookingAppointmentPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      resourceId: string
+      startsAt: Date
+      endsAt: Date
+      capacity: number
+      bookedCount: number
+      createdAt: Date
+    }, ExtArgs["result"]["bookingSlot"]>
+    composites: {}
+  }
+
+  type BookingSlotGetPayload<S extends boolean | null | undefined | BookingSlotDefaultArgs> = $Result.GetResult<Prisma.$BookingSlotPayload, S>
+
+  type BookingSlotCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BookingSlotFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BookingSlotCountAggregateInputType | true
+    }
+
+  export interface BookingSlotDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BookingSlot'], meta: { name: 'BookingSlot' } }
+    /**
+     * Find zero or one BookingSlot that matches the filter.
+     * @param {BookingSlotFindUniqueArgs} args - Arguments to find a BookingSlot
+     * @example
+     * // Get one BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BookingSlotFindUniqueArgs>(args: SelectSubset<T, BookingSlotFindUniqueArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BookingSlot that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BookingSlotFindUniqueOrThrowArgs} args - Arguments to find a BookingSlot
+     * @example
+     * // Get one BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BookingSlotFindUniqueOrThrowArgs>(args: SelectSubset<T, BookingSlotFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookingSlot that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotFindFirstArgs} args - Arguments to find a BookingSlot
+     * @example
+     * // Get one BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BookingSlotFindFirstArgs>(args?: SelectSubset<T, BookingSlotFindFirstArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookingSlot that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotFindFirstOrThrowArgs} args - Arguments to find a BookingSlot
+     * @example
+     * // Get one BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BookingSlotFindFirstOrThrowArgs>(args?: SelectSubset<T, BookingSlotFindFirstOrThrowArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BookingSlots that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BookingSlots
+     * const bookingSlots = await prisma.bookingSlot.findMany()
+     * 
+     * // Get first 10 BookingSlots
+     * const bookingSlots = await prisma.bookingSlot.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bookingSlotWithIdOnly = await prisma.bookingSlot.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BookingSlotFindManyArgs>(args?: SelectSubset<T, BookingSlotFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BookingSlot.
+     * @param {BookingSlotCreateArgs} args - Arguments to create a BookingSlot.
+     * @example
+     * // Create one BookingSlot
+     * const BookingSlot = await prisma.bookingSlot.create({
+     *   data: {
+     *     // ... data to create a BookingSlot
+     *   }
+     * })
+     * 
+     */
+    create<T extends BookingSlotCreateArgs>(args: SelectSubset<T, BookingSlotCreateArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BookingSlots.
+     * @param {BookingSlotCreateManyArgs} args - Arguments to create many BookingSlots.
+     * @example
+     * // Create many BookingSlots
+     * const bookingSlot = await prisma.bookingSlot.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BookingSlotCreateManyArgs>(args?: SelectSubset<T, BookingSlotCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BookingSlots and returns the data saved in the database.
+     * @param {BookingSlotCreateManyAndReturnArgs} args - Arguments to create many BookingSlots.
+     * @example
+     * // Create many BookingSlots
+     * const bookingSlot = await prisma.bookingSlot.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BookingSlots and only return the `id`
+     * const bookingSlotWithIdOnly = await prisma.bookingSlot.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BookingSlotCreateManyAndReturnArgs>(args?: SelectSubset<T, BookingSlotCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BookingSlot.
+     * @param {BookingSlotDeleteArgs} args - Arguments to delete one BookingSlot.
+     * @example
+     * // Delete one BookingSlot
+     * const BookingSlot = await prisma.bookingSlot.delete({
+     *   where: {
+     *     // ... filter to delete one BookingSlot
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BookingSlotDeleteArgs>(args: SelectSubset<T, BookingSlotDeleteArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BookingSlot.
+     * @param {BookingSlotUpdateArgs} args - Arguments to update one BookingSlot.
+     * @example
+     * // Update one BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BookingSlotUpdateArgs>(args: SelectSubset<T, BookingSlotUpdateArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BookingSlots.
+     * @param {BookingSlotDeleteManyArgs} args - Arguments to filter BookingSlots to delete.
+     * @example
+     * // Delete a few BookingSlots
+     * const { count } = await prisma.bookingSlot.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BookingSlotDeleteManyArgs>(args?: SelectSubset<T, BookingSlotDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookingSlots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BookingSlots
+     * const bookingSlot = await prisma.bookingSlot.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BookingSlotUpdateManyArgs>(args: SelectSubset<T, BookingSlotUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookingSlots and returns the data updated in the database.
+     * @param {BookingSlotUpdateManyAndReturnArgs} args - Arguments to update many BookingSlots.
+     * @example
+     * // Update many BookingSlots
+     * const bookingSlot = await prisma.bookingSlot.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BookingSlots and only return the `id`
+     * const bookingSlotWithIdOnly = await prisma.bookingSlot.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BookingSlotUpdateManyAndReturnArgs>(args: SelectSubset<T, BookingSlotUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BookingSlot.
+     * @param {BookingSlotUpsertArgs} args - Arguments to update or create a BookingSlot.
+     * @example
+     * // Update or create a BookingSlot
+     * const bookingSlot = await prisma.bookingSlot.upsert({
+     *   create: {
+     *     // ... data to create a BookingSlot
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BookingSlot we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BookingSlotUpsertArgs>(args: SelectSubset<T, BookingSlotUpsertArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BookingSlots.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotCountArgs} args - Arguments to filter BookingSlots to count.
+     * @example
+     * // Count the number of BookingSlots
+     * const count = await prisma.bookingSlot.count({
+     *   where: {
+     *     // ... the filter for the BookingSlots we want to count
+     *   }
+     * })
+    **/
+    count<T extends BookingSlotCountArgs>(
+      args?: Subset<T, BookingSlotCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BookingSlotCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BookingSlot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BookingSlotAggregateArgs>(args: Subset<T, BookingSlotAggregateArgs>): Prisma.PrismaPromise<GetBookingSlotAggregateType<T>>
+
+    /**
+     * Group by BookingSlot.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingSlotGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BookingSlotGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BookingSlotGroupByArgs['orderBy'] }
+        : { orderBy?: BookingSlotGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BookingSlotGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBookingSlotGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BookingSlot model
+   */
+  readonly fields: BookingSlotFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BookingSlot.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BookingSlotClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    resource<T extends BookableResourceDefaultArgs<ExtArgs> = {}>(args?: Subset<T, BookableResourceDefaultArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    appointments<T extends BookingSlot$appointmentsArgs<ExtArgs> = {}>(args?: Subset<T, BookingSlot$appointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BookingSlot model
+   */
+  interface BookingSlotFieldRefs {
+    readonly id: FieldRef<"BookingSlot", 'String'>
+    readonly organizationId: FieldRef<"BookingSlot", 'String'>
+    readonly resourceId: FieldRef<"BookingSlot", 'String'>
+    readonly startsAt: FieldRef<"BookingSlot", 'DateTime'>
+    readonly endsAt: FieldRef<"BookingSlot", 'DateTime'>
+    readonly capacity: FieldRef<"BookingSlot", 'Int'>
+    readonly bookedCount: FieldRef<"BookingSlot", 'Int'>
+    readonly createdAt: FieldRef<"BookingSlot", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BookingSlot findUnique
+   */
+  export type BookingSlotFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingSlot to fetch.
+     */
+    where: BookingSlotWhereUniqueInput
+  }
+
+  /**
+   * BookingSlot findUniqueOrThrow
+   */
+  export type BookingSlotFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingSlot to fetch.
+     */
+    where: BookingSlotWhereUniqueInput
+  }
+
+  /**
+   * BookingSlot findFirst
+   */
+  export type BookingSlotFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingSlot to fetch.
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingSlots to fetch.
+     */
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookingSlots.
+     */
+    cursor?: BookingSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingSlots.
+     */
+    distinct?: BookingSlotScalarFieldEnum | BookingSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BookingSlot findFirstOrThrow
+   */
+  export type BookingSlotFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingSlot to fetch.
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingSlots to fetch.
+     */
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookingSlots.
+     */
+    cursor?: BookingSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingSlots.
+     */
+    distinct?: BookingSlotScalarFieldEnum | BookingSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BookingSlot findMany
+   */
+  export type BookingSlotFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingSlots to fetch.
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingSlots to fetch.
+     */
+    orderBy?: BookingSlotOrderByWithRelationInput | BookingSlotOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BookingSlots.
+     */
+    cursor?: BookingSlotWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingSlots from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingSlots.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingSlots.
+     */
+    distinct?: BookingSlotScalarFieldEnum | BookingSlotScalarFieldEnum[]
+  }
+
+  /**
+   * BookingSlot create
+   */
+  export type BookingSlotCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BookingSlot.
+     */
+    data: XOR<BookingSlotCreateInput, BookingSlotUncheckedCreateInput>
+  }
+
+  /**
+   * BookingSlot createMany
+   */
+  export type BookingSlotCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BookingSlots.
+     */
+    data: BookingSlotCreateManyInput | BookingSlotCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BookingSlot createManyAndReturn
+   */
+  export type BookingSlotCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * The data used to create many BookingSlots.
+     */
+    data: BookingSlotCreateManyInput | BookingSlotCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookingSlot update
+   */
+  export type BookingSlotUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BookingSlot.
+     */
+    data: XOR<BookingSlotUpdateInput, BookingSlotUncheckedUpdateInput>
+    /**
+     * Choose, which BookingSlot to update.
+     */
+    where: BookingSlotWhereUniqueInput
+  }
+
+  /**
+   * BookingSlot updateMany
+   */
+  export type BookingSlotUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BookingSlots.
+     */
+    data: XOR<BookingSlotUpdateManyMutationInput, BookingSlotUncheckedUpdateManyInput>
+    /**
+     * Filter which BookingSlots to update
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * Limit how many BookingSlots to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookingSlot updateManyAndReturn
+   */
+  export type BookingSlotUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * The data used to update BookingSlots.
+     */
+    data: XOR<BookingSlotUpdateManyMutationInput, BookingSlotUncheckedUpdateManyInput>
+    /**
+     * Filter which BookingSlots to update
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * Limit how many BookingSlots to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookingSlot upsert
+   */
+  export type BookingSlotUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BookingSlot to update in case it exists.
+     */
+    where: BookingSlotWhereUniqueInput
+    /**
+     * In case the BookingSlot found by the `where` argument doesn't exist, create a new BookingSlot with this data.
+     */
+    create: XOR<BookingSlotCreateInput, BookingSlotUncheckedCreateInput>
+    /**
+     * In case the BookingSlot was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BookingSlotUpdateInput, BookingSlotUncheckedUpdateInput>
+  }
+
+  /**
+   * BookingSlot delete
+   */
+  export type BookingSlotDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    /**
+     * Filter which BookingSlot to delete.
+     */
+    where: BookingSlotWhereUniqueInput
+  }
+
+  /**
+   * BookingSlot deleteMany
+   */
+  export type BookingSlotDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookingSlots to delete
+     */
+    where?: BookingSlotWhereInput
+    /**
+     * Limit how many BookingSlots to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookingSlot.appointments
+   */
+  export type BookingSlot$appointmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    where?: BookingAppointmentWhereInput
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    cursor?: BookingAppointmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * BookingSlot without action
+   */
+  export type BookingSlotDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BookingAppointment
+   */
+
+  export type AggregateBookingAppointment = {
+    _count: BookingAppointmentCountAggregateOutputType | null
+    _min: BookingAppointmentMinAggregateOutputType | null
+    _max: BookingAppointmentMaxAggregateOutputType | null
+  }
+
+  export type BookingAppointmentMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceId: string | null
+    slotId: string | null
+    customerRef: string | null
+    customerPhone: string | null
+    customerName: string | null
+    scheduledAt: Date | null
+    status: $Enums.BookingAppointmentStatus | null
+    createdAt: Date | null
+  }
+
+  export type BookingAppointmentMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    resourceId: string | null
+    slotId: string | null
+    customerRef: string | null
+    customerPhone: string | null
+    customerName: string | null
+    scheduledAt: Date | null
+    status: $Enums.BookingAppointmentStatus | null
+    createdAt: Date | null
+  }
+
+  export type BookingAppointmentCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    resourceId: number
+    slotId: number
+    customerRef: number
+    customerPhone: number
+    customerName: number
+    scheduledAt: number
+    status: number
+    metadata: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BookingAppointmentMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    slotId?: true
+    customerRef?: true
+    customerPhone?: true
+    customerName?: true
+    scheduledAt?: true
+    status?: true
+    createdAt?: true
+  }
+
+  export type BookingAppointmentMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    slotId?: true
+    customerRef?: true
+    customerPhone?: true
+    customerName?: true
+    scheduledAt?: true
+    status?: true
+    createdAt?: true
+  }
+
+  export type BookingAppointmentCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    resourceId?: true
+    slotId?: true
+    customerRef?: true
+    customerPhone?: true
+    customerName?: true
+    scheduledAt?: true
+    status?: true
+    metadata?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BookingAppointmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookingAppointment to aggregate.
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingAppointments to fetch.
+     */
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BookingAppointmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingAppointments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingAppointments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BookingAppointments
+    **/
+    _count?: true | BookingAppointmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BookingAppointmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BookingAppointmentMaxAggregateInputType
+  }
+
+  export type GetBookingAppointmentAggregateType<T extends BookingAppointmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateBookingAppointment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBookingAppointment[P]>
+      : GetScalarType<T[P], AggregateBookingAppointment[P]>
+  }
+
+
+
+
+  export type BookingAppointmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BookingAppointmentWhereInput
+    orderBy?: BookingAppointmentOrderByWithAggregationInput | BookingAppointmentOrderByWithAggregationInput[]
+    by: BookingAppointmentScalarFieldEnum[] | BookingAppointmentScalarFieldEnum
+    having?: BookingAppointmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BookingAppointmentCountAggregateInputType | true
+    _min?: BookingAppointmentMinAggregateInputType
+    _max?: BookingAppointmentMaxAggregateInputType
+  }
+
+  export type BookingAppointmentGroupByOutputType = {
+    id: string
+    organizationId: string
+    resourceId: string | null
+    slotId: string | null
+    customerRef: string
+    customerPhone: string | null
+    customerName: string | null
+    scheduledAt: Date
+    status: $Enums.BookingAppointmentStatus
+    metadata: JsonValue
+    createdAt: Date
+    _count: BookingAppointmentCountAggregateOutputType | null
+    _min: BookingAppointmentMinAggregateOutputType | null
+    _max: BookingAppointmentMaxAggregateOutputType | null
+  }
+
+  type GetBookingAppointmentGroupByPayload<T extends BookingAppointmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BookingAppointmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BookingAppointmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BookingAppointmentGroupByOutputType[P]>
+            : GetScalarType<T[P], BookingAppointmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BookingAppointmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    slotId?: boolean
+    customerRef?: boolean
+    customerPhone?: boolean
+    customerName?: boolean
+    scheduledAt?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingAppointment"]>
+
+  export type BookingAppointmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    slotId?: boolean
+    customerRef?: boolean
+    customerPhone?: boolean
+    customerName?: boolean
+    scheduledAt?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingAppointment"]>
+
+  export type BookingAppointmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    slotId?: boolean
+    customerRef?: boolean
+    customerPhone?: boolean
+    customerName?: boolean
+    scheduledAt?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }, ExtArgs["result"]["bookingAppointment"]>
+
+  export type BookingAppointmentSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    resourceId?: boolean
+    slotId?: boolean
+    customerRef?: boolean
+    customerPhone?: boolean
+    customerName?: boolean
+    scheduledAt?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+  }
+
+  export type BookingAppointmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "resourceId" | "slotId" | "customerRef" | "customerPhone" | "customerName" | "scheduledAt" | "status" | "metadata" | "createdAt", ExtArgs["result"]["bookingAppointment"]>
+  export type BookingAppointmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }
+  export type BookingAppointmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }
+  export type BookingAppointmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    resource?: boolean | BookingAppointment$resourceArgs<ExtArgs>
+    slot?: boolean | BookingAppointment$slotArgs<ExtArgs>
+  }
+
+  export type $BookingAppointmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BookingAppointment"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      resource: Prisma.$BookableResourcePayload<ExtArgs> | null
+      slot: Prisma.$BookingSlotPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      resourceId: string | null
+      slotId: string | null
+      customerRef: string
+      customerPhone: string | null
+      customerName: string | null
+      scheduledAt: Date
+      status: $Enums.BookingAppointmentStatus
+      metadata: Prisma.JsonValue
+      createdAt: Date
+    }, ExtArgs["result"]["bookingAppointment"]>
+    composites: {}
+  }
+
+  type BookingAppointmentGetPayload<S extends boolean | null | undefined | BookingAppointmentDefaultArgs> = $Result.GetResult<Prisma.$BookingAppointmentPayload, S>
+
+  type BookingAppointmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BookingAppointmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BookingAppointmentCountAggregateInputType | true
+    }
+
+  export interface BookingAppointmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BookingAppointment'], meta: { name: 'BookingAppointment' } }
+    /**
+     * Find zero or one BookingAppointment that matches the filter.
+     * @param {BookingAppointmentFindUniqueArgs} args - Arguments to find a BookingAppointment
+     * @example
+     * // Get one BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BookingAppointmentFindUniqueArgs>(args: SelectSubset<T, BookingAppointmentFindUniqueArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BookingAppointment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BookingAppointmentFindUniqueOrThrowArgs} args - Arguments to find a BookingAppointment
+     * @example
+     * // Get one BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BookingAppointmentFindUniqueOrThrowArgs>(args: SelectSubset<T, BookingAppointmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookingAppointment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentFindFirstArgs} args - Arguments to find a BookingAppointment
+     * @example
+     * // Get one BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BookingAppointmentFindFirstArgs>(args?: SelectSubset<T, BookingAppointmentFindFirstArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BookingAppointment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentFindFirstOrThrowArgs} args - Arguments to find a BookingAppointment
+     * @example
+     * // Get one BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BookingAppointmentFindFirstOrThrowArgs>(args?: SelectSubset<T, BookingAppointmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BookingAppointments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BookingAppointments
+     * const bookingAppointments = await prisma.bookingAppointment.findMany()
+     * 
+     * // Get first 10 BookingAppointments
+     * const bookingAppointments = await prisma.bookingAppointment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bookingAppointmentWithIdOnly = await prisma.bookingAppointment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BookingAppointmentFindManyArgs>(args?: SelectSubset<T, BookingAppointmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BookingAppointment.
+     * @param {BookingAppointmentCreateArgs} args - Arguments to create a BookingAppointment.
+     * @example
+     * // Create one BookingAppointment
+     * const BookingAppointment = await prisma.bookingAppointment.create({
+     *   data: {
+     *     // ... data to create a BookingAppointment
+     *   }
+     * })
+     * 
+     */
+    create<T extends BookingAppointmentCreateArgs>(args: SelectSubset<T, BookingAppointmentCreateArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BookingAppointments.
+     * @param {BookingAppointmentCreateManyArgs} args - Arguments to create many BookingAppointments.
+     * @example
+     * // Create many BookingAppointments
+     * const bookingAppointment = await prisma.bookingAppointment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BookingAppointmentCreateManyArgs>(args?: SelectSubset<T, BookingAppointmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BookingAppointments and returns the data saved in the database.
+     * @param {BookingAppointmentCreateManyAndReturnArgs} args - Arguments to create many BookingAppointments.
+     * @example
+     * // Create many BookingAppointments
+     * const bookingAppointment = await prisma.bookingAppointment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BookingAppointments and only return the `id`
+     * const bookingAppointmentWithIdOnly = await prisma.bookingAppointment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BookingAppointmentCreateManyAndReturnArgs>(args?: SelectSubset<T, BookingAppointmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BookingAppointment.
+     * @param {BookingAppointmentDeleteArgs} args - Arguments to delete one BookingAppointment.
+     * @example
+     * // Delete one BookingAppointment
+     * const BookingAppointment = await prisma.bookingAppointment.delete({
+     *   where: {
+     *     // ... filter to delete one BookingAppointment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BookingAppointmentDeleteArgs>(args: SelectSubset<T, BookingAppointmentDeleteArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BookingAppointment.
+     * @param {BookingAppointmentUpdateArgs} args - Arguments to update one BookingAppointment.
+     * @example
+     * // Update one BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BookingAppointmentUpdateArgs>(args: SelectSubset<T, BookingAppointmentUpdateArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BookingAppointments.
+     * @param {BookingAppointmentDeleteManyArgs} args - Arguments to filter BookingAppointments to delete.
+     * @example
+     * // Delete a few BookingAppointments
+     * const { count } = await prisma.bookingAppointment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BookingAppointmentDeleteManyArgs>(args?: SelectSubset<T, BookingAppointmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookingAppointments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BookingAppointments
+     * const bookingAppointment = await prisma.bookingAppointment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BookingAppointmentUpdateManyArgs>(args: SelectSubset<T, BookingAppointmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BookingAppointments and returns the data updated in the database.
+     * @param {BookingAppointmentUpdateManyAndReturnArgs} args - Arguments to update many BookingAppointments.
+     * @example
+     * // Update many BookingAppointments
+     * const bookingAppointment = await prisma.bookingAppointment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BookingAppointments and only return the `id`
+     * const bookingAppointmentWithIdOnly = await prisma.bookingAppointment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BookingAppointmentUpdateManyAndReturnArgs>(args: SelectSubset<T, BookingAppointmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BookingAppointment.
+     * @param {BookingAppointmentUpsertArgs} args - Arguments to update or create a BookingAppointment.
+     * @example
+     * // Update or create a BookingAppointment
+     * const bookingAppointment = await prisma.bookingAppointment.upsert({
+     *   create: {
+     *     // ... data to create a BookingAppointment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BookingAppointment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BookingAppointmentUpsertArgs>(args: SelectSubset<T, BookingAppointmentUpsertArgs<ExtArgs>>): Prisma__BookingAppointmentClient<$Result.GetResult<Prisma.$BookingAppointmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BookingAppointments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentCountArgs} args - Arguments to filter BookingAppointments to count.
+     * @example
+     * // Count the number of BookingAppointments
+     * const count = await prisma.bookingAppointment.count({
+     *   where: {
+     *     // ... the filter for the BookingAppointments we want to count
+     *   }
+     * })
+    **/
+    count<T extends BookingAppointmentCountArgs>(
+      args?: Subset<T, BookingAppointmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BookingAppointmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BookingAppointment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BookingAppointmentAggregateArgs>(args: Subset<T, BookingAppointmentAggregateArgs>): Prisma.PrismaPromise<GetBookingAppointmentAggregateType<T>>
+
+    /**
+     * Group by BookingAppointment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BookingAppointmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BookingAppointmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BookingAppointmentGroupByArgs['orderBy'] }
+        : { orderBy?: BookingAppointmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BookingAppointmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBookingAppointmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BookingAppointment model
+   */
+  readonly fields: BookingAppointmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BookingAppointment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BookingAppointmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    resource<T extends BookingAppointment$resourceArgs<ExtArgs> = {}>(args?: Subset<T, BookingAppointment$resourceArgs<ExtArgs>>): Prisma__BookableResourceClient<$Result.GetResult<Prisma.$BookableResourcePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    slot<T extends BookingAppointment$slotArgs<ExtArgs> = {}>(args?: Subset<T, BookingAppointment$slotArgs<ExtArgs>>): Prisma__BookingSlotClient<$Result.GetResult<Prisma.$BookingSlotPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BookingAppointment model
+   */
+  interface BookingAppointmentFieldRefs {
+    readonly id: FieldRef<"BookingAppointment", 'String'>
+    readonly organizationId: FieldRef<"BookingAppointment", 'String'>
+    readonly resourceId: FieldRef<"BookingAppointment", 'String'>
+    readonly slotId: FieldRef<"BookingAppointment", 'String'>
+    readonly customerRef: FieldRef<"BookingAppointment", 'String'>
+    readonly customerPhone: FieldRef<"BookingAppointment", 'String'>
+    readonly customerName: FieldRef<"BookingAppointment", 'String'>
+    readonly scheduledAt: FieldRef<"BookingAppointment", 'DateTime'>
+    readonly status: FieldRef<"BookingAppointment", 'BookingAppointmentStatus'>
+    readonly metadata: FieldRef<"BookingAppointment", 'Json'>
+    readonly createdAt: FieldRef<"BookingAppointment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BookingAppointment findUnique
+   */
+  export type BookingAppointmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingAppointment to fetch.
+     */
+    where: BookingAppointmentWhereUniqueInput
+  }
+
+  /**
+   * BookingAppointment findUniqueOrThrow
+   */
+  export type BookingAppointmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingAppointment to fetch.
+     */
+    where: BookingAppointmentWhereUniqueInput
+  }
+
+  /**
+   * BookingAppointment findFirst
+   */
+  export type BookingAppointmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingAppointment to fetch.
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingAppointments to fetch.
+     */
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookingAppointments.
+     */
+    cursor?: BookingAppointmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingAppointments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingAppointments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingAppointments.
+     */
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * BookingAppointment findFirstOrThrow
+   */
+  export type BookingAppointmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingAppointment to fetch.
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingAppointments to fetch.
+     */
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BookingAppointments.
+     */
+    cursor?: BookingAppointmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingAppointments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingAppointments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingAppointments.
+     */
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * BookingAppointment findMany
+   */
+  export type BookingAppointmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BookingAppointments to fetch.
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BookingAppointments to fetch.
+     */
+    orderBy?: BookingAppointmentOrderByWithRelationInput | BookingAppointmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BookingAppointments.
+     */
+    cursor?: BookingAppointmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BookingAppointments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BookingAppointments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BookingAppointments.
+     */
+    distinct?: BookingAppointmentScalarFieldEnum | BookingAppointmentScalarFieldEnum[]
+  }
+
+  /**
+   * BookingAppointment create
+   */
+  export type BookingAppointmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BookingAppointment.
+     */
+    data: XOR<BookingAppointmentCreateInput, BookingAppointmentUncheckedCreateInput>
+  }
+
+  /**
+   * BookingAppointment createMany
+   */
+  export type BookingAppointmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BookingAppointments.
+     */
+    data: BookingAppointmentCreateManyInput | BookingAppointmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BookingAppointment createManyAndReturn
+   */
+  export type BookingAppointmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many BookingAppointments.
+     */
+    data: BookingAppointmentCreateManyInput | BookingAppointmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookingAppointment update
+   */
+  export type BookingAppointmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BookingAppointment.
+     */
+    data: XOR<BookingAppointmentUpdateInput, BookingAppointmentUncheckedUpdateInput>
+    /**
+     * Choose, which BookingAppointment to update.
+     */
+    where: BookingAppointmentWhereUniqueInput
+  }
+
+  /**
+   * BookingAppointment updateMany
+   */
+  export type BookingAppointmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BookingAppointments.
+     */
+    data: XOR<BookingAppointmentUpdateManyMutationInput, BookingAppointmentUncheckedUpdateManyInput>
+    /**
+     * Filter which BookingAppointments to update
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * Limit how many BookingAppointments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookingAppointment updateManyAndReturn
+   */
+  export type BookingAppointmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * The data used to update BookingAppointments.
+     */
+    data: XOR<BookingAppointmentUpdateManyMutationInput, BookingAppointmentUncheckedUpdateManyInput>
+    /**
+     * Filter which BookingAppointments to update
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * Limit how many BookingAppointments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BookingAppointment upsert
+   */
+  export type BookingAppointmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BookingAppointment to update in case it exists.
+     */
+    where: BookingAppointmentWhereUniqueInput
+    /**
+     * In case the BookingAppointment found by the `where` argument doesn't exist, create a new BookingAppointment with this data.
+     */
+    create: XOR<BookingAppointmentCreateInput, BookingAppointmentUncheckedCreateInput>
+    /**
+     * In case the BookingAppointment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BookingAppointmentUpdateInput, BookingAppointmentUncheckedUpdateInput>
+  }
+
+  /**
+   * BookingAppointment delete
+   */
+  export type BookingAppointmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+    /**
+     * Filter which BookingAppointment to delete.
+     */
+    where: BookingAppointmentWhereUniqueInput
+  }
+
+  /**
+   * BookingAppointment deleteMany
+   */
+  export type BookingAppointmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BookingAppointments to delete
+     */
+    where?: BookingAppointmentWhereInput
+    /**
+     * Limit how many BookingAppointments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BookingAppointment.resource
+   */
+  export type BookingAppointment$resourceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookableResource
+     */
+    select?: BookableResourceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookableResource
+     */
+    omit?: BookableResourceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookableResourceInclude<ExtArgs> | null
+    where?: BookableResourceWhereInput
+  }
+
+  /**
+   * BookingAppointment.slot
+   */
+  export type BookingAppointment$slotArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingSlot
+     */
+    select?: BookingSlotSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingSlot
+     */
+    omit?: BookingSlotOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingSlotInclude<ExtArgs> | null
+    where?: BookingSlotWhereInput
+  }
+
+  /**
+   * BookingAppointment without action
+   */
+  export type BookingAppointmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BookingAppointment
+     */
+    select?: BookingAppointmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BookingAppointment
+     */
+    omit?: BookingAppointmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BookingAppointmentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlatformPromotion
+   */
+
+  export type AggregatePlatformPromotion = {
+    _count: PlatformPromotionCountAggregateOutputType | null
+    _avg: PlatformPromotionAvgAggregateOutputType | null
+    _sum: PlatformPromotionSumAggregateOutputType | null
+    _min: PlatformPromotionMinAggregateOutputType | null
+    _max: PlatformPromotionMaxAggregateOutputType | null
+  }
+
+  export type PlatformPromotionAvgAggregateOutputType = {
+    discountValue: Decimal | null
+  }
+
+  export type PlatformPromotionSumAggregateOutputType = {
+    discountValue: Decimal | null
+  }
+
+  export type PlatformPromotionMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    code: string | null
+    name: string | null
+    discountType: $Enums.PlatformPromotionDiscountType | null
+    discountValue: Decimal | null
+    validFrom: Date | null
+    validUntil: Date | null
+    status: $Enums.PlatformPromotionStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformPromotionMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    code: string | null
+    name: string | null
+    discountType: $Enums.PlatformPromotionDiscountType | null
+    discountValue: Decimal | null
+    validFrom: Date | null
+    validUntil: Date | null
+    status: $Enums.PlatformPromotionStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformPromotionCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    code: number
+    name: number
+    discountType: number
+    discountValue: number
+    validFrom: number
+    validUntil: number
+    status: number
+    metadata: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlatformPromotionAvgAggregateInputType = {
+    discountValue?: true
+  }
+
+  export type PlatformPromotionSumAggregateInputType = {
+    discountValue?: true
+  }
+
+  export type PlatformPromotionMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    code?: true
+    name?: true
+    discountType?: true
+    discountValue?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformPromotionMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    code?: true
+    name?: true
+    discountType?: true
+    discountValue?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformPromotionCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    code?: true
+    name?: true
+    discountType?: true
+    discountValue?: true
+    validFrom?: true
+    validUntil?: true
+    status?: true
+    metadata?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlatformPromotionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPromotion to aggregate.
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPromotions to fetch.
+     */
+    orderBy?: PlatformPromotionOrderByWithRelationInput | PlatformPromotionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformPromotionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPromotions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPromotions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformPromotions
+    **/
+    _count?: true | PlatformPromotionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: PlatformPromotionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: PlatformPromotionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformPromotionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformPromotionMaxAggregateInputType
+  }
+
+  export type GetPlatformPromotionAggregateType<T extends PlatformPromotionAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformPromotion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformPromotion[P]>
+      : GetScalarType<T[P], AggregatePlatformPromotion[P]>
+  }
+
+
+
+
+  export type PlatformPromotionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformPromotionWhereInput
+    orderBy?: PlatformPromotionOrderByWithAggregationInput | PlatformPromotionOrderByWithAggregationInput[]
+    by: PlatformPromotionScalarFieldEnum[] | PlatformPromotionScalarFieldEnum
+    having?: PlatformPromotionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformPromotionCountAggregateInputType | true
+    _avg?: PlatformPromotionAvgAggregateInputType
+    _sum?: PlatformPromotionSumAggregateInputType
+    _min?: PlatformPromotionMinAggregateInputType
+    _max?: PlatformPromotionMaxAggregateInputType
+  }
+
+  export type PlatformPromotionGroupByOutputType = {
+    id: string
+    organizationId: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal
+    validFrom: Date | null
+    validUntil: Date | null
+    status: $Enums.PlatformPromotionStatus
+    metadata: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: PlatformPromotionCountAggregateOutputType | null
+    _avg: PlatformPromotionAvgAggregateOutputType | null
+    _sum: PlatformPromotionSumAggregateOutputType | null
+    _min: PlatformPromotionMinAggregateOutputType | null
+    _max: PlatformPromotionMaxAggregateOutputType | null
+  }
+
+  type GetPlatformPromotionGroupByPayload<T extends PlatformPromotionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformPromotionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformPromotionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformPromotionGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformPromotionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformPromotionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    code?: boolean
+    name?: boolean
+    discountType?: boolean
+    discountValue?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPromotion"]>
+
+  export type PlatformPromotionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    code?: boolean
+    name?: boolean
+    discountType?: boolean
+    discountValue?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPromotion"]>
+
+  export type PlatformPromotionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    code?: boolean
+    name?: boolean
+    discountType?: boolean
+    discountValue?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformPromotion"]>
+
+  export type PlatformPromotionSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    code?: boolean
+    name?: boolean
+    discountType?: boolean
+    discountValue?: boolean
+    validFrom?: boolean
+    validUntil?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlatformPromotionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "code" | "name" | "discountType" | "discountValue" | "validFrom" | "validUntil" | "status" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["platformPromotion"]>
+  export type PlatformPromotionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformPromotionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformPromotionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlatformPromotionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformPromotion"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      code: string
+      name: string
+      discountType: $Enums.PlatformPromotionDiscountType
+      discountValue: Prisma.Decimal
+      validFrom: Date | null
+      validUntil: Date | null
+      status: $Enums.PlatformPromotionStatus
+      metadata: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["platformPromotion"]>
+    composites: {}
+  }
+
+  type PlatformPromotionGetPayload<S extends boolean | null | undefined | PlatformPromotionDefaultArgs> = $Result.GetResult<Prisma.$PlatformPromotionPayload, S>
+
+  type PlatformPromotionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformPromotionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformPromotionCountAggregateInputType | true
+    }
+
+  export interface PlatformPromotionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformPromotion'], meta: { name: 'PlatformPromotion' } }
+    /**
+     * Find zero or one PlatformPromotion that matches the filter.
+     * @param {PlatformPromotionFindUniqueArgs} args - Arguments to find a PlatformPromotion
+     * @example
+     * // Get one PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformPromotionFindUniqueArgs>(args: SelectSubset<T, PlatformPromotionFindUniqueArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformPromotion that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformPromotionFindUniqueOrThrowArgs} args - Arguments to find a PlatformPromotion
+     * @example
+     * // Get one PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformPromotionFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformPromotionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPromotion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionFindFirstArgs} args - Arguments to find a PlatformPromotion
+     * @example
+     * // Get one PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformPromotionFindFirstArgs>(args?: SelectSubset<T, PlatformPromotionFindFirstArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformPromotion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionFindFirstOrThrowArgs} args - Arguments to find a PlatformPromotion
+     * @example
+     * // Get one PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformPromotionFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformPromotionFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformPromotions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformPromotions
+     * const platformPromotions = await prisma.platformPromotion.findMany()
+     * 
+     * // Get first 10 PlatformPromotions
+     * const platformPromotions = await prisma.platformPromotion.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformPromotionWithIdOnly = await prisma.platformPromotion.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformPromotionFindManyArgs>(args?: SelectSubset<T, PlatformPromotionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformPromotion.
+     * @param {PlatformPromotionCreateArgs} args - Arguments to create a PlatformPromotion.
+     * @example
+     * // Create one PlatformPromotion
+     * const PlatformPromotion = await prisma.platformPromotion.create({
+     *   data: {
+     *     // ... data to create a PlatformPromotion
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformPromotionCreateArgs>(args: SelectSubset<T, PlatformPromotionCreateArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformPromotions.
+     * @param {PlatformPromotionCreateManyArgs} args - Arguments to create many PlatformPromotions.
+     * @example
+     * // Create many PlatformPromotions
+     * const platformPromotion = await prisma.platformPromotion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformPromotionCreateManyArgs>(args?: SelectSubset<T, PlatformPromotionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformPromotions and returns the data saved in the database.
+     * @param {PlatformPromotionCreateManyAndReturnArgs} args - Arguments to create many PlatformPromotions.
+     * @example
+     * // Create many PlatformPromotions
+     * const platformPromotion = await prisma.platformPromotion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformPromotions and only return the `id`
+     * const platformPromotionWithIdOnly = await prisma.platformPromotion.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformPromotionCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformPromotionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformPromotion.
+     * @param {PlatformPromotionDeleteArgs} args - Arguments to delete one PlatformPromotion.
+     * @example
+     * // Delete one PlatformPromotion
+     * const PlatformPromotion = await prisma.platformPromotion.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformPromotion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformPromotionDeleteArgs>(args: SelectSubset<T, PlatformPromotionDeleteArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformPromotion.
+     * @param {PlatformPromotionUpdateArgs} args - Arguments to update one PlatformPromotion.
+     * @example
+     * // Update one PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformPromotionUpdateArgs>(args: SelectSubset<T, PlatformPromotionUpdateArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformPromotions.
+     * @param {PlatformPromotionDeleteManyArgs} args - Arguments to filter PlatformPromotions to delete.
+     * @example
+     * // Delete a few PlatformPromotions
+     * const { count } = await prisma.platformPromotion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformPromotionDeleteManyArgs>(args?: SelectSubset<T, PlatformPromotionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPromotions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformPromotions
+     * const platformPromotion = await prisma.platformPromotion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformPromotionUpdateManyArgs>(args: SelectSubset<T, PlatformPromotionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformPromotions and returns the data updated in the database.
+     * @param {PlatformPromotionUpdateManyAndReturnArgs} args - Arguments to update many PlatformPromotions.
+     * @example
+     * // Update many PlatformPromotions
+     * const platformPromotion = await prisma.platformPromotion.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformPromotions and only return the `id`
+     * const platformPromotionWithIdOnly = await prisma.platformPromotion.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformPromotionUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformPromotionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformPromotion.
+     * @param {PlatformPromotionUpsertArgs} args - Arguments to update or create a PlatformPromotion.
+     * @example
+     * // Update or create a PlatformPromotion
+     * const platformPromotion = await prisma.platformPromotion.upsert({
+     *   create: {
+     *     // ... data to create a PlatformPromotion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformPromotion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformPromotionUpsertArgs>(args: SelectSubset<T, PlatformPromotionUpsertArgs<ExtArgs>>): Prisma__PlatformPromotionClient<$Result.GetResult<Prisma.$PlatformPromotionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformPromotions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionCountArgs} args - Arguments to filter PlatformPromotions to count.
+     * @example
+     * // Count the number of PlatformPromotions
+     * const count = await prisma.platformPromotion.count({
+     *   where: {
+     *     // ... the filter for the PlatformPromotions we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformPromotionCountArgs>(
+      args?: Subset<T, PlatformPromotionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformPromotionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformPromotion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformPromotionAggregateArgs>(args: Subset<T, PlatformPromotionAggregateArgs>): Prisma.PrismaPromise<GetPlatformPromotionAggregateType<T>>
+
+    /**
+     * Group by PlatformPromotion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformPromotionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformPromotionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformPromotionGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformPromotionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformPromotionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformPromotionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformPromotion model
+   */
+  readonly fields: PlatformPromotionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformPromotion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformPromotionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformPromotion model
+   */
+  interface PlatformPromotionFieldRefs {
+    readonly id: FieldRef<"PlatformPromotion", 'String'>
+    readonly organizationId: FieldRef<"PlatformPromotion", 'String'>
+    readonly code: FieldRef<"PlatformPromotion", 'String'>
+    readonly name: FieldRef<"PlatformPromotion", 'String'>
+    readonly discountType: FieldRef<"PlatformPromotion", 'PlatformPromotionDiscountType'>
+    readonly discountValue: FieldRef<"PlatformPromotion", 'Decimal'>
+    readonly validFrom: FieldRef<"PlatformPromotion", 'DateTime'>
+    readonly validUntil: FieldRef<"PlatformPromotion", 'DateTime'>
+    readonly status: FieldRef<"PlatformPromotion", 'PlatformPromotionStatus'>
+    readonly metadata: FieldRef<"PlatformPromotion", 'Json'>
+    readonly createdAt: FieldRef<"PlatformPromotion", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlatformPromotion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformPromotion findUnique
+   */
+  export type PlatformPromotionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPromotion to fetch.
+     */
+    where: PlatformPromotionWhereUniqueInput
+  }
+
+  /**
+   * PlatformPromotion findUniqueOrThrow
+   */
+  export type PlatformPromotionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPromotion to fetch.
+     */
+    where: PlatformPromotionWhereUniqueInput
+  }
+
+  /**
+   * PlatformPromotion findFirst
+   */
+  export type PlatformPromotionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPromotion to fetch.
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPromotions to fetch.
+     */
+    orderBy?: PlatformPromotionOrderByWithRelationInput | PlatformPromotionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPromotions.
+     */
+    cursor?: PlatformPromotionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPromotions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPromotions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPromotions.
+     */
+    distinct?: PlatformPromotionScalarFieldEnum | PlatformPromotionScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPromotion findFirstOrThrow
+   */
+  export type PlatformPromotionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPromotion to fetch.
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPromotions to fetch.
+     */
+    orderBy?: PlatformPromotionOrderByWithRelationInput | PlatformPromotionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformPromotions.
+     */
+    cursor?: PlatformPromotionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPromotions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPromotions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPromotions.
+     */
+    distinct?: PlatformPromotionScalarFieldEnum | PlatformPromotionScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPromotion findMany
+   */
+  export type PlatformPromotionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformPromotions to fetch.
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformPromotions to fetch.
+     */
+    orderBy?: PlatformPromotionOrderByWithRelationInput | PlatformPromotionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformPromotions.
+     */
+    cursor?: PlatformPromotionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformPromotions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformPromotions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformPromotions.
+     */
+    distinct?: PlatformPromotionScalarFieldEnum | PlatformPromotionScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformPromotion create
+   */
+  export type PlatformPromotionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformPromotion.
+     */
+    data: XOR<PlatformPromotionCreateInput, PlatformPromotionUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformPromotion createMany
+   */
+  export type PlatformPromotionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformPromotions.
+     */
+    data: PlatformPromotionCreateManyInput | PlatformPromotionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformPromotion createManyAndReturn
+   */
+  export type PlatformPromotionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformPromotions.
+     */
+    data: PlatformPromotionCreateManyInput | PlatformPromotionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPromotion update
+   */
+  export type PlatformPromotionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformPromotion.
+     */
+    data: XOR<PlatformPromotionUpdateInput, PlatformPromotionUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformPromotion to update.
+     */
+    where: PlatformPromotionWhereUniqueInput
+  }
+
+  /**
+   * PlatformPromotion updateMany
+   */
+  export type PlatformPromotionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformPromotions.
+     */
+    data: XOR<PlatformPromotionUpdateManyMutationInput, PlatformPromotionUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPromotions to update
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * Limit how many PlatformPromotions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPromotion updateManyAndReturn
+   */
+  export type PlatformPromotionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformPromotions.
+     */
+    data: XOR<PlatformPromotionUpdateManyMutationInput, PlatformPromotionUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformPromotions to update
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * Limit how many PlatformPromotions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformPromotion upsert
+   */
+  export type PlatformPromotionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformPromotion to update in case it exists.
+     */
+    where: PlatformPromotionWhereUniqueInput
+    /**
+     * In case the PlatformPromotion found by the `where` argument doesn't exist, create a new PlatformPromotion with this data.
+     */
+    create: XOR<PlatformPromotionCreateInput, PlatformPromotionUncheckedCreateInput>
+    /**
+     * In case the PlatformPromotion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformPromotionUpdateInput, PlatformPromotionUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformPromotion delete
+   */
+  export type PlatformPromotionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+    /**
+     * Filter which PlatformPromotion to delete.
+     */
+    where: PlatformPromotionWhereUniqueInput
+  }
+
+  /**
+   * PlatformPromotion deleteMany
+   */
+  export type PlatformPromotionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformPromotions to delete
+     */
+    where?: PlatformPromotionWhereInput
+    /**
+     * Limit how many PlatformPromotions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformPromotion without action
+   */
+  export type PlatformPromotionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformPromotion
+     */
+    select?: PlatformPromotionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformPromotion
+     */
+    omit?: PlatformPromotionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformPromotionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlatformCustomDomain
+   */
+
+  export type AggregatePlatformCustomDomain = {
+    _count: PlatformCustomDomainCountAggregateOutputType | null
+    _min: PlatformCustomDomainMinAggregateOutputType | null
+    _max: PlatformCustomDomainMaxAggregateOutputType | null
+  }
+
+  export type PlatformCustomDomainMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    hostname: string | null
+    status: $Enums.PlatformCustomDomainStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformCustomDomainMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    hostname: string | null
+    status: $Enums.PlatformCustomDomainStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformCustomDomainCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    hostname: number
+    status: number
+    metadata: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlatformCustomDomainMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    hostname?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformCustomDomainMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    hostname?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformCustomDomainCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    hostname?: true
+    status?: true
+    metadata?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlatformCustomDomainAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformCustomDomain to aggregate.
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformCustomDomains to fetch.
+     */
+    orderBy?: PlatformCustomDomainOrderByWithRelationInput | PlatformCustomDomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformCustomDomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformCustomDomains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformCustomDomains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformCustomDomains
+    **/
+    _count?: true | PlatformCustomDomainCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformCustomDomainMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformCustomDomainMaxAggregateInputType
+  }
+
+  export type GetPlatformCustomDomainAggregateType<T extends PlatformCustomDomainAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformCustomDomain]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformCustomDomain[P]>
+      : GetScalarType<T[P], AggregatePlatformCustomDomain[P]>
+  }
+
+
+
+
+  export type PlatformCustomDomainGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformCustomDomainWhereInput
+    orderBy?: PlatformCustomDomainOrderByWithAggregationInput | PlatformCustomDomainOrderByWithAggregationInput[]
+    by: PlatformCustomDomainScalarFieldEnum[] | PlatformCustomDomainScalarFieldEnum
+    having?: PlatformCustomDomainScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformCustomDomainCountAggregateInputType | true
+    _min?: PlatformCustomDomainMinAggregateInputType
+    _max?: PlatformCustomDomainMaxAggregateInputType
+  }
+
+  export type PlatformCustomDomainGroupByOutputType = {
+    id: string
+    organizationId: string
+    hostname: string
+    status: $Enums.PlatformCustomDomainStatus
+    metadata: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: PlatformCustomDomainCountAggregateOutputType | null
+    _min: PlatformCustomDomainMinAggregateOutputType | null
+    _max: PlatformCustomDomainMaxAggregateOutputType | null
+  }
+
+  type GetPlatformCustomDomainGroupByPayload<T extends PlatformCustomDomainGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformCustomDomainGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformCustomDomainGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformCustomDomainGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformCustomDomainGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformCustomDomainSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    hostname?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformCustomDomain"]>
+
+  export type PlatformCustomDomainSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    hostname?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformCustomDomain"]>
+
+  export type PlatformCustomDomainSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    hostname?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformCustomDomain"]>
+
+  export type PlatformCustomDomainSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    hostname?: boolean
+    status?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlatformCustomDomainOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "hostname" | "status" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["platformCustomDomain"]>
+  export type PlatformCustomDomainInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformCustomDomainIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformCustomDomainIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlatformCustomDomainPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformCustomDomain"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      hostname: string
+      status: $Enums.PlatformCustomDomainStatus
+      metadata: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["platformCustomDomain"]>
+    composites: {}
+  }
+
+  type PlatformCustomDomainGetPayload<S extends boolean | null | undefined | PlatformCustomDomainDefaultArgs> = $Result.GetResult<Prisma.$PlatformCustomDomainPayload, S>
+
+  type PlatformCustomDomainCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformCustomDomainFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformCustomDomainCountAggregateInputType | true
+    }
+
+  export interface PlatformCustomDomainDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformCustomDomain'], meta: { name: 'PlatformCustomDomain' } }
+    /**
+     * Find zero or one PlatformCustomDomain that matches the filter.
+     * @param {PlatformCustomDomainFindUniqueArgs} args - Arguments to find a PlatformCustomDomain
+     * @example
+     * // Get one PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformCustomDomainFindUniqueArgs>(args: SelectSubset<T, PlatformCustomDomainFindUniqueArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformCustomDomain that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformCustomDomainFindUniqueOrThrowArgs} args - Arguments to find a PlatformCustomDomain
+     * @example
+     * // Get one PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformCustomDomainFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformCustomDomainFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformCustomDomain that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainFindFirstArgs} args - Arguments to find a PlatformCustomDomain
+     * @example
+     * // Get one PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformCustomDomainFindFirstArgs>(args?: SelectSubset<T, PlatformCustomDomainFindFirstArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformCustomDomain that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainFindFirstOrThrowArgs} args - Arguments to find a PlatformCustomDomain
+     * @example
+     * // Get one PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformCustomDomainFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformCustomDomainFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformCustomDomains that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformCustomDomains
+     * const platformCustomDomains = await prisma.platformCustomDomain.findMany()
+     * 
+     * // Get first 10 PlatformCustomDomains
+     * const platformCustomDomains = await prisma.platformCustomDomain.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformCustomDomainWithIdOnly = await prisma.platformCustomDomain.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformCustomDomainFindManyArgs>(args?: SelectSubset<T, PlatformCustomDomainFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformCustomDomain.
+     * @param {PlatformCustomDomainCreateArgs} args - Arguments to create a PlatformCustomDomain.
+     * @example
+     * // Create one PlatformCustomDomain
+     * const PlatformCustomDomain = await prisma.platformCustomDomain.create({
+     *   data: {
+     *     // ... data to create a PlatformCustomDomain
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformCustomDomainCreateArgs>(args: SelectSubset<T, PlatformCustomDomainCreateArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformCustomDomains.
+     * @param {PlatformCustomDomainCreateManyArgs} args - Arguments to create many PlatformCustomDomains.
+     * @example
+     * // Create many PlatformCustomDomains
+     * const platformCustomDomain = await prisma.platformCustomDomain.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformCustomDomainCreateManyArgs>(args?: SelectSubset<T, PlatformCustomDomainCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformCustomDomains and returns the data saved in the database.
+     * @param {PlatformCustomDomainCreateManyAndReturnArgs} args - Arguments to create many PlatformCustomDomains.
+     * @example
+     * // Create many PlatformCustomDomains
+     * const platformCustomDomain = await prisma.platformCustomDomain.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformCustomDomains and only return the `id`
+     * const platformCustomDomainWithIdOnly = await prisma.platformCustomDomain.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformCustomDomainCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformCustomDomainCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformCustomDomain.
+     * @param {PlatformCustomDomainDeleteArgs} args - Arguments to delete one PlatformCustomDomain.
+     * @example
+     * // Delete one PlatformCustomDomain
+     * const PlatformCustomDomain = await prisma.platformCustomDomain.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformCustomDomain
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformCustomDomainDeleteArgs>(args: SelectSubset<T, PlatformCustomDomainDeleteArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformCustomDomain.
+     * @param {PlatformCustomDomainUpdateArgs} args - Arguments to update one PlatformCustomDomain.
+     * @example
+     * // Update one PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformCustomDomainUpdateArgs>(args: SelectSubset<T, PlatformCustomDomainUpdateArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformCustomDomains.
+     * @param {PlatformCustomDomainDeleteManyArgs} args - Arguments to filter PlatformCustomDomains to delete.
+     * @example
+     * // Delete a few PlatformCustomDomains
+     * const { count } = await prisma.platformCustomDomain.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformCustomDomainDeleteManyArgs>(args?: SelectSubset<T, PlatformCustomDomainDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformCustomDomains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformCustomDomains
+     * const platformCustomDomain = await prisma.platformCustomDomain.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformCustomDomainUpdateManyArgs>(args: SelectSubset<T, PlatformCustomDomainUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformCustomDomains and returns the data updated in the database.
+     * @param {PlatformCustomDomainUpdateManyAndReturnArgs} args - Arguments to update many PlatformCustomDomains.
+     * @example
+     * // Update many PlatformCustomDomains
+     * const platformCustomDomain = await prisma.platformCustomDomain.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformCustomDomains and only return the `id`
+     * const platformCustomDomainWithIdOnly = await prisma.platformCustomDomain.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformCustomDomainUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformCustomDomainUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformCustomDomain.
+     * @param {PlatformCustomDomainUpsertArgs} args - Arguments to update or create a PlatformCustomDomain.
+     * @example
+     * // Update or create a PlatformCustomDomain
+     * const platformCustomDomain = await prisma.platformCustomDomain.upsert({
+     *   create: {
+     *     // ... data to create a PlatformCustomDomain
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformCustomDomain we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformCustomDomainUpsertArgs>(args: SelectSubset<T, PlatformCustomDomainUpsertArgs<ExtArgs>>): Prisma__PlatformCustomDomainClient<$Result.GetResult<Prisma.$PlatformCustomDomainPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformCustomDomains.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainCountArgs} args - Arguments to filter PlatformCustomDomains to count.
+     * @example
+     * // Count the number of PlatformCustomDomains
+     * const count = await prisma.platformCustomDomain.count({
+     *   where: {
+     *     // ... the filter for the PlatformCustomDomains we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformCustomDomainCountArgs>(
+      args?: Subset<T, PlatformCustomDomainCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformCustomDomainCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformCustomDomain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformCustomDomainAggregateArgs>(args: Subset<T, PlatformCustomDomainAggregateArgs>): Prisma.PrismaPromise<GetPlatformCustomDomainAggregateType<T>>
+
+    /**
+     * Group by PlatformCustomDomain.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformCustomDomainGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformCustomDomainGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformCustomDomainGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformCustomDomainGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformCustomDomainGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformCustomDomainGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformCustomDomain model
+   */
+  readonly fields: PlatformCustomDomainFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformCustomDomain.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformCustomDomainClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformCustomDomain model
+   */
+  interface PlatformCustomDomainFieldRefs {
+    readonly id: FieldRef<"PlatformCustomDomain", 'String'>
+    readonly organizationId: FieldRef<"PlatformCustomDomain", 'String'>
+    readonly hostname: FieldRef<"PlatformCustomDomain", 'String'>
+    readonly status: FieldRef<"PlatformCustomDomain", 'PlatformCustomDomainStatus'>
+    readonly metadata: FieldRef<"PlatformCustomDomain", 'Json'>
+    readonly createdAt: FieldRef<"PlatformCustomDomain", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlatformCustomDomain", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformCustomDomain findUnique
+   */
+  export type PlatformCustomDomainFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformCustomDomain to fetch.
+     */
+    where: PlatformCustomDomainWhereUniqueInput
+  }
+
+  /**
+   * PlatformCustomDomain findUniqueOrThrow
+   */
+  export type PlatformCustomDomainFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformCustomDomain to fetch.
+     */
+    where: PlatformCustomDomainWhereUniqueInput
+  }
+
+  /**
+   * PlatformCustomDomain findFirst
+   */
+  export type PlatformCustomDomainFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformCustomDomain to fetch.
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformCustomDomains to fetch.
+     */
+    orderBy?: PlatformCustomDomainOrderByWithRelationInput | PlatformCustomDomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformCustomDomains.
+     */
+    cursor?: PlatformCustomDomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformCustomDomains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformCustomDomains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformCustomDomains.
+     */
+    distinct?: PlatformCustomDomainScalarFieldEnum | PlatformCustomDomainScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformCustomDomain findFirstOrThrow
+   */
+  export type PlatformCustomDomainFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformCustomDomain to fetch.
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformCustomDomains to fetch.
+     */
+    orderBy?: PlatformCustomDomainOrderByWithRelationInput | PlatformCustomDomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformCustomDomains.
+     */
+    cursor?: PlatformCustomDomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformCustomDomains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformCustomDomains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformCustomDomains.
+     */
+    distinct?: PlatformCustomDomainScalarFieldEnum | PlatformCustomDomainScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformCustomDomain findMany
+   */
+  export type PlatformCustomDomainFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformCustomDomains to fetch.
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformCustomDomains to fetch.
+     */
+    orderBy?: PlatformCustomDomainOrderByWithRelationInput | PlatformCustomDomainOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformCustomDomains.
+     */
+    cursor?: PlatformCustomDomainWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformCustomDomains from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformCustomDomains.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformCustomDomains.
+     */
+    distinct?: PlatformCustomDomainScalarFieldEnum | PlatformCustomDomainScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformCustomDomain create
+   */
+  export type PlatformCustomDomainCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformCustomDomain.
+     */
+    data: XOR<PlatformCustomDomainCreateInput, PlatformCustomDomainUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformCustomDomain createMany
+   */
+  export type PlatformCustomDomainCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformCustomDomains.
+     */
+    data: PlatformCustomDomainCreateManyInput | PlatformCustomDomainCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformCustomDomain createManyAndReturn
+   */
+  export type PlatformCustomDomainCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformCustomDomains.
+     */
+    data: PlatformCustomDomainCreateManyInput | PlatformCustomDomainCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformCustomDomain update
+   */
+  export type PlatformCustomDomainUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformCustomDomain.
+     */
+    data: XOR<PlatformCustomDomainUpdateInput, PlatformCustomDomainUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformCustomDomain to update.
+     */
+    where: PlatformCustomDomainWhereUniqueInput
+  }
+
+  /**
+   * PlatformCustomDomain updateMany
+   */
+  export type PlatformCustomDomainUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformCustomDomains.
+     */
+    data: XOR<PlatformCustomDomainUpdateManyMutationInput, PlatformCustomDomainUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformCustomDomains to update
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * Limit how many PlatformCustomDomains to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformCustomDomain updateManyAndReturn
+   */
+  export type PlatformCustomDomainUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformCustomDomains.
+     */
+    data: XOR<PlatformCustomDomainUpdateManyMutationInput, PlatformCustomDomainUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformCustomDomains to update
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * Limit how many PlatformCustomDomains to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformCustomDomain upsert
+   */
+  export type PlatformCustomDomainUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformCustomDomain to update in case it exists.
+     */
+    where: PlatformCustomDomainWhereUniqueInput
+    /**
+     * In case the PlatformCustomDomain found by the `where` argument doesn't exist, create a new PlatformCustomDomain with this data.
+     */
+    create: XOR<PlatformCustomDomainCreateInput, PlatformCustomDomainUncheckedCreateInput>
+    /**
+     * In case the PlatformCustomDomain was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformCustomDomainUpdateInput, PlatformCustomDomainUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformCustomDomain delete
+   */
+  export type PlatformCustomDomainDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+    /**
+     * Filter which PlatformCustomDomain to delete.
+     */
+    where: PlatformCustomDomainWhereUniqueInput
+  }
+
+  /**
+   * PlatformCustomDomain deleteMany
+   */
+  export type PlatformCustomDomainDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformCustomDomains to delete
+     */
+    where?: PlatformCustomDomainWhereInput
+    /**
+     * Limit how many PlatformCustomDomains to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformCustomDomain without action
+   */
+  export type PlatformCustomDomainDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformCustomDomain
+     */
+    select?: PlatformCustomDomainSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformCustomDomain
+     */
+    omit?: PlatformCustomDomainOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformCustomDomainInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PlatformShipment
+   */
+
+  export type AggregatePlatformShipment = {
+    _count: PlatformShipmentCountAggregateOutputType | null
+    _min: PlatformShipmentMinAggregateOutputType | null
+    _max: PlatformShipmentMaxAggregateOutputType | null
+  }
+
+  export type PlatformShipmentMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    externalRef: string | null
+    trackingToken: string | null
+    status: $Enums.PlatformShipmentStatus | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    recipientPhone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformShipmentMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    externalRef: string | null
+    trackingToken: string | null
+    status: $Enums.PlatformShipmentStatus | null
+    sourceEntityType: string | null
+    sourceEntityId: string | null
+    recipientPhone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PlatformShipmentCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    externalRef: number
+    trackingToken: number
+    status: number
+    sourceEntityType: number
+    sourceEntityId: number
+    recipientPhone: number
+    metadata: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PlatformShipmentMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    externalRef?: true
+    trackingToken?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    recipientPhone?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformShipmentMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    externalRef?: true
+    trackingToken?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    recipientPhone?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PlatformShipmentCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    externalRef?: true
+    trackingToken?: true
+    status?: true
+    sourceEntityType?: true
+    sourceEntityId?: true
+    recipientPhone?: true
+    metadata?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PlatformShipmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformShipment to aggregate.
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformShipments to fetch.
+     */
+    orderBy?: PlatformShipmentOrderByWithRelationInput | PlatformShipmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PlatformShipmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformShipments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformShipments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PlatformShipments
+    **/
+    _count?: true | PlatformShipmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PlatformShipmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PlatformShipmentMaxAggregateInputType
+  }
+
+  export type GetPlatformShipmentAggregateType<T extends PlatformShipmentAggregateArgs> = {
+        [P in keyof T & keyof AggregatePlatformShipment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePlatformShipment[P]>
+      : GetScalarType<T[P], AggregatePlatformShipment[P]>
+  }
+
+
+
+
+  export type PlatformShipmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PlatformShipmentWhereInput
+    orderBy?: PlatformShipmentOrderByWithAggregationInput | PlatformShipmentOrderByWithAggregationInput[]
+    by: PlatformShipmentScalarFieldEnum[] | PlatformShipmentScalarFieldEnum
+    having?: PlatformShipmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PlatformShipmentCountAggregateInputType | true
+    _min?: PlatformShipmentMinAggregateInputType
+    _max?: PlatformShipmentMaxAggregateInputType
+  }
+
+  export type PlatformShipmentGroupByOutputType = {
+    id: string
+    organizationId: string
+    externalRef: string | null
+    trackingToken: string
+    status: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone: string | null
+    metadata: JsonValue
+    createdAt: Date
+    updatedAt: Date
+    _count: PlatformShipmentCountAggregateOutputType | null
+    _min: PlatformShipmentMinAggregateOutputType | null
+    _max: PlatformShipmentMaxAggregateOutputType | null
+  }
+
+  type GetPlatformShipmentGroupByPayload<T extends PlatformShipmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PlatformShipmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PlatformShipmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PlatformShipmentGroupByOutputType[P]>
+            : GetScalarType<T[P], PlatformShipmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PlatformShipmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    externalRef?: boolean
+    trackingToken?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    recipientPhone?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformShipment"]>
+
+  export type PlatformShipmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    externalRef?: boolean
+    trackingToken?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    recipientPhone?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformShipment"]>
+
+  export type PlatformShipmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    externalRef?: boolean
+    trackingToken?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    recipientPhone?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["platformShipment"]>
+
+  export type PlatformShipmentSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    externalRef?: boolean
+    trackingToken?: boolean
+    status?: boolean
+    sourceEntityType?: boolean
+    sourceEntityId?: boolean
+    recipientPhone?: boolean
+    metadata?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PlatformShipmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "externalRef" | "trackingToken" | "status" | "sourceEntityType" | "sourceEntityId" | "recipientPhone" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["platformShipment"]>
+  export type PlatformShipmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformShipmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type PlatformShipmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $PlatformShipmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PlatformShipment"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      externalRef: string | null
+      trackingToken: string
+      status: $Enums.PlatformShipmentStatus
+      sourceEntityType: string
+      sourceEntityId: string
+      recipientPhone: string | null
+      metadata: Prisma.JsonValue
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["platformShipment"]>
+    composites: {}
+  }
+
+  type PlatformShipmentGetPayload<S extends boolean | null | undefined | PlatformShipmentDefaultArgs> = $Result.GetResult<Prisma.$PlatformShipmentPayload, S>
+
+  type PlatformShipmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PlatformShipmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PlatformShipmentCountAggregateInputType | true
+    }
+
+  export interface PlatformShipmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PlatformShipment'], meta: { name: 'PlatformShipment' } }
+    /**
+     * Find zero or one PlatformShipment that matches the filter.
+     * @param {PlatformShipmentFindUniqueArgs} args - Arguments to find a PlatformShipment
+     * @example
+     * // Get one PlatformShipment
+     * const platformShipment = await prisma.platformShipment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PlatformShipmentFindUniqueArgs>(args: SelectSubset<T, PlatformShipmentFindUniqueArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PlatformShipment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PlatformShipmentFindUniqueOrThrowArgs} args - Arguments to find a PlatformShipment
+     * @example
+     * // Get one PlatformShipment
+     * const platformShipment = await prisma.platformShipment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PlatformShipmentFindUniqueOrThrowArgs>(args: SelectSubset<T, PlatformShipmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformShipment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentFindFirstArgs} args - Arguments to find a PlatformShipment
+     * @example
+     * // Get one PlatformShipment
+     * const platformShipment = await prisma.platformShipment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PlatformShipmentFindFirstArgs>(args?: SelectSubset<T, PlatformShipmentFindFirstArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PlatformShipment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentFindFirstOrThrowArgs} args - Arguments to find a PlatformShipment
+     * @example
+     * // Get one PlatformShipment
+     * const platformShipment = await prisma.platformShipment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PlatformShipmentFindFirstOrThrowArgs>(args?: SelectSubset<T, PlatformShipmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PlatformShipments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PlatformShipments
+     * const platformShipments = await prisma.platformShipment.findMany()
+     * 
+     * // Get first 10 PlatformShipments
+     * const platformShipments = await prisma.platformShipment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const platformShipmentWithIdOnly = await prisma.platformShipment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PlatformShipmentFindManyArgs>(args?: SelectSubset<T, PlatformShipmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PlatformShipment.
+     * @param {PlatformShipmentCreateArgs} args - Arguments to create a PlatformShipment.
+     * @example
+     * // Create one PlatformShipment
+     * const PlatformShipment = await prisma.platformShipment.create({
+     *   data: {
+     *     // ... data to create a PlatformShipment
+     *   }
+     * })
+     * 
+     */
+    create<T extends PlatformShipmentCreateArgs>(args: SelectSubset<T, PlatformShipmentCreateArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PlatformShipments.
+     * @param {PlatformShipmentCreateManyArgs} args - Arguments to create many PlatformShipments.
+     * @example
+     * // Create many PlatformShipments
+     * const platformShipment = await prisma.platformShipment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PlatformShipmentCreateManyArgs>(args?: SelectSubset<T, PlatformShipmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PlatformShipments and returns the data saved in the database.
+     * @param {PlatformShipmentCreateManyAndReturnArgs} args - Arguments to create many PlatformShipments.
+     * @example
+     * // Create many PlatformShipments
+     * const platformShipment = await prisma.platformShipment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PlatformShipments and only return the `id`
+     * const platformShipmentWithIdOnly = await prisma.platformShipment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PlatformShipmentCreateManyAndReturnArgs>(args?: SelectSubset<T, PlatformShipmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PlatformShipment.
+     * @param {PlatformShipmentDeleteArgs} args - Arguments to delete one PlatformShipment.
+     * @example
+     * // Delete one PlatformShipment
+     * const PlatformShipment = await prisma.platformShipment.delete({
+     *   where: {
+     *     // ... filter to delete one PlatformShipment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PlatformShipmentDeleteArgs>(args: SelectSubset<T, PlatformShipmentDeleteArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PlatformShipment.
+     * @param {PlatformShipmentUpdateArgs} args - Arguments to update one PlatformShipment.
+     * @example
+     * // Update one PlatformShipment
+     * const platformShipment = await prisma.platformShipment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PlatformShipmentUpdateArgs>(args: SelectSubset<T, PlatformShipmentUpdateArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PlatformShipments.
+     * @param {PlatformShipmentDeleteManyArgs} args - Arguments to filter PlatformShipments to delete.
+     * @example
+     * // Delete a few PlatformShipments
+     * const { count } = await prisma.platformShipment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PlatformShipmentDeleteManyArgs>(args?: SelectSubset<T, PlatformShipmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformShipments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PlatformShipments
+     * const platformShipment = await prisma.platformShipment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PlatformShipmentUpdateManyArgs>(args: SelectSubset<T, PlatformShipmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PlatformShipments and returns the data updated in the database.
+     * @param {PlatformShipmentUpdateManyAndReturnArgs} args - Arguments to update many PlatformShipments.
+     * @example
+     * // Update many PlatformShipments
+     * const platformShipment = await prisma.platformShipment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PlatformShipments and only return the `id`
+     * const platformShipmentWithIdOnly = await prisma.platformShipment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PlatformShipmentUpdateManyAndReturnArgs>(args: SelectSubset<T, PlatformShipmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PlatformShipment.
+     * @param {PlatformShipmentUpsertArgs} args - Arguments to update or create a PlatformShipment.
+     * @example
+     * // Update or create a PlatformShipment
+     * const platformShipment = await prisma.platformShipment.upsert({
+     *   create: {
+     *     // ... data to create a PlatformShipment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PlatformShipment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PlatformShipmentUpsertArgs>(args: SelectSubset<T, PlatformShipmentUpsertArgs<ExtArgs>>): Prisma__PlatformShipmentClient<$Result.GetResult<Prisma.$PlatformShipmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PlatformShipments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentCountArgs} args - Arguments to filter PlatformShipments to count.
+     * @example
+     * // Count the number of PlatformShipments
+     * const count = await prisma.platformShipment.count({
+     *   where: {
+     *     // ... the filter for the PlatformShipments we want to count
+     *   }
+     * })
+    **/
+    count<T extends PlatformShipmentCountArgs>(
+      args?: Subset<T, PlatformShipmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PlatformShipmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PlatformShipment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PlatformShipmentAggregateArgs>(args: Subset<T, PlatformShipmentAggregateArgs>): Prisma.PrismaPromise<GetPlatformShipmentAggregateType<T>>
+
+    /**
+     * Group by PlatformShipment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PlatformShipmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PlatformShipmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PlatformShipmentGroupByArgs['orderBy'] }
+        : { orderBy?: PlatformShipmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PlatformShipmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPlatformShipmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PlatformShipment model
+   */
+  readonly fields: PlatformShipmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PlatformShipment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PlatformShipmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PlatformShipment model
+   */
+  interface PlatformShipmentFieldRefs {
+    readonly id: FieldRef<"PlatformShipment", 'String'>
+    readonly organizationId: FieldRef<"PlatformShipment", 'String'>
+    readonly externalRef: FieldRef<"PlatformShipment", 'String'>
+    readonly trackingToken: FieldRef<"PlatformShipment", 'String'>
+    readonly status: FieldRef<"PlatformShipment", 'PlatformShipmentStatus'>
+    readonly sourceEntityType: FieldRef<"PlatformShipment", 'String'>
+    readonly sourceEntityId: FieldRef<"PlatformShipment", 'String'>
+    readonly recipientPhone: FieldRef<"PlatformShipment", 'String'>
+    readonly metadata: FieldRef<"PlatformShipment", 'Json'>
+    readonly createdAt: FieldRef<"PlatformShipment", 'DateTime'>
+    readonly updatedAt: FieldRef<"PlatformShipment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PlatformShipment findUnique
+   */
+  export type PlatformShipmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformShipment to fetch.
+     */
+    where: PlatformShipmentWhereUniqueInput
+  }
+
+  /**
+   * PlatformShipment findUniqueOrThrow
+   */
+  export type PlatformShipmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformShipment to fetch.
+     */
+    where: PlatformShipmentWhereUniqueInput
+  }
+
+  /**
+   * PlatformShipment findFirst
+   */
+  export type PlatformShipmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformShipment to fetch.
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformShipments to fetch.
+     */
+    orderBy?: PlatformShipmentOrderByWithRelationInput | PlatformShipmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformShipments.
+     */
+    cursor?: PlatformShipmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformShipments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformShipments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformShipments.
+     */
+    distinct?: PlatformShipmentScalarFieldEnum | PlatformShipmentScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformShipment findFirstOrThrow
+   */
+  export type PlatformShipmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformShipment to fetch.
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformShipments to fetch.
+     */
+    orderBy?: PlatformShipmentOrderByWithRelationInput | PlatformShipmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PlatformShipments.
+     */
+    cursor?: PlatformShipmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformShipments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformShipments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformShipments.
+     */
+    distinct?: PlatformShipmentScalarFieldEnum | PlatformShipmentScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformShipment findMany
+   */
+  export type PlatformShipmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter, which PlatformShipments to fetch.
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PlatformShipments to fetch.
+     */
+    orderBy?: PlatformShipmentOrderByWithRelationInput | PlatformShipmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PlatformShipments.
+     */
+    cursor?: PlatformShipmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PlatformShipments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PlatformShipments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PlatformShipments.
+     */
+    distinct?: PlatformShipmentScalarFieldEnum | PlatformShipmentScalarFieldEnum[]
+  }
+
+  /**
+   * PlatformShipment create
+   */
+  export type PlatformShipmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PlatformShipment.
+     */
+    data: XOR<PlatformShipmentCreateInput, PlatformShipmentUncheckedCreateInput>
+  }
+
+  /**
+   * PlatformShipment createMany
+   */
+  export type PlatformShipmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PlatformShipments.
+     */
+    data: PlatformShipmentCreateManyInput | PlatformShipmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PlatformShipment createManyAndReturn
+   */
+  export type PlatformShipmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many PlatformShipments.
+     */
+    data: PlatformShipmentCreateManyInput | PlatformShipmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformShipment update
+   */
+  export type PlatformShipmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PlatformShipment.
+     */
+    data: XOR<PlatformShipmentUpdateInput, PlatformShipmentUncheckedUpdateInput>
+    /**
+     * Choose, which PlatformShipment to update.
+     */
+    where: PlatformShipmentWhereUniqueInput
+  }
+
+  /**
+   * PlatformShipment updateMany
+   */
+  export type PlatformShipmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PlatformShipments.
+     */
+    data: XOR<PlatformShipmentUpdateManyMutationInput, PlatformShipmentUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformShipments to update
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * Limit how many PlatformShipments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformShipment updateManyAndReturn
+   */
+  export type PlatformShipmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * The data used to update PlatformShipments.
+     */
+    data: XOR<PlatformShipmentUpdateManyMutationInput, PlatformShipmentUncheckedUpdateManyInput>
+    /**
+     * Filter which PlatformShipments to update
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * Limit how many PlatformShipments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PlatformShipment upsert
+   */
+  export type PlatformShipmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PlatformShipment to update in case it exists.
+     */
+    where: PlatformShipmentWhereUniqueInput
+    /**
+     * In case the PlatformShipment found by the `where` argument doesn't exist, create a new PlatformShipment with this data.
+     */
+    create: XOR<PlatformShipmentCreateInput, PlatformShipmentUncheckedCreateInput>
+    /**
+     * In case the PlatformShipment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PlatformShipmentUpdateInput, PlatformShipmentUncheckedUpdateInput>
+  }
+
+  /**
+   * PlatformShipment delete
+   */
+  export type PlatformShipmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+    /**
+     * Filter which PlatformShipment to delete.
+     */
+    where: PlatformShipmentWhereUniqueInput
+  }
+
+  /**
+   * PlatformShipment deleteMany
+   */
+  export type PlatformShipmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PlatformShipments to delete
+     */
+    where?: PlatformShipmentWhereInput
+    /**
+     * Limit how many PlatformShipments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PlatformShipment without action
+   */
+  export type PlatformShipmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PlatformShipment
+     */
+    select?: PlatformShipmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PlatformShipment
+     */
+    omit?: PlatformShipmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PlatformShipmentInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -42590,6 +53104,133 @@ export namespace Prisma {
   export type NotificationDeliveryLogScalarFieldEnum = (typeof NotificationDeliveryLogScalarFieldEnum)[keyof typeof NotificationDeliveryLogScalarFieldEnum]
 
 
+  export const PlatformPaymentLinkScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    amountAzn: 'amountAzn',
+    currency: 'currency',
+    counterpartyRef: 'counterpartyRef',
+    sourceEntityType: 'sourceEntityType',
+    sourceEntityId: 'sourceEntityId',
+    paymentOrderId: 'paymentOrderId',
+    token: 'token',
+    paymentUrl: 'paymentUrl',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlatformPaymentLinkScalarFieldEnum = (typeof PlatformPaymentLinkScalarFieldEnum)[keyof typeof PlatformPaymentLinkScalarFieldEnum]
+
+
+  export const PlatformPortalLinkScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    token: 'token',
+    entityType: 'entityType',
+    entityId: 'entityId',
+    status: 'status',
+    expiresAt: 'expiresAt',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type PlatformPortalLinkScalarFieldEnum = (typeof PlatformPortalLinkScalarFieldEnum)[keyof typeof PlatformPortalLinkScalarFieldEnum]
+
+
+  export const BookableResourceScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    resourceKey: 'resourceKey',
+    name: 'name',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type BookableResourceScalarFieldEnum = (typeof BookableResourceScalarFieldEnum)[keyof typeof BookableResourceScalarFieldEnum]
+
+
+  export const BookingSlotScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    resourceId: 'resourceId',
+    startsAt: 'startsAt',
+    endsAt: 'endsAt',
+    capacity: 'capacity',
+    bookedCount: 'bookedCount',
+    createdAt: 'createdAt'
+  };
+
+  export type BookingSlotScalarFieldEnum = (typeof BookingSlotScalarFieldEnum)[keyof typeof BookingSlotScalarFieldEnum]
+
+
+  export const BookingAppointmentScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    resourceId: 'resourceId',
+    slotId: 'slotId',
+    customerRef: 'customerRef',
+    customerPhone: 'customerPhone',
+    customerName: 'customerName',
+    scheduledAt: 'scheduledAt',
+    status: 'status',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+  };
+
+  export type BookingAppointmentScalarFieldEnum = (typeof BookingAppointmentScalarFieldEnum)[keyof typeof BookingAppointmentScalarFieldEnum]
+
+
+  export const PlatformPromotionScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    code: 'code',
+    name: 'name',
+    discountType: 'discountType',
+    discountValue: 'discountValue',
+    validFrom: 'validFrom',
+    validUntil: 'validUntil',
+    status: 'status',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlatformPromotionScalarFieldEnum = (typeof PlatformPromotionScalarFieldEnum)[keyof typeof PlatformPromotionScalarFieldEnum]
+
+
+  export const PlatformCustomDomainScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    hostname: 'hostname',
+    status: 'status',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlatformCustomDomainScalarFieldEnum = (typeof PlatformCustomDomainScalarFieldEnum)[keyof typeof PlatformCustomDomainScalarFieldEnum]
+
+
+  export const PlatformShipmentScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    externalRef: 'externalRef',
+    trackingToken: 'trackingToken',
+    status: 'status',
+    sourceEntityType: 'sourceEntityType',
+    sourceEntityId: 'sourceEntityId',
+    recipientPhone: 'recipientPhone',
+    metadata: 'metadata',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PlatformShipmentScalarFieldEnum = (typeof PlatformShipmentScalarFieldEnum)[keyof typeof PlatformShipmentScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -42983,6 +53624,104 @@ export namespace Prisma {
    * Reference to a field of type 'NotificationOutboxStatus[]'
    */
   export type ListEnumNotificationOutboxStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationOutboxStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPaymentLinkStatus'
+   */
+  export type EnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPaymentLinkStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPaymentLinkStatus[]'
+   */
+  export type ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPaymentLinkStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPortalLinkStatus'
+   */
+  export type EnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPortalLinkStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPortalLinkStatus[]'
+   */
+  export type ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPortalLinkStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BookingAppointmentStatus'
+   */
+  export type EnumBookingAppointmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingAppointmentStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'BookingAppointmentStatus[]'
+   */
+  export type ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BookingAppointmentStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPromotionDiscountType'
+   */
+  export type EnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPromotionDiscountType'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPromotionDiscountType[]'
+   */
+  export type ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPromotionDiscountType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPromotionStatus'
+   */
+  export type EnumPlatformPromotionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPromotionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformPromotionStatus[]'
+   */
+  export type ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformPromotionStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformCustomDomainStatus'
+   */
+  export type EnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformCustomDomainStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformCustomDomainStatus[]'
+   */
+  export type ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformCustomDomainStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformShipmentStatus'
+   */
+  export type EnumPlatformShipmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformShipmentStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'PlatformShipmentStatus[]'
+   */
+  export type ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PlatformShipmentStatus[]'>
     
 
 
@@ -43848,6 +54587,7 @@ export namespace Prisma {
     paidAt?: DateTimeNullableFilter<"PaymentOrder"> | Date | string | null
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     subscriptionInvoice?: XOR<SubscriptionInvoiceNullableScalarRelationFilter, SubscriptionInvoiceWhereInput> | null
+    platformPaymentLinks?: PlatformPaymentLinkListRelationFilter
   }
 
   export type PaymentOrderOrderByWithRelationInput = {
@@ -43866,6 +54606,7 @@ export namespace Prisma {
     paidAt?: SortOrderInput | SortOrder
     organization?: OrganizationOrderByWithRelationInput
     subscriptionInvoice?: SubscriptionInvoiceOrderByWithRelationInput
+    platformPaymentLinks?: PlatformPaymentLinkOrderByRelationAggregateInput
   }
 
   export type PaymentOrderWhereUniqueInput = Prisma.AtLeast<{
@@ -43887,6 +54628,7 @@ export namespace Prisma {
     paidAt?: DateTimeNullableFilter<"PaymentOrder"> | Date | string | null
     organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
     subscriptionInvoice?: XOR<SubscriptionInvoiceNullableScalarRelationFilter, SubscriptionInvoiceWhereInput> | null
+    platformPaymentLinks?: PlatformPaymentLinkListRelationFilter
   }, "id" | "idempotencyKey">
 
   export type PaymentOrderOrderByWithAggregationInput = {
@@ -44195,6 +54937,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateListRelationFilter
     notificationOutboxEntries?: NotificationOutboxListRelationFilter
     notificationDeliveryLogs?: NotificationDeliveryLogListRelationFilter
+    platformPaymentLinks?: PlatformPaymentLinkListRelationFilter
+    platformPortalLinks?: PlatformPortalLinkListRelationFilter
+    bookableResources?: BookableResourceListRelationFilter
+    bookingSlots?: BookingSlotListRelationFilter
+    bookingAppointments?: BookingAppointmentListRelationFilter
+    platformPromotions?: PlatformPromotionListRelationFilter
+    platformCustomDomains?: PlatformCustomDomainListRelationFilter
+    platformShipments?: PlatformShipmentListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
@@ -44230,6 +54980,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateOrderByRelationAggregateInput
     notificationOutboxEntries?: NotificationOutboxOrderByRelationAggregateInput
     notificationDeliveryLogs?: NotificationDeliveryLogOrderByRelationAggregateInput
+    platformPaymentLinks?: PlatformPaymentLinkOrderByRelationAggregateInput
+    platformPortalLinks?: PlatformPortalLinkOrderByRelationAggregateInput
+    bookableResources?: BookableResourceOrderByRelationAggregateInput
+    bookingSlots?: BookingSlotOrderByRelationAggregateInput
+    bookingAppointments?: BookingAppointmentOrderByRelationAggregateInput
+    platformPromotions?: PlatformPromotionOrderByRelationAggregateInput
+    platformCustomDomains?: PlatformCustomDomainOrderByRelationAggregateInput
+    platformShipments?: PlatformShipmentOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
   }
 
@@ -44268,6 +55026,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateListRelationFilter
     notificationOutboxEntries?: NotificationOutboxListRelationFilter
     notificationDeliveryLogs?: NotificationDeliveryLogListRelationFilter
+    platformPaymentLinks?: PlatformPaymentLinkListRelationFilter
+    platformPortalLinks?: PlatformPortalLinkListRelationFilter
+    bookableResources?: BookableResourceListRelationFilter
+    bookingSlots?: BookingSlotListRelationFilter
+    bookingAppointments?: BookingAppointmentListRelationFilter
+    platformPromotions?: PlatformPromotionListRelationFilter
+    platformCustomDomains?: PlatformCustomDomainListRelationFilter
+    platformShipments?: PlatformShipmentListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "id" | "taxIdBlindIndex" | "drakarisClientId">
 
@@ -45601,6 +56367,671 @@ export namespace Prisma {
     attemptedAt?: DateTimeWithAggregatesFilter<"NotificationDeliveryLog"> | Date | string
   }
 
+  export type PlatformPaymentLinkWhereInput = {
+    AND?: PlatformPaymentLinkWhereInput | PlatformPaymentLinkWhereInput[]
+    OR?: PlatformPaymentLinkWhereInput[]
+    NOT?: PlatformPaymentLinkWhereInput | PlatformPaymentLinkWhereInput[]
+    id?: UuidFilter<"PlatformPaymentLink"> | string
+    organizationId?: UuidFilter<"PlatformPaymentLink"> | string
+    amountAzn?: DecimalFilter<"PlatformPaymentLink"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"PlatformPaymentLink"> | string
+    counterpartyRef?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    sourceEntityType?: StringFilter<"PlatformPaymentLink"> | string
+    sourceEntityId?: StringFilter<"PlatformPaymentLink"> | string
+    paymentOrderId?: UuidNullableFilter<"PlatformPaymentLink"> | string | null
+    token?: StringFilter<"PlatformPaymentLink"> | string
+    paymentUrl?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    status?: EnumPlatformPaymentLinkStatusFilter<"PlatformPaymentLink"> | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPaymentLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPaymentLink">
+    createdAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    paymentOrder?: XOR<PaymentOrderNullableScalarRelationFilter, PaymentOrderWhereInput> | null
+  }
+
+  export type PlatformPaymentLinkOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    amountAzn?: SortOrder
+    currency?: SortOrder
+    counterpartyRef?: SortOrderInput | SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    paymentOrderId?: SortOrderInput | SortOrder
+    token?: SortOrder
+    paymentUrl?: SortOrderInput | SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    paymentOrder?: PaymentOrderOrderByWithRelationInput
+  }
+
+  export type PlatformPaymentLinkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    token?: string
+    AND?: PlatformPaymentLinkWhereInput | PlatformPaymentLinkWhereInput[]
+    OR?: PlatformPaymentLinkWhereInput[]
+    NOT?: PlatformPaymentLinkWhereInput | PlatformPaymentLinkWhereInput[]
+    organizationId?: UuidFilter<"PlatformPaymentLink"> | string
+    amountAzn?: DecimalFilter<"PlatformPaymentLink"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"PlatformPaymentLink"> | string
+    counterpartyRef?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    sourceEntityType?: StringFilter<"PlatformPaymentLink"> | string
+    sourceEntityId?: StringFilter<"PlatformPaymentLink"> | string
+    paymentOrderId?: UuidNullableFilter<"PlatformPaymentLink"> | string | null
+    paymentUrl?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    status?: EnumPlatformPaymentLinkStatusFilter<"PlatformPaymentLink"> | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPaymentLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPaymentLink">
+    createdAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    paymentOrder?: XOR<PaymentOrderNullableScalarRelationFilter, PaymentOrderWhereInput> | null
+  }, "id" | "token">
+
+  export type PlatformPaymentLinkOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    amountAzn?: SortOrder
+    currency?: SortOrder
+    counterpartyRef?: SortOrderInput | SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    paymentOrderId?: SortOrderInput | SortOrder
+    token?: SortOrder
+    paymentUrl?: SortOrderInput | SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlatformPaymentLinkCountOrderByAggregateInput
+    _avg?: PlatformPaymentLinkAvgOrderByAggregateInput
+    _max?: PlatformPaymentLinkMaxOrderByAggregateInput
+    _min?: PlatformPaymentLinkMinOrderByAggregateInput
+    _sum?: PlatformPaymentLinkSumOrderByAggregateInput
+  }
+
+  export type PlatformPaymentLinkScalarWhereWithAggregatesInput = {
+    AND?: PlatformPaymentLinkScalarWhereWithAggregatesInput | PlatformPaymentLinkScalarWhereWithAggregatesInput[]
+    OR?: PlatformPaymentLinkScalarWhereWithAggregatesInput[]
+    NOT?: PlatformPaymentLinkScalarWhereWithAggregatesInput | PlatformPaymentLinkScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlatformPaymentLink"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlatformPaymentLink"> | string
+    amountAzn?: DecimalWithAggregatesFilter<"PlatformPaymentLink"> | Decimal | DecimalJsLike | number | string
+    currency?: StringWithAggregatesFilter<"PlatformPaymentLink"> | string
+    counterpartyRef?: StringNullableWithAggregatesFilter<"PlatformPaymentLink"> | string | null
+    sourceEntityType?: StringWithAggregatesFilter<"PlatformPaymentLink"> | string
+    sourceEntityId?: StringWithAggregatesFilter<"PlatformPaymentLink"> | string
+    paymentOrderId?: UuidNullableWithAggregatesFilter<"PlatformPaymentLink"> | string | null
+    token?: StringWithAggregatesFilter<"PlatformPaymentLink"> | string
+    paymentUrl?: StringNullableWithAggregatesFilter<"PlatformPaymentLink"> | string | null
+    status?: EnumPlatformPaymentLinkStatusWithAggregatesFilter<"PlatformPaymentLink"> | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"PlatformPaymentLink"> | Date | string | null
+    metadata?: JsonWithAggregatesFilter<"PlatformPaymentLink">
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformPaymentLink"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlatformPaymentLink"> | Date | string
+  }
+
+  export type PlatformPortalLinkWhereInput = {
+    AND?: PlatformPortalLinkWhereInput | PlatformPortalLinkWhereInput[]
+    OR?: PlatformPortalLinkWhereInput[]
+    NOT?: PlatformPortalLinkWhereInput | PlatformPortalLinkWhereInput[]
+    id?: UuidFilter<"PlatformPortalLink"> | string
+    organizationId?: UuidFilter<"PlatformPortalLink"> | string
+    token?: StringFilter<"PlatformPortalLink"> | string
+    entityType?: StringFilter<"PlatformPortalLink"> | string
+    entityId?: StringFilter<"PlatformPortalLink"> | string
+    status?: EnumPlatformPortalLinkStatusFilter<"PlatformPortalLink"> | $Enums.PlatformPortalLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPortalLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPortalLink">
+    createdAt?: DateTimeFilter<"PlatformPortalLink"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type PlatformPortalLinkOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    token?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type PlatformPortalLinkWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    token?: string
+    AND?: PlatformPortalLinkWhereInput | PlatformPortalLinkWhereInput[]
+    OR?: PlatformPortalLinkWhereInput[]
+    NOT?: PlatformPortalLinkWhereInput | PlatformPortalLinkWhereInput[]
+    organizationId?: UuidFilter<"PlatformPortalLink"> | string
+    entityType?: StringFilter<"PlatformPortalLink"> | string
+    entityId?: StringFilter<"PlatformPortalLink"> | string
+    status?: EnumPlatformPortalLinkStatusFilter<"PlatformPortalLink"> | $Enums.PlatformPortalLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPortalLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPortalLink">
+    createdAt?: DateTimeFilter<"PlatformPortalLink"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "token">
+
+  export type PlatformPortalLinkOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    token?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    _count?: PlatformPortalLinkCountOrderByAggregateInput
+    _max?: PlatformPortalLinkMaxOrderByAggregateInput
+    _min?: PlatformPortalLinkMinOrderByAggregateInput
+  }
+
+  export type PlatformPortalLinkScalarWhereWithAggregatesInput = {
+    AND?: PlatformPortalLinkScalarWhereWithAggregatesInput | PlatformPortalLinkScalarWhereWithAggregatesInput[]
+    OR?: PlatformPortalLinkScalarWhereWithAggregatesInput[]
+    NOT?: PlatformPortalLinkScalarWhereWithAggregatesInput | PlatformPortalLinkScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlatformPortalLink"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlatformPortalLink"> | string
+    token?: StringWithAggregatesFilter<"PlatformPortalLink"> | string
+    entityType?: StringWithAggregatesFilter<"PlatformPortalLink"> | string
+    entityId?: StringWithAggregatesFilter<"PlatformPortalLink"> | string
+    status?: EnumPlatformPortalLinkStatusWithAggregatesFilter<"PlatformPortalLink"> | $Enums.PlatformPortalLinkStatus
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"PlatformPortalLink"> | Date | string | null
+    metadata?: JsonWithAggregatesFilter<"PlatformPortalLink">
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformPortalLink"> | Date | string
+  }
+
+  export type BookableResourceWhereInput = {
+    AND?: BookableResourceWhereInput | BookableResourceWhereInput[]
+    OR?: BookableResourceWhereInput[]
+    NOT?: BookableResourceWhereInput | BookableResourceWhereInput[]
+    id?: UuidFilter<"BookableResource"> | string
+    organizationId?: UuidFilter<"BookableResource"> | string
+    resourceKey?: StringFilter<"BookableResource"> | string
+    name?: StringFilter<"BookableResource"> | string
+    metadata?: JsonFilter<"BookableResource">
+    createdAt?: DateTimeFilter<"BookableResource"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    slots?: BookingSlotListRelationFilter
+    appointments?: BookingAppointmentListRelationFilter
+  }
+
+  export type BookableResourceOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceKey?: SortOrder
+    name?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    slots?: BookingSlotOrderByRelationAggregateInput
+    appointments?: BookingAppointmentOrderByRelationAggregateInput
+  }
+
+  export type BookableResourceWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_resourceKey?: BookableResourceOrganizationIdResourceKeyCompoundUniqueInput
+    AND?: BookableResourceWhereInput | BookableResourceWhereInput[]
+    OR?: BookableResourceWhereInput[]
+    NOT?: BookableResourceWhereInput | BookableResourceWhereInput[]
+    organizationId?: UuidFilter<"BookableResource"> | string
+    resourceKey?: StringFilter<"BookableResource"> | string
+    name?: StringFilter<"BookableResource"> | string
+    metadata?: JsonFilter<"BookableResource">
+    createdAt?: DateTimeFilter<"BookableResource"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    slots?: BookingSlotListRelationFilter
+    appointments?: BookingAppointmentListRelationFilter
+  }, "id" | "organizationId_resourceKey">
+
+  export type BookableResourceOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceKey?: SortOrder
+    name?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    _count?: BookableResourceCountOrderByAggregateInput
+    _max?: BookableResourceMaxOrderByAggregateInput
+    _min?: BookableResourceMinOrderByAggregateInput
+  }
+
+  export type BookableResourceScalarWhereWithAggregatesInput = {
+    AND?: BookableResourceScalarWhereWithAggregatesInput | BookableResourceScalarWhereWithAggregatesInput[]
+    OR?: BookableResourceScalarWhereWithAggregatesInput[]
+    NOT?: BookableResourceScalarWhereWithAggregatesInput | BookableResourceScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BookableResource"> | string
+    organizationId?: UuidWithAggregatesFilter<"BookableResource"> | string
+    resourceKey?: StringWithAggregatesFilter<"BookableResource"> | string
+    name?: StringWithAggregatesFilter<"BookableResource"> | string
+    metadata?: JsonWithAggregatesFilter<"BookableResource">
+    createdAt?: DateTimeWithAggregatesFilter<"BookableResource"> | Date | string
+  }
+
+  export type BookingSlotWhereInput = {
+    AND?: BookingSlotWhereInput | BookingSlotWhereInput[]
+    OR?: BookingSlotWhereInput[]
+    NOT?: BookingSlotWhereInput | BookingSlotWhereInput[]
+    id?: UuidFilter<"BookingSlot"> | string
+    organizationId?: UuidFilter<"BookingSlot"> | string
+    resourceId?: UuidFilter<"BookingSlot"> | string
+    startsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    endsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    capacity?: IntFilter<"BookingSlot"> | number
+    bookedCount?: IntFilter<"BookingSlot"> | number
+    createdAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    resource?: XOR<BookableResourceScalarRelationFilter, BookableResourceWhereInput>
+    appointments?: BookingAppointmentListRelationFilter
+  }
+
+  export type BookingSlotOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    startsAt?: SortOrder
+    endsAt?: SortOrder
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    resource?: BookableResourceOrderByWithRelationInput
+    appointments?: BookingAppointmentOrderByRelationAggregateInput
+  }
+
+  export type BookingSlotWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BookingSlotWhereInput | BookingSlotWhereInput[]
+    OR?: BookingSlotWhereInput[]
+    NOT?: BookingSlotWhereInput | BookingSlotWhereInput[]
+    organizationId?: UuidFilter<"BookingSlot"> | string
+    resourceId?: UuidFilter<"BookingSlot"> | string
+    startsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    endsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    capacity?: IntFilter<"BookingSlot"> | number
+    bookedCount?: IntFilter<"BookingSlot"> | number
+    createdAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    resource?: XOR<BookableResourceScalarRelationFilter, BookableResourceWhereInput>
+    appointments?: BookingAppointmentListRelationFilter
+  }, "id">
+
+  export type BookingSlotOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    startsAt?: SortOrder
+    endsAt?: SortOrder
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+    createdAt?: SortOrder
+    _count?: BookingSlotCountOrderByAggregateInput
+    _avg?: BookingSlotAvgOrderByAggregateInput
+    _max?: BookingSlotMaxOrderByAggregateInput
+    _min?: BookingSlotMinOrderByAggregateInput
+    _sum?: BookingSlotSumOrderByAggregateInput
+  }
+
+  export type BookingSlotScalarWhereWithAggregatesInput = {
+    AND?: BookingSlotScalarWhereWithAggregatesInput | BookingSlotScalarWhereWithAggregatesInput[]
+    OR?: BookingSlotScalarWhereWithAggregatesInput[]
+    NOT?: BookingSlotScalarWhereWithAggregatesInput | BookingSlotScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BookingSlot"> | string
+    organizationId?: UuidWithAggregatesFilter<"BookingSlot"> | string
+    resourceId?: UuidWithAggregatesFilter<"BookingSlot"> | string
+    startsAt?: DateTimeWithAggregatesFilter<"BookingSlot"> | Date | string
+    endsAt?: DateTimeWithAggregatesFilter<"BookingSlot"> | Date | string
+    capacity?: IntWithAggregatesFilter<"BookingSlot"> | number
+    bookedCount?: IntWithAggregatesFilter<"BookingSlot"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"BookingSlot"> | Date | string
+  }
+
+  export type BookingAppointmentWhereInput = {
+    AND?: BookingAppointmentWhereInput | BookingAppointmentWhereInput[]
+    OR?: BookingAppointmentWhereInput[]
+    NOT?: BookingAppointmentWhereInput | BookingAppointmentWhereInput[]
+    id?: UuidFilter<"BookingAppointment"> | string
+    organizationId?: UuidFilter<"BookingAppointment"> | string
+    resourceId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    slotId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    customerRef?: StringFilter<"BookingAppointment"> | string
+    customerPhone?: StringNullableFilter<"BookingAppointment"> | string | null
+    customerName?: StringNullableFilter<"BookingAppointment"> | string | null
+    scheduledAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+    status?: EnumBookingAppointmentStatusFilter<"BookingAppointment"> | $Enums.BookingAppointmentStatus
+    metadata?: JsonFilter<"BookingAppointment">
+    createdAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    resource?: XOR<BookableResourceNullableScalarRelationFilter, BookableResourceWhereInput> | null
+    slot?: XOR<BookingSlotNullableScalarRelationFilter, BookingSlotWhereInput> | null
+  }
+
+  export type BookingAppointmentOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrderInput | SortOrder
+    slotId?: SortOrderInput | SortOrder
+    customerRef?: SortOrder
+    customerPhone?: SortOrderInput | SortOrder
+    customerName?: SortOrderInput | SortOrder
+    scheduledAt?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    resource?: BookableResourceOrderByWithRelationInput
+    slot?: BookingSlotOrderByWithRelationInput
+  }
+
+  export type BookingAppointmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BookingAppointmentWhereInput | BookingAppointmentWhereInput[]
+    OR?: BookingAppointmentWhereInput[]
+    NOT?: BookingAppointmentWhereInput | BookingAppointmentWhereInput[]
+    organizationId?: UuidFilter<"BookingAppointment"> | string
+    resourceId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    slotId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    customerRef?: StringFilter<"BookingAppointment"> | string
+    customerPhone?: StringNullableFilter<"BookingAppointment"> | string | null
+    customerName?: StringNullableFilter<"BookingAppointment"> | string | null
+    scheduledAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+    status?: EnumBookingAppointmentStatusFilter<"BookingAppointment"> | $Enums.BookingAppointmentStatus
+    metadata?: JsonFilter<"BookingAppointment">
+    createdAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    resource?: XOR<BookableResourceNullableScalarRelationFilter, BookableResourceWhereInput> | null
+    slot?: XOR<BookingSlotNullableScalarRelationFilter, BookingSlotWhereInput> | null
+  }, "id">
+
+  export type BookingAppointmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrderInput | SortOrder
+    slotId?: SortOrderInput | SortOrder
+    customerRef?: SortOrder
+    customerPhone?: SortOrderInput | SortOrder
+    customerName?: SortOrderInput | SortOrder
+    scheduledAt?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    _count?: BookingAppointmentCountOrderByAggregateInput
+    _max?: BookingAppointmentMaxOrderByAggregateInput
+    _min?: BookingAppointmentMinOrderByAggregateInput
+  }
+
+  export type BookingAppointmentScalarWhereWithAggregatesInput = {
+    AND?: BookingAppointmentScalarWhereWithAggregatesInput | BookingAppointmentScalarWhereWithAggregatesInput[]
+    OR?: BookingAppointmentScalarWhereWithAggregatesInput[]
+    NOT?: BookingAppointmentScalarWhereWithAggregatesInput | BookingAppointmentScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"BookingAppointment"> | string
+    organizationId?: UuidWithAggregatesFilter<"BookingAppointment"> | string
+    resourceId?: UuidNullableWithAggregatesFilter<"BookingAppointment"> | string | null
+    slotId?: UuidNullableWithAggregatesFilter<"BookingAppointment"> | string | null
+    customerRef?: StringWithAggregatesFilter<"BookingAppointment"> | string
+    customerPhone?: StringNullableWithAggregatesFilter<"BookingAppointment"> | string | null
+    customerName?: StringNullableWithAggregatesFilter<"BookingAppointment"> | string | null
+    scheduledAt?: DateTimeWithAggregatesFilter<"BookingAppointment"> | Date | string
+    status?: EnumBookingAppointmentStatusWithAggregatesFilter<"BookingAppointment"> | $Enums.BookingAppointmentStatus
+    metadata?: JsonWithAggregatesFilter<"BookingAppointment">
+    createdAt?: DateTimeWithAggregatesFilter<"BookingAppointment"> | Date | string
+  }
+
+  export type PlatformPromotionWhereInput = {
+    AND?: PlatformPromotionWhereInput | PlatformPromotionWhereInput[]
+    OR?: PlatformPromotionWhereInput[]
+    NOT?: PlatformPromotionWhereInput | PlatformPromotionWhereInput[]
+    id?: UuidFilter<"PlatformPromotion"> | string
+    organizationId?: UuidFilter<"PlatformPromotion"> | string
+    code?: StringFilter<"PlatformPromotion"> | string
+    name?: StringFilter<"PlatformPromotion"> | string
+    discountType?: EnumPlatformPromotionDiscountTypeFilter<"PlatformPromotion"> | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFilter<"PlatformPromotion"> | Decimal | DecimalJsLike | number | string
+    validFrom?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    validUntil?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    status?: EnumPlatformPromotionStatusFilter<"PlatformPromotion"> | $Enums.PlatformPromotionStatus
+    metadata?: JsonFilter<"PlatformPromotion">
+    createdAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type PlatformPromotionOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    discountType?: SortOrder
+    discountValue?: SortOrder
+    validFrom?: SortOrderInput | SortOrder
+    validUntil?: SortOrderInput | SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type PlatformPromotionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_code?: PlatformPromotionOrganizationIdCodeCompoundUniqueInput
+    AND?: PlatformPromotionWhereInput | PlatformPromotionWhereInput[]
+    OR?: PlatformPromotionWhereInput[]
+    NOT?: PlatformPromotionWhereInput | PlatformPromotionWhereInput[]
+    organizationId?: UuidFilter<"PlatformPromotion"> | string
+    code?: StringFilter<"PlatformPromotion"> | string
+    name?: StringFilter<"PlatformPromotion"> | string
+    discountType?: EnumPlatformPromotionDiscountTypeFilter<"PlatformPromotion"> | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFilter<"PlatformPromotion"> | Decimal | DecimalJsLike | number | string
+    validFrom?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    validUntil?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    status?: EnumPlatformPromotionStatusFilter<"PlatformPromotion"> | $Enums.PlatformPromotionStatus
+    metadata?: JsonFilter<"PlatformPromotion">
+    createdAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_code">
+
+  export type PlatformPromotionOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    discountType?: SortOrder
+    discountValue?: SortOrder
+    validFrom?: SortOrderInput | SortOrder
+    validUntil?: SortOrderInput | SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlatformPromotionCountOrderByAggregateInput
+    _avg?: PlatformPromotionAvgOrderByAggregateInput
+    _max?: PlatformPromotionMaxOrderByAggregateInput
+    _min?: PlatformPromotionMinOrderByAggregateInput
+    _sum?: PlatformPromotionSumOrderByAggregateInput
+  }
+
+  export type PlatformPromotionScalarWhereWithAggregatesInput = {
+    AND?: PlatformPromotionScalarWhereWithAggregatesInput | PlatformPromotionScalarWhereWithAggregatesInput[]
+    OR?: PlatformPromotionScalarWhereWithAggregatesInput[]
+    NOT?: PlatformPromotionScalarWhereWithAggregatesInput | PlatformPromotionScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlatformPromotion"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlatformPromotion"> | string
+    code?: StringWithAggregatesFilter<"PlatformPromotion"> | string
+    name?: StringWithAggregatesFilter<"PlatformPromotion"> | string
+    discountType?: EnumPlatformPromotionDiscountTypeWithAggregatesFilter<"PlatformPromotion"> | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalWithAggregatesFilter<"PlatformPromotion"> | Decimal | DecimalJsLike | number | string
+    validFrom?: DateTimeNullableWithAggregatesFilter<"PlatformPromotion"> | Date | string | null
+    validUntil?: DateTimeNullableWithAggregatesFilter<"PlatformPromotion"> | Date | string | null
+    status?: EnumPlatformPromotionStatusWithAggregatesFilter<"PlatformPromotion"> | $Enums.PlatformPromotionStatus
+    metadata?: JsonWithAggregatesFilter<"PlatformPromotion">
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformPromotion"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlatformPromotion"> | Date | string
+  }
+
+  export type PlatformCustomDomainWhereInput = {
+    AND?: PlatformCustomDomainWhereInput | PlatformCustomDomainWhereInput[]
+    OR?: PlatformCustomDomainWhereInput[]
+    NOT?: PlatformCustomDomainWhereInput | PlatformCustomDomainWhereInput[]
+    id?: UuidFilter<"PlatformCustomDomain"> | string
+    organizationId?: UuidFilter<"PlatformCustomDomain"> | string
+    hostname?: StringFilter<"PlatformCustomDomain"> | string
+    status?: EnumPlatformCustomDomainStatusFilter<"PlatformCustomDomain"> | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonFilter<"PlatformCustomDomain">
+    createdAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type PlatformCustomDomainOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    hostname?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type PlatformCustomDomainWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_hostname?: PlatformCustomDomainOrganizationIdHostnameCompoundUniqueInput
+    AND?: PlatformCustomDomainWhereInput | PlatformCustomDomainWhereInput[]
+    OR?: PlatformCustomDomainWhereInput[]
+    NOT?: PlatformCustomDomainWhereInput | PlatformCustomDomainWhereInput[]
+    organizationId?: UuidFilter<"PlatformCustomDomain"> | string
+    hostname?: StringFilter<"PlatformCustomDomain"> | string
+    status?: EnumPlatformCustomDomainStatusFilter<"PlatformCustomDomain"> | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonFilter<"PlatformCustomDomain">
+    createdAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_hostname">
+
+  export type PlatformCustomDomainOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    hostname?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlatformCustomDomainCountOrderByAggregateInput
+    _max?: PlatformCustomDomainMaxOrderByAggregateInput
+    _min?: PlatformCustomDomainMinOrderByAggregateInput
+  }
+
+  export type PlatformCustomDomainScalarWhereWithAggregatesInput = {
+    AND?: PlatformCustomDomainScalarWhereWithAggregatesInput | PlatformCustomDomainScalarWhereWithAggregatesInput[]
+    OR?: PlatformCustomDomainScalarWhereWithAggregatesInput[]
+    NOT?: PlatformCustomDomainScalarWhereWithAggregatesInput | PlatformCustomDomainScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlatformCustomDomain"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlatformCustomDomain"> | string
+    hostname?: StringWithAggregatesFilter<"PlatformCustomDomain"> | string
+    status?: EnumPlatformCustomDomainStatusWithAggregatesFilter<"PlatformCustomDomain"> | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonWithAggregatesFilter<"PlatformCustomDomain">
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformCustomDomain"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlatformCustomDomain"> | Date | string
+  }
+
+  export type PlatformShipmentWhereInput = {
+    AND?: PlatformShipmentWhereInput | PlatformShipmentWhereInput[]
+    OR?: PlatformShipmentWhereInput[]
+    NOT?: PlatformShipmentWhereInput | PlatformShipmentWhereInput[]
+    id?: UuidFilter<"PlatformShipment"> | string
+    organizationId?: UuidFilter<"PlatformShipment"> | string
+    externalRef?: StringNullableFilter<"PlatformShipment"> | string | null
+    trackingToken?: StringFilter<"PlatformShipment"> | string
+    status?: EnumPlatformShipmentStatusFilter<"PlatformShipment"> | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFilter<"PlatformShipment"> | string
+    sourceEntityId?: StringFilter<"PlatformShipment"> | string
+    recipientPhone?: StringNullableFilter<"PlatformShipment"> | string | null
+    metadata?: JsonFilter<"PlatformShipment">
+    createdAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type PlatformShipmentOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    externalRef?: SortOrderInput | SortOrder
+    trackingToken?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    recipientPhone?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type PlatformShipmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    trackingToken?: string
+    AND?: PlatformShipmentWhereInput | PlatformShipmentWhereInput[]
+    OR?: PlatformShipmentWhereInput[]
+    NOT?: PlatformShipmentWhereInput | PlatformShipmentWhereInput[]
+    organizationId?: UuidFilter<"PlatformShipment"> | string
+    externalRef?: StringNullableFilter<"PlatformShipment"> | string | null
+    status?: EnumPlatformShipmentStatusFilter<"PlatformShipment"> | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFilter<"PlatformShipment"> | string
+    sourceEntityId?: StringFilter<"PlatformShipment"> | string
+    recipientPhone?: StringNullableFilter<"PlatformShipment"> | string | null
+    metadata?: JsonFilter<"PlatformShipment">
+    createdAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "trackingToken">
+
+  export type PlatformShipmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    externalRef?: SortOrderInput | SortOrder
+    trackingToken?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    recipientPhone?: SortOrderInput | SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PlatformShipmentCountOrderByAggregateInput
+    _max?: PlatformShipmentMaxOrderByAggregateInput
+    _min?: PlatformShipmentMinOrderByAggregateInput
+  }
+
+  export type PlatformShipmentScalarWhereWithAggregatesInput = {
+    AND?: PlatformShipmentScalarWhereWithAggregatesInput | PlatformShipmentScalarWhereWithAggregatesInput[]
+    OR?: PlatformShipmentScalarWhereWithAggregatesInput[]
+    NOT?: PlatformShipmentScalarWhereWithAggregatesInput | PlatformShipmentScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PlatformShipment"> | string
+    organizationId?: UuidWithAggregatesFilter<"PlatformShipment"> | string
+    externalRef?: StringNullableWithAggregatesFilter<"PlatformShipment"> | string | null
+    trackingToken?: StringWithAggregatesFilter<"PlatformShipment"> | string
+    status?: EnumPlatformShipmentStatusWithAggregatesFilter<"PlatformShipment"> | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringWithAggregatesFilter<"PlatformShipment"> | string
+    sourceEntityId?: StringWithAggregatesFilter<"PlatformShipment"> | string
+    recipientPhone?: StringNullableWithAggregatesFilter<"PlatformShipment"> | string | null
+    metadata?: JsonWithAggregatesFilter<"PlatformShipment">
+    createdAt?: DateTimeWithAggregatesFilter<"PlatformShipment"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PlatformShipment"> | Date | string
+  }
+
   export type TenantBillingCreateInput = {
     organizationId: string
     billingStatus?: $Enums.BillingStatus
@@ -46525,6 +57956,7 @@ export namespace Prisma {
     paidAt?: Date | string | null
     organization: OrganizationCreateNestedOneWithoutPaymentOrdersInput
     subscriptionInvoice?: SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderUncheckedCreateInput = {
@@ -46542,6 +57974,7 @@ export namespace Prisma {
     createdAt?: Date | string
     paidAt?: Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceUncheckedCreateNestedOneWithoutPaymentOrderInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderUpdateInput = {
@@ -46559,6 +57992,7 @@ export namespace Prisma {
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     organization?: OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput
     subscriptionInvoice?: SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type PaymentOrderUncheckedUpdateInput = {
@@ -46576,6 +58010,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceUncheckedUpdateOneWithoutPaymentOrderNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type PaymentOrderCreateManyInput = {
@@ -46900,6 +58335,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -46935,6 +58378,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUpdateInput = {
@@ -46968,6 +58419,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -47003,6 +58462,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -48486,6 +59953,727 @@ export namespace Prisma {
     attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PlatformPaymentLinkCreateInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformPaymentLinksInput
+    paymentOrder?: PaymentOrderCreateNestedOneWithoutPlatformPaymentLinksInput
+  }
+
+  export type PlatformPaymentLinkUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    paymentOrderId?: string | null
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformPaymentLinksNestedInput
+    paymentOrder?: PaymentOrderUpdateOneWithoutPlatformPaymentLinksNestedInput
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    paymentOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPaymentLinkCreateManyInput = {
+    id?: string
+    organizationId: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    paymentOrderId?: string | null
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    paymentOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkCreateInput = {
+    id?: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformPortalLinksInput
+  }
+
+  export type PlatformPortalLinkUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlatformPortalLinkUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformPortalLinksNestedInput
+  }
+
+  export type PlatformPortalLinkUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkCreateManyInput = {
+    id?: string
+    organizationId: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlatformPortalLinkUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookableResourceCreateInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookableResourcesInput
+    slots?: BookingSlotCreateNestedManyWithoutResourceInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    slots?: BookingSlotUncheckedCreateNestedManyWithoutResourceInput
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookableResourcesNestedInput
+    slots?: BookingSlotUpdateManyWithoutResourceNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    slots?: BookingSlotUncheckedUpdateManyWithoutResourceNestedInput
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceCreateManyInput = {
+    id?: string
+    organizationId: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookableResourceUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookableResourceUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingSlotCreateInput = {
+    id?: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingSlotsInput
+    resource: BookableResourceCreateNestedOneWithoutSlotsInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    resourceId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingSlotsNestedInput
+    resource?: BookableResourceUpdateOneRequiredWithoutSlotsNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotCreateManyInput = {
+    id?: string
+    organizationId: string
+    resourceId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+  }
+
+  export type BookingSlotUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingSlotUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentCreateInput = {
+    id?: string
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingAppointmentsInput
+    resource?: BookableResourceCreateNestedOneWithoutAppointmentsInput
+    slot?: BookingSlotCreateNestedOneWithoutAppointmentsInput
+  }
+
+  export type BookingAppointmentUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    resourceId?: string | null
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingAppointmentsNestedInput
+    resource?: BookableResourceUpdateOneWithoutAppointmentsNestedInput
+    slot?: BookingSlotUpdateOneWithoutAppointmentsNestedInput
+  }
+
+  export type BookingAppointmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentCreateManyInput = {
+    id?: string
+    organizationId: string
+    resourceId?: string | null
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionCreateInput = {
+    id?: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformPromotionsInput
+  }
+
+  export type PlatformPromotionUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPromotionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformPromotionsNestedInput
+  }
+
+  export type PlatformPromotionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionCreateManyInput = {
+    id?: string
+    organizationId: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPromotionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainCreateInput = {
+    id?: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformCustomDomainsInput
+  }
+
+  export type PlatformCustomDomainUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformCustomDomainUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformCustomDomainsNestedInput
+  }
+
+  export type PlatformCustomDomainUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainCreateManyInput = {
+    id?: string
+    organizationId: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformCustomDomainUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentCreateInput = {
+    id?: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformShipmentsInput
+  }
+
+  export type PlatformShipmentUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformShipmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformShipmentsNestedInput
+  }
+
+  export type PlatformShipmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentCreateManyInput = {
+    id?: string
+    organizationId: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformShipmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -49483,6 +61671,16 @@ export namespace Prisma {
     isNot?: SubscriptionInvoiceWhereInput | null
   }
 
+  export type PlatformPaymentLinkListRelationFilter = {
+    every?: PlatformPaymentLinkWhereInput
+    some?: PlatformPaymentLinkWhereInput
+    none?: PlatformPaymentLinkWhereInput
+  }
+
+  export type PlatformPaymentLinkOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type PaymentOrderCountOrderByAggregateInput = {
     id?: SortOrder
     organizationId?: SortOrder
@@ -49778,6 +61976,48 @@ export namespace Prisma {
     none?: NotificationDeliveryLogWhereInput
   }
 
+  export type PlatformPortalLinkListRelationFilter = {
+    every?: PlatformPortalLinkWhereInput
+    some?: PlatformPortalLinkWhereInput
+    none?: PlatformPortalLinkWhereInput
+  }
+
+  export type BookableResourceListRelationFilter = {
+    every?: BookableResourceWhereInput
+    some?: BookableResourceWhereInput
+    none?: BookableResourceWhereInput
+  }
+
+  export type BookingSlotListRelationFilter = {
+    every?: BookingSlotWhereInput
+    some?: BookingSlotWhereInput
+    none?: BookingSlotWhereInput
+  }
+
+  export type BookingAppointmentListRelationFilter = {
+    every?: BookingAppointmentWhereInput
+    some?: BookingAppointmentWhereInput
+    none?: BookingAppointmentWhereInput
+  }
+
+  export type PlatformPromotionListRelationFilter = {
+    every?: PlatformPromotionWhereInput
+    some?: PlatformPromotionWhereInput
+    none?: PlatformPromotionWhereInput
+  }
+
+  export type PlatformCustomDomainListRelationFilter = {
+    every?: PlatformCustomDomainWhereInput
+    some?: PlatformCustomDomainWhereInput
+    none?: PlatformCustomDomainWhereInput
+  }
+
+  export type PlatformShipmentListRelationFilter = {
+    every?: PlatformShipmentWhereInput
+    some?: PlatformShipmentWhereInput
+    none?: PlatformShipmentWhereInput
+  }
+
   export type UserNullableScalarRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -49816,6 +62056,34 @@ export namespace Prisma {
   }
 
   export type NotificationDeliveryLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlatformPortalLinkOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BookableResourceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BookingSlotOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BookingAppointmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlatformPromotionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlatformCustomDomainOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PlatformShipmentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -50852,6 +63120,476 @@ export namespace Prisma {
     attemptedAt?: SortOrder
   }
 
+  export type EnumPlatformPaymentLinkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPaymentLinkStatus | EnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel> | $Enums.PlatformPaymentLinkStatus
+  }
+
+  export type PlatformPaymentLinkCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    amountAzn?: SortOrder
+    currency?: SortOrder
+    counterpartyRef?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    paymentOrderId?: SortOrder
+    token?: SortOrder
+    paymentUrl?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPaymentLinkAvgOrderByAggregateInput = {
+    amountAzn?: SortOrder
+  }
+
+  export type PlatformPaymentLinkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    amountAzn?: SortOrder
+    currency?: SortOrder
+    counterpartyRef?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    paymentOrderId?: SortOrder
+    token?: SortOrder
+    paymentUrl?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPaymentLinkMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    amountAzn?: SortOrder
+    currency?: SortOrder
+    counterpartyRef?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    paymentOrderId?: SortOrder
+    token?: SortOrder
+    paymentUrl?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPaymentLinkSumOrderByAggregateInput = {
+    amountAzn?: SortOrder
+  }
+
+  export type EnumPlatformPaymentLinkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPaymentLinkStatus | EnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPaymentLinkStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPaymentLinkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPlatformPortalLinkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPortalLinkStatus | EnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel> | $Enums.PlatformPortalLinkStatus
+  }
+
+  export type PlatformPortalLinkCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    token?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlatformPortalLinkMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    token?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PlatformPortalLinkMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    token?: SortOrder
+    entityType?: SortOrder
+    entityId?: SortOrder
+    status?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumPlatformPortalLinkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPortalLinkStatus | EnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPortalLinkStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPortalLinkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel>
+  }
+
+  export type BookableResourceOrganizationIdResourceKeyCompoundUniqueInput = {
+    organizationId: string
+    resourceKey: string
+  }
+
+  export type BookableResourceCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceKey?: SortOrder
+    name?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookableResourceMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceKey?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookableResourceMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceKey?: SortOrder
+    name?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookableResourceScalarRelationFilter = {
+    is?: BookableResourceWhereInput
+    isNot?: BookableResourceWhereInput
+  }
+
+  export type BookingSlotCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    startsAt?: SortOrder
+    endsAt?: SortOrder
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookingSlotAvgOrderByAggregateInput = {
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+  }
+
+  export type BookingSlotMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    startsAt?: SortOrder
+    endsAt?: SortOrder
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookingSlotMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    startsAt?: SortOrder
+    endsAt?: SortOrder
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookingSlotSumOrderByAggregateInput = {
+    capacity?: SortOrder
+    bookedCount?: SortOrder
+  }
+
+  export type EnumBookingAppointmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingAppointmentStatus | EnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel> | $Enums.BookingAppointmentStatus
+  }
+
+  export type BookableResourceNullableScalarRelationFilter = {
+    is?: BookableResourceWhereInput | null
+    isNot?: BookableResourceWhereInput | null
+  }
+
+  export type BookingSlotNullableScalarRelationFilter = {
+    is?: BookingSlotWhereInput | null
+    isNot?: BookingSlotWhereInput | null
+  }
+
+  export type BookingAppointmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    slotId?: SortOrder
+    customerRef?: SortOrder
+    customerPhone?: SortOrder
+    customerName?: SortOrder
+    scheduledAt?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookingAppointmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    slotId?: SortOrder
+    customerRef?: SortOrder
+    customerPhone?: SortOrder
+    customerName?: SortOrder
+    scheduledAt?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BookingAppointmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    resourceId?: SortOrder
+    slotId?: SortOrder
+    customerRef?: SortOrder
+    customerPhone?: SortOrder
+    customerName?: SortOrder
+    scheduledAt?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumBookingAppointmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingAppointmentStatus | EnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingAppointmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.BookingAppointmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPlatformPromotionDiscountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionDiscountType | EnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel> | $Enums.PlatformPromotionDiscountType
+  }
+
+  export type EnumPlatformPromotionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionStatus | EnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel> | $Enums.PlatformPromotionStatus
+  }
+
+  export type PlatformPromotionOrganizationIdCodeCompoundUniqueInput = {
+    organizationId: string
+    code: string
+  }
+
+  export type PlatformPromotionCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    discountType?: SortOrder
+    discountValue?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPromotionAvgOrderByAggregateInput = {
+    discountValue?: SortOrder
+  }
+
+  export type PlatformPromotionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    discountType?: SortOrder
+    discountValue?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPromotionMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    code?: SortOrder
+    name?: SortOrder
+    discountType?: SortOrder
+    discountValue?: SortOrder
+    validFrom?: SortOrder
+    validUntil?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformPromotionSumOrderByAggregateInput = {
+    discountValue?: SortOrder
+  }
+
+  export type EnumPlatformPromotionDiscountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionDiscountType | EnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionDiscountTypeWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPromotionDiscountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel>
+  }
+
+  export type EnumPlatformPromotionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionStatus | EnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPromotionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPlatformCustomDomainStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformCustomDomainStatus | EnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel> | $Enums.PlatformCustomDomainStatus
+  }
+
+  export type PlatformCustomDomainOrganizationIdHostnameCompoundUniqueInput = {
+    organizationId: string
+    hostname: string
+  }
+
+  export type PlatformCustomDomainCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    hostname?: SortOrder
+    status?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformCustomDomainMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    hostname?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformCustomDomainMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    hostname?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumPlatformCustomDomainStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformCustomDomainStatus | EnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformCustomDomainStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformCustomDomainStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel>
+  }
+
+  export type EnumPlatformShipmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformShipmentStatus | EnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel> | $Enums.PlatformShipmentStatus
+  }
+
+  export type PlatformShipmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    externalRef?: SortOrder
+    trackingToken?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    recipientPhone?: SortOrder
+    metadata?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformShipmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    externalRef?: SortOrder
+    trackingToken?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    recipientPhone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PlatformShipmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    externalRef?: SortOrder
+    trackingToken?: SortOrder
+    status?: SortOrder
+    sourceEntityType?: SortOrder
+    sourceEntityId?: SortOrder
+    recipientPhone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumPlatformShipmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformShipmentStatus | EnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformShipmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformShipmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel>
+  }
+
   export type TenantBillingCreateactiveModulesInput = {
     set: string[]
   }
@@ -51167,10 +63905,24 @@ export namespace Prisma {
     connect?: SubscriptionInvoiceWhereUniqueInput
   }
 
+  export type PlatformPaymentLinkCreateNestedManyWithoutPaymentOrderInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput> | PlatformPaymentLinkCreateWithoutPaymentOrderInput[] | PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput | PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput[]
+    createMany?: PlatformPaymentLinkCreateManyPaymentOrderInputEnvelope
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+  }
+
   export type SubscriptionInvoiceUncheckedCreateNestedOneWithoutPaymentOrderInput = {
     create?: XOR<SubscriptionInvoiceCreateWithoutPaymentOrderInput, SubscriptionInvoiceUncheckedCreateWithoutPaymentOrderInput>
     connectOrCreate?: SubscriptionInvoiceCreateOrConnectWithoutPaymentOrderInput
     connect?: SubscriptionInvoiceWhereUniqueInput
+  }
+
+  export type PlatformPaymentLinkUncheckedCreateNestedManyWithoutPaymentOrderInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput> | PlatformPaymentLinkCreateWithoutPaymentOrderInput[] | PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput | PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput[]
+    createMany?: PlatformPaymentLinkCreateManyPaymentOrderInputEnvelope
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
   }
 
   export type EnumPaymentOrderStatusFieldUpdateOperationsInput = {
@@ -51195,6 +63947,20 @@ export namespace Prisma {
     update?: XOR<XOR<SubscriptionInvoiceUpdateToOneWithWhereWithoutPaymentOrderInput, SubscriptionInvoiceUpdateWithoutPaymentOrderInput>, SubscriptionInvoiceUncheckedUpdateWithoutPaymentOrderInput>
   }
 
+  export type PlatformPaymentLinkUpdateManyWithoutPaymentOrderNestedInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput> | PlatformPaymentLinkCreateWithoutPaymentOrderInput[] | PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput | PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput[]
+    upsert?: PlatformPaymentLinkUpsertWithWhereUniqueWithoutPaymentOrderInput | PlatformPaymentLinkUpsertWithWhereUniqueWithoutPaymentOrderInput[]
+    createMany?: PlatformPaymentLinkCreateManyPaymentOrderInputEnvelope
+    set?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    disconnect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    delete?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    update?: PlatformPaymentLinkUpdateWithWhereUniqueWithoutPaymentOrderInput | PlatformPaymentLinkUpdateWithWhereUniqueWithoutPaymentOrderInput[]
+    updateMany?: PlatformPaymentLinkUpdateManyWithWhereWithoutPaymentOrderInput | PlatformPaymentLinkUpdateManyWithWhereWithoutPaymentOrderInput[]
+    deleteMany?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
+  }
+
   export type SubscriptionInvoiceUncheckedUpdateOneWithoutPaymentOrderNestedInput = {
     create?: XOR<SubscriptionInvoiceCreateWithoutPaymentOrderInput, SubscriptionInvoiceUncheckedCreateWithoutPaymentOrderInput>
     connectOrCreate?: SubscriptionInvoiceCreateOrConnectWithoutPaymentOrderInput
@@ -51203,6 +63969,20 @@ export namespace Prisma {
     delete?: SubscriptionInvoiceWhereInput | boolean
     connect?: SubscriptionInvoiceWhereUniqueInput
     update?: XOR<XOR<SubscriptionInvoiceUpdateToOneWithWhereWithoutPaymentOrderInput, SubscriptionInvoiceUpdateWithoutPaymentOrderInput>, SubscriptionInvoiceUncheckedUpdateWithoutPaymentOrderInput>
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderNestedInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput> | PlatformPaymentLinkCreateWithoutPaymentOrderInput[] | PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput | PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput[]
+    upsert?: PlatformPaymentLinkUpsertWithWhereUniqueWithoutPaymentOrderInput | PlatformPaymentLinkUpsertWithWhereUniqueWithoutPaymentOrderInput[]
+    createMany?: PlatformPaymentLinkCreateManyPaymentOrderInputEnvelope
+    set?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    disconnect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    delete?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    update?: PlatformPaymentLinkUpdateWithWhereUniqueWithoutPaymentOrderInput | PlatformPaymentLinkUpdateWithWhereUniqueWithoutPaymentOrderInput[]
+    updateMany?: PlatformPaymentLinkUpdateManyWithWhereWithoutPaymentOrderInput | PlatformPaymentLinkUpdateManyWithWhereWithoutPaymentOrderInput[]
+    deleteMany?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
   }
 
   export type RolePermissionCreateNestedManyWithoutRoleInput = {
@@ -51405,6 +64185,62 @@ export namespace Prisma {
     connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
   }
 
+  export type PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput> | PlatformPaymentLinkCreateWithoutOrganizationInput[] | PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput | PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPaymentLinkCreateManyOrganizationInputEnvelope
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+  }
+
+  export type PlatformPortalLinkCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput> | PlatformPortalLinkCreateWithoutOrganizationInput[] | PlatformPortalLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPortalLinkCreateOrConnectWithoutOrganizationInput | PlatformPortalLinkCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPortalLinkCreateManyOrganizationInputEnvelope
+    connect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+  }
+
+  export type BookableResourceCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput> | BookableResourceCreateWithoutOrganizationInput[] | BookableResourceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutOrganizationInput | BookableResourceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookableResourceCreateManyOrganizationInputEnvelope
+    connect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+  }
+
+  export type BookingSlotCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput> | BookingSlotCreateWithoutOrganizationInput[] | BookingSlotUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutOrganizationInput | BookingSlotCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookingSlotCreateManyOrganizationInputEnvelope
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+  }
+
+  export type BookingAppointmentCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput> | BookingAppointmentCreateWithoutOrganizationInput[] | BookingAppointmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutOrganizationInput | BookingAppointmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookingAppointmentCreateManyOrganizationInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type PlatformPromotionCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput> | PlatformPromotionCreateWithoutOrganizationInput[] | PlatformPromotionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPromotionCreateOrConnectWithoutOrganizationInput | PlatformPromotionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPromotionCreateManyOrganizationInputEnvelope
+    connect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+  }
+
+  export type PlatformCustomDomainCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput> | PlatformCustomDomainCreateWithoutOrganizationInput[] | PlatformCustomDomainUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformCustomDomainCreateOrConnectWithoutOrganizationInput | PlatformCustomDomainCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformCustomDomainCreateManyOrganizationInputEnvelope
+    connect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+  }
+
+  export type PlatformShipmentCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput> | PlatformShipmentCreateWithoutOrganizationInput[] | PlatformShipmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformShipmentCreateOrConnectWithoutOrganizationInput | PlatformShipmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformShipmentCreateManyOrganizationInputEnvelope
+    connect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+  }
+
   export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -51485,6 +64321,62 @@ export namespace Prisma {
     connectOrCreate?: NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput | NotificationDeliveryLogCreateOrConnectWithoutOrganizationInput[]
     createMany?: NotificationDeliveryLogCreateManyOrganizationInputEnvelope
     connect?: NotificationDeliveryLogWhereUniqueInput | NotificationDeliveryLogWhereUniqueInput[]
+  }
+
+  export type PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput> | PlatformPaymentLinkCreateWithoutOrganizationInput[] | PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput | PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPaymentLinkCreateManyOrganizationInputEnvelope
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+  }
+
+  export type PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput> | PlatformPortalLinkCreateWithoutOrganizationInput[] | PlatformPortalLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPortalLinkCreateOrConnectWithoutOrganizationInput | PlatformPortalLinkCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPortalLinkCreateManyOrganizationInputEnvelope
+    connect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+  }
+
+  export type BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput> | BookableResourceCreateWithoutOrganizationInput[] | BookableResourceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutOrganizationInput | BookableResourceCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookableResourceCreateManyOrganizationInputEnvelope
+    connect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+  }
+
+  export type BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput> | BookingSlotCreateWithoutOrganizationInput[] | BookingSlotUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutOrganizationInput | BookingSlotCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookingSlotCreateManyOrganizationInputEnvelope
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+  }
+
+  export type BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput> | BookingAppointmentCreateWithoutOrganizationInput[] | BookingAppointmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutOrganizationInput | BookingAppointmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: BookingAppointmentCreateManyOrganizationInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput> | PlatformPromotionCreateWithoutOrganizationInput[] | PlatformPromotionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPromotionCreateOrConnectWithoutOrganizationInput | PlatformPromotionCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformPromotionCreateManyOrganizationInputEnvelope
+    connect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+  }
+
+  export type PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput> | PlatformCustomDomainCreateWithoutOrganizationInput[] | PlatformCustomDomainUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformCustomDomainCreateOrConnectWithoutOrganizationInput | PlatformCustomDomainCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformCustomDomainCreateManyOrganizationInputEnvelope
+    connect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+  }
+
+  export type PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput> | PlatformShipmentCreateWithoutOrganizationInput[] | PlatformShipmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformShipmentCreateOrConnectWithoutOrganizationInput | PlatformShipmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: PlatformShipmentCreateManyOrganizationInputEnvelope
+    connect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
   }
 
   export type OrganizationUpdateactiveModulesInput = {
@@ -51650,6 +64542,118 @@ export namespace Prisma {
     deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
   }
 
+  export type PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput> | PlatformPaymentLinkCreateWithoutOrganizationInput[] | PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput | PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPaymentLinkUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPaymentLinkUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPaymentLinkCreateManyOrganizationInputEnvelope
+    set?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    disconnect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    delete?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    update?: PlatformPaymentLinkUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPaymentLinkUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPaymentLinkUpdateManyWithWhereWithoutOrganizationInput | PlatformPaymentLinkUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
+  }
+
+  export type PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput> | PlatformPortalLinkCreateWithoutOrganizationInput[] | PlatformPortalLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPortalLinkCreateOrConnectWithoutOrganizationInput | PlatformPortalLinkCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPortalLinkUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPortalLinkUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPortalLinkCreateManyOrganizationInputEnvelope
+    set?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    disconnect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    delete?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    connect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    update?: PlatformPortalLinkUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPortalLinkUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPortalLinkUpdateManyWithWhereWithoutOrganizationInput | PlatformPortalLinkUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPortalLinkScalarWhereInput | PlatformPortalLinkScalarWhereInput[]
+  }
+
+  export type BookableResourceUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput> | BookableResourceCreateWithoutOrganizationInput[] | BookableResourceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutOrganizationInput | BookableResourceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookableResourceUpsertWithWhereUniqueWithoutOrganizationInput | BookableResourceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookableResourceCreateManyOrganizationInputEnvelope
+    set?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    disconnect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    delete?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    connect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    update?: BookableResourceUpdateWithWhereUniqueWithoutOrganizationInput | BookableResourceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookableResourceUpdateManyWithWhereWithoutOrganizationInput | BookableResourceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookableResourceScalarWhereInput | BookableResourceScalarWhereInput[]
+  }
+
+  export type BookingSlotUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput> | BookingSlotCreateWithoutOrganizationInput[] | BookingSlotUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutOrganizationInput | BookingSlotCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookingSlotUpsertWithWhereUniqueWithoutOrganizationInput | BookingSlotUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookingSlotCreateManyOrganizationInputEnvelope
+    set?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    disconnect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    delete?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    update?: BookingSlotUpdateWithWhereUniqueWithoutOrganizationInput | BookingSlotUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookingSlotUpdateManyWithWhereWithoutOrganizationInput | BookingSlotUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+  }
+
+  export type BookingAppointmentUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput> | BookingAppointmentCreateWithoutOrganizationInput[] | BookingAppointmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutOrganizationInput | BookingAppointmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutOrganizationInput | BookingAppointmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookingAppointmentCreateManyOrganizationInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutOrganizationInput | BookingAppointmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutOrganizationInput | BookingAppointmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type PlatformPromotionUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput> | PlatformPromotionCreateWithoutOrganizationInput[] | PlatformPromotionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPromotionCreateOrConnectWithoutOrganizationInput | PlatformPromotionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPromotionUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPromotionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPromotionCreateManyOrganizationInputEnvelope
+    set?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    disconnect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    delete?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    connect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    update?: PlatformPromotionUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPromotionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPromotionUpdateManyWithWhereWithoutOrganizationInput | PlatformPromotionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPromotionScalarWhereInput | PlatformPromotionScalarWhereInput[]
+  }
+
+  export type PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput> | PlatformCustomDomainCreateWithoutOrganizationInput[] | PlatformCustomDomainUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformCustomDomainCreateOrConnectWithoutOrganizationInput | PlatformCustomDomainCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformCustomDomainUpsertWithWhereUniqueWithoutOrganizationInput | PlatformCustomDomainUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformCustomDomainCreateManyOrganizationInputEnvelope
+    set?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    disconnect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    delete?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    connect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    update?: PlatformCustomDomainUpdateWithWhereUniqueWithoutOrganizationInput | PlatformCustomDomainUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformCustomDomainUpdateManyWithWhereWithoutOrganizationInput | PlatformCustomDomainUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformCustomDomainScalarWhereInput | PlatformCustomDomainScalarWhereInput[]
+  }
+
+  export type PlatformShipmentUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput> | PlatformShipmentCreateWithoutOrganizationInput[] | PlatformShipmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformShipmentCreateOrConnectWithoutOrganizationInput | PlatformShipmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformShipmentUpsertWithWhereUniqueWithoutOrganizationInput | PlatformShipmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformShipmentCreateManyOrganizationInputEnvelope
+    set?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    disconnect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    delete?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    connect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    update?: PlatformShipmentUpdateWithWhereUniqueWithoutOrganizationInput | PlatformShipmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformShipmentUpdateManyWithWhereWithoutOrganizationInput | PlatformShipmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformShipmentScalarWhereInput | PlatformShipmentScalarWhereInput[]
+  }
+
   export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -51808,6 +64812,118 @@ export namespace Prisma {
     update?: NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput | NotificationDeliveryLogUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput | NotificationDeliveryLogUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: NotificationDeliveryLogScalarWhereInput | NotificationDeliveryLogScalarWhereInput[]
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput> | PlatformPaymentLinkCreateWithoutOrganizationInput[] | PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput | PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPaymentLinkUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPaymentLinkUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPaymentLinkCreateManyOrganizationInputEnvelope
+    set?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    disconnect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    delete?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    connect?: PlatformPaymentLinkWhereUniqueInput | PlatformPaymentLinkWhereUniqueInput[]
+    update?: PlatformPaymentLinkUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPaymentLinkUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPaymentLinkUpdateManyWithWhereWithoutOrganizationInput | PlatformPaymentLinkUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
+  }
+
+  export type PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput> | PlatformPortalLinkCreateWithoutOrganizationInput[] | PlatformPortalLinkUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPortalLinkCreateOrConnectWithoutOrganizationInput | PlatformPortalLinkCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPortalLinkUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPortalLinkUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPortalLinkCreateManyOrganizationInputEnvelope
+    set?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    disconnect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    delete?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    connect?: PlatformPortalLinkWhereUniqueInput | PlatformPortalLinkWhereUniqueInput[]
+    update?: PlatformPortalLinkUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPortalLinkUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPortalLinkUpdateManyWithWhereWithoutOrganizationInput | PlatformPortalLinkUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPortalLinkScalarWhereInput | PlatformPortalLinkScalarWhereInput[]
+  }
+
+  export type BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput> | BookableResourceCreateWithoutOrganizationInput[] | BookableResourceUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutOrganizationInput | BookableResourceCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookableResourceUpsertWithWhereUniqueWithoutOrganizationInput | BookableResourceUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookableResourceCreateManyOrganizationInputEnvelope
+    set?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    disconnect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    delete?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    connect?: BookableResourceWhereUniqueInput | BookableResourceWhereUniqueInput[]
+    update?: BookableResourceUpdateWithWhereUniqueWithoutOrganizationInput | BookableResourceUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookableResourceUpdateManyWithWhereWithoutOrganizationInput | BookableResourceUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookableResourceScalarWhereInput | BookableResourceScalarWhereInput[]
+  }
+
+  export type BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput> | BookingSlotCreateWithoutOrganizationInput[] | BookingSlotUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutOrganizationInput | BookingSlotCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookingSlotUpsertWithWhereUniqueWithoutOrganizationInput | BookingSlotUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookingSlotCreateManyOrganizationInputEnvelope
+    set?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    disconnect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    delete?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    update?: BookingSlotUpdateWithWhereUniqueWithoutOrganizationInput | BookingSlotUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookingSlotUpdateManyWithWhereWithoutOrganizationInput | BookingSlotUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput> | BookingAppointmentCreateWithoutOrganizationInput[] | BookingAppointmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutOrganizationInput | BookingAppointmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutOrganizationInput | BookingAppointmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: BookingAppointmentCreateManyOrganizationInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutOrganizationInput | BookingAppointmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutOrganizationInput | BookingAppointmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput> | PlatformPromotionCreateWithoutOrganizationInput[] | PlatformPromotionUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformPromotionCreateOrConnectWithoutOrganizationInput | PlatformPromotionCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformPromotionUpsertWithWhereUniqueWithoutOrganizationInput | PlatformPromotionUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformPromotionCreateManyOrganizationInputEnvelope
+    set?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    disconnect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    delete?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    connect?: PlatformPromotionWhereUniqueInput | PlatformPromotionWhereUniqueInput[]
+    update?: PlatformPromotionUpdateWithWhereUniqueWithoutOrganizationInput | PlatformPromotionUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformPromotionUpdateManyWithWhereWithoutOrganizationInput | PlatformPromotionUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformPromotionScalarWhereInput | PlatformPromotionScalarWhereInput[]
+  }
+
+  export type PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput> | PlatformCustomDomainCreateWithoutOrganizationInput[] | PlatformCustomDomainUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformCustomDomainCreateOrConnectWithoutOrganizationInput | PlatformCustomDomainCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformCustomDomainUpsertWithWhereUniqueWithoutOrganizationInput | PlatformCustomDomainUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformCustomDomainCreateManyOrganizationInputEnvelope
+    set?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    disconnect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    delete?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    connect?: PlatformCustomDomainWhereUniqueInput | PlatformCustomDomainWhereUniqueInput[]
+    update?: PlatformCustomDomainUpdateWithWhereUniqueWithoutOrganizationInput | PlatformCustomDomainUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformCustomDomainUpdateManyWithWhereWithoutOrganizationInput | PlatformCustomDomainUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformCustomDomainScalarWhereInput | PlatformCustomDomainScalarWhereInput[]
+  }
+
+  export type PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput> | PlatformShipmentCreateWithoutOrganizationInput[] | PlatformShipmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: PlatformShipmentCreateOrConnectWithoutOrganizationInput | PlatformShipmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: PlatformShipmentUpsertWithWhereUniqueWithoutOrganizationInput | PlatformShipmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: PlatformShipmentCreateManyOrganizationInputEnvelope
+    set?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    disconnect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    delete?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    connect?: PlatformShipmentWhereUniqueInput | PlatformShipmentWhereUniqueInput[]
+    update?: PlatformShipmentUpdateWithWhereUniqueWithoutOrganizationInput | PlatformShipmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: PlatformShipmentUpdateManyWithWhereWithoutOrganizationInput | PlatformShipmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: PlatformShipmentScalarWhereInput | PlatformShipmentScalarWhereInput[]
   }
 
   export type OrganizationMembershipCreateNestedManyWithoutUserInput = {
@@ -52489,6 +65605,334 @@ export namespace Prisma {
     upsert?: OrganizationUpsertWithoutNotificationDeliveryLogsInput
     connect?: OrganizationWhereUniqueInput
     update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutNotificationDeliveryLogsInput, OrganizationUpdateWithoutNotificationDeliveryLogsInput>, OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlatformPaymentLinksInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPaymentLinksInput, OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type PaymentOrderCreateNestedOneWithoutPlatformPaymentLinksInput = {
+    create?: XOR<PaymentOrderCreateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedCreateWithoutPlatformPaymentLinksInput>
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutPlatformPaymentLinksInput
+    connect?: PaymentOrderWhereUniqueInput
+  }
+
+  export type EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformPaymentLinkStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlatformPaymentLinksNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPaymentLinksInput, OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput
+    upsert?: OrganizationUpsertWithoutPlatformPaymentLinksInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformPaymentLinksInput, OrganizationUpdateWithoutPlatformPaymentLinksInput>, OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type PaymentOrderUpdateOneWithoutPlatformPaymentLinksNestedInput = {
+    create?: XOR<PaymentOrderCreateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedCreateWithoutPlatformPaymentLinksInput>
+    connectOrCreate?: PaymentOrderCreateOrConnectWithoutPlatformPaymentLinksInput
+    upsert?: PaymentOrderUpsertWithoutPlatformPaymentLinksInput
+    disconnect?: PaymentOrderWhereInput | boolean
+    delete?: PaymentOrderWhereInput | boolean
+    connect?: PaymentOrderWhereUniqueInput
+    update?: XOR<XOR<PaymentOrderUpdateToOneWithWhereWithoutPlatformPaymentLinksInput, PaymentOrderUpdateWithoutPlatformPaymentLinksInput>, PaymentOrderUncheckedUpdateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlatformPortalLinksInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPortalLinksInput, OrganizationUncheckedCreateWithoutPlatformPortalLinksInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPortalLinksInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumPlatformPortalLinkStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformPortalLinkStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlatformPortalLinksNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPortalLinksInput, OrganizationUncheckedCreateWithoutPlatformPortalLinksInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPortalLinksInput
+    upsert?: OrganizationUpsertWithoutPlatformPortalLinksInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformPortalLinksInput, OrganizationUpdateWithoutPlatformPortalLinksInput>, OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutBookableResourcesInput = {
+    create?: XOR<OrganizationCreateWithoutBookableResourcesInput, OrganizationUncheckedCreateWithoutBookableResourcesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookableResourcesInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type BookingSlotCreateNestedManyWithoutResourceInput = {
+    create?: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput> | BookingSlotCreateWithoutResourceInput[] | BookingSlotUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutResourceInput | BookingSlotCreateOrConnectWithoutResourceInput[]
+    createMany?: BookingSlotCreateManyResourceInputEnvelope
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+  }
+
+  export type BookingAppointmentCreateNestedManyWithoutResourceInput = {
+    create?: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput> | BookingAppointmentCreateWithoutResourceInput[] | BookingAppointmentUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutResourceInput | BookingAppointmentCreateOrConnectWithoutResourceInput[]
+    createMany?: BookingAppointmentCreateManyResourceInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type BookingSlotUncheckedCreateNestedManyWithoutResourceInput = {
+    create?: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput> | BookingSlotCreateWithoutResourceInput[] | BookingSlotUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutResourceInput | BookingSlotCreateOrConnectWithoutResourceInput[]
+    createMany?: BookingSlotCreateManyResourceInputEnvelope
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+  }
+
+  export type BookingAppointmentUncheckedCreateNestedManyWithoutResourceInput = {
+    create?: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput> | BookingAppointmentCreateWithoutResourceInput[] | BookingAppointmentUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutResourceInput | BookingAppointmentCreateOrConnectWithoutResourceInput[]
+    createMany?: BookingAppointmentCreateManyResourceInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutBookableResourcesNestedInput = {
+    create?: XOR<OrganizationCreateWithoutBookableResourcesInput, OrganizationUncheckedCreateWithoutBookableResourcesInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookableResourcesInput
+    upsert?: OrganizationUpsertWithoutBookableResourcesInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutBookableResourcesInput, OrganizationUpdateWithoutBookableResourcesInput>, OrganizationUncheckedUpdateWithoutBookableResourcesInput>
+  }
+
+  export type BookingSlotUpdateManyWithoutResourceNestedInput = {
+    create?: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput> | BookingSlotCreateWithoutResourceInput[] | BookingSlotUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutResourceInput | BookingSlotCreateOrConnectWithoutResourceInput[]
+    upsert?: BookingSlotUpsertWithWhereUniqueWithoutResourceInput | BookingSlotUpsertWithWhereUniqueWithoutResourceInput[]
+    createMany?: BookingSlotCreateManyResourceInputEnvelope
+    set?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    disconnect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    delete?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    update?: BookingSlotUpdateWithWhereUniqueWithoutResourceInput | BookingSlotUpdateWithWhereUniqueWithoutResourceInput[]
+    updateMany?: BookingSlotUpdateManyWithWhereWithoutResourceInput | BookingSlotUpdateManyWithWhereWithoutResourceInput[]
+    deleteMany?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+  }
+
+  export type BookingAppointmentUpdateManyWithoutResourceNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput> | BookingAppointmentCreateWithoutResourceInput[] | BookingAppointmentUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutResourceInput | BookingAppointmentCreateOrConnectWithoutResourceInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutResourceInput | BookingAppointmentUpsertWithWhereUniqueWithoutResourceInput[]
+    createMany?: BookingAppointmentCreateManyResourceInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutResourceInput | BookingAppointmentUpdateWithWhereUniqueWithoutResourceInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutResourceInput | BookingAppointmentUpdateManyWithWhereWithoutResourceInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type BookingSlotUncheckedUpdateManyWithoutResourceNestedInput = {
+    create?: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput> | BookingSlotCreateWithoutResourceInput[] | BookingSlotUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutResourceInput | BookingSlotCreateOrConnectWithoutResourceInput[]
+    upsert?: BookingSlotUpsertWithWhereUniqueWithoutResourceInput | BookingSlotUpsertWithWhereUniqueWithoutResourceInput[]
+    createMany?: BookingSlotCreateManyResourceInputEnvelope
+    set?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    disconnect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    delete?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    connect?: BookingSlotWhereUniqueInput | BookingSlotWhereUniqueInput[]
+    update?: BookingSlotUpdateWithWhereUniqueWithoutResourceInput | BookingSlotUpdateWithWhereUniqueWithoutResourceInput[]
+    updateMany?: BookingSlotUpdateManyWithWhereWithoutResourceInput | BookingSlotUpdateManyWithWhereWithoutResourceInput[]
+    deleteMany?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutResourceNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput> | BookingAppointmentCreateWithoutResourceInput[] | BookingAppointmentUncheckedCreateWithoutResourceInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutResourceInput | BookingAppointmentCreateOrConnectWithoutResourceInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutResourceInput | BookingAppointmentUpsertWithWhereUniqueWithoutResourceInput[]
+    createMany?: BookingAppointmentCreateManyResourceInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutResourceInput | BookingAppointmentUpdateWithWhereUniqueWithoutResourceInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutResourceInput | BookingAppointmentUpdateManyWithWhereWithoutResourceInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutBookingSlotsInput = {
+    create?: XOR<OrganizationCreateWithoutBookingSlotsInput, OrganizationUncheckedCreateWithoutBookingSlotsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookingSlotsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type BookableResourceCreateNestedOneWithoutSlotsInput = {
+    create?: XOR<BookableResourceCreateWithoutSlotsInput, BookableResourceUncheckedCreateWithoutSlotsInput>
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutSlotsInput
+    connect?: BookableResourceWhereUniqueInput
+  }
+
+  export type BookingAppointmentCreateNestedManyWithoutSlotInput = {
+    create?: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput> | BookingAppointmentCreateWithoutSlotInput[] | BookingAppointmentUncheckedCreateWithoutSlotInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutSlotInput | BookingAppointmentCreateOrConnectWithoutSlotInput[]
+    createMany?: BookingAppointmentCreateManySlotInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type BookingAppointmentUncheckedCreateNestedManyWithoutSlotInput = {
+    create?: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput> | BookingAppointmentCreateWithoutSlotInput[] | BookingAppointmentUncheckedCreateWithoutSlotInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutSlotInput | BookingAppointmentCreateOrConnectWithoutSlotInput[]
+    createMany?: BookingAppointmentCreateManySlotInputEnvelope
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutBookingSlotsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutBookingSlotsInput, OrganizationUncheckedCreateWithoutBookingSlotsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookingSlotsInput
+    upsert?: OrganizationUpsertWithoutBookingSlotsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutBookingSlotsInput, OrganizationUpdateWithoutBookingSlotsInput>, OrganizationUncheckedUpdateWithoutBookingSlotsInput>
+  }
+
+  export type BookableResourceUpdateOneRequiredWithoutSlotsNestedInput = {
+    create?: XOR<BookableResourceCreateWithoutSlotsInput, BookableResourceUncheckedCreateWithoutSlotsInput>
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutSlotsInput
+    upsert?: BookableResourceUpsertWithoutSlotsInput
+    connect?: BookableResourceWhereUniqueInput
+    update?: XOR<XOR<BookableResourceUpdateToOneWithWhereWithoutSlotsInput, BookableResourceUpdateWithoutSlotsInput>, BookableResourceUncheckedUpdateWithoutSlotsInput>
+  }
+
+  export type BookingAppointmentUpdateManyWithoutSlotNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput> | BookingAppointmentCreateWithoutSlotInput[] | BookingAppointmentUncheckedCreateWithoutSlotInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutSlotInput | BookingAppointmentCreateOrConnectWithoutSlotInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutSlotInput | BookingAppointmentUpsertWithWhereUniqueWithoutSlotInput[]
+    createMany?: BookingAppointmentCreateManySlotInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutSlotInput | BookingAppointmentUpdateWithWhereUniqueWithoutSlotInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutSlotInput | BookingAppointmentUpdateManyWithWhereWithoutSlotInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutSlotNestedInput = {
+    create?: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput> | BookingAppointmentCreateWithoutSlotInput[] | BookingAppointmentUncheckedCreateWithoutSlotInput[]
+    connectOrCreate?: BookingAppointmentCreateOrConnectWithoutSlotInput | BookingAppointmentCreateOrConnectWithoutSlotInput[]
+    upsert?: BookingAppointmentUpsertWithWhereUniqueWithoutSlotInput | BookingAppointmentUpsertWithWhereUniqueWithoutSlotInput[]
+    createMany?: BookingAppointmentCreateManySlotInputEnvelope
+    set?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    disconnect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    delete?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    connect?: BookingAppointmentWhereUniqueInput | BookingAppointmentWhereUniqueInput[]
+    update?: BookingAppointmentUpdateWithWhereUniqueWithoutSlotInput | BookingAppointmentUpdateWithWhereUniqueWithoutSlotInput[]
+    updateMany?: BookingAppointmentUpdateManyWithWhereWithoutSlotInput | BookingAppointmentUpdateManyWithWhereWithoutSlotInput[]
+    deleteMany?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutBookingAppointmentsInput = {
+    create?: XOR<OrganizationCreateWithoutBookingAppointmentsInput, OrganizationUncheckedCreateWithoutBookingAppointmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookingAppointmentsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type BookableResourceCreateNestedOneWithoutAppointmentsInput = {
+    create?: XOR<BookableResourceCreateWithoutAppointmentsInput, BookableResourceUncheckedCreateWithoutAppointmentsInput>
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutAppointmentsInput
+    connect?: BookableResourceWhereUniqueInput
+  }
+
+  export type BookingSlotCreateNestedOneWithoutAppointmentsInput = {
+    create?: XOR<BookingSlotCreateWithoutAppointmentsInput, BookingSlotUncheckedCreateWithoutAppointmentsInput>
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutAppointmentsInput
+    connect?: BookingSlotWhereUniqueInput
+  }
+
+  export type EnumBookingAppointmentStatusFieldUpdateOperationsInput = {
+    set?: $Enums.BookingAppointmentStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutBookingAppointmentsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutBookingAppointmentsInput, OrganizationUncheckedCreateWithoutBookingAppointmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutBookingAppointmentsInput
+    upsert?: OrganizationUpsertWithoutBookingAppointmentsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutBookingAppointmentsInput, OrganizationUpdateWithoutBookingAppointmentsInput>, OrganizationUncheckedUpdateWithoutBookingAppointmentsInput>
+  }
+
+  export type BookableResourceUpdateOneWithoutAppointmentsNestedInput = {
+    create?: XOR<BookableResourceCreateWithoutAppointmentsInput, BookableResourceUncheckedCreateWithoutAppointmentsInput>
+    connectOrCreate?: BookableResourceCreateOrConnectWithoutAppointmentsInput
+    upsert?: BookableResourceUpsertWithoutAppointmentsInput
+    disconnect?: BookableResourceWhereInput | boolean
+    delete?: BookableResourceWhereInput | boolean
+    connect?: BookableResourceWhereUniqueInput
+    update?: XOR<XOR<BookableResourceUpdateToOneWithWhereWithoutAppointmentsInput, BookableResourceUpdateWithoutAppointmentsInput>, BookableResourceUncheckedUpdateWithoutAppointmentsInput>
+  }
+
+  export type BookingSlotUpdateOneWithoutAppointmentsNestedInput = {
+    create?: XOR<BookingSlotCreateWithoutAppointmentsInput, BookingSlotUncheckedCreateWithoutAppointmentsInput>
+    connectOrCreate?: BookingSlotCreateOrConnectWithoutAppointmentsInput
+    upsert?: BookingSlotUpsertWithoutAppointmentsInput
+    disconnect?: BookingSlotWhereInput | boolean
+    delete?: BookingSlotWhereInput | boolean
+    connect?: BookingSlotWhereUniqueInput
+    update?: XOR<XOR<BookingSlotUpdateToOneWithWhereWithoutAppointmentsInput, BookingSlotUpdateWithoutAppointmentsInput>, BookingSlotUncheckedUpdateWithoutAppointmentsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlatformPromotionsInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPromotionsInput, OrganizationUncheckedCreateWithoutPlatformPromotionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPromotionsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformPromotionDiscountType
+  }
+
+  export type EnumPlatformPromotionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformPromotionStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlatformPromotionsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformPromotionsInput, OrganizationUncheckedCreateWithoutPlatformPromotionsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformPromotionsInput
+    upsert?: OrganizationUpsertWithoutPlatformPromotionsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformPromotionsInput, OrganizationUpdateWithoutPlatformPromotionsInput>, OrganizationUncheckedUpdateWithoutPlatformPromotionsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlatformCustomDomainsInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformCustomDomainsInput, OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumPlatformCustomDomainStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformCustomDomainStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlatformCustomDomainsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformCustomDomainsInput, OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput
+    upsert?: OrganizationUpsertWithoutPlatformCustomDomainsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformCustomDomainsInput, OrganizationUpdateWithoutPlatformCustomDomainsInput>, OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutPlatformShipmentsInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformShipmentsInput, OrganizationUncheckedCreateWithoutPlatformShipmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformShipmentsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumPlatformShipmentStatusFieldUpdateOperationsInput = {
+    set?: $Enums.PlatformShipmentStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutPlatformShipmentsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutPlatformShipmentsInput, OrganizationUncheckedCreateWithoutPlatformShipmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutPlatformShipmentsInput
+    upsert?: OrganizationUpsertWithoutPlatformShipmentsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutPlatformShipmentsInput, OrganizationUpdateWithoutPlatformShipmentsInput>, OrganizationUncheckedUpdateWithoutPlatformShipmentsInput>
   }
 
   export type NestedUuidFilter<$PrismaModel = never> = {
@@ -53209,6 +66653,125 @@ export namespace Prisma {
     _max?: NestedEnumNotificationOutboxStatusFilter<$PrismaModel>
   }
 
+  export type NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPaymentLinkStatus | EnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel> | $Enums.PlatformPaymentLinkStatus
+  }
+
+  export type NestedEnumPlatformPaymentLinkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPaymentLinkStatus | EnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPaymentLinkStatus[] | ListEnumPlatformPaymentLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPaymentLinkStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPaymentLinkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPaymentLinkStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPortalLinkStatus | EnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel> | $Enums.PlatformPortalLinkStatus
+  }
+
+  export type NestedEnumPlatformPortalLinkStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPortalLinkStatus | EnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPortalLinkStatus[] | ListEnumPlatformPortalLinkStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPortalLinkStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPortalLinkStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPortalLinkStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumBookingAppointmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingAppointmentStatus | EnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel> | $Enums.BookingAppointmentStatus
+  }
+
+  export type NestedEnumBookingAppointmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BookingAppointmentStatus | EnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BookingAppointmentStatus[] | ListEnumBookingAppointmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBookingAppointmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.BookingAppointmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumBookingAppointmentStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionDiscountType | EnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel> | $Enums.PlatformPromotionDiscountType
+  }
+
+  export type NestedEnumPlatformPromotionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionStatus | EnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel> | $Enums.PlatformPromotionStatus
+  }
+
+  export type NestedEnumPlatformPromotionDiscountTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionDiscountType | EnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionDiscountType[] | ListEnumPlatformPromotionDiscountTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionDiscountTypeWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPromotionDiscountType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPromotionDiscountTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlatformPromotionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformPromotionStatus | EnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformPromotionStatus[] | ListEnumPlatformPromotionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformPromotionStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformPromotionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformPromotionStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformCustomDomainStatus | EnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel> | $Enums.PlatformCustomDomainStatus
+  }
+
+  export type NestedEnumPlatformCustomDomainStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformCustomDomainStatus | EnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformCustomDomainStatus[] | ListEnumPlatformCustomDomainStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformCustomDomainStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformCustomDomainStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformCustomDomainStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPlatformShipmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformShipmentStatus | EnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel> | $Enums.PlatformShipmentStatus
+  }
+
+  export type NestedEnumPlatformShipmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PlatformShipmentStatus | EnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PlatformShipmentStatus[] | ListEnumPlatformShipmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumPlatformShipmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.PlatformShipmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumPlatformShipmentStatusFilter<$PrismaModel>
+  }
+
   export type OrganizationCreateWithoutSubscriptionInput = {
     id?: string
     name: string
@@ -53239,6 +66802,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -53273,6 +66844,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
@@ -53321,6 +66900,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -53355,6 +66942,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
@@ -53395,6 +66990,7 @@ export namespace Prisma {
     createdAt?: Date | string
     paidAt?: Date | string | null
     organization: OrganizationCreateNestedOneWithoutPaymentOrdersInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderUncheckedCreateWithoutSubscriptionInvoiceInput = {
@@ -53411,6 +67007,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     paidAt?: Date | string | null
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderCreateOrConnectWithoutSubscriptionInvoiceInput = {
@@ -53504,6 +67101,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     organization?: OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type PaymentOrderUncheckedUpdateWithoutSubscriptionInvoiceInput = {
@@ -53520,6 +67118,7 @@ export namespace Prisma {
     metadata?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type ReferralCommissionUpsertWithWhereUniqueWithoutSubscriptionInvoiceInput = {
@@ -53621,6 +67220,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -53655,6 +67262,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
@@ -53746,6 +67361,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -53780,6 +67403,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationCreateWithoutUsageMeterEventsInput = {
@@ -53812,6 +67443,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -53846,6 +67485,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
@@ -53894,6 +67541,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -53928,6 +67583,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -54085,6 +67748,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -54119,6 +67790,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
@@ -54163,6 +67842,50 @@ export namespace Prisma {
     create: XOR<SubscriptionInvoiceCreateWithoutPaymentOrderInput, SubscriptionInvoiceUncheckedCreateWithoutPaymentOrderInput>
   }
 
+  export type PlatformPaymentLinkCreateWithoutPaymentOrderInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutPlatformPaymentLinksInput
+  }
+
+  export type PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput = {
+    id?: string
+    organizationId: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkCreateOrConnectWithoutPaymentOrderInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    create: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput>
+  }
+
+  export type PlatformPaymentLinkCreateManyPaymentOrderInputEnvelope = {
+    data: PlatformPaymentLinkCreateManyPaymentOrderInput | PlatformPaymentLinkCreateManyPaymentOrderInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrganizationUpsertWithoutPaymentOrdersInput = {
     update: XOR<OrganizationUpdateWithoutPaymentOrdersInput, OrganizationUncheckedUpdateWithoutPaymentOrdersInput>
     create: XOR<OrganizationCreateWithoutPaymentOrdersInput, OrganizationUncheckedCreateWithoutPaymentOrdersInput>
@@ -54204,6 +67927,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -54238,6 +67969,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -54281,6 +68020,43 @@ export namespace Prisma {
     pdfLink?: NullableStringFieldUpdateOperationsInput | string | null
     items?: BillingInvoiceItemUncheckedUpdateManyWithoutSubscriptionInvoiceNestedInput
     referralCommissions?: ReferralCommissionUncheckedUpdateManyWithoutSubscriptionInvoiceNestedInput
+  }
+
+  export type PlatformPaymentLinkUpsertWithWhereUniqueWithoutPaymentOrderInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    update: XOR<PlatformPaymentLinkUpdateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedUpdateWithoutPaymentOrderInput>
+    create: XOR<PlatformPaymentLinkCreateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedCreateWithoutPaymentOrderInput>
+  }
+
+  export type PlatformPaymentLinkUpdateWithWhereUniqueWithoutPaymentOrderInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    data: XOR<PlatformPaymentLinkUpdateWithoutPaymentOrderInput, PlatformPaymentLinkUncheckedUpdateWithoutPaymentOrderInput>
+  }
+
+  export type PlatformPaymentLinkUpdateManyWithWhereWithoutPaymentOrderInput = {
+    where: PlatformPaymentLinkScalarWhereInput
+    data: XOR<PlatformPaymentLinkUpdateManyMutationInput, PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderInput>
+  }
+
+  export type PlatformPaymentLinkScalarWhereInput = {
+    AND?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
+    OR?: PlatformPaymentLinkScalarWhereInput[]
+    NOT?: PlatformPaymentLinkScalarWhereInput | PlatformPaymentLinkScalarWhereInput[]
+    id?: UuidFilter<"PlatformPaymentLink"> | string
+    organizationId?: UuidFilter<"PlatformPaymentLink"> | string
+    amountAzn?: DecimalFilter<"PlatformPaymentLink"> | Decimal | DecimalJsLike | number | string
+    currency?: StringFilter<"PlatformPaymentLink"> | string
+    counterpartyRef?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    sourceEntityType?: StringFilter<"PlatformPaymentLink"> | string
+    sourceEntityId?: StringFilter<"PlatformPaymentLink"> | string
+    paymentOrderId?: UuidNullableFilter<"PlatformPaymentLink"> | string | null
+    token?: StringFilter<"PlatformPaymentLink"> | string
+    paymentUrl?: StringNullableFilter<"PlatformPaymentLink"> | string | null
+    status?: EnumPlatformPaymentLinkStatusFilter<"PlatformPaymentLink"> | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPaymentLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPaymentLink">
+    createdAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPaymentLink"> | Date | string
   }
 
   export type RolePermissionCreateWithoutRoleInput = {
@@ -54669,6 +68445,7 @@ export namespace Prisma {
     createdAt?: Date | string
     paidAt?: Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderUncheckedCreateWithoutOrganizationInput = {
@@ -54685,6 +68462,7 @@ export namespace Prisma {
     createdAt?: Date | string
     paidAt?: Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceUncheckedCreateNestedOneWithoutPaymentOrderInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutPaymentOrderInput
   }
 
   export type PaymentOrderCreateOrConnectWithoutOrganizationInput = {
@@ -54858,6 +68636,282 @@ export namespace Prisma {
 
   export type NotificationDeliveryLogCreateManyOrganizationInputEnvelope = {
     data: NotificationDeliveryLogCreateManyOrganizationInput | NotificationDeliveryLogCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlatformPaymentLinkCreateWithoutOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    paymentOrder?: PaymentOrderCreateNestedOneWithoutPlatformPaymentLinksInput
+  }
+
+  export type PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    paymentOrderId?: string | null
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkCreateOrConnectWithoutOrganizationInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    create: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPaymentLinkCreateManyOrganizationInputEnvelope = {
+    data: PlatformPaymentLinkCreateManyOrganizationInput | PlatformPaymentLinkCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlatformPortalLinkCreateWithoutOrganizationInput = {
+    id?: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlatformPortalLinkUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlatformPortalLinkCreateOrConnectWithoutOrganizationInput = {
+    where: PlatformPortalLinkWhereUniqueInput
+    create: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPortalLinkCreateManyOrganizationInputEnvelope = {
+    data: PlatformPortalLinkCreateManyOrganizationInput | PlatformPortalLinkCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BookableResourceCreateWithoutOrganizationInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    slots?: BookingSlotCreateNestedManyWithoutResourceInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    slots?: BookingSlotUncheckedCreateNestedManyWithoutResourceInput
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceCreateOrConnectWithoutOrganizationInput = {
+    where: BookableResourceWhereUniqueInput
+    create: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookableResourceCreateManyOrganizationInputEnvelope = {
+    data: BookableResourceCreateManyOrganizationInput | BookableResourceCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BookingSlotCreateWithoutOrganizationInput = {
+    id?: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    resource: BookableResourceCreateNestedOneWithoutSlotsInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    resourceId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotCreateOrConnectWithoutOrganizationInput = {
+    where: BookingSlotWhereUniqueInput
+    create: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookingSlotCreateManyOrganizationInputEnvelope = {
+    data: BookingSlotCreateManyOrganizationInput | BookingSlotCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BookingAppointmentCreateWithoutOrganizationInput = {
+    id?: string
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    resource?: BookableResourceCreateNestedOneWithoutAppointmentsInput
+    slot?: BookingSlotCreateNestedOneWithoutAppointmentsInput
+  }
+
+  export type BookingAppointmentUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    resourceId?: string | null
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentCreateOrConnectWithoutOrganizationInput = {
+    where: BookingAppointmentWhereUniqueInput
+    create: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookingAppointmentCreateManyOrganizationInputEnvelope = {
+    data: BookingAppointmentCreateManyOrganizationInput | BookingAppointmentCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlatformPromotionCreateWithoutOrganizationInput = {
+    id?: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPromotionUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPromotionCreateOrConnectWithoutOrganizationInput = {
+    where: PlatformPromotionWhereUniqueInput
+    create: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPromotionCreateManyOrganizationInputEnvelope = {
+    data: PlatformPromotionCreateManyOrganizationInput | PlatformPromotionCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlatformCustomDomainCreateWithoutOrganizationInput = {
+    id?: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformCustomDomainUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformCustomDomainCreateOrConnectWithoutOrganizationInput = {
+    where: PlatformCustomDomainWhereUniqueInput
+    create: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformCustomDomainCreateManyOrganizationInputEnvelope = {
+    data: PlatformCustomDomainCreateManyOrganizationInput | PlatformCustomDomainCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PlatformShipmentCreateWithoutOrganizationInput = {
+    id?: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformShipmentUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformShipmentCreateOrConnectWithoutOrganizationInput = {
+    where: PlatformShipmentWhereUniqueInput
+    create: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformShipmentCreateManyOrganizationInputEnvelope = {
+    data: PlatformShipmentCreateManyOrganizationInput | PlatformShipmentCreateManyOrganizationInput[]
     skipDuplicates?: boolean
   }
 
@@ -55246,6 +69300,240 @@ export namespace Prisma {
     attemptedAt?: DateTimeFilter<"NotificationDeliveryLog"> | Date | string
   }
 
+  export type PlatformPaymentLinkUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    update: XOR<PlatformPaymentLinkUpdateWithoutOrganizationInput, PlatformPaymentLinkUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlatformPaymentLinkCreateWithoutOrganizationInput, PlatformPaymentLinkUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPaymentLinkUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPaymentLinkWhereUniqueInput
+    data: XOR<PlatformPaymentLinkUpdateWithoutOrganizationInput, PlatformPaymentLinkUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlatformPaymentLinkUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlatformPaymentLinkScalarWhereInput
+    data: XOR<PlatformPaymentLinkUpdateManyMutationInput, PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlatformPortalLinkUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPortalLinkWhereUniqueInput
+    update: XOR<PlatformPortalLinkUpdateWithoutOrganizationInput, PlatformPortalLinkUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlatformPortalLinkCreateWithoutOrganizationInput, PlatformPortalLinkUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPortalLinkUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPortalLinkWhereUniqueInput
+    data: XOR<PlatformPortalLinkUpdateWithoutOrganizationInput, PlatformPortalLinkUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlatformPortalLinkUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlatformPortalLinkScalarWhereInput
+    data: XOR<PlatformPortalLinkUpdateManyMutationInput, PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlatformPortalLinkScalarWhereInput = {
+    AND?: PlatformPortalLinkScalarWhereInput | PlatformPortalLinkScalarWhereInput[]
+    OR?: PlatformPortalLinkScalarWhereInput[]
+    NOT?: PlatformPortalLinkScalarWhereInput | PlatformPortalLinkScalarWhereInput[]
+    id?: UuidFilter<"PlatformPortalLink"> | string
+    organizationId?: UuidFilter<"PlatformPortalLink"> | string
+    token?: StringFilter<"PlatformPortalLink"> | string
+    entityType?: StringFilter<"PlatformPortalLink"> | string
+    entityId?: StringFilter<"PlatformPortalLink"> | string
+    status?: EnumPlatformPortalLinkStatusFilter<"PlatformPortalLink"> | $Enums.PlatformPortalLinkStatus
+    expiresAt?: DateTimeNullableFilter<"PlatformPortalLink"> | Date | string | null
+    metadata?: JsonFilter<"PlatformPortalLink">
+    createdAt?: DateTimeFilter<"PlatformPortalLink"> | Date | string
+  }
+
+  export type BookableResourceUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: BookableResourceWhereUniqueInput
+    update: XOR<BookableResourceUpdateWithoutOrganizationInput, BookableResourceUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<BookableResourceCreateWithoutOrganizationInput, BookableResourceUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookableResourceUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: BookableResourceWhereUniqueInput
+    data: XOR<BookableResourceUpdateWithoutOrganizationInput, BookableResourceUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type BookableResourceUpdateManyWithWhereWithoutOrganizationInput = {
+    where: BookableResourceScalarWhereInput
+    data: XOR<BookableResourceUpdateManyMutationInput, BookableResourceUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type BookableResourceScalarWhereInput = {
+    AND?: BookableResourceScalarWhereInput | BookableResourceScalarWhereInput[]
+    OR?: BookableResourceScalarWhereInput[]
+    NOT?: BookableResourceScalarWhereInput | BookableResourceScalarWhereInput[]
+    id?: UuidFilter<"BookableResource"> | string
+    organizationId?: UuidFilter<"BookableResource"> | string
+    resourceKey?: StringFilter<"BookableResource"> | string
+    name?: StringFilter<"BookableResource"> | string
+    metadata?: JsonFilter<"BookableResource">
+    createdAt?: DateTimeFilter<"BookableResource"> | Date | string
+  }
+
+  export type BookingSlotUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: BookingSlotWhereUniqueInput
+    update: XOR<BookingSlotUpdateWithoutOrganizationInput, BookingSlotUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<BookingSlotCreateWithoutOrganizationInput, BookingSlotUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookingSlotUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: BookingSlotWhereUniqueInput
+    data: XOR<BookingSlotUpdateWithoutOrganizationInput, BookingSlotUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type BookingSlotUpdateManyWithWhereWithoutOrganizationInput = {
+    where: BookingSlotScalarWhereInput
+    data: XOR<BookingSlotUpdateManyMutationInput, BookingSlotUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type BookingSlotScalarWhereInput = {
+    AND?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+    OR?: BookingSlotScalarWhereInput[]
+    NOT?: BookingSlotScalarWhereInput | BookingSlotScalarWhereInput[]
+    id?: UuidFilter<"BookingSlot"> | string
+    organizationId?: UuidFilter<"BookingSlot"> | string
+    resourceId?: UuidFilter<"BookingSlot"> | string
+    startsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    endsAt?: DateTimeFilter<"BookingSlot"> | Date | string
+    capacity?: IntFilter<"BookingSlot"> | number
+    bookedCount?: IntFilter<"BookingSlot"> | number
+    createdAt?: DateTimeFilter<"BookingSlot"> | Date | string
+  }
+
+  export type BookingAppointmentUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: BookingAppointmentWhereUniqueInput
+    update: XOR<BookingAppointmentUpdateWithoutOrganizationInput, BookingAppointmentUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<BookingAppointmentCreateWithoutOrganizationInput, BookingAppointmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type BookingAppointmentUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: BookingAppointmentWhereUniqueInput
+    data: XOR<BookingAppointmentUpdateWithoutOrganizationInput, BookingAppointmentUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type BookingAppointmentUpdateManyWithWhereWithoutOrganizationInput = {
+    where: BookingAppointmentScalarWhereInput
+    data: XOR<BookingAppointmentUpdateManyMutationInput, BookingAppointmentUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type BookingAppointmentScalarWhereInput = {
+    AND?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+    OR?: BookingAppointmentScalarWhereInput[]
+    NOT?: BookingAppointmentScalarWhereInput | BookingAppointmentScalarWhereInput[]
+    id?: UuidFilter<"BookingAppointment"> | string
+    organizationId?: UuidFilter<"BookingAppointment"> | string
+    resourceId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    slotId?: UuidNullableFilter<"BookingAppointment"> | string | null
+    customerRef?: StringFilter<"BookingAppointment"> | string
+    customerPhone?: StringNullableFilter<"BookingAppointment"> | string | null
+    customerName?: StringNullableFilter<"BookingAppointment"> | string | null
+    scheduledAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+    status?: EnumBookingAppointmentStatusFilter<"BookingAppointment"> | $Enums.BookingAppointmentStatus
+    metadata?: JsonFilter<"BookingAppointment">
+    createdAt?: DateTimeFilter<"BookingAppointment"> | Date | string
+  }
+
+  export type PlatformPromotionUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPromotionWhereUniqueInput
+    update: XOR<PlatformPromotionUpdateWithoutOrganizationInput, PlatformPromotionUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlatformPromotionCreateWithoutOrganizationInput, PlatformPromotionUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformPromotionUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformPromotionWhereUniqueInput
+    data: XOR<PlatformPromotionUpdateWithoutOrganizationInput, PlatformPromotionUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlatformPromotionUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlatformPromotionScalarWhereInput
+    data: XOR<PlatformPromotionUpdateManyMutationInput, PlatformPromotionUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlatformPromotionScalarWhereInput = {
+    AND?: PlatformPromotionScalarWhereInput | PlatformPromotionScalarWhereInput[]
+    OR?: PlatformPromotionScalarWhereInput[]
+    NOT?: PlatformPromotionScalarWhereInput | PlatformPromotionScalarWhereInput[]
+    id?: UuidFilter<"PlatformPromotion"> | string
+    organizationId?: UuidFilter<"PlatformPromotion"> | string
+    code?: StringFilter<"PlatformPromotion"> | string
+    name?: StringFilter<"PlatformPromotion"> | string
+    discountType?: EnumPlatformPromotionDiscountTypeFilter<"PlatformPromotion"> | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFilter<"PlatformPromotion"> | Decimal | DecimalJsLike | number | string
+    validFrom?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    validUntil?: DateTimeNullableFilter<"PlatformPromotion"> | Date | string | null
+    status?: EnumPlatformPromotionStatusFilter<"PlatformPromotion"> | $Enums.PlatformPromotionStatus
+    metadata?: JsonFilter<"PlatformPromotion">
+    createdAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformPromotion"> | Date | string
+  }
+
+  export type PlatformCustomDomainUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformCustomDomainWhereUniqueInput
+    update: XOR<PlatformCustomDomainUpdateWithoutOrganizationInput, PlatformCustomDomainUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlatformCustomDomainCreateWithoutOrganizationInput, PlatformCustomDomainUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformCustomDomainUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformCustomDomainWhereUniqueInput
+    data: XOR<PlatformCustomDomainUpdateWithoutOrganizationInput, PlatformCustomDomainUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlatformCustomDomainUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlatformCustomDomainScalarWhereInput
+    data: XOR<PlatformCustomDomainUpdateManyMutationInput, PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlatformCustomDomainScalarWhereInput = {
+    AND?: PlatformCustomDomainScalarWhereInput | PlatformCustomDomainScalarWhereInput[]
+    OR?: PlatformCustomDomainScalarWhereInput[]
+    NOT?: PlatformCustomDomainScalarWhereInput | PlatformCustomDomainScalarWhereInput[]
+    id?: UuidFilter<"PlatformCustomDomain"> | string
+    organizationId?: UuidFilter<"PlatformCustomDomain"> | string
+    hostname?: StringFilter<"PlatformCustomDomain"> | string
+    status?: EnumPlatformCustomDomainStatusFilter<"PlatformCustomDomain"> | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonFilter<"PlatformCustomDomain">
+    createdAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformCustomDomain"> | Date | string
+  }
+
+  export type PlatformShipmentUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformShipmentWhereUniqueInput
+    update: XOR<PlatformShipmentUpdateWithoutOrganizationInput, PlatformShipmentUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<PlatformShipmentCreateWithoutOrganizationInput, PlatformShipmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type PlatformShipmentUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: PlatformShipmentWhereUniqueInput
+    data: XOR<PlatformShipmentUpdateWithoutOrganizationInput, PlatformShipmentUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type PlatformShipmentUpdateManyWithWhereWithoutOrganizationInput = {
+    where: PlatformShipmentScalarWhereInput
+    data: XOR<PlatformShipmentUpdateManyMutationInput, PlatformShipmentUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type PlatformShipmentScalarWhereInput = {
+    AND?: PlatformShipmentScalarWhereInput | PlatformShipmentScalarWhereInput[]
+    OR?: PlatformShipmentScalarWhereInput[]
+    NOT?: PlatformShipmentScalarWhereInput | PlatformShipmentScalarWhereInput[]
+    id?: UuidFilter<"PlatformShipment"> | string
+    organizationId?: UuidFilter<"PlatformShipment"> | string
+    externalRef?: StringNullableFilter<"PlatformShipment"> | string | null
+    trackingToken?: StringFilter<"PlatformShipment"> | string
+    status?: EnumPlatformShipmentStatusFilter<"PlatformShipment"> | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFilter<"PlatformShipment"> | string
+    sourceEntityId?: StringFilter<"PlatformShipment"> | string
+    recipientPhone?: StringNullableFilter<"PlatformShipment"> | string | null
+    metadata?: JsonFilter<"PlatformShipment">
+    createdAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+    updatedAt?: DateTimeFilter<"PlatformShipment"> | Date | string
+  }
+
   export type UserUpsertWithoutOwnedOrganizationsInput = {
     update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
@@ -55458,6 +69746,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -55491,6 +69787,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutOwnerInput = {
@@ -55674,6 +69978,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -55708,6 +70020,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -55797,6 +70117,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -55831,6 +70159,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type ReferralCreateWithoutPartnerInput = {
@@ -56176,6 +70512,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -56210,6 +70554,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -56293,6 +70645,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -56327,6 +70687,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessEventsInput = {
@@ -56400,6 +70768,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -56434,6 +70810,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -56517,6 +70901,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -56551,6 +70943,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessSignupsInput = {
@@ -56624,6 +71024,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -56658,6 +71066,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -56741,6 +71157,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -56775,6 +71199,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type UserUpsertWithoutAuditLogsInput = {
@@ -56848,6 +71280,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -56882,6 +71322,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
@@ -56976,6 +71424,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -57010,6 +71466,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -57058,6 +71522,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -57092,6 +71564,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
@@ -57201,6 +71681,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -57235,6 +71723,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
@@ -57361,6 +71857,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
     notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
   }
 
@@ -57395,6 +71899,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
     notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
     notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
@@ -57490,6 +72002,14 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
   }
 
@@ -57524,6 +72044,1862 @@ export namespace Prisma {
     billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutPlatformPaymentLinksInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlatformPaymentLinksInput, OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type PaymentOrderCreateWithoutPlatformPaymentLinksInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    status?: $Enums.PaymentOrderStatus
+    provider?: string
+    providerTxnId?: string | null
+    monthsApplied?: number
+    description?: string
+    idempotencyKey?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    paidAt?: Date | string | null
+    organization: OrganizationCreateNestedOneWithoutPaymentOrdersInput
+    subscriptionInvoice?: SubscriptionInvoiceCreateNestedOneWithoutPaymentOrderInput
+  }
+
+  export type PaymentOrderUncheckedCreateWithoutPlatformPaymentLinksInput = {
+    id?: string
+    organizationId: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    status?: $Enums.PaymentOrderStatus
+    provider?: string
+    providerTxnId?: string | null
+    monthsApplied?: number
+    description?: string
+    idempotencyKey?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    paidAt?: Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceUncheckedCreateNestedOneWithoutPaymentOrderInput
+  }
+
+  export type PaymentOrderCreateOrConnectWithoutPlatformPaymentLinksInput = {
+    where: PaymentOrderWhereUniqueInput
+    create: XOR<PaymentOrderCreateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedCreateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type OrganizationUpsertWithoutPlatformPaymentLinksInput = {
+    update: XOR<OrganizationUpdateWithoutPlatformPaymentLinksInput, OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput>
+    create: XOR<OrganizationCreateWithoutPlatformPaymentLinksInput, OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlatformPaymentLinksInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlatformPaymentLinksInput, OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type OrganizationUpdateWithoutPlatformPaymentLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type PaymentOrderUpsertWithoutPlatformPaymentLinksInput = {
+    update: XOR<PaymentOrderUpdateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedUpdateWithoutPlatformPaymentLinksInput>
+    create: XOR<PaymentOrderCreateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedCreateWithoutPlatformPaymentLinksInput>
+    where?: PaymentOrderWhereInput
+  }
+
+  export type PaymentOrderUpdateToOneWithWhereWithoutPlatformPaymentLinksInput = {
+    where?: PaymentOrderWhereInput
+    data: XOR<PaymentOrderUpdateWithoutPlatformPaymentLinksInput, PaymentOrderUncheckedUpdateWithoutPlatformPaymentLinksInput>
+  }
+
+  export type PaymentOrderUpdateWithoutPlatformPaymentLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
+    provider?: StringFieldUpdateOperationsInput | string
+    providerTxnId?: NullableStringFieldUpdateOperationsInput | string | null
+    monthsApplied?: IntFieldUpdateOperationsInput | number
+    description?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    organization?: OrganizationUpdateOneRequiredWithoutPaymentOrdersNestedInput
+    subscriptionInvoice?: SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput
+  }
+
+  export type PaymentOrderUncheckedUpdateWithoutPlatformPaymentLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    status?: EnumPaymentOrderStatusFieldUpdateOperationsInput | $Enums.PaymentOrderStatus
+    provider?: StringFieldUpdateOperationsInput | string
+    providerTxnId?: NullableStringFieldUpdateOperationsInput | string | null
+    monthsApplied?: IntFieldUpdateOperationsInput | number
+    description?: StringFieldUpdateOperationsInput | string
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    subscriptionInvoice?: SubscriptionInvoiceUncheckedUpdateOneWithoutPaymentOrderNestedInput
+  }
+
+  export type OrganizationCreateWithoutPlatformPortalLinksInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlatformPortalLinksInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlatformPortalLinksInput, OrganizationUncheckedCreateWithoutPlatformPortalLinksInput>
+  }
+
+  export type OrganizationUpsertWithoutPlatformPortalLinksInput = {
+    update: XOR<OrganizationUpdateWithoutPlatformPortalLinksInput, OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput>
+    create: XOR<OrganizationCreateWithoutPlatformPortalLinksInput, OrganizationUncheckedCreateWithoutPlatformPortalLinksInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlatformPortalLinksInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlatformPortalLinksInput, OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput>
+  }
+
+  export type OrganizationUpdateWithoutPlatformPortalLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutBookableResourcesInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutBookableResourcesInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutBookableResourcesInput, OrganizationUncheckedCreateWithoutBookableResourcesInput>
+  }
+
+  export type BookingSlotCreateWithoutResourceInput = {
+    id?: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingSlotsInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotUncheckedCreateWithoutResourceInput = {
+    id?: string
+    organizationId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutSlotInput
+  }
+
+  export type BookingSlotCreateOrConnectWithoutResourceInput = {
+    where: BookingSlotWhereUniqueInput
+    create: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput>
+  }
+
+  export type BookingSlotCreateManyResourceInputEnvelope = {
+    data: BookingSlotCreateManyResourceInput | BookingSlotCreateManyResourceInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BookingAppointmentCreateWithoutResourceInput = {
+    id?: string
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingAppointmentsInput
+    slot?: BookingSlotCreateNestedOneWithoutAppointmentsInput
+  }
+
+  export type BookingAppointmentUncheckedCreateWithoutResourceInput = {
+    id?: string
+    organizationId: string
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentCreateOrConnectWithoutResourceInput = {
+    where: BookingAppointmentWhereUniqueInput
+    create: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput>
+  }
+
+  export type BookingAppointmentCreateManyResourceInputEnvelope = {
+    data: BookingAppointmentCreateManyResourceInput | BookingAppointmentCreateManyResourceInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutBookableResourcesInput = {
+    update: XOR<OrganizationUpdateWithoutBookableResourcesInput, OrganizationUncheckedUpdateWithoutBookableResourcesInput>
+    create: XOR<OrganizationCreateWithoutBookableResourcesInput, OrganizationUncheckedCreateWithoutBookableResourcesInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutBookableResourcesInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutBookableResourcesInput, OrganizationUncheckedUpdateWithoutBookableResourcesInput>
+  }
+
+  export type OrganizationUpdateWithoutBookableResourcesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type BookingSlotUpsertWithWhereUniqueWithoutResourceInput = {
+    where: BookingSlotWhereUniqueInput
+    update: XOR<BookingSlotUpdateWithoutResourceInput, BookingSlotUncheckedUpdateWithoutResourceInput>
+    create: XOR<BookingSlotCreateWithoutResourceInput, BookingSlotUncheckedCreateWithoutResourceInput>
+  }
+
+  export type BookingSlotUpdateWithWhereUniqueWithoutResourceInput = {
+    where: BookingSlotWhereUniqueInput
+    data: XOR<BookingSlotUpdateWithoutResourceInput, BookingSlotUncheckedUpdateWithoutResourceInput>
+  }
+
+  export type BookingSlotUpdateManyWithWhereWithoutResourceInput = {
+    where: BookingSlotScalarWhereInput
+    data: XOR<BookingSlotUpdateManyMutationInput, BookingSlotUncheckedUpdateManyWithoutResourceInput>
+  }
+
+  export type BookingAppointmentUpsertWithWhereUniqueWithoutResourceInput = {
+    where: BookingAppointmentWhereUniqueInput
+    update: XOR<BookingAppointmentUpdateWithoutResourceInput, BookingAppointmentUncheckedUpdateWithoutResourceInput>
+    create: XOR<BookingAppointmentCreateWithoutResourceInput, BookingAppointmentUncheckedCreateWithoutResourceInput>
+  }
+
+  export type BookingAppointmentUpdateWithWhereUniqueWithoutResourceInput = {
+    where: BookingAppointmentWhereUniqueInput
+    data: XOR<BookingAppointmentUpdateWithoutResourceInput, BookingAppointmentUncheckedUpdateWithoutResourceInput>
+  }
+
+  export type BookingAppointmentUpdateManyWithWhereWithoutResourceInput = {
+    where: BookingAppointmentScalarWhereInput
+    data: XOR<BookingAppointmentUpdateManyMutationInput, BookingAppointmentUncheckedUpdateManyWithoutResourceInput>
+  }
+
+  export type OrganizationCreateWithoutBookingSlotsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutBookingSlotsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutBookingSlotsInput, OrganizationUncheckedCreateWithoutBookingSlotsInput>
+  }
+
+  export type BookableResourceCreateWithoutSlotsInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookableResourcesInput
+    appointments?: BookingAppointmentCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceUncheckedCreateWithoutSlotsInput = {
+    id?: string
+    organizationId: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    appointments?: BookingAppointmentUncheckedCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceCreateOrConnectWithoutSlotsInput = {
+    where: BookableResourceWhereUniqueInput
+    create: XOR<BookableResourceCreateWithoutSlotsInput, BookableResourceUncheckedCreateWithoutSlotsInput>
+  }
+
+  export type BookingAppointmentCreateWithoutSlotInput = {
+    id?: string
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingAppointmentsInput
+    resource?: BookableResourceCreateNestedOneWithoutAppointmentsInput
+  }
+
+  export type BookingAppointmentUncheckedCreateWithoutSlotInput = {
+    id?: string
+    organizationId: string
+    resourceId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentCreateOrConnectWithoutSlotInput = {
+    where: BookingAppointmentWhereUniqueInput
+    create: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput>
+  }
+
+  export type BookingAppointmentCreateManySlotInputEnvelope = {
+    data: BookingAppointmentCreateManySlotInput | BookingAppointmentCreateManySlotInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganizationUpsertWithoutBookingSlotsInput = {
+    update: XOR<OrganizationUpdateWithoutBookingSlotsInput, OrganizationUncheckedUpdateWithoutBookingSlotsInput>
+    create: XOR<OrganizationCreateWithoutBookingSlotsInput, OrganizationUncheckedCreateWithoutBookingSlotsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutBookingSlotsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutBookingSlotsInput, OrganizationUncheckedUpdateWithoutBookingSlotsInput>
+  }
+
+  export type OrganizationUpdateWithoutBookingSlotsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type BookableResourceUpsertWithoutSlotsInput = {
+    update: XOR<BookableResourceUpdateWithoutSlotsInput, BookableResourceUncheckedUpdateWithoutSlotsInput>
+    create: XOR<BookableResourceCreateWithoutSlotsInput, BookableResourceUncheckedCreateWithoutSlotsInput>
+    where?: BookableResourceWhereInput
+  }
+
+  export type BookableResourceUpdateToOneWithWhereWithoutSlotsInput = {
+    where?: BookableResourceWhereInput
+    data: XOR<BookableResourceUpdateWithoutSlotsInput, BookableResourceUncheckedUpdateWithoutSlotsInput>
+  }
+
+  export type BookableResourceUpdateWithoutSlotsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookableResourcesNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceUncheckedUpdateWithoutSlotsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookingAppointmentUpsertWithWhereUniqueWithoutSlotInput = {
+    where: BookingAppointmentWhereUniqueInput
+    update: XOR<BookingAppointmentUpdateWithoutSlotInput, BookingAppointmentUncheckedUpdateWithoutSlotInput>
+    create: XOR<BookingAppointmentCreateWithoutSlotInput, BookingAppointmentUncheckedCreateWithoutSlotInput>
+  }
+
+  export type BookingAppointmentUpdateWithWhereUniqueWithoutSlotInput = {
+    where: BookingAppointmentWhereUniqueInput
+    data: XOR<BookingAppointmentUpdateWithoutSlotInput, BookingAppointmentUncheckedUpdateWithoutSlotInput>
+  }
+
+  export type BookingAppointmentUpdateManyWithWhereWithoutSlotInput = {
+    where: BookingAppointmentScalarWhereInput
+    data: XOR<BookingAppointmentUpdateManyMutationInput, BookingAppointmentUncheckedUpdateManyWithoutSlotInput>
+  }
+
+  export type OrganizationCreateWithoutBookingAppointmentsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutBookingAppointmentsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutBookingAppointmentsInput, OrganizationUncheckedCreateWithoutBookingAppointmentsInput>
+  }
+
+  export type BookableResourceCreateWithoutAppointmentsInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookableResourcesInput
+    slots?: BookingSlotCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceUncheckedCreateWithoutAppointmentsInput = {
+    id?: string
+    organizationId: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    slots?: BookingSlotUncheckedCreateNestedManyWithoutResourceInput
+  }
+
+  export type BookableResourceCreateOrConnectWithoutAppointmentsInput = {
+    where: BookableResourceWhereUniqueInput
+    create: XOR<BookableResourceCreateWithoutAppointmentsInput, BookableResourceUncheckedCreateWithoutAppointmentsInput>
+  }
+
+  export type BookingSlotCreateWithoutAppointmentsInput = {
+    id?: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutBookingSlotsInput
+    resource: BookableResourceCreateNestedOneWithoutSlotsInput
+  }
+
+  export type BookingSlotUncheckedCreateWithoutAppointmentsInput = {
+    id?: string
+    organizationId: string
+    resourceId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+  }
+
+  export type BookingSlotCreateOrConnectWithoutAppointmentsInput = {
+    where: BookingSlotWhereUniqueInput
+    create: XOR<BookingSlotCreateWithoutAppointmentsInput, BookingSlotUncheckedCreateWithoutAppointmentsInput>
+  }
+
+  export type OrganizationUpsertWithoutBookingAppointmentsInput = {
+    update: XOR<OrganizationUpdateWithoutBookingAppointmentsInput, OrganizationUncheckedUpdateWithoutBookingAppointmentsInput>
+    create: XOR<OrganizationCreateWithoutBookingAppointmentsInput, OrganizationUncheckedCreateWithoutBookingAppointmentsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutBookingAppointmentsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutBookingAppointmentsInput, OrganizationUncheckedUpdateWithoutBookingAppointmentsInput>
+  }
+
+  export type OrganizationUpdateWithoutBookingAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type BookableResourceUpsertWithoutAppointmentsInput = {
+    update: XOR<BookableResourceUpdateWithoutAppointmentsInput, BookableResourceUncheckedUpdateWithoutAppointmentsInput>
+    create: XOR<BookableResourceCreateWithoutAppointmentsInput, BookableResourceUncheckedCreateWithoutAppointmentsInput>
+    where?: BookableResourceWhereInput
+  }
+
+  export type BookableResourceUpdateToOneWithWhereWithoutAppointmentsInput = {
+    where?: BookableResourceWhereInput
+    data: XOR<BookableResourceUpdateWithoutAppointmentsInput, BookableResourceUncheckedUpdateWithoutAppointmentsInput>
+  }
+
+  export type BookableResourceUpdateWithoutAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookableResourcesNestedInput
+    slots?: BookingSlotUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceUncheckedUpdateWithoutAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    slots?: BookingSlotUncheckedUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookingSlotUpsertWithoutAppointmentsInput = {
+    update: XOR<BookingSlotUpdateWithoutAppointmentsInput, BookingSlotUncheckedUpdateWithoutAppointmentsInput>
+    create: XOR<BookingSlotCreateWithoutAppointmentsInput, BookingSlotUncheckedCreateWithoutAppointmentsInput>
+    where?: BookingSlotWhereInput
+  }
+
+  export type BookingSlotUpdateToOneWithWhereWithoutAppointmentsInput = {
+    where?: BookingSlotWhereInput
+    data: XOR<BookingSlotUpdateWithoutAppointmentsInput, BookingSlotUncheckedUpdateWithoutAppointmentsInput>
+  }
+
+  export type BookingSlotUpdateWithoutAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingSlotsNestedInput
+    resource?: BookableResourceUpdateOneRequiredWithoutSlotsNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateWithoutAppointmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationCreateWithoutPlatformPromotionsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlatformPromotionsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlatformPromotionsInput, OrganizationUncheckedCreateWithoutPlatformPromotionsInput>
+  }
+
+  export type OrganizationUpsertWithoutPlatformPromotionsInput = {
+    update: XOR<OrganizationUpdateWithoutPlatformPromotionsInput, OrganizationUncheckedUpdateWithoutPlatformPromotionsInput>
+    create: XOR<OrganizationCreateWithoutPlatformPromotionsInput, OrganizationUncheckedCreateWithoutPlatformPromotionsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlatformPromotionsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlatformPromotionsInput, OrganizationUncheckedUpdateWithoutPlatformPromotionsInput>
+  }
+
+  export type OrganizationUpdateWithoutPlatformPromotionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutPlatformCustomDomainsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlatformCustomDomainsInput, OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput>
+  }
+
+  export type OrganizationUpsertWithoutPlatformCustomDomainsInput = {
+    update: XOR<OrganizationUpdateWithoutPlatformCustomDomainsInput, OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput>
+    create: XOR<OrganizationCreateWithoutPlatformCustomDomainsInput, OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlatformCustomDomainsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlatformCustomDomainsInput, OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput>
+  }
+
+  export type OrganizationUpdateWithoutPlatformCustomDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationCreateWithoutPlatformShipmentsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutPlatformShipmentsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutPlatformShipmentsInput, OrganizationUncheckedCreateWithoutPlatformShipmentsInput>
+  }
+
+  export type OrganizationUpsertWithoutPlatformShipmentsInput = {
+    update: XOR<OrganizationUpdateWithoutPlatformShipmentsInput, OrganizationUncheckedUpdateWithoutPlatformShipmentsInput>
+    create: XOR<OrganizationCreateWithoutPlatformShipmentsInput, OrganizationUncheckedCreateWithoutPlatformShipmentsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutPlatformShipmentsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutPlatformShipmentsInput, OrganizationUncheckedUpdateWithoutPlatformShipmentsInput>
+  }
+
+  export type OrganizationUpdateWithoutPlatformShipmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type BillingInvoiceItemCreateManySubscriptionInvoiceInput = {
@@ -57636,6 +74012,74 @@ export namespace Prisma {
     pendingDeactivation?: BoolFieldUpdateOperationsInput | boolean
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type PlatformPaymentLinkCreateManyPaymentOrderInput = {
+    id?: string
+    organizationId: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkUpdateWithoutPaymentOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutPlatformPaymentLinksNestedInput
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateWithoutPaymentOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RolePermissionCreateManyRoleInput = {
@@ -57796,6 +74240,101 @@ export namespace Prisma {
     providerPayload?: NullableJsonNullValueInput | InputJsonValue
     errorMessage?: string | null
     attemptedAt?: Date | string
+  }
+
+  export type PlatformPaymentLinkCreateManyOrganizationInput = {
+    id?: string
+    amountAzn: Decimal | DecimalJsLike | number | string
+    currency?: string
+    counterpartyRef?: string | null
+    sourceEntityType: string
+    sourceEntityId: string
+    paymentOrderId?: string | null
+    token: string
+    paymentUrl?: string | null
+    status?: $Enums.PlatformPaymentLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformPortalLinkCreateManyOrganizationInput = {
+    id?: string
+    token: string
+    entityType: string
+    entityId: string
+    status?: $Enums.PlatformPortalLinkStatus
+    expiresAt?: Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookableResourceCreateManyOrganizationInput = {
+    id?: string
+    resourceKey: string
+    name: string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingSlotCreateManyOrganizationInput = {
+    id?: string
+    resourceId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentCreateManyOrganizationInput = {
+    id?: string
+    resourceId?: string | null
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PlatformPromotionCreateManyOrganizationInput = {
+    id?: string
+    code: string
+    name: string
+    discountType: $Enums.PlatformPromotionDiscountType
+    discountValue: Decimal | DecimalJsLike | number | string
+    validFrom?: Date | string | null
+    validUntil?: Date | string | null
+    status?: $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformCustomDomainCreateManyOrganizationInput = {
+    id?: string
+    hostname: string
+    status?: $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PlatformShipmentCreateManyOrganizationInput = {
+    id?: string
+    externalRef?: string | null
+    trackingToken: string
+    status?: $Enums.PlatformShipmentStatus
+    sourceEntityType: string
+    sourceEntityId: string
+    recipientPhone?: string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type UsageMeterEventUpdateWithoutOrganizationInput = {
@@ -57962,6 +74501,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceUpdateOneWithoutPaymentOrderNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type PaymentOrderUncheckedUpdateWithoutOrganizationInput = {
@@ -57978,6 +74518,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paidAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     subscriptionInvoice?: SubscriptionInvoiceUncheckedUpdateOneWithoutPaymentOrderNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutPaymentOrderNestedInput
   }
 
   export type PaymentOrderUncheckedUpdateManyWithoutOrganizationInput = {
@@ -58162,6 +74703,297 @@ export namespace Prisma {
     providerPayload?: NullableJsonNullValueInput | InputJsonValue
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPaymentLinkUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    paymentOrder?: PaymentOrderUpdateOneWithoutPlatformPaymentLinksNestedInput
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    paymentOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amountAzn?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    currency?: StringFieldUpdateOperationsInput | string
+    counterpartyRef?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    paymentOrderId?: NullableStringFieldUpdateOperationsInput | string | null
+    token?: StringFieldUpdateOperationsInput | string
+    paymentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumPlatformPaymentLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPaymentLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    entityType?: StringFieldUpdateOperationsInput | string
+    entityId?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformPortalLinkStatusFieldUpdateOperationsInput | $Enums.PlatformPortalLinkStatus
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookableResourceUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    slots?: BookingSlotUpdateManyWithoutResourceNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    slots?: BookingSlotUncheckedUpdateManyWithoutResourceNestedInput
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutResourceNestedInput
+  }
+
+  export type BookableResourceUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceKey?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingSlotUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resource?: BookableResourceUpdateOneRequiredWithoutSlotsNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    resource?: BookableResourceUpdateOneWithoutAppointmentsNestedInput
+    slot?: BookingSlotUpdateOneWithoutAppointmentsNestedInput
+  }
+
+  export type BookingAppointmentUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformPromotionUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    code?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    discountType?: EnumPlatformPromotionDiscountTypeFieldUpdateOperationsInput | $Enums.PlatformPromotionDiscountType
+    discountValue?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    validFrom?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    validUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    status?: EnumPlatformPromotionStatusFieldUpdateOperationsInput | $Enums.PlatformPromotionStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    hostname?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformCustomDomainStatusFieldUpdateOperationsInput | $Enums.PlatformCustomDomainStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PlatformShipmentUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    externalRef?: NullableStringFieldUpdateOperationsInput | string | null
+    trackingToken?: StringFieldUpdateOperationsInput | string
+    status?: EnumPlatformShipmentStatusFieldUpdateOperationsInput | $Enums.PlatformShipmentStatus
+    sourceEntityType?: StringFieldUpdateOperationsInput | string
+    sourceEntityId?: StringFieldUpdateOperationsInput | string
+    recipientPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationMembershipCreateManyUserInput = {
@@ -58417,6 +75249,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
@@ -58450,6 +75290,14 @@ export namespace Prisma {
     notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
     notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
@@ -58668,6 +75516,152 @@ export namespace Prisma {
     providerPayload?: NullableJsonNullValueInput | InputJsonValue
     errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
     attemptedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingSlotCreateManyResourceInput = {
+    id?: string
+    organizationId: string
+    startsAt: Date | string
+    endsAt: Date | string
+    capacity?: number
+    bookedCount?: number
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentCreateManyResourceInput = {
+    id?: string
+    organizationId: string
+    slotId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingSlotUpdateWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingSlotsNestedInput
+    appointments?: BookingAppointmentUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    appointments?: BookingAppointmentUncheckedUpdateManyWithoutSlotNestedInput
+  }
+
+  export type BookingSlotUncheckedUpdateManyWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    startsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endsAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    capacity?: IntFieldUpdateOperationsInput | number
+    bookedCount?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUpdateWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingAppointmentsNestedInput
+    slot?: BookingSlotUpdateOneWithoutAppointmentsNestedInput
+  }
+
+  export type BookingAppointmentUncheckedUpdateWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutResourceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    slotId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentCreateManySlotInput = {
+    id?: string
+    organizationId: string
+    resourceId?: string | null
+    customerRef: string
+    customerPhone?: string | null
+    customerName?: string | null
+    scheduledAt: Date | string
+    status?: $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type BookingAppointmentUpdateWithoutSlotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutBookingAppointmentsNestedInput
+    resource?: BookableResourceUpdateOneWithoutAppointmentsNestedInput
+  }
+
+  export type BookingAppointmentUncheckedUpdateWithoutSlotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BookingAppointmentUncheckedUpdateManyWithoutSlotInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    resourceId?: NullableStringFieldUpdateOperationsInput | string | null
+    customerRef?: StringFieldUpdateOperationsInput | string
+    customerPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    customerName?: NullableStringFieldUpdateOperationsInput | string | null
+    scheduledAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    status?: EnumBookingAppointmentStatusFieldUpdateOperationsInput | $Enums.BookingAppointmentStatus
+    metadata?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

@@ -28,4 +28,20 @@ PRD: [../PRD.md](../PRD.md)
 - [ ] Live WhatsApp Business API
 - [x] `SATELLITE_CRM_VISIT_LOGGED` contract
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## C4 — Platform (Wave B3)
+
+- [x] Notifications on lead convert — `@era/satellite-kit`
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
+- [x] Wave E-A commerce — portal/pay/shipment on lead convert (MVP)
+- [x] Wave E-B booking — `createBookingAppointment` follow-up on convert (MVP)
+- [x] Wave F §4 — loyalty/domains on lead convert
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Platform session via SSO — `PlatformSessionBarServer`
+- [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A)
+
+## SP7 — Depth (post-quartet)
+
+- [x] C2 inbox + lead assign + visit log (Wave 1)
+- [x] Finance convert `POST /api/leads/:id/convert` + platform hooks (Wave E)

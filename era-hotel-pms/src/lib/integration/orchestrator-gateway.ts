@@ -2,8 +2,12 @@ import axios, { AxiosError } from "axios";
 import {
   SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED,
   SATELLITE_HOTEL_RESERVATION_COMPLETED,
+  SATELLITE_HOTEL_INVOICE_ISSUED,
+  SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT,
   type SatelliteHotelNightAuditClosedEvent,
   type SatelliteHotelReservationCompletedEvent,
+  type SatelliteHotelInvoiceIssuedEvent,
+  type SatelliteHotelCityLedgerSnapshotEvent,
 } from "@era/contracts";
 import type { IntegrationEnvelope } from "./event-types";
 
@@ -81,6 +85,40 @@ export function envelopeToNightAuditClosedEvent(
   };
 }
 
+export function envelopeToInvoiceIssuedEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelInvoiceIssuedEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_INVOICE_ISSUED) {
+    return null;
+  }
+  const payload = envelope.payload as SatelliteHotelInvoiceIssuedEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_INVOICE_ISSUED,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    payload,
+  };
+}
+
+export function envelopeToCityLedgerSnapshotEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelCityLedgerSnapshotEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT) {
+    return null;
+  }
+  const payload = envelope.payload as SatelliteHotelCityLedgerSnapshotEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    payload,
+  };
+}
+
 export type OrchestratorGatewayResult = {
   ok: boolean;
   status?: number;
@@ -92,7 +130,11 @@ export type OrchestratorGatewayResult = {
  * `POST ${ORCHESTRATOR_EVENT_URL}/api/v1/satellite-events` with service token.
  */
 export async function publishToOrchestratorGateway(
-  event: SatelliteHotelReservationCompletedEvent | SatelliteHotelNightAuditClosedEvent,
+  event:
+    | SatelliteHotelReservationCompletedEvent
+    | SatelliteHotelNightAuditClosedEvent
+    | SatelliteHotelInvoiceIssuedEvent
+    | SatelliteHotelCityLedgerSnapshotEvent,
 ): Promise<OrchestratorGatewayResult> {
   const baseUrl =
     process.env.ORCHESTRATOR_EVENT_URL ??

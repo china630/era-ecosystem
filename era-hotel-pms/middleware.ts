@@ -67,6 +67,7 @@ export async function middleware(request: NextRequest) {
 
   if (
     pathname === '/login' ||
+    pathname === '/sso/callback' ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {

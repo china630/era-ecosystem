@@ -261,4 +261,22 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 **Migration:** `20260528170000_wave5_contract_pricing`
 
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## Platform (Wave B3)
+
+- [x] Invoice issued guest notification — `trySendPlatformNotification` on `issueFolioInvoice`
+- [x] Spa/booking widget resource (CP-B3 hotel spa) — `POST /api/spa/slots` → `createBookingSlot` (MVP)
+- [x] Payment link on folio invoice — `createPaymentLink` in `issueFolioInvoice` (Wave D)
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
+- [x] Wave E-A commerce — portal link on folio invoice (`issueFolioInvoice`)
+- [x] Wave E-C billing UI — `platformSubscription` on `GET /api/hotel/integration-settings` + admin read-only block (§2.2.1 Live)
+- [x] Quartet Track A — POS bridge CI + [KKM-POLICY-FB-BRIDGE.md](./KKM-POLICY-FB-BRIDGE.md)
+- [x] Entitlement-gated platform hooks on folio invoice — `@era/satellite-kit` `runPlatformCommerceHooks`
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Hybrid local ops + SSO platform roles (`isCrossSystem` on SSO user)
+- [x] `PlatformSessionBarServer` in layout — Finance deep links
+- [x] No local join-org / memberships (N/A)
+- [x] Wave F §4 — delivery/loyalty on folio invoice; `createCustomDomain` on integration-settings PATCH
+
+Client: `@era/satellite-kit`.

@@ -13,6 +13,7 @@ const linkKeys = [
   { href: "/orders", key: "orders", icon: Receipt },
   { href: "/kds", key: "kds", icon: ChefHat },
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
+  { href: "/admin/integration", key: "integration", icon: Receipt },
   { href: "/calendar", key: "calendar", icon: CalendarDays },
 ] as const;
 

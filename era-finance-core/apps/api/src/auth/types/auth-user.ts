@@ -7,6 +7,7 @@ export type AuthUser = {
   organizationId: string | null;
   role: UserRole | null;
   roles?: UserRole[];
+  permissions?: string[];
   isOwner?: boolean;
   /** Загружается из БД при валидации JWT. */
   isSuperAdmin?: boolean;

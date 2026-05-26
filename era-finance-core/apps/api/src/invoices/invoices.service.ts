@@ -35,6 +35,7 @@ import { renderInvoicePdf } from "./invoice-pdf.render";
 import {
   notificationsPackEnabled,
   sendControlPlaneNotification,
+  createControlPlanePaymentLink,
 } from "../integration/control-plane-notifications.client";
 import { MailService } from "../mail/mail.service";
 import { parseIsoDateOnly } from "../reporting/reporting-period.util";
@@ -1173,6 +1174,23 @@ export class InvoicesService {
     const key = `orgs/${organizationId}/invoices/${id}.pdf`;
 
     if (notificationsPackEnabled()) {
+      let paymentLink: string | undefined;
+      try {
+        const totalAzn = Number(inv.totalAmount);
+        if (totalAzn > 0) {
+          const link = await createControlPlanePaymentLink(organizationId, {
+            amountAzn: totalAzn,
+            counterpartyRef: inv.counterpartyId,
+            sourceEntityType: "invoice",
+            sourceEntityId: id,
+            description: `Invoice ${inv.number}`,
+          });
+          paymentLink = link.paymentUrl ?? link.portalPayUrl;
+        }
+      } catch {
+        paymentLink = undefined;
+      }
+
       await sendControlPlaneNotification(organizationId, {
         templateKey: "finance.invoice.email",
         channel: "EMAIL",
@@ -1181,13 +1199,39 @@ export class InvoicesService {
         sourceEntityType: "invoice",
         sourceEntityId: id,
         subject: `Invoice ${inv.number}`,
-        body: `Счёт ${inv.number} во вложении.`,
+        body: paymentLink
+          ? `Счёт ${inv.number}. Оплата: ${paymentLink}`
+          : `Счёт ${inv.number} во вложении.`,
         payload: {
           invoiceNumber: inv.number,
           pdfStorageKey: key,
+          paymentLink,
         },
       });
-      return { ok: true, sentTo: email, via: "platform-notifications" };
+
+      const phone = (inv.counterparty as { phone?: string | null }).phone?.trim();
+      if (phone && paymentLink) {
+        await sendControlPlaneNotification(organizationId, {
+          templateKey: "finance.invoice.whatsapp",
+          channel: "WHATSAPP",
+          messageClass: "FINANCIAL",
+          recipient: phone,
+          sourceEntityType: "invoice",
+          sourceEntityId: `${id}:wa`,
+          body: `Счёт ${inv.number} — оплата: ${paymentLink}`,
+          payload: {
+            invoiceNumber: inv.number,
+            paymentLink,
+          },
+        });
+      }
+
+      return {
+        ok: true,
+        sentTo: email,
+        via: "platform-notifications",
+        paymentLink,
+      };
     }
 
     let pdf: Buffer;

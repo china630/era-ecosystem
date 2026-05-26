@@ -7,4 +7,5 @@ export * from "./crm-field.events";
 export * from "./auto-sto.events";
 export * from "./clinic.events";
 export * from "./wholesale.events";
+export * from "./fb.events";
 export * from "./satellite-event";

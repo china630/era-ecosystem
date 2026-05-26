@@ -40,4 +40,26 @@ Source of truth for checkboxes. Summary for PM: [PRD §4](../PRD.md).
 - [ ] KKM integration (M9)
 - [ ] Umico/Kaspi sync (M10)
 
-Platform add-ons (booking, notifications, portal, payments): `src/integration/control-plane-platform.client.ts` → `CONTROL_PLANE_URL` (era-365-orchestrator).
+## R5 — Platform add-ons (Wave B3)
+
+- [x] Notifications on receipt pay — `trySendPlatformNotification` + optional payment link (`@era/satellite-kit`)
+- [x] Booking pickup slot on pay — `createBookingSlot` (MVP)
+- [x] Platform delivery shipment on pay — `createShipment` when `delivery: true` or outlet preset `ecommerce` (MVP)
+- [x] Wave F §4 — loyalty/domains on receipt pay (`customHostname`)
+- [x] Portal link on pay — `createPortalLink` for `retail_receipt` (MVP)
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` → `getSubscriptionMe` (Wave D)
+- [x] UAT: platform send documented in [UAT-SMOKE.md](./UAT-SMOKE.md) § Platform
+
+Platform client: `@era/satellite-kit` via `src/integration/control-plane-platform.client.ts`.
+
+## SP8 — Platform RBAC consumer (§2.1)
+
+- [x] Platform session (`financeRole` + org) via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
+- [x] Local operational RBAC (cashier roles) — unchanged
+- [x] No local join-org / memberships (N/A — Finance/Orch only)
+
+## SP7 — Depth (post-quartet)
+
+- [x] R2/R3 presets, void/return/shift-close (Wave 1)
+- [x] Executive `/executive` with `canViewExecutive`
+- [x] Settings UI playbook pilot `/settings` (ModalShell)

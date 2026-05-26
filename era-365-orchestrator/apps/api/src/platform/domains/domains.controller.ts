@@ -2,7 +2,7 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { DomainsService } from "./domains.service";
+import { DomainsService, type CreateDomainInput } from "./domains.service";
 
 @ApiTags("platform-domains")
 @ApiBearerAuth("bearer")
@@ -12,10 +12,10 @@ export class DomainsController {
   constructor(private readonly domains: DomainsService) {}
 
   @Post("domains")
-  @ApiOperation({ summary: "Register custom domain (stub)" })
+  @ApiOperation({ summary: "Register custom domain (MVP)" })
   createDomain(
     @OrganizationId() organizationId: string,
-    @Body() body: unknown,
+    @Body() body: CreateDomainInput,
   ) {
     return this.domains.createDomain(organizationId, body);
   }

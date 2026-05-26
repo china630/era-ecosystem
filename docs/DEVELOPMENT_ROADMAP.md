@@ -11,7 +11,7 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 | **PP1** | Orchestrator RBAC: access requests, transfer ownership, disputes | **Done** — [DELIVERY-ORCHESTRATOR CP1](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md); Finance proxies via `ERA_CONTROL_PLANE_RBAC_PROXY` |
 | **PP2** | Unified SSO + `BUSINESS_OWNER` on 7 industry apps | **Done** — `@era/satellite-kit` `executeSatelliteSsoExchange` |
 | **PP3** | Finance `ERA_AUTH_MODE=control-plane` dev cutover | **Done** — documented in [SETUP_AND_RUN](./SETUP_AND_RUN.md) |
-| **PP4** | Event bus: all 11 `@era/contracts` types → Finance worker | **Done** — incl. `SHIFT_CLOSED`, `VISIT_LOGGED`, full lab handler |
+| **PP4** | Event bus: all 13 `@era/contracts` ingress types → Finance worker | **Done** — incl. hotel night audit, invoice issued, city ledger; retail shift closed; CRM visit logged |
 | **PP5** | Contract Management §4.15 | **Done** — `contract_management_pro`, `/contracts`, PO `checkLimit` |
 | **PP6** | Gov Budget §4.16 | **Done** — `gov_budget_pro`, gateway, BUDGET demo org, `/gov-budget` |
 | **PP7** | Ops, CI, umbrella docs | **Done** — migration `20260525180000_contracts_gov_budget`, [SMOKE_ALL_SERVICES](./SMOKE_ALL_SERVICES.md) |
@@ -21,7 +21,7 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 - [x] Orchestrator CP1: access request, transfer ownership, dispute APIs
 - [x] All 7 industry satellites: SSO with `BUSINESS_OWNER` mapping (`executeSatelliteSsoExchange`)
 - [x] Finance `ERA_AUTH_MODE=control-plane` verified in dev smoke
-- [x] All 11 event types in `@era/contracts` → Finance worker handler (no stubs)
+- [x] All 13 ingress event types in `@era/contracts` → Finance worker handler (no stubs)
 - [x] Contracts: entitlement + UI + PO limit block
 - [x] Gov Budget: entitlement + gateway + BUDGET seed + execution report UI
 - [x] `SMOKE_ALL_SERVICES.md` covers platform + vertical E2E samples
@@ -63,7 +63,13 @@ Priority by value and DELIVERY readiness. Do not start new platform debt here �
 | **SP2** | Logistics L2 + Clinic K2/K3 | **Done (Wave 1)** — POD/fuel UI; lab lifecycle, discount audit, executive |
 | **SP3** | F&B FB-1 + Hotel Stage 17 | **Done (Wave 2)** — FB-0 auth/menu, UI wired, bridge regression |
 | **SP4** | Construction C2, Auto A2, Wholesale W2 | **Done (Wave 2)** — plan-vs-actual UI, appointments UI, pick lists + Finance credit fallback |
-| **SP5** | UAT-SMOKE pass, PRD/TZ sync | **Pending** |
+| **SP5** | UAT-SMOKE pass, PRD/TZ sync | **Done** — Wave E-A…E-D commerce/booking hooks + [READINESS_MATRIX.md](./READINESS_MATRIX.md) refresh |
+| **SP6** | Quartet product (Tracks A/B/C) | **Done** — Finance+Orch+Hotel+FB smoke, entitlement hooks, FB product depth, E8 ingress |
+| **SP7** | Secondary satellites depth | **Done** — customs hub (Log), executive/settings polish, DELIVERY SP7 notes |
+| **SP10** | Post-SP9 platform (P1–P7) | **Done** — Orch super-admin UI, SSO docs, Finance JWT handoff, early-access on Orch, Hotel MDM guest, UI playbook, hygiene |
+| **CP2** | Platform hardening (RS256, permissions, MDM, handoff ticket, UI, addons Live) | **Done** — ERA Program Orchestrator P01–P08 |
+| **SP8** | Platform RBAC consumer (§2.1) | **Done** — hybrid Orch roles + local ops; `satellite-kit` platform session; matrix N/A for join/memberships on sats |
+| **SP9** | Orch hub entry (launcher, SSO, register, super-admin shell) | **Done** — Orch web :3100; Finance industry/super-admin/register redirect; `sso-launch-smoke.mjs`; holding Finance-only (closed) |
 
 ### Legacy sprint index (S1–S8 scaffold)
 
@@ -99,7 +105,8 @@ Priority by value and DELIVERY readiness. Do not start new platform debt here �
 |---------|--------|
 | **CP-BILLING** (billing + referrals + early-access → orchestrator) | **Done** — [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) checklist 1–10 |
 | **CP-B2** Notifications Pack | **Live** — `/platform/notifications/v1/*`; Finance opt-in `ERA_NOTIFICATIONS_PACK` |
-| **CP-B3…B8** Platform APIs | **Stub** — booking, portal, payments, loyalty, domains, delivery on orchestrator |
+| **CP-B3…B5** Booking, portal, payments | **MVP API** — orchestrator `/platform/*`; Wave A consumers: Finance invoices, clinic/auto-sto crons |
+| **CP-B6…B8** Loyalty, domains, delivery | **MVP API** — orchestrator persistence + Wave C/D satellite hooks |
 | **CP-VERTICAL-GROWTH** | **Wave A–C clients** — `control-plane-platform.client.ts` in each satellite |
 | **DOC-B** | Wave 1 done; Wave 2–3 + final audit synced in MODULES_CATALOG / PLATFORM_ADDONS / UAT-SMOKE-PLATFORM |
 

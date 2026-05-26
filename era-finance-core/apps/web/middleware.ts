@@ -33,6 +33,26 @@ function redirectToLogin(req: NextRequest, pathname: string, clearCookie: boolea
   return res;
 }
 
+const ORCH_WEB_BASE =
+  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3100";
+
+function redirectToOrch(pathname: string): NextResponse | null {
+  const base = ORCH_WEB_BASE.replace(/\/$/, "");
+  if (pathname === "/register" || pathname.startsWith("/register/")) {
+    return NextResponse.redirect(`${base}/register`);
+  }
+  if (pathname === "/register-org" || pathname.startsWith("/register-org/")) {
+    return NextResponse.redirect(`${base}/register-org`);
+  }
+  if (pathname.startsWith("/industry/")) {
+    return NextResponse.redirect(`${base}${pathname}`);
+  }
+  if (pathname === "/super-admin" || pathname.startsWith("/super-admin/")) {
+    return NextResponse.redirect(`${base}${pathname}`);
+  }
+  return null;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -42,6 +62,9 @@ export function middleware(req: NextRequest) {
   if (isSkippableAssetPath(pathname)) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
+
+  const orchRedirect = redirectToOrch(pathname);
+  if (orchRedirect) return orchRedirect;
 
   if (maintenanceModeEnabled()) {
     return new NextResponse(ERAFINANCE_MAINTENANCE_HTML, {
@@ -72,6 +95,13 @@ export function middleware(req: NextRequest) {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
     if (tokenState === "invalid") clearAccessTokenCookie(res);
     return res;
+  }
+
+  if (pathname === "/login" && tokenState !== "valid") {
+    const orch = ORCH_WEB_BASE.replace(/\/$/, "");
+    const url = new URL(`${orch}/login`, orch);
+    url.searchParams.set("next", "finance");
+    return NextResponse.redirect(url);
   }
 
   if (tokenState !== "valid") {

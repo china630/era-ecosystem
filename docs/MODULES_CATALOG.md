@@ -15,12 +15,12 @@ Sold via `organization_modules` / pricing catalog; API under `/platform/*` on **
 | Add-on | Slug (draft) | Serves |
 |--------|--------------|--------|
 | Notifications Pack | `platform_notifications` | WA / email / SMS transactional — **Live (CP-B2)** |
-| Online Booking Widget | `platform_booking` | Clinic, auto-sto, retail pickup, hotel spa — **Stub API** |
-| Customer Portal | `platform_portal` | Orders, visits, documents, pay — **Stub API** |
-| Payment links & deposits | `platform_payments` | Invoice pay-by-link, booking deposit — **Stub API** |
-| Loyalty & promotions | `platform_loyalty` | Promo codes, points — **Stub API** |
-| Custom domain & white-label | `platform_domain` | Branded storefront — **Stub API** |
-| Delivery orchestration | `platform_delivery` | Retail + logistics — **Stub API** |
+| Online Booking Widget | `platform_booking` | Clinic, auto-sto, retail pickup, hotel spa — **MVP API (CP-B3)** |
+| Customer Portal | `platform_portal` | Orders, visits, documents, pay — **MVP API (CP-B4)** |
+| Payment links & deposits | `platform_payments` | Invoice pay-by-link, booking deposit — **MVP API (CP-B5)** |
+| Loyalty & promotions | `platform_loyalty` | Promo codes, points — **MVP API (CP-B6)** |
+| Custom domain & white-label | `platform_domain` | Branded storefront — **MVP API (CP-B7)** |
+| Delivery orchestration | `platform_delivery` | Retail + logistics — **MVP API (CP-B8)** |
 
 Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
@@ -42,7 +42,7 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Manufacturing | Recipes, orders, release | Tier 2+ |
 | Fixed assets | FA registry | |
 | IFRS mapping | IFRS reports | Tier 3 |
-| Industry Solutions UI | `/industry/[vertical]` | Launcher tiles; entitlements from **orchestrator** |
+| Industry Solutions UI | Redirect → Orch `:3100` | **Orchestrator only** (SP9); Finance `/industry/*` redirects |
 | In-app staff notifications | Bell in web shell | **Not** customer Notifications Pack |
 | Satellite GL dispatch | API worker | Consumes orchestrator events → journals |
 

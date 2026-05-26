@@ -9,7 +9,9 @@ import {
   Post,
   UseGuards,
 } from "@nestjs/common";
+import { RequirePermissions } from "../common/decorators/permissions.decorator";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
+import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { SuperAdminGuard } from "../common/guards/super-admin.guard";
 import { AdminBillingService } from "./admin-billing.service";
 import { AdminSubscriptionPatchDto } from "./dto/admin-subscription-patch.dto";
@@ -31,7 +33,8 @@ import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
 import { SetBillingQuotasMatrixDto } from "./dto/set-billing-quotas-matrix.dto";
 import { SetTierQuotasDto } from "./dto/set-tier-quotas.dto";
 
-@UseGuards(JwtAuthGuard, SuperAdminGuard)
+@UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
+@RequirePermissions("admin.system")
 @Controller("v1/admin")
 export class AdminBillingController {
   constructor(private readonly admin: AdminBillingService) {}

@@ -1,4 +1,4 @@
-﻿import { buildNotificationIdempotencyKey } from "./notifications-idempotency.util";
+import { buildNotificationIdempotencyKey } from "./notifications-idempotency.util";
 
 describe("notification idempotency key", () => {
   it("is stable for the same org + source + template", () => {

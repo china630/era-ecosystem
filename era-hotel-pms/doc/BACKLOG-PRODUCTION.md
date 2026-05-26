@@ -16,10 +16,10 @@ Finance boundary: [../../docs/HOSPITALITY_FINANCE_BOUNDARY.md](../../docs/HOSPIT
 
 | ID | Task | Notes |
 |----|------|-------|
-| H-P0-1 | Wire `SATELLITE_HOTEL_INVOICE_ISSUED` in Finance dispatch | Draft sales invoice from folio issue |
-| H-P0-2 | City ledger snapshot event → Finance reconciliation | Complement agency CL deep link |
+| H-P0-1 | Wire `SATELLITE_HOTEL_INVOICE_ISSUED` in Finance dispatch | Draft sales invoice from folio issue — **done** |
+| H-P0-2 | City ledger snapshot event → Finance reconciliation | Complement agency CL deep link — **done** (dispatch meta) |
 | H-P0-3 | On-site UAT checklist 13 with Nafta | Gate sign-off |
-| H-P0-4 | Hospitality launcher tile group (orchestrator) | hotel + fb + finance shortcuts |
+| H-P0-4 | Hospitality launcher tile group (orchestrator) | hotel + fb + finance shortcuts — **done** |
 
 ## P1 — Deferred MVP items (DELIVERY unchecked)
 

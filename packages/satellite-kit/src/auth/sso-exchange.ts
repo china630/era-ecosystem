@@ -63,6 +63,7 @@ export type SsoExchangeResult = {
     role: string;
     roles: string[];
     isOwner: boolean;
+    financeRole?: string;
   };
 };
 
@@ -73,22 +74,27 @@ export async function executeSatelliteSsoExchange(
 ): Promise<SsoExchangeResult> {
   const financeRole = body.financeRole ?? "USER";
   const satelliteRole = mapFinanceRoleToSatellite(financeRole);
+  const isOwner = satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER;
   const roleCodes = [
     satelliteRole,
-    ...(satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER
+    ...(isOwner ? [SATELLITE_ROLE.SATELLITE_OPERATOR] : []),
+    ...(satelliteRole === SATELLITE_ROLE.PLATFORM_MEMBER
       ? [SATELLITE_ROLE.SATELLITE_OPERATOR]
       : []),
   ];
+
+  const roleNames: Record<string, string> = {
+    [SATELLITE_ROLE.BUSINESS_OWNER]: "Business Owner",
+    [SATELLITE_ROLE.PLATFORM_MEMBER]: "Platform Member",
+    [SATELLITE_ROLE.SATELLITE_OPERATOR]: "Satellite Operator",
+  };
 
   let role = await prisma.role.findUnique({ where: { code: satelliteRole } });
   if (!role) {
     role = await prisma.role.create({
       data: {
         code: satelliteRole,
-        name:
-          satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER
-            ? "Business Owner"
-            : "Satellite Operator",
+        name: roleNames[satelliteRole] ?? satelliteRole,
         permissionsJson: "[]",
       },
     });
@@ -130,7 +136,7 @@ export async function executeSatelliteSsoExchange(
     roles: roleCodes,
     fullName: user.fullName,
     organizationId: body.organizationId,
-    isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
+    isOwner,
     financeRole,
   });
 
@@ -142,7 +148,8 @@ export async function executeSatelliteSsoExchange(
       fullName: user.fullName,
       role: satelliteRole,
       roles: roleCodes,
-      isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
+      isOwner,
+      financeRole,
     },
   };
 }

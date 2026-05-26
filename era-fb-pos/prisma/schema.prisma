@@ -121,6 +121,8 @@ model Ticket {
   waiterLabel             String?      @map("waiter_label")
   covers                  Int          @default(1)
   guestName               String?      @map("guest_name")
+  serviceChannel          String?      @map("service_channel")
+  walkInLabel             String?      @map("walk_in_label")
   beoId                   String?      @map("beo_id")
   roomChargeReservationId String?      @map("room_charge_reservation_id")
   subtotalAzn             Decimal      @default(0) @map("subtotal_azn") @db.Decimal(12, 2)

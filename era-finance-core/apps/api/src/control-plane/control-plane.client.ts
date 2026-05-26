@@ -75,6 +75,31 @@ export class ControlPlaneClient {
     });
   }
 
+  async linkOrganizationMdm(input: {
+    organizationId: string;
+    name: string;
+    taxId: string;
+  }): Promise<void> {
+    const enabled =
+      (process.env.ERA_MDM_REGISTER_VIA_ORCH ?? "true").toLowerCase() !==
+      "false";
+    if (!enabled || !this.serviceToken) return;
+    try {
+      await fetch(`${this.baseUrl}/internal/v1/mdm/organizations/link`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-service-token": this.serviceToken,
+        },
+        body: JSON.stringify(input),
+      });
+    } catch (err) {
+      this.logger.warn(
+        `MDM link failed for org ${input.organizationId}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
+
   async attachReferralOnSignup(input: {
     organizationId: string;
     organizationCreatedAt: string;

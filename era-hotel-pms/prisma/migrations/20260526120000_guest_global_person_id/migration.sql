@@ -1,0 +1,1 @@
+ALTER TABLE "Guest" ADD COLUMN IF NOT EXISTS "globalPersonId" TEXT;

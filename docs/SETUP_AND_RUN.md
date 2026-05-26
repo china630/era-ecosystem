@@ -36,7 +36,7 @@
 | Сервис | Порт | Публичный хост (Traefik) |
 |--------|------|--------------------------|
 | Traefik dashboard | 8080 | — |
-| Orchestrator Web | 3100 | `app.era.az` |
+| Orchestrator Web | 3100 | `app.era.az` — **ecosystem entry (SP9): login, industry launcher, SSO** |
 | Orchestrator API | 4100 | `api.era.az` |
 | Finance API | 4000 | **не публикуется** |
 | Finance Web (локально) | 3000 | — |
@@ -46,6 +46,8 @@
 | Redis | 6379 | — |
 
 > При одновременном локальном запуске **finance web** и **hotel PMS** оба используют `:3000` — запускайте только один из них или смените порт.
+
+> **Точка входа (SP9):** откройте **Orchestrator Web** `http://127.0.0.1:3100` (или `app.era.az`). Industry launcher и регистрация — на Orch; Finance — GL/holding; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
 
 ---
 
@@ -462,6 +464,7 @@ cd ../era-hotel-pms && npm install
 | 2 | Login: `POST http://api.era.az/auth/login` → Bearer token |
 | 3 | Finance: `ERA_AUTH_MODE=control-plane` — stateless JWT без lookup в БД |
 | 4 | RBAC mutations: `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default) — Finance proxies join/access/transfer to orchestrator |
+| 4b | RBAC smoke: [UAT-SMOKE-RBAC.md](../era-365-orchestrator/doc/UAT-SMOKE-RBAC.md); Finance `GET /api/auth/me` + `POST /api/auth/switch` proxy memberships when `ERA_AUTH_MODE=control-plane` |
 | 5 | Billing по-прежнему через `ControlPlaneEntitlementGuard` |
 
 ### Event bus (hotel → finance)

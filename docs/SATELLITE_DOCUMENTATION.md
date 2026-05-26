@@ -9,6 +9,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Global UI/UX | [`DESIGN.md`](../DESIGN.md) — shared tokens/components: `@era/satellite-kit/ui` |
 | Run all services | [`SETUP_AND_RUN.md`](./SETUP_AND_RUN.md) |
 | SSO & event bus | [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md) |
+| Readiness matrices | [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) — DELIVERY %, API × app, integrations; **refresh:** skill `era-readiness-matrix` or `node scripts/delivery-readiness.mjs` (§1) + `node scripts/readiness-coverage.mjs` (§4) |
 | Smoke checklist | [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) |
 | This standard | `SATELLITE_DOCUMENTATION.md` |
 
@@ -74,7 +75,22 @@ era-{name}/
 
 Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
 
-**Out of scope for unified SSO (documented boundary):** `era-fb-pos` and `era-hotel-pms` use local hotel JWT auth; alignment deferred to Phase B SP3.
+**Hybrid (SP8):** `era-fb-pos` and `era-hotel-pms` keep **local operational** users (waiter, reception, FB_MANAGER). **Platform** users (OWNER/DIRECTOR/ADMIN/ACCOUNTANT) enter via **Orchestrator SSO** → `financeRole` in session; RBAC mutations stay in Finance/Orch only.
+
+### UAT-SMOKE template — SSO paths (required in every `era-*/doc/UAT-SMOKE.md`)
+
+```markdown
+## SSO paths (platform entry — SP9/P2)
+
+### Owner path (Orchestrator)
+1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+2. Home → industry tile → **Open** → satellite `/sso/callback` session.
+3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
+
+### Ops path (local)
+1. Use this app's `/login` and seed users in sections below.
+2. Billing, team, register → Orchestrator only (no satellite `/register`).
+```
 
 **Шаблон для PRD §3** (добавить первой строкой в таблицу персон):
 

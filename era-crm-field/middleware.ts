@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (pathname === "/login") return NextResponse.next();
+  if (pathname === "/login" || pathname === "/sso/callback") return NextResponse.next();
   const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
   if (!token) {
     const url = request.nextUrl.clone();

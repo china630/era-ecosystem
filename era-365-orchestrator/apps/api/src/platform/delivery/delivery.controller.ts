@@ -2,7 +2,10 @@ import { Body, Controller, Post, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
 import { OrganizationId } from "../../common/org-id.decorator";
-import { DeliveryService } from "./delivery.service";
+import {
+  DeliveryService,
+  type CreateShipmentInput,
+} from "./delivery.service";
 
 @ApiTags("platform-delivery")
 @ApiBearerAuth("bearer")
@@ -12,10 +15,10 @@ export class DeliveryController {
   constructor(private readonly delivery: DeliveryService) {}
 
   @Post("shipments")
-  @ApiOperation({ summary: "Create shipment (stub)" })
+  @ApiOperation({ summary: "Create shipment (MVP)" })
   createShipment(
     @OrganizationId() organizationId: string,
-    @Body() body: unknown,
+    @Body() body: CreateShipmentInput,
   ) {
     return this.delivery.createShipment(organizationId, body);
   }

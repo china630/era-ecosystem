@@ -43,10 +43,10 @@
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
 | M0 | Shell | **MVP** | — |
-| M1 | B2B order entry | **PLANNED** | buyerCounterpartyId |
-| M2 | Credit limit display | **PLANNED** | Read Finance AR |
-| M3 | Pick/pack workflow | **PLANNED** | — |
-| M4 | Confirm shipment | **PLANNED** | `ORDER_CONFIRMED` |
+| M1 | B2B order entry | **MVP** | buyerCounterpartyId |
+| M2 | Credit limit display | **MVP** | Read Finance AR |
+| M3 | Pick/pack workflow | **MVP** | — |
+| M4 | Confirm shipment | **MVP** | `ORDER_CONFIRMED` |
 
 ---
 

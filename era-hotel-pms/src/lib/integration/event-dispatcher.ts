@@ -15,6 +15,8 @@ import {
 import {
   envelopeToReservationCompletedEvent,
   envelopeToNightAuditClosedEvent,
+  envelopeToInvoiceIssuedEvent,
+  envelopeToCityLedgerSnapshotEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
 import type {
@@ -343,7 +345,9 @@ export async function publishEvent(
 
   if (
     (envelope.eventType === 'SATELLITE_HOTEL_RESERVATION_COMPLETED' ||
-      envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED') &&
+      envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED' ||
+      envelope.eventType === 'SATELLITE_HOTEL_INVOICE_ISSUED' ||
+      envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT') &&
     eventGatewayMode() === 'orchestrator'
   ) {
     const organizationId =
@@ -362,7 +366,11 @@ export async function publishEvent(
     const contractEvent =
       envelope.eventType === 'SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED'
         ? envelopeToNightAuditClosedEvent(envelope, organizationId)
-        : envelopeToReservationCompletedEvent(envelope, organizationId);
+        : envelope.eventType === 'SATELLITE_HOTEL_INVOICE_ISSUED'
+          ? envelopeToInvoiceIssuedEvent(envelope, organizationId)
+          : envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT'
+            ? envelopeToCityLedgerSnapshotEvent(envelope, organizationId)
+            : envelopeToReservationCompletedEvent(envelope, organizationId);
     if (!contractEvent) {
       const msg = 'Failed to map envelope to @era/contracts event';
       await logOutboundEvent(envelope, 'FAILED', 0, msg);

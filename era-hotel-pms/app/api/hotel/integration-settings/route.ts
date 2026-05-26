@@ -10,6 +10,10 @@ import {
   DEFAULT_OUTBOUND_SETTINGS,
   type OutboundSettings,
 } from '@/lib/integration/integration-settings';
+import {
+  getSubscriptionMe,
+  createCustomDomain,
+} from '@/integration/control-plane-platform.client';
 
 const patchSchema = z.object({
   enabled: z.boolean().optional(),
@@ -33,6 +37,7 @@ const patchSchema = z.object({
     })
     .optional(),
   requireZeroBalanceOnCheckout: z.boolean().optional(),
+  customHostname: z.string().max(253).optional(),
 });
 
 export async function GET() {
@@ -40,7 +45,16 @@ export async function GET() {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.MASTER_DATA_MANAGE);
     const settings = await getOutboundSettings();
-    return jsonOk(serialize(settings));
+    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    let platformSubscription: unknown = null;
+    if (organizationId) {
+      try {
+        platformSubscription = await getSubscriptionMe({ organizationId });
+      } catch {
+        platformSubscription = null;
+      }
+    }
+    return jsonOk(serialize({ ...settings, platformSubscription }));
   } catch (err) {
     return handleRouteError(err);
   }
@@ -59,6 +73,20 @@ export async function PATCH(request: Request) {
       urls: { ...current.urls, ...partial.urls },
     };
     await saveIntegrationSettings(merged);
+    const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    if (organizationId && partial.customHostname?.trim()) {
+      try {
+        await createCustomDomain(
+          {
+            hostname: partial.customHostname.trim(),
+            metadata: { source: 'hotel_integration_settings' },
+          },
+          { organizationId },
+        );
+      } catch {
+        // optional custom domain
+      }
+    }
     return jsonOk(serialize(merged));
   } catch (err) {
     return handleRouteError(err);

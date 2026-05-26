@@ -147,6 +147,7 @@ function E6Simulator({ onDone }: { onDone: () => void }) {
 
 interface OutboundSettings {
   enabled: boolean;
+  platformSubscription?: Record<string, unknown> | null;
   realtime: {
     chargePosted: boolean;
     paymentReceived: boolean;
@@ -354,6 +355,18 @@ export default function IntegrationAdminPage() {
         }
       />
       <StatusMessage>{msg}</StatusMessage>
+
+      {settings.platformSubscription != null && (
+        <PageSection className="mb-6 rounded border border-[#E5E8EB] bg-[#F8F9FA] p-4 text-[13px] text-[#34495E]">
+          <p className="mb-2 text-xs font-semibold uppercase text-[#7F8C8D]">
+            {t('platformSubscription')}
+          </p>
+          <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs">
+            {JSON.stringify(settings.platformSubscription, null, 2)}
+          </pre>
+          <p className="mt-2 text-xs text-[#7F8C8D]">{t('platformSubscriptionHint')}</p>
+        </PageSection>
+      )}
 
       <PageSection className="mb-6 space-y-3 text-[13px] text-[#34495E]">
         <label className="flex items-center gap-2">

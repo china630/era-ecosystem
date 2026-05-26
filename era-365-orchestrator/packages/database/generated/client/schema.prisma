@@ -121,6 +121,49 @@ enum NotificationOutboxStatus {
   CANCELLED
 }
 
+enum PlatformPaymentLinkStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+enum PlatformPortalLinkStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum BookingAppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PlatformPromotionDiscountType {
+  PERCENT
+  FIXED_AZN
+}
+
+enum PlatformPromotionStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum PlatformCustomDomainStatus {
+  PENDING_DNS
+  ACTIVE
+  DISABLED
+}
+
+enum PlatformShipmentStatus {
+  CREATED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
 enum PermissionCategory {
   CORE
   BILLING
@@ -307,21 +350,22 @@ model LandingModuleMarketing {
 }
 
 model PaymentOrder {
-  id                  String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId      String               @map("organization_id") @db.Uuid
-  amountAzn           Decimal              @map("amount_azn") @db.Decimal(12, 2)
-  currency            String               @default("AZN")
-  status              PaymentOrderStatus   @default(PENDING)
-  provider            String               @default("pasha_bank")
-  providerTxnId       String?              @map("provider_txn_id")
-  monthsApplied       Int                  @default(1) @map("months_applied")
-  description         String               @default("")
-  idempotencyKey      String?              @unique @map("idempotency_key")
-  metadata            Json                 @default("{}")
-  createdAt           DateTime             @default(now()) @map("created_at")
-  paidAt              DateTime?            @map("paid_at")
-  organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  subscriptionInvoice SubscriptionInvoice?
+  id                   String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                @map("organization_id") @db.Uuid
+  amountAzn            Decimal               @map("amount_azn") @db.Decimal(12, 2)
+  currency             String                @default("AZN")
+  status               PaymentOrderStatus    @default(PENDING)
+  provider             String                @default("pasha_bank")
+  providerTxnId        String?               @map("provider_txn_id")
+  monthsApplied        Int                   @default(1) @map("months_applied")
+  description          String                @default("")
+  idempotencyKey       String?               @unique @map("idempotency_key")
+  metadata             Json                  @default("{}")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  paidAt               DateTime?             @map("paid_at")
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptionInvoice  SubscriptionInvoice?
+  platformPaymentLinks PlatformPaymentLink[]
 
   @@index([organizationId])
   @@index([status])
@@ -409,6 +453,14 @@ model Organization {
   notificationTemplates     NotificationTemplate[]
   notificationOutboxEntries NotificationOutbox[]
   notificationDeliveryLogs  NotificationDeliveryLog[]
+  platformPaymentLinks      PlatformPaymentLink[]
+  platformPortalLinks       PlatformPortalLink[]
+  bookableResources         BookableResource[]
+  bookingSlots              BookingSlot[]
+  bookingAppointments       BookingAppointment[]
+  platformPromotions        PlatformPromotion[]
+  platformCustomDomains     PlatformCustomDomain[]
+  platformShipments         PlatformShipment[]
   owner                     User?                     @relation("OrganizationOwner", fields: [ownerId], references: [id])
 
   @@index([ownerId])
@@ -718,4 +770,148 @@ model NotificationDeliveryLog {
   @@index([outboxId, attemptedAt])
   @@index([organizationId, attemptedAt])
   @@map("notification_delivery_logs")
+}
+
+model PlatformPaymentLink {
+  id               String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                    @map("organization_id") @db.Uuid
+  amountAzn        Decimal                   @map("amount_azn") @db.Decimal(12, 2)
+  currency         String                    @default("AZN") @db.VarChar(3)
+  counterpartyRef  String?                   @map("counterparty_ref") @db.VarChar(128)
+  sourceEntityType String                    @map("source_entity_type") @db.VarChar(64)
+  sourceEntityId   String                    @map("source_entity_id") @db.VarChar(128)
+  paymentOrderId   String?                   @map("payment_order_id") @db.Uuid
+  token            String                    @unique @db.VarChar(64)
+  paymentUrl       String?                   @map("payment_url")
+  status           PlatformPaymentLinkStatus @default(PENDING)
+  expiresAt        DateTime?                 @map("expires_at") @db.Timestamptz(6)
+  metadata         Json                      @default("{}")
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  paymentOrder     PaymentOrder?             @relation(fields: [paymentOrderId], references: [id])
+
+  @@index([organizationId, status])
+  @@map("platform_payment_links")
+}
+
+model PlatformPortalLink {
+  id             String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  token          String                   @unique @db.VarChar(64)
+  entityType     String                   @map("entity_type") @db.VarChar(64)
+  entityId       String                   @map("entity_id") @db.VarChar(128)
+  status         PlatformPortalLinkStatus @default(ACTIVE)
+  expiresAt      DateTime?                @map("expires_at") @db.Timestamptz(6)
+  metadata       Json                     @default("{}")
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, entityType, entityId])
+  @@map("platform_portal_links")
+}
+
+model BookableResource {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  resourceKey    String               @map("resource_key") @db.VarChar(64)
+  name           String               @db.VarChar(256)
+  metadata       Json                 @default("{}")
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  slots          BookingSlot[]
+  appointments   BookingAppointment[]
+
+  @@unique([organizationId, resourceKey])
+  @@map("bookable_resources")
+}
+
+model BookingSlot {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  resourceId     String               @map("resource_id") @db.Uuid
+  startsAt       DateTime             @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime             @map("ends_at") @db.Timestamptz(6)
+  capacity       Int                  @default(1)
+  bookedCount    Int                  @default(0) @map("booked_count")
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  resource       BookableResource     @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  appointments   BookingAppointment[]
+
+  @@index([organizationId, startsAt])
+  @@map("booking_slots")
+}
+
+model BookingAppointment {
+  id             String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                   @map("organization_id") @db.Uuid
+  resourceId     String?                  @map("resource_id") @db.Uuid
+  slotId         String?                  @map("slot_id") @db.Uuid
+  customerRef    String                   @map("customer_ref") @db.VarChar(128)
+  customerPhone  String?                  @map("customer_phone") @db.VarChar(32)
+  customerName   String?                  @map("customer_name") @db.VarChar(256)
+  scheduledAt    DateTime                 @map("scheduled_at") @db.Timestamptz(6)
+  status         BookingAppointmentStatus @default(PENDING)
+  metadata       Json                     @default("{}")
+  createdAt      DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  resource       BookableResource?        @relation(fields: [resourceId], references: [id])
+  slot           BookingSlot?             @relation(fields: [slotId], references: [id])
+
+  @@index([organizationId, scheduledAt])
+  @@map("booking_appointments")
+}
+
+model PlatformPromotion {
+  id             String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                        @map("organization_id") @db.Uuid
+  code           String                        @db.VarChar(64)
+  name           String                        @db.VarChar(256)
+  discountType   PlatformPromotionDiscountType @map("discount_type")
+  discountValue  Decimal                       @map("discount_value") @db.Decimal(12, 2)
+  validFrom      DateTime?                     @map("valid_from") @db.Timestamptz(6)
+  validUntil     DateTime?                     @map("valid_until") @db.Timestamptz(6)
+  status         PlatformPromotionStatus       @default(ACTIVE)
+  metadata       Json                          @default("{}")
+  createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@map("platform_promotions")
+}
+
+model PlatformCustomDomain {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  hostname       String                     @db.VarChar(253)
+  status         PlatformCustomDomainStatus @default(PENDING_DNS)
+  metadata       Json                       @default("{}")
+  createdAt      DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, hostname])
+  @@map("platform_custom_domains")
+}
+
+model PlatformShipment {
+  id               String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String                 @map("organization_id") @db.Uuid
+  externalRef      String?                @map("external_ref") @db.VarChar(128)
+  trackingToken    String                 @unique @map("tracking_token") @db.VarChar(64)
+  status           PlatformShipmentStatus @default(CREATED)
+  sourceEntityType String                 @map("source_entity_type") @db.VarChar(64)
+  sourceEntityId   String                 @map("source_entity_id") @db.VarChar(128)
+  recipientPhone   String?                @map("recipient_phone") @db.VarChar(32)
+  metadata         Json                   @default("{}")
+  createdAt        DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization     Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, status])
+  @@index([organizationId, sourceEntityType, sourceEntityId])
+  @@map("platform_shipments")
 }

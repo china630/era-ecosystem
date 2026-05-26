@@ -383,6 +383,7 @@ model ContractPricingRule {
 
 model Guest {
   id             String         @id @default(uuid())
+  globalPersonId String?
   fullName       String
   voen           String?
   passportNumber String

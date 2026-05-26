@@ -38,7 +38,7 @@ Satellites emit typed events → orchestrator → finance `SatelliteEventWorker`
 
 Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, Wave 5 FIN-01): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
 
-Planned (not yet wired in finance dispatch): `SATELLITE_HOTEL_INVOICE_ISSUED`, city ledger snapshot events.
+**Live** in Finance dispatch (Wave 5 / H-P0): `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` (see [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md)).
 
 ## CRM boundary
 

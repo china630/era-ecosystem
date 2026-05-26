@@ -53,6 +53,17 @@ type PlatformInvoiceRow = {
   createdAt: string;
 };
 
+type NotificationOutboxRow = {
+  id: string;
+  templateKey: string;
+  channel: string;
+  recipient: string;
+  status: string;
+  createdAt: string;
+  sourceEntityType: string;
+  sourceEntityId: string;
+};
+
 type MarketplaceBundle = {
   id: string;
   name: string;
@@ -201,6 +212,10 @@ export default function SubscriptionSettingsPage() {
     [],
   );
   const [invoicesLoading, setInvoicesLoading] = useState(false);
+  const [notificationOutbox, setNotificationOutbox] = useState<
+    NotificationOutboxRow[]
+  >([]);
+  const [outboxLoading, setOutboxLoading] = useState(false);
   const [invoicesErr, setInvoicesErr] = useState<string | null>(null);
 
   const [consentModal, setConsentModal] = useState<
@@ -262,6 +277,30 @@ export default function SubscriptionSettingsPage() {
       cancelled = true;
     };
   }, [token, user?.role]);
+
+  useEffect(() => {
+    if (!token || !canAccessBilling(user?.role ?? undefined)) {
+      setNotificationOutbox([]);
+      return;
+    }
+    let cancelled = false;
+    setOutboxLoading(true);
+    void (async () => {
+      const res = await apiFetch("/api/platform/notifications/v1/outbox?limit=20");
+      if (cancelled) return;
+      if (!res.ok) {
+        setNotificationOutbox([]);
+        setOutboxLoading(false);
+        return;
+      }
+      const data = (await res.json()) as { items?: NotificationOutboxRow[] };
+      setNotificationOutbox(data.items ?? []);
+      setOutboxLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, user?.role, organizationId]);
 
   const loadMarketplace = useCallback(async () => {
     if (!token || !canAccessBilling(user?.role ?? undefined)) {
@@ -721,6 +760,49 @@ export default function SubscriptionSettingsPage() {
                         >
                           {t("subscriptionSettings.downloadPdf")}
                         </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+
+      {canAccessBilling(user?.role ?? undefined) && (
+        <section className={`${CARD_CONTAINER_CLASS} space-y-3`}>
+          <h2 className="text-lg font-semibold text-[#2C3E50]">
+            Notifications delivery log
+          </h2>
+          <p className="text-sm text-[#7F8C8D]">
+            Platform Notifications Pack outbox (last 20 entries).
+          </p>
+          {outboxLoading && <p className="text-sm text-[#7F8C8D]">Loading…</p>}
+          {!outboxLoading && notificationOutbox.length === 0 && (
+            <p className="text-sm text-[#7F8C8D]">No notification entries yet.</p>
+          )}
+          {!outboxLoading && notificationOutbox.length > 0 && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[#7F8C8D] border-b border-[#EBEDF0]">
+                    <th className="px-3 py-2">Template</th>
+                    <th className="px-3 py-2">Channel</th>
+                    <th className="px-3 py-2">Recipient</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Created</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EBEDF0] text-[#34495E]">
+                  {notificationOutbox.map((row) => (
+                    <tr key={row.id}>
+                      <td className="px-3 py-2">{row.templateKey}</td>
+                      <td className="px-3 py-2">{row.channel}</td>
+                      <td className="px-3 py-2">{row.recipient}</td>
+                      <td className="px-3 py-2">{row.status}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        {new Date(row.createdAt).toLocaleString(locale)}
                       </td>
                     </tr>
                   ))}

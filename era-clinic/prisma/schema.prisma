@@ -63,6 +63,7 @@ model Appointment {
   practitionerId String
   scheduledAt    DateTime
   status         String       @default("SCHEDULED")
+  reminderSentAt DateTime?
   patientRef     PatientRef   @relation(fields: [patientRefId], references: [id])
   practitioner   Practitioner @relation(fields: [practitionerId], references: [id])
   visit          Visit?

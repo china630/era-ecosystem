@@ -3,7 +3,7 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   authCookieName,
-  SATELLITE_ROLE,
+  hasPlatformCapability,
   verifySatelliteSession,
 } from "@era/satellite-kit";
 
@@ -19,15 +19,14 @@ export default async function ExecutivePage() {
     redirect("/login");
   }
 
-  const isOwner =
-    session.role === SATELLITE_ROLE.BUSINESS_OWNER || session.isOwner;
+  const canView = hasPlatformCapability(session, "canViewExecutive");
 
   return (
     <main className="mx-auto max-w-3xl p-6">
       <PageHeader title="Executive summary" subtitle="Retail POS — owner view" />
-      {!isOwner ? (
+      {!canView ? (
         <p className="mt-4 text-sm text-red-600">
-          Access restricted to BUSINESS_OWNER (Finance OWNER/DIRECTOR via SSO).
+          Access restricted to platform roles (OWNER/DIRECTOR/ADMIN/ACCOUNTANT via SSO).
         </p>
       ) : (
         <div className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
