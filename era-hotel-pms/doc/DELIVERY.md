@@ -280,3 +280,12 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] Wave F §4 — delivery/loyalty on folio invoice; `createCustomDomain` on integration-settings PATCH
 
 Client: `@era/satellite-kit`.
+
+## W2-E — Enrichment (Gemini отельный ERP)
+
+PRD M20–M23 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
+
+- [x] M20: Yield management rules (BAR by occupancy stub)
+- [x] M21: Guest loyalty tier hook → `platform_loyalty`
+- [x] M22: Room service QR menu → fb-pos ticket
+- [x] M23: Maintenance work order from HK

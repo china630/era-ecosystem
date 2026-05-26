@@ -25,6 +25,7 @@ type Lead = {
   ownerId?: string | null;
   owner?: { id: string; fullName: string; login: string } | null;
   estimatedAmount?: string | number | null;
+  nextContactAt?: string | null;
 };
 
 type SessionUser = {
@@ -105,6 +106,26 @@ function LeadsPipelineContent() {
       if (!res.ok) throw new Error(data.error ?? "Convert failed");
       setMessage(`Lead converted — event dispatched for ${id.slice(0, 8)}`);
       await loadLeads();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    }
+  }
+
+  async function scheduleFollowUp(leadId: string, nextContactAt: string) {
+    if (!nextContactAt) return;
+    setMessage("");
+    try {
+      const res = await fetch(`/api/leads/${leadId}/follow-up`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nextContactAt: new Date(nextContactAt).toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Follow-up failed");
+      setMessage(`Follow-up scheduled for ${leadId.slice(0, 8)}`);
+      await loadLeads(myLeadsOnly);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     }
@@ -204,14 +225,33 @@ function LeadsPipelineContent() {
                         </select>
                       </label>
                     )}
+                    {lead.nextContactAt && (
+                      <div className="text-[11px] text-[#E67E22]">
+                        Next: {new Date(lead.nextContactAt).toLocaleString()}
+                      </div>
+                    )}
                     {lead.stage !== "WON" && lead.stage !== "LOST" && (
-                      <button
-                        type="button"
-                        className="mt-1 text-[11px] text-[#2980B9] underline"
-                        onClick={() => convertLead(lead.id)}
-                      >
-                        Convert
-                      </button>
+                      <>
+                        <label className="mt-1 block text-[11px]">
+                          Follow-up
+                          <input
+                            type="datetime-local"
+                            className="mt-0.5 block w-full rounded border px-1 py-0.5"
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                void scheduleFollowUp(lead.id, e.target.value);
+                              }
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          className="mt-1 text-[11px] text-[#2980B9] underline"
+                          onClick={() => convertLead(lead.id)}
+                        >
+                          Convert
+                        </button>
+                      </>
                     )}
                   </li>
                 ))}

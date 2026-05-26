@@ -10,16 +10,12 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   Decimal,
   EmployeeKind,
+  OrganizationKind,
   PayrollRunStatus,
   UserRole,
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  PAYROLL_EXPENSE_ACCOUNT_CODE,
-  PAYROLL_PAYABLE_ACCOUNT_CODE,
-  PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { CreatePayrollRunDto } from "./dto/create-payroll-run.dto";
 import { PayrollHeavyQueueService } from "./payroll-heavy.queue";
@@ -52,6 +48,7 @@ export class PayrollService {
     private readonly config: ConfigService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
     private readonly notifications: NotificationService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   listRuns(organizationId: string) {
@@ -347,7 +344,11 @@ export class PayrollService {
     });
   }
 
-  async markSalaryRegistryPaid(organizationId: string, registryId: string) {
+  async markSalaryRegistryPaid(
+    organizationId: string,
+    registryId: string,
+    opts?: { budgetLineId?: string },
+  ) {
     const row = await (this.prisma as any).salaryRegistry.findFirst({
       where: { id: registryId, organizationId },
       include: {
@@ -490,6 +491,32 @@ export class PayrollService {
             : [];
         const deptNameById = new Map(departments.map((d) => [d.id, d.name]));
 
+        const orgKind = await this.posting.getOrganizationKind(organizationId);
+        let payrollExpenseCode = await this.posting.resolveAccountCode(
+          organizationId,
+          "PAYROLL_EXPENSE",
+          tx,
+        );
+        if (opts?.budgetLineId && orgKind === OrganizationKind.BUDGET) {
+          const budgetLine = await tx.budgetLine.findFirst({
+            where: { id: opts.budgetLineId },
+            include: { budgetYear: true },
+          });
+          if (
+            !budgetLine ||
+            budgetLine.budgetYear.organizationId !== organizationId
+          ) {
+            throw new NotFoundException("Budget line not found");
+          }
+          payrollExpenseCode = budgetLine.accountCode.trim();
+        }
+        const [payrollPayableCode, supplierPayableCode, payrollTaxPayableCode] =
+          await Promise.all([
+            this.posting.resolveAccountCode(organizationId, "PAYROLL_PAYABLE", tx),
+            this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE", tx),
+            this.posting.resolveAccountCode(organizationId, "PAYROLL_TAX_PAYABLE", tx),
+          ]);
+
         for (const [idx, b] of ordered.entries()) {
           const { emp, contr } = b;
           const cr521 = emp.workerTaxes
@@ -511,49 +538,49 @@ export class PayrollService {
 
           if (emp.gross.gt(0)) {
             lines.push({
-              accountCode: PAYROLL_EXPENSE_ACCOUNT_CODE,
+              accountCode: payrollExpenseCode,
               debit: emp.gross.toString(),
               credit: 0,
             });
           }
           if (emp.employer.gt(0)) {
             lines.push({
-              accountCode: PAYROLL_EXPENSE_ACCOUNT_CODE,
+              accountCode: payrollExpenseCode,
               debit: emp.employer.toString(),
               credit: 0,
             });
           }
           if (contr.gross.gt(0)) {
             lines.push({
-              accountCode: PAYROLL_EXPENSE_ACCOUNT_CODE,
+              accountCode: payrollExpenseCode,
               debit: contr.gross.toString(),
               credit: 0,
             });
           }
           if (emp.net.gt(0)) {
             lines.push({
-              accountCode: PAYROLL_PAYABLE_ACCOUNT_CODE,
+              accountCode: payrollPayableCode,
               debit: 0,
               credit: emp.net.toString(),
             });
           }
           if (contr.gross.gt(0)) {
             lines.push({
-              accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+              accountCode: supplierPayableCode,
               debit: 0,
               credit: contr.gross.toString(),
             });
           }
           if (contr.withholding521.gt(0)) {
             lines.push({
-              accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+              accountCode: supplierPayableCode,
               debit: contr.withholding521.toString(),
               credit: 0,
             });
           }
           if (cr521.gt(0)) {
             lines.push({
-              accountCode: PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+              accountCode: payrollTaxPayableCode,
               debit: 0,
               credit: cr521.toString(),
             });

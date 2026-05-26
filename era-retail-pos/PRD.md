@@ -101,10 +101,21 @@ RBAC: операционные роли в satellite DB; membership/OWNER — or
 | M6b | Preset apparel | Lightspeed variants | **MVP** | — |
 | M6c | Preset electronics | Square serial | **MVP** | — |
 | M6d | Preset pharmacy | PharmacyKeeper OTC | **MVP** | — |
-| M7 | Product lookup (read cache) | Square catalog search | **PLANNED** | SKU master в Finance |
+| M7 | Product lookup (read cache) | Square catalog search | **MVP** | `GET /api/products/search` + `ProductCache` |
 | M8 | Offline queue & replay | Square offline | **DEFERRED** | — |
 | M9 | Fiscal device (KKM) | Local AZ providers | **DEFERRED** | Finance kassa module |
 | M10 | Marketplace sync | Umico/Kaspi | **DEFERRED** | Stock in Finance |
+| **M11** | **Promotions at checkout (lite)** | Lightspeed promos | **MVP** | `POST /api/receipts/:id/apply-promo` до оплаты; [`platform_loyalty`](../docs/PLATFORM_ADDONS.md) later. |
+| **M12** | **Customer at POS** | Square customer on sale | **MVP** | `customerPhone`, `loyaltyRef` на `Receipt`. |
+
+**M2 (extend):** X-отчёт по смене без Z-close — `GET /api/shifts/:id/x-report` (**MVP**).
+
+| ID | Module | Benchmark | Status | Finance handoff |
+|----|--------|-----------|--------|-----------------|
+| M13 | Omnichannel OMS (BOPIS, pickup slots) | Shopify OMS | **W2 PLANNED** | [`platform_delivery`](../docs/PLATFORM_ADDONS.md) |
+| M14 | Mobile stock / shelf label check | WMS lite | **W2 DEFERRED** | Inventory **Finance** |
+| M15 | Auto-replenishment suggest | 1C заказ | **W2 DEFERRED** | **Finance** purchases |
+| M16 | Supplier SRM / invoice match | — | **W2 DEFERRED** | **Finance** |
 
 ---
 
@@ -189,3 +200,5 @@ Env: `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_O
 | 2026-05-24 | 1.0 | Full PRD: benchmarks, modules, stories, phases |
 | 2026-05-25 | 1.1 | SP1: R2 preset config API, R3 void/return routes, shift close event dispatch |
 | 2026-05-25 | 1.2 | SW1: ReceiptLine preset fields + validation, void line API, return event dispatch, preset-aware `/pos` |
+| 2026-05-28 | 1.3 | Enrichment backlog: M11 promotions at checkout, M12 customer at POS, M7/M2 extend — [MODULES_CATALOG](../docs/MODULES_CATALOG.md) |
+| 2026-05-28 | 1.4 | W2 modules M13–M16 (Gemini retail ERP) |

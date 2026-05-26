@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { accountDisplayName } from "../../../lib/account-display-name";
 import { apiFetch } from "../../../lib/api-client";
@@ -148,19 +149,24 @@ export default function NasChartSettingsPage() {
         title={t("chartPage.title")}
         subtitle={chartSubtitle}
         actions={
-          canImport ? (
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => {
-                setModalOpen(true);
-                setSearch("");
-                setDebouncedSearch("");
-              }}
-            >
-              {t("chartPage.addFromCatalog")}
-            </button>
-          ) : undefined
+          <div className="flex flex-wrap gap-2">
+            <Link href="/accounting/posting-roles" className={SECONDARY_BUTTON_CLASS}>
+              {t("chartPage.postingRolesLink", "Posting roles")}
+            </Link>
+            {canImport ? (
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={() => {
+                  setModalOpen(true);
+                  setSearch("");
+                  setDebouncedSearch("");
+                }}
+              >
+                {t("chartPage.addFromCatalog")}
+              </button>
+            ) : null}
+          </div>
         }
       />
 

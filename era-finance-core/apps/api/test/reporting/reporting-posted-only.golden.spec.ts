@@ -1,6 +1,7 @@
 import { Prisma } from "@erafinance/database";
 import { LedgerType } from "@erafinance/database";
 import { ReportingService } from "../../src/reporting/reporting.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 
 describe("ReportingService golden: posted-only trial balance", () => {
@@ -57,6 +58,7 @@ describe("ReportingService golden: posted-only trial balance", () => {
       prisma,
       {} as never,
       { get: jest.fn() } as never,
+      createMockPostingResolver(),
     );
 
     const out = await svc.trialBalance(

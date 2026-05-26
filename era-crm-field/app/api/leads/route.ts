@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { computeLeadScore } from "@/lib/lead-score";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -29,15 +30,22 @@ export async function GET(req: Request) {
           ? { ownerId }
           : undefined;
 
+    const sort = searchParams.get("sort");
     const leads = await prisma.lead.findMany({
       where,
       include: {
         owner: { select: { id: true, fullName: true, login: true } },
+        visits: true,
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: sort === "score" ? { score: "desc" } : { updatedAt: "desc" },
       take: 100,
     });
-    return jsonOk(leads);
+    const withScores = leads.map((l) => {
+      const score =
+        l.scoreUpdatedAt != null ? l.score : computeLeadScore(l);
+      return { ...l, score };
+    });
+    return jsonOk(withScores);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -17,15 +17,9 @@ import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
 import type { CreateInventoryAuditDto } from "./dto/create-inventory-audit.dto";
 import { AccountingService } from "../accounting/accounting.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { getClosedPeriodKeys, monthKeyUtc } from "../reporting/reporting-period.util";
 import { AccessControlService } from "../access/access-control.service";
-import {
-  ACCOUNTABLE_PERSONS_ACCOUNT_CODE,
-  FINISHED_GOODS_ACCOUNT_CODE,
-  INVENTORY_GOODS_ACCOUNT_CODE,
-  INVENTORY_SURPLUS_INCOME_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-} from "../ledger.constants";
 import { StockService } from "../stock/stock.service";
 import { parseInventorySettings } from "./inventory-settings";
 import { assertWarehouseNotUnderReconciliation } from "./inventory-reconciliation-lock";
@@ -50,6 +44,7 @@ export class InventoryAuditService {
     private readonly accounting: AccountingService,
     private readonly access: AccessControlService,
     private readonly stock: StockService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async findAll(
@@ -458,10 +453,14 @@ export class InventoryAuditService {
         0,
       ),
     );
+    const [finishedGoodsCode, inventoryGoodsCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "FINISHED_GOODS"),
+      this.posting.resolveAccountCode(organizationId, "INVENTORY_GOODS"),
+    ]);
     const invAcc =
-      draft.warehouse.inventoryAccountCode === "204"
-        ? FINISHED_GOODS_ACCOUNT_CODE
-        : INVENTORY_GOODS_ACCOUNT_CODE;
+      draft.warehouse.inventoryAccountCode === finishedGoodsCode
+        ? finishedGoodsCode
+        : inventoryGoodsCode;
 
     return this.prisma.$transaction(async (tx) => {
       const fresh = await tx.inventoryAudit.findFirst({
@@ -637,13 +636,23 @@ export class InventoryAuditService {
         }
       }
 
+      const [
+        inventorySurplusIncomeCode,
+        miscExpenseCode,
+        accountablePersonsCode,
+      ] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "INVENTORY_SURPLUS_INCOME", tx),
+        this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
+        this.posting.resolveAccountCode(organizationId, "ACCOUNTABLE_PERSONS", tx),
+      ]);
+
       const glLines: Array<{ accountCode: string; debit: string | number; credit: string | number }> =
         [];
       if (surplusTotal.gt(0)) {
         glLines.push(
           { accountCode: invAcc, debit: surplusTotal.toString(), credit: 0 },
           {
-            accountCode: INVENTORY_SURPLUS_INCOME_ACCOUNT_CODE,
+            accountCode: inventorySurplusIncomeCode,
             debit: 0,
             credit: surplusTotal.toString(),
           },
@@ -652,7 +661,7 @@ export class InventoryAuditService {
       if (shortageWriteoffTotal.gt(0)) {
         glLines.push(
           {
-            accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+            accountCode: miscExpenseCode,
             debit: shortageWriteoffTotal.toString(),
             credit: 0,
           },
@@ -662,7 +671,7 @@ export class InventoryAuditService {
       if (shortageEmployeeTotal.gt(0)) {
         glLines.push(
           {
-            accountCode: ACCOUNTABLE_PERSONS_ACCOUNT_CODE,
+            accountCode: accountablePersonsCode,
             debit: shortageEmployeeTotal.toString(),
             credit: 0,
           },

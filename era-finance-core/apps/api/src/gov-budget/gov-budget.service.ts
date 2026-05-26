@@ -6,15 +6,41 @@ import {
 import {
   BudgetYearStatus,
   Decimal,
+  OrganizationKind,
+  Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { CheckBudgetLimitDto } from "./dto/check-budget-limit.dto";
 import { CreateBudgetYearDto } from "./dto/create-budget-year.dto";
+import type { RecordBudgetExpenseDto } from "./dto/record-budget-expense.dto";
+import type { RecordBudgetFundingDto } from "./dto/record-budget-funding.dto";
+
+function parseDateOnly(raw: string | undefined): Date {
+  if (!raw?.trim()) return new Date();
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw.trim());
+  if (!m) throw new BadRequestException("date must be YYYY-MM-DD");
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0));
+}
 
 @Injectable()
 export class GovBudgetService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly resolver: PostingAccountResolver,
+    private readonly postingJournal: PostingJournalBuilder,
+  ) {}
+
+  private async assertBudgetOrganization(organizationId: string): Promise<void> {
+    const kind = await this.resolver.getOrganizationKind(organizationId);
+    if (kind !== OrganizationKind.BUDGET) {
+      throw new BadRequestException(
+        "Gov-budget ledger postings require a BUDGET organization",
+      );
+    }
+  }
 
   async listYears(
     organizationId: string,
@@ -173,13 +199,105 @@ export class GovBudgetService {
     if (!line || line.budgetYear.organizationId !== organizationId) {
       throw new NotFoundException("Budget line not found");
     }
-    return this.prisma.budgetCommitment.create({
+    const commitment = await this.prisma.budgetCommitment.create({
       data: {
         budgetLineId,
         amount: new Decimal(amount.toString()),
         referenceType,
         referenceId,
       },
+    });
+    return commitment;
+  }
+
+  /**
+   * Treasury funding received — Dr bank settlement / Cr budget funding (334).
+   */
+  async recordFundingReceipt(
+    organizationId: string,
+    dto: RecordBudgetFundingDto,
+  ) {
+    await this.assertBudgetOrganization(organizationId);
+    if (dto.budgetYearId) {
+      await this.getYear(organizationId, dto.budgetYearId);
+    }
+    const amount = new Prisma.Decimal(dto.amount);
+    const date = parseDateOnly(dto.date);
+    const reference = dto.reference?.trim() || `FUND-${Date.now()}`;
+    const description =
+      dto.description?.trim() ||
+      `Budget funding receipt (${amount.toString()} AZN)`;
+
+    return this.prisma.$transaction(async (tx) => {
+      const { transactionId } = await this.postingJournal.postInTransaction(tx, {
+        organizationId,
+        schemaId: "BUDGET_APPROPRIATION",
+        amounts: { main: amount },
+        date,
+        reference,
+        description,
+      });
+      return { ok: true, transactionId, reference };
+    });
+  }
+
+  /**
+   * Budget expense execution — Dr budget line NAS / Cr bank settlement (103).
+   */
+  async recordExpenseExecution(
+    organizationId: string,
+    dto: RecordBudgetExpenseDto,
+  ) {
+    await this.assertBudgetOrganization(organizationId);
+    const line = await this.prisma.budgetLine.findFirst({
+      where: { id: dto.budgetLineId },
+      include: { budgetYear: true },
+    });
+    if (!line || line.budgetYear.organizationId !== organizationId) {
+      throw new NotFoundException("Budget line not found");
+    }
+    if (line.budgetYear.status !== BudgetYearStatus.APPROVED) {
+      throw new BadRequestException("Budget year must be APPROVED");
+    }
+
+    const amount = new Prisma.Decimal(dto.amount);
+    const check = await this.checkLimit(organizationId, {
+      budgetLineId: dto.budgetLineId,
+      amount: Number(amount.toString()),
+    });
+    if (!check.allowed) {
+      throw new BadRequestException({
+        code: check.reason ?? "BUDGET_LIMIT_EXCEEDED",
+        message: "Budget line limit exceeded",
+        ...check,
+      });
+    }
+
+    const date = parseDateOnly(dto.date);
+    const reference = dto.reference?.trim() || `EXEC-${Date.now()}`;
+    const description =
+      dto.description?.trim() ||
+      `Budget execution ${line.accountCode} (${amount.toString()} AZN)`;
+
+    return this.prisma.$transaction(async (tx) => {
+      const { transactionId } = await this.postingJournal.postInTransaction(tx, {
+        organizationId,
+        schemaId: "BUDGET_EXPENSE_EXECUTION",
+        amounts: { main: amount },
+        date,
+        reference,
+        description,
+        dynamicAccounts: { debitAccountCode: line.accountCode.trim() },
+      });
+      await tx.budgetCommitment.create({
+        data: {
+          budgetLineId: line.id,
+          amount,
+          referenceType: "BUDGET_EXPENSE_EXECUTION",
+          referenceId: transactionId,
+        },
+      });
+      return { ok: true, transactionId, reference, budgetLineId: line.id };
     });
   }
 
@@ -216,7 +334,7 @@ export class GovBudgetService {
       factTotal: factTotal.toFixed(4),
       remainingTotal: planTotal.sub(factTotal).toFixed(4),
       lines: lineItems,
-      note: "Fact reflects commitments only; ledger postings are a future phase.",
+      note: "Fact includes commitments; use POST /gov-budget/funding and /gov-budget/expense-execution for ledger.",
     };
   }
 

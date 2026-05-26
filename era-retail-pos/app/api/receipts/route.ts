@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     const validationError = validateReceiptLines(preset, body.lines);
     if (validationError) return jsonError(validationError, 400);
 
-    const amountNet = body.lines.reduce(
+    const subtotalAmount = body.lines.reduce(
       (sum, line) => sum + computeLineTotal(line),
       0,
     );
@@ -52,7 +52,8 @@ export async function POST(req: Request) {
         outletId: shift.register.outletId,
         registerId: shift.registerId,
         shiftId: shift.id,
-        amountNet,
+        subtotalAmount,
+        amountNet: subtotalAmount,
         lines: {
           create: body.lines.map((line) => ({
             description: line.description,

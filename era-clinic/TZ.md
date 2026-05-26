@@ -55,6 +55,15 @@ Event: `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` — `labOrderId`, `visitId?`, `pat
 | `approvedBy` | String (user id) |
 | `reason` | String |
 
+## W1-E — Enrichment
+
+| Method | Path | Model |
+|--------|------|-------|
+| GET | `/api/catalog/services` | `ServiceCatalogCache` (code, name, priceNet) |
+| POST | `/api/catalog/sync` | Seed/sync price list stub (M6) |
+| POST | `/api/lab-orders/:id/results` | `resultJson` lines with `flag: CRITICAL` (M5) |
+| GET | `/api/lab-orders?criticalOnly=true` | Filter orders with critical results |
+
 ## Finance boundary
 
 Insurance billing, full patient billing — deferred to Finance MDM + AR. See [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).

@@ -1,3 +1,4 @@
+import { createMockPostingResolver } from "../../test/helpers/mock-posting-resolver";
 import { ManufacturingOverheadService } from "./manufacturing-overhead.service";
 
 describe("ManufacturingOverheadService.allocatePeriod", () => {
@@ -12,7 +13,11 @@ describe("ManufacturingOverheadService.allocatePeriod", () => {
       $transaction: jest.fn(),
     };
     const accounting = {};
-    const svc = new ManufacturingOverheadService(prisma as any, accounting as any);
+    const svc = new ManufacturingOverheadService(
+      prisma as any,
+      accounting as any,
+      createMockPostingResolver(),
+    );
     const out = await svc.allocatePeriod(orgId, "2026-05");
     expect(out.poolsProcessed).toBe(0);
     expect(out.allocationsCreated).toBe(0);

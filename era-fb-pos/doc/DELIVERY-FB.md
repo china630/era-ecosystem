@@ -69,6 +69,13 @@ node scripts/quartet-smoke.mjs
 - [x] Health in `scripts/quartet-smoke.mjs`
 - [x] UAT steps in [UAT-SMOKE.md](./UAT-SMOKE.md) § Quartet
 
+## W2-E — Enrichment (Gemini ресторанный ERP)
+
+- [x] M11: KDS course timing / fire delay
+- [x] M12: Recipe depletion on ticket close (link Finance manufacturing)
+- [x] M13: Delivery aggregator order inbox
+- [ ] M14: Labor roster PIN — deferred
+
 ## SP8 — Platform RBAC consumer (§2.1)
 
 - [x] Hybrid: local `FB_WAITER` / `FB_MANAGER`; platform OWNER/ACCOUNTANT via SSO (`financeRole`)

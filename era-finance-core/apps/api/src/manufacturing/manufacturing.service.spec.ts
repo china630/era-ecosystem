@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Decimal } from "@erafinance/database";
+import { createMockPostingResolver } from "../../test/helpers/mock-posting-resolver";
 import { ManufacturingService } from "./manufacturing.service";
 
 describe("ManufacturingService.computeAvailableOutput", () => {
@@ -19,6 +20,7 @@ describe("ManufacturingService.computeAvailableOutput", () => {
       prisma as any,
       {} as any,
       {} as any,
+      createMockPostingResolver(),
     );
   }
 

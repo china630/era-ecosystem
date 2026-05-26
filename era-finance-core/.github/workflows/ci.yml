@@ -49,6 +49,9 @@ jobs:
         run: npm ci
       - name: Prisma migrate (deploy)
         run: npm run db:migrate:deploy
+      - name: Validate posting role presets
+        run: npx tsx prisma/scripts/validate-posting-roles.ts
+        working-directory: packages/database
       - name: ESLint API
         run: npm run lint -w @erafinance/api
       - name: Unit tests (API src only)

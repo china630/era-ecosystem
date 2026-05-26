@@ -15,7 +15,7 @@ import { AccountingService } from "../accounting/accounting.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { monthRangeUtc } from "../reporting/reporting-period.util";
 import { roundMoney2 } from "../fixed-assets/decimal-round";
-import { MANUFACTURING_OVERHEAD_CREDIT_ACCOUNT_CODE } from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { CreateOverheadDriverDto } from "./dto/create-overhead-driver.dto";
 import { CreateOverheadPoolDto } from "./dto/create-overhead-pool.dto";
 import { UpdateOverheadDriverDto } from "./dto/update-overhead-driver.dto";
@@ -47,6 +47,7 @@ export class ManufacturingOverheadService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   listDrivers(organizationId: string) {
@@ -133,10 +134,14 @@ export class ManufacturingOverheadService {
       orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
     });
 
+    const overheadCreditCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "MANUFACTURING_OVERHEAD_CREDIT",
+    );
     const overheadAccounts = await this.prisma.account.findMany({
       where: {
         organizationId,
-        code: MANUFACTURING_OVERHEAD_CREDIT_ACCOUNT_CODE,
+        code: overheadCreditCode,
       },
       select: { id: true },
     });
@@ -218,8 +223,11 @@ export class ManufacturingOverheadService {
         ? "Paylama: miqdar"
         : "Paylama: material mayası";
 
-    const credit =
-      dto.creditAccountCode?.trim() ?? MANUFACTURING_OVERHEAD_CREDIT_ACCOUNT_CODE;
+    const defaultCreditCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "MANUFACTURING_OVERHEAD_CREDIT",
+    );
+    const credit = dto.creditAccountCode?.trim() ?? defaultCreditCode;
     const debit = dto.debitAccountCode?.trim() ?? "204";
     const source = dto.sourceAccountCode?.trim() ?? credit;
 

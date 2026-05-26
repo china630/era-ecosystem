@@ -2,7 +2,7 @@ import { ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { Test } from "@nestjs/testing";
 import { SubscriptionReadOnlyGuard } from "../../src/subscription/subscription-read-only.guard";
-import { PrismaService } from "../../src/prisma/prisma.service";
+import { ControlPlanePrismaService } from "../../src/control-plane/control-plane-prisma.service";
 
 function mockExecutionContext(
   method: string,
@@ -25,18 +25,18 @@ function mockExecutionContext(
 
 describe("SubscriptionReadOnlyGuard (RC1)", () => {
   let guard: SubscriptionReadOnlyGuard;
-  let prisma: {
+  let cp: {
     organizationSubscription: { findUnique: jest.Mock };
   };
 
   beforeEach(async () => {
-    prisma = {
+    cp = {
       organizationSubscription: { findUnique: jest.fn() },
     };
     const moduleRef = await Test.createTestingModule({
       providers: [
         SubscriptionReadOnlyGuard,
-        { provide: PrismaService, useValue: prisma },
+        { provide: ControlPlanePrismaService, useValue: cp },
         Reflector,
       ],
     }).compile();
@@ -44,7 +44,7 @@ describe("SubscriptionReadOnlyGuard (RC1)", () => {
   });
 
   it("GET проходит при истёкшей подписке", async () => {
-    prisma.organizationSubscription.findUnique.mockResolvedValue({
+    cp.organizationSubscription.findUnique.mockResolvedValue({
       isBlocked: false,
     });
     const ctx = mockExecutionContext("GET", "/api/products", {
@@ -54,7 +54,7 @@ describe("SubscriptionReadOnlyGuard (RC1)", () => {
   });
 
   it("POST при незаблокированной подписке разрешён (истечение срока не режим только чтение)", async () => {
-    prisma.organizationSubscription.findUnique.mockResolvedValue({
+    cp.organizationSubscription.findUnique.mockResolvedValue({
       isBlocked: false,
     });
     const ctx = mockExecutionContext("POST", "/api/products", {
@@ -64,7 +64,7 @@ describe("SubscriptionReadOnlyGuard (RC1)", () => {
   });
 
   it("POST при административной блокировке подписки → 403 SUBSCRIPTION_SUSPENDED_READ_ONLY", async () => {
-    prisma.organizationSubscription.findUnique.mockResolvedValue({
+    cp.organizationSubscription.findUnique.mockResolvedValue({
       isBlocked: true,
     });
     const ctx = mockExecutionContext("POST", "/api/products", {
@@ -78,7 +78,7 @@ describe("SubscriptionReadOnlyGuard (RC1)", () => {
   });
 
   it("POST при активной подписке разрешён", async () => {
-    prisma.organizationSubscription.findUnique.mockResolvedValue({
+    cp.organizationSubscription.findUnique.mockResolvedValue({
       isBlocked: false,
     });
     const ctx = mockExecutionContext("POST", "/api/products", {

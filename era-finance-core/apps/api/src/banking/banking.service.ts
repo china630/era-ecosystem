@@ -12,15 +12,7 @@ import {
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
 import { BankSubaccountService } from "../accounting/bank-subaccount.service";
-import {
-  CASH_OPERATIONAL_ACCOUNT_CODE,
-  CASH_IN_TRANSIT_ACCOUNT_CODE,
-  FOUNDER_FUNDS_ACCOUNT_CODE,
-  FX_GAIN_ACCOUNT_CODE,
-  FX_LOSS_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-  TRANSIT_TRANSFER_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { endOfUtcDay, parseIsoDateOnly } from "../reporting/reporting-period.util";
@@ -84,6 +76,7 @@ export class BankingService {
     private readonly accounting: AccountingService,
     private readonly treasury: TreasuryService,
     private readonly bankSubaccount: BankSubaccountService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async importCsv(
@@ -233,6 +226,10 @@ export class BankingService {
     const desc = dto.description?.trim() || "Nəqd məxaric";
 
     return this.prisma.$transaction(async (tx) => {
+      const [miscExpenseCode, cashAznCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
+        this.posting.resolveAccountCode(organizationId, "CASH_AZN", tx),
+      ]);
       await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date,
@@ -241,12 +238,12 @@ export class BankingService {
         isFinal: true,
         lines: [
           {
-            accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+            accountCode: miscExpenseCode,
             debit: amt.toString(),
             credit: 0,
           },
           {
-            accountCode: CASH_OPERATIONAL_ACCOUNT_CODE,
+            accountCode: cashAznCode,
             debit: 0,
             credit: amt.toString(),
           },
@@ -430,14 +427,21 @@ export class BankingService {
       await this.assertNasAccountsExist(tx, organizationId, [
         source.ledgerAccountCode,
         target.ledgerAccountCode,
-        TRANSIT_TRANSFER_ACCOUNT_CODE,
-        MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+        ...(await Promise.all([
+          this.posting.resolveAccountCode(organizationId, "TRANSIT_TRANSFER", tx),
+          this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
+        ])),
+      ]);
+
+      const [transitTransferCode, miscExpenseCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "TRANSIT_TRANSFER", tx),
+        this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
       ]);
 
       const transferTotal = amount.add(commission);
       const lines = [
         {
-          accountCode: TRANSIT_TRANSFER_ACCOUNT_CODE,
+          accountCode: transitTransferCode,
           debit: transferTotal.toString(),
           credit: "0",
         },
@@ -445,19 +449,19 @@ export class BankingService {
         ...(commission.gt(0)
           ? [
               {
-                accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+                accountCode: miscExpenseCode,
                 debit: commission.toString(),
                 credit: "0",
               },
               {
-                accountCode: TRANSIT_TRANSFER_ACCOUNT_CODE,
+                accountCode: transitTransferCode,
                 debit: "0",
                 credit: commission.toString(),
               },
             ]
           : []),
         { accountCode: target.ledgerAccountCode, debit: amount.toString(), credit: "0" },
-        { accountCode: TRANSIT_TRANSFER_ACCOUNT_CODE, debit: "0", credit: amount.toString() },
+        { accountCode: transitTransferCode, debit: "0", credit: amount.toString() },
       ];
       this.assertBalanced(lines);
 
@@ -774,9 +778,17 @@ export class BankingService {
       await this.assertNasAccountsExist(tx, organizationId, [
         source.ledgerAccountCode,
         target.ledgerAccountCode,
-        FX_GAIN_ACCOUNT_CODE,
-        FX_LOSS_ACCOUNT_CODE,
-        MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+        ...(await Promise.all([
+          this.posting.resolveAccountCode(organizationId, "FX_GAIN", tx),
+          this.posting.resolveAccountCode(organizationId, "FX_LOSS", tx),
+          this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
+        ])),
+      ]);
+
+      const [fxGainCode, fxLossCode, miscExpenseCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "FX_GAIN", tx),
+        this.posting.resolveAccountCode(organizationId, "FX_LOSS", tx),
+        this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE", tx),
       ]);
 
       const sourceRate = await this.getOfficialRate(tx, date, source.currency);
@@ -807,13 +819,13 @@ export class BankingService {
       if (fxAbs.gt(0)) {
         if (isLoss) {
           lines.push({
-            accountCode: FX_LOSS_ACCOUNT_CODE,
+            accountCode: fxLossCode,
             debit: fxAbs.toString(),
             credit: "0",
           });
         } else {
           lines.push({
-            accountCode: FX_GAIN_ACCOUNT_CODE,
+            accountCode: fxGainCode,
             debit: "0",
             credit: fxAbs.toString(),
           });
@@ -821,7 +833,7 @@ export class BankingService {
       }
       if (commission.gt(0)) {
         lines.push({
-          accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+          accountCode: miscExpenseCode,
           debit: commission.toString(),
           credit: "0",
         });
@@ -932,7 +944,9 @@ export class BankingService {
         throw new BadRequestException("target bank account not found in organization");
       }
       const sourceAccountCode =
-        dto.source === "KASSA" ? CASH_IN_TRANSIT_ACCOUNT_CODE : FOUNDER_FUNDS_ACCOUNT_CODE;
+        dto.source === "KASSA"
+          ? await this.posting.resolveAccountCode(organizationId, "CASH_IN_TRANSIT", tx)
+          : await this.posting.resolveAccountCode(organizationId, "FOUNDER_FUNDS", tx);
 
       await this.assertNasAccountsExist(tx, organizationId, [
         target.ledgerAccountCode,

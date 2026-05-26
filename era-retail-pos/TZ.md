@@ -57,6 +57,17 @@ Validation: [src/lib/receipt-line-validation.ts](./src/lib/receipt-line-validati
 
 See [.env.example](./.env.example): `DATABASE_URL`, `AUTH_JWT_SECRET`, `ERA_SSO_SHARED_SECRET`, `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`.
 
+## W1-E — Enrichment APIs
+
+| Method | Path | Model / notes |
+|--------|------|----------------|
+| POST | `/api/receipts/:id/apply-promo` | `Receipt.promoCode`, `discountPercent`, `discountAmount`, `subtotalAmount` |
+| POST | `/api/receipts` (body) | `customerPhone`, `loyaltyRef` on create |
+| GET | `/api/products/search?q=` | `ProductCache` read model (M7) |
+| GET | `/api/shifts/:id/x-report` | Mid-shift X totals, no Z-close (M2 extend) |
+
+Helpers: [src/lib/receipt-promo.ts](./src/lib/receipt-promo.ts), [src/lib/receipt-totals.ts](./src/lib/receipt-totals.ts), [src/lib/product-cache-seed.ts](./src/lib/product-cache-seed.ts).
+
 ## Testing
 
 - Build: `npm run build`

@@ -38,3 +38,8 @@
 - [ ] `POST /api/visits/[id]/discount` — `CLINIC_ADMIN` or `BUSINESS_OWNER` only; audit row created
 - [ ] `/executive` — `BUSINESS_OWNER` sees visits today, lab revenue, open orders
 - [ ] `GET /api/executive/summary` — 403 for non-owner roles
+
+## W1-E — Enrichment
+
+- [x] M6: `GET /api/catalog/services` + `POST /api/catalog/sync` seed cache
+- [x] M5: `POST /api/lab-orders/:id/results` with out-of-range value → `CRITICAL` flag; `/lab-orders?criticalOnly=true`

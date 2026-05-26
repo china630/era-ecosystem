@@ -16,6 +16,8 @@ import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
   paymentMethod: z.string().default("cash"),
+  customerPhone: z.string().max(32).optional(),
+  loyaltyRef: z.string().max(64).optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),
 });
@@ -45,6 +47,8 @@ export async function POST(
       data: {
         status: "PAID",
         paymentMethod: body.paymentMethod,
+        customerPhone: body.customerPhone?.trim() || null,
+        loyaltyRef: body.loyaltyRef?.trim() || null,
         paidAt: new Date(),
       },
       include: { lines: true },
@@ -66,6 +70,9 @@ export async function POST(
         currency: "AZN",
         paymentMethod: body.paymentMethod,
         lineCount: receipt.lines.length,
+        customerPhone: body.customerPhone?.trim(),
+        loyaltyRef: body.loyaltyRef?.trim(),
+        promoCode: receipt.promoCode ?? undefined,
       },
     });
 

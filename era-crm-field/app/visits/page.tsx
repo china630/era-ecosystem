@@ -13,6 +13,9 @@ type LeadOption = { id: string; title: string; contactRef: string };
 type Visit = {
   id: string;
   notes?: string | null;
+  addressLabel?: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   visitedAt: string;
   lead: { id: string; title: string; contactRef: string };
 };
@@ -22,6 +25,9 @@ export default function VisitsPage() {
   const [leads, setLeads] = useState<LeadOption[]>([]);
   const [leadId, setLeadId] = useState("");
   const [notes, setNotes] = useState("");
+  const [addressLabel, setAddressLabel] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -58,7 +64,13 @@ export default function VisitsPage() {
       const res = await fetch("/api/visits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId, notes: notes || undefined }),
+        body: JSON.stringify({
+          leadId,
+          notes: notes || undefined,
+          addressLabel: addressLabel || undefined,
+          latitude: latitude ? Number(latitude) : undefined,
+          longitude: longitude ? Number(longitude) : undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to log visit");
@@ -105,6 +117,35 @@ export default function VisitsPage() {
             </select>
           </label>
           <label className="block text-[13px]">
+            Address / place
+            <input
+              className="mt-1 block w-full rounded border px-2 py-1"
+              value={addressLabel}
+              onChange={(e) => setAddressLabel(e.target.value)}
+              placeholder="Baku, Nizami st. 12"
+            />
+          </label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block text-[13px]">
+              Latitude
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                placeholder="40.4093"
+              />
+            </label>
+            <label className="block text-[13px]">
+              Longitude
+              <input
+                className="mt-1 block w-full rounded border px-2 py-1"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                placeholder="49.8671"
+              />
+            </label>
+          </div>
+          <label className="block text-[13px]">
             Notes
             <textarea
               className="mt-1 block w-full rounded border px-2 py-1"
@@ -139,6 +180,15 @@ export default function VisitsPage() {
                     {visit.lead.contactRef} ·{" "}
                     {new Date(visit.visitedAt).toLocaleString()}
                   </div>
+                  {visit.addressLabel && (
+                    <p className="text-[#7F8C8D]">{visit.addressLabel}</p>
+                  )}
+                  {visit.latitude != null && visit.longitude != null && (
+                    <p className="text-[#7F8C8D]">
+                      {Number(visit.latitude).toFixed(4)},{" "}
+                      {Number(visit.longitude).toFixed(4)}
+                    </p>
+                  )}
                   {visit.notes && <p className="mt-1">{visit.notes}</p>}
                 </li>
               ))}

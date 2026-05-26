@@ -16,6 +16,8 @@
     "prisma/lib/core/pricing-module-seed.ts",
     "prisma/lib/core/pricing-bundle-seed.ts",
     "prisma/lib/core/ensure-currencies-seed.ts",
-    "prisma/lib/org/legal-form-kind.mapper.ts"
+    "prisma/lib/org/legal-form-kind.mapper.ts",
+    "prisma/lib/posting/posting-role.ts",
+    "prisma/lib/posting/posting-seed.ts"
   ]
 }

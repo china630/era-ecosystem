@@ -5,6 +5,8 @@ import {
   StockMovementType,
 } from "@erafinance/database";
 import { AccountingService } from "../../src/accounting/accounting.service";
+import { PostingAccountResolver } from "../../src/accounting/posting/posting-account-resolver.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 import { ManufacturingService } from "../../src/manufacturing/manufacturing.service";
 import { PrismaService } from "../../src/prisma/prisma.service";
 import { StockService } from "../../src/stock/stock.service";
@@ -71,6 +73,10 @@ describe("ManufacturingService.releaseProduction (M9 stress: 18 components)", ()
         { provide: PrismaService, useValue: prisma },
         { provide: StockService, useValue: stock },
         { provide: AccountingService, useValue: accounting },
+        {
+          provide: PostingAccountResolver,
+          useValue: createMockPostingResolver(),
+        },
       ],
     }).compile();
 

@@ -63,3 +63,17 @@ Platform client: `@era/satellite-kit` via `src/integration/control-plane-platfor
 - [x] R2/R3 presets, void/return/shift-close (Wave 1)
 - [x] Executive `/executive` with `canViewExecutive`
 - [x] Settings UI playbook pilot `/settings` (ModalShell)
+
+## W1-E — Enrichment (Gemini → PRD M11/M12/M7)
+
+Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) · **M11/M12 retail-only**
+
+- [x] M11: Apply promotion on cart before pay (%, manual code)
+- [x] M12: Customer phone / loyalty ref on receipt
+- [x] M7: Product lookup read cache (`GET /api/products/search`)
+- [x] M2 extend: X-report mid-shift API + UI
+
+## W2-E — Enrichment (Gemini ритейл ERP)
+
+- [x] M13: BOPIS / pickup via platform_delivery
+- [ ] M14–M16: mobile stock, replenishment, SRM — deferred (Finance)

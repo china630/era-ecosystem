@@ -117,6 +117,11 @@ describe("RBAC Mutation Auto-Scanner", () => {
 
     // eslint-disable-next-line no-console
     console.table(rows);
+    if (violations.length > 0) {
+      throw new Error(
+        `RBAC mutation endpoints missing guard metadata:\n${violations.join("\n")}`,
+      );
+    }
     expect(violations).toEqual([]);
   });
 });

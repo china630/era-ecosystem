@@ -18,7 +18,11 @@ type Trip = {
   completedAt?: string | null;
   podRecipient?: string | null;
   podNotes?: string | null;
+  podPhotoUrl?: string | null;
+  podSignatureUrl?: string | null;
   podCapturedAt?: string | null;
+  waybillNumber?: string | null;
+  waybillIssuedAt?: string | null;
   fuelLiters?: string | number | null;
   fuelCost?: string | number | null;
   vehicle: { plate: string; model?: string | null };
@@ -36,6 +40,8 @@ export default function TripDetailPage() {
 
   const [podRecipient, setPodRecipient] = useState("");
   const [podNotes, setPodNotes] = useState("");
+  const [podPhotoUrl, setPodPhotoUrl] = useState("");
+  const [podSignatureUrl, setPodSignatureUrl] = useState("");
   const [fuelLiters, setFuelLiters] = useState("");
   const [fuelCost, setFuelCost] = useState("");
 
@@ -53,6 +59,8 @@ export default function TripDetailPage() {
     setTrip(data);
     setPodRecipient(data.podRecipient ?? "");
     setPodNotes(data.podNotes ?? "");
+    setPodPhotoUrl(data.podPhotoUrl ?? "");
+    setPodSignatureUrl(data.podSignatureUrl ?? "");
     setFuelLiters(data.fuelLiters != null ? String(data.fuelLiters) : "");
     setFuelCost(data.fuelCost != null ? String(data.fuelCost) : "");
     setLoading(false);
@@ -84,7 +92,12 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/trips/${id}/pod`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipient: podRecipient, notes: podNotes || undefined }),
+      body: JSON.stringify({
+        recipient: podRecipient,
+        notes: podNotes || undefined,
+        podPhotoUrl: podPhotoUrl.trim() || undefined,
+        podSignatureUrl: podSignatureUrl.trim() || undefined,
+      }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -116,6 +129,18 @@ export default function TripDetailPage() {
     }
     await loadTrip();
     setMessage(`Fuel recorded: ${data.liters} L, ${data.cost} AZN`);
+  }
+
+  async function issueWaybill() {
+    setMessage("");
+    const res = await fetch(`/api/trips/${id}/waybill`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      setMessage(data.error ?? "Waybill failed");
+      return;
+    }
+    setTrip(data);
+    setMessage(`Waybill issued: ${data.waybillNumber}`);
   }
 
   async function completeTrip() {
@@ -195,6 +220,25 @@ export default function TripDetailPage() {
           </ol>
         </section>
 
+        <section className="space-y-2 text-[13px] border-t pt-4">
+          <h2 className="font-semibold">Waybill (M3)</h2>
+          {trip.waybillNumber ? (
+            <p>
+              <strong>{trip.waybillNumber}</strong>
+              {trip.waybillIssuedAt
+                ? ` · ${new Date(trip.waybillIssuedAt).toLocaleString()}`
+                : ""}
+            </p>
+          ) : (
+            <p className="text-[12px] text-[#7F8C8D]">Not issued yet.</p>
+          )}
+          {!trip.waybillNumber && (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void issueWaybill()}>
+              Issue waybill
+            </button>
+          )}
+        </section>
+
         <section className="space-y-2 text-[13px]">
           <h2 className="font-semibold">Status actions</h2>
           <div className="flex flex-wrap gap-2">
@@ -237,6 +281,24 @@ export default function TripDetailPage() {
               value={podRecipient}
               onChange={(e) => setPodRecipient(e.target.value)}
               required
+            />
+          </label>
+          <label className="block">
+            Photo URL (stub)
+            <input
+              className="mt-1 w-full rounded border px-2 py-1"
+              value={podPhotoUrl}
+              onChange={(e) => setPodPhotoUrl(e.target.value)}
+              placeholder="https://…"
+            />
+          </label>
+          <label className="block">
+            Signature URL (stub)
+            <input
+              className="mt-1 w-full rounded border px-2 py-1"
+              value={podSignatureUrl}
+              onChange={(e) => setPodSignatureUrl(e.target.value)}
+              placeholder="https://…"
             />
           </label>
           <label className="block">

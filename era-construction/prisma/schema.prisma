@@ -34,7 +34,50 @@ model Project {
   progressActs         ProgressAct[]
   materialRequisitions MaterialRequisition[]
   boqLines             BoqLine[]
+  dailyLogs            DailyLog[]
+  punchListItems       PunchListItem[]
+  subcontractorClaims  SubcontractorClaim[]
   createdAt            DateTime              @default(now())
+}
+
+model DailyLog {
+  id         String   @id @default(cuid())
+  projectId  String
+  logDate    DateTime @db.Date
+  weather    String?
+  crewCount  Int?
+  notes      String?
+  reportedBy String?
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, logDate])
+}
+
+model PunchListItem {
+  id          String   @id @default(cuid())
+  projectId   String
+  location    String
+  description String
+  status      String   @default("OPEN")
+  photoUrl    String?
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, status])
+}
+
+model SubcontractorClaim {
+  id                String   @id @default(cuid())
+  projectId         String
+  subcontractorName String
+  amountNet         Decimal  @default(0) @db.Decimal(12, 2)
+  status            String   @default("DRAFT")
+  notes             String?
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+
+  @@index([projectId, status])
 }
 
 model BoqLine {

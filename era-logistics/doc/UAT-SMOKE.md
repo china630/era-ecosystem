@@ -39,3 +39,9 @@
 - [ ] `GET /api/reports/fuel?from=2026-05-01&to=2026-05-31` → totals + `byVehicle`
 - [ ] `/trips/[id]` — POD form, fuel form, status actions, complete
 - [ ] `/reports/fuel` — summary table for date range
+
+## W1-E — Enrichment
+
+- [x] M3: `POST /api/trips/:id/waybill` → `waybillNumber`; UI issue on `/trips/[id]`
+- [x] M7: `GET /api/fleet/alerts` + `/fleet` expiry list (seed vehicles with near dates)
+- [x] M4: `POST /api/trips/:id/pod` with `podPhotoUrl`, `podSignatureUrl`

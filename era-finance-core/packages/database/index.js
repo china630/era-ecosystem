@@ -8,6 +8,8 @@ const pricingModuleSeed = require("./dist/lib/core/pricing-module-seed.js");
 const pricingBundleSeed = require("./dist/lib/core/pricing-bundle-seed.js");
 const ensureCurrenciesSeed = require("./dist/lib/core/ensure-currencies-seed.js");
 const legalFormKind = require("./dist/lib/org/legal-form-kind.mapper.js");
+const postingRole = require("./dist/lib/posting/posting-role.js");
+const postingSeed = require("./dist/lib/posting/posting-seed.js");
 
 Object.assign(
   module.exports,
@@ -18,5 +20,7 @@ Object.assign(
   pricingBundleSeed,
   ensureCurrenciesSeed,
   legalFormKind,
+  postingRole,
+  postingSeed,
 );
 module.exports.Decimal = Prisma.Decimal;

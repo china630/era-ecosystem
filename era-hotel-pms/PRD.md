@@ -51,15 +51,30 @@ Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bri
 
 ---
 
-## §4. Modules (summary)
+## §4. Modules
 
-| Area | Status | Doc |
-|------|--------|-----|
-| PMS core (book, assign, folio) | **DONE** | DELIVERY Stage 1–3 |
-| Night audit | **DONE** | Stage 4 |
-| Satellite events / ERP | **DONE** | Stage 10–12 |
-| POS bridge | **DONE** | Stage 17 |
-| Channel / B2C | **DEFERRED** | Phase 2 roadmap |
+### Core (delivered)
+
+| ID | Module | Status | Doc |
+|----|--------|--------|-----|
+| M1–M10 | PMS core (book, folio, NA, HK, channel) | **DONE** | DELIVERY Stages 1–4 |
+| M11 | ERP / satellite events | **DONE** | Stage 10–12 |
+| M12 | Medical / sanatorium scheduling | **DONE** | procedures |
+| M13 | Banquets BEO | **MVP** | `/banquets` |
+| M14 | Stock MVP | **MVP** | `/admin/stock` |
+| M15 | Agency / invoices read | **DONE** | reports → Finance |
+| M16 | POS bridge (fb-pos) | **DONE** | Stage 17 |
+
+### W2 enrichment (Gemini отельный ERP)
+
+| ID | Module | Status | Owner |
+|----|--------|--------|-------|
+| M20 | Yield management (dynamic BAR) | **W2 PLANNED** | SATELLITE |
+| M21 | Guest loyalty tiers | **W2 PLANNED** | **PLATFORM** `loyalty` |
+| M22 | Room service QR → fb-pos | **W2 PLANNED** | SATELLITE + fb-pos |
+| M23 | Maintenance work orders | **W2 PLANNED** | SATELLITE |
+
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 Full checklist: [doc/DELIVERY.md](./doc/DELIVERY.md)
 
@@ -98,4 +113,5 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 | Date | Note |
 |------|------|
 | 2026-05 | Phase 1–2 delivery |
+| 2026-05-28 | §4 module IDs M1–M23; W2 enrichment M20–M23 |
 | 2026-05-24 | Formal PRD.md (umbrella index to clone-spec) |

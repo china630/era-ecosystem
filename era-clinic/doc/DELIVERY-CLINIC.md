@@ -69,3 +69,17 @@ Client: `@era/satellite-kit`.
 - [x] K2/K3 lab lifecycle + executive summary (Wave 1)
 - [x] Sanatorium bridge K5 (Nafta HN-3)
 - [x] Admin settings UI playbook `/admin/settings`
+
+## W1-E — Enrichment
+
+Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era)
+
+- [x] M6: Service catalog cache API + sync from Finance price list stub
+- [x] M5: Critical lab flag UI on publish (beyond refMin/refMax)
+- [ ] K3: Multi-room drag reschedule — optional W1; **done in W2-E M9** below
+
+## W2-E — Enrichment (Gemini медицина ERP)
+
+- [x] M9: Multi-room drag reschedule
+- [x] M14: Telehealth / portal deep link on lab publish
+- [ ] M10–M13: EHR, LIS, insurance, inpatient — deferred per PRD

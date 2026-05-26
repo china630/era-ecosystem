@@ -60,10 +60,20 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 | M0 | Platform shell | **MVP** | — |
 | M1 | Fleet (vehicle, driver) | **PLANNED** | — |
 | M2 | Trip planning & status | **MVP** | `TRIP_COMPLETED` |
-| M3 | Waybill document | **PLANNED** | — |
+| M3 | Waybill document | **MVP** | `POST /api/trips/:id/waybill` |
 | M4 | POD (photo/signature stub) | **MVP** | — |
 | M5 | Fuel norm per trip | **MVP** | Cost event Phase 2 |
-| M6 | Customs handoff flag | **DEFERRED** | Finance trade_pro |
+| M6 | Customs handoff flag | **MVP** | Finance `trade_pro` read hub — DELIVERY L3 |
+| **M7** | **Fleet compliance** | Fleet docs | **MVP** | `GET /api/fleet/alerts`, `/fleet` UI |
+| M4 (extend) | POD photo + signature | Last mile | **MVP** | `podPhotoUrl`, `podSignatureUrl` on `Trip` |
+| M8 | Multi-stop trip (`trip_points`) | VRP lite | **W2 PLANNED** | Gemini 06 §2 |
+| M9 | Driver mobile workflow API | Last mile | **W2 PLANNED** | Gemini 06 §3 |
+| M10 | Rate matrix / tariffs | OMS billing | **W2 DEFERRED** | **Finance** |
+| M11 | COD split & clearing | Courier COD | **W2 DEFERRED** | **Finance** |
+| M12 | Hub cross-dock scanning | WMS hub | **W2 DEFERRED** | Gemini 06 §6 |
+| M13 | Customer tracking portal | Visibility | **W2 PLANNED** | **PLATFORM** `portal` |
+
+См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -106,3 +116,5 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 | 2026-05-24 | PRD v1.0 |
 | 2026-05-25 | SP2 L2: POD + fuel report APIs |
 | 2026-05-25 | SW4 L2: trip detail UI, fuel fleet rollup, workflow |
+| 2026-05-28 | Enrichment W1: M3, M7, M4 media |
+| 2026-05-28 | Enrichment W2: M8–M13 (Gemini logistics ERP) |

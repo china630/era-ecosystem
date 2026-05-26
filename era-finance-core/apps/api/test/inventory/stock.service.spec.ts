@@ -3,7 +3,7 @@ import {
   INVENTORY_GOODS_ACCOUNT_CODE,
   MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
 } from "../../src/ledger.constants";
-import { InventoryService } from "../../src/inventory/inventory.service";
+import { createTestInventoryService } from "../helpers/mock-posting-resolver";
 import type { AccountingService } from "../../src/accounting/accounting.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import type { StockService } from "../../src/stock/stock.service";
@@ -77,7 +77,7 @@ describe("InventoryService (stock / adjust)", () => {
       computeIssueUnitCost: jest.fn().mockResolvedValue(new Decimal(5)),
     } as unknown as StockService;
     const access = { assertMayPostAccounting: jest.fn() } as any;
-    const svc = new InventoryService(prisma, accounting, stock, access);
+    const svc = createTestInventoryService(prisma, accounting, stock, access);
 
     await svc.adjustStock(orgId, {
       warehouseId: whId,

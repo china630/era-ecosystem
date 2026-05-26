@@ -81,8 +81,14 @@
 | M8 | Split bill | Toast | **DEFERRED** | FB-2 |
 | M9 | ERP consumption E8 | — | **DEFERRED** | Finance event |
 | M10 | i18n en/ru/az | hotel-pms | **DEFERRED** | FB-2 |
+| M11 | KDS course timing | iiko KDS | **W2 PLANNED** | Gemini 04 §2 |
+| M12 | Recipe / BOH depletion engine | iiko storehouse | **W2 PLANNED** | Gemini 04 §3; posting → **Finance** |
+| M13 | Delivery aggregator inbox | Wolt/Glovo | **W2 PLANNED** | **PLATFORM** `delivery` |
+| M14 | Labor roster / PIN clock | Toast labor | **W2 DEFERRED** | Gemini 04 §8 |
 
 **PMS dependency:** [era-hotel-pms DELIVERY Stage 17](../era-hotel-pms/doc/DELIVERY.md) — bridge готов.
+
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 

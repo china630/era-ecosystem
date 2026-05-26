@@ -48,3 +48,10 @@
 - [ ] Return receipt: `POST /api/receipts/{id}/return` on PAID receipt → negative return receipt with `originalReceiptId` + `SATELLITE_RETAIL_SALE_COMPLETED` (negative `amountNet`)
 - [ ] Close shift: `POST /api/shifts/close` → `totalSales`, `receiptCount`, `SATELLITE_RETAIL_SHIFT_CLOSED`
 - [ ] `/pos` UI: void line button, return on paid receipt, close shift with Z-summary
+
+## W1-E — Enrichment (Gemini retail)
+
+- [x] M11: Open receipt → apply promo % or code before pay → `amountNet` reflects discount
+- [x] M12: Set customer phone / loyalty ref on receipt → visible on paid receipt
+- [x] M7: `GET /api/products/search?q=…` returns cached SKU rows
+- [x] M2 extend: `GET /api/shifts/:id/x-report` + X-report button on `/pos` during open shift

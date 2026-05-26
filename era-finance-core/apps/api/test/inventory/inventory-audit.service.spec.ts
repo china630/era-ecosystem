@@ -6,6 +6,7 @@ import {
   UserRole,
 } from "@erafinance/database";
 import { InventoryAuditService } from "../../src/inventory/inventory-audit.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 import type { AccountingService } from "../../src/accounting/accounting.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import type { AccessControlService } from "../../src/access/access-control.service";
@@ -50,7 +51,13 @@ describe("InventoryAuditService", () => {
       assertMayPostAccounting: jest.fn(),
     } as unknown as AccessControlService;
 
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
 
     await svc.createReconciliationDraft(orgId, {
       date: draftDto.date,
@@ -82,7 +89,13 @@ describe("InventoryAuditService", () => {
       assertMayPostAccounting: jest.fn(),
     } as unknown as AccessControlService;
 
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
 
     await expect(
       svc.create(
@@ -102,7 +115,13 @@ describe("InventoryAuditService", () => {
     const prisma = {} as unknown as PrismaService;
     const accounting = {} as unknown as AccountingService;
     const access = {} as unknown as AccessControlService;
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
 
     await expect(
       svc.approveDraft(orgId, auditId, "u1", UserRole.ACCOUNTANT),
@@ -202,7 +221,13 @@ describe("InventoryAuditService", () => {
       assertMayPostAccounting: jest.fn().mockResolvedValue(undefined),
     } as unknown as AccessControlService;
 
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
 
     await svc.complete(orgId, auditId, "u1", UserRole.ACCOUNTANT);
 
@@ -229,7 +254,13 @@ describe("InventoryAuditService", () => {
       assertMayPostAccounting: jest.fn(),
     } as unknown as AccessControlService;
 
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
 
     await expect(
       svc.approveDraft(orgId, auditId, "u1", UserRole.USER),
@@ -244,7 +275,13 @@ describe("InventoryAuditService", () => {
     } as unknown as PrismaService;
     const accounting = { postJournalInTransaction: jest.fn() } as unknown as AccountingService;
     const access = { assertMayPostAccounting: jest.fn() } as unknown as AccessControlService;
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
     await expect(
       svc.approveDraft(orgId, auditId, "u1", UserRole.ACCOUNTANT),
     ).rejects.toThrow(BadRequestException);
@@ -263,7 +300,13 @@ describe("InventoryAuditService", () => {
         .fn()
         .mockRejectedValue(new ForbiddenException("ACCOUNTING_ROLE_REQUIRED")),
     } as unknown as AccessControlService;
-    const svc = new InventoryAuditService(prisma, accounting, access, stock);
+    const svc = new InventoryAuditService(
+      prisma,
+      accounting,
+      access,
+      stock,
+      createMockPostingResolver(),
+    );
     await expect(
       svc.approveDraft(orgId, auditId, "u1", UserRole.PROCUREMENT),
     ).rejects.toThrow(BadRequestException);

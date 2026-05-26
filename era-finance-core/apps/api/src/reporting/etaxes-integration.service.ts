@@ -8,7 +8,7 @@ import { ConfigService } from "@nestjs/config";
 import axios from "axios";
 import { LedgerType } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
-import { REVENUE_ACCOUNT_CODE } from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { endOfUtcDay, parseIsoDateOnly } from "./reporting-period.util";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 import {
@@ -122,6 +122,7 @@ export class ETaxesIntegrationService {
     private readonly prisma: PrismaService,
     private readonly vatQuarter: VatQuarterDataService,
     private readonly config: ConfigService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   private validateRows(
@@ -244,10 +245,11 @@ export class ETaxesIntegrationService {
     fromStr: string,
     toStr: string,
   ): Promise<string | null> {
+    const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
     const acc = await this.prisma.account.findFirst({
       where: {
         organizationId,
-        code: REVENUE_ACCOUNT_CODE,
+        code: revenueCode,
         ledgerType: LedgerType.NAS,
       },
       select: { id: true },

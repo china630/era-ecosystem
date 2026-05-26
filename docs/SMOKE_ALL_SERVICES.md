@@ -364,3 +364,128 @@ node era-hotel-pms/scripts/test-pos-bridge.mjs
 | finance-api | http://127.0.0.1:4000 | `/api/health` |
 | hotel-pms | http://127.0.0.1:3000 | `/api/health` |
 | fb-pos | http://127.0.0.1:3200 | `/api/health` |
+
+## W1-E — Industry enrichment (Wave 1 quartet)
+
+After `npx prisma db push` (or migrate) per app DB:
+
+### era-retail-pos (:3300)
+
+```bash
+# Product cache search (seed on first run)
+curl -s "http://localhost:3300/api/products/search?q=milk"
+
+# X-report (open shift id from POST /api/shifts/open)
+curl -s http://localhost:3300/api/shifts/<SHIFT_ID>/x-report
+
+# Apply promo on open receipt
+curl -s -X POST http://localhost:3300/api/receipts/<RECEIPT_ID>/apply-promo \
+  -H "Content-Type: application/json" \
+  -d '{"discountPercent":10}'
+```
+
+### era-crm-field (:3303)
+
+```bash
+curl -s -X POST http://localhost:3303/api/visits \
+  -H "Content-Type: application/json" \
+  -d '{"leadId":"<id>","latitude":40.4093,"longitude":49.8671,"addressLabel":"Baku"}'
+
+curl -s -X PATCH http://localhost:3303/api/leads/<id>/follow-up \
+  -H "Content-Type: application/json" \
+  -d '{"nextContactAt":"2026-06-01T10:00:00.000Z"}'
+```
+
+### era-clinic (:3306)
+
+```bash
+curl -s http://localhost:3306/api/catalog/services
+curl -s -X POST http://localhost:3306/api/catalog/sync
+curl -s "http://localhost:3306/api/lab-orders?criticalOnly=true"
+```
+
+### era-logistics (:3304)
+
+```bash
+curl -s -X POST http://localhost:3304/api/trips/<id>/waybill
+curl -s http://localhost:3304/api/fleet/alerts
+curl -s -X POST http://localhost:3304/api/trips/<id>/pod \
+  -H "Content-Type: application/json" \
+  -d '{"recipient":"Ali M.","podPhotoUrl":"https://example.com/pod.jpg"}'
+```
+
+## W2-E — Industry enrichment (Wave 2)
+
+### era-construction
+
+```bash
+curl -s -X POST http://localhost:3305/api/projects/<PROJECT_ID>/daily-logs \
+  -H "Content-Type: application/json" \
+  -d '{"logDate":"2026-05-28","crewCount":12,"notes":"Concrete pour"}'
+```
+
+### era-auto-sto
+
+```bash
+curl -s "http://localhost:3307/api/vehicles/history?plate=10-AA-001"
+curl -s -X POST http://localhost:3307/api/work-orders/<WO_ID>/intake \
+  -H "Content-Type: application/json" \
+  -d '{"vin":"WVWZZZ","intakeNotes":"Front bumper damage"}'
+```
+
+### era-wholesale
+
+```bash
+curl -s http://localhost:3308/api/pick-waves
+curl -s -X POST http://localhost:3308/api/orders/<ORDER_ID>/ttn
+```
+
+### era-retail-pos (BOPIS)
+
+```bash
+curl -s -X POST http://localhost:3300/api/receipts/<RECEIPT_ID>/bopis \
+  -H "Content-Type: application/json" \
+  -d '{"pickupSlotKey":"pickup","customerPhone":"+994501234567"}'
+```
+
+### era-logistics (multi-stop)
+
+```bash
+curl -s -X POST http://localhost:3304/api/trips/<TRIP_ID>/points \
+  -H "Content-Type: application/json" \
+  -d '{"points":[{"addressLabel":"Stop 1"},{"addressLabel":"Stop 2"}]}'
+curl -s http://localhost:3304/api/driver/trips
+curl -s http://localhost:3304/api/tracking/<TRACKING_TOKEN>
+```
+
+### era-crm-field (scoring)
+
+```bash
+curl -s -X POST http://localhost:3303/api/leads/<LEAD_ID>/score
+curl -s "http://localhost:3303/api/leads?sort=score"
+```
+
+### era-clinic
+
+```bash
+curl -s -X PATCH http://localhost:3306/api/appointments/<ID>/reschedule \
+  -H "Content-Type: application/json" \
+  -d '{"scheduledAt":"2026-06-01T09:00:00.000Z","roomCode":"RM-2"}'
+```
+
+### era-fb-pos
+
+```bash
+curl -s http://localhost:3200/api/delivery-inbox
+curl -s -X POST http://localhost:3200/api/tickets/<TICKET_ID>/fire-course \
+  -H "Content-Type: application/json" \
+  -d '{"courseNumber":2,"delayMinutes":5}'
+```
+
+### era-hotel-pms
+
+```bash
+curl -s http://localhost:3000/api/admin/yield-rules
+curl -s http://localhost:3000/api/admin/maintenance
+curl -s "http://localhost:3000/api/room-service/qr?roomId=101"
+```

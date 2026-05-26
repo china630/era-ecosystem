@@ -22,6 +22,7 @@ import {
   monthKeyUtc,
 } from "../reporting/reporting-period.util";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
+import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -119,8 +120,15 @@ export class AccountingService {
 
     const org = await tx.organization.findUnique({
       where: { id: organizationId },
-      select: { settings: true },
+      select: { settings: true, kind: true },
     });
+    if (!org) {
+      throw new NotFoundException("Organization not found");
+    }
+    assertBudgetJournalLinesSafe(
+      org.kind,
+      lines.map((l) => l.accountCode),
+    );
     const closed = getClosedPeriodKeys(org?.settings);
     const key = monthKeyUtc(date);
     if (closed.includes(key)) {

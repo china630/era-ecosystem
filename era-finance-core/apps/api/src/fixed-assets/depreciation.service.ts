@@ -9,10 +9,7 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  ACCUMULATED_DEPRECIATION_ACCOUNT_CODE,
-  DEPRECIATION_EXPENSE_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { monthRangeUtc } from "../reporting/reporting-period.util";
 import { roundMoney2 } from "./decimal-round";
 
@@ -20,7 +17,10 @@ const Decimal = Prisma.Decimal;
 
 @Injectable()
 export class DepreciationService {
-  constructor(private readonly accounting: AccountingService) {}
+  constructor(
+    private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
+  ) {}
 
   async runMonthlyDepreciation(
     tx: Prisma.TransactionClient,
@@ -120,18 +120,23 @@ export class DepreciationService {
       return { transactionId: null, totalAmount: "0", assetsCount: 0 };
     }
 
+    const [depreciationExpenseCode, accumulatedDepreciationCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "DEPRECIATION_EXPENSE", tx),
+      this.posting.resolveAccountCode(organizationId, "ACCUMULATED_DEPRECIATION", tx),
+    ]);
+
     let total = new Decimal(0);
     const lines: { accountCode: string; debit: string; credit: string }[] = [];
     for (const r of rows) {
       total = total.add(r.amount);
       lines.push({
-        accountCode: DEPRECIATION_EXPENSE_ACCOUNT_CODE,
+        accountCode: depreciationExpenseCode,
         debit: r.amount.toString(),
         credit: "0",
       });
     }
     lines.push({
-      accountCode: ACCUMULATED_DEPRECIATION_ACCOUNT_CODE,
+      accountCode: accumulatedDepreciationCode,
       debit: "0",
       credit: roundMoney2(total).toString(),
     });
@@ -226,18 +231,23 @@ export class DepreciationService {
       return { transactionId: null, totalAmount: "0", assetsCount: 0 };
     }
 
+    const [depreciationExpenseCode, accumulatedDepreciationCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "DEPRECIATION_EXPENSE", tx),
+      this.posting.resolveAccountCode(organizationId, "ACCUMULATED_DEPRECIATION", tx),
+    ]);
+
     let total = new Decimal(0);
     const lines: { accountCode: string; debit: string; credit: string }[] = [];
     for (const r of rows) {
       total = total.add(r.amount);
       lines.push({
-        accountCode: DEPRECIATION_EXPENSE_ACCOUNT_CODE,
+        accountCode: depreciationExpenseCode,
         debit: r.amount.toString(),
         credit: "0",
       });
     }
     lines.push({
-      accountCode: ACCUMULATED_DEPRECIATION_ACCOUNT_CODE,
+      accountCode: accumulatedDepreciationCode,
       debit: "0",
       credit: roundMoney2(total).toString(),
     });
@@ -405,6 +415,11 @@ export class DepreciationService {
     const m = now.getUTCMonth() + 1;
     const { end } = monthRangeUtc(y, m);
 
+    const [depreciationExpenseCode, accumulatedDepreciationCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "DEPRECIATION_EXPENSE", tx),
+      this.posting.resolveAccountCode(organizationId, "ACCUMULATED_DEPRECIATION", tx),
+    ]);
+
     const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
       organizationId,
       date: end,
@@ -413,12 +428,12 @@ export class DepreciationService {
       isFinal: true,
       lines: [
         {
-          accountCode: DEPRECIATION_EXPENSE_ACCOUNT_CODE,
+          accountCode: depreciationExpenseCode,
           debit: amount.toString(),
           credit: "0",
         },
         {
-          accountCode: ACCUMULATED_DEPRECIATION_ACCOUNT_CODE,
+          accountCode: accumulatedDepreciationCode,
           debit: "0",
           credit: amount.toString(),
         },

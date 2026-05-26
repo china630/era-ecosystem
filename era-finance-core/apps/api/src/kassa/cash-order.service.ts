@@ -17,16 +17,7 @@ import {
   type Prisma,
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  ACCOUNTABLE_PERSONS_ACCOUNT_CODE,
-  MAIN_BANK_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  PAYROLL_EXPENSE_ACCOUNT_CODE,
-  PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-  REVENUE_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import {
   assertValidCashDeskAccountCode,
   resolveCashAccountCodeForCurrency,
@@ -65,6 +56,7 @@ export class CashOrderService {
     private readonly reporting: ReportingService,
     private readonly treasury: TreasuryService,
     private readonly approvals: ApprovalsService,
+    private readonly posting: PostingAccountResolver,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
   ) {}
 
@@ -129,6 +121,12 @@ export class CashOrderService {
       year,
     );
 
+    const receivableCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "TRADE_RECEIVABLE",
+      tx,
+    );
+
     await tx.cashOrder.create({
       data: {
         organizationId,
@@ -141,7 +139,7 @@ export class CashOrderService {
         amount: params.amount,
         purpose: `Invoice ${params.invoiceNumber}`,
         cashAccountCode: params.debitAccountCode,
-        offsetAccountCode: RECEIVABLE_ACCOUNT_CODE,
+        offsetAccountCode: receivableCode,
         counterpartyId: params.counterpartyId,
         sourceInvoiceId: params.invoiceId,
         sourceInvoicePaymentId: params.paymentId,
@@ -276,9 +274,15 @@ export class CashOrderService {
     }
     const date = new Date(dto.date + "T12:00:00.000Z");
     const year = date.getUTCFullYear();
-    const offset = this.resolvePkoOffset(dto.pkoSubtype, dto.offsetAccountCode);
-    const cashCode = resolveCashAccountCodeForCurrency(
+    const offset = await this.resolvePkoOffset(
+      organizationId,
+      dto.pkoSubtype,
+      dto.offsetAccountCode,
+    );
+    const cashCode = await resolveCashAccountCodeForCurrency(
+      organizationId,
       dto.currency,
+      this.posting,
       dto.cashAccountCode,
     );
     return this.prisma.$transaction(async (tx) => {
@@ -353,8 +357,10 @@ export class CashOrderService {
       dto.employeeId,
       dto.offsetAccountCode,
     );
-    const cashCode = resolveCashAccountCodeForCurrency(
+    const cashCode = await resolveCashAccountCodeForCurrency(
+      organizationId,
       dto.currency,
+      this.posting,
       dto.cashAccountCode,
     );
     return this.prisma.$transaction(async (tx) => {
@@ -388,16 +394,17 @@ export class CashOrderService {
     });
   }
 
-  private resolvePkoOffset(
+  private async resolvePkoOffset(
+    organizationId: string,
     st: CashOrderPkoSubtype,
     explicit?: string,
-  ): string {
+  ): Promise<string> {
     if (explicit?.trim()) return explicit.trim();
     switch (st) {
       case CashOrderPkoSubtype.INCOME_FROM_CUSTOMER:
-        return REVENUE_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
       case CashOrderPkoSubtype.WITHDRAWAL_FROM_BANK:
-        return MAIN_BANK_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "MAIN_BANK");
       case CashOrderPkoSubtype.RETURN_FROM_ACCOUNTABLE:
         throw new BadRequestException(
           "offsetAccountCode required (subaccount 244.xx)",
@@ -405,7 +412,7 @@ export class CashOrderService {
       case CashOrderPkoSubtype.OTHER:
         throw new BadRequestException("offsetAccountCode required");
       default:
-        return REVENUE_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
     }
   }
 
@@ -483,11 +490,11 @@ export class CashOrderService {
     if (explicit?.trim()) return explicit.trim();
     switch (st) {
       case CashOrderRkoSubtype.SALARY:
-        return PAYROLL_EXPENSE_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "PAYROLL_EXPENSE", prisma as Tx);
       case CashOrderRkoSubtype.SUPPLIER_PAYMENT:
-        return PAYABLE_SUPPLIERS_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE", prisma as Tx);
       case CashOrderRkoSubtype.BANK_DEPOSIT:
-        return MAIN_BANK_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "MAIN_BANK", prisma as Tx);
       case CashOrderRkoSubtype.ACCOUNTABLE_ISSUE:
         if (!employeeId) {
           throw new BadRequestException("employeeId required for accountable issue");
@@ -504,7 +511,7 @@ export class CashOrderService {
       case CashOrderRkoSubtype.OTHER:
         throw new BadRequestException("offsetAccountCode required");
       default:
-        return PAYROLL_EXPENSE_ACCOUNT_CODE;
+        return this.posting.resolveAccountCode(organizationId, "PAYROLL_EXPENSE", prisma as Tx);
     }
   }
 
@@ -567,19 +574,22 @@ export class CashOrderService {
     });
 
     const posted = await this.prisma.$transaction(async (tx) => {
+      const payrollTaxPayableCode = wht.gt(0)
+        ? await this.posting.resolveAccountCode(organizationId, "PAYROLL_TAX_PAYABLE", tx)
+        : null;
       let lines: Array<{ accountCode: string; debit: string; credit: string }>;
       if (order.kind === CashOrderKind.KMO) {
         lines = [
           { accountCode: cash, debit: cashPaid.toString(), credit: "0" },
           { accountCode: offset, debit: "0", credit: cashPaid.toString() },
         ];
-      } else if (wht.gt(0)) {
+      } else if (wht.gt(0) && payrollTaxPayableCode) {
         const gross = cashPaid.add(wht);
         lines = [
           { accountCode: offset, debit: gross.toString(), credit: "0" },
           { accountCode: cash, debit: "0", credit: cashPaid.toString() },
           {
-            accountCode: PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+            accountCode: payrollTaxPayableCode,
             debit: "0",
             credit: wht.toString(),
           },
@@ -716,6 +726,10 @@ export class CashOrderService {
   }
 
   async listAccountablePersons(organizationId: string, ledgerType: LedgerType) {
+    const accountablePersonsCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "ACCOUNTABLE_PERSONS",
+    );
     const today = new Date().toISOString().slice(0, 10);
     const yearStart = `${new Date().getUTCFullYear()}-01-01`;
     const tb = await this.reporting.trialBalance(
@@ -749,8 +763,8 @@ export class CashOrderService {
 
     for (const row of tb.rows) {
       if (
-        row.accountCode !== ACCOUNTABLE_PERSONS_ACCOUNT_CODE &&
-        !row.accountCode.startsWith(`${ACCOUNTABLE_PERSONS_ACCOUNT_CODE}.`)
+        row.accountCode !== accountablePersonsCode &&
+        !row.accountCode.startsWith(`${accountablePersonsCode}.`)
       ) {
         continue;
       }
@@ -819,6 +833,11 @@ export class CashOrderService {
     const amt = rep.totalDeclared.toString();
 
     return this.prisma.$transaction(async (tx) => {
+      const miscExpenseCode = await this.posting.resolveAccountCode(
+        organizationId,
+        "MISC_OPERATING_EXPENSE",
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: rep.reportDate,
@@ -827,7 +846,7 @@ export class CashOrderService {
         isFinal: true,
         lines: [
           {
-            accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+            accountCode: miscExpenseCode,
             debit: amt,
             credit: "0",
           },

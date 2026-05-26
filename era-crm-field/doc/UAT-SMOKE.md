@@ -59,3 +59,8 @@ curl -X POST http://localhost:3303/api/inbox \
   -H "Cookie: era_satellite_token=<token>" \
   -d '{"channel":"whatsapp","externalRef":"+994501234567","preview":"Hello"}'
 ```
+
+## W1-E — Enrichment
+
+- [x] M4: `POST /api/visits` with `latitude`, `longitude`, `addressLabel` → stored; `/visits` shows geo
+- [x] M8: `PATCH /api/leads/:id/follow-up` with `nextContactAt` → notification stub; `/leads` schedule follow-up

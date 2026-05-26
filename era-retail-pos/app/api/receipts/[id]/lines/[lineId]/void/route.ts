@@ -1,4 +1,5 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { totalsFromReceipt } from "@/lib/receipt-totals";
 import { prisma } from "@/lib/prisma";
 import { canVoidLine, getRequestSession } from "@/lib/session";
 
@@ -34,13 +35,17 @@ export async function POST(
       data: { lineStatus: "VOID" },
     });
 
-    const amountNet = receipt.lines
-      .filter((item) => item.id !== lineId && item.lineStatus === "ACTIVE")
-      .reduce((sum, item) => sum + Number(item.lineTotal), 0);
+    const linesAfterVoid = receipt.lines.map((item) =>
+      item.id === lineId ? { ...item, lineStatus: "VOID" as const } : item,
+    );
+    const { subtotal, discountAmount, amountNet } = totalsFromReceipt(
+      receipt,
+      linesAfterVoid,
+    );
 
     const updated = await prisma.receipt.update({
       where: { id },
-      data: { amountNet },
+      data: { subtotalAmount: subtotal, discountAmount, amountNet },
       include: { lines: true },
     });
 

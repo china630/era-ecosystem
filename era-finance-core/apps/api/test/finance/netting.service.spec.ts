@@ -8,6 +8,7 @@ import {
   RECEIVABLE_ACCOUNT_CODE,
 } from "../../src/ledger.constants";
 import type { PrismaService } from "../../src/prisma/prisma.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -114,7 +115,7 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new NettingService(prisma, accounting);
+    const svc = new NettingService(prisma, accounting, createMockPostingResolver());
 
     const out = await svc.createNetting(orgId, cpId, 100, LedgerType.NAS);
 
@@ -209,7 +210,7 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
       $transaction: jest.fn(async (fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     } as unknown as PrismaService;
 
-    const svc = new NettingService(prisma, accounting);
+    const svc = new NettingService(prisma, accounting, createMockPostingResolver());
     await svc.createNetting(orgId, cpId, 50, LedgerType.NAS, undefined, {
       userId: "user-1",
       previewSuggestedAmount: 200,

@@ -1,4 +1,5 @@
 import { Prisma } from "@erafinance/database";
+import { createMockPostingResolver } from "../../test/helpers/mock-posting-resolver";
 import { CustomsService } from "./customs.service";
 
 describe("CustomsService", () => {
@@ -25,6 +26,7 @@ describe("CustomsService", () => {
       syncRuns as never,
       counterparties as never,
       taxCalculator as never,
+      createMockPostingResolver(),
     );
     const out = await service.createDraftFromCapture(
       "00000000-0000-0000-0000-000000000099",
@@ -88,6 +90,7 @@ describe("CustomsService", () => {
       syncRuns as never,
       counterparties as never,
       taxCalc as never,
+      createMockPostingResolver(),
     );
     const out = await service.createDraftFromCapture(
       "00000000-0000-0000-0000-000000000099",

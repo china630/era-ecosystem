@@ -11,10 +11,7 @@ import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
-import {
-  CASH_OPERATIONAL_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { AccountingService } from "./accounting.service";
 import { QuickExpenseDto } from "./dto/quick-expense.dto";
 
@@ -22,7 +19,10 @@ import { QuickExpenseDto } from "./dto/quick-expense.dto";
 @ApiBearerAuth("bearer")
 @Controller("accounting")
 export class AccountingController {
-  constructor(private readonly accounting: AccountingService) {}
+  constructor(
+    private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
+  ) {}
 
   @Post("quick-expense")
   @UseGuards(RolesGuard)
@@ -40,6 +40,10 @@ export class AccountingController {
     const ref = "WEB-EXP";
     const desc = dto.description?.trim() || "Операционный расход (веб)";
     const amt = String(dto.amount);
+    const [miscExpenseCode, cashAznCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "MISC_OPERATING_EXPENSE"),
+      this.posting.resolveAccountCode(organizationId, "CASH_AZN"),
+    ]);
     const { transactionId } = await this.accounting.postTransaction({
       organizationId,
       date,
@@ -50,12 +54,12 @@ export class AccountingController {
       departmentId: dto.departmentId ?? null,
       lines: [
         {
-          accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+          accountCode: miscExpenseCode,
           debit: amt,
           credit: 0,
         },
         {
-          accountCode: CASH_OPERATIONAL_ACCOUNT_CODE,
+          accountCode: cashAznCode,
           debit: 0,
           credit: amt,
         },

@@ -1,10 +1,11 @@
 import { Prisma } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
+import { createMockPostingResolver } from "../../test/helpers/mock-posting-resolver";
 import { DepreciationService } from "./depreciation.service";
 
 describe("DepreciationService", () => {
   const accounting = {} as AccountingService;
-  const svc = new DepreciationService(accounting);
+  const svc = new DepreciationService(accounting, createMockPostingResolver());
   const computeRb = (
     svc as unknown as {
       computeReducingBalanceMonthlyAmount(

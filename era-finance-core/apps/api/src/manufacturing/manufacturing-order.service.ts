@@ -12,11 +12,7 @@ import {
   StockMovementType,
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  FINISHED_GOODS_ACCOUNT_CODE,
-  INVENTORY_GOODS_ACCOUNT_CODE,
-  WIP_MANUFACTURING_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { assertWarehouseNotUnderReconciliation } from "../inventory/inventory-reconciliation-lock";
 import { StockService } from "../stock/stock.service";
@@ -37,6 +33,7 @@ export class ManufacturingOrderService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly stock: StockService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async listOrders(
@@ -235,6 +232,11 @@ export class ManufacturingOrderService {
 
       totalMaterial = roundMoney2(totalMaterial);
 
+      const [wipCode, inventoryGoodsCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "WIP_MANUFACTURING", tx),
+        this.posting.resolveAccountCode(organizationId, "INVENTORY_GOODS", tx),
+      ]);
+
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: documentDate,
@@ -243,12 +245,12 @@ export class ManufacturingOrderService {
         isFinal: true,
         lines: [
           {
-            accountCode: WIP_MANUFACTURING_ACCOUNT_CODE,
+            accountCode: wipCode,
             debit: totalMaterial.toString(),
             credit: "0",
           },
           {
-            accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+            accountCode: inventoryGoodsCode,
             debit: "0",
             credit: totalMaterial.toString(),
           },
@@ -411,6 +413,11 @@ export class ManufacturingOrderService {
         });
       }
 
+      const [finishedGoodsCode, wipCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "FINISHED_GOODS", tx),
+        this.posting.resolveAccountCode(organizationId, "WIP_MANUFACTURING", tx),
+      ]);
+
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: documentDate,
@@ -419,12 +426,12 @@ export class ManufacturingOrderService {
         isFinal: true,
         lines: [
           {
-            accountCode: FINISHED_GOODS_ACCOUNT_CODE,
+            accountCode: finishedGoodsCode,
             debit: totalMaterial.toString(),
             credit: "0",
           },
           {
-            accountCode: WIP_MANUFACTURING_ACCOUNT_CODE,
+            accountCode: wipCode,
             debit: "0",
             credit: totalMaterial.toString(),
           },
@@ -526,6 +533,10 @@ export class ManufacturingOrderService {
         }
 
         if (totalMaterial.gt(0)) {
+          const [inventoryGoodsCode, wipCode] = await Promise.all([
+            this.posting.resolveAccountCode(organizationId, "INVENTORY_GOODS", tx),
+            this.posting.resolveAccountCode(organizationId, "WIP_MANUFACTURING", tx),
+          ]);
           await this.accounting.postJournalInTransaction(tx, {
             organizationId,
             date: documentDate,
@@ -534,12 +545,12 @@ export class ManufacturingOrderService {
             isFinal: true,
             lines: [
               {
-                accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+                accountCode: inventoryGoodsCode,
                 debit: totalMaterial.toString(),
                 credit: "0",
               },
               {
-                accountCode: WIP_MANUFACTURING_ACCOUNT_CODE,
+                accountCode: wipCode,
                 debit: "0",
                 credit: totalMaterial.toString(),
               },

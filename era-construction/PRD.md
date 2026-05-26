@@ -62,8 +62,17 @@
 | M1 | Project / site | **PLANNED** | — |
 | M2 | BOQ (смета) | **PLANNED** | — |
 | M3 | Material requisition | **PLANNED** | PO in Finance Phase 2 |
-| M4 | Progress act (КС) | **PLANNED** | `PROGRESS_ACT_APPROVED` |
+| M4 | Progress act (КС) | **MVP** | `PROGRESS_ACT_APPROVED` |
 | M5 | Photo report | **DEFERRED** | — |
+| M6 | Field daily log (прораб) | **W2 PLANNED** | Объём, погода, фото; Gemini 05 §3 |
+| M7 | Punch list / defects | **W2 PLANNED** | Snag list → assignee |
+| M8 | Gantt / CPM schedule | **W2 DEFERRED** | Gemini 05 §2 |
+| M9 | Subcontractor progress claims | **W2 PLANNED** | Lite portal; Finance contracts |
+| M10 | Site equipment / machine hours | **W2 DEFERRED** | Gemini 05 §6 |
+| M11 | CDE / drawing versions | **W2 DEFERRED** | Gemini 05 §7 |
+| M12 | Labor timesheets / SKUD | **W2 DEFERRED** | Gemini 05 §8 |
+
+См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -104,3 +113,4 @@ Material purchase → Finance procurement (not satellite GL).
 |------|------|
 | 2026-05-24 | PRD v1.0 |
 | 2026-05-25 | Wave 2 C2: plan-vs-actual API + project/requisition UI |
+| 2026-05-28 | Gemini enrichment: M6–M12 (W2 backlog) in §4 |

@@ -31,11 +31,12 @@ import {
   satelliteWholesaleOrderConfirmedSchema,
   satelliteFbStockConsumptionCompletedSchema,
 } from "@era/contracts";
-import { LedgerType, Prisma } from "@erafinance/database";
+import { LedgerType, Prisma, type PostingRole } from "@erafinance/database";
 import {
   AccountingService,
   type PostTransactionLine,
 } from "../accounting/accounting.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { InvoicesService } from "../invoices/invoices.service";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -53,6 +54,7 @@ export class SatelliteEventDispatchService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly invoices: InvoicesService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async dispatch(
@@ -122,20 +124,15 @@ export class SatelliteEventDispatchService {
     throw new Error("Unhandled satellite event type");
   }
 
-  private receivableAccount(): string {
-    return process.env.SATELLITE_GL_RECEIVABLE ?? "201";
-  }
-
-  private cashAccount(): string {
-    return process.env.SATELLITE_GL_CASH ?? "221";
-  }
-
-  private revenueAccount(): string {
-    return process.env.SATELLITE_GL_REVENUE ?? "601";
-  }
-
-  private wipAccount(): string {
-    return process.env.SATELLITE_GL_WIP ?? "111";
+  private async satelliteGlAccount(
+    organizationId: string,
+    envVar: string,
+    role: PostingRole,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string> {
+    const override = process.env[envVar]?.trim();
+    if (override) return override;
+    return this.posting.resolveAccountCode(organizationId, role, tx);
   }
 
   private async resolveCounterpartyId(
@@ -178,8 +175,22 @@ export class SatelliteEventDispatchService {
     if (amount <= 0) {
       throw new Error("Journal amount must be positive");
     }
-    const debit = params.debitAccount ?? this.receivableAccount();
-    const credit = params.creditAccount ?? this.revenueAccount();
+    const debit =
+      params.debitAccount ??
+      (await this.satelliteGlAccount(
+        organizationId,
+        "SATELLITE_GL_RECEIVABLE",
+        "TRADE_RECEIVABLE",
+        tx,
+      ));
+    const credit =
+      params.creditAccount ??
+      (await this.satelliteGlAccount(
+        organizationId,
+        "SATELLITE_GL_REVENUE",
+        "SALES_REVENUE",
+        tx,
+      ));
     const lines: PostTransactionLine[] = [
       { accountCode: debit, debit: amount, credit: 0 },
       { accountCode: credit, debit: 0, credit: amount },
@@ -338,10 +349,16 @@ export class SatelliteEventDispatchService {
       };
     }
 
+    const [revenueDefault, cashDefault, receivableDefault] = await Promise.all([
+      this.satelliteGlAccount(organizationId, "SATELLITE_GL_REVENUE", "SALES_REVENUE"),
+      this.satelliteGlAccount(organizationId, "SATELLITE_GL_CASH", "MAIN_BANK"),
+      this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE"),
+    ]);
+
     const lines: PostTransactionLine[] = [];
     for (const line of revenueLines) {
       lines.push({
-        accountCode: line.glAccountCode || this.revenueAccount(),
+        accountCode: line.glAccountCode || revenueDefault,
         debit: 0,
         credit: line.amount,
       });
@@ -349,14 +366,14 @@ export class SatelliteEventDispatchService {
     const arAmount = Math.max(0, totalRevenue - totalPayments);
     if (totalPayments > 0) {
       lines.push({
-        accountCode: this.cashAccount(),
+        accountCode: cashDefault,
         debit: totalPayments,
         credit: 0,
       });
     }
     if (arAmount > 0) {
       lines.push({
-        accountCode: this.receivableAccount(),
+        accountCode: receivableDefault,
         debit: arAmount,
         credit: 0,
       });
@@ -442,12 +459,16 @@ export class SatelliteEventDispatchService {
     event: ReturnType<typeof satelliteConstructionProgressActSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
     return this.prisma.$transaction(async (tx) => {
+      const [receivableDefault, wipDefault] = await Promise.all([
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_RECEIVABLE", "TRADE_RECEIVABLE", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_WIP", "WIP_MANUFACTURING", tx),
+      ]);
       const transactionId = await this.postBalancedJournal(tx, organizationId, {
         amount: event.payload.amountNet,
         reference: `construction:${event.payload.actId}`,
         description: `Construction progress act (${event.correlationId})`,
-        debitAccount: this.receivableAccount(),
-        creditAccount: this.wipAccount(),
+        debitAccount: receivableDefault,
+        creditAccount: wipDefault,
       });
       return {
         transactionId,
@@ -644,16 +665,20 @@ export class SatelliteEventDispatchService {
       0,
     );
     const amount = Math.max(event.payload.amountAzn, cogsAmount);
-    const transactionId = await this.prisma.$transaction(async (tx) =>
-      this.postBalancedJournal(tx, organizationId, {
+    const transactionId = await this.prisma.$transaction(async (tx) => {
+      const [wipDefault, cogsDefault] = await Promise.all([
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_WIP", "WIP_MANUFACTURING", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COGS", "COGS", tx),
+      ]);
+      return this.postBalancedJournal(tx, organizationId, {
         amount,
         reference: `fb-consumption:${event.payload.ticketId}`,
         description: `F&B stock consumption ${event.payload.outletCode ?? event.payload.outletId} (${event.correlationId})`,
         counterpartyId: cpId,
-        debitAccount: this.wipAccount(),
-        creditAccount: process.env.SATELLITE_GL_COGS ?? "701",
-      }),
-    );
+        debitAccount: wipDefault,
+        creditAccount: cogsDefault,
+      });
+    });
     return {
       transactionId,
       meta: {

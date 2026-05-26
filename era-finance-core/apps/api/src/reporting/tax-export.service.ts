@@ -13,9 +13,9 @@ import {
 import ExcelJS from "exceljs";
 import { endOfUtcDay, monthRangeUtc } from "./reporting-period.util";
 import { PrismaService } from "../prisma/prisma.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { STORAGE_SERVICE, type StorageService } from "../storage/storage.interface";
 import type { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
-import { REVENUE_ACCOUNT_CODE } from "../ledger.constants";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 
 type DeclarationRecord = {
@@ -45,6 +45,7 @@ export class TaxExportService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async list(organizationId: string): Promise<DeclarationRecord[]> {
@@ -65,13 +66,14 @@ export class TaxExportService {
   }> {
     const { year, month } = parsePeriod(period);
     const { start, end } = monthRangeUtc(year, month);
+    const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
     const account = await this.prisma.account.findFirst({
-      where: { organizationId, code: REVENUE_ACCOUNT_CODE, ledgerType: LedgerType.NAS },
+      where: { organizationId, code: revenueCode, ledgerType: LedgerType.NAS },
       select: { id: true },
     });
     if (!account) {
       throw new BadRequestException(
-        `Revenue account ${REVENUE_ACCOUNT_CODE} not found for organization`,
+        `Revenue account ${revenueCode} not found for organization`,
       );
     }
 

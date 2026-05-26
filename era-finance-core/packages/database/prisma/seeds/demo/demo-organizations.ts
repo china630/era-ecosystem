@@ -55,6 +55,15 @@ const DEMO_ORGS: ReadonlyArray<{
     kind: OrganizationKind.BUDGET,
     legalForm: CounterpartyLegalForm.STATE_AGENCY,
   },
+  {
+    name: "Demo NGO Foundation (local)",
+    taxId: "9900000004",
+    legalAddress: "Bakı, Yasamal rayonu (demo NGO)",
+    phone: "+994501112266",
+    directorName: "Demo Director NGO",
+    kind: OrganizationKind.NGO,
+    legalForm: CounterpartyLegalForm.NGO,
+  },
 ];
 
 function demoActiveModules(): string[] {

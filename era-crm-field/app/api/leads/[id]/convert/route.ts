@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma";
 const bodySchema = z.object({
   counterpartyId: z.string().optional(),
   delivery: z.boolean().optional(),
+  customHostname: z.string().optional(),
 });
 
 export async function POST(

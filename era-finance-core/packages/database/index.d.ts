@@ -21,6 +21,20 @@ export {
   type ChartOfAccountsFile,
 } from "./dist/lib/chart/chart-seed";
 export {
+  POSTING_ROLES,
+  assertPostingRole,
+  isPostingRole,
+  type PostingRole,
+} from "./dist/lib/posting/posting-role";
+export {
+  loadPostingRolesJson,
+  postingRolesJsonPath,
+  upsertGlobalPostingRoleTemplates,
+  validatePostingRolesAgainstCharts,
+  POSTING_ROLE_RUNTIME_ACCOUNT_CODES,
+  type PostingRolesFile,
+} from "./dist/lib/posting/posting-seed";
+export {
   PRICING_MODULE_CASH_BANK_PRO,
   LEGACY_CASH_BANK_MODULE_KEYS,
   hasCashBankModuleInList,

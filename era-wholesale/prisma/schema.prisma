@@ -42,6 +42,8 @@ model B2BOrder {
   amountNet           Decimal        @default(0) @db.Decimal(12, 2)
   lineCount           Int            @default(0)
   confirmedAt         DateTime?
+  ttnNumber           String?
+  ttnIssuedAt         DateTime?
   pickList            PickList?
   createdAt           DateTime       @default(now())
 }
@@ -49,10 +51,13 @@ model B2BOrder {
 model PickList {
   id        String         @id @default(cuid())
   orderId   String         @unique
+  waveCode  String?
   status    String         @default("OPEN")
   order     B2BOrder       @relation(fields: [orderId], references: [id])
   lines     PickListLine[]
   createdAt DateTime       @default(now())
+
+  @@index([waveCode])
 }
 
 model PickListLine {

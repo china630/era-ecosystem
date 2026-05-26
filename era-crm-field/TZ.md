@@ -31,6 +31,13 @@ ChannelThread (stub, Phase 2)
 
 **No GL in CRM.** Conversion creates counterparty opportunity handoff in Finance via event only — see [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).
 
+## W1-E — Enrichment
+
+| Method | Path | Model |
+|--------|------|-------|
+| GET/POST | `/api/visits` | `Visit.latitude`, `Visit.longitude`, `addressLabel` |
+| PATCH | `/api/leads/:id/follow-up` | `Lead.nextContactAt` → `trySendPlatformNotification` (M8) |
+
 ## Environment
 
 Same satellite env block as other industry apps — [.env.example](./.env.example).

@@ -45,3 +45,15 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] C2 inbox + lead assign + visit log (Wave 1)
 - [x] Finance convert `POST /api/leads/:id/convert` + platform hooks (Wave E)
+
+## W1-E — Enrichment
+
+Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era)
+
+- [x] M4: Visit geo fields + optional map stub on `/visits`
+- [x] M8: Next-contact reminder (`nextContactAt` + platform notification)
+
+## W2-E — Enrichment
+
+- [x] M9: Lead scoring stub
+- [ ] M10: Pipeline automation — deferred

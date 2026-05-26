@@ -9,6 +9,7 @@ import { OpeningBalancesService } from "../../src/migration/opening-balances.ser
 import { RolesGuard } from "../../src/auth/guards/roles.guard";
 
 describe("OpeningBalancesController /finance (HTTP e2e)", () => {
+  jest.setTimeout(60_000);
   let app: INestApplication;
   const service = {
     importFinance: jest.fn(),

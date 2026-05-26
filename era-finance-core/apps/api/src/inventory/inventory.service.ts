@@ -11,25 +11,17 @@ import {
   StockMovementReason,
   StockMovementType,
   UserRole,
+  type PostingRole,
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
 import { AccessControlService } from "../access/access-control.service";
 import { getClosedPeriodKeys, monthKeyUtc } from "../reporting/reporting-period.util";
 import { randomUUID } from "node:crypto";
 import { AccountingService } from "../accounting/accounting.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { ContractsService } from "../contracts/contracts.service";
 import { GovBudgetService } from "../gov-budget/gov-budget.service";
-import {
-  COGS_ACCOUNT_CODE,
-  FINISHED_GOODS_ACCOUNT_CODE,
-  INVENTORY_GOODS_ACCOUNT_CODE,
-  INVENTORY_SURPLUS_INCOME_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-  REVENUE_ACCOUNT_CODE,
-  VAT_INPUT_ACCOUNT_CODE,
-} from "../ledger.constants";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
 import { StockService } from "../stock/stock.service";
@@ -62,7 +54,17 @@ export class InventoryService {
     private readonly access: AccessControlService,
     private readonly contracts: ContractsService,
     private readonly govBudget: GovBudgetService,
+    private readonly posting: PostingAccountResolver,
+    private readonly postingJournal: PostingJournalBuilder,
   ) {}
+
+  private nas(
+    organizationId: string,
+    role: PostingRole,
+    tx?: Prisma.TransactionClient,
+  ): Promise<string> {
+    return this.posting.resolveAccountCode(organizationId, role, tx);
+  }
 
   private async assertPurchaseLimitGateways(
     organizationId: string,
@@ -634,13 +636,21 @@ export class InventoryService {
       const vAz = totalVat.mul(fx);
       const grAz = totalGross.mul(fx);
 
+      const [inventoryCode, miscExpenseCode, vatInputCode, supplierPayableCode] =
+        await Promise.all([
+          this.nas(organizationId, "INVENTORY_GOODS", tx),
+          this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
+          this.nas(organizationId, "VAT_INPUT", tx),
+          this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
+        ]);
+
       const lines =
         vAz.gt(0) && pricesIncludeVat
           ? [
               ...(gAz.gt(0)
                 ? [
                     {
-                      accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+                      accountCode: inventoryCode,
                       debit: gAz.toString(),
                       credit: 0,
                     },
@@ -649,19 +659,19 @@ export class InventoryService {
               ...(sAz.gt(0)
                 ? [
                     {
-                      accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+                      accountCode: miscExpenseCode,
                       debit: sAz.toString(),
                       credit: 0,
                     },
                   ]
                 : []),
               {
-                accountCode: VAT_INPUT_ACCOUNT_CODE,
+                accountCode: vatInputCode,
                 debit: vAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: grAz.toString(),
               },
@@ -670,7 +680,7 @@ export class InventoryService {
               ...(gAz.gt(0)
                 ? [
                     {
-                      accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+                      accountCode: inventoryCode,
                       debit: gAz.toString(),
                       credit: 0,
                     },
@@ -679,14 +689,14 @@ export class InventoryService {
               ...(sAz.gt(0)
                 ? [
                     {
-                      accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+                      accountCode: miscExpenseCode,
                       debit: sAz.toString(),
                       credit: 0,
                     },
                   ]
                 : []),
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: grAz.toString(),
               },
@@ -796,33 +806,39 @@ export class InventoryService {
       const vAz = totalVat.mul(fx);
       const gAz = totalGross.mul(fx);
 
+      const [inventoryCode, vatInputCode, supplierPayableCode] = await Promise.all([
+        this.nas(organizationId, "INVENTORY_GOODS", tx),
+        this.nas(organizationId, "VAT_INPUT", tx),
+        this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
+      ]);
+
       const journalLines =
         totalVat.gt(0) && pricesIncludeVat
           ? [
               {
-                accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+                accountCode: inventoryCode,
                 debit: nAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: VAT_INPUT_ACCOUNT_CODE,
+                accountCode: vatInputCode,
                 debit: vAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: gAz.toString(),
               },
             ]
           : [
               {
-                accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
+                accountCode: inventoryCode,
                 debit: nAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: gAz.toString(),
               },
@@ -915,10 +931,12 @@ export class InventoryService {
       }
     }
 
+    const supplierPayableCode = await this.nas(organizationId, "SUPPLIER_PAYABLE");
+
     const items = rows.map((tr) => {
       let credit531 = new Decimal(0);
       for (const je of tr.journalEntries) {
-        if (je.account.code === PAYABLE_SUPPLIERS_ACCOUNT_CODE) {
+        if (je.account.code === supplierPayableCode) {
           credit531 = credit531.add(je.credit);
         }
       }
@@ -1120,23 +1138,13 @@ export class InventoryService {
       throw new NotFoundException("Invoice not found");
     }
 
-    const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+    const { transactionId } = await this.postingJournal.postInTransaction(tx, {
       organizationId,
+      schemaId: "INVOICE_REVENUE_RECOGNITION",
+      amounts: { main: totalAmount },
       date: new Date(),
       reference: full.number,
-      description: `Отгрузка / выручка по ${full.number} (Дт ${RECEIVABLE_ACCOUNT_CODE} Кт ${REVENUE_ACCOUNT_CODE})`,
-      lines: [
-        {
-          accountCode: RECEIVABLE_ACCOUNT_CODE,
-          debit: totalAmount.toString(),
-          credit: 0,
-        },
-        {
-          accountCode: REVENUE_ACCOUNT_CODE,
-          debit: 0,
-          credit: totalAmount.toString(),
-        },
-      ],
+      description: `Отгрузка / выручка по ${full.number}`,
     });
 
     const snapshotLines: Array<{
@@ -1597,23 +1605,13 @@ export class InventoryService {
       }
 
       if (totalCogs.gt(0)) {
-        await this.accounting.postJournalInTransaction(tx, {
+        await this.postingJournal.postInTransaction(tx, {
           organizationId,
+          schemaId: "COGS_ON_SALE",
+          amounts: { main: totalCogs },
           date: documentDate,
           reference: inv.number,
           description: `Себестоимость (məxaric) по инвойсу ${inv.number}`,
-          lines: [
-            {
-              accountCode: COGS_ACCOUNT_CODE,
-              debit: totalCogs.toString(),
-              credit: 0,
-            },
-            {
-              accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
-              debit: 0,
-              credit: totalCogs.toString(),
-            },
-          ],
         });
       }
 
@@ -1861,33 +1859,39 @@ export class InventoryService {
       const vAz = totalVat.mul(fx);
       const gAz = totalGross.mul(fx);
 
+      const [miscExpenseCode, vatInputCode, supplierPayableCode] = await Promise.all([
+        this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
+        this.nas(organizationId, "VAT_INPUT", tx),
+        this.nas(organizationId, "SUPPLIER_PAYABLE", tx),
+      ]);
+
       const journalLines =
         totalVat.gt(0) && pricesIncludeVat
           ? [
               {
-                accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+                accountCode: miscExpenseCode,
                 debit: nAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: VAT_INPUT_ACCOUNT_CODE,
+                accountCode: vatInputCode,
                 debit: vAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: gAz.toString(),
               },
             ]
           : [
               {
-                accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+                accountCode: miscExpenseCode,
                 debit: nAz.toString(),
                 credit: 0,
               },
               {
-                accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+                accountCode: supplierPayableCode,
                 debit: 0,
                 credit: gAz.toString(),
               },
@@ -2499,23 +2503,13 @@ export class InventoryService {
     }
 
     if (totalCogs.gt(0)) {
-      await this.accounting.postJournalInTransaction(tx, {
+      await this.postingJournal.postInTransaction(tx, {
         organizationId,
+        schemaId: "COGS_ON_SALE",
+        amounts: { main: totalCogs },
         date: saleDocumentDate,
         reference: inv.number,
         description: `Себестоимость по инвойсу ${inv.number}`,
-        lines: [
-          {
-            accountCode: COGS_ACCOUNT_CODE,
-            debit: totalCogs.toString(),
-            credit: 0,
-          },
-          {
-            accountCode: INVENTORY_GOODS_ACCOUNT_CODE,
-            debit: 0,
-            credit: totalCogs.toString(),
-          },
-        ],
       });
     }
 
@@ -2555,10 +2549,13 @@ export class InventoryService {
     });
     const allowNeg = !!parseInventorySettings(org?.settings).allowNegativeStock;
 
+    const [finishedGoodsCode, inventoryGoodsCode, miscExpenseCode] = await Promise.all([
+      this.nas(organizationId, "FINISHED_GOODS", tx),
+      this.nas(organizationId, "INVENTORY_GOODS", tx),
+      this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
+    ]);
     const invAccountCode =
-      dto.inventoryAccountCode === "204"
-        ? FINISHED_GOODS_ACCOUNT_CODE
-        : INVENTORY_GOODS_ACCOUNT_CODE;
+      dto.inventoryAccountCode === "204" ? finishedGoodsCode : inventoryGoodsCode;
 
     const existing = await tx.stockItem.findUnique({
       where: {
@@ -2631,7 +2628,7 @@ export class InventoryService {
           isFinal: true,
           lines: [
             {
-              accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+              accountCode: miscExpenseCode,
               debit: amount.toString(),
               credit: 0,
             },
@@ -2697,6 +2694,7 @@ export class InventoryService {
       },
     });
 
+    const surplusIncomeCode = await this.nas(organizationId, "INVENTORY_SURPLUS_INCOME", tx);
     const amount = qty.mul(unit);
     if (amount.gt(0)) {
       await this.accounting.postJournalInTransaction(tx, {
@@ -2712,7 +2710,7 @@ export class InventoryService {
             credit: 0,
           },
           {
-            accountCode: INVENTORY_SURPLUS_INCOME_ACCOUNT_CODE,
+            accountCode: surplusIncomeCode,
             debit: 0,
             credit: amount.toString(),
           },
@@ -2960,10 +2958,15 @@ export class InventoryService {
     });
     const allowNeg = !!parseInventorySettings(org?.settings).allowNegativeStock;
 
+    const [finishedGoodsCode, inventoryGoodsCode, surplusIncomeCode, miscExpenseCode] =
+      await Promise.all([
+        this.nas(organizationId, "FINISHED_GOODS", tx),
+        this.nas(organizationId, "INVENTORY_GOODS", tx),
+        this.nas(organizationId, "INVENTORY_SURPLUS_INCOME", tx),
+        this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
+      ]);
     const invAcc =
-      draft.warehouse.inventoryAccountCode === "204"
-        ? FINISHED_GOODS_ACCOUNT_CODE
-        : INVENTORY_GOODS_ACCOUNT_CODE;
+      draft.warehouse.inventoryAccountCode === "204" ? finishedGoodsCode : inventoryGoodsCode;
 
     const eps = new Decimal("0.0001");
     let surplusTotal = new Decimal(0);
@@ -3195,7 +3198,7 @@ export class InventoryService {
         ? [
             { accountCode: invAcc, debit: surplusTotal.toString(), credit: 0 },
             {
-              accountCode: INVENTORY_SURPLUS_INCOME_ACCOUNT_CODE,
+              accountCode: surplusIncomeCode,
               debit: 0,
               credit: surplusTotal.toString(),
             },
@@ -3204,7 +3207,7 @@ export class InventoryService {
       ...(shortageTotal.gt(0)
         ? [
             {
-              accountCode: MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
+              accountCode: miscExpenseCode,
               debit: shortageTotal.toString(),
               credit: 0,
             },

@@ -9,12 +9,18 @@ import {
 import { trySendPlatformNotification } from "@/lib/platform-notify";
 import { prisma } from "@/lib/prisma";
 
+const bodySchema = z.object({
+  homeDelivery: z.boolean().optional(),
+  customHostname: z.string().optional(),
+});
+
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const body = bodySchema.parse(await req.json().catch(() => ({})));
     const order = await prisma.labOrder.findUnique({
       where: { id },
       include: { patientRef: true, visit: true },
@@ -27,21 +33,15 @@ export async function POST(
       return jsonError("Results required before publish", 400);
     }
 
-    const published = await prisma.labOrder.update({
-      where: { id },
-      data: { status: "PUBLISHED", publishedAt: new Date() },
-      include: { patientRef: true, visit: true },
-    });
-
     const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID ?? "";
-    const phone = published.patientRef.phone?.trim();
+    const phone = order.patientRef.phone?.trim();
     let portalUrl: string | undefined;
     if (organizationId && phone) {
       try {
         const link = (await createPortalLink(
           {
             subjectType: "lab_order",
-            subjectId: published.id,
+            subjectId: order.id,
             recipientPhone: phone,
             expiresInHours: 72,
           },
@@ -56,7 +56,7 @@ export async function POST(
           await createShipment(
             {
               sourceEntityType: "lab_order",
-              sourceEntityId: published.id,
+              sourceEntityId: order.id,
               externalRef: phone,
               recipientPhone: phone,
             },
@@ -69,11 +69,11 @@ export async function POST(
       try {
         await createPromotion(
           {
-            code: `CLI-LAB-${published.id.slice(0, 8)}`,
+            code: `CLI-LAB-${order.id.slice(0, 8)}`,
             name: "Clinic lab promotion",
             discountType: "PERCENT",
             discountValue: 5,
-            metadata: { labOrderId: published.id },
+            metadata: { labOrderId: order.id },
           },
           { organizationId },
         );
@@ -85,7 +85,7 @@ export async function POST(
           await createCustomDomain(
             {
               hostname: body.customHostname.trim(),
-              metadata: { labOrderId: published.id },
+              metadata: { labOrderId: order.id },
             },
             { organizationId },
           );
@@ -99,7 +99,7 @@ export async function POST(
         messageClass: "TRANSACTIONAL",
         recipient: phone,
         sourceEntityType: "lab_order",
-        sourceEntityId: published.id,
+        sourceEntityId: order.id,
         body: portalUrl
           ? `Lab results ready: ${portalUrl}`
           : "Lab results are ready in the patient portal.",
@@ -107,7 +107,17 @@ export async function POST(
       });
     }
 
-    return jsonOk(published);
+    const published = await prisma.labOrder.update({
+      where: { id },
+      data: {
+        status: "PUBLISHED",
+        publishedAt: new Date(),
+        telehealthUrl: portalUrl ?? null,
+      },
+      include: { patientRef: true, visit: true },
+    });
+
+    return jsonOk({ ...published, portalUrl });
   } catch (err) {
     return handleRouteError(err);
   }

@@ -32,3 +32,14 @@ Client: `@era/satellite-kit`.
 
 - [x] Appointments UI `/appointments` + platform crons (service-due)
 - [x] Work order complete → commerce/notifications (Wave E)
+
+## W2-E — Enrichment (Gemini СТО ERP)
+
+PRD M5–M12 · note: M5 partially covered by A2 appointments
+
+- [x] M6: Interactive intake (photos, damage checklist)
+- [x] M8: Shop floor timer per job line
+- [x] M9: Parts status on work order
+- [x] M10: Vehicle history timeline by VIN/plate
+- [ ] M5 extend: Bay/lift resource on calendar
+- [ ] M7, M11, M12: deferred

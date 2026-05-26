@@ -13,16 +13,8 @@ import {
   SignedDocumentKind,
 } from "@erafinance/database";
 import { DepreciationService } from "../fixed-assets/depreciation.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
-import {
-  COGS_ACCOUNT_CODE,
-  FX_GAIN_ACCOUNT_CODE,
-  PAYROLL_EXPENSE_ACCOUNT_CODE,
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-  REVENUE_ACCOUNT_CODE,
-} from "../ledger.constants";
 import {
   endOfUtcDay,
   getClosedPeriodKeys,
@@ -89,6 +81,7 @@ export class ReportingService {
     private readonly prisma: PrismaService,
     private readonly depreciation: DepreciationService,
     private readonly config: ConfigService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async trialBalance(
@@ -114,6 +107,13 @@ export class ReportingService {
     if (dateFrom.getTime() > dateTo.getTime()) {
       throw new BadRequestException("dateFrom must be <= dateTo");
     }
+
+    const [revenueCode, cogsCode, payrollExpenseCode, fxGainCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
+      this.posting.resolveAccountCode(organizationId, "COGS"),
+      this.posting.resolveAccountCode(organizationId, "PAYROLL_EXPENSE"),
+      this.posting.resolveAccountCode(organizationId, "FX_GAIN"),
+    ]);
 
     const accounts = await this.prisma.account.findMany({
       where: { organizationId, ledgerType },
@@ -264,10 +264,10 @@ export class ReportingService {
       new Decimal("0.0001"),
     );
 
-    const revenueRow = rows.find((r) => r.accountCode === REVENUE_ACCOUNT_CODE);
-    const cogsRow = rows.find((r) => r.accountCode === COGS_ACCOUNT_CODE);
-    const payrollRow = rows.find((r) => r.accountCode === PAYROLL_EXPENSE_ACCOUNT_CODE);
-    const fxRow = rows.find((r) => r.accountCode === FX_GAIN_ACCOUNT_CODE);
+    const revenueRow = rows.find((r) => r.accountCode === revenueCode);
+    const cogsRow = rows.find((r) => r.accountCode === cogsCode);
+    const payrollRow = rows.find((r) => r.accountCode === payrollExpenseCode);
+    const fxRow = rows.find((r) => r.accountCode === fxGainCode);
     const trialBalanceProfitProxy = (revenueRow
       ? new Decimal(revenueRow.periodCredit).sub(new Decimal(revenueRow.periodDebit))
       : new Decimal(0))
@@ -337,11 +337,18 @@ export class ReportingService {
       throw new BadRequestException("dateFrom must be <= dateTo");
     }
 
+    const [revenueCode, cogsCode, payrollExpenseCode, fxGainCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
+      this.posting.resolveAccountCode(organizationId, "COGS"),
+      this.posting.resolveAccountCode(organizationId, "PAYROLL_EXPENSE"),
+      this.posting.resolveAccountCode(organizationId, "FX_GAIN"),
+    ]);
+
     const codes = [
-      REVENUE_ACCOUNT_CODE,
-      COGS_ACCOUNT_CODE,
-      PAYROLL_EXPENSE_ACCOUNT_CODE,
-      FX_GAIN_ACCOUNT_CODE,
+      revenueCode,
+      cogsCode,
+      payrollExpenseCode,
+      fxGainCode,
     ] as const;
     const accs = await this.prisma.account.findMany({
       where: { organizationId, ledgerType, code: { in: [...codes] } },
@@ -403,16 +410,16 @@ export class ReportingService {
       return sumMap.get(a.id) ?? { dr: new Decimal(0), cr: new Decimal(0) };
     };
 
-    const r601 = pick(REVENUE_ACCOUNT_CODE);
+    const r601 = pick(revenueCode);
     const revenueNet = r601.cr.sub(r601.dr);
 
-    const r701 = pick(COGS_ACCOUNT_CODE);
+    const r701 = pick(cogsCode);
     const cogsNet = r701.dr.sub(r701.cr);
 
-    const r721 = pick(PAYROLL_EXPENSE_ACCOUNT_CODE);
+    const r721 = pick(payrollExpenseCode);
     const payrollExpenseNet = r721.dr.sub(r721.cr);
 
-    const r662 = pick(FX_GAIN_ACCOUNT_CODE);
+    const r662 = pick(fxGainCode);
     const fx662Net = r662.dr.sub(r662.cr);
 
     const netProfit = revenueNet
@@ -441,8 +448,8 @@ export class ReportingService {
 
     const payrollLabel =
       deptFilter != null
-        ? `Расходы на ЗП по департаменту (${PAYROLL_EXPENSE_ACCOUNT_CODE})`
-        : `Расходы на ЗП (${PAYROLL_EXPENSE_ACCOUNT_CODE})`;
+        ? `Расходы на ЗП по департаменту (${payrollExpenseCode})`
+        : `Расходы на ЗП (${payrollExpenseCode})`;
 
     return {
       dateFrom: dateFromStr,
@@ -452,23 +459,23 @@ export class ReportingService {
       payrollExpenseSource: "ledger",
       lines: [
         {
-          accountCode: REVENUE_ACCOUNT_CODE,
-          label: `Выручка (${REVENUE_ACCOUNT_CODE})`,
+          accountCode: revenueCode,
+          label: `Выручка (${revenueCode})`,
           amount: revenueNet.toFixed(4),
         },
         {
-          accountCode: COGS_ACCOUNT_CODE,
-          label: `Себестоимость (${COGS_ACCOUNT_CODE})`,
+          accountCode: cogsCode,
+          label: `Себестоимость (${cogsCode})`,
           amount: cogsNet.neg().toFixed(4),
         },
         {
-          accountCode: PAYROLL_EXPENSE_ACCOUNT_CODE,
+          accountCode: payrollExpenseCode,
           label: payrollLabel,
           amount: payrollExpenseNet.neg().toFixed(4),
         },
         {
-          accountCode: FX_GAIN_ACCOUNT_CODE,
-          label: `Прочие доходы/расходы (${FX_GAIN_ACCOUNT_CODE}, по Дт−Кт)`,
+          accountCode: fxGainCode,
+          label: `Прочие доходы/расходы (${fxGainCode}, по Дт−Кт)`,
           amount: fx662Net.neg().toFixed(4),
         },
       ],
@@ -505,6 +512,10 @@ export class ReportingService {
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
   ) {
+    const receivableCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "TRADE_RECEIVABLE",
+    );
     const invoices = await this.prisma.invoice.findMany({
       where: {
         organizationId,
@@ -517,10 +528,10 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
-        code: RECEIVABLE_ACCOUNT_CODE,
+        code: receivableCode,
       },
     });
-    const displayAccountCode = arAcc?.code ?? RECEIVABLE_ACCOUNT_CODE;
+    const displayAccountCode = arAcc?.code ?? receivableCode;
 
     const byCp = new Map<string, Decimal>();
     for (const inv of invoices) {
@@ -622,6 +633,10 @@ export class ReportingService {
       dateTo,
       dateFromStr,
       dateToStr,
+      {
+        receivable: await this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE"),
+        revenue: await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
+      },
       options,
     );
 
@@ -892,6 +907,17 @@ export class ReportingService {
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
   ) {
+    const [
+      payrollTaxPayableCode,
+      supplierPayableCode,
+      revenueCode,
+      payrollExpenseCode,
+    ] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "PAYROLL_TAX_PAYABLE"),
+      this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE"),
+      this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
+      this.posting.resolveAccountCode(organizationId, "PAYROLL_EXPENSE"),
+    ]);
     const today = new Date();
     const from30 = new Date(
       Date.UTC(
@@ -930,21 +956,21 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
-        code: PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+        code: payrollTaxPayableCode,
       },
     });
     const pay531Acc = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
-        code: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+        code: supplierPayableCode,
       },
     });
     const revAcc = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
-        code: REVENUE_ACCOUNT_CODE,
+        code: revenueCode,
       },
     });
 
@@ -1003,7 +1029,7 @@ export class ReportingService {
       where: {
         organizationId,
         ledgerType,
-        code: PAYROLL_EXPENSE_ACCOUNT_CODE,
+        code: payrollExpenseCode,
       },
     });
     const y = today.getUTCFullYear();

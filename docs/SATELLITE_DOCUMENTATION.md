@@ -12,6 +12,11 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Readiness matrices | [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) — DELIVERY %, API × app, integrations; **refresh:** skill `era-readiness-matrix` or `node scripts/delivery-readiness.mjs` (§1) + `node scripts/readiness-coverage.mjs` (§4) |
 | Smoke checklist | [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) |
 | This standard | `SATELLITE_DOCUMENTATION.md` |
+| Modules catalog + enrichment backlog | [`MODULES_CATALOG.md`](./MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) |
+| Gemini ERP research (reference) | [`ERPs/`](../ERPs/) |
+| Industry enrichment backlog (Gemini W1/W2) | [MODULES_CATALOG.md § enrichment](./MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) |
+| ERP research index | [ERPs/README.md](../ERPs/README.md) |
+| Finance bridge pattern (ADR) | [satellite-finance-bridge-pattern.md](./adr/satellite-finance-bridge-pattern.md) |
 
 ## Per-satellite layout
 

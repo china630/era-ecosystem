@@ -19,15 +19,19 @@ type LabOrder = {
 export default function LabOrdersPage() {
   const [orders, setOrders] = useState<LabOrder[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
+  const [criticalOnly, setCriticalOnly] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const query = statusFilter ? `?status=${statusFilter}` : "";
+    const params = new URLSearchParams();
+    if (statusFilter) params.set("status", statusFilter);
+    if (criticalOnly) params.set("criticalOnly", "true");
+    const query = params.toString() ? `?${params}` : "";
     fetch(`/api/lab-orders${query}`)
       .then((res) => res.json())
       .then((data) => setOrders(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
-  }, [statusFilter]);
+  }, [statusFilter, criticalOnly]);
 
   async function completeOrder(id: string) {
     await fetch(`/api/lab-orders/${id}/complete`, { method: "POST" });
@@ -48,6 +52,17 @@ export default function LabOrdersPage() {
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+        <label className="flex items-center gap-2 text-[13px]">
+          <input
+            type="checkbox"
+            checked={criticalOnly}
+            onChange={(e) => {
+              setLoading(true);
+              setCriticalOnly(e.target.checked);
+            }}
+          />
+          Critical results only (M5)
+        </label>
         <label className="flex items-center gap-2 text-[13px]">
           Status filter
           <select

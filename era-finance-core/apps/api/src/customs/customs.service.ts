@@ -3,11 +3,7 @@ import { CustomsDeclarationStatus, Prisma } from "@erafinance/database";
 import type { CustomsDeclarationFullPrefillCapture, CustomsDeclarationPrefillCapture } from "@erafinance/api-contracts";
 import { normalizeUnitInputToCatalogCode } from "../common/unit-of-measure-normalize";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  INVENTORY_GOODS_ACCOUNT_CODE,
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  VAT_INPUT_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { CounterpartiesService } from "../counterparties/counterparties.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { IntegrationSyncRunService } from "../integrations/integration-sync-run.service";
@@ -46,6 +42,7 @@ export class CustomsService {
     private readonly syncRuns: IntegrationSyncRunService,
     private readonly counterparties: CounterpartiesService,
     private readonly taxCalculator: CustomsTaxCalculatorService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   list(organizationId: string) {
@@ -352,15 +349,20 @@ export class CustomsService {
       const inventoryDr = new Prisma.Decimal(row.customs_duty_azn).add(new Prisma.Decimal(row.fees_azn));
       const vatDr = new Prisma.Decimal(row.customs_vat_azn);
       const totalCr = inventoryDr.add(vatDr);
+      const [inventoryGoodsCode, vatInputCode, supplierPayableCode] = await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "INVENTORY_GOODS", tx),
+        this.posting.resolveAccountCode(organizationId, "VAT_INPUT", tx),
+        this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE", tx),
+      ]);
       await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: new Date(),
         reference: row.bgd_number,
         description: `BGD attach ${row.bgd_number}`,
         lines: [
-          { accountCode: INVENTORY_GOODS_ACCOUNT_CODE, debit: inventoryDr.toString(), credit: 0 },
-          { accountCode: VAT_INPUT_ACCOUNT_CODE, debit: vatDr.toString(), credit: 0 },
-          { accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE, debit: 0, credit: totalCr.toString() },
+          { accountCode: inventoryGoodsCode, debit: inventoryDr.toString(), credit: 0 },
+          { accountCode: vatInputCode, debit: vatDr.toString(), credit: 0 },
+          { accountCode: supplierPayableCode, debit: 0, credit: totalCr.toString() },
         ],
       });
       await tx.customsDeclaration.update({

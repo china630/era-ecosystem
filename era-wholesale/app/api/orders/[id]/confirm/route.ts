@@ -15,6 +15,7 @@ import { z } from "zod";
 
 const bodySchema = z.object({
   delivery: z.boolean().optional(),
+  customHostname: z.string().optional(),
 });
 
 export async function POST(

@@ -44,3 +44,18 @@ Client: `@era/satellite-kit`.
 
 - [x] L2 POD + fuel reports (Wave 1)
 - [x] L3 customs status hub `/customs` + Finance deep link
+
+## W1-E — Enrichment
+
+Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era)
+
+- [x] M3: Waybill document (generate/print stub per trip)
+- [x] M7: Fleet compliance — vehicle doc expiry fields + alerts UI
+- [x] M4: POD photo URL + signature URL on trip
+
+## W2-E — Enrichment
+
+- [x] M8: Multi-stop `trip_points`
+- [x] M9: Driver mobile workflow API stub
+- [x] M13: Customer tracking via platform_portal
+- [ ] M10–M12: deferred (Finance / hub WMS)

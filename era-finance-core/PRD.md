@@ -636,7 +636,9 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 ### 5.1. Системные шаблоны плана счетов и онбординг организации (v1.1 / v2.0)
 
-**[x] COMPLETED.** Эталон NAS/IFRS в **`TemplateAccount`** / **`TemplateIFRSMapping`**, атомарный онбординг через **`provisionChartOfAccountsFromTemplate`**, Super-Admin **`/api/admin/chart-template`**, импорт каталога NAS в UI **`/accounting/chart`** (ранее **`/settings/chart`**; постоянный редирект сохранён) — в продукте. Исторические таблицы «проблема as-is» и длинные чек-листы миграций **убраны как устаревшие**; обратная совместимость для старых тенантов — без автоматического массового перезаписывания `Account`.
+**[x] COMPLETED.** Эталон NAS/IFRS в **`TemplateAccount`** / **`TemplateIFRSMapping`**, атомарный онбординг через **`provisionChartOfAccountsFromTemplate`**, Super-Admin **`/api/admin/chart-template`**, импорт каталога NAS в UI **`/accounting/chart`** (ранее **`/settings/chart`**; постоянный редирект сохранён) — в продукте.
+
+**[x] COMPLETED — Posting Role Profiles (v2026.05):** отдельный слой **профиля автопроводок** (`template_posting_roles`, `organization_posting_roles`, пресеты per **`OrganizationKind`**) поверх плана счетов; UI **`/accounting/posting-roles`**; BUDGET/NGO используют kind-специфичные коды (не коммерческие 211/601). См. ADR **`docs/adr/posting-role-profiles.md`**. Исторические таблицы «проблема as-is» и длинные чек-листы миграций **убраны как устаревшие**; обратная совместимость для старых тенантов — без автоматического массового перезаписывания `Account`.
 
 #### 5.1.6. Критерии приёмки (зафиксировано как выполненные)
 
@@ -1065,7 +1067,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 | **Сущность** | **InventoryAudit (1 склад)** + строки **InventoryAuditLine (N)**: `systemQty`, `factQty`, `costPrice`, `discrepancyKind`, опционально **МОЛ** (`accountableEmployeeId` для **SHORTAGE_EMPLOYEE**). |
 | **Жизненный цикл** | **DRAFT** (без строк) → **COUNTING** (снимок остатков, редактирование факта) → **REVIEW** (классификация расхождений) → **COMPLETED** (склад + NAS в **одной** `prisma.$transaction`) или **CANCELLED**. |
 | **Блокировка склада** | Пока документ в **COUNTING** или **REVIEW**, любые операции, создающие **StockMovement** по этому складу, получают **409** (`WAREHOUSE_LOCKED_FOR_RECONCILIATION`). |
-| **Проводки (NAS)** | Излишек: **Дт 201/204 — Кт 631**; списание в убыток: **Дт 731 — Кт 201/204**; долг на МОЛ: **Дт 244 — Кт 201/204** (см. `ledger.constants.ts`). |
+| **Проводки (NAS)** | Излишек: **Дт 201/204 — Кт 631**; списание в убыток: **Дт 731 — Кт 201/204**; долг на МОЛ: **Дт 244 — Кт 201/204** (роли **`INVENTORY_*` / `MISC_OPERATING_EXPENSE` / `ACCOUNTABLE_PERSONS`** в posting profile; COMMERCIAL ≈ прежний `ledger.constants.ts`). |
 | **UI** | **`/inventory/audits`**, **`/inventory/audits/[id]`**, **`InventoryAuditCreateFlow`**; редирект **`/inventory/audit/new` → `/inventory/audits`**. |
 | **REST (канон)** | **`/api/inventory/reconciliations/*`** — полный цикл (перечень методов — [TZ.md](./TZ.md) §10.1). Веб-клиент использует этот префикс для мутаций. |
 | **Совместимость REST** | **`/api/inventory/audits`**: допустимы **`POST /`** (DRAFT) и **`PATCH …/lines`**; **`POST …/:id/approve`** и **`POST …/:id/sync-system`** отключены — только **`reconciliations`**. |

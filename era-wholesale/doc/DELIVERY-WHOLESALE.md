@@ -37,3 +37,9 @@ Client: `@era/satellite-kit`.
 - [x] Pick lists UI + API (Wave 2)
 - [x] Finance credit limit fallback on confirm (live when `FINANCE_API_URL` set)
 - [x] Admin settings UI playbook `/admin/settings`
+
+## W2-E — Enrichment
+
+- [x] M5: Delivery note / TTN print per order
+- [x] M6: Pick wave grouping UI
+- [ ] M7: EDI export deferred

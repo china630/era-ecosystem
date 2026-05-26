@@ -388,6 +388,7 @@ model Guest {
   voen           String?
   passportNumber String
   phone          String
+  loyaltyTier    String?
   reservations   Reservation[]
   medicalAlerts  MedicalAlert[]
 }
@@ -832,4 +833,23 @@ model OutboundEventLog {
   lastError   String?
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+}
+
+model YieldRule {
+  id              String   @id @default(uuid())
+  propertyCode    String
+  minOccupancyPct Decimal  @db.Decimal(5, 2)
+  rateAdjustment  Decimal  @db.Decimal(5, 2)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+}
+
+model MaintenanceWorkOrder {
+  id          String   @id @default(uuid())
+  roomId      String?
+  title       String
+  status      String   @default("OPEN")
+  reportedBy  String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
 }

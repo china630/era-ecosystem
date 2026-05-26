@@ -1,5 +1,12 @@
 import { BadRequestException } from "@nestjs/common";
 import { InvoicesService } from "./invoices.service";
+import {
+  createMockPostingJournalBuilder,
+  createMockPostingResolver,
+} from "../../test/helpers/mock-posting-resolver";
+
+const noop = {} as any;
+const posting = createMockPostingResolver();
 
 function makeServiceWithInvoice(invoice: unknown) {
   const prisma = {
@@ -9,14 +16,16 @@ function makeServiceWithInvoice(invoice: unknown) {
   };
   const service = new InvoicesService(
     prisma as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
-    {} as any,
+    noop,
+    posting,
+    createMockPostingJournalBuilder(undefined, posting),
+    noop,
+    noop,
+    noop,
+    noop,
+    noop,
+    noop,
+    noop,
   );
   return { service, prisma };
 }

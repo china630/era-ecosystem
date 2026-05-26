@@ -12,6 +12,7 @@ import { OrganizationsService } from "../../src/organizations/organizations.serv
 import { MailService } from "../../src/mail/mail.service";
 import { PiiCryptoService } from "../../src/security/pii-crypto.service";
 import { GlobalCompanyDirectoryService } from "../../src/global-directory/global-company-directory.service";
+import { ControlPlaneClient } from "../../src/control-plane/control-plane.client";
 
 describe("AuthService (JWT: login + switch-org)", () => {
   const orgA = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
@@ -51,6 +52,7 @@ describe("AuthService (JWT: login + switch-org)", () => {
         },
         { provide: PiiCryptoService, useValue: { blindIndexForVoen: jest.fn(() => "test_bi") } },
         { provide: GlobalCompanyDirectoryService, useValue: {} },
+        { provide: ControlPlaneClient, useValue: {} },
       ],
     }).compile();
 

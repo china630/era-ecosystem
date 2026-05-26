@@ -76,6 +76,14 @@ export default function PosCheckoutPage() {
   >(null);
   const [lineForm, setLineForm] = useState<LineForm>(EMPTY_LINE);
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [promoCode, setPromoCode] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [loyaltyRef, setLoyaltyRef] = useState("");
+  const [productQuery, setProductQuery] = useState("");
+  const [xReport, setXReport] = useState<{
+    paidReceiptCount: number;
+    totalSales: number;
+  } | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [zSummary, setZSummary] = useState<{
@@ -198,6 +206,84 @@ export default function PosCheckoutPage() {
     }
   }
 
+  async function applyPromo() {
+    if (!receipt || receipt.status !== "OPEN") return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/receipts/${receipt.id}/apply-promo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promoCode: promoCode.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Promo failed");
+      setReceipt(data);
+      setMessage(
+        `Promo applied — total ${Number(data.amountNet).toFixed(2)} AZN` +
+          (data.promoCode ? ` (${data.promoCode})` : ""),
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function searchProduct() {
+    if (!productQuery.trim()) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await fetch(
+        `/api/products/search?q=${encodeURIComponent(productQuery.trim())}`,
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Search failed");
+      const hit = Array.isArray(data) ? data[0] : null;
+      if (!hit) {
+        setMessage("No product found");
+        return;
+      }
+      setLineForm((prev) => ({
+        ...prev,
+        description: hit.description,
+        unitPrice: String(hit.unitPrice),
+        plu: hit.sku,
+        barcode: hit.barcode ?? "",
+      }));
+      setMessage(`Loaded ${hit.sku}: ${hit.description}`);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadXReport() {
+    if (!shift) return;
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/shifts/${shift.id}/x-report`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "X-report failed");
+      setXReport({
+        paidReceiptCount: data.paidReceiptCount,
+        totalSales: Number(data.totalSales),
+      });
+      setMessage(
+        `X-report: ${data.paidReceiptCount} receipts, ${Number(data.totalSales).toFixed(2)} AZN`,
+      );
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function payReceipt() {
     if (!receipt) return;
     setLoading(true);
@@ -206,7 +292,11 @@ export default function PosCheckoutPage() {
       const res = await fetch(`/api/receipts/${receipt.id}/pay`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentMethod }),
+        body: JSON.stringify({
+          paymentMethod,
+          customerPhone: customerPhone.trim() || undefined,
+          loyaltyRef: loyaltyRef.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Payment failed");
@@ -356,10 +446,73 @@ export default function PosCheckoutPage() {
             type="button"
             className={PRIMARY_BUTTON_CLASS}
             disabled={loading || !shift || shift.status === "CLOSED"}
+            onClick={loadXReport}
+          >
+            X-report
+          </button>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            disabled={loading || !shift || shift.status === "CLOSED"}
             onClick={closeShift}
           >
             Close shift
           </button>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 border-t pt-4">
+          <label className="text-[13px]">
+            Product search (SKU / barcode)
+            <div className="mt-1 flex gap-2">
+              <input
+                className="flex-1 rounded border px-2 py-1"
+                value={productQuery}
+                onChange={(e) => setProductQuery(e.target.value)}
+              />
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={loading}
+                onClick={searchProduct}
+              >
+                Find
+              </button>
+            </div>
+          </label>
+          <label className="text-[13px]">
+            Promo code (SAVE10, HALF)
+            <div className="mt-1 flex gap-2">
+              <input
+                className="flex-1 rounded border px-2 py-1"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+              />
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={loading || !receipt || receipt.status !== "OPEN"}
+                onClick={applyPromo}
+              >
+                Apply
+              </button>
+            </div>
+          </label>
+          <label className="text-[13px]">
+            Customer phone
+            <input
+              className="mt-1 w-full rounded border px-2 py-1"
+              value={customerPhone}
+              onChange={(e) => setCustomerPhone(e.target.value)}
+            />
+          </label>
+          <label className="text-[13px]">
+            Loyalty ref
+            <input
+              className="mt-1 w-full rounded border px-2 py-1"
+              value={loyaltyRef}
+              onChange={(e) => setLoyaltyRef(e.target.value)}
+            />
+          </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -530,6 +683,12 @@ export default function PosCheckoutPage() {
           <p className="text-[13px] text-[#7F8C8D]">
             Receipt: {receipt.id.slice(0, 8)} —{" "}
             {Number(receipt.amountNet).toFixed(2)} AZN ({receipt.status})
+          </p>
+        )}
+        {xReport && (
+          <p className="text-[13px] text-[#7F8C8D]">
+            X-report: {xReport.paidReceiptCount} paid receipts,{" "}
+            {xReport.totalSales.toFixed(2)} AZN
           </p>
         )}
         {zSummary && (

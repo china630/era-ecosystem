@@ -1,7 +1,11 @@
 import { Decimal, InvoiceStatus, LedgerType, pickAccountDisplayName } from "@erafinance/database";
 import type { PrismaService } from "../prisma/prisma.service";
-import { RECEIVABLE_ACCOUNT_CODE, REVENUE_ACCOUNT_CODE } from "../ledger.constants";
 import { endOfUtcDay } from "./reporting-period.util";
+
+export type CounterpartyReconciliationAccountCodes = {
+  receivable: string;
+  revenue: string;
+};
 
 export type CounterpartyReconciliationOptions = {
   currency?: string | null;
@@ -28,22 +32,24 @@ export type ReconciliationTransactionRow = {
   runningBalance: string;
 };
 
-function isReceivableCode(code: string): boolean {
-  return code === RECEIVABLE_ACCOUNT_CODE || code.startsWith(`${RECEIVABLE_ACCOUNT_CODE}.`);
+function isReceivableCode(code: string, receivableRoot: string): boolean {
+  return code === receivableRoot || code.startsWith(`${receivableRoot}.`);
 }
 
-function isRevenueCode(code: string): boolean {
-  return code === REVENUE_ACCOUNT_CODE || code.startsWith(`${REVENUE_ACCOUNT_CODE}.`);
+function isRevenueCode(code: string, revenueRoot: string): boolean {
+  return code === revenueRoot || code.startsWith(`${revenueRoot}.`);
 }
 
 function transactionIsRevenueRecognition(
   lines: Array<{ debit: Decimal; credit: Decimal; account: { code: string } }>,
+  receivableRoot: string,
+  revenueRoot: string,
 ): boolean {
   let dr211 = new Decimal(0);
   let cr601 = new Decimal(0);
   for (const l of lines) {
-    if (isReceivableCode(l.account.code)) dr211 = dr211.add(l.debit);
-    if (isRevenueCode(l.account.code)) cr601 = cr601.add(l.credit);
+    if (isReceivableCode(l.account.code, receivableRoot)) dr211 = dr211.add(l.debit);
+    if (isRevenueCode(l.account.code, revenueRoot)) cr601 = cr601.add(l.credit);
   }
   return dr211.gt(0) && cr601.gt(0) && dr211.sub(cr601).abs().lte(new Decimal("0.0001"));
 }
@@ -73,6 +79,7 @@ export async function buildCounterpartyReconciliationPayload(
   dateTo: Date,
   dateFromStr: string,
   dateToStr: string,
+  accountCodes: CounterpartyReconciliationAccountCodes,
   options?: CounterpartyReconciliationOptions,
 ): Promise<{
   opening: Decimal;
@@ -108,6 +115,8 @@ export async function buildCounterpartyReconciliationPayload(
 }> {
   const ledgerType = options?.ledgerType ?? LedgerType.NAS;
   const currencyUpper = options?.currency?.trim().toUpperCase() ?? null;
+  const receivableCode = accountCodes.receivable;
+  const revenueCode = accountCodes.revenue;
   const invCurWhere = currencyUpper ? ({ currency: currencyUpper } as const) : {};
 
   const dateToEnd = endOfUtcDay(dateTo);
@@ -167,10 +176,10 @@ export async function buildCounterpartyReconciliationPayload(
 
   const [acc211, acc601] = await Promise.all([
     prisma.account.findFirst({
-      where: { organizationId, ledgerType, code: RECEIVABLE_ACCOUNT_CODE },
+      where: { organizationId, ledgerType, code: receivableCode },
     }),
     prisma.account.findFirst({
-      where: { organizationId, ledgerType, code: REVENUE_ACCOUNT_CODE },
+      where: { organizationId, ledgerType, code: revenueCode },
     }),
   ]);
   const fallback211 = acc211 ? pickAccountDisplayName(acc211, "ru") : "Дебиторская задолженность";
@@ -230,13 +239,13 @@ export async function buildCounterpartyReconciliationPayload(
     const candidates = revenueTxCandidates.filter(
       (t) =>
         t.reference === inv.number &&
-        transactionIsRevenueRecognition(t.journalEntries),
+        transactionIsRevenueRecognition(t.journalEntries, receivableCode, revenueCode),
     );
     if (candidates.length === 0) return null;
     const target = inv.totalAmount;
     const scored = candidates.map((t) => {
       const dr211 = t.journalEntries
-        .filter((e) => isReceivableCode(e.account.code))
+        .filter((e) => isReceivableCode(e.account.code, receivableCode))
         .reduce((s, e) => s.add(e.debit), new Decimal(0));
       const amtDiff = dr211.sub(target).abs();
       const timeRef = (inv.recognizedAt ?? inv.createdAt).getTime();
@@ -290,14 +299,14 @@ export async function buildCounterpartyReconciliationPayload(
       : [
           {
             journalEntryId: null,
-            accountCode: RECEIVABLE_ACCOUNT_CODE,
+            accountCode: receivableCode,
             accountName: fallback211,
             debit: inv.totalAmount.toFixed(4),
             credit: "0.0000",
           },
           {
             journalEntryId: null,
-            accountCode: REVENUE_ACCOUNT_CODE,
+            accountCode: revenueCode,
             accountName: fallback601,
             debit: "0.0000",
             credit: inv.totalAmount.toFixed(4),
@@ -310,8 +319,8 @@ export async function buildCounterpartyReconciliationPayload(
         date: day,
         reference: inv.number,
         description: matched
-          ? `Счёт — проводка в журнале (Дт ${RECEIVABLE_ACCOUNT_CODE} / Кт ${REVENUE_ACCOUNT_CODE})`
-          : `Счёт (начисление Дт ${RECEIVABLE_ACCOUNT_CODE})`,
+          ? `Счёт — проводка в журнале (Дт ${receivableCode} / Кт ${revenueCode})`
+          : `Счёт (начисление Дт ${receivableCode})`,
         debit: inv.totalAmount.toFixed(4),
         credit: "0.0000",
         balanceAfter: "0.0000",
@@ -350,7 +359,7 @@ export async function buildCounterpartyReconciliationPayload(
             },
             {
               journalEntryId: null,
-              accountCode: RECEIVABLE_ACCOUNT_CODE,
+              accountCode: receivableCode,
               accountName: fallback211,
               debit: "0.0000",
               credit: pay.amount.toFixed(4),
@@ -363,8 +372,8 @@ export async function buildCounterpartyReconciliationPayload(
         date: day,
         reference: pay.invoice.number,
         description: pay.transactionId
-          ? `Оплата — строки журнала (Кт ${RECEIVABLE_ACCOUNT_CODE})`
-          : "Оплата (Кт 211)",
+          ? `Оплата — строки журнала (Кт ${receivableCode})`
+          : `Оплата (Кт ${receivableCode})`,
         debit: "0.0000",
         credit: pay.amount.toFixed(4),
         balanceAfter: "0.0000",

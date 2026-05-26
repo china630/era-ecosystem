@@ -4,7 +4,7 @@ import {
   Prisma,
   UserRole,
 } from "@erafinance/database";
-import { InventoryService } from "../../src/inventory/inventory.service";
+import { createTestInventoryService } from "../helpers/mock-posting-resolver";
 import { MISC_OPERATING_EXPENSE_ACCOUNT_CODE } from "../../src/ledger.constants";
 import { mockTxInventoryReconciliationClear } from "../helpers/mock-prisma-tx-reconciliation";
 
@@ -76,7 +76,7 @@ describe("InventoryService.postAdjustment (physical / write-off)", () => {
       $transaction: jest.fn((fn: (t: typeof tx) => Promise<unknown>) => fn(tx)),
     } as any;
 
-    const service = new InventoryService(prisma, accounting, stock, access);
+    const service = createTestInventoryService(prisma, accounting, stock, access);
     await service.postAdjustment("org-1", "adj-1", "user-1", UserRole.ACCOUNTANT);
 
     expect(computeIssueUnitCost).toHaveBeenCalledWith(

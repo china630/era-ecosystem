@@ -47,6 +47,11 @@
 | M2 | Credit limit display | **MVP** | Read Finance AR |
 | M3 | Pick/pack workflow | **MVP** | — |
 | M4 | Confirm shipment | **MVP** | `ORDER_CONFIRMED` |
+| M5 | Delivery note / TTN | **W2 PLANNED** | Печать отгрузочного документа |
+| M6 | Pick wave / route (lite) | **W2 PLANNED** | Волна сборки склада |
+| M7 | EDI / buyer API export | **W2 DEFERRED** | Phase W3 |
+
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -77,3 +82,4 @@ W0 done · W1 order+confirm E2E · W2 pick lists · W3 EDI export
 
 2026-05-24 PRD v1.0
 2026-05-25 Wave 2 W2: pick list UI + Finance credit fallback
+2026-05-28 Gemini enrichment M5–M7 (W2) in §4

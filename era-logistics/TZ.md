@@ -58,6 +58,16 @@ Event payload: `tripId`, `vehicleId`, `freightAmount`, `currency: AZN` — see [
 
 `DATABASE_URL`, `AUTH_JWT_SECRET`, `ERA_SSO_SHARED_SECRET`, `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` — [.env.example](./.env.example).
 
+## W1-E — Enrichment
+
+| Method | Path | Model |
+|--------|------|-------|
+| GET/POST | `/api/trips/:id/waybill` | `Trip.waybillNumber`, `waybillIssuedAt` (M3) |
+| POST | `/api/trips/:id/pod` | `Trip.podPhotoUrl`, `podSignatureUrl` (M4) |
+| GET | `/api/fleet/alerts` | `Vehicle.insuranceExpiresAt`, `inspectionExpiresAt`, `permitExpiresAt` (M7) |
+
+UI: `/fleet` compliance alerts · waybill + POD media on `/trips/[id]`.
+
 ## Testing
 
 - L1: close trip → orchestrator → finance worker idempotency (`SatelliteEventProcessed`)

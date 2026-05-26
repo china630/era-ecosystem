@@ -34,15 +34,25 @@ model Outlet {
 }
 
 model WorkOrder {
-  id           String          @id @default(cuid())
-  code         String          @unique
-  vehiclePlate String?
-  status       WorkOrderStatus @default(OPEN)
-  laborAmount  Decimal         @default(0) @db.Decimal(12, 2)
-  partsAmount  Decimal         @default(0) @db.Decimal(12, 2)
-  completedAt  DateTime?
-  appointment  Appointment?
-  createdAt    DateTime        @default(now())
+  id                 String          @id @default(cuid())
+  code               String          @unique
+  vehiclePlate       String?
+  vin                String?
+  status             WorkOrderStatus @default(OPEN)
+  laborAmount        Decimal         @default(0) @db.Decimal(12, 2)
+  partsAmount        Decimal         @default(0) @db.Decimal(12, 2)
+  partsStatus        String          @default("NONE")
+  intakeNotes        String?
+  intakePhotoUrls    String?
+  intakeCompletedAt  DateTime?
+  shopFloorStartedAt DateTime?
+  shopFloorEndedAt   DateTime?
+  completedAt        DateTime?
+  appointment        Appointment?
+  createdAt          DateTime        @default(now())
+
+  @@index([vehiclePlate])
+  @@index([vin])
 }
 
 model Appointment {

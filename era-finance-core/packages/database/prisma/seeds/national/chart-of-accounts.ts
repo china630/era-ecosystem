@@ -5,6 +5,7 @@ import {
   seedChartOfAccountsCatalogEntries,
   upsertGlobalNasTemplateAccounts,
 } from "../../lib/chart/chart-seed";
+import { upsertGlobalPostingRoleTemplates } from "../../lib/posting/posting-seed";
 
 export async function seedNationalChart(ctx: SeedContext): Promise<void> {
   if (ctx.dryRun) return;
@@ -17,4 +18,5 @@ export async function seedNationalChart(ctx: SeedContext): Promise<void> {
     await seedChartOfAccountsCatalogEntries(ctx.prisma, accounts, kind);
   }
   await upsertGlobalNasTemplateAccounts(ctx.prisma);
+  await upsertGlobalPostingRoleTemplates(ctx.prisma);
 }

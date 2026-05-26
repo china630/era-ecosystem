@@ -11,12 +11,8 @@ import { InvoiceStatus, Prisma, type UserRole } from "@erafinance/database";
 import { InvoicePrefillSchema, type InvoicePrefill } from "@erafinance/api-contracts";
 import { assertUserMayMutateInvoiceInPaidStatus } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  FX_GAIN_ACCOUNT_CODE,
-  FX_LOSS_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-  REVENUE_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { InventoryService } from "../inventory/inventory.service";
 import {
@@ -69,6 +65,8 @@ export class InvoicesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
+    private readonly postingJournal: PostingJournalBuilder,
     private readonly pdfQueue: InvoicePdfQueueService,
     private readonly inventory: InventoryService,
     private readonly mail: MailService,
@@ -788,6 +786,11 @@ export class InvoicesService {
       );
 
       const reference = `ALLOC-${new Date().getTime()}`;
+      const receivableCode = await this.posting.resolveAccountCode(
+        organizationId,
+        "TRADE_RECEIVABLE",
+        tx,
+      );
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: payDate,
@@ -795,7 +798,7 @@ export class InvoicesService {
         description: `Транш оплаты контрагента (${dto.counterpartyId})`,
         lines: [
           { accountCode: debitCode, debit: appliedAmount.toString(), credit: 0 },
-          { accountCode: RECEIVABLE_ACCOUNT_CODE, debit: 0, credit: appliedAmount.toString() },
+          { accountCode: receivableCode, debit: 0, credit: appliedAmount.toString() },
         ],
       });
 
@@ -1036,23 +1039,19 @@ export class InvoicesService {
     debitAccountCode: string,
     options?: { skipRegistryMirror?: boolean; roundingDifference?: Decimal },
   ): Promise<{ transactionId: string }> {
-    const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
+    const receivableCode = await this.posting.resolveAccountCode(
       organizationId,
+      "TRADE_RECEIVABLE",
+      tx,
+    );
+    const { transactionId } = await this.postingJournal.postInTransaction(tx, {
+      organizationId,
+      schemaId: "INVOICE_PAYMENT",
+      amounts: { main: amount },
       date: paymentDate,
       reference: inv.number,
-      description: `Оплата по ${inv.number} (Дт ${debitAccountCode} Кт ${RECEIVABLE_ACCOUNT_CODE}), ${amount.toString()}`,
-      lines: [
-        {
-          accountCode: debitAccountCode,
-          debit: amount.toString(),
-          credit: 0,
-        },
-        {
-          accountCode: RECEIVABLE_ACCOUNT_CODE,
-          debit: 0,
-          credit: amount.toString(),
-        },
-      ],
+      description: `Оплата по ${inv.number} (Дт ${debitAccountCode} Кт ${receivableCode}), ${amount.toString()}`,
+      dynamicAccounts: { debitAccountCode },
     });
 
     const payment = await tx.invoicePayment.create({
@@ -1109,44 +1108,25 @@ export class InvoicesService {
 
     const rounding = options?.roundingDifference ?? new Decimal(0);
     if (rounding.gt(0)) {
-      const fxAccount = FX_GAIN_ACCOUNT_CODE;
-      await this.accounting.postJournalInTransaction(tx, {
+      await this.postingJournal.postInTransaction(tx, {
         organizationId,
+        schemaId: "FX_GAIN",
+        amounts: { main: rounding },
         date: paymentDate,
         reference: inv.number,
         description: `Округление мультивалютной оплаты ${inv.number}`,
-        lines: [
-          {
-            accountCode: debitAccountCode,
-            debit: rounding.toString(),
-            credit: 0,
-          },
-          {
-            accountCode: fxAccount,
-            debit: 0,
-            credit: rounding.toString(),
-          },
-        ],
+        dynamicAccounts: { debitAccountCode },
       });
     } else if (rounding.lt(0)) {
       const fxLoss = rounding.abs();
-      await this.accounting.postJournalInTransaction(tx, {
+      await this.postingJournal.postInTransaction(tx, {
         organizationId,
+        schemaId: "FX_LOSS",
+        amounts: { main: fxLoss },
         date: paymentDate,
         reference: inv.number,
         description: `Округление мультивалютной оплаты ${inv.number}`,
-        lines: [
-          {
-            accountCode: FX_LOSS_ACCOUNT_CODE,
-            debit: fxLoss.toString(),
-            credit: 0,
-          },
-          {
-            accountCode: debitAccountCode,
-            debit: 0,
-            credit: fxLoss.toString(),
-          },
-        ],
+        dynamicAccounts: { creditAccountCode: debitAccountCode },
       });
     }
 

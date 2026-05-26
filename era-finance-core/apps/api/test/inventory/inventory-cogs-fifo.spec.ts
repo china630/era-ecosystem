@@ -4,7 +4,7 @@ import {
   Prisma,
   StockMovementType,
 } from "@erafinance/database";
-import { InventoryService } from "../../src/inventory/inventory.service";
+import { createTestInventoryService } from "../helpers/mock-posting-resolver";
 import { StockService } from "../../src/stock/stock.service";
 import { mockTxInventoryReconciliationClear } from "../helpers/mock-prisma-tx-reconciliation";
 
@@ -72,7 +72,7 @@ describe("Inventory COGS / FIFO hardening", () => {
     } as any;
     const stock = new StockService(prisma);
     const access = { assertMayPostAccounting: jest.fn() } as any;
-    const service = new InventoryService(prisma, accounting, stock, access);
+    const service = createTestInventoryService(prisma, accounting, stock, access);
 
     await service.postSaleInventoryInTransaction(tx as any, "org-1", "inv-1");
 
@@ -114,7 +114,7 @@ describe("Inventory COGS / FIFO hardening", () => {
       ),
     } as any;
     const access = { assertMayPostAccounting: jest.fn() } as any;
-    const service = new InventoryService(
+    const service = createTestInventoryService(
       prisma,
       { postJournalInTransaction: jest.fn() } as any,
       { computeIssueUnitCost: jest.fn() } as any,
@@ -183,7 +183,7 @@ describe("Inventory COGS / FIFO hardening", () => {
     } as any;
     const stock = new StockService(prisma);
     const access = { assertMayPostAccounting: jest.fn() } as any;
-    const service = new InventoryService(prisma, accounting, stock, access);
+    const service = createTestInventoryService(prisma, accounting, stock, access);
 
     await service.postSaleInventoryInTransaction(tx as any, "org-1", "inv-2");
 

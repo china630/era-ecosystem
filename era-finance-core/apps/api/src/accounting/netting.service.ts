@@ -12,12 +12,7 @@ import {
 } from "@erafinance/database";
 import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "./accounting.service";
-import {
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-  VAT_INPUT_ACCOUNT_CODE,
-  VAT_OUTPUT_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { parseOrgIsVatPayer } from "../common/org-vat-payer.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { decryptText } from "../security/pii-crypto.util";
@@ -36,6 +31,7 @@ export class NettingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   /** Непогашенная дебиторка по счетам с выручкой (как в accountsReceivable). */
@@ -70,11 +66,15 @@ export class NettingService {
     counterpartyId: string,
     ledgerType: LedgerType,
   ): Promise<Decimal> {
+    const supplierPayableCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "SUPPLIER_PAYABLE",
+    );
     const acc = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
-        code: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+        code: supplierPayableCode,
       },
     });
     if (!acc) return new Decimal(0);
@@ -277,22 +277,32 @@ export class NettingService {
       );
     }
 
+    const [receivableCode, supplierPayableCode, vatInputCode, vatOutputCode] =
+      await Promise.all([
+        this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE"),
+        this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE"),
+        this.posting.resolveAccountCode(organizationId, "VAT_INPUT"),
+        this.posting.resolveAccountCode(organizationId, "VAT_OUTPUT"),
+      ]);
+
     const ar = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
-        code: RECEIVABLE_ACCOUNT_CODE,
+        code: receivableCode,
       },
     });
     const ap = await this.prisma.account.findFirst({
       where: {
         organizationId,
         ledgerType,
-        code: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+        code: supplierPayableCode,
       },
     });
     if (!ar || !ap) {
-      throw new BadRequestException("Счета 211 или 531 не найдены в плане счетов");
+      throw new BadRequestException(
+        `Счета ${receivableCode} или ${supplierPayableCode} не найдены в плане счетов`,
+      );
     }
 
     const orgRow = await this.prisma.organization.findUnique({
@@ -313,7 +323,7 @@ export class NettingService {
           where: {
             organizationId,
             ledgerType,
-            code: VAT_INPUT_ACCOUNT_CODE,
+            code: vatInputCode,
           },
         })
       : null;
@@ -322,7 +332,7 @@ export class NettingService {
           where: {
             organizationId,
             ledgerType,
-            code: VAT_OUTPUT_ACCOUNT_CODE,
+            code: vatOutputCode,
           },
         })
       : null;
@@ -333,12 +343,12 @@ export class NettingService {
     return this.prisma.$transaction(async (tx) => {
       const baseLines = [
         {
-          accountCode: PAYABLE_SUPPLIERS_ACCOUNT_CODE,
+          accountCode: supplierPayableCode,
           debit: amount.toString(),
           credit: 0,
         },
         {
-          accountCode: RECEIVABLE_ACCOUNT_CODE,
+          accountCode: receivableCode,
           debit: 0,
           credit: amount.toString(),
         },
@@ -347,12 +357,12 @@ export class NettingService {
         vatOnNetting && canPostVat
           ? [
               {
-                accountCode: VAT_INPUT_ACCOUNT_CODE,
+                accountCode: vatInputCode,
                 debit: vatStr,
                 credit: 0,
               },
               {
-                accountCode: VAT_OUTPUT_ACCOUNT_CODE,
+                accountCode: vatOutputCode,
                 debit: 0,
                 credit: vatStr,
               },

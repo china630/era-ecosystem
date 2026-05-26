@@ -20,6 +20,9 @@ describe("PaymentProviderService webhook auto-resume", () => {
       },
     };
     const prisma = {
+      subscriptionInvoice: {
+        findUnique: jest.fn().mockResolvedValue({ userId: "user-owner-1" }),
+      },
       $transaction: jest.fn(async (fn: (trx: typeof tx) => Promise<unknown>) =>
         fn(tx),
       ),
@@ -34,6 +37,9 @@ describe("PaymentProviderService webhook auto-resume", () => {
     const config = { get: jest.fn(() => "") };
     const systemConfig = {};
     const audit = {};
+    const billingSettlement = {
+      settleOrganizationsForOwner: jest.fn().mockResolvedValue(undefined),
+    };
 
     const drakaris = {};
     const service = new PaymentProviderService(
@@ -47,6 +53,7 @@ describe("PaymentProviderService webhook auto-resume", () => {
       config as any,
       systemConfig as any,
       audit as any,
+      billingSettlement as any,
     );
 
     const out = await service.handleWebhook({

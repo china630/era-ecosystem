@@ -47,7 +47,16 @@ SMB СТО ведут заказ-наряды в Excel; запчасти и вы
 | M2 | Work order | **MVP** | `WORK_ORDER_CLOSED` |
 | M3 | Labor lines | **PLANNED** | laborAmount |
 | M4 | Parts lines (SKU ref) | **PLANNED** | partsAmount + stock OUT |
-| M5 | Appointment calendar | **DEFERRED** | — |
+| M5 | Appointment calendar + service bays | **W2 PLANNED** | Gemini 02 §1; `platform_booking` |
+| M6 | Interactive intake (photos, checklist) | **W2 PLANNED** | Gemini 02 §1 |
+| M7 | Parts catalogue VIN / cross-reference | **W2 DEFERRED** | TecDoc / Mitchell — integration |
+| M8 | Shop floor time tracking | **W2 PLANNED** | Gemini 02 §4 |
+| M9 | Parts line status on WO | **W2 PLANNED** | ordered → arrived → issued |
+| M10 | Vehicle history by VIN | **W2 PLANNED** | Gemini 02 §7 |
+| M11 | B2B parts procurement from WO | **W2 DEFERRED** | **Finance** PO |
+| M12 | Tool crib / equipment tracking | **W2 DEFERRED** | Gemini 02 §8 |
+
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -78,3 +87,4 @@ A0 done · A1 work order E2E · A2 appointments · A3 VIN/parts catalog API
 
 2026-05-24 PRD v1.0
 2026-05-25 Wave 2 A2: `/appointments` UI
+2026-05-28 Gemini enrichment M5–M12 (W2) in §4

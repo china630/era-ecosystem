@@ -80,6 +80,12 @@
 | M5 | Convert lead | Kommo «won» | **PLANNED** | `SATELLITE_CRM_LEAD_CONVERTED` |
 | M6 | Finance handoff UI | — | **PLANNED** | Link to Finance counterparty |
 | M7 | WA Business API live | Respond.io | **DEFERRED** | Finance sends invoice |
+| M4 (extend) | Visit geo check-in | Field GPS stub | **MVP** | `Visit.latitude` / `longitude` on `/visits` |
+| **M8** | **Next-contact reminder** | HubSpot tasks | **MVP** | `Lead.nextContactAt` + follow-up API |
+| M9 | Lead scoring / SLA timers | Kommo | **W2 DEFERRED** | — |
+| M10 | Pipeline automation rules | Bitrix | **W2 DEFERRED** | — |
+
+См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -125,3 +131,5 @@
 | 2026-05-24 | PRD v1.0 + explicit Finance boundary |
 | 2026-05-25 | SP1 C2: visits API + `SATELLITE_CRM_VISIT_LOGGED` dispatch |
 | 2026-05-25 | SP1 C2 SW2: visit UI, agent assignment, inbox stub (WA/IG metadata) |
+| 2026-05-28 | Enrichment W1: M4 geo, M8 next-contact |
+| 2026-05-28 | Enrichment W2: M9–M10 |

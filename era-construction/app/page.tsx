@@ -19,6 +19,11 @@ export default function HomePage() {
               Open main screen
             </Link>
           </li>
+          <li>
+            <Link href="/field-ops" className="font-medium text-[#2980B9] hover:underline">
+              Field ops (W2)
+            </Link>
+          </li>
         </ul>
       </div>
     </>

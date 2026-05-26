@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 const bodySchema = z.object({
   recipient: z.string().min(1),
   notes: z.string().optional(),
+  podPhotoUrl: z.string().max(2048).optional(),
+  podSignatureUrl: z.string().max(2048).optional(),
 });
 
 export async function POST(
@@ -23,6 +25,8 @@ export async function POST(
       data: {
         podRecipient: body.recipient,
         podNotes: body.notes,
+        podPhotoUrl: body.podPhotoUrl?.trim() || null,
+        podSignatureUrl: body.podSignatureUrl?.trim() || null,
         podCapturedAt: new Date(),
       },
       include: { vehicle: true },

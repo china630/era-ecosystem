@@ -29,11 +29,17 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 
 ## Phase B — Satellite refinement (in progress)
 
-**Satellite Wave 1** (orchestrator: `.cursor/plans/satellite_wave1_orchestrator.plan.md`): retail R2/R3 → CRM C2 → clinic K2/K3 → logistics L2 — **complete** 2026-05-25.
+**Satellite Wave 1 (SP depth):** retail R2/R3 → CRM C2 → clinic K2/K3 → logistics L2 — **complete** 2026-05-25 (tracked in DELIVERY SP1–SP2).
 
-**Satellite Wave 2** (orchestrator: `.cursor/plans/satellite_wave2_orchestrator.plan.md`): fb-pos FB-0 + hotel regression → construction/auto/wholesale UI — **complete** 2026-05-25.
+**Satellite Wave 2 (SP depth):** fb-pos FB-0 + hotel regression → construction/auto/wholesale UI — **complete** 2026-05-25 (DELIVERY SP3–SP4).
 
-**Satellite Wave 3+4 — Hospitality Nafta** (master: `.cursor/plans/nafta_wave3_wave4_master.plan.md`; scope: `hospitality_nafta_orchestrator_a0426e2f.plan.md`): SAN-PKG → PROC-SCHED → clinic K5 → MDM → transfers → banquets. DOC-B: [era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md](../era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md).
+**Gemini W1 enrichment:** retail/crm/clinic/logistics W1-E — **complete** 2026-05-28 · traceability: [MODULES_CATALOG § W1](../../docs/MODULES_CATALOG.md#w1--implementation-queue-4-apps) + per-app `doc/DELIVERY-*` § W1-E.
+
+**Gemini W2 enrichment:** 9 industry apps W2-E MVP items — **complete** 2026-05-28 · traceability: [MODULES_CATALOG § W2](../../docs/MODULES_CATALOG.md#w2--documented-backlog-all-industry-satellites) + DELIVERY § W2-E.
+
+**Next industry queue:** W2 **DEFERRED** rows in MODULES_CATALOG (retail M14–M16, clinic M10–M13, logistics M10–M12, …) and fb-pos core M0–M10 depth.
+
+**Satellite Wave 3+4 — Hospitality Nafta:** SAN-PKG → PROC-SCHED → clinic K5 → MDM → transfers → banquets (DELIVERY + hotel `doc/nafta/`). DOC-B: [era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md](../era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md).
 
 | HN | Focus | Status |
 |----|-------|--------|
@@ -45,7 +51,7 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 | HN-7 | airport transfers (PMS) | **Done** |
 | HN-8 | banquet BEO + fb-pos service | **Done** |
 
-**Satellite Wave 5 — Hospitality Nafta Finance & Channel** (master: `.cursor/plans/nafta_wave5_master.plan.md`): GL bridge → invoice/agency → contract pricing → channel regression. Manifest: [screens-manifest-v2-wave5-must.json](../era-hotel-pms/doc/nafta/screens-manifest-v2-wave5-must.json).
+**Satellite Wave 5 — Hospitality Nafta Finance & Channel** — **complete** · GL bridge → invoice/agency → contract pricing → channel regression. Manifest: [screens-manifest-v2-wave5-must.json](../era-hotel-pms/doc/nafta/screens-manifest-v2-wave5-must.json).
 
 | NW | Focus | Status |
 |----|-------|--------|

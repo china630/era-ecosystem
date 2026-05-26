@@ -1,10 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { AccountType, LedgerType, Prisma } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
-import {
-  FX_GAIN_ACCOUNT_CODE,
-  FX_LOSS_ACCOUNT_CODE,
-} from "../ledger.constants";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { CbarRateSyncService } from "./cbar-rate-sync.service";
 
@@ -59,6 +56,7 @@ export class FxRevaluationService {
     private readonly prisma: PrismaService,
     private readonly cbarRates: CbarRateSyncService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async runMonthEndForAllOrganizations(now: Date = new Date()): Promise<void> {
@@ -129,6 +127,11 @@ export class FxRevaluationService {
     const oldRates: Record<string, number> = { ...(fx.rates ?? {}) };
     const newRates: Record<string, number> = { ...oldRates };
 
+    const [fxGainCode, fxLossCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "FX_GAIN"),
+      this.posting.resolveAccountCode(organizationId, "FX_LOSS"),
+    ]);
+
     const lines: { accountCode: string; debit: string; credit: string }[] = [];
     const EPS = new Decimal("0.01");
 
@@ -161,14 +164,14 @@ export class FxRevaluationService {
           credit: "0",
         });
         lines.push({
-          accountCode: FX_GAIN_ACCOUNT_CODE,
+          accountCode: fxGainCode,
           debit: "0",
           credit: diff.abs().toString(),
         });
       } else {
         const amt = diff.abs().toString();
         lines.push({
-          accountCode: FX_LOSS_ACCOUNT_CODE,
+          accountCode: fxLossCode,
           debit: amt,
           credit: "0",
         });

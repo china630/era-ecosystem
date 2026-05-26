@@ -72,9 +72,18 @@
 | M3 | Appointment & check-in | **PLANNED** | — |
 | M4 | Visit card & clinical services | **PLANNED** | `VISIT_COMPLETED` |
 | M5 | **Laboratory orders & results** | **MVP** | `LAB_ORDER_COMPLETED`; portal on publish |
-| M6 | Service catalog cache (codes, prices) | **PLANNED** | Master prices in Finance |
-| M7 | Notifications (SMS/email stub) | **DEFERRED** | — |
-| M8 | Patient portal (results, booking) | **DEFERRED** | — |
+| M5 (extend) | **Critical lab result flag** | LIS alert | **MVP** | `enrichResultLines` + `criticalOnly` filter |
+| M6 | Service catalog cache (codes, prices) | **MVP** | `ServiceCatalogCache` + sync API |
+| M7 | Notifications (SMS/email stub) | **DEFERRED** | Использовать `platform_notifications` |
+| M8 | Patient portal (results, booking) | **DEFERRED** | `platform_portal` + K4 |
+| M9 | Multi-room drag reschedule | **W2 PLANNED** | K3; Gemini 07 §1 |
+| M10 | EHR templates / CPOE lite | **W2 DEFERRED** | Gemini 07 §2 |
+| M11 | LIS analyzer import (HL7/file) | **W2 DEFERRED** | Gemini 07 §3 |
+| M12 | Insurance / DMS eligibility | **W2 DEFERRED** | **Finance** §4.15 |
+| M13 | Inpatient / bed management | **W2 DEFERRED** | Gemini 07 §7 |
+| M14 | Telehealth + patient portal | **W2 PLANNED** | **PLATFORM** portal |
+
+См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 
 ---
 
@@ -169,3 +178,5 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 | 2026-05-24 | v1.1: M5 lab, personas, BUSINESS_OWNER, расширенные stories K-06…K-15 |
 | 2026-05-25 | SP2: lab orders UI + scheduling slots stub API |
 | 2026-05-25 | SW3/K2-K3: full lab lifecycle, discount audit, executive summary |
+| 2026-05-28 | Enrichment W1: M5 critical flag, M6 price cache |
+| 2026-05-28 | Enrichment W2: M9–M14 (Gemini medical ERP) |

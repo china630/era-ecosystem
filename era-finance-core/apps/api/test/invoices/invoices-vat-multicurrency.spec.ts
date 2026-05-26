@@ -1,13 +1,20 @@
 import { Prisma } from "@erafinance/database";
 import { InvoicesService } from "../../src/invoices/invoices.service";
+import {
+  createMockPostingJournalBuilder,
+  createMockPostingResolver,
+} from "../helpers/mock-posting-resolver";
 
 describe("Invoices VAT and multi-currency rounding", () => {
   const noop = {} as any;
+  const posting = createMockPostingResolver();
 
   it("VAT inclusive math stays stable for non-AZN invoice rows", async () => {
     const service = new InvoicesService(
       { product: { findFirst: jest.fn() } } as any,
       noop,
+      posting,
+      createMockPostingJournalBuilder(undefined, posting),
       noop,
       noop,
       noop,
@@ -35,6 +42,8 @@ describe("Invoices VAT and multi-currency rounding", () => {
     const service = new InvoicesService(
       {} as any,
       accounting as any,
+      posting,
+      createMockPostingJournalBuilder(accounting as any, posting),
       noop,
       noop,
       noop,
@@ -83,6 +92,8 @@ describe("Invoices VAT and multi-currency rounding", () => {
     const service = new InvoicesService(
       {} as any,
       accounting as any,
+      posting,
+      createMockPostingJournalBuilder(accounting as any, posting),
       noop,
       noop,
       noop,

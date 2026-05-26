@@ -39,6 +39,7 @@
     "db:seed:verify": "npm run db:seed:verify -w @erafinance/database",
     "db:seed:core": "npm run db:seed:core -w @erafinance/database",
     "db:seed:national": "dotenv -e .env -o -- npm run db:seed:national -w @erafinance/database",
+    "validate:posting-roles": "npm exec -w @erafinance/database -- tsx prisma/scripts/validate-posting-roles.ts",
     "db:seed:hr": "npm run db:seed:hr -w @erafinance/database",
     "db:seed:trade": "npm run db:seed:trade -w @erafinance/database",
     "db:seed:geo": "npm run db:seed:geo -w @erafinance/database",

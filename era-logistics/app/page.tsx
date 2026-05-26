@@ -24,6 +24,11 @@ export default function HomePage() {
               Fuel report
             </Link>
           </li>
+          <li>
+            <Link href="/fleet" className="font-medium text-[#2980B9] hover:underline">
+              Fleet compliance alerts
+            </Link>
+          </li>
         </ul>
       </div>
     </>

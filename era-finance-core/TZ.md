@@ -352,6 +352,7 @@
 - **PSA placeholders:** `PsaService` провижинит placeholder-продукты из `system_product_templates` в tenant `products` при первом использовании (вместо локально захардкоженного одиночного SKU).
 - **Онбординг API:** публичный ввод — поле **`legalForm`** (`CounterpartyLegalForm`), а **`kind`** вычисляется сервером: `STATE_AGENCY -> BUDGET`, `NGO -> NGO`, иначе `COMMERCIAL`. В **`settings.templateGroup`** для payroll пишется **`COMMERCIAL`** или **`GOVERNMENT`** (маппинг: **`BUDGET` → GOVERNMENT**, иначе **COMMERCIAL**).
 - **Ручное расширение плана:** **`GET /api/accounts/templates`**, **`POST /api/accounts/import-from-template`**; UI **`/accounting/chart`** (редирект с устаревшего **`/settings/chart`**).
+- **Профиль автопроводок (Posting Role Profiles, v2026.05):** семантические роли **`PostingRole`** (slug) → NAS-код **per `OrganizationKind`** в JSON **`posting-roles-{commercial|budget|ngo}.json`**, сид в **`template_posting_roles`**, оверрайды тенанта — **`organization_posting_roles`** (OWNER / ADMIN / ACCOUNTANT). API **`GET/PATCH/DELETE /api/accounting/posting-roles`**; UI **`/accounting/posting-roles`**. Автопроводки Finance резолвят коды через **`PostingAccountResolver`** / **`PostingJournalBuilder`**, а не через устаревший **`ledger.constants.ts`**. CI: **`node scripts/validate-posting-roles.mjs`**. ADR: **`docs/adr/posting-role-profiles.md`**.
 
 ### Транзакции (Transaction) и проводки (Journal Entry)
 

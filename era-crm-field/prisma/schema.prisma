@@ -53,6 +53,9 @@ model Lead {
   estimatedAmount Decimal?           @db.Decimal(12, 2)
   counterpartyId  String?
   ownerId         String?
+  nextContactAt   DateTime?
+  score           Int       @default(0)
+  scoreUpdatedAt  DateTime?
   owner           User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   visits          Visit[]
   stageHistory    LeadStageHistory[]
@@ -76,11 +79,14 @@ model LeadStageHistory {
 }
 
 model Visit {
-  id        String   @id @default(cuid())
-  leadId    String
-  notes     String?
-  visitedAt DateTime @default(now())
-  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  leadId       String
+  notes        String?
+  addressLabel String?
+  latitude     Decimal? @db.Decimal(10, 7)
+  longitude    Decimal? @db.Decimal(10, 7)
+  visitedAt    DateTime @default(now())
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 
   @@index([leadId])
 }

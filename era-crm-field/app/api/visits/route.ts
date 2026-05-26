@@ -8,6 +8,9 @@ const createSchema = z.object({
   leadId: z.string(),
   notes: z.string().optional(),
   visitedAt: z.string().datetime().optional(),
+  addressLabel: z.string().optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 
 export async function GET() {
@@ -33,6 +36,9 @@ export async function POST(req: Request) {
       data: {
         leadId: body.leadId,
         notes: body.notes,
+        addressLabel: body.addressLabel,
+        latitude: body.latitude,
+        longitude: body.longitude,
         visitedAt: body.visitedAt ? new Date(body.visitedAt) : new Date(),
       },
       include: { lead: { include: { owner: true } } },

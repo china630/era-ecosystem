@@ -33,3 +33,12 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] Plan vs actual UI + cost hooks via progress acts (Wave 2/4)
 - [x] Platform commerce/booking on progress act (Wave E)
+
+## W2-E — Enrichment (Gemini строительная ERP)
+
+PRD M6–M12 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
+
+- [x] M6: Field daily log API + mobile form
+- [x] M7: Punch list / defect tracker
+- [x] M9: Subcontractor claim stub
+- [ ] M8, M10, M11, M12: deferred per PRD

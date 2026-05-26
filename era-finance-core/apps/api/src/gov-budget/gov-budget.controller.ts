@@ -24,6 +24,8 @@ import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { CheckBudgetLimitDto } from "./dto/check-budget-limit.dto";
 import { CreateBudgetYearDto } from "./dto/create-budget-year.dto";
+import { RecordBudgetExpenseDto } from "./dto/record-budget-expense.dto";
+import { RecordBudgetFundingDto } from "./dto/record-budget-funding.dto";
 import { GovBudgetService } from "./gov-budget.service";
 
 @ApiTags("gov-budget")
@@ -95,6 +97,31 @@ export class GovBudgetController {
     @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
   ) {
     return this.govBudget.listLines(organizationId, id);
+  }
+
+  @Post("funding")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary: "Record treasury funding (BUDGET_APPROPRIATION ledger posting)",
+  })
+  recordFunding(
+    @OrganizationId() organizationId: string,
+    @Body() dto: RecordBudgetFundingDto,
+  ) {
+    return this.govBudget.recordFundingReceipt(organizationId, dto);
+  }
+
+  @Post("expense-execution")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Execute budget expense against line (BUDGET_EXPENSE_EXECUTION + commitment)",
+  })
+  recordExpense(
+    @OrganizationId() organizationId: string,
+    @Body() dto: RecordBudgetExpenseDto,
+  ) {
+    return this.govBudget.recordExpenseExecution(organizationId, dto);
   }
 
   @Post("check-limit")

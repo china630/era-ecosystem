@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { hasCriticalFlag } from "@/lib/lab-result-flags";
 import { prisma } from "@/lib/prisma";
 
 const createSchema = z.object({
@@ -22,6 +23,10 @@ const querySchema = z.object({
       "COMPLETED",
     ])
     .optional(),
+  criticalOnly: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
 });
 
 export async function GET(req: Request) {
@@ -29,6 +34,7 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const query = querySchema.parse({
       status: url.searchParams.get("status") ?? undefined,
+      criticalOnly: url.searchParams.get("criticalOnly") ?? undefined,
     });
 
     const orders = await prisma.labOrder.findMany({
@@ -37,7 +43,21 @@ export async function GET(req: Request) {
       orderBy: { createdAt: "desc" },
       take: 100,
     });
-    return jsonOk(orders);
+
+    if (!query.criticalOnly) return jsonOk(orders);
+
+    const filtered = orders.filter((o) => {
+      if (!o.resultJson) return false;
+      try {
+        const lines = JSON.parse(o.resultJson) as Parameters<
+          typeof hasCriticalFlag
+        >[0];
+        return hasCriticalFlag(lines);
+      } catch {
+        return false;
+      }
+    });
+    return jsonOk(filtered);
   } catch (err) {
     return handleRouteError(err);
   }

@@ -1,8 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
-import {
-  CASH_OPERATIONAL_ACCOUNT_CODE,
-  FOREIGN_CASH_OPERATIONAL_ACCOUNT_CODE,
-} from "../ledger.constants";
+import type { Prisma } from "@erafinance/database";
+import type { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 
 /** Счета, которые нельзя использовать как кассу (частая путаница с 101/102). */
 const DISALLOWED_AS_CASH = new Set(["211", "531", "538"]);
@@ -30,20 +28,21 @@ export function assertValidCashDeskAccountCode(code: string): void {
 }
 
 /**
- * Если код не передан — 101.01 для AZN, иначе 102.01; иначе валидация явного кода.
+ * Если код не передан — CASH_AZN / CASH_FOREIGN по posting role; иначе валидация явного кода.
  */
-export function resolveCashAccountCodeForCurrency(
+export async function resolveCashAccountCodeForCurrency(
+  organizationId: string,
   currency: string | undefined,
+  posting: PostingAccountResolver,
   explicit?: string | null,
-): string {
+  tx?: Prisma.TransactionClient,
+): Promise<string> {
   const trimmed = explicit?.trim();
   if (trimmed) {
     assertValidCashDeskAccountCode(trimmed);
     return trimmed;
   }
   const cur = (currency ?? "AZN").toUpperCase();
-  if (cur === "AZN") {
-    return CASH_OPERATIONAL_ACCOUNT_CODE;
-  }
-  return FOREIGN_CASH_OPERATIONAL_ACCOUNT_CODE;
+  const role = cur === "AZN" ? "CASH_AZN" : "CASH_FOREIGN";
+  return posting.resolveAccountCode(organizationId, role, tx);
 }

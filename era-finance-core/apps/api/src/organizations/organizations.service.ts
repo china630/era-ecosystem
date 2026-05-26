@@ -7,6 +7,7 @@ import {
   OrganizationKind,
   UserRole,
   provisionNasAccountsForOrganization,
+  upsertGlobalPostingRoleTemplates,
   type Prisma,
 } from "@erafinance/database";
 import { AccountsService } from "../accounts/accounts.service";
@@ -33,6 +34,7 @@ export class OrganizationsService {
     kind: OrganizationKind = OrganizationKind.COMMERCIAL,
   ): Promise<void> {
     await provisionNasAccountsForOrganization(tx, organizationId, kind);
+    await upsertGlobalPostingRoleTemplates(tx);
     await this.accounts.bootstrapMultiGaapForNewOrganization(organizationId, tx);
   }
 

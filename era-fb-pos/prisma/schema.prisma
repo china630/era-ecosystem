@@ -54,6 +54,18 @@ model Outlet {
   @@map("outlets")
 }
 
+model DeliveryInboxOrder {
+  id           String   @id @default(cuid())
+  externalRef  String   @unique @map("external_ref")
+  channel      String   @default("aggregator")
+  status       String   @default("NEW")
+  payloadJson  String?  @map("payload_json")
+  ticketId     String?  @map("ticket_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("delivery_inbox_orders")
+}
+
 model PosTable {
   id              String      @id @default(cuid())
   outletId        String      @map("outlet_id")
@@ -147,6 +159,8 @@ model TicketLine {
   qty            Int                     @default(1)
   unitPriceAzn   Decimal                 @map("unit_price_azn") @db.Decimal(12, 2)
   kitchenStatus  TicketLineKitchenStatus @default(NEW) @map("kitchen_status")
+  courseNumber   Int                     @default(1) @map("course_number")
+  scheduledFireAt DateTime?              @map("scheduled_fire_at")
   notes          String?
   ticket         Ticket                  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   menuItem       MenuItem?               @relation(fields: [menuItemId], references: [id])

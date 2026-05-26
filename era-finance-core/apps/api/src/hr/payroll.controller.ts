@@ -25,6 +25,7 @@ import { CreatePayrollRunDto } from "./dto/create-payroll-run.dto";
 import { PayrollHeavyQueueService } from "./payroll-heavy.queue";
 import { PayrollExportService } from "./payroll-export.service";
 import { PayrollService } from "./payroll.service";
+import { MarkRegistryPaidDto } from "./dto/mark-registry-paid.dto";
 import { PayrollPayoutDto } from "./dto/payroll-payout.dto";
 
 @ApiTags("hr-payroll")
@@ -134,8 +135,11 @@ export class PayrollController {
   markRegistryPaid(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
+    @Body() dto: MarkRegistryPaidDto,
   ) {
-    return this.payroll.markSalaryRegistryPaid(organizationId, id);
+    return this.payroll.markSalaryRegistryPaid(organizationId, id, {
+      budgetLineId: dto.budgetLineId,
+    });
   }
 
   @Get("registries/:id/export-link")

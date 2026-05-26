@@ -121,6 +121,7 @@ model Organization {
   bankPaymentDrafts            BankPaymentDraft[]
   ifrsMappingRules             IfrsMappingRule[]
   payrollSlips                 PayrollSlip[]
+  postingRoleOverrides         OrganizationPostingRole[]
   integrationSyncRuns          IntegrationSyncRun[]
   ocrJobs                      OcrJob[]
   customsDeclarations          CustomsDeclaration[]
@@ -196,6 +197,35 @@ model TemplateAccount {
   @@index([kind])
   @@index([code])
   @@map("template_accounts")
+}
+
+/// Global NAS posting role → account code preset per OrganizationKind.
+model TemplatePostingRole {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  kind        OrganizationKind @map("kind")
+  role        String           @map("role")
+  accountCode String           @map("account_code")
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  @@unique([kind, role], map: "template_posting_roles_kind_role_key")
+  @@index([kind])
+  @@map("template_posting_roles")
+}
+
+/// Per-organization override for a posting role (OWNER / ADMIN / ACCOUNTANT).
+model OrganizationPostingRole {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  role           String       @map("role")
+  accountCode    String       @map("account_code")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, role], map: "organization_posting_roles_org_role_key")
+  @@index([organizationId])
+  @@map("organization_posting_roles")
 }
 
 model AccountBalance {
