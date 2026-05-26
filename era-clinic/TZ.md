@@ -55,7 +55,7 @@ Event: `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` — `labOrderId`, `visitId?`, `pat
 | `approvedBy` | String (user id) |
 | `reason` | String |
 
-## W1-E — Enrichment
+## Product APIs (v1.0)
 
 | Method | Path | Model |
 |--------|------|-------|

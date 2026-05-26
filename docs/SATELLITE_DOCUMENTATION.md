@@ -12,10 +12,10 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Readiness matrices | [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) — DELIVERY %, API × app, integrations; **refresh:** skill `era-readiness-matrix` or `node scripts/delivery-readiness.mjs` (§1) + `node scripts/readiness-coverage.mjs` (§4) |
 | Smoke checklist | [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) |
 | This standard | `SATELLITE_DOCUMENTATION.md` |
-| Modules catalog + enrichment backlog | [`MODULES_CATALOG.md`](./MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) |
-| Gemini ERP research (reference) | [`ERPs/`](../ERPs/) |
-| Industry enrichment backlog (Gemini W1/W2) | [MODULES_CATALOG.md § enrichment](./MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) |
-| ERP research index | [ERPs/README.md](../ERPs/README.md) |
+| Product versions | [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) |
+| Modules catalog + roadmap | [MODULES_CATALOG.md](./MODULES_CATALOG.md#industry-module-roadmap) |
+| Industry research (reference) | [ERPs/README.md](../ERPs/README.md) |
+| Development roadmap | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) |
 | Finance bridge pattern (ADR) | [satellite-finance-bridge-pattern.md](./adr/satellite-finance-bridge-pattern.md) |
 
 ## Per-satellite layout
@@ -41,7 +41,7 @@ era-{name}/
 3. **Modules** — table with status: `PLANNED | IN_PROGRESS | MVP | DONE | DEFERRED`
 4. **User stories** — IDs and acceptance criteria
 5. **Integrations** — orchestrator events, Finance handoff
-6. **Release phases**
+6. **Release phases** — use [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) (`v1.0` shipped · `v1.1` / `v2.0` planned)
 7. **Changelog**
 
 ## Identity & RBAC (control plane)
@@ -80,12 +80,12 @@ era-{name}/
 
 Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
 
-**Hybrid (SP8):** `era-fb-pos` and `era-hotel-pms` keep **local operational** users (waiter, reception, FB_MANAGER). **Platform** users (OWNER/DIRECTOR/ADMIN/ACCOUNTANT) enter via **Orchestrator SSO** → `financeRole` in session; RBAC mutations stay in Finance/Orch only.
+**Hybrid (v1.0):** `era-fb-pos` and `era-hotel-pms` keep **local operational** users (waiter, reception, FB_MANAGER). **Platform** users (OWNER/DIRECTOR/ADMIN/ACCOUNTANT) enter via **Orchestrator SSO** → `financeRole` in session; RBAC mutations stay in Finance/Orch only.
 
 ### UAT-SMOKE template — SSO paths (required in every `era-*/doc/UAT-SMOKE.md`)
 
 ```markdown
-## SSO paths (platform entry — SP9/P2)
+## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).

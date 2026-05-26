@@ -1,98 +1,51 @@
 # ERA Ecosystem — Development Roadmap
 
-Living index for platform-first delivery. **Per-app checkboxes** stay in DELIVERY files; this doc tracks **Phase A (platform)** gate and **Phase B (satellite depth)** progress.
+Living index for platform-first delivery. **Per-app checkboxes** stay in DELIVERY files; this doc tracks **platform gate** (done) and **product versions** ([PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md)).
 
-## Phase A — Platform debt (complete)
+## v1.0 — Current release (shipped)
 
-Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
+### Platform
 
-| PP | Focus | Status |
-|----|-------|--------|
-| **PP1** | Orchestrator RBAC: access requests, transfer ownership, disputes | **Done** — [DELIVERY-ORCHESTRATOR CP1](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md); Finance proxies via `ERA_CONTROL_PLANE_RBAC_PROXY` |
-| **PP2** | Unified SSO + `BUSINESS_OWNER` on 7 industry apps | **Done** — `@era/satellite-kit` `executeSatelliteSsoExchange` |
-| **PP3** | Finance `ERA_AUTH_MODE=control-plane` dev cutover | **Done** — documented in [SETUP_AND_RUN](./SETUP_AND_RUN.md) |
-| **PP4** | Event bus: all 13 `@era/contracts` ingress types → Finance worker | **Done** — incl. hotel night audit, invoice issued, city ledger; retail shift closed; CRM visit logged |
-| **PP5** | Contract Management §4.15 | **Done** — `contract_management_pro`, `/contracts`, PO `checkLimit` |
-| **PP6** | Gov Budget §4.16 | **Done** — `gov_budget_pro`, gateway, BUDGET demo org, `/gov-budget` |
-| **PP7** | Ops, CI, umbrella docs | **Done** — migration `20260525180000_contracts_gov_budget`, [SMOKE_ALL_SERVICES](./SMOKE_ALL_SERVICES.md) |
+Gate passed 2026-05-25. Control plane, SSO on industry satellites, Finance event worker (13 ingress types), contracts, gov budget, billing on orchestrator.
 
-### Phase A gate checklist
+| Area | Status | Doc |
+|------|--------|-----|
+| Orchestrator RBAC (access, transfer, disputes) | **Done** | [DELIVERY-ORCHESTRATOR](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) |
+| Unified SSO + `BUSINESS_OWNER` | **Done** | [INTEGRATION_SSO_EVENTS](./INTEGRATION_SSO_EVENTS.md) |
+| Finance control-plane auth | **Done** | [SETUP_AND_RUN](./SETUP_AND_RUN.md) |
+| Contract Management §4.15 | **Done** | Finance `/contracts` |
+| Gov Budget §4.16 | **Done** | Finance `/gov-budget` |
+| CP-BILLING + platform add-ons MVP API | **Done** | [PLATFORM_ADDONS](./PLATFORM_ADDONS.md) · [CP-BILLING-MIGRATION](./CP-BILLING-MIGRATION.md) |
+| Posting role profiles (COMMERCIAL/BUDGET/NGO) | **Done** | [ADR posting-role-profiles](./adr/posting-role-profiles.md) |
 
-- [x] Orchestrator CP1: access request, transfer ownership, dispute APIs
-- [x] All 7 industry satellites: SSO with `BUSINESS_OWNER` mapping (`executeSatelliteSsoExchange`)
-- [x] Finance `ERA_AUTH_MODE=control-plane` verified in dev smoke
-- [x] All 13 ingress event types in `@era/contracts` → Finance worker handler (no stubs)
-- [x] Contracts: entitlement + UI + PO limit block
-- [x] Gov Budget: entitlement + gateway + BUDGET seed + execution report UI
-- [x] `SMOKE_ALL_SERVICES.md` covers platform + vertical E2E samples
-- [x] Umbrella docs synced (this file, INTEGRATION, SETUP, SATELLITE_DOCUMENTATION, README)
+### Industry satellites (operations + modules)
 
-## Phase B — Satellite refinement (in progress)
+Core MVP per app DELIVERY (checkout, trips, clinic lab, hotel PMS, FB POS, wholesale B2B, construction acts, etc.) plus **industry modules in v1.0** — see [MODULES_CATALOG § Shipped v1.0](./MODULES_CATALOG.md#shipped-in-v10).
 
-**Satellite Wave 1 (SP depth):** retail R2/R3 → CRM C2 → clinic K2/K3 → logistics L2 — **complete** 2026-05-25 (tracked in DELIVERY SP1–SP2).
+Hospitality Nafta package (sanatorium, banquets, GL bridge, invoice center, contract pricing) — **Done** · [era-hotel-pms/doc/nafta/](../era-hotel-pms/doc/nafta/).
 
-**Satellite Wave 2 (SP depth):** fb-pos FB-0 + hotel regression → construction/auto/wholesale UI — **complete** 2026-05-25 (DELIVERY SP3–SP4).
+---
 
-**Gemini W1 enrichment:** retail/crm/clinic/logistics W1-E — **complete** 2026-05-28 · traceability: [MODULES_CATALOG § W1](../../docs/MODULES_CATALOG.md#w1--implementation-queue-4-apps) + per-app `doc/DELIVERY-*` § W1-E.
+## v1.1 — Next (planned)
 
-**Gemini W2 enrichment:** 9 industry apps W2-E MVP items — **complete** 2026-05-28 · traceability: [MODULES_CATALOG § W2](../../docs/MODULES_CATALOG.md#w2--documented-backlog-all-industry-satellites) + DELIVERY § W2-E.
+**Scope:** [MODULES_CATALOG § Planned v1.1](./MODULES_CATALOG.md#planned-v11) — retail M14–M16, clinic M10–M13, logistics tariffs/COD, CRM automation, construction/auto/wholesale/fb extensions.
 
-**Next industry queue:** W2 **DEFERRED** rows in [MODULES_CATALOG](./MODULES_CATALOG.md) (retail M14–M16, clinic M10–M13, logistics M10–M12, fb-pos M14, …). Catalog per-app statuses synced with DELIVERY 2026-05-26.
+**Tracking:** `## Planned — v1.1` sections in each `era-*/doc/DELIVERY*.md` and `PRD.md` §4 statuses `PLANNED (v1.1)`.
 
-**Satellite Wave 3+4 — Hospitality Nafta:** SAN-PKG → PROC-SCHED → clinic K5 → MDM → transfers → banquets (DELIVERY + hotel `doc/nafta/`). DOC-B: [era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md](../era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md).
+---
 
-| HN | Focus | Status |
-|----|-------|--------|
-| HN-1 | hotel-pms SAN-PKG + EOD folio | **Done** |
-| HN-2 | hotel-pms PROC-SCHED | **Done** |
-| HN-3 | clinic sanatorium bridge K5 | **Done** |
-| HN-P | orchestrator era-mdm | **Done** |
-| HN-N | NotebookLM manifest (27 merged + batches) | **Done** |
-| HN-7 | airport transfers (PMS) | **Done** |
-| HN-8 | banquet BEO + fb-pos service | **Done** |
+## v2.0 — Later (planned)
 
-**Satellite Wave 5 — Hospitality Nafta Finance & Channel** — **complete** · GL bridge → invoice/agency → contract pricing → channel regression. Manifest: [screens-manifest-v2-wave5-must.json](../era-hotel-pms/doc/nafta/screens-manifest-v2-wave5-must.json).
+**Scope:** [MODULES_CATALOG § Planned v2.0](./MODULES_CATALOG.md#planned-v20) — fiscal/offline/marketplace retail, platform add-ons **Live**, heavy integrations (EDI, TecDoc, tool crib, …).
 
-| NW | Focus | Status |
-|----|-------|--------|
-| NW-1 | finance GL bridge FIN-01 | **Done** |
-| NW-2 | hotel invoice center + agency CL | **Done** |
-| NW-3 | contract discounts PROC-24 | **Done** |
-| NW-4 | channel stop-sell regression PROC-23 | **Done** (verify only) |
-| NW-5 | DOC-B Wave 5 | **Done** |
-
-Priority by value and DELIVERY readiness. Do not start new platform debt here — file issues for CP2 (RS256/JWKS, `permissions[]`).
-
-| SP | Focus | Status |
-|----|-------|--------|
-| **SP1** | Retail R2/R3 + CRM C2 | **Done (Wave 1)** — preset checkout, void/return/shift-close; visits, assign, inbox stub |
-| **SP2** | Logistics L2 + Clinic K2/K3 | **Done (Wave 1)** — POD/fuel UI; lab lifecycle, discount audit, executive |
-| **SP3** | F&B FB-1 + Hotel Stage 17 | **Done (Wave 2)** — FB-0 auth/menu, UI wired, bridge regression |
-| **SP4** | Construction C2, Auto A2, Wholesale W2 | **Done (Wave 2)** — plan-vs-actual UI, appointments UI, pick lists + Finance credit fallback |
-| **SP5** | UAT-SMOKE pass, PRD/TZ sync | **Done** — Wave E-A…E-D commerce/booking hooks + [READINESS_MATRIX.md](./READINESS_MATRIX.md) refresh |
-| **SP6** | Quartet product (Tracks A/B/C) | **Done** — Finance+Orch+Hotel+FB smoke, entitlement hooks, FB product depth, E8 ingress |
-| **SP7** | Secondary satellites depth | **Done** — customs hub (Log), executive/settings polish, DELIVERY SP7 notes |
-| **SP10** | Post-SP9 platform (P1–P7) | **Done** — Orch super-admin UI, SSO docs, Finance JWT handoff, early-access on Orch, Hotel MDM guest, UI playbook, hygiene |
-| **CP2** | Platform hardening (RS256, permissions, MDM, handoff ticket, UI, addons Live) | **Done** — ERA Program Orchestrator P01–P08 |
-| **SP8** | Platform RBAC consumer (§2.1) | **Done** — hybrid Orch roles + local ops; `satellite-kit` platform session; matrix N/A for join/memberships on sats |
-| **SP9** | Orch hub entry (launcher, SSO, register, super-admin shell) | **Done** — Orch web :3100; Finance industry/super-admin/register redirect; `sso-launch-smoke.mjs`; holding Finance-only (closed) |
-
-### Legacy sprint index (S1–S8 scaffold)
-
-| Sprint | Focus | Status |
-|--------|-------|--------|
-| **S1** | Control plane RBAC, SSO claims, `BUSINESS_OWNER` | **Done** — superseded by PP1–PP2 |
-| **S2** | Finance Contract Management §4.15 | **Done** — superseded by PP5 |
-| **S3** | Finance Gov Budget §4.16 | **Done** — superseded by PP6 |
-| **S4** | Retail R1 + CRM C1 | **Done** |
-| **S5** | Logistics L1 + Clinic K1 | **Done** |
-| **S6** | FB-1 + construction/auto/wholesale C1 | **Done (API)** |
-| **S7** | Clinic K2 lab + platform events | **Done** |
-| **S8** | GTM, CI smoke | **Done** — `.github/workflows/ecosystem-smoke.yml` |
+---
 
 ## Standards
 
+- [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — naming rules
 - [SATELLITE_DOCUMENTATION.md](./SATELLITE_DOCUMENTATION.md) — layout, RBAC, index
+- [MODULES_CATALOG.md](./MODULES_CATALOG.md) — module IDs per app
+- [READINESS_MATRIX.md](./READINESS_MATRIX.md) — DELIVERY % and API × app
 - [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) — JWT + event bus
 - [SETUP_AND_RUN.md](./SETUP_AND_RUN.md) — local run
 
@@ -104,17 +57,6 @@ Priority by value and DELIVERY readiness. Do not start new platform debt here �
 4. TZ API/Prisma sync
 5. UAT-SMOKE steps documented
 6. `SMOKE_ALL_SERVICES.md` section if service touched
-
-## Platform Master Plan — Billing, Notifications, Vertical Add-ons (2026-05)
-
-| Program | Status |
-|---------|--------|
-| **CP-BILLING** (billing + referrals + early-access → orchestrator) | **Done** — [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) checklist 1–10 |
-| **CP-B2** Notifications Pack | **Live** — `/platform/notifications/v1/*`; Finance opt-in `ERA_NOTIFICATIONS_PACK` |
-| **CP-B3…B5** Booking, portal, payments | **MVP API** — orchestrator `/platform/*`; Wave A consumers: Finance invoices, clinic/auto-sto crons |
-| **CP-B6…B8** Loyalty, domains, delivery | **MVP API** — orchestrator persistence + Wave C/D satellite hooks |
-| **CP-VERTICAL-GROWTH** | **Wave A–C clients** — `control-plane-platform.client.ts` in each satellite |
-| **DOC-B** | Wave 1 done; Wave 2–3 + final audit synced in MODULES_CATALOG / PLATFORM_ADDONS / UAT-SMOKE-PLATFORM |
 
 ## Satellite index
 

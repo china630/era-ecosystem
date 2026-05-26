@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -49,7 +49,7 @@
 - [ ] Close shift: `POST /api/shifts/close` → `totalSales`, `receiptCount`, `SATELLITE_RETAIL_SHIFT_CLOSED`
 - [ ] `/pos` UI: void line button, return on paid receipt, close shift with Z-summary
 
-## W1-E — Enrichment (Gemini retail)
+## Product modules (v1.0)
 
 - [x] M11: Open receipt → apply promo % or code before pay → `amountNet` reflects discount
 - [x] M12: Set customer phone / loyalty ref on receipt → visible on paid receipt

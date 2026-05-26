@@ -133,15 +133,15 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 |-----------|----------|--------------|----------------|------------------|--------------|------------------|-------|
 | finance-core | Live | Live (13) | Live | — | Live | SoT | Launcher |
 | orchestrator | Impl | Impl | Live (B2) | MVP (B3) | MVP (B4–B8) | Billing SoT | MDM |
-| hotel-pms | Live | Live | Live | MVP (spa) | MVP | Live | FB bridge, Wave F loyalty/domains/delivery |
-| fb-pos | Live | Live | Live | MVP | MVP | Events | Hotel bridge, Wave F full §4 commerce |
-| retail-pos | Live | Live | Live | MVP | MVP | Events | Wave F loyalty/domains/delivery |
-| logistics | Live | Live | Live | MVP | MVP | Events | Wave F loyalty/domains |
-| construction | Live | Live | Live | MVP | MVP | Events | Wave F loyalty/domains |
-| crm-field | Live | Live | Live | MVP | MVP | MDM | Wave F loyalty/domains |
-| auto-sto | Live | Live | Live | MVP | MVP | Events | Wave F delivery/loyalty/domains |
-| clinic | Live | Live | Live | MVP | MVP | Events | Wave F delivery/loyalty/domains |
-| wholesale | Live | Live | Live | MVP | MVP | MVP credit | Wave F loyalty/domains |
+| hotel-pms | Live | Live | Live | MVP (spa) | MVP | Live | FB bridge; partial platform §4 hooks |
+| fb-pos | Live | Live | Live | MVP | MVP | Events | Hotel bridge |
+| retail-pos | Live | Live | Live | MVP | MVP | Events | Full platform §4 hooks |
+| logistics | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
+| construction | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
+| crm-field | Live | Live | Live | MVP | MVP | MDM | Platform §4 hooks |
+| auto-sto | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
+| clinic | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
+| wholesale | Live | Live | Live | MVP | MVP | MVP credit | Platform §4 hooks |
 
 ---
 
@@ -188,7 +188,7 @@ Regenerate: `node scripts/readiness-coverage.mjs` (full table) or `node scripts/
 
 **N/A by design (consumer):** Fin — booking, portal, loyalty, domains, delivery; all apps except Orch — billing host.
 
-**Coverage notes (2026-05-26):** `readiness-coverage.mjs` — gaps on **hotel-pms** / **fb-pos** for portal, pay, loyalty, delivery (Wave F partial vs retail/clinic). Orch rows use **H** for booking/portal host in full matrix below.
+**Coverage notes (2026-05-26):** `readiness-coverage.mjs` — gaps on **hotel-pms** / **fb-pos** for portal, pay, loyalty, delivery (v1.0 partial vs retail/clinic). Orch rows use **H** for booking/portal host in §4.2.
 
 ### 4.2 App × family checklist
 

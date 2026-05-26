@@ -57,7 +57,7 @@ Validation: [src/lib/receipt-line-validation.ts](./src/lib/receipt-line-validati
 
 See [.env.example](./.env.example): `DATABASE_URL`, `AUTH_JWT_SECRET`, `ERA_SSO_SHARED_SECRET`, `ORCHESTRATOR_EVENT_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`.
 
-## W1-E — Enrichment APIs
+## Product APIs (v1.0)
 
 | Method | Path | Model / notes |
 |--------|------|----------------|

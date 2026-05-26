@@ -47,16 +47,16 @@ SMB СТО ведут заказ-наряды в Excel; запчасти и вы
 | M2 | Work order | **MVP** | `WORK_ORDER_CLOSED` |
 | M3 | Labor lines | **PLANNED** | laborAmount |
 | M4 | Parts lines (SKU ref) | **PLANNED** | partsAmount + stock OUT |
-| M5 | Appointment calendar + service bays | **W2 PLANNED** | Gemini 02 §1; `platform_booking` |
-| M6 | Interactive intake (photos, checklist) | **W2 PLANNED** | Gemini 02 §1 |
-| M7 | Parts catalogue VIN / cross-reference | **W2 DEFERRED** | TecDoc / Mitchell — integration |
-| M8 | Shop floor time tracking | **W2 PLANNED** | Gemini 02 §4 |
-| M9 | Parts line status on WO | **W2 PLANNED** | ordered → arrived → issued |
-| M10 | Vehicle history by VIN | **W2 PLANNED** | Gemini 02 §7 |
-| M11 | B2B parts procurement from WO | **W2 DEFERRED** | **Finance** PO |
-| M12 | Tool crib / equipment tracking | **W2 DEFERRED** | Gemini 02 §8 |
+| M5 | Appointment calendar + service bays | **MVP** | A2 appointments; bay/lift extend → **v1.1** |
+| M6 | Interactive intake (photos, checklist) | **MVP** | ERPs/02 §1 |
+| M7 | Parts catalogue VIN / cross-reference | **PLANNED (v1.1)** | TecDoc / Mitchell |
+| M8 | Shop floor time tracking | **MVP** | ERPs/02 §4 |
+| M9 | Parts line status on WO | **MVP** | ordered → arrived → issued |
+| M10 | Vehicle history by VIN | **MVP** | ERPs/02 §7 |
+| M11 | B2B parts procurement from WO | **PLANNED (v1.1)** | **Finance** PO |
+| M12 | Tool crib / equipment tracking | **PLANNED (v2.0)** | ERPs/02 §8 |
 
-См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-module-roadmap).
 
 ---
 

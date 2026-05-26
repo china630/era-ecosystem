@@ -1,6 +1,8 @@
-# Wave D+ — Secondary satellites (after quartet)
+# Secondary satellites — platform consumers (v1.0)
 
-Run only after **SP6 Quartet** exit: green Track A/B/C for Finance, Orchestrator, Hotel, FB.
+> **Superseded naming:** use [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md). Quartet + industry modules are **v1.0**; this note covers post-quartet depth only.
+
+Run after quartet exit: green smoke for Finance, Orchestrator, Hotel, FB.
 
 ## Scope
 

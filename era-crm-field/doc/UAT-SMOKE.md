@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -60,7 +60,8 @@ curl -X POST http://localhost:3303/api/inbox \
   -d '{"channel":"whatsapp","externalRef":"+994501234567","preview":"Hello"}'
 ```
 
-## W1-E — Enrichment
+## Product modules (v1.0)
 
 - [x] M4: `POST /api/visits` with `latitude`, `longitude`, `addressLabel` → stored; `/visits` shows geo
 - [x] M8: `PATCH /api/leads/:id/follow-up` with `nextContactAt` → notification stub; `/leads` schedule follow-up
+

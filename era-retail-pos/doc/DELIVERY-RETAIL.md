@@ -34,46 +34,48 @@ Source of truth for checkboxes. Summary for PM: [PRD §4](../PRD.md).
 - [x] `SATELLITE_RETAIL_SHIFT_CLOSED` in @era/contracts
 - [x] Shift close dispatch
 
-## R4 — Deferred
+## R4 — Product modules (v1.0)
 
-- [ ] Offline queue (M8)
-- [ ] KKM integration (M9)
-- [ ] Umico/Kaspi sync (M10)
-
-## R5 — Platform add-ons (Wave B3)
-
-- [x] Notifications on receipt pay — `trySendPlatformNotification` + optional payment link (`@era/satellite-kit`)
-- [x] Booking pickup slot on pay — `createBookingSlot` (MVP)
-- [x] Platform delivery shipment on pay — `createShipment` when `delivery: true` or outlet preset `ecommerce` (MVP)
-- [x] Wave F §4 — loyalty/domains on receipt pay (`customHostname`)
-- [x] Portal link on pay — `createPortalLink` for `retail_receipt` (MVP)
-- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` → `getSubscriptionMe` (Wave D)
-- [x] UAT: platform send documented in [UAT-SMOKE.md](./UAT-SMOKE.md) § Platform
-
-Platform client: `@era/satellite-kit` via `src/integration/control-plane-platform.client.ts`.
-
-## SP8 — Platform RBAC consumer (§2.1)
-
-- [x] Platform session (`financeRole` + org) via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
-- [x] Local operational RBAC (cashier roles) — unchanged
-- [x] No local join-org / memberships (N/A — Finance/Orch only)
-
-## SP7 — Depth (post-quartet)
-
-- [x] R2/R3 presets, void/return/shift-close (Wave 1)
-- [x] Executive `/executive` with `canViewExecutive`
-- [x] Settings UI playbook pilot `/settings` (ModalShell)
-
-## W1-E — Enrichment (Gemini → PRD M11/M12/M7)
-
-Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era) · **M11/M12 retail-only**
+Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md) · **M11/M12 retail-only**
 
 - [x] M11: Apply promotion on cart before pay (%, manual code)
 - [x] M12: Customer phone / loyalty ref on receipt
 - [x] M7: Product lookup read cache (`GET /api/products/search`)
 - [x] M2 extend: X-report mid-shift API + UI
-
-## W2-E — Enrichment (Gemini ритейл ERP)
-
 - [x] M13: BOPIS / pickup via platform_delivery
-- [ ] M14–M16: mobile stock, replenishment, SRM — deferred (Finance)
+
+## R5 — Platform add-ons (v1.0)
+
+- [x] Notifications on receipt pay — `trySendPlatformNotification` + optional payment link (`@era/satellite-kit`)
+- [x] Booking pickup slot on pay — `createBookingSlot` (MVP)
+- [x] Platform delivery shipment on pay — `createShipment` when `delivery: true` or outlet preset `ecommerce` (MVP)
+- [x] Loyalty/domains on receipt pay (`customHostname`)
+- [x] Portal link on pay — `createPortalLink` for `retail_receipt` (MVP)
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` → `getSubscriptionMe`
+- [x] UAT: platform send documented in [UAT-SMOKE.md](./UAT-SMOKE.md) § Platform
+
+Platform client: `@era/satellite-kit` via `src/integration/control-plane-platform.client.ts`.
+
+## Platform session (v1.0)
+
+- [x] Platform session (`financeRole` + org) via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
+- [x] Local operational RBAC (cashier roles) — unchanged
+- [x] No local join-org / memberships (N/A — Finance/Orch only)
+
+## Operations (v1.0)
+
+- [x] R2/R3 presets, void/return/shift-close
+- [x] Executive `/executive` with `canViewExecutive`
+- [x] Settings UI playbook pilot `/settings` (ModalShell)
+
+## Planned — v1.1
+
+- [ ] M14: Mobile stock / label check (WMS lite)
+- [ ] M15: Auto-replenishment / PO suggest (Finance)
+- [ ] M16: Supplier contracts & invoice match (Finance)
+
+## Planned — v2.0
+
+- [ ] M8: Offline queue
+- [ ] M9: KKM integration
+- [ ] M10: Umico/Kaspi sync

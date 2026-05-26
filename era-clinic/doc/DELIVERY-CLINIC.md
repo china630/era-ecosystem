@@ -33,7 +33,7 @@ PRD: [../PRD.md](../PRD.md)
 
 ## K4
 
-- [ ] LIS file import — **Phase 2 defer** (Wave E-D; not blocking §4 portal/pay hooks)
+- [ ] LIS file import — **PLANNED (v1.1)** (not blocking portal/pay hooks)
 - [ ] Patient portal (deferred module M8)
 
 ## K5 — Sanatorium bridge (Wave 3 Nafta)
@@ -49,37 +49,39 @@ PRD: [../PRD.md](../PRD.md)
 
 **Hotel hook env:** `CLINIC_API_URL`, `CLINIC_BRIDGE_SECRET`, `HOTEL_ORGANIZATION_ID` on era-hotel-pms.
 
-## K6 — Platform (Wave B3)
+## K6 — Platform add-ons (v1.0)
 
 - [x] Notifications + booking cron (T-24h) — Live
 - [x] Portal link on lab publish — `createPortalLink` MVP
-- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
-- [x] Wave E-A commerce — payment link on visit/lab complete (MVP)
-- [x] Wave F §4 — delivery/loyalty/domains on lab publish
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot`
+- [x] Payment link on visit/lab complete (MVP)
+- [x] Delivery/loyalty/domains on lab publish
 
 Client: `@era/satellite-kit`.
 
-## SP8 — Platform RBAC consumer (§2.1)
+## Platform session (v1.0)
 
 - [x] Platform session via SSO — `PlatformSessionBarServer`, executive `canViewExecutive`
 - [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A); MDM N/A on satellite
 
-## SP7 — Depth (post-quartet)
+## Operations (v1.0)
 
-- [x] K2/K3 lab lifecycle + executive summary (Wave 1)
-- [x] Sanatorium bridge K5 (Nafta HN-3)
+- [x] Lab lifecycle + executive summary
+- [x] Sanatorium bridge (hotel integration)
 - [x] Admin settings UI playbook `/admin/settings`
 
-## W1-E — Enrichment
+## Product modules (v1.0)
 
-Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era)
+Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 - [x] M6: Service catalog cache API + sync from Finance price list stub
 - [x] M5: Critical lab flag UI on publish (beyond refMin/refMax)
-- [ ] K3: Multi-room drag reschedule — optional W1; **done in W2-E M9** below
-
-## W2-E — Enrichment (Gemini медицина ERP)
-
 - [x] M9: Multi-room drag reschedule
 - [x] M14: Telehealth / portal deep link on lab publish
-- [ ] M10–M13: EHR, LIS, insurance, inpatient — deferred per PRD
+
+## Planned — v1.1
+
+- [ ] M10: EHR templates / CPOE lite
+- [ ] M11: LIS analyzer import
+- [ ] M12: Insurance / DMS eligibility
+- [ ] M13: Inpatient / bed management

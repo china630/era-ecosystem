@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -66,3 +66,4 @@
 - `npm run build` succeeds
 - Flows 1–9 complete without blocking errors
 - With `HOTEL_PMS_URL` set, room charge appears on PMS folio (see [era-hotel-pms UAT §11](../../era-hotel-pms/doc/UAT-SMOKE.md))
+

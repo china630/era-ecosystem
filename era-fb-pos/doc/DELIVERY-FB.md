@@ -57,26 +57,29 @@ node era-hotel-pms/scripts/test-pos-bridge.mjs
 node scripts/quartet-smoke.mjs
 ```
 
-## FB-5 — Platform (Wave B/C)
+## FB-5 — Platform add-ons (v1.0)
 
 - [x] Notifications on ticket pay — `@era/satellite-kit`
 - [x] Entitlement-gated hooks — `runPlatformCommerceHooks` on pay (portal/pay/delivery/loyalty/domain/booking)
 - [x] Billing snapshot UI — `GET /api/admin/integration-settings` + `/admin/integration`
-- [x] Wave E-B booking — booking slot gated by `platform_booking` module
+- [x] Booking slot gated by `platform_booking` module
 
-## FB-6 — Quartet smoke (Track A)
+## FB-6 — Quartet smoke
 
 - [x] Health in `scripts/quartet-smoke.mjs`
 - [x] UAT steps in [UAT-SMOKE.md](./UAT-SMOKE.md) § Quartet
 
-## W2-E — Enrichment (Gemini ресторанный ERP)
+## Product modules (v1.0)
 
 - [x] M11: KDS course timing / fire delay
 - [x] M12: Recipe depletion on ticket close (link Finance manufacturing)
 - [x] M13: Delivery aggregator order inbox
-- [ ] M14: Labor roster PIN — deferred
 
-## SP8 — Platform RBAC consumer (§2.1)
+## Planned — v1.1
+
+- [ ] M14: Labor roster PIN
+
+## Platform session (v1.0)
 
 - [x] Hybrid: local `FB_WAITER` / `FB_MANAGER`; platform OWNER/ACCOUNTANT via SSO (`financeRole`)
 - [x] `/admin/integration` — platform SSO only (`PLATFORM_SESSION_REQUIRED` without `financeRole`)

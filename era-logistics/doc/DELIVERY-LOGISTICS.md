@@ -24,38 +24,40 @@ PRD: [../PRD.md](../PRD.md)
 
 - [x] Customs status read from Finance — `/customs` hub + Finance deep link (SP7)
 
-## L4 — Platform (Wave B3)
+## L4 — Platform add-ons (v1.0)
 
 - [x] Notifications on trip complete — `@era/satellite-kit` `trySendPlatformNotification`
-- [x] Portal + delivery on trip complete — `createPortalLink`, `createShipment` (Wave D)
-- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
-- [x] Wave E-A commerce — portal/pay/delivery on trip complete (MVP)
-- [x] Wave E-B booking — delivery window slot on trip complete (MVP)
-- [x] Wave F §4 — loyalty/domains on trip complete
+- [x] Portal + delivery on trip complete — `createPortalLink`, `createShipment`
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot`
+- [x] Portal/pay/delivery on trip complete (MVP)
+- [x] Booking — delivery window slot on trip complete (MVP)
+- [x] Loyalty/domains on trip complete
 
 Client: `@era/satellite-kit`.
 
-## SP8 — Platform RBAC consumer (§2.1)
+## Platform session (v1.0)
 
 - [x] Platform session via SSO — `PlatformSessionBarServer`
 - [x] Local operational RBAC unchanged; no local Orch RBAC API (N/A)
 
-## SP7 — Depth (post-quartet)
+## Operations (v1.0)
 
-- [x] L2 POD + fuel reports (Wave 1)
-- [x] L3 customs status hub `/customs` + Finance deep link
+- [x] POD + fuel reports
+- [x] Customs status hub `/customs` + Finance deep link
 
-## W1-E — Enrichment
+## Product modules (v1.0)
 
-Source: [MODULES_CATALOG § enrichment](../../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era)
+Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 - [x] M3: Waybill document (generate/print stub per trip)
 - [x] M7: Fleet compliance — vehicle doc expiry fields + alerts UI
 - [x] M4: POD photo URL + signature URL on trip
-
-## W2-E — Enrichment
-
 - [x] M8: Multi-stop `trip_points`
 - [x] M9: Driver mobile workflow API stub
 - [x] M13: Customer tracking via platform_portal
-- [ ] M10–M12: deferred (Finance / hub WMS)
+
+## Planned — v1.1
+
+- [ ] M10: Rate matrix / tariff engine (Finance)
+- [ ] M11: COD split & clearing (Finance)
+- [ ] M12: Hub cross-dock scanning

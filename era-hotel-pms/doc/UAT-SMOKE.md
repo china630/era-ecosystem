@@ -5,7 +5,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -172,3 +172,4 @@ See [QUARTET_UAT.md](../../docs/QUARTET_UAT.md).
 - `npm run build` succeeds.
 - No blocking errors in flows 1ï¿½11 and ï¿½20.
 - Outbound journal reflects folio ops when channels enabled.
+

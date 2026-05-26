@@ -36,7 +36,7 @@
 | Сервис | Порт | Публичный хост (Traefik) |
 |--------|------|--------------------------|
 | Traefik dashboard | 8080 | — |
-| Orchestrator Web | 3100 | `app.era.az` — **ecosystem entry (SP9): login, industry launcher, SSO** |
+| Orchestrator Web | 3100 | `app.era.az` — **ecosystem entry (v1.0): login, industry launcher, SSO** |
 | Orchestrator API | 4100 | `api.era.az` |
 | Finance API | 4000 | **не публикуется** |
 | Finance Web (локально) | 3000 | — |
@@ -47,7 +47,7 @@
 
 > При одновременном локальном запуске **finance web** и **hotel PMS** оба используют `:3000` — запускайте только один из них или смените порт.
 
-> **Точка входа (SP9):** откройте **Orchestrator Web** `http://127.0.0.1:3100` (или `app.era.az`). Industry launcher и регистрация — на Orch; Finance — GL/holding; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
+> **Точка входа (v1.0):** откройте **Orchestrator Web** `http://127.0.0.1:3100` (или `app.era.az`). Industry launcher и регистрация — на Orch; Finance — GL/holding; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
 
 ---
 

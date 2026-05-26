@@ -186,12 +186,11 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [ ] HK mobile PWA `/hk/mobile`
 - [ ] B2C booking engine
 - [ ] Door locks integration
-- [x] `era-fb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) Wave 2 UI + auth
+- [x] `era-fb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) v1.0 UI + auth
 - [ ] PMS-04 drag-resize room plan
 - [ ] Auto email reports (WA0345+)
 
-### Stage 18 — SAN-PKG (Wave 3 Nafta)
-
+### Stage 18 — SAN-PKG
 - [x] `RatePlanPackageLine` — package routing to revenue codes (ROOM / TREATMENT / BOARD)
 - [x] `medicalFlag` rate plans: check-in defers charges; night audit EOD posts package bundle
 - [x] Revenue codes `PKG`, `TREATMENT`, `BOARD`; seed MEDICAL package @ 180 AZN/night
@@ -199,8 +198,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] Traceability: [doc/nafta/README.md](doc/nafta/README.md)
 - [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § SAN-PKG
 
-### Stage 19 — PROC-SCHED (Wave 3 Nafta)
-
+### Stage 19 — PROC-SCHED
 - [x] `ProcedureService`, `ProcedureAppointment`, `RatePlanProcedureInclusion`
 - [x] `/procedures` UI + `/api/procedures/*` — book, finish, no-show
 - [x] Conflict check: staff + place overlap
@@ -209,8 +207,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528100000_wave3_sanatorium`
 
-### Stage 21 — BANQUET BEO (Wave 4 Nafta HN-8)
-
+### Stage 21 — BANQUET BEO
 - [x] `BanquetSaloon`, `BanquetMenuPackage`, `BanquetEvent` + `BanquetEventStatus`
 - [x] Hall block via `PosResource` (`BANQUET_HALL`) + `PosReservation` on confirm
 - [x] `/banquets` UI + `/api/banquets/*` — create draft BEO, confirm, deposit payment on folio
@@ -220,8 +217,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528140000_wave4_banquet`
 
-### Stage 20 — TRANSFER (Wave 4 Nafta HN-7)
-
+### Stage 20 — TRANSFER
 - [x] `TransferVehicle`, `TransferOrder` — IN/OUT directions, fleet assignment
 - [x] `/transfers` UI + `/api/transfers/*` — book, assign vehicle, complete
 - [x] Complete: posts `TRANSFER` revenue on folio when not yet charged
@@ -230,8 +226,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528130000_wave4_transfer`
 
-### Stage 22 — GL-BRIDGE (Wave 5 Nafta NW-1)
-
+### Stage 22 — GL-BRIDGE
 - [x] `HotelRevenueGlMapping` — revenue code → NAS GL account (601–606 seed)
 - [x] Night audit E1 enriches `revenueLines` with `glAccountCode`; orchestrator `@era/contracts` `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`
 - [x] Finance `SatelliteEventDispatchService.handleHotelNightAudit` — multi-line NAS journal
@@ -240,8 +235,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528150000_wave5_gl_bridge`
 
-### Stage 23 — INVOICE-AGENCY (Wave 5 Nafta NW-2)
-
+### Stage 23 — INVOICE-AGENCY
 - [x] `/reports/invoices` — all fiscal documents + `integrateToAccounting` toggle (PROC-35)
 - [x] `GET /api/reports/invoices`, `PATCH /api/reports/invoices/[id]`
 - [x] Agency CL summary: city ledger, cash paid, net amount (PROC-21 / WA_CASH_02)
@@ -250,8 +244,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528160000_wave5_invoice_agency`
 
-### Stage 24 — CONTRACT-PRICING (Wave 5 Nafta NW-3)
-
+### Stage 24 — CONTRACT-PRICING
 - [x] `ContractPricingRule` — DISCOUNT/SUPPLEMENT % by agency + rate plan + date range (PROC-24)
 - [x] `/admin/contract-pricing` CRUD + `/api/admin/contract-pricing`
 - [x] Booking quote `/api/bookings/quote` + contract-adjusted `totalAmount` on create
@@ -261,27 +254,27 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 **Migration:** `20260528170000_wave5_contract_pricing`
 
 
-## Platform (Wave B3)
+## Platform add-ons (v1.0)
 
 - [x] Invoice issued guest notification — `trySendPlatformNotification` on `issueFolioInvoice`
-- [x] Spa/booking widget resource (CP-B3 hotel spa) — `POST /api/spa/slots` → `createBookingSlot` (MVP)
-- [x] Payment link on folio invoice — `createPaymentLink` in `issueFolioInvoice` (Wave D)
-- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot` (Wave D)
-- [x] Wave E-A commerce — portal link on folio invoice (`issueFolioInvoice`)
-- [x] Wave E-C billing UI — `platformSubscription` on `GET /api/hotel/integration-settings` + admin read-only block (§2.2.1 Live)
-- [x] Quartet Track A — POS bridge CI + [KKM-POLICY-FB-BRIDGE.md](./KKM-POLICY-FB-BRIDGE.md)
+- [x] Spa/booking widget — `POST /api/spa/slots` → `createBookingSlot` (MVP)
+- [x] Payment link on folio invoice — `createPaymentLink` in `issueFolioInvoice`
+- [x] Billing snapshot consumer — `GET /api/platform/billing-snapshot`
+- [x] Portal link on folio invoice (`issueFolioInvoice`)
+- [x] Billing UI — `platformSubscription` on `GET /api/hotel/integration-settings` + admin read-only block
+- [x] POS bridge CI + [KKM-POLICY-FB-BRIDGE.md](./KKM-POLICY-FB-BRIDGE.md)
 - [x] Entitlement-gated platform hooks on folio invoice — `@era/satellite-kit` `runPlatformCommerceHooks`
 
-## SP8 — Platform RBAC consumer (§2.1)
+## Platform session (v1.0)
 
 - [x] Hybrid local ops + SSO platform roles (`isCrossSystem` on SSO user)
 - [x] `PlatformSessionBarServer` in layout — Finance deep links
 - [x] No local join-org / memberships (N/A)
-- [x] Wave F §4 — delivery/loyalty on folio invoice; `createCustomDomain` on integration-settings PATCH
+- [x] Delivery/loyalty on folio invoice; `createCustomDomain` on integration-settings PATCH
 
 Client: `@era/satellite-kit`.
 
-## W2-E — Enrichment (Gemini отельный ERP)
+## Product modules (v1.0)
 
 PRD M20–M23 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 

@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -20,3 +20,4 @@
 - [ ] `GET /api/health` â†’ 200
 - [ ] Home page loads
 - [ ] `POST /api/events/dispatch` (with orchestrator running)
+

@@ -2,79 +2,54 @@
 
 Functional modules per application. **Finance** = source of truth for GL, sales/purchase documents, inventory, counterparty MDM. **Orchestrator** = identity, billing, entitlements, platform add-ons. Satellites = vertical operations + events.
 
+**Versions:** [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — **v1.0** = shipped; **v1.1** / **v2.0** = planned.
+
 **Architecture:** [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · **Platform add-ons:** [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md)
 
 Industry Solutions entitlements (Finance sidebar): see [industry-satellite-sync.md](../era-finance-core/docs/industry-satellite-sync.md).
 
-**Industry enrichment (Gemini ERP research):** [Industry enrichment backlog](#industry-enrichment-backlog-gemini-erp--era) below · source files in [`ERPs/`](../ERPs/).
+**Industry modules:** [cross-app roadmap](#industry-module-roadmap) · research index [`ERPs/`](../ERPs/) · versioning rules [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md).
 
 ---
 
-## Industry enrichment backlog (Gemini ERP → ERA)
+## Industry module roadmap
 
-Cross-cutting backlog from [`ERPs/`](../ERPs/) decomposition. Full module IDs are in each app **`PRD.md` §4**. **W1** and **W2 MVP** enrichment — **complete** 2026-05-28 (see DELIVERY § W1-E / W2-E). **Next queue:** rows marked **W2 DEFERRED** below.
+Module IDs — each app **`PRD.md` §4**. **M11 / M12** (promotions, customer at POS) — только **`era-retail-pos`**.
 
-**Note:** **M11 / M12** module IDs exist only in **`era-retail-pos`** (promotions at checkout, customer at POS).
+### Shipped in v1.0
 
-### W1 — implementation queue (4 apps)
+| App | Module | Capability | Owner | Status |
+|-----|--------|------------|-------|--------|
+| era-retail-pos | M7, M11, M12, M2 ext, M13 | Product cache, promos, customer, X-report, BOPIS | SATELLITE + platform | **MVP** |
+| era-crm-field | M4 ext, M8, M9 | Visit geo, next-contact, lead score | SATELLITE + platform | **MVP** |
+| era-clinic | M5 ext, M6, M9, M14 | Critical lab, price cache, reschedule, telehealth | SATELLITE + platform | **MVP** |
+| era-logistics | M3, M4 ext, M7, M8, M9, M13 | Waybill, POD media, fleet, multi-stop, driver API, tracking | SATELLITE + platform | **MVP** |
+| era-construction | M6, M7, M9 | Daily log, punch list, subcontractor claims | SATELLITE | **MVP** |
+| era-auto-sto | M6, M8, M9, M10 | Intake, shop floor, parts status, vehicle history | SATELLITE | **MVP** |
+| era-wholesale | M5, M6 | TTN, pick waves | SATELLITE | **MVP** |
+| era-fb-pos | M11, M12, M13 | KDS courses, recipe depletion, delivery inbox | SATELLITE + platform | **MVP** |
+| era-hotel-pms | M20–M23 | Yield, loyalty, room-service QR, maintenance WO | SATELLITE + platform | **MVP** |
 
-| App | PRD module | Capability | Owner | Status |
-|-----|------------|------------|-------|--------|
-| era-retail-pos | M11, M12, M7, M2 ext | Promotions, customer, product cache, X-report | SATELLITE + platform_loyalty | **MVP** |
-| era-crm-field | M4 ext, M8 | Visit geo, next-contact | SATELLITE + notifications | **MVP** |
-| era-clinic | M5 ext, M6 | Critical lab, price cache | SATELLITE | **MVP** |
-| era-logistics | M3, M4 ext, M7 | Waybill, POD media, fleet compliance | SATELLITE | **MVP** |
+### Planned v1.1
 
-### W2 — documented backlog (all industry satellites)
+| App | Module | Capability | Owner |
+|-----|--------|------------|-------|
+| era-retail-pos | M14–M16 | Mobile stock, replenishment, supplier SRM | SATELLITE + FINANCE |
+| era-crm-field | M10 | Pipeline automation | SATELLITE |
+| era-clinic | M10–M13 | EHR lite, LIS import, insurance, inpatient | SATELLITE + FINANCE |
+| era-logistics | M10–M12 | Rate matrix, COD clearing, hub cross-dock | FINANCE + SATELLITE |
+| era-construction | M8, M10–M12 | Gantt, equipment hours, CDE, timesheets | SATELLITE / DEFERRED |
+| era-auto-sto | M5 ext, M7, M11 | Bay calendar, VIN catalogue, B2B parts PO | SATELLITE + FINANCE |
+| era-wholesale | M7 | EDI / buyer API export | SATELLITE |
+| era-fb-pos | M14 | Labor roster / PIN clock | SATELLITE |
 
-| App | PRD module | Capability | Gemini | Owner | Status |
-|-----|------------|------------|--------|-------|--------|
-| era-retail-pos | M13 | Omnichannel OMS (pickup, BOPIS) | 03 §6 | PLATFORM `delivery` + retail | **W2 MVP** |
-| era-retail-pos | M14 | Mobile stock / label check (WMS lite) | 03 §7 | SATELLITE stub | W2 DEFERRED |
-| era-retail-pos | M15 | Auto-replenishment / PO suggest | 03 §4 | FINANCE purchases | W2 DEFERRED |
-| era-retail-pos | M16 | Supplier contracts & invoice match | 03 §8 | FINANCE | W2 DEFERRED |
-| era-construction | M6 | Field daily log (прораб) | 05 §3 | SATELLITE | **W2 MVP** |
-| era-construction | M7 | Punch list / defects | 05 §3 | SATELLITE | **W2 MVP** |
-| era-construction | M8 | Gantt / CPM scheduling | 05 §2 | DEFERRED | W2 DEFERRED |
-| era-construction | M9 | Subcontractor progress claims | 05 §5 | SATELLITE lite | **W2 MVP** |
-| era-construction | M10 | Site equipment / machine hours | 05 §6 | SATELLITE | W2 DEFERRED |
-| era-construction | M11 | CDE / drawing versions | 05 §7 | DEFERRED | W2 DEFERRED |
-| era-construction | M12 | Labor timesheets / SKUD | 05 §8 | DEFERRED | W2 DEFERRED |
-| era-auto-sto | M5 | Appointment + bay calendar | 02 §1 | SATELLITE + booking | W2 PARTIAL (A2 done; bay/lift extend open) |
-| era-auto-sto | M6 | Interactive intake (photos, checklist) | 02 §1 | SATELLITE | **W2 MVP** |
-| era-auto-sto | M7 | Parts catalogue VIN / cross | 02 §3 | DEFERRED integration | W2 DEFERRED |
-| era-auto-sto | M8 | Shop floor time tracking | 02 §4 | SATELLITE | **W2 MVP** |
-| era-auto-sto | M9 | Parts status on WO | 02 §3 | SATELLITE | **W2 MVP** |
-| era-auto-sto | M10 | Vehicle history by VIN | 02 §7 | SATELLITE | **W2 MVP** |
-| era-auto-sto | M11 | B2B parts order from WO | 02 §6 | FINANCE PO | W2 DEFERRED |
-| era-auto-sto | M12 | Tool crib / equipment | 02 §8 | DEFERRED | W2 DEFERRED |
-| era-wholesale | M5 | Delivery note / TTN | retail OMS | SATELLITE | **W2 MVP** |
-| era-wholesale | M6 | Pick route / wave (lite) | 03 §7 | SATELLITE | **W2 MVP** |
-| era-wholesale | M7 | EDI / buyer API export | — | DEFERRED | W2 DEFERRED |
-| era-logistics | M8 | Multi-stop trip / trip_points | 06 §2 | SATELLITE | **W2 MVP** |
-| era-logistics | M9 | Driver mobile workflow API | 06 §3 | SATELLITE | **W2 MVP** |
-| era-logistics | M10 | Rate matrix / tariff engine | 06 §7 | FINANCE | W2 DEFERRED |
-| era-logistics | M11 | COD split & clearing | 06 §4 | FINANCE | W2 DEFERRED |
-| era-logistics | M12 | Hub cross-dock scanning | 06 §6 | DEFERRED | W2 DEFERRED |
-| era-logistics | M13 | Customer tracking portal | 06 §8 | PLATFORM portal | **W2 MVP** |
-| era-clinic | M9 | Multi-room drag reschedule | 07 §1 | SATELLITE | **W2 MVP** |
-| era-clinic | M10 | EHR templates / CPOE lite | 07 §2 | SATELLITE stub | W2 DEFERRED |
-| era-clinic | M11 | LIS analyzer import (HL7/file) | 07 §3 | DEFERRED | W2 DEFERRED |
-| era-clinic | M12 | Insurance / DMS eligibility | 07 §6 | FINANCE contracts | W2 DEFERRED |
-| era-clinic | M13 | Inpatient / bed management | 07 §7 | DEFERRED | W2 DEFERRED |
-| era-clinic | M14 | Telehealth + patient portal | 07 §8 | PLATFORM portal | **W2 MVP** |
-| era-crm-field | M9 | Lead scoring / SLA | Kommo | SATELLITE | **W2 MVP** |
-| era-crm-field | M10 | Pipeline automation rules | Bitrix | DEFERRED | W2 DEFERRED |
-| era-fb-pos | M11 | KDS course timing | 04 §2 | SATELLITE | **W2 MVP** |
-| era-fb-pos | M12 | Recipe / BOH depletion engine | 04 §3 | FINANCE mfg + SATELLITE | **W2 MVP** |
-| era-fb-pos | M13 | Delivery aggregator inbox | 04 §6 | PLATFORM delivery | **W2 MVP** |
-| era-fb-pos | M14 | Labor roster / PIN clock | 04 §8 | SATELLITE | W2 DEFERRED |
-| era-hotel-pms | M20 | Yield management (dynamic BAR) | 01 §1 | SATELLITE | **W2 MVP** |
-| era-hotel-pms | M21 | Guest loyalty tiers | 01 §7 | PLATFORM loyalty | **W2 MVP** |
-| era-hotel-pms | M22 | Room service QR menu | 01 §6 | SATELLITE + fb-pos | **W2 MVP** |
-| era-hotel-pms | M23 | Maintenance work orders | 01 §5 ext | SATELLITE | **W2 MVP** |
+### Planned v2.0
 
-**Plans:** W1/W2 enrichment programs **complete** 2026-05-28 (Cursor plans archived/removed). Next: DEFERRED rows below + per-app DELIVERY.
+| App | Module | Capability | Owner |
+|-----|--------|------------|-------|
+| era-retail-pos | M8–M10 | Offline queue, fiscal KKM, marketplace sync | SATELLITE + FINANCE |
+| era-auto-sto | M12 | Tool crib / equipment | SATELLITE |
+| Platform | CP-B3–B8 | Booking, portal, payments, loyalty, domain, delivery → **Live** | orchestrator |
 
 ---
 
@@ -84,13 +59,13 @@ Sold via `organization_modules` / pricing catalog; API under `/platform/*` on **
 
 | Add-on | Slug (draft) | Serves |
 |--------|--------------|--------|
-| Notifications Pack | `platform_notifications` | WA / email / SMS transactional — **Live (CP-B2)** |
-| Online Booking Widget | `platform_booking` | Clinic, auto-sto, retail pickup, hotel spa — **MVP API (CP-B3)** |
-| Customer Portal | `platform_portal` | Orders, visits, documents, pay — **MVP API (CP-B4)** |
-| Payment links & deposits | `platform_payments` | Invoice pay-by-link, booking deposit — **MVP API (CP-B5)** |
-| Loyalty & promotions | `platform_loyalty` | Promo codes, points — **MVP API (CP-B6)** |
-| Custom domain & white-label | `platform_domain` | Branded storefront — **MVP API (CP-B7)** |
-| Delivery orchestration | `platform_delivery` | Retail + logistics — **MVP API (CP-B8)** |
+| Notifications Pack | `platform_notifications` | WA / email / SMS — **Live** (v1.0) |
+| Online Booking Widget | `platform_booking` | Clinic, auto-sto, retail, hotel — **MVP** (v1.0); **Live** → v2.0 |
+| Customer Portal | `platform_portal` | Orders, visits, documents — **MVP** (v1.0); **Live** → v2.0 |
+| Payment links & deposits | `platform_payments` | Pay-by-link, deposits — **MVP** (v1.0); **Live** → v2.0 |
+| Loyalty & promotions | `platform_loyalty` | Promo codes, points — **MVP** (v1.0); **Live** → v2.0 |
+| Custom domain & white-label | `platform_domain` | Branded storefront — **MVP** (v1.0); **Live** → v2.0 |
+| Delivery orchestration | `platform_delivery` | Retail + logistics — **MVP** (v1.0); **Live** → v2.0 |
 
 Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
@@ -124,17 +99,17 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-hotel-pms (Hospitality PMS)
 
-| Module | Wave | Area | Status |
-|--------|------|------|--------|
+| Module | Since | Area | Status |
+|--------|-------|------|--------|
 | M1–M15 Core PMS | — | book, folio, NA, HK, channel, ERP | **DONE** (see DELIVERY) |
 | M16 POS bridge | — | fb-pos room charge | **DONE** |
 | M17 Sanatorium / medical | — | clinic bridge | **DONE** |
 | M18 Stock MVP | — | `/admin/stock` | **MVP** |
 | M19 Banquets BEO | — | `/banquets` | **MVP** |
-| M20 Yield management | **W2** | Dynamic BAR rules | **MVP** (W2-E) |
-| M21 Guest loyalty | **W2** | Tiers, points | **MVP** + PLATFORM |
-| M22 Room service QR | **W2** | In-room ordering → fb-pos | **MVP** (W2-E) |
-| M23 Maintenance WO | **W2** | HK → engineering tasks | **MVP** (W2-E) |
+| M20 Yield management | v1.0 | Dynamic BAR rules | **MVP** |
+| M21 Guest loyalty | v1.0 | Tiers, points | **MVP** + PLATFORM |
+| M22 Room service QR | v1.0 | In-room ordering → fb-pos | **MVP** |
+| M23 Maintenance WO | v1.0 | HK → engineering tasks | **MVP** |
 | Invoices / agency CL | — | reports | Read → Finance |
 
 **Backlog:** [era-hotel-pms/doc/BACKLOG-PRODUCTION.md](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md) · PRD module table: [era-hotel-pms/PRD.md](../era-hotel-pms/PRD.md)
@@ -143,8 +118,8 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-fb-pos (F&B POS)
 
-| Module | Wave | Screens / API | Notes |
-|--------|------|---------------|-------|
+| Module | Since | Screens / API | Notes |
+|--------|-------|---------------|-------|
 | M0 Shell | — | layout | **DONE** (FB-0) |
 | M1 Menu / outlet | — | `/admin/menu` | **DONE** |
 | M2 Floor + ticket | — | `/floor` | **DONE** |
@@ -156,10 +131,10 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M8 Split bill | — | — | **DONE** (FB-2) |
 | M9 Recipe consumption | — | E8 event | **DONE** |
 | M10 i18n | — | en/ru/az | **DONE** |
-| M11 KDS course timing | **W2** | fire-course API | **MVP** (W2-E) |
-| M12 Recipe / BOH engine | **W2** | ticket close depletion | **MVP** (W2-E) |
-| M13 Delivery aggregator | **W2** | delivery-inbox | **MVP** (W2-E) |
-| M14 Labor roster PIN | **W2** | — | **W2 DEFERRED** |
+| M11 KDS course timing | v1.0 | fire-course API | **MVP** |
+| M12 Recipe / BOH engine | v1.0 | ticket close depletion | **MVP** |
+| M13 Delivery aggregator | v1.0 | delivery-inbox | **MVP** |
+| M14 Labor roster PIN | v1.1 | — | **PLANNED** |
 | Banquet BEO | — | — | HN-8 hotel |
 
 **Backlog:** [era-fb-pos/doc/BACKLOG-PRODUCTION.md](../era-fb-pos/doc/BACKLOG-PRODUCTION.md)
@@ -168,20 +143,20 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-retail-pos
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0–M6(d) | — | Shell, shift, checkout, presets — **MVP** |
-| M7 Product lookup | **W1** | Read cache Finance SKU — **MVP** (W1-E) |
-| M8 Offline queue | — | **DEFERRED** |
-| M9 Fiscal KKM | — | **DEFERRED** |
-| M10 Marketplace sync | — | **DEFERRED** |
-| **M11 Promotions (lite)** | **W1** | Cart before pay — **MVP** (W1-E) |
-| **M12 Customer at POS** | **W1** | Phone / loyalty ref — **MVP** (W1-E) |
-| M2 X-report | **W1** | Mid-shift without Z-close — **MVP** (W1-E) |
-| M13 Omnichannel OMS | **W2** | BOPIS — **MVP** (W2-E) |
-| M14 Mobile stock / labels | **W2** | **DEFERRED** |
-| M15 Auto-replenishment | **W2** | **FINANCE** |
-| M16 Supplier SRM | **W2** | **FINANCE** |
+| M7 Product lookup | v1.0 | Read cache Finance SKU | **MVP** |
+| M8 Offline queue | v2.0 | — | **PLANNED** |
+| M9 Fiscal KKM | v2.0 | — | **PLANNED** |
+| M10 Marketplace sync | v2.0 | — | **PLANNED** |
+| M11 Promotions (lite) | v1.0 | Cart before pay | **MVP** |
+| M12 Customer at POS | v1.0 | Phone / loyalty ref | **MVP** |
+| M2 X-report | v1.0 | Mid-shift without Z-close | **MVP** |
+| M13 Omnichannel OMS | v1.0 | BOPIS | **MVP** |
+| M14 Mobile stock / labels | v1.1 | WMS lite | **PLANNED** |
+| M15 Auto-replenishment | v1.1 | — | **PLANNED** (FINANCE) |
+| M16 Supplier SRM | v1.1 | — | **PLANNED** (FINANCE) |
 | Events | — | sale completed, shift closed |
 | Growth | — | Platform on pay — DELIVERY R5 |
 
@@ -189,22 +164,22 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-logistics
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 Fleet | — | **MVP** (vehicles + `/fleet` alerts) |
 | M2 Trips | — | **MVP** |
-| M3 Waybill | **W1** | Путевой лист — **MVP** (W1-E) |
-| M4 POD (+ media) | W1/W2 | Text + photo/signature — **MVP** (W1-E) |
-| M5 Fuel reports | — | **MVP** |
-| M6 Customs hub | — | **MVP** (L3) |
-| M7 Fleet compliance | **W1** | Doc expiry alerts — **MVP** (W1-E) |
-| M8 Multi-stop trips | **W2** | `trip_points` — **MVP** (W2-E) |
-| M9 Driver mobile API | **W2** | Driver trips API — **MVP** (W2-E) |
-| M10 Rate matrix | **W2** | **W2 DEFERRED** (FINANCE) |
-| M11 COD clearing | **W2** | **W2 DEFERRED** (FINANCE) |
-| M12 Hub cross-dock | **W2** | **W2 DEFERRED** |
-| M13 Customer tracking | **W2** | Public tracking token — **MVP** (W2-E) |
+| M3 Waybill | v1.0 | Путевой лист | **MVP** |
+| M4 POD (+ media) | v1.0 | Text + photo/signature | **MVP** |
+| M5 Fuel reports | v1.0 | — | **MVP** |
+| M6 Customs hub | v1.0 | — | **MVP** |
+| M7 Fleet compliance | v1.0 | Doc expiry alerts | **MVP** |
+| M8 Multi-stop trips | v1.0 | `trip_points` | **MVP** |
+| M9 Driver mobile API | v1.0 | Driver trips API | **MVP** |
+| M10 Rate matrix | v1.1 | Tariffs | **PLANNED** (FINANCE) |
+| M11 COD clearing | v1.1 | — | **PLANNED** (FINANCE) |
+| M12 Hub cross-dock | v1.1 | — | **PLANNED** |
+| M13 Customer tracking | v1.0 | Public tracking token | **MVP** |
 | Events | — | `TRIP_COMPLETED` |
 | Growth | — | DELIVERY L4 |
 
@@ -212,21 +187,21 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-construction
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 Project / site | — | **MVP** (C1) |
 | M2 BOQ (смета) | — | **MVP** stub (C1) |
 | M3 Material requisition | — | **MVP** (C2) |
 | M4 Progress act (КС) | — | **MVP** (C1) |
 | M5 Photo report | — | **DEFERRED** |
-| M6 Field daily log | **W2** | **MVP** (W2-E) |
-| M7 Punch list / defects | **W2** | **MVP** (W2-E) |
-| M8 Gantt / CPM | **W2** | **W2 DEFERRED** |
-| M9 Subcontractor claims | **W2** | **MVP** (W2-E) |
-| M10 Site equipment hours | **W2** | **W2 DEFERRED** |
-| M11 CDE drawings | **W2** | **W2 DEFERRED** |
-| M12 Labor timesheets | **W2** | **W2 DEFERRED** |
+| M6 Field daily log | v1.0 | — | **MVP** |
+| M7 Punch list / defects | v1.0 | — | **MVP** |
+| M8 Gantt / CPM | v1.1 | — | **PLANNED** |
+| M9 Subcontractor claims | v1.0 | — | **MVP** |
+| M10 Site equipment hours | v1.1 | — | **PLANNED** |
+| M11 CDE drawings | v1.1 | — | **PLANNED** |
+| M12 Labor timesheets | v1.1 | — | **PLANNED** |
 | Events | — | `PROGRESS_ACT_APPROVED` |
 | Growth | — | Platform on act — DELIVERY C3 |
 
@@ -234,19 +209,19 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-crm-field
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 Pipeline | — | **MVP** (C1) |
 | M2 Lead card / timeline | — | **MVP** |
 | M3 Inbox stub | — | **MVP** |
-| M4 Visit (+ geo) | W1 | Visit log + lat/lng — **MVP** (W1-E) |
-| M5 Convert lead | — | **MVP** |
-| M6 Finance handoff link | — | **MVP** (convert → Finance) |
-| M7 Live WA Business API | — | **DEFERRED** |
-| M8 Next-contact reminder | **W1** | **MVP** (W1-E) |
-| M9 Lead scoring / SLA | **W2** | **MVP** (W2-E) |
-| M10 Pipeline automation | **W2** | **W2 DEFERRED** |
+| M4 Visit (+ geo) | v1.0 | Visit log + lat/lng | **MVP** |
+| M5 Convert lead | v1.0 | — | **MVP** |
+| M6 Finance handoff link | v1.0 | convert → Finance | **MVP** |
+| M7 Live WA Business API | v2.0 | — | **PLANNED** |
+| M8 Next-contact reminder | v1.0 | — | **MVP** |
+| M9 Lead scoring / SLA | v1.0 | — | **MVP** |
+| M10 Pipeline automation | v1.1 | — | **PLANNED** |
 | Events | — | converted, visit logged |
 | Growth | — | DELIVERY C4 |
 
@@ -254,44 +229,44 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-auto-sto
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 Customer vehicle card | — | **PLANNED** |
 | M2 Work order | — | **MVP** |
 | M3 Labor lines | — | **PLANNED** |
 | M4 Parts lines | — | **PLANNED** |
-| M5 Appointment + bays | **W2** | A2 appointments **MVP**; bay/lift extend **open** |
-| M6 Interactive intake | **W2** | **MVP** (W2-E) |
-| M7 VIN / parts catalogue API | **W2** | **W2 DEFERRED** (TecDoc…) |
-| M8 Shop floor timer | **W2** | **MVP** (W2-E) |
-| M9 Parts status on WO | **W2** | **MVP** (W2-E) |
-| M10 Vehicle history (VIN) | **W2** | **MVP** (W2-E) |
-| M11 B2B parts procurement | **W2** | **FINANCE** PO |
-| M12 Tool crib | **W2** | **DEFERRED** |
+| M5 Appointment + bays | v1.0 / v1.1 | Appointments **MVP**; bay/lift extend → **v1.1** |
+| M6 Interactive intake | v1.0 | — | **MVP** |
+| M7 VIN / parts catalogue API | v1.1 | TecDoc… | **PLANNED** |
+| M8 Shop floor timer | v1.0 | — | **MVP** |
+| M9 Parts status on WO | v1.0 | — | **MVP** |
+| M10 Vehicle history (VIN) | v1.0 | — | **MVP** |
+| M11 B2B parts procurement | v1.1 | FINANCE PO | **PLANNED** |
+| M12 Tool crib | v2.0 | — | **PLANNED** |
 | Events | — | `WORK_ORDER_CLOSED` |
 
 ---
 
 ## era-clinic
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 Patient ref | — | **MVP** |
 | M2 Practitioners / rooms | — | **MVP** |
 | M3 Appointments | — | **MVP** |
 | M4 Visit card | — | **MVP** |
-| M5 Lab (+ critical flag) | W1 | K2 **MVP**; critical UI **W1** |
-| M6 Price cache | **W1** | Finance price list |
-| M7 Notifications | — | **DEFERRED** → platform |
-| M8 Patient portal | — | **DEFERRED** |
-| M9 Multi-room drag schedule | **W2** | **MVP** (W2-E; was K3 optional W1) |
-| M10 EHR / CPOE lite | **W2** | **W2 DEFERRED** |
-| M11 LIS HL7 import | **W2** | **W2 DEFERRED** |
-| M12 Insurance eligibility | **W2** | **W2 DEFERRED** (FINANCE) |
-| M13 Inpatient beds | **W2** | **W2 DEFERRED** |
-| M14 Telehealth + portal | **W2** | **MVP** (W2-E) |
+| M5 Lab (+ critical flag) | v1.0 | Critical flags on results | **MVP** |
+| M6 Price cache | v1.0 | Finance price list | **MVP** |
+| M7 Notifications | v2.0 | → platform pack | **PLANNED** |
+| M8 Patient portal | v2.0 | — | **PLANNED** |
+| M9 Multi-room drag schedule | v1.0 | Reschedule API | **MVP** |
+| M10 EHR / CPOE lite | v1.1 | — | **PLANNED** |
+| M11 LIS HL7 import | v1.1 | — | **PLANNED** |
+| M12 Insurance eligibility | v1.1 | FINANCE | **PLANNED** |
+| M13 Inpatient beds | v1.1 | — | **PLANNED** |
+| M14 Telehealth + portal | v1.0 | — | **MVP** |
 | K5 Sanatorium bridge | — | **MVP** |
 | Events | — | visit + lab completed |
 | Growth | — | DELIVERY K6 |
@@ -300,16 +275,16 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 ## era-wholesale
 
-| Module | Wave | Notes |
-|--------|------|-------|
+| Module | Since | Notes |
+|--------|-------|-------|
 | M0 Shell | — | **MVP** |
 | M1 B2B order entry | — | **MVP** |
 | M2 Credit limit display | — | **MVP** |
 | M3 Pick/pack workflow | — | **MVP** |
 | M4 Confirm shipment | — | **MVP** |
-| M5 Delivery note (TTN) | **W2** | **MVP** (W2-E) |
-| M6 Pick wave / route lite | **W2** | **MVP** (W2-E) |
-| M7 EDI / buyer API | **W2** | **DEFERRED** |
+| M5 Delivery note (TTN) | v1.0 | — | **MVP** |
+| M6 Pick wave / route lite | v1.0 | — | **MVP** |
+| M7 EDI / buyer API | v1.1 | — | **PLANNED** |
 | Events | — | `ORDER_CONFIRMED` |
 
 ---
@@ -348,4 +323,5 @@ Not a product priority — any vertical mix uses the same control plane + platfo
 
 | Date | Change |
 |------|--------|
-| 2026-05-26 | Sync per-app module statuses with DELIVERY W1-E / W2-E; hotel M20–M23, fb-pos core, retail/logistics/crm/clinic W1–W2 MVP |
+| 2026-05-26 | Product versions v1.0 / v1.1 / v2.0; removed wave/Gemini labels from catalog |
+| 2026-05-26 | Sync module statuses with DELIVERY |

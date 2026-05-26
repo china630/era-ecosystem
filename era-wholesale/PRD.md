@@ -47,11 +47,11 @@
 | M2 | Credit limit display | **MVP** | Read Finance AR |
 | M3 | Pick/pack workflow | **MVP** | — |
 | M4 | Confirm shipment | **MVP** | `ORDER_CONFIRMED` |
-| M5 | Delivery note / TTN | **W2 PLANNED** | Печать отгрузочного документа |
-| M6 | Pick wave / route (lite) | **W2 PLANNED** | Волна сборки склада |
-| M7 | EDI / buyer API export | **W2 DEFERRED** | Phase W3 |
+| M5 | Delivery note / TTN | **MVP** | Печать отгрузочного документа |
+| M6 | Pick wave / route (lite) | **MVP** | Волна сборки склада |
+| M7 | EDI / buyer API export | **PLANNED (v1.1)** | Buyer API |
 
-См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
 ---
 

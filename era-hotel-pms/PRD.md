@@ -65,16 +65,12 @@ Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bri
 | M15 | Agency / invoices read | **DONE** | reports → Finance |
 | M16 | POS bridge (fb-pos) | **DONE** | Stage 17 |
 
-### W2 enrichment (Gemini отельный ERP)
+| M20 | Yield management (dynamic BAR) | **MVP** | SATELLITE |
+| M21 | Guest loyalty tiers | **MVP** | **PLATFORM** `loyalty` |
+| M22 | Room service QR → fb-pos | **MVP** | SATELLITE + fb-pos |
+| M23 | Maintenance work orders | **MVP** | SATELLITE |
 
-| ID | Module | Status | Owner |
-|----|--------|--------|-------|
-| M20 | Yield management (dynamic BAR) | **MVP** | SATELLITE (W2-E) |
-| M21 | Guest loyalty tiers | **MVP** | **PLATFORM** `loyalty` (W2-E) |
-| M22 | Room service QR → fb-pos | **MVP** | SATELLITE + fb-pos (W2-E) |
-| M23 | Maintenance work orders | **MVP** | SATELLITE (W2-E) |
-
-См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
 Full checklist: [doc/DELIVERY.md](./doc/DELIVERY.md)
 

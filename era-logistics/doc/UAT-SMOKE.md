@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -40,8 +40,9 @@
 - [ ] `/trips/[id]` — POD form, fuel form, status actions, complete
 - [ ] `/reports/fuel` — summary table for date range
 
-## W1-E — Enrichment
+## Product modules (v1.0)
 
 - [x] M3: `POST /api/trips/:id/waybill` → `waybillNumber`; UI issue on `/trips/[id]`
 - [x] M7: `GET /api/fleet/alerts` + `/fleet` expiry list (seed vehicles with near dates)
 - [x] M4: `POST /api/trips/:id/pod` with `podPhotoUrl`, `podSignatureUrl`
+

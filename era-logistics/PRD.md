@@ -66,14 +66,14 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 | M6 | Customs handoff flag | **MVP** | Finance `trade_pro` read hub — DELIVERY L3 |
 | **M7** | **Fleet compliance** | Fleet docs | **MVP** | `GET /api/fleet/alerts`, `/fleet` UI |
 | M4 (extend) | POD photo + signature | Last mile | **MVP** | `podPhotoUrl`, `podSignatureUrl` on `Trip` |
-| M8 | Multi-stop trip (`trip_points`) | VRP lite | **W2 PLANNED** | Gemini 06 §2 |
-| M9 | Driver mobile workflow API | Last mile | **W2 PLANNED** | Gemini 06 §3 |
-| M10 | Rate matrix / tariffs | OMS billing | **W2 DEFERRED** | **Finance** |
-| M11 | COD split & clearing | Courier COD | **W2 DEFERRED** | **Finance** |
-| M12 | Hub cross-dock scanning | WMS hub | **W2 DEFERRED** | Gemini 06 §6 |
-| M13 | Customer tracking portal | Visibility | **W2 PLANNED** | **PLATFORM** `portal` |
+| M8 | Multi-stop trip (`trip_points`) | VRP lite | **MVP** | ERPs/06 §2 |
+| M9 | Driver mobile workflow API | Last mile | **MVP** | ERPs/06 §3 |
+| M10 | Rate matrix / tariffs | OMS billing | **PLANNED (v1.1)** | **Finance** |
+| M11 | COD split & clearing | Courier COD | **PLANNED (v1.1)** | **Finance** |
+| M12 | Hub cross-dock scanning | WMS hub | **PLANNED (v1.1)** | ERPs/06 §6 |
+| M13 | Customer tracking portal | Visibility | **MVP** | **PLATFORM** `portal` |
 
-См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
 ---
 

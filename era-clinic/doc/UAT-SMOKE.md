@@ -4,7 +4,7 @@
 
 
 
-## SSO paths (platform entry - SP9/P2)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
 1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
@@ -39,7 +39,8 @@
 - [ ] `/executive` — `BUSINESS_OWNER` sees visits today, lab revenue, open orders
 - [ ] `GET /api/executive/summary` — 403 for non-owner roles
 
-## W1-E — Enrichment
+## Product modules (v1.0)
 
 - [x] M6: `GET /api/catalog/services` + `POST /api/catalog/sync` seed cache
 - [x] M5: `POST /api/lab-orders/:id/results` with out-of-range value → `CRITICAL` flag; `/lab-orders?criticalOnly=true`
+

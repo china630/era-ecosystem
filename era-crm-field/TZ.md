@@ -31,7 +31,7 @@ ChannelThread (stub, Phase 2)
 
 **No GL in CRM.** Conversion creates counterparty opportunity handoff in Finance via event only — see [doc/clone-spec/01-finance-boundary.md](./doc/clone-spec/01-finance-boundary.md).
 
-## W1-E — Enrichment
+## Product APIs (v1.0)
 
 | Method | Path | Model |
 |--------|------|-------|

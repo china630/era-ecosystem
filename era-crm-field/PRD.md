@@ -77,15 +77,15 @@
 | M2 | Lead card & activities | Bitrix timeline | **PLANNED** | — |
 | M3 | Channel inbox (WA/IG stub) | Respond.io | **MVP** | — |
 | M4 | Visit log & geo stub | — | **MVP** | — |
-| M5 | Convert lead | Kommo «won» | **PLANNED** | `SATELLITE_CRM_LEAD_CONVERTED` |
-| M6 | Finance handoff UI | — | **PLANNED** | Link to Finance counterparty |
+| M5 | Convert lead | Kommo «won» | **MVP** | `SATELLITE_CRM_LEAD_CONVERTED` |
+| M6 | Finance handoff UI | — | **MVP** | Link to Finance counterparty |
 | M7 | WA Business API live | Respond.io | **DEFERRED** | Finance sends invoice |
 | M4 (extend) | Visit geo check-in | Field GPS stub | **MVP** | `Visit.latitude` / `longitude` on `/visits` |
 | **M8** | **Next-contact reminder** | HubSpot tasks | **MVP** | `Lead.nextContactAt` + follow-up API |
-| M9 | Lead scoring / SLA timers | Kommo | **W2 DEFERRED** | — |
-| M10 | Pipeline automation rules | Bitrix | **W2 DEFERRED** | — |
+| M9 | Lead scoring / SLA timers | Kommo | **MVP** | `POST /api/leads/:id/score` |
+| M10 | Pipeline automation rules | Bitrix | **PLANNED (v1.1)** | — |
 
-См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
 ---
 

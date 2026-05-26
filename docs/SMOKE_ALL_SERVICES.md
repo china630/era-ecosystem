@@ -209,7 +209,7 @@ Finance worker idempotency: table `satellite_events_processed` — replay same `
 | Wholesale W1 | `POST /api/orders/:id/confirm` |
 | Wholesale W2 | `GET/POST /api/pick-lists`, `PATCH /api/pick-lists/:id/lines/:lineId`, `GET /api/credit-limit?counterpartyId=` |
 
-## F&B POS + hotel bridge (Wave 2 / SP3)
+## F&B POS + hotel bridge (v1.0)
 
 With `docker compose up -d fb-pos hotel-pms` (or local `:3200` / `:3000`):
 
@@ -313,7 +313,7 @@ curl -X POST http://retail.era.az/api/auth/sso/exchange \
 
 Verify response `user.role` is `BUSINESS_OWNER` and `user.isOwner` is `true`.
 
-## Wave E — Platform commerce + booking (SP5)
+## v1.0 — Platform commerce + booking
 
 With `ERA_SATELLITE_ORGANIZATION_ID` and orchestrator `@ :4100`:
 
@@ -328,7 +328,7 @@ With `ERA_SATELLITE_ORGANIZATION_ID` and orchestrator `@ :4100`:
 
 Orchestrator: `GET /platform/booking/v1/slots?resourceKey=pickup` (Bearer org token). Full checklist: [UAT-SMOKE-PLATFORM.md](../era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md) § Wave E.
 
-## Wave F — §4 coverage (delivery, loyalty, domains)
+## v1.0 — Platform hooks (delivery, loyalty, domains)
 
 | Satellite | Trigger | Body flags | CP APIs |
 |-----------|---------|------------|---------|
@@ -340,7 +340,7 @@ Orchestrator: `GET /platform/booking/v1/slots?resourceKey=pickup` (Bearer org to
 
 Regenerate matrix §4: `node scripts/readiness-coverage.mjs`. Consumer-only %: `node scripts/readiness-coverage.mjs --consumer-only`.
 
-## Quartet E2E — Finance · Orchestrator · Hotel · FB (SP6 Track A)
+## Quartet E2E — Finance · Orchestrator · Hotel · FB (v1.0)
 
 Product core for Nafta F&B + PMS. Full checklist: [QUARTET_UAT.md](./QUARTET_UAT.md).
 
@@ -365,7 +365,7 @@ node era-hotel-pms/scripts/test-pos-bridge.mjs
 | hotel-pms | http://127.0.0.1:3000 | `/api/health` |
 | fb-pos | http://127.0.0.1:3200 | `/api/health` |
 
-## W1-E — Industry enrichment (Wave 1 quartet)
+## v1.0 — Industry modules (quartet)
 
 After `npx prisma db push` (or migrate) per app DB:
 
@@ -414,7 +414,7 @@ curl -s -X POST http://localhost:3304/api/trips/<id>/pod \
   -d '{"recipient":"Ali M.","podPhotoUrl":"https://example.com/pod.jpg"}'
 ```
 
-## W2-E — Industry enrichment (Wave 2)
+## v1.0 — Industry modules (extended apps)
 
 ### era-construction
 

@@ -76,14 +76,14 @@
 | M6 | Service catalog cache (codes, prices) | **MVP** | `ServiceCatalogCache` + sync API |
 | M7 | Notifications (SMS/email stub) | **DEFERRED** | Использовать `platform_notifications` |
 | M8 | Patient portal (results, booking) | **DEFERRED** | `platform_portal` + K4 |
-| M9 | Multi-room drag reschedule | **W2 PLANNED** | K3; Gemini 07 §1 |
-| M10 | EHR templates / CPOE lite | **W2 DEFERRED** | Gemini 07 §2 |
-| M11 | LIS analyzer import (HL7/file) | **W2 DEFERRED** | Gemini 07 §3 |
-| M12 | Insurance / DMS eligibility | **W2 DEFERRED** | **Finance** §4.15 |
-| M13 | Inpatient / bed management | **W2 DEFERRED** | Gemini 07 §7 |
-| M14 | Telehealth + patient portal | **W2 PLANNED** | **PLATFORM** portal |
+| M9 | Multi-room drag reschedule | **MVP** | Reschedule API |
+| M10 | EHR templates / CPOE lite | **PLANNED (v1.1)** | ERPs/07 §2 |
+| M11 | LIS analyzer import (HL7/file) | **PLANNED (v1.1)** | ERPs/07 §3 |
+| M12 | Insurance / DMS eligibility | **PLANNED (v1.1)** | **Finance** §4.15 |
+| M13 | Inpatient / bed management | **PLANNED (v1.1)** | ERPs/07 §7 |
+| M14 | Telehealth + patient portal | **MVP** | **PLATFORM** portal |
 
-См. [MODULES_CATALOG § enrichment](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
+См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 
 ---
 
