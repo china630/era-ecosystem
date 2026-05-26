@@ -12,7 +12,7 @@ Industry Solutions entitlements (Finance sidebar): see [industry-satellite-sync.
 
 ## Industry enrichment backlog (Gemini ERP → ERA)
 
-Cross-cutting backlog from [`ERPs/`](../ERPs/) decomposition. Full module IDs are in each app **`PRD.md` §4**. **W1** = implementation queue now · **W2** = documented next wave (same enrichment program).
+Cross-cutting backlog from [`ERPs/`](../ERPs/) decomposition. Full module IDs are in each app **`PRD.md` §4**. **W1** and **W2 MVP** enrichment — **complete** 2026-05-28 (see DELIVERY § W1-E / W2-E). **Next queue:** rows marked **W2 DEFERRED** below.
 
 **Note:** **M11 / M12** module IDs exist only in **`era-retail-pos`** (promotions at checkout, customer at POS).
 
@@ -40,7 +40,7 @@ Cross-cutting backlog from [`ERPs/`](../ERPs/) decomposition. Full module IDs ar
 | era-construction | M10 | Site equipment / machine hours | 05 §6 | SATELLITE | W2 DEFERRED |
 | era-construction | M11 | CDE / drawing versions | 05 §7 | DEFERRED | W2 DEFERRED |
 | era-construction | M12 | Labor timesheets / SKUD | 05 §8 | DEFERRED | W2 DEFERRED |
-| era-auto-sto | M5 | Appointment + bay calendar | 02 §1 | SATELLITE + booking | W2 PLANNED |
+| era-auto-sto | M5 | Appointment + bay calendar | 02 §1 | SATELLITE + booking | W2 PARTIAL (A2 done; bay/lift extend open) |
 | era-auto-sto | M6 | Interactive intake (photos, checklist) | 02 §1 | SATELLITE | **W2 MVP** |
 | era-auto-sto | M7 | Parts catalogue VIN / cross | 02 §3 | DEFERRED integration | W2 DEFERRED |
 | era-auto-sto | M8 | Shop floor time tracking | 02 §4 | SATELLITE | **W2 MVP** |
@@ -131,10 +131,10 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M17 Sanatorium / medical | — | clinic bridge | **DONE** |
 | M18 Stock MVP | — | `/admin/stock` | **MVP** |
 | M19 Banquets BEO | — | `/banquets` | **MVP** |
-| M20 Yield management | **W2** | Dynamic BAR rules | **PLANNED** |
-| M21 Guest loyalty | **W2** | Tiers, points | **PLATFORM** |
-| M22 Room service QR | **W2** | In-room ordering → fb-pos | **PLANNED** |
-| M23 Maintenance WO | **W2** | HK → engineering tasks | **PLANNED** |
+| M20 Yield management | **W2** | Dynamic BAR rules | **MVP** (W2-E) |
+| M21 Guest loyalty | **W2** | Tiers, points | **MVP** + PLATFORM |
+| M22 Room service QR | **W2** | In-room ordering → fb-pos | **MVP** (W2-E) |
+| M23 Maintenance WO | **W2** | HK → engineering tasks | **MVP** (W2-E) |
 | Invoices / agency CL | — | reports | Read → Finance |
 
 **Backlog:** [era-hotel-pms/doc/BACKLOG-PRODUCTION.md](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md) · PRD module table: [era-hotel-pms/PRD.md](../era-hotel-pms/PRD.md)
@@ -145,21 +145,21 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
 | Module | Wave | Screens / API | Notes |
 |--------|------|---------------|-------|
-| M0 Shell | — | layout | **IN_PROGRESS** |
-| M1 Menu / outlet | — | `/admin/menu` | **PLANNED** |
-| M2 Floor + ticket | — | `/floor` | **PLANNED** |
-| M3 KDS | — | `/kds` | **PLANNED** |
-| M4 Payments | — | pay API | **PLANNED** |
-| M5 Room charge | — | PMS bridge | **PLANNED** |
-| M6 Shifts X/Z | — | Z-close | **PLANNED** |
-| M7 Void / discount | — | — | **PLANNED** |
-| M8 Split bill | — | — | **DEFERRED** |
-| M9 Recipe consumption | — | — | **DEFERRED** |
-| M10 i18n | — | — | **DEFERRED** |
-| M11 KDS course timing | **W2** | `/kds` | Fire by course |
-| M12 Recipe / BOH engine | **W2** | admin | Depletion stub → Finance |
-| M13 Delivery aggregator | **W2** | — | **PLATFORM** `delivery` |
-| M14 Labor roster PIN | **W2** | — | **DEFERRED** |
+| M0 Shell | — | layout | **DONE** (FB-0) |
+| M1 Menu / outlet | — | `/admin/menu` | **DONE** |
+| M2 Floor + ticket | — | `/floor` | **DONE** |
+| M3 KDS | — | `/kds` | **DONE** |
+| M4 Payments | — | pay API | **DONE** |
+| M5 Room charge | — | PMS bridge | **DONE** |
+| M6 Shifts X/Z | — | Z-close | **DONE** |
+| M7 Void / discount | — | — | **DONE** |
+| M8 Split bill | — | — | **DONE** (FB-2) |
+| M9 Recipe consumption | — | E8 event | **DONE** |
+| M10 i18n | — | en/ru/az | **DONE** |
+| M11 KDS course timing | **W2** | fire-course API | **MVP** (W2-E) |
+| M12 Recipe / BOH engine | **W2** | ticket close depletion | **MVP** (W2-E) |
+| M13 Delivery aggregator | **W2** | delivery-inbox | **MVP** (W2-E) |
+| M14 Labor roster PIN | **W2** | — | **W2 DEFERRED** |
 | Banquet BEO | — | — | HN-8 hotel |
 
 **Backlog:** [era-fb-pos/doc/BACKLOG-PRODUCTION.md](../era-fb-pos/doc/BACKLOG-PRODUCTION.md)
@@ -171,14 +171,14 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Module | Wave | Notes |
 |--------|------|-------|
 | M0–M6(d) | — | Shell, shift, checkout, presets — **MVP** |
-| M7 Product lookup | **W1** | Read cache Finance SKU — **PLANNED** |
+| M7 Product lookup | **W1** | Read cache Finance SKU — **MVP** (W1-E) |
 | M8 Offline queue | — | **DEFERRED** |
 | M9 Fiscal KKM | — | **DEFERRED** |
 | M10 Marketplace sync | — | **DEFERRED** |
-| **M11 Promotions (lite)** | **W1** | Cart before pay + `platform_loyalty` |
-| **M12 Customer at POS** | **W1** | Phone / loyalty ref |
-| M2 X-report | **W1** | Mid-shift without Z-close |
-| M13 Omnichannel OMS | **W2** | BOPIS, pickup — `platform_delivery` |
+| **M11 Promotions (lite)** | **W1** | Cart before pay — **MVP** (W1-E) |
+| **M12 Customer at POS** | **W1** | Phone / loyalty ref — **MVP** (W1-E) |
+| M2 X-report | **W1** | Mid-shift without Z-close — **MVP** (W1-E) |
+| M13 Omnichannel OMS | **W2** | BOPIS — **MVP** (W2-E) |
 | M14 Mobile stock / labels | **W2** | **DEFERRED** |
 | M15 Auto-replenishment | **W2** | **FINANCE** |
 | M16 Supplier SRM | **W2** | **FINANCE** |
@@ -192,19 +192,19 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Module | Wave | Notes |
 |--------|------|-------|
 | M0 Shell | — | **MVP** |
-| M1 Fleet | — | **PLANNED** |
+| M1 Fleet | — | **MVP** (vehicles + `/fleet` alerts) |
 | M2 Trips | — | **MVP** |
-| M3 Waybill | **W1** | Путевой лист — **PLANNED** |
-| M4 POD (+ media) | W1/W2 | Text **MVP**; photo URL **W1** |
+| M3 Waybill | **W1** | Путевой лист — **MVP** (W1-E) |
+| M4 POD (+ media) | W1/W2 | Text + photo/signature — **MVP** (W1-E) |
 | M5 Fuel reports | — | **MVP** |
 | M6 Customs hub | — | **MVP** (L3) |
-| M7 Fleet compliance | **W1** | Doc expiry alerts |
-| M8 Multi-stop trips | **W2** | `trip_points` |
-| M9 Driver mobile API | **W2** | Workflow для водителя |
-| M10 Rate matrix | **W2** | **FINANCE** |
-| M11 COD clearing | **W2** | **FINANCE** |
-| M12 Hub cross-dock | **W2** | **DEFERRED** |
-| M13 Customer tracking | **W2** | **PLATFORM** portal |
+| M7 Fleet compliance | **W1** | Doc expiry alerts — **MVP** (W1-E) |
+| M8 Multi-stop trips | **W2** | `trip_points` — **MVP** (W2-E) |
+| M9 Driver mobile API | **W2** | Driver trips API — **MVP** (W2-E) |
+| M10 Rate matrix | **W2** | **W2 DEFERRED** (FINANCE) |
+| M11 COD clearing | **W2** | **W2 DEFERRED** (FINANCE) |
+| M12 Hub cross-dock | **W2** | **W2 DEFERRED** |
+| M13 Customer tracking | **W2** | Public tracking token — **MVP** (W2-E) |
 | Events | — | `TRIP_COMPLETED` |
 | Growth | — | DELIVERY L4 |
 
@@ -215,18 +215,18 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | Module | Wave | Notes |
 |--------|------|-------|
 | M0 Shell | — | **MVP** |
-| M1 Project / site | — | **PLANNED** |
-| M2 BOQ (смета) | — | **PLANNED** |
+| M1 Project / site | — | **MVP** (C1) |
+| M2 BOQ (смета) | — | **MVP** stub (C1) |
 | M3 Material requisition | — | **MVP** (C2) |
 | M4 Progress act (КС) | — | **MVP** (C1) |
 | M5 Photo report | — | **DEFERRED** |
-| M6 Field daily log | **W2** | Прораб: объём, погода, фото |
-| M7 Punch list / defects | **W2** | Задачи субподрядчику |
-| M8 Gantt / CPM | **W2** | **DEFERRED** |
-| M9 Subcontractor claims | **W2** | Акты субподряда lite |
-| M10 Site equipment hours | **W2** | **DEFERRED** |
-| M11 CDE drawings | **W2** | **DEFERRED** |
-| M12 Labor timesheets | **W2** | **DEFERRED** |
+| M6 Field daily log | **W2** | **MVP** (W2-E) |
+| M7 Punch list / defects | **W2** | **MVP** (W2-E) |
+| M8 Gantt / CPM | **W2** | **W2 DEFERRED** |
+| M9 Subcontractor claims | **W2** | **MVP** (W2-E) |
+| M10 Site equipment hours | **W2** | **W2 DEFERRED** |
+| M11 CDE drawings | **W2** | **W2 DEFERRED** |
+| M12 Labor timesheets | **W2** | **W2 DEFERRED** |
 | Events | — | `PROGRESS_ACT_APPROVED` |
 | Growth | — | Platform on act — DELIVERY C3 |
 
@@ -240,13 +240,13 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M1 Pipeline | — | **MVP** (C1) |
 | M2 Lead card / timeline | — | **MVP** |
 | M3 Inbox stub | — | **MVP** |
-| M4 Visit (+ geo) | W1 | Visit log; geo **W1 PLANNED** |
+| M4 Visit (+ geo) | W1 | Visit log + lat/lng — **MVP** (W1-E) |
 | M5 Convert lead | — | **MVP** |
-| M6 Finance handoff link | — | **PLANNED** |
+| M6 Finance handoff link | — | **MVP** (convert → Finance) |
 | M7 Live WA Business API | — | **DEFERRED** |
-| M8 Next-contact reminder | **W1** | `platform_notifications` |
-| M9 Lead scoring / SLA | **W2** | **DEFERRED** |
-| M10 Pipeline automation | **W2** | **DEFERRED** |
+| M8 Next-contact reminder | **W1** | **MVP** (W1-E) |
+| M9 Lead scoring / SLA | **W2** | **MVP** (W2-E) |
+| M10 Pipeline automation | **W2** | **W2 DEFERRED** |
 | Events | — | converted, visit logged |
 | Growth | — | DELIVERY C4 |
 
@@ -261,12 +261,12 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M2 Work order | — | **MVP** |
 | M3 Labor lines | — | **PLANNED** |
 | M4 Parts lines | — | **PLANNED** |
-| M5 Appointment + bays | **W2** | Календарь постов + `platform_booking` |
-| M6 Interactive intake | **W2** | Фото, чеклист приёмки |
-| M7 VIN / parts catalogue API | **W2** | **DEFERRED** (TecDoc…) |
-| M8 Shop floor timer | **W2** | План/факт нормо-часов |
-| M9 Parts status on WO | **W2** | ordered → arrived → issued |
-| M10 Vehicle history (VIN) | **W2** | Timeline ремонтов |
+| M5 Appointment + bays | **W2** | A2 appointments **MVP**; bay/lift extend **open** |
+| M6 Interactive intake | **W2** | **MVP** (W2-E) |
+| M7 VIN / parts catalogue API | **W2** | **W2 DEFERRED** (TecDoc…) |
+| M8 Shop floor timer | **W2** | **MVP** (W2-E) |
+| M9 Parts status on WO | **W2** | **MVP** (W2-E) |
+| M10 Vehicle history (VIN) | **W2** | **MVP** (W2-E) |
 | M11 B2B parts procurement | **W2** | **FINANCE** PO |
 | M12 Tool crib | **W2** | **DEFERRED** |
 | Events | — | `WORK_ORDER_CLOSED` |
@@ -286,12 +286,12 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M6 Price cache | **W1** | Finance price list |
 | M7 Notifications | — | **DEFERRED** → platform |
 | M8 Patient portal | — | **DEFERRED** |
-| M9 Multi-room drag schedule | **W2** | K3 |
-| M10 EHR / CPOE lite | **W2** | **DEFERRED** |
-| M11 LIS HL7 import | **W2** | **DEFERRED** |
-| M12 Insurance eligibility | **W2** | **FINANCE** |
-| M13 Inpatient beds | **W2** | **DEFERRED** |
-| M14 Telehealth + portal | **W2** | **PLATFORM** |
+| M9 Multi-room drag schedule | **W2** | **MVP** (W2-E; was K3 optional W1) |
+| M10 EHR / CPOE lite | **W2** | **W2 DEFERRED** |
+| M11 LIS HL7 import | **W2** | **W2 DEFERRED** |
+| M12 Insurance eligibility | **W2** | **W2 DEFERRED** (FINANCE) |
+| M13 Inpatient beds | **W2** | **W2 DEFERRED** |
+| M14 Telehealth + portal | **W2** | **MVP** (W2-E) |
 | K5 Sanatorium bridge | — | **MVP** |
 | Events | — | visit + lab completed |
 | Growth | — | DELIVERY K6 |
@@ -307,8 +307,8 @@ Detail: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 | M2 Credit limit display | — | **MVP** |
 | M3 Pick/pack workflow | — | **MVP** |
 | M4 Confirm shipment | — | **MVP** |
-| M5 Delivery note (TTN) | **W2** | Печать/экспорт накладной |
-| M6 Pick wave / route lite | **W2** | Волна сборки |
+| M5 Delivery note (TTN) | **W2** | **MVP** (W2-E) |
+| M6 Pick wave / route lite | **W2** | **MVP** (W2-E) |
 | M7 EDI / buyer API | **W2** | **DEFERRED** |
 | Events | — | `ORDER_CONFIRMED` |
 
@@ -341,3 +341,11 @@ Example stack for a hospitality operator (one of many possible bundles):
 4. **fb-pos** — F&B  
 
 Not a product priority — any vertical mix uses the same control plane + platform add-ons model.
+
+---
+
+## Changelog
+
+| Date | Change |
+|------|--------|
+| 2026-05-26 | Sync per-app module statuses with DELIVERY W1-E / W2-E; hotel M20–M23, fb-pos core, retail/logistics/crm/clinic W1–W2 MVP |

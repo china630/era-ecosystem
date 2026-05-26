@@ -112,7 +112,7 @@ RBAC: операционные роли в satellite DB; membership/OWNER — or
 
 | ID | Module | Benchmark | Status | Finance handoff |
 |----|--------|-----------|--------|-----------------|
-| M13 | Omnichannel OMS (BOPIS, pickup slots) | Shopify OMS | **W2 PLANNED** | [`platform_delivery`](../docs/PLATFORM_ADDONS.md) |
+| M13 | Omnichannel OMS (BOPIS, pickup slots) | Shopify OMS | **MVP** | [`platform_delivery`](../docs/PLATFORM_ADDONS.md) (W2-E) |
 | M14 | Mobile stock / shelf label check | WMS lite | **W2 DEFERRED** | Inventory **Finance** |
 | M15 | Auto-replenishment suggest | 1C заказ | **W2 DEFERRED** | **Finance** purchases |
 | M16 | Supplier SRM / invoice match | — | **W2 DEFERRED** | **Finance** |

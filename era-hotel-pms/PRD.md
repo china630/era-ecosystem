@@ -69,10 +69,10 @@ Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bri
 
 | ID | Module | Status | Owner |
 |----|--------|--------|-------|
-| M20 | Yield management (dynamic BAR) | **W2 PLANNED** | SATELLITE |
-| M21 | Guest loyalty tiers | **W2 PLANNED** | **PLATFORM** `loyalty` |
-| M22 | Room service QR → fb-pos | **W2 PLANNED** | SATELLITE + fb-pos |
-| M23 | Maintenance work orders | **W2 PLANNED** | SATELLITE |
+| M20 | Yield management (dynamic BAR) | **MVP** | SATELLITE (W2-E) |
+| M21 | Guest loyalty tiers | **MVP** | **PLATFORM** `loyalty` (W2-E) |
+| M22 | Room service QR → fb-pos | **MVP** | SATELLITE + fb-pos (W2-E) |
+| M23 | Maintenance work orders | **MVP** | SATELLITE (W2-E) |
 
 См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-enrichment-backlog-gemini-erp--era).
 

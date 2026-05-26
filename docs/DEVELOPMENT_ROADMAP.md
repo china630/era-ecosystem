@@ -37,7 +37,7 @@ Gate passed 2026-05-25. All PP1–PP7 exit criteria met; Phase B started.
 
 **Gemini W2 enrichment:** 9 industry apps W2-E MVP items — **complete** 2026-05-28 · traceability: [MODULES_CATALOG § W2](../../docs/MODULES_CATALOG.md#w2--documented-backlog-all-industry-satellites) + DELIVERY § W2-E.
 
-**Next industry queue:** W2 **DEFERRED** rows in MODULES_CATALOG (retail M14–M16, clinic M10–M13, logistics M10–M12, …) and fb-pos core M0–M10 depth.
+**Next industry queue:** W2 **DEFERRED** rows in [MODULES_CATALOG](./MODULES_CATALOG.md) (retail M14–M16, clinic M10–M13, logistics M10–M12, fb-pos M14, …). Catalog per-app statuses synced with DELIVERY 2026-05-26.
 
 **Satellite Wave 3+4 — Hospitality Nafta:** SAN-PKG → PROC-SCHED → clinic K5 → MDM → transfers → banquets (DELIVERY + hotel `doc/nafta/`). DOC-B: [era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md](../era-hotel-pms/doc/nafta/DOC-B-CHECKLIST.md).
 
