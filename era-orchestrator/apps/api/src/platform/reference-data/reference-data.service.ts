@@ -60,7 +60,7 @@ export class ReferenceDataService {
     }
 
     const defaultOrg = this.config.get<string>("REFERENCE_DATA_DEFAULT_ORG_ID")?.trim() ?? "";
-    const orgCandidate = dto.organizationId ?? mappedOrg || defaultOrg;
+    const orgCandidate = dto.organizationId ?? (mappedOrg || defaultOrg);
     const orgId = resolveOrganizationUuid(orgCandidate) ?? orgCandidate;
     if (!orgId) {
       throw new BadRequestException(

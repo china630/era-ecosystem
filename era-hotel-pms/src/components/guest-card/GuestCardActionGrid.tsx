@@ -15,7 +15,6 @@ export type ActionItem = {
 
 export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
   const t = useTranslations('guestCard');
-  const ts = useTranslations('guestCard.satellite');
 
   return (
     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -23,7 +22,7 @@ export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
         const label = t(a.labelKey as 'crm.tasks');
         const title = a.disabled
           ? a.disabledReasonKey?.startsWith('satellite.')
-            ? ts(a.disabledReasonKey.slice('satellite.'.length) as 'notConfigured')
+            ? t(a.disabledReasonKey as 'satellite.notConfigured')
             : a.disabledReasonKey
               ? t(a.disabledReasonKey as 'comingSoon')
               : t('comingSoon')
@@ -46,7 +45,7 @@ export function GuestCardActionGrid({ actions }: { actions: ActionItem[] }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className={className}
-                title={ts('openExternal')}
+                title={t('satellite.openExternal')}
               >
                 {label}
                 {badge}
