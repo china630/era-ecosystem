@@ -112,7 +112,9 @@ jobs:
         run: npm run lint -w @erafinance/api
       - name: Generate control-plane Prisma client
         working-directory: era-orchestrator/packages/database
-        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://build:build@127.0.0.1:5432/era_control_plane?schema=public
+        run: npm install --ignore-scripts && npm run db:generate
       - name: Unit tests
         working-directory: era-finance-core
         run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2
