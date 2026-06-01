@@ -112,7 +112,7 @@ jobs:
         run: npm run lint -w @erafinance/api
       - name: Unit tests
         working-directory: era-finance-core
-        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --ci
+        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --ci --forceExit --maxWorkers=2
       - name: Integration tests
         working-directory: era-finance-core
         run: npm run test:integration -w @erafinance/api -- --ci
