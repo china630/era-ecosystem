@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Prepare @erafinance/database (file: dependency)
+      - name: "Prepare erafinance database (file dependency)"
         run: chmod +x scripts/ci-prepare-finance-database.sh && ./scripts/ci-prepare-finance-database.sh
       - name: Build data-hub
         working-directory: era-data-hub
