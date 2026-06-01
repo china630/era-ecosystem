@@ -28,6 +28,8 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Satellite UI playbook | [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) — **`EraAppRouteShell`**, header slots, sidebar checklist |
 | Finance ERP docs index | [era-finance-core/docs/README.md](../era-finance-core/docs/README.md) |
 | Finance bridge pattern (ADR) | [satellite-finance-bridge-pattern.md](./adr/satellite-finance-bridge-pattern.md) |
+| ERA Data Hub (DaaS) ADR | [era-data-hub.md](./adr/era-data-hub.md) |
+| ERA Data Hub delivery | [era-data-hub/doc/DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) |
 | CP ↔ Finance handoff (ADR) | [cp-finance-handoff.md](./adr/cp-finance-handoff.md) |
 
 ## Per-satellite layout

@@ -11,6 +11,10 @@ export type RackReservationSummary = {
   payStatus: 'PAID' | 'PARTIAL' | 'UNPAID' | 'NONE';
   procedureCount: number;
   procedurePending: number;
+  agencyId: string | null;
+  agencyCode: string | null;
+  sourceId: string | null;
+  sourceCode: string | null;
 };
 
 export type RackRoomDto = {
@@ -38,6 +42,8 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         where: { status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] } },
         include: {
           guest: true,
+          agency: { select: { id: true, code: true } },
+          source: { select: { id: true, code: true } },
           folios: { include: { charges: true, payments: true } },
           medicalOrders: { select: { id: true, status: true } },
         },
@@ -67,6 +73,10 @@ export async function listRoomsForRack(): Promise<RackRoomDto[]> {
         payStatus: resolvePayStatus(balance, r.folios.length > 0),
         procedureCount: r.medicalOrders.length,
         procedurePending: pending,
+        agencyId: r.agencyId,
+        agencyCode: r.agency?.code ?? null,
+        sourceId: r.sourceId,
+        sourceCode: r.source?.code ?? null,
       };
     }),
   }));

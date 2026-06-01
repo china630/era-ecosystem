@@ -1,0 +1,64 @@
+{
+  "chessboard.subtitle": { "az": "", "ru": "" },
+  "chessboard.hkHint": {
+    "az": "Təyin və qeydiyyat yalnız AVAILABLE, CLEAN və ya INSPECTED otaqlarda (HK-03).",
+    "ru": "Назначение и заезд только в номерах AVAILABLE, CLEAN или INSPECTED (HK-03)."
+  },
+  "roomRack.dragHint": {
+    "az": "Qonağı başqa otağa köçürmək üçün sürüşdürün",
+    "ru": "Перетащите гостя в другой номер для переселения"
+  },
+  "roomRack.legendAria": {
+    "az": "Otaq şahmatı rəng əfsanəsi",
+    "ru": "Легенда цветов шахматки"
+  },
+  "roomRack.forecastDisabled": {
+    "az": "Proqnoz (tezliklə)",
+    "ru": "Прогноз (скоро)"
+  },
+  "roomRack.procedures": { "az": "{count} prosedur", "ru": "{count} проц." },
+  "inHousePage.title": { "az": "Qalan qonaqlar", "ru": "Проживающие гости" },
+  "inHousePage.room": { "az": "Otaq", "ru": "Номер" },
+  "inHousePage.guest": { "az": "Qonaq", "ru": "Гость" },
+  "inHousePage.folio": { "az": "Folio", "ru": "Фолио" },
+  "inHousePage.openFolio": { "az": "Folio aç", "ru": "Открыть фолио" },
+  "inHousePage.empty": { "az": "Qalan qonaq yoxdur.", "ru": "Нет проживающих гостей." },
+  "nav.agencyLedger": { "az": "Agentlik uçotu", "ru": "Учёт агентств" },
+  "nav.invoices": { "az": "Bütün hesab-fakturalar", "ru": "Все счета" },
+  "nav.reconciliation": { "az": "Sверка", "ru": "Сверка" },
+  "nav.posCalendar": { "az": "POS təqvimi", "ru": "Календарь POS" },
+  "nav.masterData": { "az": "Əsas məlumat", "ru": "НСИ" },
+  "nav.integration": { "az": "İnteqrasiya", "ru": "Интеграция" },
+  "nav.stock": { "az": "Anbar", "ru": "Склад" },
+  "nav.users": { "az": "İstifadəçilər", "ru": "Пользователи" },
+  "nav.housekeeping": { "az": "Otaq xidməti", "ru": "Хозяйственная служба" },
+  "nav.channel": { "az": "Kanal meneceri", "ru": "Менеджер каналов" },
+  "nav.contractPricing": { "az": "Müqavilə qiymətləri", "ru": "Договорные цены" },
+  "nav.medical": { "az": "Tibbi", "ru": "Медицина" },
+  "nav.procedures": { "az": "Prosedurlar", "ru": "Процедуры" },
+  "nav.transfers": { "az": "Transferlər", "ru": "Трансферы" },
+  "nav.banquets": { "az": "Banketlər", "ru": "Банкеты" },
+  "nav.sectionFrontOffice": {
+    "az": "Front Office və rezervasiyalar",
+    "ru": "Фронт-офис и бронирования"
+  },
+  "nav.sectionHousekeeping": {
+    "az": "Otaq xidməti və şahmat",
+    "ru": "Хозяйственная служба и шахматка"
+  },
+  "nav.sectionNightAudit": { "az": "Gecə auditi", "ru": "Ночной аудит" },
+  "nav.sectionFrontCash": { "az": "Front kassa", "ru": "Фронт-касса" },
+  "nav.sectionChannel": { "az": "Kanal meneceri", "ru": "Менеджер каналов" },
+  "nav.sectionContracts": { "az": "Müqavilələr və yield", "ru": "Контракты и yield" },
+  "nav.sectionSpa": { "az": "SPA və planlaşdırma", "ru": "SPA и расписание" },
+  "nav.sectionTransfers": { "az": "Transferlər", "ru": "Трансферы" },
+  "nav.sectionBanquets": { "az": "Banketlər və BEO", "ru": "Банкеты и BEO" },
+  "nav.sectionMedical": { "az": "Tibbi və sanatoriya", "ru": "Медицина и санаторий" },
+  "nav.minibarControl": { "az": "Minibar nəzarəti", "ru": "Контроль мини-бара" },
+  "nav.maidManagement": { "az": "Xidməçi idarəetməsi", "ru": "Управление горничными" },
+  "nav.closedRoomList": { "az": "Bağlı otaqlar (OOO)", "ru": "Закрытые номера (OOO)" },
+  "nav.lostAndFound": { "az": "Tapılan əşyalar", "ru": "Бюро находок" },
+  "guestCard.crm.allergens": { "az": "Allergiyalar", "ru": "Аллергены" },
+  "guestCard.crm.preferences": { "az": "Üstünlüklər", "ru": "Предпочтения" },
+  "guestCard.crm.interests": { "az": "Maraqlar / hobbi", "ru": "Интересы / хобби" }
+}

@@ -52,6 +52,28 @@ export const RACK_TEXT_CLASS: Record<RackDisplayState, string> = {
   notReady: 'text-red-600',
 };
 
+/** Room number color when HK status drives display (Wave G) */
+export const RACK_NUMBER_BY_HK: Record<RoomStatus, string> = {
+  AVAILABLE: 'text-[#2980B9]',
+  CLEAN: 'text-emerald-600',
+  INSPECTED: 'text-emerald-500',
+  DIRTY: 'text-orange-600',
+  OCCUPIED: 'text-amber-600',
+  OOO: 'text-red-700',
+  OOS: 'text-red-700',
+  MAINTENANCE: 'text-red-700',
+};
+
+export function rackNumberTextClass(
+  room: {
+    status: RoomStatus;
+    rackDisplayState?: RackDisplayState;
+  },
+): string {
+  if (room.rackDisplayState) return RACK_TEXT_CLASS[room.rackDisplayState];
+  return RACK_NUMBER_BY_HK[room.status] ?? 'text-[#34495E]';
+}
+
 const HK_ASSIGNABLE: RoomStatus[] = ['AVAILABLE', 'CLEAN', 'INSPECTED'];
 
 export function canQuickBookRoom(room: {

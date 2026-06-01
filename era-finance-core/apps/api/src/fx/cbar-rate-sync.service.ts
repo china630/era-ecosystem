@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { CbarRateStatus, Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { SystemConfigService } from "../system-config/system-config.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { CbarFxService, type CbarLatestRate, type ParsedCbarDoc } from "./cbar-fx.service";
 import type { FxDashboardRateRow } from "./fx-dashboard.types";
 
@@ -44,6 +45,7 @@ export class CbarRateSyncService {
     private readonly prisma: PrismaService,
     private readonly cbar: CbarFxService,
     private readonly systemConfig: SystemConfigService,
+    private readonly dataHub: DataHubClientService,
   ) {}
 
   /** Синхронизация по «сегодня» в URL (якорь); в БД пишется дата из атрибута Date в XML. */
@@ -146,6 +148,13 @@ export class CbarRateSyncService {
       return 1;
     }
     const key = this.cbar.formatBakuDate(date);
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getFxRates(key, upper);
+      const hit = remote?.find((r) => r.currencyCode === upper);
+      if (hit?.rate != null && Number.isFinite(hit.rate)) {
+        return hit.rate;
+      }
+    }
     const rateDate = bakuDdMmYyyyToRateDate(key);
     const row = await this.prisma.cbarOfficialRate.findUnique({
       where: {

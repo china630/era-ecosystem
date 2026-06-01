@@ -68,13 +68,57 @@
 | Room plan bar shapes | `/room-plan` | Arrow end; turnover notch when checkout = next check-in |
 | Room plan tooltip | `/room-plan` | Hover popup with reservation fields |
 | Reservation card UX | `ReservationCardModal` | Shared toolbar; create → edit same card |
-| Guest card depth | `GuestCardModal` | CRM + reservation action grids |
+| Guest card depth | `GuestCardModal` | Config CRM + reservation grids ([GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md)) |
 | Notes in list | `/reports/reservations` | No separate FO-notes menu item |
 | Reports nav | `hotel_reports` | Actual check-in/out times |
 
-### Wave D — Planned
+### Wave D1 — Done (2026-06-02)
 
-- SPA scheduler depth, banquets BEO, medical sanatorium flows, Credit Card/Packages sub-modals
+| Area | Notes |
+|------|--------|
+| Header order | `EraAppHeader`: Locale → Bell → Org → Profile |
+| Room rack filters | Agency, booking source, pay status |
+| Reservation card | Split panels, full PATCH, bottom bar, toolbar check-in |
+| Tests | `reservation-full-patch.schema.spec.ts`, `e2e/reservation-card.spec.ts` |
+
+### Wave D2 — Done (2026-06-02)
+
+| Area | Notes |
+|------|--------|
+| Guest card | Split panels, all consent toggles, details schema fields, loyalty/time-share grids |
+| Guest routes | `/guests/:id/notes`, `/guests/:id/tasks` |
+| Reservation sub-modals | Credit card, packages, tasks, folio routing (API + modals) |
+| Group reservations | `GroupCreateModal`, open reservation card from row |
+| Schema | `20260602120000_wave_d2_guest_res_submodals` |
+| Tests | `e2e/guest-card.spec.ts` |
+
+### Wave D3 — Done (closure 2026-06-02)
+
+- Docs reconciled (this file, `FRONT-OFFICE-ELECTRAWEB.md`, `DELIVERY.md`, `UAT-SMOKE.md`, `UI_PLAYBOOK_SATELLITES.md`)
+- FO i18n: `scripts/apply-wave-d2-i18n.mjs` + key parity `verify:i18n`
+- Deploy: `npx prisma migrate deploy` in `era-hotel-pms` after pull
+
+### Waves E–G — Done (2026-06-03)
+
+- **E:** Reservation CSV (left panel, room icons, attach/lightning, guests/pricing/folio depth); migration `20260603120000_wave_e_reservation_csv`
+- **F:** Guest CSV (ID mock reader, doc columns, loyalty points, time-share tabs, toolbar); migration `20260603130000_wave_f_guest_csv`
+- **G:** Rack/plan room number colors (`rackNumberTextClass`); [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) closure
+- **Done:** Guest CRM P0+P1 + Res details ([GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md)); P2/P3 disabled; clinic/finance satellites
+
+### Backlog (post-FO CSV + legacy module drafts)
+
+| Area | ERA today | Notes |
+|------|-----------|--------|
+| SPA scheduler depth | `/procedures`, `/spa/*` | MVP Wave B |
+| Banquets BEO | backlog | — |
+| Medical sanatorium | `era-clinic` satellite | Not in-hotel EMR |
+| Platform CRM (`04 CRM.md`) | `era-crm` satellite | ≠ Guest Card CRM |
+| Front Cash (`03 FRONT CASH.md`) | folio/cashier partial | Dedicated wave TBD |
+| Channel Manager depth | `/channel` Wave B | Stop sale, channel log depth |
+| SETUP MDM (`0 SETUP.md`) | admin + clone-spec 09 | 200+ screens → generic CRUD pattern |
+| Contract management | agencies admin | Wave B |
+
+Index of removed root folder: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md).
 
 ---
 
@@ -98,5 +142,8 @@ GL / sales invoices → **era-finance-core** via `FinanceBoundaryBanner` and dee
 
 ## Related docs
 
+- [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md) — FO traceability (Done / Partial / Planned)
 - [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md)
+- [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md) — Guest Card CRM + Reservation details
+- [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md) — mapping after `Electraweb/` removal
 - [DELIVERY.md](./DELIVERY.md) · [UAT-SMOKE.md](./UAT-SMOKE.md)

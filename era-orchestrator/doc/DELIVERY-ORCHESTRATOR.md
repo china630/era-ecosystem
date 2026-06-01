@@ -54,6 +54,16 @@ PRD: [../PRD.md](../PRD.md)
 
 **Not in CP-BILLING:** Platform add-ons catalog — [PLATFORM_ADDONS.md](../../docs/PLATFORM_ADDONS.md).
 
+## CP-REFERENCE-DATA — ERA Data Hub API keys (Pass 2)
+
+- [x] `platform_reference_data` in `pricing-module-seed`
+- [x] `POST /platform/reference-data/v1/validate-key` (service token; `@Public`)
+- [x] Entitlement guard `assertPlatformModule(org, platform_reference_data)` (skippable via `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for dev)
+- [x] Meter stub — `PlatformAuditLog` action `validate_api_key`
+- [x] UAT — [UAT-SMOKE-PLATFORM.md](./UAT-SMOKE-PLATFORM.md) § CP-REFERENCE-DATA
+
+Env: `REFERENCE_DATA_VALID_API_KEYS`, `REFERENCE_DATA_DEFAULT_ORG_ID`. Consumer doc: [DATA-HUB-CONSUMER.md](../../era-data-hub/doc/DATA-HUB-CONSUMER.md).
+
 ## Quartet product (SP6)
 
 - [x] Track A smoke — `scripts/quartet-smoke.mjs`, CI `quartet-smoke` job

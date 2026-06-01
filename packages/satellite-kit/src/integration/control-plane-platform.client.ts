@@ -1,5 +1,5 @@
 /**
- * CP-VERTICAL-GROWTH — thin client for era-365-orchestrator platform add-ons.
+ * CP-VERTICAL-GROWTH — thin client for era-orchestrator platform add-ons.
  */
 
 export type PlatformCallOptions = {

@@ -8,9 +8,12 @@ import {
 } from '@/lib/services/contract-pricing.service';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
-export async function listReservations(status?: ReservationStatus) {
+export async function listReservations(status?: ReservationStatus, guestId?: string) {
   return prisma.reservation.findMany({
-    where: status ? { status } : undefined,
+    where: {
+      ...(status ? { status } : {}),
+      ...(guestId ? { guestId } : {}),
+    },
     include: {
       room: { include: { roomType: true } },
       roomType: true,

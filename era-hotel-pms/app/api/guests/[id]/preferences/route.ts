@@ -1,0 +1,55 @@
+import { z } from 'zod';
+import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { serialize } from '@/lib/serialize';
+import { getSessionFromHeaders } from '@/lib/auth/session';
+import { assertPermission } from '@/lib/auth/require';
+import { PERMISSIONS } from '@/lib/auth/permissions';
+import {
+  createGuestPreference,
+  deleteGuestPreference,
+  listGuestPreferences,
+} from '@/lib/services/guest-crm.service';
+
+const schema = z.object({
+  preference: z.string().min(1),
+  note: z.string().optional(),
+  importance: z.string().optional(),
+  department: z.string().optional(),
+});
+
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSessionFromHeaders();
+    assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
+    const { id } = await params;
+    return jsonOk(serialize(await listGuestPreferences(id)));
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSessionFromHeaders();
+    assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    const { id } = await params;
+    const body = schema.parse(await request.json());
+    return jsonOk(serialize(await createGuestPreference(id, body)));
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getSessionFromHeaders();
+    assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
+    const { id } = await params;
+    const rowId = new URL(request.url).searchParams.get('id');
+    if (!rowId) throw new Error('id required');
+    await deleteGuestPreference(rowId, id);
+    return jsonOk({ ok: true });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}

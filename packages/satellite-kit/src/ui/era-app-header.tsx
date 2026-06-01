@@ -21,7 +21,8 @@ export type EraAppHeaderProps = {
 };
 
 /**
- * Fixed app header — see docs/UI_PLAYBOOK_SATELLITES.md (Locale → Org → Notifications → Profile → Tier).
+ * Fixed app header — Electraweb order (read right→left): Profile → Org → Bell → Locale.
+ * DOM (LTR): locale, notifications, organization, profile, tierBar.
  */
 export function EraAppHeader({
   sidebarCollapsed = false,
@@ -66,8 +67,8 @@ export function EraAppHeader({
 
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           {locale}
-          {organization}
           {notifications}
+          {organization}
           {profile}
           {tierBar}
         </div>

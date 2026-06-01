@@ -209,6 +209,48 @@ Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d
 10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
 11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
 
+## 14. Wave D1/D2 — ElectraWeb parity (2026-06-02)
+
+Prerequisite: `cd era-hotel-pms && npx prisma migrate deploy` (applies `20260602120000_wave_d2_guest_res_submodals`).
+
+1. Header (logged in): right cluster order **Locale → Bell → Organization → Profile** (read RTL: Profile … Locale).
+2. `/` rack aside: filters **Agency**, **Source**, **Payment status**; reset clears all.
+3. Open reservation from list → **Guests** tab full pax grid; **Pricing** manual rate + daily grid; **Folio** posting/payment links.
+4. Reservation bottom bar: **Credit card**, **Packages**, **Tasks**, **Folio routing** open modals (not disabled).
+5. `/in-house` → guest card → **Identity**: add document; toggle SMS/WhatsApp/phone/email consents → Save.
+6. Guest card **Details** tab: visa/marital/parents fields → Save → reload persists.
+7. **Loyalty** / **Time share** tabs: add row via + button.
+8. CRM **Notes** / **Tasks** links → `/guests/:id/notes` and `/guests/:id/tasks`.
+9. `/reports/group-reservations` → **Add group** modal; click guest name → reservation card opens.
+10. Locale **AZ**: rack legend shows Boş/Dolu/Gəliş (not English-only labels).
+
+## 15. Waves E–G closure (2026-06-03)
+
+Prerequisite: `cd era-hotel-pms && npx prisma migrate deploy` (applies `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_guest_csv`).
+
+1. Reservation card: left panel **Nights**, **Preferred location/bed**, **Given room type**, **Contract ref** → Save → reload.
+2. Room row: **Lock**, **Search** (focuses room select), **HK** link, **Bed** icon visible.
+3. Toolbar **Attach** → upload file metadata row; **Lightning** → recalc / charge-all shortcuts.
+4. **Guests** tab: member/pay/res id columns; **Repeat guest** adds pax row.
+5. **Pricing** tab: currency, fix price, discount % columns on daily grid.
+6. **Folio** tab: **1st / 2nd person** filters; columns Pax, Invoice.
+7. Guest card **ID Reader** → paste JSON `{"firstName":"Test","lastName":"User"}` → Apply → fields update.
+8. Guest **Loyalty** → points history grid → add row.
+9. Guest **Time share** → switch Quotation / Agreement / Cancel / All tabs.
+10. Rack + room plan: room numbers use HK-colored text (compare vacant vs dirty rooms).
+
+## 16. Guest CRM + Reservation details (2026-06-04)
+
+Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`); `node scripts/apply-guest-crm-i18n.mjs`.
+
+1. In-house → open guest card → tab **CRM**: enabled links **Tasks**, **Notes**, **Tags** (blue buttons).
+2. **Allergens** → add allergen → guest card left panel shows allergen warning badge.
+3. **Document archive** → upload a file → row appears in list.
+4. Tab **Reservation details** → **Reservations** opens `/reports/reservations?guestId=…` filtered list.
+5. **Transfers** opens `/transfers?guestId=…`; **Lost & found** opens HK list with guest filter.
+6. Medical buttons: if `NEXT_PUBLIC_CLINIC_WEB_URL` set → external link; else disabled with tooltip.
+7. **Comments** → add comment → listed on guest comments page.
+
 ## Pass criteria
 
 - `npm run build` succeeds.

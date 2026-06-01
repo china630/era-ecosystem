@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { DataHubModule } from "../data-hub/data-hub.module";
 import { AccountingModule } from "../accounting/accounting.module";
 import { CounterpartiesModule } from "../counterparties/counterparties.module";
 import { IntegrationsModule } from "../integrations/integrations.module";
@@ -8,7 +9,7 @@ import { CustomsTariffRatesService } from "./customs-tariff-rates.service";
 import { CustomsTaxCalculatorService } from "./customs-tax-calculator.service";
 
 @Module({
-  imports: [AccountingModule, IntegrationsModule, CounterpartiesModule],
+  imports: [DataHubModule, AccountingModule, IntegrationsModule, CounterpartiesModule],
   controllers: [CustomsController],
   providers: [CustomsService, CustomsTariffRatesService, CustomsTaxCalculatorService],
   exports: [CustomsService, CustomsTariffRatesService],

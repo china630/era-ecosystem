@@ -44,16 +44,18 @@ export default function ReservationsListPage() {
   const [cardId, setCardId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [notesOnly, setNotesOnly] = useState(searchParams.get('hasNotes') === '1');
+  const guestIdFilter = searchParams.get('guestId');
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/reports/reservations-grid');
+    const q = guestIdFilter ? `?guestId=${encodeURIComponent(guestIdFilter)}` : '';
+    const res = await fetch(`/api/reports/reservations-grid${q}`);
     const data = await res.json();
     if (!res.ok) {
       setMsg(data.error ?? tc('loadError'));
       return;
     }
     setRows(Array.isArray(data) ? data : []);
-  }, [tc]);
+  }, [tc, guestIdFilter]);
 
   useEffect(() => {
     void load();
@@ -63,10 +65,11 @@ export default function ReservationsListPage() {
     setNotesOnly(searchParams.get('hasNotes') === '1');
   }, [searchParams]);
 
-  const displayed = useMemo(
-    () => (notesOnly ? rows.filter((r) => r.hasNotes) : rows),
-    [rows, notesOnly],
-  );
+  const displayed = useMemo(() => {
+    let list = rows;
+    if (notesOnly) list = list.filter((r) => r.hasNotes);
+    return list;
+  }, [rows, notesOnly]);
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return (

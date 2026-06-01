@@ -24,8 +24,10 @@ export async function GET(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.RESERVATIONS_READ);
-    const status = new URL(request.url).searchParams.get('status') as ReservationStatus | null;
-    const reservations = await listReservations(status ?? undefined);
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status') as ReservationStatus | null;
+    const guestId = url.searchParams.get('guestId') ?? undefined;
+    const reservations = await listReservations(status ?? undefined, guestId);
     return jsonOk(serialize(reservations));
   } catch (err) {
     return handleRouteError(err);

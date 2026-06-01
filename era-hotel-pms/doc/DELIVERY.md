@@ -300,7 +300,7 @@ Migration: `20260601120000_wave_b_full`. Guide: [FRONT-OFFICE-ELECTRAWEB.md](FRO
 
 Guide: [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md).
 
-- [x] Nav **Əsas** first in Core; order per Electraweb `front office.md`
+- [x] Nav **Əsas** first in Core; order per FO spec ([FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md))
 - [x] Executive dashboard: 7 KPIs (`GET /api/executive/dashboard`)
 - [x] Rack tiles: status, guest, stay dates, pay status, procedure count
 - [x] DnD relocate rack + room plan (`POST /api/reservations/:id/relocate`)
@@ -313,3 +313,40 @@ Guide: [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md).
 - [x] Notes merged into reservation list; `/reports/reservations/notes` redirects
 - [x] Reports section: actual check-in/out times (renamed)
 - [x] `FilterMenuButton` in `@era/satellite-kit`
+
+## Wave D1 — Reservation card + rack (2026-06-02)
+
+Migration: (none — uses existing schema). See [ELEKTRAWEB-PARITY.md](ELEKTRAWEB-PARITY.md).
+
+- [x] Header: Locale → Bell → Org → Profile (`EraAppHeader`)
+- [x] Rack filters: agency, source, pay status; `GET /api/master/booking-sources`
+- [x] Reservation card split panels + full `PATCH /api/reservations/:id/full`
+- [x] Toolbar: history, menu, confirm check-in; bottom bar wired
+- [x] Tests: `reservation-full-patch.schema.spec.ts`, `e2e/reservation-card.spec.ts`
+
+## Wave D2 + D3 closure — Guest card + sub-modals (2026-06-02)
+
+Migration: `20260602120000_wave_d2_guest_res_submodals`.
+
+- [x] Guest card: panels, all consent toggles, details fields (visa, marital, parents, verification)
+- [x] Loyalty cards + time-share agreements (Prisma + APIs + tab grids)
+- [x] Guest notes/tasks pages + CRM links
+- [x] Reservation sub-modals: payment cards, packages, tasks, folio routing
+- [x] Group reservations: modal create, open reservation card from row
+- [x] FO i18n pass: `scripts/apply-wave-d2-i18n.mjs`; `verify:i18n` green
+- [x] Tests: `e2e/guest-card.spec.ts`
+- [x] Traceability: [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md); i18n `apply-wave-d3-fo-i18n.mjs`; [READINESS_MATRIX.md](../../docs/READINESS_MATRIX.md) §1 + FO product table
+
+## Waves E–G — FO CSV tail closure (2026-06-03)
+
+Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_guest_csv`.
+
+- [x] **Wave E:** reservation left CSV fields, room icons, attach + lightning toolbar, guests/pricing/folio tabs, `ReservationAttachment` API
+- [x] **Wave F:** guest identity doc columns, ID reader JSON mock, loyalty points history, time-share sub-tabs, details + toolbar lock/menu
+- [x] **Wave G:** `rackNumberTextClass` on rack + room plan labels; doc/UAT/matrix closure
+- [x] i18n: `apply-wave-e-res-card-i18n.mjs`, `apply-wave-f-guest-i18n.mjs`
+- [x] Tests: extended `e2e/reservation-card.spec.ts`, `e2e/guest-card.spec.ts`
+- [x] Guest CRM P0+P1 + Reservation Details ([GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md), migration `20260604120000_guest_crm`)
+- [x] CRM satellite boundaries: clinic + finance deep links (not in-hotel EMR)
+- [ ] CRM omnichannel live (Twilio/SendGrid): STUB only (B9 Partial)
+- [x] CRM P2/P3 buttons: visible-disabled in config

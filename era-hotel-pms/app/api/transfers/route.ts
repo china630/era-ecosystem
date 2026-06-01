@@ -27,6 +27,7 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const reservationId = url.searchParams.get('reservationId') ?? undefined;
+    const guestId = url.searchParams.get('guestId') ?? undefined;
     const status = url.searchParams.get('status') ?? undefined;
     const direction = url.searchParams.get('direction') ?? undefined;
     const fromStr = url.searchParams.get('from');
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
     const [orders, vehicles] = await Promise.all([
       listTransferOrders({
         reservationId,
+        guestId,
         status,
         direction,
         from: fromStr ? new Date(fromStr) : undefined,

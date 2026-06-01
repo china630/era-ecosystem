@@ -1,0 +1,8 @@
+{
+  "guestCard.idReaderApply": { "az": "Qonağa tətbiq et", "ru": "Применить к гостю" },
+  "guestCard.loyalty.pointsHistory": { "az": "Xallar tarixçəsi", "ru": "История баллов" },
+  "guestCard.timeShare.tabQuotation": { "az": "Təklif", "ru": "Котировка" },
+  "guestCard.timeShare.tabAgreement": { "az": "Müqavilə", "ru": "Договор" },
+  "guestCard.details.marriageDate": { "az": "Evlilik tarixi", "ru": "Дата брака" },
+  "guestCard.toolbar.lock": { "az": "Kilidlə", "ru": "Заблокировать" }
+}

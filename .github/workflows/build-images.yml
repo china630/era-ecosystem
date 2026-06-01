@@ -1,0 +1,164 @@
+name: Build and push images
+
+on:
+  push:
+    branches: [dev, master]
+  workflow_dispatch:
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-packages-base:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      package_image: ${{ steps.out.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: lowercase
+        run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.owner }}/era-ecosystem/workspace-packages
+          tags: |
+            type=sha,prefix=${{ github.ref_name }}-,format=short
+            type=raw,value=${{ github.ref_name }},enable=${{ github.ref_name == 'dev' || github.ref_name == 'master' }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile.packages
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=workspace-packages
+          cache-to: type=gha,mode=max,scope=workspace-packages
+
+      - id: out
+        run: |
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          short=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "image=${{ env.REGISTRY }}/${owner}/era-ecosystem/workspace-packages:${{ github.ref_name }}-${short}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: build-packages-base
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: orchestrator
+            dockerfile: era-orchestrator/Dockerfile
+            satellite_dir: ""
+            satellite_port: ""
+          - service: data-hub
+            dockerfile: era-data-hub/Dockerfile
+            satellite_dir: ""
+            satellite_port: ""
+          - service: finance-core
+            dockerfile: era-finance-core/Dockerfile
+            satellite_dir: ""
+            satellite_port: ""
+          - service: finance-web
+            dockerfile: era-finance-core/Dockerfile.web
+            satellite_dir: ""
+            satellite_port: ""
+          - service: hotel-pms
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-hotel-pms
+            satellite_port: "3201"
+          - service: fnb-pos
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-fnb-pos
+            satellite_port: "3202"
+          - service: clinic
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-clinic
+            satellite_port: "3203"
+          - service: retail-pos
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-retail-pos
+            satellite_port: "3204"
+          - service: logistics
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-logistics
+            satellite_port: "3205"
+          - service: construction
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-construction
+            satellite_port: "3206"
+          - service: crm
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-crm
+            satellite_port: "3207"
+          - service: auto-service
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-auto-service
+            satellite_port: "3208"
+          - service: wholesale
+            dockerfile: docker/Dockerfile.satellite
+            satellite_dir: era-wholesale
+            satellite_port: "3209"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: lowercase
+        run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.owner }}/era-ecosystem/${{ matrix.service }}
+          tags: |
+            type=sha,prefix=${{ github.ref_name }}-,format=short
+            type=raw,value=${{ github.ref_name }},enable=${{ github.ref_name == 'dev' || github.ref_name == 'master' }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            PACKAGE_IMAGE=${{ needs.build-packages-base.outputs.package_image }}
+            NEXT_PUBLIC_ORCH_API_URL=http://127.0.0.1:4000
+            NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100
+            NEXT_PUBLIC_API_URL=http://finance-core:4100
+            NEXT_PUBLIC_CONTROL_PLANE_URL=http://orchestrator:4000
+            NEXT_PUBLIC_ORCH_WEB_URL=http://127.0.0.1:3000
+            SATELLITE_DIR=${{ matrix.satellite_dir }}
+            SATELLITE_PORT=${{ matrix.satellite_port }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}

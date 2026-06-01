@@ -6,7 +6,9 @@ import type { PaymentMethod, ReservationNoteType } from '@prisma/client';
 const fullInclude = {
   room: { include: { roomType: true } },
   roomType: true,
+  givenRoomType: true,
   guest: true,
+  attachments: { orderBy: { createdAt: 'desc' as const } },
   ratePlan: true,
   mealPlan: true,
   agency: true,
@@ -21,6 +23,7 @@ const fullInclude = {
       payments: true,
     },
   },
+  fiscalDocuments: true,
 } as const;
 
 export async function getReservationFull(id: string) {
@@ -49,8 +52,12 @@ export async function getReservationFull(id: string) {
       id: d.id,
       stayDate: d.stayDate,
       amount: decimalToNumber(d.amount),
+      currencyCode: d.currencyCode,
+      fixPrice: d.fixPrice,
+      discountPct: d.discountPct ? decimalToNumber(d.discountPct) : null,
       manualFlag: d.manualFlag,
     })),
+    attachments: reservation.attachments,
     notesMap,
   };
 }
@@ -62,11 +69,11 @@ export async function patchReservationFull(
     ratePlanId?: string;
     mealPlanId?: string | null;
     agencyId?: string | null;
+    sourceId?: string | null;
     roomId?: string | null;
     guestId?: string;
     checkInDate?: Date;
     checkOutDate?: Date;
-    paymentMethod?: PaymentMethod;
     voucherNo?: string | null;
     roomCount?: number;
     adults?: number;
@@ -94,6 +101,11 @@ export async function patchReservationFull(
     useManualRate?: boolean;
     manualDailyRate?: number | null;
     discountActive?: boolean;
+    isLocked?: boolean;
+    preferredLocation?: string | null;
+    preferredBed?: string | null;
+    givenRoomTypeId?: string | null;
+    contractRef?: string | null;
     notes?: Partial<Record<ReservationNoteType, string>>;
     paxGuests?: Array<{
       id?: string;
@@ -106,14 +118,26 @@ export async function patchReservationFull(
       age?: number | null;
       idCardNo?: string | null;
       passportNo?: string | null;
+      memberNo?: string | null;
+      payStatus?: string | null;
+      externalResId?: string | null;
+      guestState?: string | null;
       isPrimary?: boolean;
+    }>;
+    dailyRates?: Array<{
+      stayDate: string;
+      amount: number;
+      manualFlag?: boolean;
+      currencyCode?: string;
+      fixPrice?: boolean;
+      discountPct?: number | null;
     }>;
   },
 ) {
   const existing = await prisma.reservation.findUnique({ where: { id } });
   if (!existing) throw new Error('Reservation not found');
 
-  const { notes, paxGuests, manualDailyRate, ...data } = input;
+  const { notes, paxGuests, manualDailyRate, dailyRates, ...data } = input;
 
   await prisma.reservation.update({
     where: { id },
@@ -154,18 +178,55 @@ export async function patchReservationFull(
         age: p.age ?? null,
         idCardNo: p.idCardNo ?? null,
         passportNo: p.passportNo ?? null,
+        memberNo: p.memberNo ?? null,
+        payStatus: p.payStatus ?? null,
+        externalResId: p.externalResId ?? null,
+        guestState: p.guestState ?? null,
         isPrimary: p.isPrimary ?? i === 0,
         sortOrder: i,
       })),
     });
   }
 
+  if (dailyRates?.length) {
+    for (const d of dailyRates) {
+      const stayDate = new Date(d.stayDate);
+      await prisma.reservationDailyRate.upsert({
+        where: {
+          reservationId_stayDate: { reservationId: id, stayDate },
+        },
+        create: {
+          reservationId: id,
+          stayDate,
+          amount: toDecimal(d.amount),
+          manualFlag: d.manualFlag ?? false,
+          currencyCode: d.currencyCode ?? 'AZN',
+          fixPrice: d.fixPrice ?? false,
+          discountPct:
+            d.discountPct === undefined || d.discountPct === null
+              ? null
+              : toDecimal(d.discountPct),
+        },
+        update: {
+          amount: toDecimal(d.amount),
+          manualFlag: d.manualFlag ?? false,
+          currencyCode: d.currencyCode ?? 'AZN',
+          fixPrice: d.fixPrice ?? false,
+          discountPct:
+            d.discountPct === undefined || d.discountPct === null
+              ? null
+              : toDecimal(d.discountPct),
+        },
+      });
+    }
+  }
+
   return getReservationFull(id);
 }
 
-export async function listReservationsForGrid() {
+export async function listReservationsForGrid(guestId?: string) {
   const rows = await prisma.reservation.findMany({
-    where: { groupId: null },
+    where: { groupId: null, ...(guestId ? { guestId } : {}) },
     include: {
       room: true,
       roomType: true,

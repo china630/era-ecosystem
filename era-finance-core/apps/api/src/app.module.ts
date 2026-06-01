@@ -59,6 +59,7 @@ import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.g
 import { SatelliteIntegrationModule } from "./integration/integration.module";
 import { IndustryHandoffsModule } from "./industry-handoffs/industry-handoffs.module";
 import { BillingModule } from "./billing/billing.module";
+import { DataHubModule } from "./data-hub/data-hub.module";
 
 const apiEnvFiles = apiEnvFilePaths();
 const useControlPlaneAuth =
@@ -78,6 +79,7 @@ const useControlPlaneAuth =
     AuthModule,
     MailModule,
     PrismaModule,
+    DataHubModule,
     ControlPlaneModule,
     SubscriptionModule,
     QuotaModule,
