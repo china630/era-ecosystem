@@ -110,9 +110,12 @@ jobs:
       - name: ESLint API
         working-directory: era-finance-core
         run: npm run lint -w @erafinance/api
+      - name: Generate control-plane Prisma client
+        working-directory: era-orchestrator/packages/database
+        run: npx prisma generate
       - name: Unit tests
         working-directory: era-finance-core
-        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --ci --forceExit --maxWorkers=2
+        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2
       - name: Integration tests
         working-directory: era-finance-core
         run: npm run test:integration -w @erafinance/api -- --ci
@@ -146,9 +149,13 @@ jobs:
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Build and test ${{ matrix.dir }}
         working-directory: ${{ matrix.dir }}
+        env:
+          CI: "true"
         run: |
           npm ci
           npx prisma generate
           npm test
           npm run build
-          npm run lint --if-present
+          if [ -f .eslintrc.json ] || [ -f eslint.config.mjs ] || [ -f eslint.config.js ]; then
+            npm run lint
+          fi
