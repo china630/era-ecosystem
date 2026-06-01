@@ -1,6 +1,6 @@
 # 15. POS, F&B и SPA-касса (фаза 2)
 
-> **Полная спецификация era-fb-pos:** [../fb-pos/README.md](../fb-pos/README.md)  
+> **Полная спецификация era-fnb-pos:** [../fb-pos/README.md](../fb-pos/README.md)  
 > Референс Elektraweb: supplement [../nafta/supplement-pos-spa.md](../nafta/supplement-pos-spa.md)  
 > Фаза 1: только [05-folio-and-cash.md](05-folio-and-cash.md) quick posting WA0135
 
@@ -21,7 +21,7 @@
 | Продукт | Назначение |
 |---------|------------|
 | `era-hotel-pms` | Quick posting (WA0135), мост room-charge, календарь слотов, медконтур |
-| `era-fb-pos` | Полный F&B POS (Food & Beverage) — зал, KDS; **не** розничный магазин |
+| `era-fnb-pos` | Полный F&B POS (Food & Beverage) — зал, KDS; **не** розничный магазин |
 | `era-spa-pos` | **Не планируется** для Nafta без нового scope; SPA — quick posting + мед + календарь в PMS |
 
 Архитектура PMS ↔ fb-pos ↔ ERP: [23-pos-bridge.md](23-pos-bridge.md), [13-nafta-validation-checklist.md](13-nafta-validation-checklist.md) §H.

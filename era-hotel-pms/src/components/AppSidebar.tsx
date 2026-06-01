@@ -86,7 +86,10 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.REPORTS_READ),
     },
     {
-      href: process.env.NEXT_PUBLIC_FB_POS_URL ?? 'http://localhost:3200',
+      href:
+        process.env.NEXT_PUBLIC_FNB_POS_URL ??
+        process.env.NEXT_PUBLIC_FB_POS_URL ??
+        'http://localhost:3202',
       labelKey: 'posCalendar',
       icon: CalendarDays,
       external: true,

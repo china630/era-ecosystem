@@ -1,59 +1,63 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
+import { AuthLoginCard, buildAuthLoginLabels, showApiError, assignNoStoreRedirect } from "@era/satellite-kit/ui";
+import type { Locale } from "@era/i18n-common";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [login, setLogin] = useState("");
+  const t = useTranslations("login");
+  const tAuth = useTranslations("auth");
+  const locale = useLocale() as Locale;
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ login, password }),
-    });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      setError(j.error ?? "Login failed");
-      return;
+    setBusy(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login: loginId, password }),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        showApiError(j, tAuth("loginFailed"));
+        return;
+      }
+      assignNoStoreRedirect("/");
+    } finally {
+      setBusy(false);
     }
-    router.push("/");
-    router.refresh();
+  }
+
+  let subtitle: string | undefined;
+  let ssoHint: string | undefined;
+  try {
+    subtitle = t("subtitle");
+  } catch {
+    subtitle = undefined;
+  }
+  try {
+    ssoHint = t("ssoHint") || t("demoHint");
+  } catch {
+    ssoHint = undefined;
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-6">
-      <h1 className="mb-4 text-2xl font-semibold text-[#34495E]">ERA Satellite</h1>
-      <form onSubmit={onSubmit} className="space-y-3 rounded-2xl border border-[#D5DADF] bg-white p-6">
-        <input
-          className="h-9 w-full rounded-lg border border-[#D5DADF] px-3"
-          placeholder="Login"
-          value={login}
-          onChange={(e) => setLogin(e.target.value)}
-        />
-        <input
-          type="password"
-          className="h-9 w-full rounded-lg border border-[#D5DADF] px-3"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button
-          type="submit"
-          className="h-9 w-full rounded-lg bg-[#2980B9] text-sm font-medium text-white"
-        >
-          Sign in
-        </button>
-      </form>
-      <p className="mt-4 text-center text-xs text-[#7F8C8D]">
-        Or use SSO from ERA Finance / Orchestrator
-      </p>
-    </main>
+    <AuthLoginCard
+      locale={locale}
+      labels={buildAuthLoginLabels(tAuth)}
+      loginId={loginId}
+      password={password}
+      onLoginIdChange={setLoginId}
+      onPasswordChange={setPassword}
+      onSubmit={onSubmit}
+      busy={busy}
+      subtitle={subtitle}
+      ssoHint={ssoHint}
+    />
   );
 }

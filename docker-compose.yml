@@ -1,6 +1,6 @@
-# ERA Ecosystem — single-server stack (Traefik file provider, no routing labels on apps).
+# ERA Ecosystem — single-server stack (Traefik file provider).
 # Usage: cp .env.example .env && docker compose up -d --build
-# Hosts: app.era.az, api.era.az, hotel.era.az, pos.era.az → 127.0.0.1
+# Spec: docs/ECOSYSTEM_URLS.md
 
 name: era-ecosystem
 
@@ -65,32 +65,46 @@ services:
     depends_on:
       orchestrator:
         condition: service_started
+      finance-web:
+        condition: service_started
       hotel-pms:
         condition: service_started
-      fb-pos:
+      fnb-pos:
         condition: service_started
       retail-pos:
         condition: service_started
 
   orchestrator:
     build:
-      context: ./era-365-orchestrator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: era-orchestrator/Dockerfile
+      args:
+        NEXT_PUBLIC_ORCH_API_URL: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
+        NEXT_PUBLIC_FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
     container_name: era-orchestrator
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${ORCHESTRATOR_DB:-era_orchestrator}?schema=public
+      MDM_DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${MDM_DB:-era_mdm}?schema=public
       REDIS_URL: redis://redis:6379/0
-      PORT: "4100"
-      FINANCE_CORE_URL: http://finance-core:4000
+      API_PORT: "4000"
+      WEB_PORT: "3000"
+      FINANCE_CORE_URL: http://finance-core:4100
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
-      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-365-orchestrator}
+      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
+      ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
+      ERA_API_ORIGIN: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
+      ERA_FINANCE_ORIGIN: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
+      NEXT_PUBLIC_ORCH_API_URL: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
+      NEXT_PUBLIC_ORCH_WEB_URL: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
+      NEXT_PUBLIC_FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
+      FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
     depends_on:
       postgres:
         condition: service_healthy
@@ -98,9 +112,11 @@ services:
         condition: service_healthy
       finance-core:
         condition: service_healthy
+    ports:
+      - "${ORCHESTRATOR_WEB_PUBLISH_PORT:-3000}:3000"
+      - "${ORCHESTRATOR_API_PUBLISH_PORT:-4000}:4000"
     networks:
       - era-network
-    # No ports published — Traefik routes app.era.az / api.era.az via dynamic.yml
 
   finance-core:
     build:
@@ -112,13 +128,15 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
       REDIS_URL: redis://redis:6379/1
-      API_PORT: "4000"
-      CONTROL_PLANE_URL: http://orchestrator:4100
+      API_PORT: "4100"
+      CONTROL_PLANE_URL: http://orchestrator:4000
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
-      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-365-orchestrator}
+      JWT_SECRET: ${JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
+      ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
       ERA_AUTH_MODE: ${ERA_AUTH_MODE:-legacy}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       SATELLITE_EVENT_WORKER_DISABLED: ${SATELLITE_EVENT_WORKER_DISABLED:-0}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
     depends_on:
@@ -126,30 +144,65 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    ports:
+      - "${FINANCE_API_PUBLISH_PORT:-4100}:4100"
+    networks:
+      - era-network
+
+  finance-web:
+    build:
+      context: .
+      dockerfile: era-finance-core/Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: http://finance-core:4100
+        NEXT_PUBLIC_CONTROL_PLANE_URL: http://orchestrator:4000
+        NEXT_PUBLIC_ORCH_WEB_URL: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
+    container_name: era-finance-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3100"
+      NEXT_PUBLIC_API_URL: http://finance-core:4100
+      NEXT_PUBLIC_CONTROL_PLANE_URL: http://orchestrator:4000
+      NEXT_PUBLIC_ORCH_WEB_URL: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
+      CONTROL_PLANE_URL: http://orchestrator:4000
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-az}
+    depends_on:
+      finance-core:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    ports:
+      - "${FINANCE_WEB_PUBLISH_PORT:-3100}:3100"
     networks:
       - era-network
 
   hotel-pms:
     build:
-      context: ./era-hotel-pms
-      dockerfile: Dockerfile
-      target: runner
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-hotel-pms
+        SATELLITE_PORT: "3201"
     container_name: era-hotel-pms
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${HOTEL_DB:-era_hotel_pms}?schema=public
       REDIS_URL: redis://redis:6379/2
-      PORT: "3000"
+      PORT: "3201"
       HOSTNAME: 0.0.0.0
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
-      FB_POS_WEBHOOK_URL: http://fb-pos:3200/api/webhooks/pms/reservation-lifecycle
-      NEXT_PUBLIC_FB_POS_URL: http://pos.era.az
+      FNB_POS_WEBHOOK_URL: http://fnb-pos:3202/api/webhooks/pms/reservation-lifecycle
+      NEXT_PUBLIC_FNB_POS_URL: ${ERA_FNB_POS_ORIGIN:-https://fnb-pos.era-365.online}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-hotel-pms}
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-legacy}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+    ports:
+      - "3201:3201"
     depends_on:
       postgres:
         condition: service_healthy
@@ -158,22 +211,32 @@ services:
     networks:
       - era-network
 
-  fb-pos:
+  fnb-pos:
     build:
-      context: ./era-fb-pos
-      dockerfile: Dockerfile
-    container_name: era-fb-pos
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-fnb-pos
+        SATELLITE_PORT: "3202"
+    container_name: era-fnb-pos
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FB_POS_DB:-era_fb_pos}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FNB_POS_DB:-era_fnb_pos}?schema=public
       REDIS_URL: redis://redis:6379/3
-      PORT: "3200"
+      PORT: "3202"
       HOSTNAME: 0.0.0.0
-      HOTEL_PMS_URL: http://hotel-pms:3000
-      PMS_BRIDGE_URL: http://hotel-pms:3000
+      HOTEL_PMS_URL: http://hotel-pms:3201
+      PMS_BRIDGE_URL: http://hotel-pms:3201
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
-      FB_POS_WEBHOOK_SECRET: ${FB_POS_WEBHOOK_SECRET:-dev-fb-pos-webhook-secret}
+      FNB_POS_WEBHOOK_SECRET: ${FNB_POS_WEBHOOK_SECRET:-dev-fnb-pos-webhook-secret}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+      ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3202:3202"
     depends_on:
       postgres:
         condition: service_healthy
@@ -181,25 +244,32 @@ services:
         condition: service_healthy
       hotel-pms:
         condition: service_started
+      orchestrator:
+        condition: service_started
     networks:
       - era-network
 
   retail-pos:
     build:
-      context: ./era-retail-pos
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-retail-pos
+        SATELLITE_PORT: "3204"
     container_name: era-retail-pos
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${RETAIL_POS_DB:-era_retail_pos}?schema=public
-      PORT: "3300"
+      PORT: "3204"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3204:3204"
     depends_on:
       postgres:
         condition: service_healthy
@@ -210,20 +280,25 @@ services:
 
   logistics:
     build:
-      context: ./era-logistics
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-logistics
+        SATELLITE_PORT: "3205"
     container_name: era-logistics
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${LOGISTICS_DB:-era_logistics}?schema=public
-      PORT: "3301"
+      PORT: "3205"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3205:3205"
     depends_on:
       postgres:
         condition: service_healthy
@@ -234,20 +309,25 @@ services:
 
   construction:
     build:
-      context: ./era-construction
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-construction
+        SATELLITE_PORT: "3206"
     container_name: era-construction
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CONSTRUCTION_DB:-era_construction}?schema=public
-      PORT: "3302"
+      PORT: "3206"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3206:3206"
     depends_on:
       postgres:
         condition: service_healthy
@@ -256,22 +336,27 @@ services:
     networks:
       - era-network
 
-  crm-field:
+  crm:
     build:
-      context: ./era-crm-field
-      dockerfile: Dockerfile
-    container_name: era-crm-field
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-crm
+        SATELLITE_PORT: "3207"
+    container_name: era-crm
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CRM_FIELD_DB:-era_crm_field}?schema=public
-      PORT: "3303"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CRM_DB:-era_crm}?schema=public
+      PORT: "3207"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3207:3207"
     depends_on:
       postgres:
         condition: service_healthy
@@ -280,22 +365,27 @@ services:
     networks:
       - era-network
 
-  auto-sto:
+  auto-service:
     build:
-      context: ./era-auto-sto
-      dockerfile: Dockerfile
-    container_name: era-auto-sto
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-auto-service
+        SATELLITE_PORT: "3208"
+    container_name: era-auto-service
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${AUTO_STO_DB:-era_auto_sto}?schema=public
-      PORT: "3304"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${AUTO_SERVICE_DB:-era_auto_service}?schema=public
+      PORT: "3208"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3208:3208"
     depends_on:
       postgres:
         condition: service_healthy
@@ -306,20 +396,25 @@ services:
 
   wholesale:
     build:
-      context: ./era-wholesale
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-wholesale
+        SATELLITE_PORT: "3209"
     container_name: era-wholesale
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${WHOLESALE_DB:-era_wholesale}?schema=public
-      PORT: "3305"
+      PORT: "3209"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3209:3209"
     depends_on:
       postgres:
         condition: service_healthy
@@ -330,20 +425,25 @@ services:
 
   clinic:
     build:
-      context: ./era-clinic
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-clinic
+        SATELLITE_PORT: "3203"
     container_name: era-clinic
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CLINIC_DB:-era_clinic}?schema=public
-      PORT: "3306"
+      PORT: "3203"
       HOSTNAME: 0.0.0.0
-      ORCHESTRATOR_EVENT_URL: http://orchestrator:4100
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+    ports:
+      - "3203:3203"
     depends_on:
       postgres:
         condition: service_healthy

@@ -20,19 +20,13 @@ export function PlatformAccountBar({
 }: Props) {
   if (!capabilities.isPlatformSession) return null;
 
+  const hasLinks = capabilities.canManageTeam || capabilities.canManageBilling;
+  if (!hasLinks) return null;
+
   return (
     <div
-      className={`flex flex-wrap items-center gap-3 border-b border-[#D5DADF] pb-3 text-[12px] text-[#5D6D7E] ${className}`}
+      className={`flex flex-wrap items-center gap-3 border-b border-[#D5DADF] px-4 py-2 text-[12px] text-[#5D6D7E] ${className}`}
     >
-      <span>
-        Org: <strong className="text-[#34495E]">{organizationId ?? "—"}</strong>
-        {capabilities.financeRole ? (
-          <>
-            {" "}
-            · {capabilities.financeRole}
-          </>
-        ) : null}
-      </span>
       {capabilities.canManageTeam ? (
         <a
           href={buildFinanceTeamUrl(organizationId)}

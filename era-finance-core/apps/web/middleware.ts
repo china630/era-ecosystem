@@ -34,9 +34,9 @@ function redirectToLogin(req: NextRequest, pathname: string, clearCookie: boolea
 }
 
 const ORCH_WEB_BASE =
-  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3100";
+  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000";
 
-function redirectToOrch(pathname: string): NextResponse | null {
+function redirectToOrch(req: NextRequest, pathname: string): NextResponse | null {
   const base = ORCH_WEB_BASE.replace(/\/$/, "");
   if (pathname === "/register" || pathname.startsWith("/register/")) {
     return NextResponse.redirect(`${base}/register`);
@@ -44,8 +44,16 @@ function redirectToOrch(pathname: string): NextResponse | null {
   if (pathname === "/register-org" || pathname.startsWith("/register-org/")) {
     return NextResponse.redirect(`${base}/register-org`);
   }
+  if (pathname === "/pricing" || pathname.startsWith("/pricing/")) {
+    return NextResponse.redirect(`${base}/pricing`);
+  }
   if (pathname.startsWith("/industry/")) {
     return NextResponse.redirect(`${base}${pathname}`);
+  }
+  if (pathname.startsWith("/super-admin/data")) {
+    const url = req.nextUrl.clone();
+    url.pathname = pathname.replace(/^\/super-admin\/data/, "/admin/data") || "/admin/data";
+    return NextResponse.redirect(url);
   }
   if (pathname === "/super-admin" || pathname.startsWith("/super-admin/")) {
     return NextResponse.redirect(`${base}${pathname}`);
@@ -63,7 +71,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
-  const orchRedirect = redirectToOrch(pathname);
+  const orchRedirect = redirectToOrch(req, pathname);
   if (orchRedirect) return orchRedirect;
 
   if (maintenanceModeEnabled()) {

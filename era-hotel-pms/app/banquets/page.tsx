@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Plus } from 'lucide-react';
 import {
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
@@ -11,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -32,6 +34,8 @@ type BanquetEvent = {
   reservation: { guest: { fullName: string }; room: { roomNumber: string } | null } | null;
 };
 
+const createFormId = 'create-beo-form';
+
 export default function BanquetsPage() {
   const { can } = useAuth();
   const t = useTranslations('banquets');
@@ -49,6 +53,8 @@ export default function BanquetsPage() {
   const [advanceAmount, setAdvanceAmount] = useState('500');
   const [contactName, setContactName] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [banquetRes, resRes] = await Promise.all([
@@ -71,6 +77,18 @@ export default function BanquetsPage() {
     load();
   }, [load]);
 
+  function openCreateModal() {
+    setEventName('');
+    setReservationId('');
+    setEventDate('');
+    setPax('50');
+    setAdvanceAmount('500');
+    setContactName('');
+    if (saloons[0]?.id) setSaloonId(saloons[0].id);
+    if (menuPackages[0]?.id) setMenuPackageId(menuPackages[0].id);
+    setModalOpen(true);
+  }
+
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return (
       <AppShell>
@@ -79,11 +97,13 @@ export default function BanquetsPage() {
     );
   }
 
-  async function createBeo() {
+  async function createBeo(e: React.FormEvent) {
+    e.preventDefault();
     if (!eventName || !saloonId || !eventDate || !pax) {
       setMsg(t('missingFields'));
       return;
     }
+    setBusy(true);
     const res = await fetch('/api/banquets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -99,8 +119,10 @@ export default function BanquetsPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('created') : data.error ?? tc('error'));
     if (res.ok) {
+      setModalOpen(false);
       setEventName('');
       await load();
     }
@@ -119,108 +141,19 @@ export default function BanquetsPage() {
 
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <StatusMessage>{msg}</StatusMessage>
-
-      {can(PERMISSIONS.RESERVATIONS_WRITE) && (
-        <PageSection>
-          <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('createBeo')}</h2>
-          <div className={`${FORM_STACK_CLASS} max-w-xl`}>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('eventName')}</label>
-              <input
-                className={MODAL_INPUT_CLASS}
-                value={eventName}
-                onChange={(e) => setEventName(e.target.value)}
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('saloon')}</label>
-              <select className={MODAL_INPUT_CLASS} value={saloonId} onChange={(e) => setSaloonId(e.target.value)}>
-                {saloons.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.code} — {s.name} (max {s.maxPax})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('menuPackage')}</label>
-              <select
-                className={MODAL_INPUT_CLASS}
-                value={menuPackageId}
-                onChange={(e) => setMenuPackageId(e.target.value)}
-              >
-                <option value="">{tc('select')}</option>
-                {menuPackages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} — {p.name} ({p.pricePerPax} AZN/pax)
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('depositFolio')}</label>
-              <select
-                className={MODAL_INPUT_CLASS}
-                value={reservationId}
-                onChange={(e) => setReservationId(e.target.value)}
-              >
-                <option value="">{t('noFolio')}</option>
-                {reservations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('eventDate')}</label>
-                <input
-                  type="date"
-                  className={MODAL_INPUT_CLASS}
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                />
-              </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('pax')}</label>
-                <input
-                  type="number"
-                  min={1}
-                  className={MODAL_INPUT_CLASS}
-                  value={pax}
-                  onChange={(e) => setPax(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('advance')}</label>
-                <input
-                  type="number"
-                  min={0}
-                  className={MODAL_INPUT_CLASS}
-                  value={advanceAmount}
-                  onChange={(e) => setAdvanceAmount(e.target.value)}
-                />
-              </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t('contact')}</label>
-                <input
-                  className={MODAL_INPUT_CLASS}
-                  value={contactName}
-                  onChange={(e) => setContactName(e.target.value)}
-                />
-              </div>
-            </div>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={createBeo}>
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          can(PERMISSIONS.RESERVATIONS_WRITE) ? (
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreateModal}>
+              <Plus className="h-4 w-4" aria-hidden />
               {t('create')}
             </button>
-          </div>
-        </PageSection>
-      )}
+          ) : undefined
+        }
+      />
+      <StatusMessage>{msg}</StatusMessage>
 
       <PageSection>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('list')}</h2>
@@ -268,6 +201,115 @@ export default function BanquetsPage() {
           </table>
         </div>
       </PageSection>
+
+      <EraModal
+        open={modalOpen}
+        title={t('createBeo')}
+        onClose={() => setModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={createFormId}
+            onCancel={() => setModalOpen(false)}
+            busy={busy}
+            submitLabel={t('create')}
+          />
+        }
+      >
+        <form id={createFormId} onSubmit={createBeo} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('eventName')}</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              required
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('saloon')}</label>
+            <select className={MODAL_INPUT_CLASS} value={saloonId} onChange={(e) => setSaloonId(e.target.value)} required>
+              {saloons.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.code} — {s.name} (max {s.maxPax})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('menuPackage')}</label>
+            <select
+              className={MODAL_INPUT_CLASS}
+              value={menuPackageId}
+              onChange={(e) => setMenuPackageId(e.target.value)}
+            >
+              <option value="">{tc('select')}</option>
+              {menuPackages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.code} — {p.name} ({p.pricePerPax} AZN/pax)
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('depositFolio')}</label>
+            <select
+              className={MODAL_INPUT_CLASS}
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+            >
+              <option value="">{t('noFolio')}</option>
+              {reservations.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('eventDate')}</label>
+              <input
+                type="date"
+                className={MODAL_INPUT_CLASS}
+                value={eventDate}
+                onChange={(e) => setEventDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('pax')}</label>
+              <input
+                type="number"
+                min={1}
+                className={MODAL_INPUT_CLASS}
+                value={pax}
+                onChange={(e) => setPax(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('advance')}</label>
+              <input
+                type="number"
+                min={0}
+                className={MODAL_INPUT_CLASS}
+                value={advanceAmount}
+                onChange={(e) => setAdvanceAmount(e.target.value)}
+              />
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('contact')}</label>
+              <input
+                className={MODAL_INPUT_CLASS}
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+              />
+            </div>
+          </div>
+        </form>
+      </EraModal>
     </AppShell>
   );
 }

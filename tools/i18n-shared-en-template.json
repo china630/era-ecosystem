@@ -1,0 +1,65 @@
+{
+  "login": {
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "home": "Home",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

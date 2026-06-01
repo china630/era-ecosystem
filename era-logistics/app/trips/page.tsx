@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -17,6 +18,8 @@ type Trip = {
 };
 
 export default function TripsPage() {
+  const t = useTranslations("trips");
+  const tNav = useTranslations("nav");
   const [trips, setTrips] = useState<Trip[]>([]);
 
   useEffect(() => {
@@ -28,25 +31,25 @@ export default function TripsPage() {
   return (
     <>
       <PageHeader
-        title="ERA Logistics"
-        subtitle="Trips — open detail for POD, fuel, workflow"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <>
             <Link
               href="/reports/fuel"
               className="mr-2 text-[13px] text-[#2980B9] hover:underline"
             >
-              Fuel report
+              {t("fuelReport")}
             </Link>
             <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-              Home
+              {tNav("home")}
             </Link>
           </>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-3`}>
         {trips.length === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">No trips yet.</p>
+          <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
         ) : (
           <ul className="space-y-2 text-[13px]">
             {trips.map((trip) => (

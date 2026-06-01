@@ -13,14 +13,14 @@ const consumerOnly = process.argv.includes("--consumer-only");
 
 const APPS = [
   { id: "Fin", dir: "era-finance-core", label: "era-finance-core" },
-  { id: "Orch", dir: "era-365-orchestrator", label: "era-365-orchestrator" },
+  { id: "Orch", dir: "era-orchestrator", label: "era-orchestrator" },
   { id: "Hot", dir: "era-hotel-pms", label: "era-hotel-pms" },
-  { id: "FB", dir: "era-fb-pos", label: "era-fb-pos" },
+  { id: "FB", dir: "era-fnb-pos", label: "era-fnb-pos" },
   { id: "Ret", dir: "era-retail-pos", label: "era-retail-pos" },
   { id: "Log", dir: "era-logistics", label: "era-logistics" },
   { id: "Con", dir: "era-construction", label: "era-construction" },
-  { id: "CRM", dir: "era-crm-field", label: "era-crm-field" },
-  { id: "Auto", dir: "era-auto-sto", label: "era-auto-sto" },
+  { id: "CRM", dir: "era-crm", label: "era-crm" },
+  { id: "Auto", dir: "era-auto-service", label: "era-auto-service" },
   { id: "Cli", dir: "era-clinic", label: "era-clinic" },
   { id: "Who", dir: "era-wholesale", label: "era-wholesale" },
 ];
@@ -132,6 +132,18 @@ const BRIDGE = {
   consumer: { id: "FB", pattern: /room-charge|pms-bridge-client/ },
 };
 
+/** runPlatformCommerceHooks aggregates CP-B3–B8 consumer calls (satellite-kit). */
+const HOOK_AGGREGATOR_PATTERN =
+  /runPlatformCommerceHooks\s*\(|runHotelFolioPlatformHooks\s*\(/;
+const HOOK_AGGREGATOR_FAMILIES = new Set([
+  "booking",
+  "portal",
+  "payments",
+  "loyalty",
+  "domains",
+  "delivery",
+]);
+
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", ".next", "generated"]);
 
 function walkFiles(dir, acc = []) {
@@ -172,7 +184,14 @@ function evaluateApp(app, fam, corpus) {
     return { status: "N/A", consumer: false, host: false, any: false };
   }
   const manual = fam.manual[app.id] === true;
-  const consumer = detect(corpus, fam.consumerPatterns);
+  let consumer = detect(corpus, fam.consumerPatterns);
+  if (
+    !consumer &&
+    HOOK_AGGREGATOR_FAMILIES.has(fam.key) &&
+    HOOK_AGGREGATOR_PATTERN.test(corpus)
+  ) {
+    consumer = true;
+  }
   const host = detect(corpus, fam.hostPatterns);
   const any = manual || consumer || (consumerOnly ? consumer : consumer || host);
   let status = "—";
@@ -218,7 +237,7 @@ function summarizeFamily(fam, consumerDenom) {
 
 const bridgeCorpus = {
   Hot: scanApp("era-hotel-pms").corpus,
-  FB: scanApp("era-fb-pos").corpus,
+  FB: scanApp("era-fnb-pos").corpus,
 };
 const bridgeOk =
   BRIDGE.provider.pattern.test(bridgeCorpus.Hot) &&

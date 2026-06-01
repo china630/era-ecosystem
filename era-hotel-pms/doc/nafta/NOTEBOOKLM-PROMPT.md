@@ -25,8 +25,8 @@ You are a principal hotel-systems analyst. You have access to ~1500 Elektraweb (
 Our target product split (do NOT suggest duplicating Turkish compliance):
 - era-hotel-pms: reservations, folio, night audit, packages, procedure SCHEDULE (not SPA cash), transfers, banquet BEO
 - era-clinic: clinical episode, diagnoses, lab (not full EMR)
-- era-fb-pos: restaurant floor, KDS, room charge, banquet SERVICE DAY execution
-- era-finance-core + era-365-orchestrator: GL, e-qaimə AZ, MDM — NOT in PMS
+- era-fnb-pos: restaurant floor, KDS, room charge, banquet SERVICE DAY execution
+- era-finance-core + era-orchestrator: GL, e-qaimə AZ, MDM — NOT in PMS
 
 Already implemented or in Wave 3 (mark as wave=3, do not re-specify in detail):
 - Medical package SAN-PKG + EOD folio posting
@@ -36,7 +36,7 @@ Already implemented or in Wave 3 (mark as wave=3, do not re-specify in detail):
 
 Wave 4 priorities we explicitly need from Elektraweb:
 - Airport/hotel TRANSFERS (screens like WA0143 airport guest list, WA0227 vehicle fleet, WA0085 transfer settings) → era-hotel-pms
-- BANQUETS / SalesMarketing (WA0231 banquet agreements, event BEO, hall blocking) → era-hotel-pms BEO + era-fb-pos service outlet
+- BANQUETS / SalesMarketing (WA0231 banquet agreements, event BEO, hall blocking) → era-hotel-pms BEO + era-fnb-pos service outlet
 
 TASK: Produce structured deliverables for import into our git repo. Be exhaustive on MODULES and PROCESSES; be compact per screen (one row per screen, not prose per screen).
 

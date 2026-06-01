@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+# Shared workspace packages — build once, reuse in satellites.
+#   docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
+FROM node:22-alpine AS builder
+WORKDIR /workspace
+COPY packages/i18n-common packages/i18n-common
+COPY packages/era-contracts packages/era-contracts
+COPY packages/era-storage packages/era-storage
+COPY packages/satellite-kit packages/satellite-kit
+RUN cd packages/i18n-common && npm install && npm run build \
+  && cd ../era-contracts && npm install && npm run build \
+  && cd ../era-storage && npm install && npm run build \
+  && cd ../satellite-kit && npm install && npm run build
+
+FROM node:22-alpine
+WORKDIR /workspace/packages
+COPY --from=builder /workspace/packages /workspace/packages

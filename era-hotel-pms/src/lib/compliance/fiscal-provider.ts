@@ -26,6 +26,21 @@ export class MockKkmProvider implements FiscalProvider {
   }
 }
 
+class NbcKkmProviderStub implements FiscalProvider {
+  async fiscalizePayment(input: {
+    amount: number;
+    paymentMethod: string;
+  }): Promise<FiscalReceiptResult> {
+    const id = `NBC-${randomUUID().slice(0, 8)}`;
+    return {
+      receiptId: id,
+      qrPayload: `nbc://fiscal/${id}?amt=${input.amount}&m=${input.paymentMethod}`,
+    };
+  }
+}
+
 export function getFiscalProvider(): FiscalProvider {
+  const p = (process.env.ERA_FISCAL_PROVIDER ?? 'mock').toLowerCase();
+  if (p === 'nbc' || p === 'cybernet') return new NbcKkmProviderStub();
   return new MockKkmProvider();
 }

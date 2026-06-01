@@ -16,7 +16,7 @@
 ## Architecture position
 
 ```text
-era-retail-pos  →  era-365-orchestrator  →  era-finance-core
+era-retail-pos  →  era-orchestrator  →  era-finance-core
    (ops)              (ingress)              (GL + AR + stock)
 ```
 

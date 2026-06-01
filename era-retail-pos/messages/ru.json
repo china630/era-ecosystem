@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "title": "ERA Retail POS",
+    "description": "Розничная торговля — отраслевой сателлит ERA"
+  },
+  "login": {
+    "title": "ERA Retail POS",
+    "subtitle": "Вход в точку продаж",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "…",
+    "ssoHint": "Или SSO через ERA Finance / Orchestrator"
+  },
+  "home": {
+    "title": "ERA Retail POS",
+    "subtitle": "Отраслевой сателлит ERA",
+    "intro": "MVP operational shell по DESIGN.md.",
+    "healthLink": "Health API",
+    "openPos": "Открыть главный экран"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Откуда входить?",
+        "a": "Через ERA 365 Orchestrator (app.era-365.online) или launcher ERA Finance по SSO."
+      },
+      "sso": {
+        "q": "Как работает SSO?",
+        "a": "Токен платформы передаётся автоматически; отдельный пароль — только локальный fallback."
+      },
+      "pos": {
+        "q": "Где экран POS?",
+        "a": "После входа — «Главный экран» (/pos) для продаж и склада."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "home": "Главная"
+  },
+  "pos": {
+    "title": "ERA Retail POS",
+    "subtitle": "Preset-касса — смена, строки, оплата, возврат, Z-close",
+    "outletPreset": "Preset точки",
+    "paymentMethod": "Способ оплаты",
+    "cash": "Наличные",
+    "card": "Карта",
+    "openShift": "Открыть смену",
+    "addReceipt": "Добавить чек",
+    "pay": "Оплатить",
+    "return": "Возврат",
+    "xReport": "X-отчёт",
+    "closeShift": "Закрыть смену",
+    "productSearch": "Поиск товара (SKU / штрихкод)",
+    "find": "Найти",
+    "promoCode": "Промокод (SAVE10, HALF)",
+    "apply": "Применить",
+    "customerPhone": "Телефон клиента",
+    "loyaltyRef": "Loyalty ref",
+    "lineDescription": "Описание строки",
+    "unitPrice": "Цена (AZN)",
+    "qty": "Кол-во",
+    "pluSku": "PLU / SKU",
+    "barcode": "Штрихкод",
+    "size": "Размер",
+    "color": "Цвет",
+    "serial": "Серийный №",
+    "batch": "Партия",
+    "weightedItem": "Весовой товар",
+    "weightKg": "Вес (кг)",
+    "rxRequired": "Требуется рецепт",
+    "rxApprovedBy": "Рецепт подтвердил",
+    "receiptLines": "Строки чека",
+    "voidLine": "Аннулировать строку",
+    "shift": "Смена",
+    "receipt": "Чек",
+    "online": "Онлайн",
+    "queued": "{count} в очереди",
+    "offlineMode": "Офлайн — платежи в локальной очереди"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

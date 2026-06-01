@@ -10,14 +10,75 @@ import { fileURLToPath } from "url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const SATELLITES = [
-  { dir: "era-retail-pos", title: "ERA Retail POS", homePath: "/pos" },
-  { dir: "era-logistics", title: "ERA Logistics", homePath: "/trips" },
-  { dir: "era-construction", title: "ERA Construction", homePath: "/projects" },
-  { dir: "era-crm-field", title: "ERA CRM Field", homePath: "/leads" },
-  { dir: "era-auto-sto", title: "ERA Auto STO", homePath: "/work-orders" },
-  { dir: "era-wholesale", title: "ERA Wholesale", homePath: "/orders" },
-  { dir: "era-clinic", title: "ERA Clinic", homePath: "/appointments" },
+  { dir: "era-retail-pos", title: "ERA Retail POS", homePath: "/pos", shell: "RetailOpsShell", settingsHref: "/settings" },
+  { dir: "era-logistics", title: "ERA Logistics", homePath: "/trips", shell: "LogisticsOpsShell", settingsHref: "/admin/settings" },
+  { dir: "era-construction", title: "ERA Construction", homePath: "/projects", shell: "ConstructionOpsShell", settingsHref: "/admin/settings" },
+  { dir: "era-crm", title: "ERA CRM Field", homePath: "/leads", shell: "CrmOpsShell", settingsHref: "/admin/settings" },
+  { dir: "era-auto-service", title: "ERA Auto STO", homePath: "/work-orders", shell: "AutoServiceOpsShell", settingsHref: "/admin/settings" },
+  { dir: "era-wholesale", title: "ERA Wholesale", homePath: "/orders", shell: "WholesaleOpsShell", settingsHref: "/admin/settings" },
+  { dir: "era-clinic", title: "ERA Clinic", homePath: "/appointments", shell: "ClinicOpsShell", settingsHref: "/admin/settings" },
 ];
+
+function opsShellSource(shellName, settingsHref) {
+  return `"use client";
+
+import { useTranslations, useLocale } from "next-intl";
+import type { Locale } from "@era/i18n-common";
+import { LayoutDashboard, Settings } from "lucide-react";
+import {
+  EraAppRouteShell,
+  HeaderOrganization,
+  HeaderProfileMenu,
+  SatelliteHeaderLocale,
+  useSatelliteOpsSession,
+  type EraOpsNavItem,
+  type HeaderProfileMenuItem,
+} from "@era/satellite-kit/ui";
+
+export default function ${shellName}({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("nav");
+  const tMeta = useTranslations("meta");
+  const locale = useLocale() as Locale;
+  const { session } = useSatelliteOpsSession();
+
+  const navItems: EraOpsNavItem[] = [
+    { href: "/", label: t("home"), icon: LayoutDashboard },
+    { href: "${settingsHref}", label: t("settings"), icon: Settings },
+  ];
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
+
+  const profileItems: HeaderProfileMenuItem[] = [
+    { label: t("settings"), href: "${settingsHref}" },
+  ];
+
+  return (
+    <EraAppRouteShell
+      brandTitle={tMeta("title")}
+      navItems={navItems}
+      profile={
+        <HeaderProfileMenu
+          displayName={session?.displayName ?? tMeta("title")}
+          email={session?.email ?? undefined}
+          items={profileItems}
+          onLogout={() => void logout()}
+          logoutLabel={t("logout", { defaultValue: "Logout" })}
+        />
+      }
+      organization={
+        <HeaderOrganization variant="label" organizationName={session?.organizationName} />
+      }
+      locale={<SatelliteHeaderLocale locale={locale} />}
+    >
+      {children}
+    </EraAppRouteShell>
+  );
+}
+`;
+}
 
 function w(filePath, content) {
   const full = path.join(root, filePath);
@@ -75,25 +136,41 @@ for (const s of SATELLITES) {
   w(
     `${base}/app/layout.tsx`,
     `import type { Metadata } from "next";
-import { APP_SHELL_CLASS } from "@era/satellite-kit/ui";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { APP_SHELL_CLASS, SatelliteAppProviders, SatelliteRootChrome } from "@era/satellite-kit/ui";
+import ${s.shell} from "@/components/${s.shell}";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "${s.title}",
-  description: "ERA industry satellite — operational shell",
+  description: "ERA industry satellite — EraAppRouteShell",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={APP_SHELL_CLASS}>
-        <div className="mx-auto max-w-5xl px-4 py-6">{children}</div>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <SatelliteAppProviders>
+            <SatelliteRootChrome>
+              <${s.shell}>{children}</${s.shell}>
+            </SatelliteRootChrome>
+          </SatelliteAppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
 }
 `,
   );
+
+  w(`${base}/src/components/${s.shell}.tsx`, opsShellSource(s.shell, s.settingsHref));
 
   const mainPage = `${base}/app${s.homePath}/page.tsx`;
   if (fs.existsSync(path.join(root, mainPage))) {

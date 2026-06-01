@@ -4,10 +4,10 @@
 
 
 
-## SSO paths (platform entry � v1.0)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: `http://localhost:3000` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite `/sso/callback` session.
 3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
 
@@ -43,4 +43,12 @@
 
 - [x] M6: `GET /api/catalog/services` + `POST /api/catalog/sync` seed cache
 - [x] M5: `POST /api/lab-orders/:id/results` with out-of-range value → `CRITICAL` flag; `/lab-orders?criticalOnly=true`
+
+
+## v1.1 - M10-M13 (DONE)
+
+- [x] M10: visit CPOE fields on visit card
+- [x] M11: POST /api/lab/import
+- [x] M12: insurance eligibility proxy (Finance)
+- [x] M13: inpatient ward UI
 

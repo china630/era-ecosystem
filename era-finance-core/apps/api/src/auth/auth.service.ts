@@ -291,6 +291,7 @@ export class AuthService {
   }
 
   async register(dto: RegisterOrgDto) {
+    this.assertMdmRegistrationCutover();
     const normalizedTaxId = dto.taxId.trim();
     const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
     const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);
@@ -426,8 +427,22 @@ export class AuthService {
     };
   }
 
+  private assertMdmRegistrationCutover(): void {
+    if (process.env.ERA_MDM_REGISTRATION_CUTOVER !== "true") return;
+    const orchUrl =
+      process.env.ORCHESTRATOR_WEB_URL?.replace(/\/$/, "") ??
+      "http://localhost:3100";
+    throw new BadRequestException({
+      message:
+        "Organization registration is only available on ERA Orchestrator (MDM cutover v2.0).",
+      redirectUrl: `${orchUrl}/register-org`,
+      code: "MDM_REGISTRATION_CUTOVER",
+    });
+  }
+
   /** Новая организация для уже авторизованного пользователя (роль OWNER). */
   async createOrganizationForExistingUser(userId: string, dto: CreateOrgDto) {
+    this.assertMdmRegistrationCutover();
     const normalizedTaxId = dto.taxId.trim();
     const taxIdBlindIndex = this.piiCrypto.blindIndexForVoen(normalizedTaxId);
     const taxIdCipher = this.piiCrypto.encryptVoen(normalizedTaxId);

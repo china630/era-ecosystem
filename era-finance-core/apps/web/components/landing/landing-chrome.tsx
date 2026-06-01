@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Locale } from "@era/i18n-common";
 import type { LandingMarketingCopy } from "../../lib/i18n/landing-marketing-copy";
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "../../lib/design-system";
 import { LandingLanguageToggle } from "./landing-language-toggle";
@@ -13,8 +14,8 @@ export function LandingChrome({
 }: {
   hero: LandingMarketingCopy["hero"];
   loginLabel: string;
-  locale: "ru" | "az";
-  onLocaleChange?: (next: "ru" | "az") => void;
+  locale: Locale;
+  onLocaleChange?: (next: Locale) => void;
 }) {
   return (
     <header className="sticky top-0 z-20 border-b border-[#D5DADF]/80 bg-white/90 backdrop-blur-md">

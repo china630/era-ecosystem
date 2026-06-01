@@ -2,12 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 import type { RetailPreset, RetailPresetConfig } from "@/lib/retail-preset";
+import {
+  enqueueOfflineReceipt,
+  flushOfflineQueue,
+  isOfflineQueueEnabled,
+} from "@/lib/offline-receipt-queue";
 
 type Shift = { id: string; status: string };
 type ReceiptLine = {
@@ -68,6 +74,8 @@ const EMPTY_LINE: LineForm = {
 };
 
 export default function PosCheckoutPage() {
+  const t = useTranslations("pos");
+  const tNav = useTranslations("nav");
   const [shift, setShift] = useState<Shift | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [preset, setPreset] = useState<RetailPreset>("grocery");
@@ -90,6 +98,32 @@ export default function PosCheckoutPage() {
     totalSales: number;
     receiptCount: number;
   } | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
+  const [offlinePending, setOfflinePending] = useState(0);
+
+  const offlineEnabled = isOfflineQueueEnabled();
+
+  useEffect(() => {
+    if (!offlineEnabled || typeof window === "undefined") return;
+    const sync = () => setIsOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, [offlineEnabled]);
+
+  useEffect(() => {
+    if (!offlineEnabled || !isOnline) return;
+    flushOfflineQueue()
+      .then((n) => {
+        if (n > 0) setMessage(`Synced ${n} offline receipt(s)`);
+        setOfflinePending(0);
+      })
+      .catch(() => undefined);
+  }, [offlineEnabled, isOnline]);
 
   useEffect(() => {
     fetch("/api/presets")
@@ -285,7 +319,29 @@ export default function PosCheckoutPage() {
   }
 
   async function payReceipt() {
-    if (!receipt) return;
+    if (!receipt || !shift) return;
+    if (offlineEnabled && !isOnline) {
+      setLoading(true);
+      try {
+        await enqueueOfflineReceipt({
+          shiftId: shift.id,
+          lines: [buildLinePayload()],
+          paymentMethod,
+          promoCode: promoCode.trim() || undefined,
+          customerPhone: customerPhone.trim() || undefined,
+          loyaltyRef: loyaltyRef.trim() || undefined,
+          createdAt: new Date().toISOString(),
+        });
+        setOfflinePending((n) => n + 1);
+        setReceipt(null);
+        setMessage("Offline: receipt queued for sync");
+      } catch (err) {
+        setMessage(err instanceof Error ? err.message : "Offline queue failed");
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     setLoading(true);
     setMessage("");
     try {
@@ -363,18 +419,33 @@ export default function PosCheckoutPage() {
   return (
     <>
       <PageHeader
-        title="ERA Retail POS"
-        subtitle="Preset checkout — shift, lines, pay, return, Z-close"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
+            {tNav("home")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+        {offlineEnabled && (
+          <p
+            className={`rounded border px-3 py-2 text-sm ${
+              isOnline
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-300 bg-amber-50 text-amber-900"
+            }`}
+          >
+            {isOnline
+              ? offlinePending > 0
+                ? `${t("online")} — ${t("queued", { count: offlinePending })}`
+                : t("online")
+              : t("offlineMode")}
+          </p>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-[13px]">
-            Outlet preset
+            {t("outletPreset")}
             <select
               className="mt-1 w-full rounded border px-2 py-1"
               value={preset}
@@ -392,14 +463,14 @@ export default function PosCheckoutPage() {
             </select>
           </label>
           <label className="text-[13px]">
-            Payment method
+            {t("paymentMethod")}
             <select
               className="mt-1 w-full rounded border px-2 py-1"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
+              <option value="cash">{t("cash")}</option>
+              <option value="card">{t("card")}</option>
             </select>
           </label>
         </div>
@@ -411,7 +482,7 @@ export default function PosCheckoutPage() {
             disabled={loading || !!shift}
             onClick={openShift}
           >
-            Open shift
+            {t("openShift")}
           </button>
           <button
             type="button"
@@ -419,7 +490,7 @@ export default function PosCheckoutPage() {
             disabled={loading || !shift || shift.status === "CLOSED"}
             onClick={createReceipt}
           >
-            Add receipt
+            {t("addReceipt")}
           </button>
           <button
             type="button"
@@ -432,7 +503,7 @@ export default function PosCheckoutPage() {
             }
             onClick={payReceipt}
           >
-            Pay
+            {t("pay")}
           </button>
           <button
             type="button"
@@ -440,7 +511,7 @@ export default function PosCheckoutPage() {
             disabled={loading || !receipt || receipt.status !== "PAID"}
             onClick={returnReceipt}
           >
-            Return
+            {t("return")}
           </button>
           <button
             type="button"
@@ -448,7 +519,7 @@ export default function PosCheckoutPage() {
             disabled={loading || !shift || shift.status === "CLOSED"}
             onClick={loadXReport}
           >
-            X-report
+            {t("xReport")}
           </button>
           <button
             type="button"
@@ -456,13 +527,13 @@ export default function PosCheckoutPage() {
             disabled={loading || !shift || shift.status === "CLOSED"}
             onClick={closeShift}
           >
-            Close shift
+            {t("closeShift")}
           </button>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 border-t pt-4">
           <label className="text-[13px]">
-            Product search (SKU / barcode)
+            {t("productSearch")}
             <div className="mt-1 flex gap-2">
               <input
                 className="flex-1 rounded border px-2 py-1"
@@ -475,12 +546,12 @@ export default function PosCheckoutPage() {
                 disabled={loading}
                 onClick={searchProduct}
               >
-                Find
+                {t("find")}
               </button>
             </div>
           </label>
           <label className="text-[13px]">
-            Promo code (SAVE10, HALF)
+            {t("promoCode")}
             <div className="mt-1 flex gap-2">
               <input
                 className="flex-1 rounded border px-2 py-1"
@@ -493,12 +564,12 @@ export default function PosCheckoutPage() {
                 disabled={loading || !receipt || receipt.status !== "OPEN"}
                 onClick={applyPromo}
               >
-                Apply
+                {t("apply")}
               </button>
             </div>
           </label>
           <label className="text-[13px]">
-            Customer phone
+            {t("customerPhone")}
             <input
               className="mt-1 w-full rounded border px-2 py-1"
               value={customerPhone}
@@ -506,7 +577,7 @@ export default function PosCheckoutPage() {
             />
           </label>
           <label className="text-[13px]">
-            Loyalty ref
+            {t("loyaltyRef")}
             <input
               className="mt-1 w-full rounded border px-2 py-1"
               value={loyaltyRef}
@@ -517,7 +588,7 @@ export default function PosCheckoutPage() {
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-[13px]">
-            Line description
+            {t("lineDescription")}
             <input
               className="mt-1 w-full rounded border px-2 py-1"
               value={lineForm.description}
@@ -525,7 +596,7 @@ export default function PosCheckoutPage() {
             />
           </label>
           <label className="text-[13px]">
-            Unit price (AZN)
+            {t("unitPrice")}
             <input
               className="mt-1 w-full rounded border px-2 py-1"
               value={lineForm.unitPrice}
@@ -534,7 +605,7 @@ export default function PosCheckoutPage() {
           </label>
           {activeLineFields.includes("qty") && (
             <label className="text-[13px]">
-              Qty
+              {t("qty")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.qty}
@@ -545,7 +616,7 @@ export default function PosCheckoutPage() {
           {(activeLineFields.includes("plu") ||
             activeLineFields.includes("sku")) && (
             <label className="text-[13px]">
-              PLU / SKU
+              {t("pluSku")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.plu}
@@ -555,7 +626,7 @@ export default function PosCheckoutPage() {
           )}
           {activeLineFields.includes("barcode") && (
             <label className="text-[13px]">
-              Barcode
+              {t("barcode")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.barcode}
@@ -565,7 +636,7 @@ export default function PosCheckoutPage() {
           )}
           {activeLineFields.includes("size") && (
             <label className="text-[13px]">
-              Size
+              {t("size")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.size}
@@ -575,7 +646,7 @@ export default function PosCheckoutPage() {
           )}
           {activeLineFields.includes("color") && (
             <label className="text-[13px]">
-              Color
+              {t("color")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.color}
@@ -585,7 +656,7 @@ export default function PosCheckoutPage() {
           )}
           {activeLineFields.includes("serial") && (
             <label className="text-[13px]">
-              Serial
+              {t("serial")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.serial}
@@ -595,7 +666,7 @@ export default function PosCheckoutPage() {
           )}
           {activeLineFields.includes("batch") && (
             <label className="text-[13px]">
-              Batch
+              {t("batch")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.batch}
@@ -610,12 +681,12 @@ export default function PosCheckoutPage() {
                 checked={lineForm.isWeighted}
                 onChange={(e) => updateLineForm("isWeighted", e.target.checked)}
               />
-              Weighted item
+              {t("weightedItem")}
             </label>
           )}
           {lineForm.isWeighted && activeLineFields.includes("isWeighted") && (
             <label className="text-[13px]">
-              Weight (kg)
+              {t("weightKg")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.weightKg}
@@ -630,12 +701,12 @@ export default function PosCheckoutPage() {
                 checked={lineForm.rxRequired}
                 onChange={(e) => updateLineForm("rxRequired", e.target.checked)}
               />
-              Rx required
+              {t("rxRequired")}
             </label>
           )}
           {lineForm.rxRequired && activeLineFields.includes("rxRequired") && (
             <label className="text-[13px]">
-              Rx approved by
+              {t("rxApprovedBy")}
               <input
                 className="mt-1 w-full rounded border px-2 py-1"
                 value={lineForm.rxApprovedBy}
@@ -647,7 +718,7 @@ export default function PosCheckoutPage() {
 
         {receipt?.lines && receipt.lines.length > 0 && (
           <div className="space-y-2">
-            <p className="text-[13px] font-medium">Receipt lines</p>
+            <p className="text-[13px] font-medium">{t("receiptLines")}</p>
             <ul className="space-y-1 text-[13px]">
               {receipt.lines.map((line) => (
                 <li
@@ -665,7 +736,7 @@ export default function PosCheckoutPage() {
                       disabled={loading}
                       onClick={() => voidLine(line.id)}
                     >
-                      Void line
+                      {t("voidLine")}
                     </button>
                   )}
                 </li>
@@ -676,12 +747,12 @@ export default function PosCheckoutPage() {
 
         {shift && (
           <p className="text-[13px] text-[#7F8C8D]">
-            Shift: {shift.id.slice(0, 8)} ({shift.status}) · Preset: {preset}
+            {t("shift")}: {shift.id.slice(0, 8)} ({shift.status}) · Preset: {preset}
           </p>
         )}
         {receipt && (
           <p className="text-[13px] text-[#7F8C8D]">
-            Receipt: {receipt.id.slice(0, 8)} —{" "}
+            {t("receipt")}: {receipt.id.slice(0, 8)} —{" "}
             {Number(receipt.amountNet).toFixed(2)} AZN ({receipt.status})
           </p>
         )}

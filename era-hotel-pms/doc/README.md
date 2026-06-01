@@ -8,7 +8,7 @@
 |--------|------|
 | **Umbrella monorepo (hotel-pms + fb-pos)** | **[MONOREPO.md](MONOREPO.md)** · реестр: [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md) |
 | **Delivery hotel-pms** | [DELIVERY.md](DELIVERY.md) (Stage 17 = bridge для fb-pos) |
-| **Спецификация era-fb-pos** | [FB_POS_SATELLITE.md](FB_POS_SATELLITE.md) → [../../era-fb-pos/doc/README.md](../../era-fb-pos/doc/README.md) |
+| **Спецификация era-fnb-pos** | [FB_POS_SATELLITE.md](FB_POS_SATELLITE.md) → [../../era-fnb-pos/doc/README.md](../../era-fnb-pos/doc/README.md) |
 | **OpenAPI контракты** | [openapi/README.md](openapi/README.md) |
 | **Спецификация продукта (v0.4, ф.1 + ф.2)** | **[clone-spec/README.md](clone-spec/README.md)** ← основная работа |
 | **ACC vs ERP — граница финансов** | [clone-spec/01-finance-boundary.md](clone-spec/01-finance-boundary.md) |
@@ -28,7 +28,7 @@ doc/
 ├── MONOREPO.md               ← план umbrella repo
 ├── DOCUMENTATION-INDEX.md    ← реестр всех md/yaml (миграция без потерь)
 ├── openapi/                  ← fb-pos-pms-bridge, erp-*
-├── fb-pos/                   ← спека era-fb-pos (09/10 wireflows)
+├── fb-pos/                   ← спека era-fnb-pos (09/10 wireflows)
 ├── clone-spec/               ← ТЗ hotel-pms
 ├── nafta/                    ← всё специфичное для Nafta (работайте отсюда)
 │   ├── screens-manifest.csv  ← 292 строки, главный индекс

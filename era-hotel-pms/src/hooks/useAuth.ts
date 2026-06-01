@@ -8,6 +8,8 @@ export interface AuthUser {
   fullName: string;
   role: string;
   permissions: string[];
+  organizationName?: string | null;
+  organizationId?: string | null;
 }
 
 export function useAuth() {

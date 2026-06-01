@@ -46,7 +46,11 @@ export default function AppNav() {
         )}
         {can(PERMISSIONS.RESERVATIONS_READ) && (
           <a
-            href={process.env.NEXT_PUBLIC_FB_POS_URL ?? 'http://localhost:3200'}
+            href={
+              process.env.NEXT_PUBLIC_FNB_POS_URL ??
+              process.env.NEXT_PUBLIC_FB_POS_URL ??
+              'http://localhost:3202'
+            }
             className="text-sky-400 hover:underline"
             target="_blank"
             rel="noopener noreferrer"

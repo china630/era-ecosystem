@@ -1,5 +1,10 @@
+import { Suspense } from 'react';
 import Chessboard from '@/components/Chessboard';
 
 export default function HomePage() {
-  return <Chessboard />;
+  return (
+    <Suspense fallback={null}>
+      <Chessboard />
+    </Suspense>
+  );
 }

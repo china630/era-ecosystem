@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   authCookieName,
   hasPlatformCapability,
@@ -20,6 +21,8 @@ function startOfToday(): Date {
 }
 
 export default async function ExecutivePage() {
+  const t = await getTranslations("executive");
+  const tNav = await getTranslations("nav");
   const cookieStore = await cookies();
   const token = cookieStore.get(authCookieName())?.value;
   if (!token) redirect("/login");
@@ -75,35 +78,33 @@ export default async function ExecutivePage() {
   return (
     <>
       <PageHeader
-        title="Executive summary"
-        subtitle="K-14 — daily clinic KPIs (no GL in satellite)"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
+            {tNav("home")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6`}>
         {!canView ? (
-          <p className="text-[13px] text-red-600">
-            Access restricted to BUSINESS_OWNER (Finance OWNER/DIRECTOR via SSO).
-          </p>
+          <p className="text-[13px] text-red-600">{t("accessDenied")}</p>
         ) : !summary ? (
-          <p className="text-[13px] text-[#7F8C8D]">Unable to load summary.</p>
+          <p className="text-[13px] text-[#7F8C8D]">{t("loadFailed")}</p>
         ) : (
           <dl className="grid gap-4 sm:grid-cols-3 text-[13px]">
             <div className="rounded border p-4">
-              <dt className="text-[#7F8C8D]">Visits today</dt>
+              <dt className="text-[#7F8C8D]">{t("visitsToday")}</dt>
               <dd className="text-2xl font-semibold">{summary.visitsToday}</dd>
             </div>
             <div className="rounded border p-4">
-              <dt className="text-[#7F8C8D]">Lab revenue today</dt>
+              <dt className="text-[#7F8C8D]">{t("labRevenueToday")}</dt>
               <dd className="text-2xl font-semibold">
                 {summary.labRevenueToday.toFixed(2)} AZN
               </dd>
             </div>
             <div className="rounded border p-4">
-              <dt className="text-[#7F8C8D]">Open lab orders</dt>
+              <dt className="text-[#7F8C8D]">{t("openLabOrders")}</dt>
               <dd className="text-2xl font-semibold">{summary.openLabOrders}</dd>
             </div>
           </dl>

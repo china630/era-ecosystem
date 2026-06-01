@@ -3,18 +3,23 @@
 Standalone hospitality satellite: **Next.js + Prisma + PostgreSQL + Redis**, outbound JSON events to Nafta 1C bridge or ERA Finance gateway.
 
 Product spec: [`doc/clone-spec/README.md`](doc/clone-spec/README.md) · Delivery: [`doc/DELIVERY.md`](doc/DELIVERY.md)  
-F&B POS satellite: [`../era-fb-pos/README.md`](../era-fb-pos/README.md) · PMS bridge: [`doc/clone-spec/23-pos-bridge.md`](doc/clone-spec/23-pos-bridge.md) · Doc index: [`doc/DOCUMENTATION-INDEX.md`](doc/DOCUMENTATION-INDEX.md)
+F&B POS satellite: [`../era-fnb-pos/README.md`](../era-fnb-pos/README.md) · PMS bridge: [`doc/clone-spec/23-pos-bridge.md`](doc/clone-spec/23-pos-bridge.md) · Doc index: [`doc/DOCUMENTATION-INDEX.md`](doc/DOCUMENTATION-INDEX.md)  
+**UI shell:** [`docs/UI_PLAYBOOK_SATELLITES.md`](../docs/UI_PLAYBOOK_SATELLITES.md) · `HotelOpsShell` → `EraAppRouteShell` (no auth/locale in sidebar footer).
 
 ## Quick start (Docker — recommended)
+
+**Standalone** (this folder's `docker-compose.yml`):
 
 ```bash
 copy .env.example .env.local
 docker compose up -d
 ```
 
-- App: [http://localhost:3000](http://localhost:3000) (redirects to `/login` if not signed in)
+- App: [http://localhost:3000](http://localhost:3000) (standalone) · **umbrella stack: [http://localhost:3201](http://localhost:3201)**
 - [Login](http://localhost:3000/login) — demo: `admin` / `admin123`, `reception` / `reception123`, `manager` / `manager123`
-- Chessboard, [Room plan](http://localhost:3000/room-plan), [Occupancy](http://localhost:3000/reports/occupancy), [Agency ledger](http://localhost:3000/reports/agency-ledger), [Reconciliation](http://localhost:3000/reports/reconciliation), [F&B POS](http://localhost:3200) (era-fb-pos), [New booking](http://localhost:3000/bookings/new), [Master data](http://localhost:3000/admin/master-data), [Integration](http://localhost:3000/admin/integration), [Stock](http://localhost:3000/admin/stock), [Users](http://localhost:3000/admin/users), [Housekeeping](http://localhost:3000/housekeeping), [Operations](http://localhost:3000/operations), [Channel](http://localhost:3000/channel), [Medical](http://localhost:3000/medical)
+- **Front Office:** Chessboard `/`, [Room plan](http://localhost:3201/room-plan), [Reservations](http://localhost:3201/reports/reservations), [Group reservations](http://localhost:3201/reports/group-reservations), [FO with notes](http://localhost:3201/reports/reservations/notes), [In-house](http://localhost:3201/in-house), [Daily in-house](http://localhost:3201/reports/inhouse-daily), [EOD logs](http://localhost:3201/reports/end-of-day-logs)
+- **Ops / distribution / HK:** [Operations](http://localhost:3201/operations), [Channel](http://localhost:3201/channel), [Housekeeping](http://localhost:3201/housekeeping), [Closed rooms](http://localhost:3201/housekeeping/closed-rooms), [Guests](http://localhost:3201/guests)
+- ElectraWeb parity: [`doc/ELEKTRAWEB-PARITY.md`](doc/ELEKTRAWEB-PARITY.md) · [`doc/FRONT-OFFICE-ELECTRAWEB.md`](doc/FRONT-OFFICE-ELECTRAWEB.md)
 - UAT checklist: [`doc/UAT-SMOKE.md`](doc/UAT-SMOKE.md)
 
 Production profile:
@@ -39,7 +44,7 @@ copy .env.example .env.local
 
 ### 3. Database
 
-Migrations: `20260522120000_phase1_full` (domain), `20260523100000_auth_rbac` (User/Role), `20260524100000_phase1_closure` (outbound settings, stop-sell).
+Migrations include Wave B FO parity: `20260601120000_wave_b_full` (daily rates, guest identity, HK/distribution entities). Earlier: `20260522120000_phase1_full`, `20260523100000_auth_rbac`, `20260524100000_phase1_closure`.
 
 ```bash
 npm install

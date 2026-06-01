@@ -1,10 +1,14 @@
 # CP-BILLING — единый план переноса в orchestrator
 
-**Цель:** за один программный инкремент перенести **весь** коммерческий control plane из **era-finance-core** в **era-365-orchestrator**. Без поэтапного «половина billing здесь, половина там» в steady state.
+**pre-GA (2026-05-25):** Finance API registers `BillingModule`; meter `recordUsage` from quota paths; super-admin `PATCH /api/admin/config/billing/*`; public `GET /api/public/pricing`.
+
+**MVP backlog closure (2026-05-26):** `BillingMeterService.ensureIntradayTierInvoice` — idempotent same-day `SubscriptionInvoice` when tier spend ceiling hit; tests in `apps/api/test/billing/billing-meter.service.spec.ts`.
+
+**Цель:** за один программный инкремент перенести **весь** коммерческий control plane из **era-finance-core** в **era-orchestrator**. Без поэтапного «половина billing здесь, половина там» в steady state.
 
 **Не входит в этот план:** Platform add-ons (Notifications Pack, Booking, …) — отдельная работа **после** CP-BILLING. См. [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md).
 
-**Связанные документы:** [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · [ADR control-plane-billing-migration](../era-365-orchestrator/doc/adr/control-plane-billing-migration.md)
+**Связанные документы:** [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · [ADR control-plane-billing-migration](../era-orchestrator/doc/adr/control-plane-billing-migration.md)
 
 ---
 
@@ -89,7 +93,7 @@ Super-Admin **UI** может временно остаться на Finance web
 
 ### E. Database (authoritative = orchestrator CP schema)
 
-Уже есть в `era-365-orchestrator/packages/database/prisma/schema.prisma`:
+Уже есть в `era-orchestrator/packages/database/prisma/schema.prisma`:
 
 - `tenant_billing`
 - `organization_subscriptions`
@@ -108,7 +112,7 @@ Super-Admin **UI** может временно остаться на Finance web
 |----|-----------|
 | `/settings/subscription` | `apiFetch` → orchestrator URL |
 | `/super-admin/billing/*` | Admin API → orchestrator |
-| `/pricing` (public) | `GET /v1/public/pricing` |
+| `/pricing` (public) | Orch web page → `GET /v1/public/pricing`; Finance `/pricing` **redirect** |
 | `subscription-context.tsx` | Snapshot с orchestrator |
 
 **Реализация (2026-05):** `era-finance-core/apps/web/lib/api-client.ts` — `resolveApiUrl()` автоматически маршрутизирует `/api/subscription|billing|partner|early-access|admin/config/billing|…` на orchestrator. В браузере — rewrite `/cp/v1/*` → `NEXT_PUBLIC_CONTROL_PLANE_URL` (см. `next.config.ts`). ERP auth и остальной `/api/*` по-прежнему на Finance API :4000.
@@ -140,7 +144,7 @@ Super-Admin **UI** может временно остаться на Finance web
 | Signup attach | `attachReferralOnSignupTx` in Finance auth | Orchestrator org registration |
 | Commission accrual | `accrueCommissionsForSubscriptionInvoice` | From orchestrator `BillingMonthlyService` |
 
-**UI:** Finance `/partner` → orchestrator API (interim). Super-Admin referrals → CP admin API.
+**UI:** Finance `/partner`, `/pricing`, `/register*` → orchestrator web (`NEXT_PUBLIC_ORCH_WEB_URL`). Super-Admin referrals → CP admin API.
 
 **Spec:** Finance TZ §14.9 (SoT after cutover — orchestrator PRD M10).
 
@@ -214,6 +218,6 @@ Super-Admin **UI** может временно остаться на Finance web
 - [x] CP-BILLING-7 Early access move (H)
 - [x] CP-BILLING-8 Referrals & Partner move (I)
 - [x] CP-BILLING-9 Remove Finance billing + referrals code
-- [x] CP-BILLING-10 E2E + webhook cutover + referral accrual tests — `npm run platform:billing-reconcile` on orchestrator; UAT: [UAT-SMOKE-PLATFORM.md](../era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md)
+- [x] CP-BILLING-10 E2E + webhook cutover + referral accrual tests — `npm run platform:billing-reconcile` on orchestrator; UAT: [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md)
 
 После всех галочек — **CP-BILLING done**. Затем DOC-B Wave 1, затем CP-B2.

@@ -1,0 +1,483 @@
+{
+  "ru": {
+    "nav": {
+      "dailyInhouseList": "Список проживающих на день",
+      "minibarControl": "Минибар",
+      "closedRoomList": "Закрытые номера (OOO)",
+      "lostAndFound": "Бюро находок",
+      "promotionCodes": "Промокоды",
+      "travelAgencies": "Турагентства",
+      "childMatrix": "Детская матрица",
+      "foWithNotes": "Брони с примечаниями",
+      "reservationTimes": "Время бронирований",
+      "roomChanges": "Планы смены номера"
+    },
+    "operations": {
+      "viewEodLogs": "Журнал закрытия дня"
+    },
+    "booking": {
+      "reservationCardTitle": "Карточка бронирования",
+      "tabGuests": "Гости",
+      "tabPricing": "Цены",
+      "tabFolio": "Фолио",
+      "tabNotes": "Примечания",
+      "quotePending": "Выберите даты и тариф для расчёта.",
+      "folioTabHint": "Строки фолио появятся после сохранения брони.",
+      "notesTabHint": "Внутренние примечания."
+    },
+    "channel": {
+      "availabilityMatrix": "Матрица доступности"
+    },
+    "roomPlan": {
+      "print": "Печать"
+    },
+    "reservationCard": {
+      "stay": "Проживание",
+      "voucherNo": "№ ваучера",
+      "adults": "Взрослые",
+      "market": "Рынок",
+      "segment": "Сегмент",
+      "name": "Имя",
+      "surname": "Фамилия",
+      "nationality": "Гражданство",
+      "passport": "Паспорт",
+      "booker": "Заказчик",
+      "vipType": "Тип VIP",
+      "accomType": "Тип размещения",
+      "recordType": "Тип записи",
+      "tripReason": "Цель поездки",
+      "total": "Итого",
+      "calcDaily": "Рассчитать цены по дням",
+      "chargeAll": "Провести все ночи",
+      "chargeAllDone": "Проведено ночей: {count}",
+      "agency": "Агентство",
+      "individual": "Физ. лицо",
+      "mealPlan": "Питание",
+      "child11_6": "Дети 11–6",
+      "child5_2": "Дети 5–2",
+      "child1_0": "Дети 0–1",
+      "stayDate": "Дата",
+      "lock": "Заблокировать",
+      "unlock": "Разблокировать",
+      "print": "Печать",
+      "department": "Отдел",
+      "amount": "Сумма",
+      "posting": "Проводки",
+      "getPayment": "Принять оплату",
+      "folioTab": {
+        "all": "Все",
+        "agency": "Агентство",
+        "guest": "Гость"
+      },
+      "noteType": {
+        "EXTRA_REQ": "Доп. требования",
+        "RES_NOTE": "Примечание к брони",
+        "CIN_NOTE": "Примечание к заезду",
+        "COUT_NOTE": "Примечание к выезду",
+        "ROOM_NOTE": "Примечание к номеру",
+        "CANCEL_NOTE": "Примечание к отмене",
+        "PAYMENT_NOTE": "Примечание к оплате",
+        "PRICE_NOTE": "Примечание к цене",
+        "INVOICE_NOTE": "Примечание к счёту",
+        "CONFIRMATION": "Подтверждение",
+        "GENERAL_NOTE": "Общее примечание",
+        "ARRIVAL_POSTPONED": "Заезд перенесён",
+        "DEPARTURE_EXTENDED": "Выезд продлён",
+        "SET_ARRIVAL_EARLY": "Ранний заезд",
+        "SET_DEPARTURE_EARLY": "Ранний выезд"
+      },
+      "bottom": {
+        "details": "Детали",
+        "notes": "Примечания ({count})",
+        "creditCard": "Банковская карта",
+        "packages": "Пакеты",
+        "tasks": "Задачи ({count})",
+        "folioRouting": "Маршрутизация фолио"
+      }
+    },
+    "guestCard": {
+      "title": "Карточка гостя",
+      "idReader": "Считыватель документов",
+      "stats": {
+        "totalVisit": "Визитов",
+        "totalNights": "Ночей",
+        "totalRevenue": "Выручка",
+        "avgRate": "Средн. тариф",
+        "bonus": "Бонусы",
+        "surveys": "Средн. опрос",
+        "comments": "Комментарии",
+        "preferences": "Предпочтения"
+      },
+      "greyList": "Серый список",
+      "problematic": "Проблемный",
+      "tabIdentity": "Документы / контакты",
+      "tabCrm": "CRM",
+      "tabReservations": "Бронирования",
+      "tabDetails": "Детали",
+      "tabLoyalty": "Лояльность",
+      "tabTimeShare": "Тайм-шер",
+      "comingSoon": "Скоро",
+      "documents": "Документы",
+      "contacts": "Контакты",
+      "addresses": "Адреса",
+      "addDocument": "Добавить документ"
+    },
+    "inhouseDaily": {
+      "title": "Список проживающих на день",
+      "inHouse": "Проживают",
+      "departuresToday": "Выезды сегодня",
+      "room": "Номер",
+      "guest": "Гость",
+      "type": "Тип",
+      "departure": "Выезд"
+    },
+    "endOfDayLogs": {
+      "title": "Журнал закрытия дня",
+      "businessDay": "Операционный день",
+      "status": "Статус",
+      "started": "Начало",
+      "steps": "Шаги"
+    },
+    "foWithNotes": {
+      "title": "Брони с примечаниями",
+      "guest": "Гость",
+      "arrival": "Заезд",
+      "notes": "Примечания"
+    },
+    "reservationTimes": {
+      "title": "Время бронирований",
+      "guest": "Гость",
+      "plannedIn": "Плановый заезд",
+      "plannedOut": "Плановый выезд",
+      "actualIn": "Фактический заезд",
+      "actualOut": "Фактический выезд"
+    },
+    "roomChanges": {
+      "title": "Планы смены номера",
+      "guest": "Гость",
+      "from": "Из",
+      "to": "В",
+      "effective": "Действует с",
+      "status": "Статус"
+    },
+    "promotionCodes": {
+      "title": "Промокоды",
+      "code": "Код",
+      "discount": "Скидка %",
+      "active": "Активен"
+    },
+    "travelAgencies": {
+      "title": "Турагентства",
+      "code": "Код",
+      "name": "Название",
+      "commission": "Комиссия %",
+      "active": "Активен"
+    },
+    "childMatrix": {
+      "title": "Детская матрица цен",
+      "ageFrom": "Возраст от",
+      "ageTo": "Возраст до",
+      "discount": "Скидка %"
+    },
+    "closedRoomList": {
+      "title": "Закрытые номера (OOO)",
+      "room": "Номер",
+      "status": "Статус",
+      "type": "Тип"
+    },
+    "maidManagement": {
+      "title": "Распределение горничных",
+      "code": "Код",
+      "name": "Имя",
+      "tasks": "Задачи"
+    },
+    "minibarControl": {
+      "title": "Минибар"
+    },
+    "lostAndFound": {
+      "title": "Бюро находок",
+      "date": "Дата",
+      "location": "Место",
+      "description": "Описание",
+      "status": "Статус"
+    },
+    "reservationList": {
+      "title": "Бронирования",
+      "add": "Добавить бронь",
+      "room": "Номер",
+      "hk": "HK",
+      "agency": "Агентство",
+      "guest": "Гость",
+      "arrival": "Заезд",
+      "departure": "Выезд",
+      "roomType": "Тип номера",
+      "adult": "Взр.",
+      "children": "Дети",
+      "state": "Статус",
+      "resId": "№ брони"
+    },
+    "groupReservations": {
+      "title": "Групповые бронирования",
+      "code": "Код группы",
+      "name": "Название группы",
+      "rooms": "Номера",
+      "guests": "Гости",
+      "add": "Добавить группу",
+      "balance": "Баланс группы"
+    },
+    "placesAndRooms": {
+      "title": "Кабинеты и массажные"
+    },
+    "spaReservationList": {
+      "title": "SPA-бронирования",
+      "openScheduler": "Открыть расписание процедур"
+    },
+    "serviceStaffMatch": {
+      "title": "Соответствие персонал–услуга",
+      "staff": "Персонал",
+      "service": "Услуга",
+      "appointments": "Записи"
+    },
+    "airportTransfer": {
+      "title": "Подтверждение трансфера в аэропорт",
+      "allTransfers": "Все трансферы"
+    }
+  },
+  "az": {
+    "nav": {
+      "foWithNotes": "Qeydlərlə rezervasiyalar",
+      "reservationTimes": "Rezervasiya vaxtları",
+      "roomChanges": "Otaq dəyişikliyi planları"
+    },
+    "operations": {
+      "viewEodLogs": "Gün sonu jurnallarına bax"
+    },
+    "booking": {
+      "reservationCardTitle": "Rezervasiya kartı",
+      "tabGuests": "Qonaqlar",
+      "tabPricing": "Qiymətlər",
+      "tabFolio": "Folio",
+      "tabNotes": "Qeydlər",
+      "quotePending": "Qiymət üçün tarix və tarif seçin.",
+      "folioTabHint": "Folio sətirləri rezervasiya saxlanılandan sonra görünür.",
+      "notesTabHint": "Daxili qeydlər."
+    },
+    "channel": {
+      "availabilityMatrix": "Mövcudluq matrisi"
+    },
+    "roomPlan": {
+      "print": "Çap"
+    },
+    "reservationCard": {
+      "stay": "Qalma",
+      "voucherNo": "Vauçer №",
+      "adults": "Böyüklər",
+      "market": "Bazar",
+      "segment": "Seqment",
+      "name": "Ad",
+      "surname": "Soyad",
+      "nationality": "Milliyyət",
+      "passport": "Pasport",
+      "booker": "Sifarişçi",
+      "vipType": "VIP növü",
+      "accomType": "Yerləşmə növü",
+      "recordType": "Qeyd növü",
+      "tripReason": "Səfər səbəbi",
+      "total": "Cəmi",
+      "calcDaily": "Günlük qiymətləri hesabla",
+      "chargeAll": "Bütün gecələri keçir",
+      "chargeAllDone": "Keçirilmiş gecə: {count}",
+      "agency": "Agentlik",
+      "individual": "Fərdi",
+      "mealPlan": "Yemək planı",
+      "child11_6": "Uşaq 11–6",
+      "child5_2": "Uşaq 5–2",
+      "child1_0": "Uşaq 0–1",
+      "stayDate": "Tarix",
+      "lock": "Kilidlə",
+      "unlock": "Kilidi aç",
+      "print": "Çap",
+      "department": "Şöbə",
+      "amount": "Məbləğ",
+      "posting": "Keçirmələr",
+      "getPayment": "Ödəniş qəbul et",
+      "folioTab": {
+        "all": "Hamısı",
+        "agency": "Agentlik",
+        "guest": "Qonaq"
+      },
+      "noteType": {
+        "EXTRA_REQ": "Əlavə tələblər",
+        "RES_NOTE": "Rezervasiya qeydi",
+        "CIN_NOTE": "Giriş qeydi",
+        "COUT_NOTE": "Çıxış qeydi",
+        "ROOM_NOTE": "Otaq qeydi",
+        "CANCEL_NOTE": "Ləğv qeydi",
+        "PAYMENT_NOTE": "Ödəniş qeydi",
+        "PRICE_NOTE": "Qiymət qeydi",
+        "INVOICE_NOTE": "Hesab-faktura qeydi",
+        "CONFIRMATION": "Təsdiq",
+        "GENERAL_NOTE": "Ümumi qeyd",
+        "ARRIVAL_POSTPONED": "Giriş təxirə salındı",
+        "DEPARTURE_EXTENDED": "Çıxış uzadıldı",
+        "SET_ARRIVAL_EARLY": "Erkən giriş",
+        "SET_DEPARTURE_EARLY": "Erkən çıxış"
+      },
+      "bottom": {
+        "details": "Detallar",
+        "notes": "Qeydlər ({count})",
+        "creditCard": "Bank kartı",
+        "packages": "Paketlər",
+        "tasks": "Tapşırıqlar ({count})",
+        "folioRouting": "Folio marşrutlaşdırma"
+      }
+    },
+    "guestCard": {
+      "title": "Qonaq kartı",
+      "idReader": "Sənəd skaneri",
+      "stats": {
+        "totalVisit": "Ümumi ziyarət",
+        "totalNights": "Gecələr",
+        "totalRevenue": "Gəlir",
+        "avgRate": "Orta tarif",
+        "bonus": "Bonus",
+        "surveys": "Sorğu ort.",
+        "comments": "Şərhlər",
+        "preferences": "Üstünlüklər"
+      },
+      "greyList": "Boz siyahı",
+      "problematic": "Problemli",
+      "tabIdentity": "Şəxsiyyət / əlaqə",
+      "tabCrm": "CRM",
+      "tabReservations": "Rezervasiya detalları",
+      "tabDetails": "Detallar",
+      "tabLoyalty": "Loyallıq",
+      "tabTimeShare": "Time share",
+      "comingSoon": "Tezliklə",
+      "documents": "Sənədlər",
+      "contacts": "Əlaqələr",
+      "addresses": "Ünvanlar",
+      "addDocument": "Sənəd əlavə et"
+    },
+    "inhouseDaily": {
+      "title": "Gündəlik in-house siyahı",
+      "inHouse": "Qalanlar",
+      "departuresToday": "Bu gün çıxışlar",
+      "room": "Otaq",
+      "guest": "Qonaq",
+      "type": "Tip",
+      "departure": "Çıxış"
+    },
+    "endOfDayLogs": {
+      "title": "Gün sonu jurnalları",
+      "businessDay": "Əməliyyat günü",
+      "status": "Status",
+      "started": "Başlanğıc",
+      "steps": "Addımlar"
+    },
+    "foWithNotes": {
+      "title": "Qeydlərlə rezervasiyalar",
+      "guest": "Qonaq",
+      "arrival": "Giriş",
+      "notes": "Qeydlər"
+    },
+    "reservationTimes": {
+      "title": "Rezervasiya vaxtları",
+      "guest": "Qonaq",
+      "plannedIn": "Planlaşdırılan giriş",
+      "plannedOut": "Planlaşdırılan çıxış",
+      "actualIn": "Faktiki giriş",
+      "actualOut": "Faktiki çıxış"
+    },
+    "roomChanges": {
+      "title": "Otaq dəyişikliyi planları",
+      "guest": "Qonaq",
+      "from": "Haradan",
+      "to": "Haraya",
+      "effective": "Qüvvəyə minir",
+      "status": "Status"
+    },
+    "promotionCodes": {
+      "title": "Promo kodları",
+      "code": "Kod",
+      "discount": "Endirim %",
+      "active": "Aktiv"
+    },
+    "travelAgencies": {
+      "title": "Səyahət agentlikləri",
+      "code": "Kod",
+      "name": "Ad",
+      "commission": "Komissiya %",
+      "active": "Aktiv"
+    },
+    "childMatrix": {
+      "title": "Uşaq qiymət matrisi",
+      "ageFrom": "Yaşdan",
+      "ageTo": "Yaşa qədər",
+      "discount": "Endirim %"
+    },
+    "closedRoomList": {
+      "title": "Bağlı otaqlar (OOO)",
+      "room": "Otaq",
+      "status": "Status",
+      "type": "Tip"
+    },
+    "maidManagement": {
+      "title": "Xidmətçi paylanması",
+      "code": "Kod",
+      "name": "Ad",
+      "tasks": "Tapşırıqlar"
+    },
+    "minibarControl": {
+      "title": "Minibar nəzarəti"
+    },
+    "lostAndFound": {
+      "title": "Tapılan əşyalar",
+      "date": "Tarix",
+      "location": "Yer",
+      "description": "Təsvir",
+      "status": "Status"
+    },
+    "reservationList": {
+      "title": "Rezervasiyalar",
+      "add": "Rezervasiya əlavə et",
+      "room": "Otaq",
+      "hk": "HK",
+      "agency": "Agentlik",
+      "guest": "Qonaq",
+      "arrival": "Giriş",
+      "departure": "Çıxış",
+      "roomType": "Otaq tipi",
+      "adult": "Böyük",
+      "children": "Uşaqlar",
+      "state": "Vəziyyət",
+      "resId": "Rez. ID"
+    },
+    "groupReservations": {
+      "title": "Qrup rezervasiyaları",
+      "code": "Qrup kodu",
+      "name": "Qrup adı",
+      "rooms": "Otaqlar",
+      "guests": "Qonaqlar",
+      "add": "Qrup əlavə et",
+      "balance": "Qrup balansı"
+    },
+    "placesAndRooms": {
+      "title": "Kabinetlər və masaj otaqları"
+    },
+    "spaReservationList": {
+      "title": "SPA rezervasiya siyahısı",
+      "openScheduler": "Prosedur cədvəlini aç"
+    },
+    "serviceStaffMatch": {
+      "title": "Xidmət-personal uyğunluğu",
+      "staff": "Personal",
+      "service": "Xidmət",
+      "appointments": "Qeydlər"
+    },
+    "airportTransfer": {
+      "title": "Hava limanı transfer təsdiqi",
+      "allTransfers": "Bütün transferlər"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "common": {
+    "locale": "en",
+    "accessDenied": "You do not have access to this section."
+  },
+  "nav": {
+    "home": "Home"
+  },
+  "header": {
+    "settings": "Settings",
+    "help": "Help",
+    "profileMenu": "Account menu",
+    "invoicesQuota": "Invoices",
+    "employeesQuota": "Staff"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

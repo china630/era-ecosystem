@@ -4,13 +4,13 @@ RUN apk add --no-cache libc6-compat openssl wget
 
 FROM base AS deps
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install --ignore-scripts
 
 FROM base AS dev
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npx prisma generate
-EXPOSE 3000
+EXPOSE 3201
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
 
@@ -35,8 +35,8 @@ COPY --from=builder /app/package.json ./package.json
 COPY scripts/docker-entrypoint.sh /app/scripts/docker-entrypoint.sh
 RUN chmod +x /app/scripts/docker-entrypoint.sh
 USER nextjs
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 3201
+ENV PORT=3201
 ENV HOSTNAME=0.0.0.0
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

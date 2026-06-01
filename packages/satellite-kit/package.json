@@ -13,21 +13,42 @@
     "./ui": {
       "types": "./dist/ui/index.d.ts",
       "default": "./dist/ui/index.js"
-    }
+    },
+    "./platform/industry-modules": {
+      "types": "./dist/platform/industry-modules.d.ts",
+      "default": "./dist/platform/industry-modules.js"
+    },
+    "./auth/sso-launch": {
+      "types": "./dist/auth/sso-launch.d.ts",
+      "default": "./dist/auth/sso-launch.js"
+    },
+    "./integration/finance-deep-links": {
+      "types": "./dist/integration/finance-deep-links.d.ts",
+      "default": "./dist/integration/finance-deep-links.js"
+    },
+    "./auth/middleware-edge": {
+      "types": "./dist/auth/middleware-edge.d.ts",
+      "default": "./dist/auth/middleware-edge.js"
+    },
+    "./tailwind-content": "./tailwind-content.js"
   },
   "sideEffects": false,
   "scripts": {
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@era/i18n-common": "file:../i18n-common",
     "@era/contracts": "file:../era-contracts",
+    "@era/storage": "file:../era-storage",
     "jose": "^6.0.11",
     "lucide-react": "^0.511.0",
+    "sonner": "^2.0.3",
     "zod": "^3.25.36"
   },
   "peerDependencies": {
     "axios": "^1.7.0",
     "next": "^14.0.0 || ^15.0.0",
+    "next-intl": "^4.0.0",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
@@ -36,6 +57,7 @@
     "@types/react": "^19.1.4",
     "axios": "^1.9.0",
     "next": "^15.3.3",
+    "next-intl": "^4.12.0",
     "react": "^19.1.0",
     "typescript": "^5.7.3"
   }

@@ -57,9 +57,9 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 
 ## Deferred (post-MVP)
 
-- [ ] PMS-04 Room Plan drag-resize (pointer DnD — buttons +1/+2 done)
-- [ ] OpenAPI ERP ([18-erp-integration.md](clone-spec/18-erp-integration.md))
-- [ ] Phase 2 modules ([14-phase2-roadmap.md](clone-spec/14-phase2-roadmap.md))
+- [x] PMS-04 Room Plan drag-resize (pointer DnD — buttons +1/+2 done) <!-- v1.1 -->
+- [x] OpenAPI ERP ([18-erp-integration.md](clone-spec/18-erp-integration.md)) — catalog yaml v1.1 review
+- [x] Phase 2 modules (v2.0 MVP) — NBC adapter, B2C widget, door locks; prod cert → backlog
 
 ## Stage 7 — RBAC, seat licensing, SSO (sprint)
 
@@ -149,7 +149,7 @@ Roadmap: [clone-spec/14-phase2-roadmap.md](clone-spec/14-phase2-roadmap.md) · P
 
 - [x] Tourism registry: `TourismSubmission`, mock adapter, check-in/out hooks, `/operations` retry
 - [x] KKM mock: `FiscalProvider`, E7 `PAYMENT_FISCALIZED`, receipt on folio payments
-- [ ] Реальный NBC/Cybernet KKM — отложено
+- [x] Реальный NBC/Cybernet KKM — adapter `ERA_FISCAL_PROVIDER=nbc|mock` (v2.0)
 
 ### Stage 14 — P2-C POS bridge (в PMS)
 
@@ -162,11 +162,11 @@ Roadmap: [clone-spec/14-phase2-roadmap.md](clone-spec/14-phase2-roadmap.md) · P
 - [x] `Warehouse`, `Product`, `StockMovement`, `Recipe` / `RecipeLine`
 - [x] `/admin/stock` + APIs under `/api/stock/*`
 - [x] Optional consumption on room-charge (`STOCK_CONSUMPTION_ENABLED` + `productSku`)
-- [ ] Full PO / fixed assets / DMENU — out of scope
+- [-] Full PO / fixed assets / DMENU — out of scope (v1.1)
 
 ### Stage 17 — PMS bridge for fb-pos (FB-1 prep)
 
-OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wireflows: [09](../../era-fb-pos/doc/09-wireflow-ticket-to-folio.md), [10](../../era-fb-pos/doc/10-wireflow-cash-fiscal.md)
+OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wireflows: [09](../../era-fnb-pos/doc/09-wireflow-ticket-to-folio.md), [10](../../era-fnb-pos/doc/10-wireflow-cash-fiscal.md)
 
 - [x] `GET /api/pms/in-house` — поиск гостя (`query`, `roomNumber`, `limit`)
 - [x] `GET /api/pms/reservations/{id}/folio-summary` — `allowRoomCharge`, `denyReason`
@@ -174,21 +174,20 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] `GET /api/pms/pos-shift-status` — open POS shifts для night audit UI
 - [x] `PUT /api/pms/pos-shift-status` — fb-pos push open/close Z
 - [x] `PosShift` NA guard — блок night audit при open `PosBridgeShift`
-- [x] PMS → fb-pos webhook on check-out (`FB_POS_WEBHOOK_URL`, fire-and-forget)
+- [x] PMS → fb-pos webhook on check-out (`FNB_POS_WEBHOOK_URL`, fire-and-forget)
 - [x] Middleware: `POS_BRIDGE_SECRET` на `/api/pms/*` и room-charge без JWT
 - [x] Prisma: `PosBridgeShift`, `PosRoomChargeIdempotency` — migration `20260527100000_stage17_pos_bridge`
 - [x] E2E script — `node scripts/test-pos-bridge.mjs` (PMS bridge smoke)
-- [x] **SP3 regression:** `era-fb-pos` FB-1 calls `POST /api/pos/room-charge` via `HOTEL_PMS_URL`; re-run script + [UAT-SMOKE §11](UAT-SMOKE.md) after fb-pos changes
+- [x] **SP3 regression:** `era-fnb-pos` FB-1 calls `POST /api/pos/room-charge` via `HOTEL_PMS_URL`; re-run script + [UAT-SMOKE §11](UAT-SMOKE.md) after fb-pos changes
 
 ### Stage 16+ — P2-E backlog (без сроков)
 
-- [x] **era-fb-pos** — сателлит: [../../era-fb-pos/doc/README.md](../../era-fb-pos/doc/README.md); shell FB-0 на :3200
-- [ ] HK mobile PWA `/hk/mobile`
-- [ ] B2C booking engine
-- [ ] Door locks integration
-- [x] `era-fb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) v1.0 UI + auth
-- [ ] PMS-04 drag-resize room plan
-- [ ] Auto email reports (WA0345+)
+- [x] **era-fnb-pos** — сателлит: [../../era-fnb-pos/doc/README.md](../../era-fnb-pos/doc/README.md); shell FB-0 на :3200
+- [x] HK mobile PWA `/hk/mobile`
+- [x] B2C booking engine — `/b2c` + `GET /api/public/booking/rates`
+- [x] Door locks integration — `DoorLockAdapter` + `POST /api/integrations/door-lock/unlock`
+- [x] `era-fnb-pos` full (floor, KDS, POS Z-shift) — [DELIVERY-FB.md](../../era-fnb-pos/doc/DELIVERY-FB.md) v1.0 UI + auth
+- [x] Auto email reports (WA0345+) — `POST /api/admin/reports/email-cron`
 
 ### Stage 18 — SAN-PKG
 - [x] `RatePlanPackageLine` — package routing to revenue codes (ROOM / TREATMENT / BOARD)
@@ -212,7 +211,7 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] Hall block via `PosResource` (`BANQUET_HALL`) + `PosReservation` on confirm
 - [x] `/banquets` UI + `/api/banquets/*` — create draft BEO, confirm, deposit payment on folio
 - [x] Seed: saloon **NAFTANI-HALL**, menu package, sample BEO
-- [x] fb-pos: `beoId` on ticket, outlet `BANQUET` — [DELIVERY-FB.md](../../era-fb-pos/doc/DELIVERY-FB.md) banquet section
+- [x] fb-pos: `beoId` on ticket, outlet `BANQUET` — [DELIVERY-FB.md](../../era-fnb-pos/doc/DELIVERY-FB.md) banquet section
 - [x] UAT: [UAT-SMOKE.md](UAT-SMOKE.md) § BANQUET
 
 **Migration:** `20260528140000_wave4_banquet`
@@ -282,3 +281,35 @@ PRD M20–M23 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M21: Guest loyalty tier hook → `platform_loyalty`
 - [x] M22: Room service QR menu → fb-pos ticket
 - [x] M23: Maintenance work order from HK
+
+## Wave B — ElectraWeb FO parity (2026-06-01)
+
+Migration: `20260601120000_wave_b_full`. Guide: [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) · [ELEKTRAWEB-PARITY.md](ELEKTRAWEB-PARITY.md).
+
+- [x] Reservation Card: pricing recalc, charge-all, lock, agency/children/meal plan
+- [x] Unified create → stay on Reservation Card (`onCreated`)
+- [x] FO reports: notes, inhouse-daily, reservation-times, room-changes, EOD logs
+- [x] Guest Card: documents, contacts, addresses, loyalty JSON
+- [x] Group reservations balance + assign API
+- [x] Distribution: promotion codes, travel agencies, child matrix, channel availability matrix
+- [x] HK: closed rooms, maids, minibar, lost & found (no HotelParityPage stubs)
+- [x] SPA/transfers MVP screens
+- [x] Night audit → link to EOD logs; room plan print
+
+## Wave C — Front Office product (2026-06-01)
+
+Guide: [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md).
+
+- [x] Nav **Əsas** first in Core; order per Electraweb `front office.md`
+- [x] Executive dashboard: 7 KPIs (`GET /api/executive/dashboard`)
+- [x] Rack tiles: status, guest, stay dates, pay status, procedure count
+- [x] DnD relocate rack + room plan (`POST /api/reservations/:id/relocate`)
+- [x] Room plan: `FilterMenuButton` for grouping + period (14/21/30)
+- [x] Room plan: split room column, arrow/notch bars, hover tooltip, −20% row height, full width
+- [x] Executive cockpit (Daily Flash): fact/plan occupancy, ADR/RevPAR −1d/−7d, revenue segments, MTD/YTD, receivables, hotel status
+- [x] Forecast dashboard: `/executive/forecast` — occupancy 7/14/30/90 days (`GET /api/executive/forecast`)
+- [x] Reservation card: shared toolbar; create uses card chrome
+- [x] Guest card: CRM + reservation action grids; details tab
+- [x] Notes merged into reservation list; `/reports/reservations/notes` redirects
+- [x] Reports section: actual check-in/out times (renamed)
+- [x] `FilterMenuButton` in `@era/satellite-kit`

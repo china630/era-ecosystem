@@ -1,8 +1,12 @@
 # Control plane SSO & satellite event bus
 
+## Public hub (Orchestrator web)
+
+Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_WEB_URL`, default `:3000`): `/login`, `/register`, `/register-org`, `/pricing`, `/help`, `/terms`, `/partner`. Finance and satellites link out via `orchPublicHref()`; Finance `/pricing` and `/register*` redirect to Orch. Canonical FAQ: Orch `/help`. See [ECOSYSTEM_URLS.md](./ECOSYSTEM_URLS.md).
+
 ## SSO (Epic A — Phase A complete)
 
-- **Issuer:** `era-365-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`)
+- **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`)
 - **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` verifies HS256 JWT (`ERA_JWT_SECRET`, `iss`, `aud`)
 - **Rollout:** set `ERA_AUTH_MODE=control-plane` on finance-core API (default `legacy` keeps `JwtAuthGuard` + DB validation)
 
@@ -19,12 +23,12 @@
 2. Finance: `ERA_JWT_RS256_JWKS_URL=http://orchestrator:4100/.well-known/jwks.json` (or equivalent) — CP guard accepts RS256 tokens.
 3. HS256 remains valid during dual-sign period if both secrets/keys configured.
 
-JWKS endpoint: `era-365-orchestrator/apps/api/src/auth/well-known.controller.ts`. DELIVERY checkbox: [DELIVERY-ORCHESTRATOR.md](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) CP2.
+JWKS endpoint: `era-orchestrator/apps/api/src/auth/well-known.controller.ts`. DELIVERY checkbox: [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) CP2.
 - **Billing:** `ControlPlaneEntitlementGuard` runs after auth; `isOwner` from JWT for owner-only routes
 
 ## RBAC (Epic A2 — orchestrator source of truth)
 
-**Source of truth:** `era-365-orchestrator` for identity, org membership, **`OWNER`**, transfer ownership, access requests, ownership disputes.
+**Source of truth:** `era-orchestrator` for identity, org membership, **`OWNER`**, transfer ownership, access requests, ownership disputes.
 
 Finance keeps **domain policy** guards (e.g. PROCUREMENT cannot Post ledger). With `ERA_AUTH_MODE=control-plane`, roles come from JWT claims.
 
@@ -74,7 +78,7 @@ See [SATELLITE_DOCUMENTATION.md](./SATELLITE_DOCUMENTATION.md) § Identity & RBA
   "roles": ["OWNER"],
   "isOwner": true,
   "isSuperAdmin": false,
-  "iss": "era-365-orchestrator",
+  "iss": "era-orchestrator",
   "aud": "era-finance-core"
 }
 ```
@@ -131,9 +135,9 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | era-logistics | `handleLogisticsTrip` | GL posting |
 | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | era-construction | `handleConstructionAct` | GL + draft invoice |
-| `SATELLITE_CRM_LEAD_CONVERTED` | era-crm-field | `handleCrmLead` | GL + draft invoice |
-| `SATELLITE_CRM_VISIT_LOGGED` | era-crm-field | `handleCrmVisitLogged` | Activity log (meta only) |
-| `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-sto | `handleAutoSto` | GL + draft invoice |
+| `SATELLITE_CRM_LEAD_CONVERTED` | era-crm | `handleCrmLead` | GL + draft invoice |
+| `SATELLITE_CRM_VISIT_LOGGED` | era-crm | `handleCrmVisitLogged` | Activity log (meta only) |
+| `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |

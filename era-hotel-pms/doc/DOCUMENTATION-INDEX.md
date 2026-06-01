@@ -22,6 +22,8 @@
 | [MONOREPO.md](MONOREPO.md) | `doc/MONOREPO.md` | umbrella | stable |
 | [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md) | `doc/DOCUMENTATION-INDEX.md` | umbrella | stable |
 | [UAT-SMOKE.md](UAT-SMOKE.md) | `doc/UAT-SMOKE.md` | hotel-pms | stable |
+| [ELEKTRAWEB-PARITY.md](ELEKTRAWEB-PARITY.md) | `doc/ELEKTRAWEB-PARITY.md` | hotel-pms | stable |
+| [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) | `doc/FRONT-OFFICE-ELECTRAWEB.md` | hotel-pms | stable |
 | [i18n.md](i18n.md) | `doc/i18n.md` | hotel-pms | stable |
 | [nafta/DOC-B-CHECKLIST.md](nafta/DOC-B-CHECKLIST.md) | `doc/nafta/` | hotel-pms | stable |
 | [nafta/NOTEBOOKLM-PROMPT.md](nafta/NOTEBOOKLM-PROMPT.md) | `doc/nafta/` | hotel-pms | stable |
@@ -47,7 +49,7 @@
 
 ---
 
-## `doc/fb-pos/` — ТЗ era-fb-pos
+## `doc/fb-pos/` — ТЗ era-fnb-pos
 
 | Файл | monorepo_path | Зависимости |
 |------|---------------|-------------|
@@ -165,6 +167,16 @@ rg "doc/fb-pos" apps/            # должны указывать на ../../do
 ```
 
 Рекомендуется CI job: `markdown-link-check` на `doc/**/*.md`.
+
+---
+
+## App shell (UI)
+
+| Topic | Location |
+|-------|----------|
+| **`HotelOpsShell`** | `src/components/HotelOpsShell.tsx` — `EraAppRouteShell` from `@era/satellite-kit/ui` |
+| Header order | Profile → org label → locale → tier bar (see [`docs/UI_PLAYBOOK_SATELLITES.md`](../../docs/UI_PLAYBOOK_SATELLITES.md)) |
+| Sidebar | No locale / logout in footer; width `17.5rem`, `overflow-x-hidden` |
 
 ---
 

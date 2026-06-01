@@ -10,7 +10,7 @@ Gate passed 2026-05-25. Control plane, SSO on industry satellites, Finance event
 
 | Area | Status | Doc |
 |------|--------|-----|
-| Orchestrator RBAC (access, transfer, disputes) | **Done** | [DELIVERY-ORCHESTRATOR](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) |
+| Orchestrator RBAC (access, transfer, disputes) | **Done** | [DELIVERY-ORCHESTRATOR](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) |
 | Unified SSO + `BUSINESS_OWNER` | **Done** | [INTEGRATION_SSO_EVENTS](./INTEGRATION_SSO_EVENTS.md) |
 | Finance control-plane auth | **Done** | [SETUP_AND_RUN](./SETUP_AND_RUN.md) |
 | Contract Management §4.15 | **Done** | Finance `/contracts` |
@@ -26,17 +26,67 @@ Hospitality Nafta package (sanatorium, banquets, GL bridge, invoice center, cont
 
 ---
 
-## v1.1 — Next (planned)
+## v1.1 — Shipped (2026-05-26)
 
-**Scope:** [MODULES_CATALOG § Planned v1.1](./MODULES_CATALOG.md#planned-v11) — retail M14–M16, clinic M10–M13, logistics tariffs/COD, CRM automation, construction/auto/wholesale/fb extensions.
+**Scope:** [MODULES_CATALOG § Shipped v1.1](./MODULES_CATALOG.md#shipped-in-v11) — retail M14–M16, clinic M10–M13, logistics tariffs/COD, CRM automation, construction/auto/wholesale/fb, hotel polish.
 
-**Tracking:** `## Planned — v1.1` sections in each `era-*/doc/DELIVERY*.md` and `PRD.md` §4 statuses `PLANNED (v1.1)`.
+**Plan:** [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) · [.cursor/plans/era_v1.1_release_75a73624.plan.md](../.cursor/plans/era_v1.1_release_75a73624.plan.md).
+
+**Finance APIs:** `era-finance-core/apps/api/src/industry-handoffs/` — stock-check, replenishment, supplier-match, rate-quote, cod-clearing, eligibility, external PO.
 
 ---
 
-## v2.0 — Later (planned)
+## v2.0 — Shipped (2026-05-26)
 
-**Scope:** [MODULES_CATALOG § Planned v2.0](./MODULES_CATALOG.md#planned-v20) — fiscal/offline/marketplace retail, platform add-ons **Live**, heavy integrations (EDI, TecDoc, tool crib, …).
+**Scope:** [MODULES_CATALOG § Shipped v2.0](./MODULES_CATALOG.md#shipped-in-v20) — platform add-ons **Live**, MDM registration cutover, retail M8–M10, auto M12, CRM WhatsApp live, clinic portal, hotel NBC KKM / B2C / door locks.
+
+**Plan:** [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) · [.cursor/plans/era_v2.0_release_ee4a671b.plan.md](../.cursor/plans/era_v2.0_release_ee4a671b.plan.md).
+
+**Flags:** `ERA_MDM_REGISTRATION_CUTOVER`, `ERA_FISCAL_PROVIDER=mock|nbc`, `PLATFORM_ADDONS_MODE=live`, `WHATSAPP_BUSINESS_MODE=live`.
+
+---
+
+## Ecosystem UX patch (2026-05-30)
+
+Cross-product polish shipped without a version bump:
+
+| Area | Status | Doc |
+|------|--------|-----|
+| Unified login UI (`AuthLoginCard`) on Orch, Finance, all satellites | **Done** | [DESIGN.md](../DESIGN.md), [SATELLITE_DOCUMENTATION](./SATELLITE_DOCUMENTATION.md) |
+| Multi-credential login (login / email / phone) + scrypt passwords | **Done** | `@era/satellite-kit/auth` |
+| Orchestrator public hub (`/pricing`, `/help`, `/terms`, `/register`, `/partner`) | **Done** | [ECOSYSTEM_URLS](./ECOSYSTEM_URLS.md) |
+| Finance redirects (`/pricing`, `/register*`) → Orch `:3000` | **Done** | `NEXT_PUBLIC_ORCH_WEB_URL` |
+| i18n az/ru/en parity + `tools/sync-i18n-parity.mjs` | **Done** | [USER_DOCUMENTATION](./USER_DOCUMENTATION.md) |
+| `platform_storage` add-on + `@era/storage` package | **Done** | [PLATFORM_ADDONS](./PLATFORM_ADDONS.md) |
+
+---
+
+## pre-GA — Shipped (2026-05-25)
+
+**Scope:** Platform hooks Hotel/FB, retail offline UI, Finance Phase 16 billing wire, MDM/VÖEN, hotel prod polish, DVX/ƏMAS Phase 2 docs.
+
+**Plan:** [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) · [.cursor/plans/era_pre-ga_hardening_447867e7.plan.md](../.cursor/plans/era_pre-ga_hardening_447867e7.plan.md).
+
+---
+
+## Module maturity (pre-GA)
+
+**Plan:** [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) · [.cursor/plans/era_modules_catalog_maturity_2dc76166.plan.md](../.cursor/plans/era_modules_catalog_maturity_2dc76166.plan.md).
+
+| Milestone | Status |
+|-----------|--------|
+| M-sync — false **PLANNED** cleared (v1.1 shipped APIs) | **Done** |
+| M1 — v1.1 modules **DONE** (UAT + TZ + SMOKE) | **Done** |
+| M2 — v1.0 / v2.0 core **DONE** (hotel M18–23, FB M11–13, retail M8–10, logistics v1.0 pack) | **Done** |
+| M3 — Auto M1 vehicle card, M3/M4 labor & parts lines | **Done** |
+| M4 — Orch launcher **MVP**; Finance catalog Status column | **Done** |
+| M5 — Con M5 **DEFERRED**; hotel Full PO/FA out-of-scope | **Done** |
+
+**MVP backlog closure (2026-05-26):** [MODULES_CATALOG.md § MVP backlog](./MODULES_CATALOG.md#mvp-backlog-priority) — **closed** except Finance Manufacturing/IFRS (tier 2+/3) and Con M5 **DEFERRED**.
+
+**Residual catalog MVP:** Manufacturing, IFRS only (~2 rows). Integration gaps: none ([READINESS_MATRIX.md](./READINESS_MATRIX.md) §4.3).
+
+**Open testing (2026-05-27):** Closed/local UAT **go** — see [READINESS_MATRIX §6](./READINESS_MATRIX.md#6-open-testing-gate-2026-05-27). Ecosystem i18n + FAQ/legal shipped; staging smoke before external GA.
 
 ---
 

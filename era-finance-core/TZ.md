@@ -40,8 +40,9 @@
 | GET | `/api/system/invoice-vat-rates` | Допустимые ставки ƏDV для строк счёта/номенклатуры (`tax_rates`, VAT) |
 | GET | `/api/system/team-assignable-roles` | Роли, доступные для приглашения в организацию |
 | GET | `/api/system/inventory-movement-enums` | Списки `StockMovementType` и `StockMovementReason` (как в Prisma) для складских фильтров и согласованности UI |
-| GET/POST/* | `/api/billing/*` | Контур биллинга организации: доступ **только** для роли `OWNER` (не-owner роли получают `403`) |
-| POST | `/api/billing/webhooks/:provider` | Webhook платёжного провайдера (`mock`, `pasha`, `pasha_bank`), публичный маршрут |
+| GET/POST/* | `/api/billing/*` | **UI contract** → исполняется на **orchestrator** (Finance web `resolveApiUrl`); доступ **OWNER** на CP |
+| POST | `/api/billing/webhooks/:provider` | Webhook провайдера на **orchestrator** (публичный маршрут CP) |
+| GET | `/api/subscription/me` | Снимок подписки/модулей — **orchestrator** (`/v1/subscription/me`); Finance guards читают CP через internal/proxy |
 | GET / POST | `/api/integrations/drakaris/v1/client/:id`, `/payments` | Drakaris/yığım inbound API: Basic Auth, конверт `{status,description,data}`, status-коды 200/401/402/404/405/406/407/408 (см. §14.8.14) |
 | GET / PATCH | `/api/users/me` | Self-service профиль текущего пользователя: PII (cipher), `phone` (E.164 +994), `locale` (`AZ`\|`RU`), смена пароля (см. §2.2) |
 | GET | `/api/reports/cash-flow` | ДДС прямой метод (`CashFlowService.getDirectCashFlow`), query: `dateFrom`, `dateTo`, опц. `cashDeskId`, `bankName` |
@@ -88,7 +89,27 @@
 
 ## 0. Синхронизация с PRD
 
-Таблица **§0.0** отражает актуальные контракты **v25.2** (добавлены tenant-эндпоинты **`/api/compliance/*`** для ERM). Расширенное описание модулей — разделы **§2–§10**, **§6.0**, **§7.0**; продуктовые формулировки — **PRD §4.12**, **§4.13**, **§5.1**.
+**Версия связки PRD ↔ TZ:** **2026-05-26** (control plane Phase A, CP-BILLING SoT on orchestrator, umbrella deploy).
+
+Таблица **§0.0** отражает актуальные контракты **v25.2** (tenant **`/api/compliance/*`** для ERM; billing/subscription rows → **orchestrator**). Расширенное описание модулей — **§2–§10**, **§6.0**, **§7.0**; продуктовые формулировки — **PRD §4.12**, **§4.13**, **§5.1**.
+
+### 0.1. ERA Ecosystem (control plane + satellites, 2026-05+)
+
+Продукт **больше не сводится к одному Finance VPS**. Каноническая модель — [PRD.md](./PRD.md) **§3.2.1**, umbrella [CONTROL_PLANE_ARCHITECTURE.md](../docs/CONTROL_PLANE_ARCHITECTURE.md).
+
+| Контур | Репозиторий | Роль |
+|--------|-------------|------|
+| **Control plane** | `era-orchestrator` | Identity, SSO, RBAC/ownership, **billing SoT**, entitlements, satellite event ingress |
+| **Data plane (ERP)** | `era-finance-core` | GL, documents, inventory, payroll, compliance, satellite event **dispatch** |
+| **Industry satellites** | `era-hotel-pms`, `era-fnb-pos`, … | Operational UX; typed events → orchestrator → Finance worker |
+
+**Локальный запуск всего стека:** [docs/SETUP_AND_RUN.md](../docs/SETUP_AND_RUN.md) (корневой `docker-compose.yml`), не только `era-finance-core/docker-compose.yml`.
+
+**Finance web → orchestrator:** `apps/web/lib/api-client.ts` — префиксы `/api/subscription`, `/api/billing`, `/api/partner`, `/api/early-access`, `/api/public/pricing`, admin pricing/referrals → rewrite `/cp/v1/*` (см. `next.config.ts`). Пути **§0.0** для billing остаются **контрактом UI** (те же URL с клиента), исполнение — на CP.
+
+**Auth:** `ERA_AUTH_MODE=control-plane` — JWT от orchestrator; RBAC mutations (`join-org`, access requests, transfer ownership) проксируются при `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default).
+
+**Деплой:** umbrella compose + [docs/SMOKE_ALL_SERVICES.md](../docs/SMOKE_ALL_SERVICES.md); Finance-only legacy — [docs/deploy/FINANCE-ERP-DEPLOY.md](./docs/deploy/FINANCE-ERP-DEPLOY.md).
 
 ---
 
@@ -1355,7 +1376,7 @@ Cash Flow is generated for a period (`dateFrom`..`dateTo`, UTC inclusive). API: 
 - **Secure payroll export storage (v2026.04.16):** универсальные зарплатные реестры сохраняются как файл через `STORAGE_SERVICE` (S3/local), а не inline `data:` payload.
 - **Temporary links (TTL):** скачивание зарплатного файла доступно только по временной подписанной ссылке и только ролям `OWNER`/`ACCOUNTANT` в пределах текущего `organizationId`.
 - **Early access / painted door (market validation):** тенантские эндпоинты **`POST /api/early-access/events`**, **`POST /api/early-access/signup`**, **`GET /api/early-access/me`** — фиксация кликов, времени модалки, конверсии в лист ожидания и снимка тарифа/отрасли (см. PRD §5.0.1). Высокочастотный **`POST …/events`** **исключён** из `AuditMutationInterceptor`. Супер-админ: **`GET /api/admin/early-access/summary`**, **`GET /api/admin/early-access/events`** (кросс-тенант при `skipTenantFilter` на `/api/admin/*`). Пороговые уведомления: env **`EARLY_ACCESS_THRESHOLDS`** (по умолчанию `50,100`).
-- **Industry entitlements (v2026.06):** slugs **`industry_retail_ecom`**, **`industry_logistics_customs`**, **`industry_construction`**, **`industry_crm_whatsapp`** в `customConfig.modules` / `activeModules` (Super-Admin PATCH); снимок `modules.industry*` в `/subscription/me`; при включении — навигация на shell **`/industry/{vertical}`**, иначе painted-door модалка. Не включаются автоматически для ENTERPRISE.
+- **Industry entitlements (v2026.06):** slugs **`industry_retail`**, **`industry_logistics`**, **`industry_construction`**, **`industry_crm`** в `customConfig.modules` / `activeModules` (Super-Admin PATCH); снимок `modules.industry*` в `/subscription/me`; при включении — навигация на shell **`/industry/{vertical}`**, иначе painted-door модалка. Не включаются автоматически для ENTERPRISE.
 
 ### 11.1. Web UI: шапка страницы (`PageHeader`)
 
@@ -2210,6 +2231,8 @@ enum SubscriptionTier {
 
 > В [PRD.md](./PRD.md) соответствующий блок — **§7.6**. Ниже — архитектура **платформенной** админки (не путать с **модулем 6** HR в §7 этого документа).
 
+**Экосистема:** маршруты **`/api/billing/*`**, **`/api/subscription/*`**, **`/api/partner/*`**, **`/api/early-access/*`**, **`/api/admin/config/billing`**, **`/api/admin/pricing-*`**, **`/api/admin/referrals/*`** (см. **§0.0**) исполняются на **`era-orchestrator`**; Finance web проксирует их (`resolveApiUrl` → `/cp/v1/*`). Канонический UI супер-админа для billing/MDM — Orch **`/super-admin`**. Finance **`/super-admin/data`** (NAS, i18n, customs) остаётся на Finance API.
+
 ### §15.0 Security / Audit — PII and Secret redaction in integration logs
 
 - **Цель:** не сохранять и не писать в application logs незамаскированные **PII** и **секреты** из ответов/ошибок внешних API (банки, IBAN.com, налоговые пробы и т.п.).
@@ -2717,7 +2740,7 @@ enum SubscriptionTier {
 
 ### 22.0. Phase 14.1 и идентификаторы задач (синхрон с PRD)
 
-Продуктовая фаза **Phase 14.1 — Risk & Compliance (ERM)** зафиксирована в **[PRD.md](./PRD.md) §14.1–§14.2** (платный модуль **`compliance_pro`**, ENTERPRISE по правилам полного пакета). Таблица **Task ID** в PRD — единый реестр для **`docs/modules-roadmap.html`** и **`docs/modules-roadmap-facts.html`**: **`MOD-ERM-001`**, **`MOD-ERM-002`**, **`FEAT-ERM-TAX-001`**, **`FEAT-ERM-VOEN-001`**, **`FEAT-ERM-FRAUD-001`**, **`FEAT-ERM-UX-001`** (все **[x] COMPLETED** в PRD); **`FEAT-ERM-AI-001`** — **[ ] PLANNED**; **`FEAT-SEC-CRYPTO-001`** — **[ ] PLANNED** (Phase 15 — **§23**).
+Продуктовая фаза **Phase 14.1 — Risk & Compliance (ERM)** зафиксирована в **[PRD.md](./PRD.md) §14.1–§14.2** (платный модуль **`compliance_pro`**, ENTERPRISE по правилам полного пакета). Таблица **Task ID** — **PRD §14.2**: **`MOD-ERM-001`**, **`MOD-ERM-002`**, **`FEAT-ERM-TAX-001`**, **`FEAT-ERM-VOEN-001`**, **`FEAT-ERM-FRAUD-001`**, **`FEAT-ERM-UX-001`** (все **[x] COMPLETED**); **`FEAT-ERM-AI-001`** — **[ ] PLANNED**; **`FEAT-SEC-CRYPTO-001`** — **[ ] PLANNED** (Phase 15 — **§23**).
 
 **Назначение:** модуль **`compliance_pro`** даёт организации дашборд **рисков** и журнал **системных сигналов** (`RiskAudit`), формируемых **периодическими** rule-based сканерами (BullMQ). **Гейтинг:** все tenant API модуля и веб-дашборд только при активном **`compliance_pro`** или при **ENTERPRISE** (полный пакет модулей по правилам §14.2). **ENTERPRISE** получает `compliancePro: true` в снимке подписки.
 
@@ -2814,7 +2837,7 @@ enum SubscriptionTier {
 | Поле | Значение |
 |------|----------|
 | **Статус** | [ ] **PLANNED (scope)** — спецификация для фаз реализации после текущего production scope |
-| **Task ID** | **`FEAT-SEC-CRYPTO-001`** (реестр PRD §14.2, roadmap `docs/modules-roadmap*.html`) |
+| **Task ID** | **`FEAT-SEC-CRYPTO-001`** (реестр PRD §14.2) |
 | **PRD** | **[PRD.md](./PRD.md) §15** — продуктовые цели, Tier 1–3 recovery, «дилемма бухгалтера» |
 | **Связь** | ASAN İmza / SİMA для **подписи документов** — существующий контур (PRD §6.2, `MOD-V3-SIGN-001`); §23 добавляет **state-backed crypto escrow** для **восстановления OMRK**, не смешивая с PDF signing API |
 

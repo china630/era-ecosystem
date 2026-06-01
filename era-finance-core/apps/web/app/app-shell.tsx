@@ -198,201 +198,6 @@ function QuickActionsMobileFab({
   );
 }
 
-function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
-  const { t } = useTranslation();
-  const { user, organizations, switchOrganization, ready, token } = useAuth();
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [tree, setTree] = useState<{
-    holdings: Array<{
-      holdingId: string;
-      holdingName: string;
-      baseCurrency: string;
-      organizations: Array<{
-        id: string;
-        name: string;
-        taxId: string;
-        currency: string;
-      }>;
-    }>;
-    freeOrganizations: Array<{
-      id: string;
-      name: string;
-      taxId: string;
-      currency: string;
-    }>;
-  } | null>(null);
-  const [treeErr, setTreeErr] = useState<string | null>(null);
-
-  const pickDone = useCallback(() => {
-    setOpen(false);
-    onNavigate?.();
-  }, [onNavigate]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (wrapRef.current?.contains(e.target as Node)) return;
-      setOpen(false);
-    };
-    document.addEventListener("click", onDoc);
-    return () => document.removeEventListener("click", onDoc);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !token) return;
-    let cancelled = false;
-    setTreeErr(null);
-    void apiFetch("/api/organizations/tree")
-      .then(async (res) => {
-        if (cancelled) return;
-        if (!res.ok) {
-          setTreeErr(`${res.status}`);
-          return;
-        }
-        setTree((await res.json()) as typeof tree);
-      })
-      .catch(() => setTreeErr("load"))
-      .finally(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [open, token]);
-
-  if (!ready || !token || !user) return null;
-
-  const current = organizations.find((o) => o.id === user.organizationId);
-
-  if (organizations.length <= 1) {
-    return current ? (
-      <span
-        className="hidden sm:inline text-sm font-medium text-primary truncate max-w-[220px]"
-        title={current.name}
-      >
-        {current.name}
-      </span>
-    ) : null;
-  }
-
-  return (
-    <div className="relative hidden sm:block" ref={wrapRef}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        aria-label={t("orgSwitcher.aria")}
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 max-w-[240px] px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white text-sm font-medium text-primary hover:border-action/40 hover:bg-action/10 transition text-left"
-      >
-        <span className="truncate">{current?.name ?? "—"}</span>
-        <span className="text-gray-400 shrink-0" aria-hidden>
-          ▾
-        </span>
-      </button>
-      {open && (
-        <ul
-          className="absolute left-0 mt-1 w-72 max-h-72 overflow-auto rounded-xl border border-gray-200 bg-white shadow-lg py-1 z-50"
-          role="listbox"
-        >
-          {treeErr ? (
-            <li className="px-3 py-2 text-xs text-slate-500">
-              {t("common.loadErr")}: {treeErr}
-            </li>
-          ) : null}
-
-          {tree?.holdings?.length ? (
-            <li className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-              {t("orgSwitcher.holdingSection")}
-            </li>
-          ) : null}
-
-          {(tree?.holdings ?? []).map((h) => (
-            <li key={h.holdingId} className="pt-1">
-              <Link
-                href={`/holding?id=${encodeURIComponent(h.holdingId)}`}
-                className="block px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-action/10"
-                onClick={pickDone}
-              >
-                {h.holdingName}
-                <span className="ml-2 text-xs font-medium text-slate-500">
-                  {h.baseCurrency}
-                </span>
-              </Link>
-              <ul className="pb-1">
-                {h.organizations.map((o) => (
-                  <li key={o.id} role="option" aria-selected={o.id === user.organizationId}>
-                    <button
-                      type="button"
-                      className="w-full text-left pl-6 pr-3 py-2 text-sm hover:bg-action/10 flex flex-col gap-0.5"
-                      onClick={() => {
-                        if (o.id === user.organizationId) {
-                          pickDone();
-                          return;
-                        }
-                        void switchOrganization(o.id)
-                          .then(() => pickDone())
-                          .catch(() => {
-                            /* toast optional */
-                          });
-                      }}
-                    >
-                      <span className="font-medium text-gray-900 truncate">{o.name}</span>
-                      <span className="text-xs text-gray-500">
-                        VÖEN {o.taxId}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-
-          {tree?.freeOrganizations?.length ? (
-            <>
-              <li className="border-t border-gray-100 mt-1" />
-              <li className="px-3 pt-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                {t("orgSwitcher.freeCompanies")}
-              </li>
-              {tree.freeOrganizations.map((o) => (
-                <li key={o.id} role="option" aria-selected={o.id === user.organizationId}>
-                  <button
-                    type="button"
-                    className="w-full text-left px-3 py-2 text-sm hover:bg-action/10 flex flex-col gap-0.5"
-                    onClick={() => {
-                      if (o.id === user.organizationId) {
-                        pickDone();
-                        return;
-                      }
-                      void switchOrganization(o.id)
-                        .then(() => pickDone())
-                        .catch(() => {
-                          /* toast optional */
-                        });
-                    }}
-                  >
-                    <span className="font-medium text-gray-900 truncate">{o.name}</span>
-                    <span className="text-xs text-gray-500">VÖEN {o.taxId}</span>
-                  </button>
-                </li>
-              ))}
-            </>
-          ) : null}
-
-          <li className="border-t border-gray-100 mt-1 pt-1">
-            <Link
-              href="/companies"
-              className="block px-3 py-2 text-sm text-action hover:bg-action/10"
-              onClick={pickDone}
-            >
-              {t("orgSwitcher.manageCompanies")}
-            </Link>
-          </li>
-        </ul>
-      )}
-    </div>
-  );
-}
-
 function LedgerToggle() {
   const { t } = useTranslation();
   const { ledgerType, setLedgerType, ready } = useLedger();
@@ -456,7 +261,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (user.organizationId) return;
     if (pathname === "/companies" || pathname.startsWith("/companies/")) return;
     if (pathname.startsWith("/partner")) return;
-    if (user.isSuperAdmin && pathname.startsWith("/super-admin")) return;
+    if (user.isSuperAdmin && pathname.startsWith("/admin/data")) return;
     router.replace("/companies");
   }, [ready, token, user, pathname, router]);
 
@@ -554,7 +359,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       pathname.startsWith("/companies") ||
       pathname.startsWith("/settings") ||
       pathname.startsWith("/admin");
-    const superAdminNavActive = pathname.startsWith("/super-admin");
+    const superAdminNavActive = pathname.startsWith("/admin/data");
     const reportingHubActive =
       !pathname.startsWith("/reports") &&
       (pathname === "/reporting" ||
@@ -663,7 +468,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }, [pathname]);
 
-  const superAdminRoute = pathname.startsWith("/super-admin");
+  const superAdminRoute = pathname.startsWith("/admin/data");
 
   if (hideShell) {
     return <div className="min-h-screen">{children}</div>;
@@ -729,12 +534,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div
         className={[
           "min-w-0 pt-16 transition-[padding] duration-200 ease-out",
-          sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-64",
+          sidebarCollapsed ? "lg:pl-[4.5rem]" : "lg:pl-[17.5rem]",
         ].join(" ")}
       >
         <MainHeader
           onToggleMobileNav={toggleMobileNav}
           mobileNavOpen={mobileNavOpen}
+          sidebarCollapsed={sidebarCollapsed}
           ready={ready}
           token={token}
           user={user}
@@ -750,12 +556,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           notificationsBell={
             ready && token ? <InAppNotificationBell /> : undefined
           }
-          orgSwitcher={<OrgSwitcher onNavigate={closeMobileNav} />}
           onLogout={() => void logout()}
           riskIndicator={<ComplianceRiskIndicator />}
         />
 
-        <main className="app-shell-main mx-auto w-full min-w-0 max-w-screen-xl px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8">
+        <main className="app-shell-main w-full min-w-0 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:pb-8">
           {ready && token ? <TrialBanner /> : null}
           {ready && token ? <ExternalAuditEngagementBanner /> : null}
           {ready && token && billingBanner ? (

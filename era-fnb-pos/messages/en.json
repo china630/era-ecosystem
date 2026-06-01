@@ -1,0 +1,171 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Restaurant floor, orders, and kitchen display"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "floor": "Floor",
+    "orders": "Orders",
+    "kds": "KDS",
+    "menu": "Menu",
+    "integration": "Integration",
+    "calendar": "Reservations",
+    "brand": "ERA F&B POS"
+  },
+  "home": {
+    "title": "F&B POS",
+    "subtitle": "ERA industry satellite",
+    "openFloor": "Open floor",
+    "activeOrders": "Active orders",
+    "kitchenDisplay": "Kitchen display",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "floor": {
+    "title": "Floor map"
+  },
+  "kds": {
+    "title": "Kitchen display"
+  },
+  "executive": {
+    "title": "Executive summary",
+    "subtitle": "F&B — owner view (billing in Finance / Orchestrator)",
+    "restricted": "Restricted to platform roles (OWNER/DIRECTOR/ADMIN/ACCOUNTANT via Orch SSO).",
+    "organization": "Organization",
+    "financeRole": "Finance role",
+    "openFinance": "Open Finance →"
+  },
+  "admin": {
+    "settings": {
+      "title": "Outlet settings",
+      "subtitle": "Admin — UI playbook (list + ModalShell)",
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "outletName": "Outlet name",
+      "edit": "Edit",
+      "editOutlet": "Edit outlet",
+      "save": "Save",
+      "defaultOutletName": "Demo outlet"
+    },
+    "menu": {
+      "title": "Menu admin"
+    },
+    "integration": {
+      "title": "Integration & billing",
+      "loadFailed": "Failed to load",
+      "organization": "Organization",
+      "kkmDriver": "KKM driver",
+      "e8Consumption": "E8 consumption",
+      "enabled": "enabled",
+      "disabledEnv": "disabled (env)",
+      "platformSubscription": "Platform subscription (read-only)"
+    }
+  },
+  "sso": {
+    "signingIn": "Signing you in…"
+  },
+  "orders": {
+    "title": "Active orders",
+    "openTickets": "Open tickets",
+    "ticketActions": "Ticket actions",
+    "loading": "Loading…",
+    "noTickets": "No open tickets.",
+    "selectTicket": "Select a ticket",
+    "fireKitchen": "Fire kitchen",
+    "payCash": "Pay cash",
+    "openKds": "Open KDS",
+    "void": "Void",
+    "applyDiscount": "Apply discount %",
+    "splitSelected": "Split selected lines",
+    "selectLinesToSplit": "Select lines to split",
+    "roleHint": "Sign in as waiter for fire/pay; manager for void, discount and Z-close."
+  },
+  "calendar": {
+    "title": "Table reservations",
+    "table": "Table",
+    "time": "Time",
+    "guest": "Guest",
+    "pax": "Pax",
+    "book": "Book",
+    "openTicket": "Open ticket",
+    "reserved": "Reserved",
+    "failed": "Failed"
+  },
+  "common": {
+    "azn": "AZN",
+    "loading": "Loading…",
+    "emDash": "—",
+    "home": "Home",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "auth": {
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "login": {
+    "title": "ERA F&B POS",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "demoHint": "Demo: waiter/waiter or manager/manager",
+    "subtitle": "Sign in to your account",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  }
+}

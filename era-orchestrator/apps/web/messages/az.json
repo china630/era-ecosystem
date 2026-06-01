@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "title": "ERA 365 Orchestrator",
+    "description": "İdarəetmə planı — identiklik, billing, sənaye launcher"
+  },
+  "login": {
+    "title": "ERA 365",
+    "subtitle": "İdarəetmə planına daxil olun",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "…",
+    "createAccount": "Hesab yarat",
+    "registerOrg": "Təşkilat qeydiyyatı",
+    "demoHint": "Platform super-admin: bootstrap-dan sonra tmp/era-local-credentials.md"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA 365 — modullar",
+    "subtitle": "İdarəetmə planı girişi. Aşağıda hüquqlu modulları açın.",
+    "loadingEntitlements": "Hüquqlar yüklənir…",
+    "hotelUpsellTitle": "Hotel PMS-i genişləndirin",
+    "hotelUpsellHint": "Hotel PMS girişiniz var. Channel Manager əlavə edin və ya qiymətləndirmədə Resort paketini seçin.",
+    "hotelUpsellCta": "Hotel qiymətləri",
+    "open": "Aç →",
+    "waitlist": "Gözləmə siyahısı",
+    "financeOpen": "Finance aç",
+    "intro": "DESIGN.md üzrə MVP əməliyyat qabığı.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA 365 nədir?",
+        "a": "ERA ekosisteminin idarəetmə planı: identiklik, təşkilatlar, abunəlik və sənaye modullarına launcher."
+      },
+      "sso": {
+        "q": "Satellitlərə necə keçmək olar?",
+        "a": "Daxil olduqdan sonra launcher-dən Finance və ya sənaye modulunu seçin. SSO token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN və modul seçimi ilə."
+      }
+    }
+  },
+  "superAdmin": {
+    "hub": {
+      "title": "Super-admin",
+      "subtitle": "Platforma idarəetməsi — billing, MDM, təhlükəsizlik.",
+      "billingLink": "Billing — qiymət, paketlər, kvotalar",
+      "mdmLink": "MDM — şirkət reyestri",
+      "earlyAccessLink": "Early access — gözləmə siyahısı",
+      "securityLink": "Təhlükəsizlik — mübahisələr və org state"
+    },
+    "mdm": {
+      "title": "MDM",
+      "subtitlePrefix": "VÖEN və təşkilat uyğunlaşdırması.",
+      "browseCompanies": "Şirkətlər siyahısı",
+      "openCompanyList": "Şirkətləri aç"
+    },
+    "mdmCompanies": {
+      "title": "MDM — şirkətlər",
+      "prev": "Əvvəl",
+      "next": "Növbəti",
+      "page": "Səhifə {page}"
+    },
+    "security": {
+      "title": "Təhlükəsizlik",
+      "orgIdPlaceholder": "Təşkilat ID",
+      "load": "Yüklə",
+      "loadFailed": "Yükləmə uğursuz",
+      "disputeIdPlaceholder": "Mübahisə ID",
+      "updateDispute": "Mübahisəni yenilə",
+      "patchFailed": "Yeniləmə uğursuz"
+    },
+    "earlyAccess": {
+      "title": "Erkən giriş",
+      "loadingSummary": "Xülasə yüklənir…",
+      "recentEvents": "Son hadisələr"
+    },
+    "billing": {
+      "loading": "Yüklənir…",
+      "foundationLabel": "Foundation (AZN/ay)",
+      "saveFoundation": "Foundation saxla",
+      "seedCatalog": "Kataloq seed",
+      "colModule": "Modul",
+      "colKey": "Açar",
+      "colPrice": "AZN/ay",
+      "colActions": "Əməliyyatlar",
+      "save": "Saxla"
+    },
+    "billingPackages": {
+      "newBundle": "Yeni paket",
+      "loading": "Yüklənir…",
+      "colBundle": "Paket",
+      "colDiscount": "Endirim %",
+      "colModules": "Modullar",
+      "colTrial": "Sınaq",
+      "colActions": "Əməliyyatlar",
+      "trialYes": "Bəli",
+      "delete": "Sil",
+      "deleteConfirm": "Paketi silmək?",
+      "modalTitle": "Paket yarat",
+      "name": "Ad",
+      "discount": "Endirim %",
+      "moduleKeys": "Modul açarları (vergüllə)",
+      "create": "Yarat"
+    },
+    "billingQuotas": {
+      "loading": "Yüklənir…",
+      "yearlyDiscount": "İllik endirim (%)",
+      "ocrJobs": "OCR işləri / org / ay",
+      "save": "Saxla"
+    }
+  },
+  "auth": {
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "home": "Əsas",
+    "save": "Saxla",
+    "cancel": "Ləğv et",
+    "edit": "Redaktə",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "all": "Hamısı",
+    "search": "Axtarış",
+    "name": "Ad",
+    "status": "Status",
+    "date": "Tarix",
+    "guest": "Qonaq",
+    "notes": "Qeydlər",
+    "complete": "Tamamla",
+    "notFound": "Tapılmadı",
+    "select": "Seçin…",
+    "failed": "Uğursuz",
+    "error": "Xəta",
+    "loadingFailed": "Yükləmə uğursuz",
+    "saveFailed": "Saxlama uğursuz"
+  },
+  "register": {
+    "title": "Hesab yarat",
+    "subtitle": "ERA 365 ekosistemində şəxsi hesab",
+    "firstName": "Ad",
+    "lastName": "Soyad",
+    "email": "E-poçt",
+    "password": "Şifrə (min. 8)",
+    "submit": "Qeydiyyat",
+    "busy": "…",
+    "alreadyHaveAccount": "Artıq hesab var? Daxil ol",
+    "registerFailed": "Qeydiyyat uğursuz oldu"
+  },
+  "registerOrg": {
+    "title": "Təşkilat qeydiyyatı",
+    "subtitle": "VÖEN və şirkət adı ilə qeydiyyat",
+    "orgName": "Təşkilat adı",
+    "taxId": "VÖEN",
+    "submit": "Qeydiyyatı tamamla",
+    "back": "← Geri",
+    "registerFailed": "Qeydiyyat uğursuz oldu"
+  },
+  "terms": {
+    "title": "İstifadəçi razılaşması",
+    "intro": "ERA 365 platformasından istifadə şərtləri.",
+    "section1Title": "1. Xidmət",
+    "section1Body": "ERA 365 bulud ERP ekosistemidir. Xidmət abunəlik və seçilmiş modullar üzrə göstərilir.",
+    "section2Title": "2. Məlumatlar",
+    "section2Body": "Təşkilat məlumatları şifrələnir və yalnız sizin icazənizlə emal olunur.",
+    "section3Title": "3. Öhdəliklər",
+    "section3Body": "İstifadəçi hesab məlumatlarının məxfiliyini qorumağa borcludur."
+  },
+  "partner": {
+    "title": "Referral paneli",
+    "loading": "Yüklənir…",
+    "loginRequired": "Partner paneli üçün daxil olun",
+    "login": "Daxil ol",
+    "notPartner": "Partner hesabı tapılmadı",
+    "back": "← Geri",
+    "referralLink": "Referral keçidi",
+    "copyLink": "Linki kopyala",
+    "qr": "QR kod",
+    "statsTotal": "Cəmi referral",
+    "statsActive": "Aktiv",
+    "statsPending": "Gözləyən komissiya"
+  },
+  "admin": {
+    "settings": {
+      "field": "Sahə",
+      "value": "Dəyər",
+      "actions": "Əməliyyatlar",
+      "edit": "Redaktə",
+      "save": "Saxla"
+    }
+  }
+}

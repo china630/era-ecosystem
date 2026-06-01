@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { createRoom, listRooms } from '@/lib/services/room.service';
+import { createRoom } from '@/lib/services/room.service';
+import { listRoomsForRack } from '@/lib/services/room-rack.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertAnyPermission, assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -20,7 +21,7 @@ export async function GET() {
       PERMISSIONS.ROOMS_STATUS,
       PERMISSIONS.HOUSEKEEPING_MANAGE,
     ]);
-    const rooms = await listRooms();
+    const rooms = await listRoomsForRack();
     return jsonOk(serialize(rooms));
   } catch (err) {
     return handleRouteError(err);

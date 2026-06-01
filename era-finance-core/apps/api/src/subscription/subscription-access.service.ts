@@ -72,15 +72,15 @@ export type OrganizationModuleEntitlements = {
   contractManagementPro: boolean;
   /** Annual budget plan and execution (PRD §4.16). */
   govBudgetPro: boolean;
-  industryRetailEcom: boolean;
-  industryLogisticsCustoms: boolean;
+  industryRetail: boolean;
+  industryLogistics: boolean;
   industryConstruction: boolean;
-  industryCrmWhatsapp: boolean;
-  industryAutoSto: boolean;
+  industryCrm: boolean;
+  industryAutoService: boolean;
   industryClinic: boolean;
   industryWholesale: boolean;
   industryHotelPms: boolean;
-  industryFbPos: boolean;
+  industryFnbPos: boolean;
 };
 
 /** v8.1: снимок поля custom_config (конструктор тарифа). */
@@ -117,6 +117,7 @@ function entitlementsFromConstructorModules(
 ): OrganizationModuleEntitlements {
   const set = new Set(modules);
   const has = (s: string) => set.has(s);
+  const hasInd = (canonical: string) => hasIndustrySlug(set, canonical);
   return {
     manufacturing: has("manufacturing") || has("production"),
     fixedAssets: has("fixed_assets"),
@@ -129,21 +130,37 @@ function entitlementsFromConstructorModules(
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
-    industryRetailEcom: has("industry_retail_ecom"),
-    industryLogisticsCustoms: has("industry_logistics_customs"),
+    industryRetail: hasInd("industry_retail"),
+    industryLogistics: hasInd("industry_logistics"),
     industryConstruction: has("industry_construction"),
-    industryCrmWhatsapp: has("industry_crm_whatsapp"),
-    industryAutoSto: has("industry_auto_sto"),
+    industryCrm: hasInd("industry_crm"),
+    industryAutoService: hasInd("industry_auto_service"),
     industryClinic: has("industry_clinic"),
     industryWholesale: has("industry_wholesale"),
     industryHotelPms: has("industry_hotel_pms"),
-    industryFbPos: has("industry_fb_pos"),
+    industryFnbPos: hasInd("industry_fnb_pos"),
   };
 }
 
 function normalizeActiveModules(m: unknown): string[] {
   if (!Array.isArray(m)) return [];
   return m.map((x) => String(x).trim()).filter(Boolean);
+}
+
+const INDUSTRY_SLUG_LEGACY: Record<string, readonly string[]> = {
+  industry_retail: ["industry_retail_ecom"],
+  industry_logistics: ["industry_logistics_customs"],
+  industry_crm: ["industry_crm_whatsapp"],
+  industry_auto_service: ["industry_auto_sto"],
+  industry_fnb_pos: ["industry_fb_pos"],
+};
+
+function hasIndustrySlug(set: Set<string>, canonical: string): boolean {
+  if (set.has(canonical)) return true;
+  for (const legacy of INDUSTRY_SLUG_LEGACY[canonical] ?? []) {
+    if (set.has(legacy)) return true;
+  }
+  return false;
 }
 
 function isTariffTier(v: unknown): v is TariffTier {
@@ -179,15 +196,15 @@ function emptyOrganizationSnapshot(): {
       compliancePro: false,
       contractManagementPro: false,
       govBudgetPro: false,
-      industryRetailEcom: false,
-      industryLogisticsCustoms: false,
+      industryRetail: false,
+      industryLogistics: false,
       industryConstruction: false,
-      industryCrmWhatsapp: false,
-      industryAutoSto: false,
+      industryCrm: false,
+      industryAutoService: false,
       industryClinic: false,
       industryWholesale: false,
       industryHotelPms: false,
-      industryFbPos: false,
+      industryFnbPos: false,
     },
     expiresAt: null,
     isTrial: false,
@@ -221,15 +238,15 @@ function computeEntitlementsLegacy(sub: {
     compliancePro: has("compliance_pro"),
     contractManagementPro: has("contract_management_pro"),
     govBudgetPro: has("gov_budget_pro"),
-    industryRetailEcom: false,
-    industryLogisticsCustoms: false,
+    industryRetail: false,
+    industryLogistics: false,
     industryConstruction: false,
-    industryCrmWhatsapp: false,
-    industryAutoSto: false,
+    industryCrm: false,
+    industryAutoService: false,
     industryClinic: false,
     industryWholesale: false,
     industryHotelPms: false,
-    industryFbPos: false,
+    industryFnbPos: false,
   };
 }
 
@@ -259,15 +276,15 @@ function computeEntitlements(sub: {
       compliancePro: true,
       contractManagementPro: true,
       govBudgetPro: true,
-      industryRetailEcom: false,
-      industryLogisticsCustoms: false,
+      industryRetail: false,
+      industryLogistics: false,
       industryConstruction: false,
-      industryCrmWhatsapp: false,
-      industryAutoSto: false,
+      industryCrm: false,
+      industryAutoService: false,
       industryClinic: false,
       industryWholesale: false,
       industryHotelPms: false,
-      industryFbPos: false,
+      industryFnbPos: false,
     };
   }
   const customList = parseCustomModules(safe.customConfig);
@@ -309,24 +326,29 @@ function isAllowedByConstructorModules(
       return has("audit_hub");
     case "compliance_pro":
       return has("compliance_pro");
+    case "industry_retail":
     case "industry_retail_ecom":
-      return has("industry_retail_ecom");
+      return hasIndustrySlug(set, "industry_retail");
+    case "industry_logistics":
     case "industry_logistics_customs":
-      return has("industry_logistics_customs");
+      return hasIndustrySlug(set, "industry_logistics");
     case "industry_construction":
       return has("industry_construction");
+    case "industry_crm":
     case "industry_crm_whatsapp":
-      return has("industry_crm_whatsapp");
+      return hasIndustrySlug(set, "industry_crm");
+    case "industry_auto_service":
     case "industry_auto_sto":
-      return has("industry_auto_sto");
+      return hasIndustrySlug(set, "industry_auto_service");
     case "industry_clinic":
       return has("industry_clinic");
     case "industry_wholesale":
       return has("industry_wholesale");
     case "industry_hotel_pms":
       return has("industry_hotel_pms");
+    case "industry_fnb_pos":
     case "industry_fb_pos":
-      return has("industry_fb_pos");
+      return hasIndustrySlug(set, "industry_fnb_pos");
     case "recovery_pro":
       return has("recovery_pro");
     default:

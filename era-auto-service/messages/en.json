@@ -1,0 +1,148 @@
+{
+  "auth": {
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "meta": {
+    "title": "ERA Auto STO",
+    "description": "Retail POS — ERA industry satellite"
+  },
+  "nav": {
+    "home": "Home",
+    "workOrders": "Work orders",
+    "appointments": "Appointments",
+    "settings": "Settings"
+  },
+  "login": {
+    "title": "ERA Auto STO",
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Loading…",
+    "title": "ERA Auto STO",
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "lookup": "Search",
+    "create": "Create",
+    "home": "Home",
+    "cancel": "Cancel",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "appointments": {
+    "title": "Appointments",
+    "subtitle": "A2 — service slot booking",
+    "workOrders": "Work orders",
+    "bookTitle": "Book appointment",
+    "vehiclePlate": "License plate",
+    "customerName": "Customer",
+    "book": "Book",
+    "upcoming": "Upcoming",
+    "bookingFailed": "Error booking",
+    "booked": "Booked {plate}"
+  },
+  "workOrders": {
+    "title": "Work orders",
+    "subtitle": "M1 vehicle card · M3 labor · M4 parts",
+    "vehicleCard": "M1 — customer vehicle",
+    "plate": "Number",
+    "customerName": "Customer",
+    "voen": "VÖEN (Finance counterparty)",
+    "counterparty": "Counterparty",
+    "saveVehicle": "Save card vehicle",
+    "newWorkOrder": "New work order",
+    "woCode": "Code WO",
+    "createWorkOrder": "Create work order",
+    "orders": "Orders",
+    "selected": "Selected",
+    "laborLine": "M3 Labor",
+    "addLabor": "Add labor line",
+    "partLine": "M4 Part",
+    "addPart": "Add part line",
+    "completeWorkOrder": "Complete work order",
+    "vehicleSaved": "Vehicle card saved",
+    "counterpartyLinked": "Counterparty: {id}…",
+    "voenNotFound": "VÖEN not found in Finance MDM",
+    "workOrderCreated": "Work order {code} created",
+    "laborAdded": "Labor line added",
+    "partAdded": "Part line added",
+    "completed": "Work order completed"
+  },
+  "adminSettings": {
+    "title": "Service settings",
+    "subtitle": "UI playbook — Fleet bundle admin",
+    "appointments": "Appointments",
+    "workshop": "Workshop",
+    "editWorkshop": "Edit workshop"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

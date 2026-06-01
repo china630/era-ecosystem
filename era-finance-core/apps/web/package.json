@@ -7,9 +7,10 @@
     "clean": "node ./scripts/clean-next.mjs",
     "dev:clean": "npm run clean && next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000 -H 0.0.0.0"
+    "start": "next start -H 0.0.0.0"
   },
   "dependencies": {
+    "@era/i18n-common": "file:../../../packages/i18n-common",
     "@era/satellite-kit": "file:../../../packages/satellite-kit",
     "@erafinance/api-contracts": "*",
     "@erafinance/i18n": "*",

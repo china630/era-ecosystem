@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  ModalFooter,
+  ModalShell,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -22,6 +29,8 @@ type Episode = {
 };
 
 export default function SanatoriumPage() {
+  const t = useTranslations("sanatorium");
+  const tNav = useTranslations("nav");
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
   const [complaint, setComplaint] = useState("");
@@ -29,6 +38,10 @@ export default function SanatoriumPage() {
   const [diagnosis, setDiagnosis] = useState("");
   const [testCode, setTestCode] = useState("CBC");
   const [msg, setMsg] = useState("");
+  const [complaintModalOpen, setComplaintModalOpen] = useState(false);
+  const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
+  const [labModalOpen, setLabModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch("/api/sanatorium/episodes");
@@ -46,24 +59,38 @@ export default function SanatoriumPage() {
 
   async function postAction(action: string, body: unknown) {
     if (!selectedId) return;
+    setBusy(true);
     const res = await fetch(`/api/sanatorium/episodes/${selectedId}?action=${action}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const data = await res.json();
-    setMsg(res.ok ? "Saved" : data.error ?? "Failed");
-    if (res.ok) await load();
+    setBusy(false);
+    setMsg(res.ok ? t("saved") : (data.error ?? t("failed")));
+    if (res.ok) {
+      if (action === "complaint") {
+        setComplaint("");
+        setComplaintModalOpen(false);
+      }
+      if (action === "diagnosis") {
+        setIcdCode("");
+        setDiagnosis("");
+        setDiagnosisModalOpen(false);
+      }
+      if (action === "lab") setLabModalOpen(false);
+      await load();
+    }
   }
 
   return (
     <>
       <PageHeader
-        title="Sanatorium in-house"
-        subtitle="K5 — clinical episodes for hotel stays (US-06, US-07)"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
+            {tNav("home")}
           </Link>
         }
       />
@@ -71,7 +98,7 @@ export default function SanatoriumPage() {
         {msg && <p className="text-[13px] text-emerald-700">{msg}</p>}
         <div className="grid gap-6 lg:grid-cols-2">
           <div>
-            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">In-house list</h2>
+            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("inHouseList")}</h2>
             <ul className="space-y-2 text-[13px]">
               {episodes.map((e) => (
                 <li key={e.id}>
@@ -82,15 +109,15 @@ export default function SanatoriumPage() {
                     }`}
                     onClick={() => setSelectedId(e.id)}
                   >
-                    <div className="font-medium">{e.patientRef?.fullName ?? "Guest"}</div>
+                    <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
                     <div className="text-[#7F8C8D]">
-                      Stay {e.reservationId?.slice(0, 8) ?? "—"} · {e.status}
+                      {t("stay")} {e.reservationId?.slice(0, 8) ?? "—"} · {e.status}
                     </div>
                   </button>
                 </li>
               ))}
               {episodes.length === 0 && (
-                <li className="text-[#7F8C8D]">No open episodes — check in a medical package guest in PMS.</li>
+                <li className="text-[#7F8C8D]">{t("noEpisodes")}</li>
               )}
             </ul>
           </div>
@@ -100,30 +127,22 @@ export default function SanatoriumPage() {
                 <strong>{selected.patientRef?.fullName}</strong> ({selected.patientRef?.refCode})
               </div>
               <div>
-                <h3 className="font-semibold">Complaints</h3>
+                <h3 className="font-semibold">{t("complaints")}</h3>
                 <ul className="list-disc pl-5">
                   {selected.complaints.map((c, i) => (
                     <li key={i}>{c.text}</li>
                   ))}
                 </ul>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    className="flex-1 rounded border px-2 py-1"
-                    value={complaint}
-                    onChange={(e) => setComplaint(e.target.value)}
-                    placeholder="New complaint"
-                  />
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    onClick={() => postAction("complaint", { text: complaint })}
-                  >
-                    Add
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
+                  onClick={() => setComplaintModalOpen(true)}
+                >
+                  {t("add")}
+                </button>
               </div>
               <div>
-                <h3 className="font-semibold">Diagnoses</h3>
+                <h3 className="font-semibold">{t("diagnoses")}</h3>
                 <ul className="list-disc pl-5">
                   {selected.diagnoses.map((d, i) => (
                     <li key={i}>
@@ -132,59 +151,121 @@ export default function SanatoriumPage() {
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  <input
-                    className="rounded border px-2 py-1"
-                    value={icdCode}
-                    onChange={(e) => setIcdCode(e.target.value)}
-                    placeholder="ICD"
-                  />
-                  <input
-                    className="col-span-2 rounded border px-2 py-1"
-                    value={diagnosis}
-                    onChange={(e) => setDiagnosis(e.target.value)}
-                    placeholder="Description"
-                  />
-                  <button
-                    type="button"
-                    className={`${PRIMARY_BUTTON_CLASS} col-span-3`}
-                    onClick={() => postAction("diagnosis", { icdCode, description: diagnosis })}
-                  >
-                    Add diagnosis
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
+                  onClick={() => setDiagnosisModalOpen(true)}
+                >
+                  {t("addDiagnosis")}
+                </button>
               </div>
               <div>
-                <h3 className="font-semibold">Lab orders</h3>
+                <h3 className="font-semibold">{t("labOrders")}</h3>
                 <ul>
                   {selected.labOrders.map((o) => (
                     <li key={o.id}>
                       {o.testCode} — {o.status}{" "}
                       <Link href={`/lab-orders/${o.id}`} className="text-sky-600 underline">
-                        workflow
+                        {t("workflow")}
                       </Link>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    className="flex-1 rounded border px-2 py-1"
-                    value={testCode}
-                    onChange={(e) => setTestCode(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    onClick={() => postAction("lab", { testCode })}
-                  >
-                    Order lab
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
+                  onClick={() => setLabModalOpen(true)}
+                >
+                  {t("orderLab")}
+                </button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <ModalShell
+        open={complaintModalOpen}
+        title={t("newComplaint")}
+        onClose={() => setComplaintModalOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setComplaintModalOpen(false)}
+            onSubmit={() => void postAction("complaint", { text: complaint })}
+            busy={busy}
+            submitLabel={t("add")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("newComplaint")}</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={complaint}
+              onChange={(e) => setComplaint(e.target.value)}
+            />
+          </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={diagnosisModalOpen}
+        title={t("addDiagnosis")}
+        onClose={() => setDiagnosisModalOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setDiagnosisModalOpen(false)}
+            onSubmit={() => void postAction("diagnosis", { icdCode, description: diagnosis })}
+            busy={busy}
+            submitLabel={t("addDiagnosis")}
+          />
+        }
+      >
+        <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>ICD</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={icdCode}
+              onChange={(e) => setIcdCode(e.target.value)}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("description")}</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={diagnosis}
+              onChange={(e) => setDiagnosis(e.target.value)}
+            />
+          </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={labModalOpen}
+        title={t("orderLab")}
+        onClose={() => setLabModalOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setLabModalOpen(false)}
+            onSubmit={() => void postAction("lab", { testCode })}
+            busy={busy}
+            submitLabel={t("orderLab")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("orderLab")}</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={testCode}
+              onChange={(e) => setTestCode(e.target.value)}
+            />
+          </div>
+        </div>
+      </ModalShell>
     </>
   );
 }

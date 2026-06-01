@@ -12,7 +12,7 @@ export function apiBaseUrl(): string {
   return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
 }
 
-/** Control plane (era-365-orchestrator) — billing, subscription, referrals, early-access. */
+/** Control plane (era-orchestrator) — billing, subscription, referrals, early-access. */
 export function controlPlaneBaseUrl(): string {
   if (typeof window !== "undefined") {
     return "";

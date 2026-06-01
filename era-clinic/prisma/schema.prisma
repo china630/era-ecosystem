@@ -182,6 +182,54 @@ model VisitDiscountAudit {
   @@index([visitId])
 }
 
+model ClinicalTemplate {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  bodyJson    String
+  createdAt   DateTime @default(now())
+}
+
+model Ward {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  beds      Bed[]
+  createdAt DateTime @default(now())
+}
+
+model Bed {
+  id          String          @id @default(cuid())
+  wardId      String
+  code        String
+  status      String          @default("AVAILABLE")
+  ward        Ward            @relation(fields: [wardId], references: [id], onDelete: Cascade)
+  assignments BedAssignment[]
+
+  @@unique([wardId, code])
+}
+
+model BedAssignment {
+  id           String    @id @default(cuid())
+  bedId        String
+  patientRefId String
+  admittedAt   DateTime  @default(now())
+  dischargedAt DateTime?
+  bed          Bed       @relation(fields: [bedId], references: [id], onDelete: Cascade)
+
+  @@index([bedId, dischargedAt])
+}
+
+model CpoeEntry {
+  id         String   @id @default(cuid())
+  visitId    String
+  templateId String?
+  payloadJson String
+  createdAt  DateTime @default(now())
+
+  @@index([visitId])
+}
+
 model Role {
   id              String   @id @default(cuid())
   code            String   @unique
@@ -194,6 +242,7 @@ model User {
   id              String    @id @default(cuid())
   login           String    @unique
   email           String?
+  phone           String?   @unique
   fullName        String
   passwordHash    String
   roleId          String

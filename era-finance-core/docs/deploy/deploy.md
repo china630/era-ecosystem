@@ -185,7 +185,7 @@ Schedule **`scripts/backup-db.sh`** via cron on the droplet; store copies off-dr
 |----------|---------|
 | `PRE-RELEASE-CHECKLIST.md` | Build, i18n catalog, smoke before tag |
 | `DR_RUNBOOK.md` | Backups, restore, RPO/RTO |
-| `../launch/STAGE_B_INFRASTRUCTURE.md` | Infra steps 34–65 |
+| `monitoring/README.md` | Optional Prometheus/Grafana stack |
 | `TZ.md` §1.4–1.7, §1.6 | VPC, Redis `noeviction`, AZ/EU hosting |
 
 ---

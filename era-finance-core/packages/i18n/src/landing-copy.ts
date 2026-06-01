@@ -1,5 +1,6 @@
 /** Public landing copy — separate module so Next.js does not tree-shake it from `resources.ts`. */
 
+import type { Locale } from "@era/i18n-common";
 import { landingEcosystemAz, landingEcosystemRu, type LandingEcosystemCopy } from "./landing-ecosystem-data";
 
 export type {
@@ -89,6 +90,10 @@ export type LandingMarketingCopy = {
     primary: string;
     secondary: string;
     ctaMicrocopy: string;
+  };
+  faq: {
+    title: string;
+    items: { id: string; question: string; answer: string }[];
   };
   features: {
     finance: LandingFeatureCopy;
@@ -238,6 +243,29 @@ const landingMarketingRu: LandingMarketingCopy = {
     primary: "Начать 3 месяца бесплатно",
     secondary: "Войти",
     ctaMicrocopy: "Без привязки карты • Отмена в любой момент",
+  },
+  faq: {
+    title: "Частые вопросы",
+    items: [
+      {
+        id: "platform",
+        question: "Где регистрировать компанию и входить в ERA?",
+        answer:
+          "Новые организации создаются на платформе ERA (app.era-365.online): аккаунт, VÖEN и модули подписки. После входа модуль Finance открывается из launcher платформы.",
+      },
+      {
+        id: "finance",
+        question: "Что даёт ERA Finance?",
+        answer:
+          "Облачный учёт для Азербайджана: NAS/MMUS, касса и банк, продажи и закупки, склад и отчётность — в одном контуре с платформой ERA.",
+      },
+      {
+        id: "sso",
+        question: "Можно ли войти через SSO?",
+        answer:
+          "Да. Используйте единый вход ERA (Orchestrator / Finance). Для усиленной аутентификации следуйте подсказкам ASAN İmza в интерфейсе.",
+      },
+    ],
   },
   features: {
     finance: {
@@ -457,6 +485,29 @@ const landingMarketingAz: LandingMarketingCopy = {
     secondary: "Daxil ol",
     ctaMicrocopy: "Kredit kartı tələb olunmur • İstənilən vaxt ləğv et",
   },
+  faq: {
+    title: "Tez-tez verilən suallar",
+    items: [
+      {
+        id: "platform",
+        question: "Şirkəti harada qeydiyyatdan keçirmək və ERA-ya daxil olmaq olar?",
+        answer:
+          "Yeni təşkilatlar ERA platformasında (app.era-365.online) yaradılır: hesab, VÖEN və abunə modulları. Daxil olduqdan sonra Finance modulu platforma launcher-indən açılır.",
+      },
+      {
+        id: "finance",
+        question: "ERA Finance nə verir?",
+        answer:
+          "Azərbaycan üçün bulud uçotu: NAS/MMUS, kassa və bank, satış və alış, anbar və hesabat — ERA platforması ilə vahid konturdə.",
+      },
+      {
+        id: "sso",
+        question: "SSO ilə daxil olmaq olarmı?",
+        answer:
+          "Bəli. ERA vahid girişindən (Orchestrator / Finance) istifadə edin. Gücləndirilmiş autentifikasiya üçün interfeysdə ASAN İmza göstərişlərinə əməl edin.",
+      },
+    ],
+  },
   features: {
     finance: {
       eyebrow: "Maliyyə nüvəsi",
@@ -567,9 +618,9 @@ const landingMarketingAz: LandingMarketingCopy = {
 };
 
 export const landingMarketingCopyByLocale = {
-  ru: landingMarketingRu,
   az: landingMarketingAz,
-} as const satisfies Record<"ru" | "az", LandingMarketingCopy>;
+  ru: landingMarketingRu,
+} as const satisfies Record<"az" | "ru", LandingMarketingCopy>;
 
 function toFlatLandingCopy(m: LandingMarketingCopy): LandingPageCopy {
   return {
@@ -592,7 +643,7 @@ export function getLandingPageCopy(locale: "ru" | "az"): LandingPageCopy {
 }
 
 /** Static branches so Next/webpack retain full copy trees (dynamic `[locale]` was tree-shaken in dev). */
-export function getLandingMarketingCopy(locale: "ru" | "az"): LandingMarketingCopy {
+export function getLandingMarketingCopy(locale: Locale): LandingMarketingCopy {
   if (locale === "ru") return landingMarketingCopyByLocale.ru;
   return landingMarketingCopyByLocale.az;
 }

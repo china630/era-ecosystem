@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "ERA Wholesale",
+    "description": "Topdan satış və B2B peyk modulu"
+  },
+  "login": {
+    "title": "ERA Wholesale",
+    "subtitle": "Hesabınızla daxil olun",
+    "login": "Login",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "Daxil olunur…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA Wholesale",
+    "subtitle": "ERA sənaye peyk modulu"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identiklik, abunəlik və sənaye modulları vahid control plane (ERA 365) və Finance ERP üzərindən birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olmaq olar?",
+        "a": "ERA Finance və ya ERA 365 Orchestrator-dan bu modula keçid edin — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra Orchestrator-da «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN ilə."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "save": "Saxla",
+    "edit": "Redaktə et",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "create": "Yarat"
+  },
+  "orders": {
+    "title": "ERA Wholesale",
+    "subtitle": "Əməliyyat MVP qabığı — UI DESIGN.md-ə uyğundur.",
+    "shellNote": "Reyestr ekranları və əlavə/redaktə axınları DESIGN.md-ə uyğun modallarla tətbiq olunacaq."
+  },
+  "pickLists": {
+    "title": "Yığım siyahıları",
+    "subtitle": "W2 — anbar yığımı təsdiqi + kredit limiti",
+    "orders": "Sifarişlər",
+    "createPickList": "Yığım siyahısı yarat",
+    "selectOrder": "Sifariş seçin…",
+    "sku": "SKU",
+    "qtyOrdered": "Sifariş miqdarı",
+    "creditCheck": "Kredit limiti yoxlaması",
+    "counterpartyId": "Counterparty ID",
+    "checkCredit": "Krediti yoxla",
+    "limit": "Limit",
+    "openPickLists": "Açıq yığım siyahıları",
+    "confirmPick": "Yığımı təsdiqlə",
+    "createFailed": "Yaratma uğursuz oldu",
+    "pickCreated": "{order} üçün yığım siyahısı",
+    "pickConfirmFailed": "Yığım təsdiqi uğursuz oldu",
+    "picked": "{sku} yığıldı",
+    "creditFailed": "Kredit yoxlaması uğursuz oldu"
+  },
+  "adminSettings": {
+    "title": "Topdan satış parametrləri",
+    "subtitle": "Admin — UI playbook (siyahı + ModalShell)",
+    "pickLists": "Yığım siyahıları",
+    "warehouse": "Anbar",
+    "editWarehouse": "Anbarı redaktə et"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

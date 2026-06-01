@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import type { PricingPostpaidCopy } from "../../lib/i18n/pricing-postpaid-copy";
 import { PRIMARY_BUTTON_CLASS } from "../../lib/design-system";
 import { PRICING_CARD_HOVER_CLASS } from "../../lib/landing-motion";

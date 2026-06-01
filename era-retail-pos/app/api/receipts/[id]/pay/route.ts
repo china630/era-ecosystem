@@ -42,6 +42,15 @@ export async function POST(
     if (!receipt) return jsonError("Receipt not found", 404);
     if (receipt.status === "PAID") return jsonOk(receipt);
 
+    const fiscal = await (async () => {
+      const { getRetailFiscalProvider } = await import("@/lib/fiscal-provider");
+      return getRetailFiscalProvider().fiscalizeReceipt({
+        receiptId: id,
+        amountNet: Number(receipt.amountNet),
+        paymentMethod: body.paymentMethod,
+      });
+    })();
+
     const paid = await prisma.receipt.update({
       where: { id },
       data: {
@@ -49,6 +58,7 @@ export async function POST(
         paymentMethod: body.paymentMethod,
         customerPhone: body.customerPhone?.trim() || null,
         loyaltyRef: body.loyaltyRef?.trim() || null,
+        fiscalNumber: fiscal.fiscalNumber,
         paidAt: new Date(),
       },
       include: { lines: true },

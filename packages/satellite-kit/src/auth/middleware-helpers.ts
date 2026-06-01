@@ -3,7 +3,44 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/auth/sso/exchange",
   "/api/health",
   "/api/events/dispatch",
+  "/api/locale",
 ];
+
+/** Page paths reachable without authentication (locale toggle, FAQ on login). */
+export const DEFAULT_PUBLIC_PAGE_PREFIXES = ["/login", "/sso/callback", "/help"];
+
+/** Full-bleed public pages — no app chrome (matches Finance `app/layout.tsx` bare shell). */
+export const DEFAULT_BARE_PUBLIC_PAGE_PREFIXES = [
+  "/login",
+  "/sso/callback",
+  "/help",
+  "/register",
+  "/register-org",
+  "/pricing",
+  "/terms",
+  "/partner",
+];
+
+export const ERA_PATHNAME_HEADER = "x-era-pathname";
+
+export function isBarePublicWebPath(
+  pathname: string,
+  extraPrefixes: string[] = [],
+): boolean {
+  const prefixes = [...DEFAULT_BARE_PUBLIC_PAGE_PREFIXES, ...extraPrefixes];
+  return prefixes.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
+
+export function eraPathnameRequestHeaders(
+  source: Headers,
+  pathname: string,
+): Headers {
+  const next = new Headers(source);
+  next.set(ERA_PATHNAME_HEADER, pathname);
+  return next;
+}
 
 export function isPublicApiPath(
   pathname: string,

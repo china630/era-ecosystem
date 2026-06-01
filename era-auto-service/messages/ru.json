@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "ERA Auto STO",
+    "description": "Спутник автосервиса и СТО"
+  },
+  "login": {
+    "title": "ERA Auto STO",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA Auto STO",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "lookup": "Поиск",
+    "create": "Создать"
+  },
+  "appointments": {
+    "title": "Записи",
+    "subtitle": "A2 — бронирование слотов сервиса",
+    "workOrders": "Заказы на работу",
+    "bookTitle": "Записаться",
+    "vehiclePlate": "Госномер",
+    "customerName": "Клиент",
+    "book": "Забронировать",
+    "upcoming": "Предстоящие",
+    "bookingFailed": "Ошибка бронирования",
+    "booked": "Забронировано {plate}"
+  },
+  "workOrders": {
+    "title": "Заказы на работу",
+    "subtitle": "M1 карточка ТС · M3 работы · M4 запчасти",
+    "vehicleCard": "M1 — ТС клиента",
+    "plate": "Номер",
+    "customerName": "Клиент",
+    "voen": "VÖEN (Finance counterparty)",
+    "counterparty": "Контрагент",
+    "saveVehicle": "Сохранить карточку ТС",
+    "newWorkOrder": "Новый заказ",
+    "woCode": "Код ЗН",
+    "createWorkOrder": "Создать заказ",
+    "orders": "Заказы",
+    "selected": "Выбрано",
+    "laborLine": "M3 Работа",
+    "addLabor": "Добавить работу",
+    "partLine": "M4 Запчасть",
+    "addPart": "Добавить запчасть",
+    "completeWorkOrder": "Завершить заказ",
+    "vehicleSaved": "Карточка ТС сохранена",
+    "counterpartyLinked": "Контрагент: {id}…",
+    "voenNotFound": "VÖEN не найден в Finance MDM",
+    "workOrderCreated": "Заказ {code} создан",
+    "laborAdded": "Работа добавлена",
+    "partAdded": "Запчасть добавлена",
+    "completed": "Заказ завершён"
+  },
+  "adminSettings": {
+    "title": "Параметры сервиса",
+    "subtitle": "UI playbook — Fleet bundle admin",
+    "appointments": "Записи",
+    "workshop": "Сервис",
+    "editWorkshop": "Изменить сервис"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

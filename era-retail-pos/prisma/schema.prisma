@@ -87,6 +87,7 @@ model Receipt {
   pickupSlotKey     String?
   bopisScheduledAt  DateTime?
   paymentMethod     String?
+  fiscalNumber      String?
   paidAt            DateTime?
   originalReceiptId String?
   outlet            Outlet        @relation(fields: [outletId], references: [id])
@@ -136,6 +137,7 @@ model User {
   id              String    @id @default(cuid())
   login           String    @unique
   email           String?
+  phone           String?   @unique
   fullName        String
   passwordHash    String
   roleId          String
@@ -144,6 +146,28 @@ model User {
   isCrossSystem   Boolean   @default(false) @map("is_cross_system")
   lastLoginAt     DateTime? @map("last_login_at")
   createdAt       DateTime  @default(now()) @map("created_at")
+}
+
+model OfflineReceiptQueue {
+  id           String   @id @default(cuid())
+  clientId     String
+  payloadJson  String
+  status       String   @default("PENDING")
+  syncedAt     DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+model MarketplaceWebhookEvent {
+  id          String   @id @default(cuid())
+  channel     String
+  externalRef String
+  payloadJson String
+  processedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([channel, externalRef])
 }
 
 model ProductCache {

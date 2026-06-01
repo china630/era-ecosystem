@@ -1,0 +1,24 @@
+{
+  "name": "@era/storage",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared S3-compatible object storage for ERA products",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.741.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.7.3"
+  }
+}

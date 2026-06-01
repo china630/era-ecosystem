@@ -1,7 +1,7 @@
 # ERA Ecosystem — настройка и запуск
 
 Инструкция по конфигурации и запуску каждого компонента umbrella-репозитория.  
-Архитектура: [`DESIGN.md`](../DESIGN.md) · SSO и event bus: [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md)
+Канонические хосты, порты и env: [`ECOSYSTEM_URLS.md`](./ECOSYSTEM_URLS.md) · Архитектура: [`DESIGN.md`](../DESIGN.md) · SSO и event bus: [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md)
 
 ---
 
@@ -11,10 +11,10 @@
 2. [Первичная подготовка](#2-первичная-подготовка)
 3. [Запуск всего стека в Docker (рекомендуется)](#3-запуск-всего-стека-в-docker-рекомендуется)
 4. [Локальная разработка по сервисам](#4-локальная-разработка-по-сервисам)
-5. [era-365-orchestrator (control plane)](#5-era-365-orchestrator-control-plane)
+5. [era-orchestrator (control plane)](#5-era-orchestrator-control-plane)
 6. [era-finance-core (data plane)](#6-era-finance-core-data-plane)
 7. [era-hotel-pms (satellite)](#7-era-hotel-pms-satellite)
-8. [era-fb-pos (satellite)](#8-era-fb-pos-satellite)
+8. [era-fnb-pos (satellite)](#8-era-fnb-pos-satellite)
 9. [packages/era-contracts](#9-packagesera-contracts)
 10. [SSO и шина событий](#10-sso-и-шина-событий)
 11. [Проверка работоспособности](#11-проверка-работоспособности)
@@ -36,37 +36,36 @@
 | Сервис | Порт | Публичный хост (Traefik) |
 |--------|------|--------------------------|
 | Traefik dashboard | 8080 | — |
-| Orchestrator Web | 3100 | `app.era.az` — **ecosystem entry (v1.0): login, industry launcher, SSO** |
-| Orchestrator API | 4100 | `api.era.az` |
-| Finance API | 4000 | **не публикуется** |
-| Finance Web (локально) | 3000 | — |
-| Hotel PMS | 3000 | `hotel.era.az` |
-| F&B POS | 3200 | `pos.era.az` |
+| Orchestrator Web | 3000 | `app.era-365.online` — **ecosystem entry (v1.0): login, industry launcher, SSO** |
+| Orchestrator API | 4000 | `api.era-365.online` |
+| Finance API | 4100 | **не публикуется** (прокси через Finance Web) |
+| Finance Web | 3100 | `finance-core.era-365.online` |
+| Hotel PMS | 3201 | `hotel-pms.era-365.online` |
+| F&B POS | 3202 | `fnb-pos.era-365.online` |
 | PostgreSQL | 5432 | — |
 | Redis | 6379 | — |
 
-> При одновременном локальном запуске **finance web** и **hotel PMS** оба используют `:3000` — запускайте только один из них или смените порт.
-
-> **Точка входа (v1.0):** откройте **Orchestrator Web** `http://127.0.0.1:3100` (или `app.era.az`). Industry launcher и регистрация — на Orch; Finance — GL/holding; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
+> **Точка входа (v1.0):** откройте **Orchestrator Web** `http://127.0.0.1:3000` (или `app.era-365.online`). Industry launcher и регистрация — на Orch; Finance Web — `http://127.0.0.1:3100`; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
 
 ---
 
 ## 2. Первичная подготовка
 
-### Клонирование с submodules
+### Клонирование (flat monorepo)
 
 ```bash
 git clone <url> era-ecosystem
 cd era-ecosystem
-git submodule update --init --recursive
 ```
+
+Все приложения (`era-orchestrator`, `era-finance-core`, `era-hotel-pms`, …) — **подпапки одного репозитория**, без git submodules. Разработка из подпапки: [`LOCAL_FOLDER_DEV.md`](./LOCAL_FOLDER_DEV.md).
 
 ### Файл hosts (для Traefik-маршрутов)
 
 Добавьте в `C:\Windows\System32\drivers\etc\hosts` (Windows) или `/etc/hosts` (Linux/macOS):
 
 ```
-127.0.0.1 app.era.az api.era.az hotel.era.az pos.era.az
+127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online
 ```
 
 ### Общий `.env` (корень umbrella)
@@ -77,14 +76,39 @@ cp .env.example .env
 
 Отредактируйте секреты (`POSTGRES_PASSWORD`, `ERA_JWT_SECRET`, `AUTH_JWT_SECRET`, токены bridge и т.д.).
 
-PostgreSQL при первом старте Docker создаёт четыре БД (см. `docker/postgres/init-databases.sql`):
+PostgreSQL при первом старте Docker создаёт **11** БД (см. `docker/postgres/init-databases.sql`):
 
 | Переменная | База данных |
 |------------|-------------|
 | `ORCHESTRATOR_DB` | `era_orchestrator` |
 | `FINANCE_DB` | `era_finance` |
 | `HOTEL_DB` | `era_hotel_pms` |
-| `FB_POS_DB` | `era_fb_pos` |
+| `FNB_POS_DB` | `era_fnb_pos` |
+| `RETAIL_POS_DB` … `CLINIC_DB` | остальные industry-сателлиты (см. `.env.example`) |
+
+### i18n и юридические URL (все web-узлы)
+
+| Переменная | Назначение |
+|------------|------------|
+| `DEFAULT_LOCALE` | `az` (по умолчанию для next-intl / публичных страниц) |
+| `NEXT_PUBLIC_ERA_TERMS_URL_RU` / `_AZ` | Оферта (fallback: `NEXT_PUBLIC_ERA_TERMS_URL`) |
+| `NEXT_PUBLIC_ERA_PRIVACY_URL_RU` / `_AZ` | Политика конфиденциальности |
+| `NEXT_PUBLIC_ERA_STATUS_URL` | Статус-пейдж бренда |
+| Cookie `era_i18n_lang` | `az` \| `ru` \| `en` — единый для экосистемы |
+
+Finance legacy: `NEXT_PUBLIC_ERAFINANCE_*` и cookie `erafinance_i18n_lang` читаются с fallback. Подробнее: [SATELLITE_DOCUMENTATION.md § i18n stacks](./SATELLITE_DOCUMENTATION.md#i18n-stacks-ecosystem-contract).
+
+### Auth UI и cross-app ссылки
+
+| Переменная | Назначение |
+|------------|------------|
+| `NEXT_PUBLIC_ORCH_WEB_URL` | Базовый URL Orchestrator web (`http://127.0.0.1:3000` локально) — register, pricing, FAQ, terms |
+| `NEXT_PUBLIC_ORCH_API_URL` | Orch API для клиентских fetch (`http://127.0.0.1:4000`) |
+| `NEXT_PUBLIC_FINANCE_WEB_URL` | Finance ERP UI (`http://127.0.0.1:3100`) |
+
+**Login UI:** все industry-сателлиты и Orchestrator используют `@era/satellite-kit/ui` → `AuthLoginCard` (DESIGN.md). Локальный вход: **login / email / phone** + пароль. Переключатель языка — справа от заголовка; `POST /api/locale` должен быть в public allowlist middleware.
+
+**i18n sync:** после правок `packages/i18n-common/messages/common.*.json` — `node tools/sync-i18n-parity.mjs`.
 
 ---
 
@@ -101,25 +125,39 @@ docker compose up -d --build
 
 | Контейнер | Назначение |
 |-----------|------------|
-| `era-postgres` | PostgreSQL 16, 4 БД |
+| `era-postgres` | PostgreSQL 16, 11 БД |
 | `era-redis` | Redis 7 (очереди, кэш) |
 | `era-traefik` | Reverse proxy (file provider) |
-| `era-orchestrator` | Control plane API `:4100` + Web `:3100` |
-| `era-finance-core` | Data plane API `:4000` (только внутри сети) |
-| `era-hotel-pms` | Hotel PMS `:3000` |
-| `era-fb-pos` | F&B POS `:3200` |
+| `era-orchestrator` | Control plane API `:4000` + Web `:3000` |
+| `era-finance-core` | Finance API `:4100` (внутри сети; `/api` через web) |
+| `era-finance-web` | Finance ERP UI `:3100` |
+| `era-hotel-pms` | Hotel PMS `:3201` |
+| `era-fnb-pos` | F&B POS `:3202` |
+| Industry satellites | `:3203`–`:3209` (clinic … wholesale) |
 
 ### URL после старта
 
 | URL | Сервис |
 |-----|--------|
-| http://app.era.az | Orchestrator UI |
-| http://api.era.az | Control plane API |
-| http://hotel.era.az | Hotel PMS |
-| http://pos.era.az | F&B POS |
+| https://app.era-365.online | Orchestrator UI |
+| https://api.era-365.online | Control plane API |
+| https://finance-core.era-365.online | Finance ERP (Next.js; прокси `/api` → `finance-core:4100`) |
+| https://hotel-pms.era-365.online | Hotel PMS |
+| https://fnb-pos.era-365.online | F&B POS |
 | http://localhost:8080 | Traefik dashboard |
 
-Finance-core доступен **только** из Docker-сети: `http://finance-core:4000`.
+Finance API напрямую с хоста не публикуется: `http://finance-core:4100` (Docker network). Для smoke с хоста: `curl https://finance-core.era-365.online/api/health` (через rewrites web).
+
+**Публичный hub (Orchestrator web):** после старта проверьте `http://127.0.0.1:3000/pricing`, `/help`, `/terms`, `/register`. Finance `/pricing` и `/register*` редиректят на Orch (`NEXT_PUBLIC_ORCH_WEB_URL`).
+
+### Shared packages (Docker)
+
+Образ `era-ecosystem/packages:local` собирает `@era/i18n-common`, `@era/contracts`, `@era/storage`, `@era/satellite-kit`. При изменении shared-кода:
+
+```bash
+docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
+docker compose build
+```
 
 ### Полезные команды
 
@@ -133,34 +171,43 @@ docker compose down -v       # остановить + удалить volumes (д
 
 ### Первый запуск БД
 
-После первого `docker compose up` выполните миграции **внутри** контейнеров или локально, указав `DATABASE_URL` на `localhost:5432`:
+После первого `docker compose up` выполните **единый bootstrap** с хоста (Postgres на `localhost:5432`):
 
-> **Phase A migrations (2026-05-25):** Finance — `20260525180000_contracts_gov_budget` (contracts + gov budget tables); Orchestrator — `20260523120000_tenant_billing` plus RBAC/dispute schema from current `schema.prisma` (`db:generate` + migrate). Run both before smoke-testing platform features.
+```bash
+# Из корня era-ecosystem (Orchestrator-first super-admin + Finance seed + satellite migrations)
+npm run bootstrap:local
+# С demo-организациями:
+npm run bootstrap:local:demo
+```
+
+Учётные данные пишутся в `tmp/era-local-credentials.md` (gitignored).
+
+**Orchestrator** — канонический IdP: login `:3000`, super-admin `:3000/super-admin`.  
+**Finance data hub** (NAS, i18n, customs) — `:3100/admin/data` (не Orch).  
+**Platform billing / MDM admin** — только Orch web.
+
+Ручной режим (если bootstrap недоступен):
 
 ```bash
 # Orchestrator
-cd era-365-orchestrator
+cd era-orchestrator
 npm install
 $env:DATABASE_URL="postgresql://era:<password>@localhost:5432/era_orchestrator"
-npm run db:generate
-npx prisma migrate deploy
+npm run db:bootstrap-local
 
 # Finance
 cd era-finance-core
 npm install
-# скопируйте/дополните .env (DATABASE_URL, JWT_SECRET, REDIS_URL, CONTROL_PLANE_URL)
 npm run db:bootstrap-local   # migrate + seed (dev)
 
 # Hotel
 cd era-hotel-pms
-npm install
 npx prisma migrate deploy
 npm run db:seed
 
 # F&B POS
-cd era-fb-pos
-npm install
-npx prisma db push
+cd era-fnb-pos
+npx prisma migrate deploy
 npx tsx prisma/seed.ts
 ```
 
@@ -171,8 +218,9 @@ npx tsx prisma/seed.ts
 Общая схема:
 
 1. Поднять **PostgreSQL + Redis** (из корневого `docker compose` или отдельно).
-2. Создать `.env` / `.env.local` в submodule.
-3. `npm install` → миграции → `npm run dev`.
+2. Создать `.env` / `.env.local` в нужной подпапке (`era-orchestrator`, `era-finance-core`, …).
+3. Собрать shared packages при первом запуске (см. [`LOCAL_FOLDER_DEV.md`](./LOCAL_FOLDER_DEV.md)).
+4. `npm install` → миграции → `npm run dev`.
 
 Минимальная инфраструктура только Postgres + Redis:
 
@@ -183,20 +231,20 @@ docker compose up -d postgres redis
 
 ---
 
-## 5. era-365-orchestrator (control plane)
+## 5. era-orchestrator (control plane)
 
 **Роль:** IdP (JWT), billing, entitlements, ingress для satellite events.
 
 | Компонент | Путь | Порт |
 |-----------|------|------|
-| API (NestJS) | `apps/api` | 4100 |
-| Web (Next.js) | `apps/web` | 3100 |
+| API (NestJS) | `apps/api` | 4000 |
+| Web (Next.js) | `apps/web` | 3000 |
 | Prisma | `packages/database` | — |
 
 ### Настройка
 
 ```bash
-cd era-365-orchestrator
+cd era-orchestrator
 cp .env.example .env
 ```
 
@@ -204,10 +252,10 @@ cp .env.example .env
 
 ```env
 DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/era_orchestrator
-PORT=4100
+PORT=4000
 REDIS_URL=redis://127.0.0.1:6379/0
 ERA_JWT_SECRET=change-me-shared-hs256-secret-min-32-chars
-ERA_JWT_ISSUER=era-365-orchestrator
+ERA_JWT_ISSUER=era-orchestrator
 ERA_JWT_AUDIENCE_FINANCE=era-finance-core
 ERA_SSO_SHARED_SECRET=change-me-sso-hmac-secret
 SATELLITE_EVENT_SERVICE_TOKEN=dev-satellite-event-token
@@ -222,7 +270,7 @@ CONTROL_PLANE_SERVICE_TOKEN=dev-control-plane-token
 ```bash
 npm install
 npm run db:generate
-npm run dev          # API :4100 + Web :3100 параллельно
+npm run dev          # API :4000 + Web :3000 параллельно
 # или отдельно:
 npm run dev:api
 npm run dev:web
@@ -251,10 +299,10 @@ npm run dev:web
 
 **Роль:** GL, транзакции, склад, payroll. **Не** публикуется через Traefik.
 
-| Компонент | Путь | Порт |
-|-----------|------|------|
-| API (NestJS) | `apps/api` | 4000 |
-| Web (Next.js) | `apps/web` | 3000 |
+| Компонент | Путь | Порт (bare / Docker publish) |
+|-----------|------|------------------------------|
+| API (NestJS) | `apps/api` | **4100** |
+| Web (Next.js) | `apps/web` | **3100** |
 | Prisma | `packages/database` | — |
 
 ### Настройка
@@ -271,13 +319,15 @@ DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/era_finance
 REDIS_URL=redis://127.0.0.1:6379/1
 JWT_SECRET=dev-jwt-secret-min-32-chars
 JWT_REFRESH_SECRET=dev-refresh-secret-min-32-chars
-API_PORT=4000
-CONTROL_PLANE_URL=http://127.0.0.1:4100
+API_PORT=4100
+WEB_PORT=3100
+CONTROL_PLANE_URL=http://127.0.0.1:4000
+NEXT_PUBLIC_CONTROL_PLANE_URL=http://127.0.0.1:4000
 CONTROL_PLANE_SERVICE_TOKEN=dev-control-plane-token
 
 # Control-plane SSO (когда включите ERA_AUTH_MODE=control-plane)
 ERA_JWT_SECRET=change-me-shared-hs256-secret-min-32-chars
-ERA_JWT_ISSUER=era-365-orchestrator
+ERA_JWT_ISSUER=era-orchestrator
 ERA_JWT_AUDIENCE_FINANCE=era-finance-core
 ERA_AUTH_MODE=legacy
 # Проксировать RBAC-мутации (join-org, access-requests, transfer-ownership) на orchestrator
@@ -301,7 +351,7 @@ cd ../../era-finance-core
 ```bash
 npm install
 npm run db:bootstrap-local   # первый раз: migrate + seed
-npm run dev                  # API :4000 + Web :3000
+npm run dev                  # API :4100 + Web :3100
 ```
 
 **Demo BUDGET org (gov budget smoke):** seed creates **Demo Budget Agency (local)** (`OrganizationKind.BUDGET`, VÖEN `9900000003`) with owner `demo.owner@erafinance.local` / `DemoLocal#2026`. Enable `gov_budget_pro` on the org subscription, then open `/gov-budget` in Finance web.
@@ -325,10 +375,11 @@ npm run dev:web
 
 ### Swagger / health
 
-- API: http://localhost:4000/api/health  
-- Swagger (dev): http://localhost:4000/docs  
+- API: http://localhost:4100/api/health  
+- Web: http://localhost:3100  
+- Swagger (dev): http://localhost:4100/docs  
 
-Подробный production deploy: [`era-finance-core/docs/deploy/README.md`](../era-finance-core/docs/deploy/README.md).
+Подробный deploy: umbrella — этот файл; Finance ERP only — [`era-finance-core/docs/deploy/FINANCE-ERP-DEPLOY.md`](../era-finance-core/docs/deploy/FINANCE-ERP-DEPLOY.md).
 
 ---
 
@@ -336,9 +387,9 @@ npm run dev:web
 
 **Роль:** PMS (бронирования, folio, night audit), outbound events в ERP.
 
-| Стек | Порт |
-|------|------|
-| Next.js + Prisma | 3000 |
+| Стек | Порт (umbrella Docker) | Standalone compose |
+|------|------------------------|--------------------|
+| Next.js + Prisma | **3201** | **3000** |
 
 ### Настройка
 
@@ -354,12 +405,12 @@ DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/era_hotel_pms
 REDIS_URL=redis://127.0.0.1:6379/2
 AUTH_JWT_SECRET=change-me-min-32-chars
 POS_BRIDGE_SECRET=dev-pos-bridge-secret
-NEXT_PUBLIC_FB_POS_URL=http://localhost:3200
-FB_POS_WEBHOOK_URL=http://localhost:3200/api/webhooks/pms/reservation-lifecycle
+NEXT_PUBLIC_FNB_POS_URL=http://localhost:3200
+FNB_POS_WEBHOOK_URL=http://localhost:3200/api/webhooks/pms/reservation-lifecycle
 
 # Event bus через orchestrator (опционально)
 ERA_EVENT_GATEWAY_MODE=orchestrator
-ORCHESTRATOR_EVENT_URL=http://127.0.0.1:4100
+ORCHESTRATOR_EVENT_URL=http://127.0.0.1:4000
 SATELLITE_EVENT_SERVICE_TOKEN=dev-satellite-event-token
 ERA_SATELLITE_ORGANIZATION_ID=<uuid-организации-в-finance>
 ```
@@ -388,7 +439,7 @@ npm run dev
 
 ---
 
-## 8. era-fb-pos (satellite)
+## 8. era-fnb-pos (satellite)
 
 **Роль:** floor plan, заказы, KDS, календарь; bridge к hotel PMS.
 
@@ -399,12 +450,12 @@ npm run dev
 ### Настройка
 
 ```bash
-cd era-fb-pos
+cd era-fnb-pos
 cp .env.example .env
 ```
 
 ```env
-DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/era_fb_pos
+DATABASE_URL=postgresql://era:era_dev_password@localhost:5432/era_fnb_pos
 PMS_BRIDGE_URL=http://127.0.0.1:3000
 POS_BRIDGE_SECRET=dev-pos-bridge-secret
 FB_POS_WEBHOOK_SECRET=dev-fb-pos-webhook-secret
@@ -423,7 +474,7 @@ npm run dev
 
 - UI: http://localhost:3200  
 
-Документация: [`era-fb-pos/README.md`](../era-fb-pos/README.md).
+Документация: [`era-fnb-pos/README.md`](../era-fnb-pos/README.md).
 
 ---
 
@@ -437,7 +488,7 @@ npm install
 npm run build
 ```
 
-Подключение в submodule (уже в `package.json`):
+Подключение в монорепо (уже в `package.json`):
 
 ```json
 "@era/contracts": "file:../packages/era-contracts"
@@ -447,7 +498,7 @@ npm run build
 
 ```bash
 npm run build
-cd ../../era-365-orchestrator && npm install
+cd ../../era-orchestrator && npm install
 cd ../era-finance-core && npm install
 cd ../era-hotel-pms && npm install
 ```
@@ -461,10 +512,10 @@ cd ../era-hotel-pms && npm install
 | Шаг | Действие |
 |-----|----------|
 | 1 | Одинаковый `ERA_JWT_SECRET` на orchestrator и finance-core |
-| 2 | Login: `POST http://api.era.az/auth/login` → Bearer token |
+| 2 | Login: `POST https://api.era-365.online/auth/login` → Bearer token |
 | 3 | Finance: `ERA_AUTH_MODE=control-plane` — stateless JWT без lookup в БД |
 | 4 | RBAC mutations: `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default) — Finance proxies join/access/transfer to orchestrator |
-| 4b | RBAC smoke: [UAT-SMOKE-RBAC.md](../era-365-orchestrator/doc/UAT-SMOKE-RBAC.md); Finance `GET /api/auth/me` + `POST /api/auth/switch` proxy memberships when `ERA_AUTH_MODE=control-plane` |
+| 4b | RBAC smoke: [UAT-SMOKE-RBAC.md](../era-orchestrator/doc/UAT-SMOKE-RBAC.md); Finance `GET /api/auth/me` + `POST /api/auth/switch` proxy memberships when `ERA_AUTH_MODE=control-plane` |
 | 5 | Billing по-прежнему через `ControlPlaneEntitlementGuard` |
 
 ### Event bus (hotel → finance)
@@ -487,15 +538,15 @@ cd ../era-hotel-pms && npm install
 
 ```bash
 docker compose ps                    # все сервисы healthy / up
-curl http://api.era.az/auth/login    # 404/405 без body — маршрут жив
-curl http://hotel.era.az/login       # HTML hotel
-curl http://pos.era.az               # HTML POS
+curl https://api.era-365.online/auth/login    # 404/405 без body — маршрут жив
+curl https://hotel-pms.era-365.online/login       # HTML hotel
+curl https://fnb-pos.era-365.online               # HTML POS
 ```
 
 ### Orchestrator API
 
 ```bash
-curl -X POST http://localhost:4100/auth/login \
+curl -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"user@example.com\",\"password\":\"secret\"}"
 ```
@@ -503,7 +554,7 @@ curl -X POST http://localhost:4100/auth/login \
 ### Finance API
 
 ```bash
-curl http://localhost:4000/api/health
+curl http://localhost:4100/api/health
 ```
 
 ### Hotel → Event bus (ручной smoke)
@@ -528,13 +579,13 @@ npm run dev
 
 | App | Dir | Port | Host | PRD |
 |-----|-----|------|------|-----|
-| Retail POS | `era-retail-pos` | 3300 | retail.era.az | [PRD](../era-retail-pos/PRD.md) |
-| Logistics | `era-logistics` | 3301 | logistics.era.az | [PRD](../era-logistics/PRD.md) |
-| Construction | `era-construction` | 3302 | construction.era.az | [PRD](../era-construction/PRD.md) |
-| CRM Field | `era-crm-field` | 3303 | crm.era.az | [PRD](../era-crm-field/PRD.md) |
-| Auto STO | `era-auto-sto` | 3304 | auto.era.az | [PRD](../era-auto-sto/PRD.md) |
-| Wholesale | `era-wholesale` | 3305 | wholesale.era.az | [PRD](../era-wholesale/PRD.md) |
-| Clinic | `era-clinic` | 3306 | clinic.era.az | [PRD](../era-clinic/PRD.md) |
+| Retail POS | `era-retail-pos` | [PRD](era-retail-pos/PRD.md) | retail-pos.era-365.online | 3204 | retail-pos.era-365.online | [PRD](../era-retail-pos/PRD.md) |
+| Logistics | `era-logistics` | [PRD](era-logistics/PRD.md) | logistics.era-365.online | 3205 | logistics.era-365.online | [PRD](../era-logistics/PRD.md) |
+| Construction | `era-construction` | [PRD](era-construction/PRD.md) | construction.era-365.online | 3206 | construction.era-365.online | [PRD](../era-construction/PRD.md) |
+| CRM Field | `era-crm` | [PRD](era-crm/PRD.md) | crm.era-365.online | 3207 | crm.era-365.online | [PRD](../era-crm/PRD.md) |
+| Auto STO | `era-auto-service` | [PRD](era-auto-service/PRD.md) | auto-service.era-365.online | 3208 | auto-service.era-365.online | [PRD](../era-auto-service/PRD.md) |
+| Wholesale | `era-wholesale` | [PRD](era-wholesale/PRD.md) | wholesale.era-365.online | 3209 | wholesale.era-365.online | [PRD](../era-wholesale/PRD.md) |
+| Clinic | `era-clinic` | [PRD](era-clinic/PRD.md) | clinic.era-365.online | 3203 | clinic.era-365.online | [PRD](../era-clinic/PRD.md) |
 
 Retail presets: grocery, apparel, electronics, pharmacy — см. [`era-retail-pos/doc/presets/`](../era-retail-pos/doc/presets/).
 
@@ -548,12 +599,14 @@ Smoke all services: [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md).
 
 | Симптом | Решение |
 |---------|---------|
-| `app.era.az` не открывается | Проверьте hosts, Traefik (`docker compose logs traefik`), порт 80 |
+| `app.era-365.online` не открывается | Проверьте hosts, Traefik (`docker compose logs traefik`), порт 80 |
 | Finance API недоступен снаружи | Ожидаемо — только internal `finance-core:4000` или `localhost:4000` локально |
 | Конфликт порта 3000 | Не запускайте finance web и hotel одновременно на одном хосте |
 | Orchestrator login 401 | БД без таблицы `users` / неверный `DATABASE_URL`; используйте finance DB на этапе миграции |
 | Events не доходят до finance | Один `SATELLITE_EVENT_REDIS_URL` (db `0`); worker не disabled; token совпадает |
 | Hotel bridge к POS 403 | `POS_BRIDGE_SECRET` одинаковый в hotel и fb-pos |
+| Hotel: `Reservation.groupId` / `RoomChangePlan` does not exist | Не применены миграции Hotel. Из корня с паролем из `.env`: `cd era-hotel-pms` и `DATABASE_URL=postgresql://era:$POSTGRES_PASSWORD@localhost:5432/era_hotel_pms?schema=public npx prisma migrate deploy` — или `npm run bootstrap:local` (флаг `--migrate-satellites` по умолчанию). В Docker entrypoint вызывает `prisma migrate deploy`; при WARN в логах — выполните команду с хоста. |
+| `[i18n] MISSING_MESSAGE: common.accessDenied` | Обновите образ `hotel-pms` и `packages/i18n-common` (`common.*.json` с ключом `accessDenied`). |
 | `@era/contracts` not found | `npm run build` в `packages/era-contracts`, затем `npm install` в consumer |
 
 ---
@@ -566,4 +619,6 @@ Smoke all services: [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md).
 | [`DESIGN.md`](../DESIGN.md) | UI/UX и архитектурные принципы |
 | [`SATELLITE_DOCUMENTATION.md`](./SATELLITE_DOCUMENTATION.md) | Стандарт PRD/DELIVERY |
 | [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md) | Smoke всех сервисов |
+| [`era-finance-core/docs/README.md`](../era-finance-core/docs/README.md) | Finance docs index |
 | [`era-finance-core/docs/deploy/`](../era-finance-core/docs/deploy/) | Production deploy finance |
+| [`DEPLOY_DIGITALOCEAN.ru.md`](./DEPLOY_DIGITALOCEAN.ru.md) | Полный стек на DigitalOcean Droplet |

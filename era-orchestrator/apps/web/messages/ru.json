@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "title": "ERA 365 Orchestrator",
+    "description": "Control plane — идентичность, биллинг, launcher отраслей"
+  },
+  "login": {
+    "title": "ERA 365",
+    "subtitle": "Вход в control plane",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "…",
+    "createAccount": "Создать аккаунт",
+    "registerOrg": "Регистрация организации",
+    "demoHint": "Platform super-admin: см. tmp/era-local-credentials.md после bootstrap"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA 365 — модули",
+    "subtitle": "Точка входа control plane. Откройте доступные модули ниже.",
+    "loadingEntitlements": "Загрузка прав…",
+    "hotelUpsellTitle": "Расширьте Hotel PMS",
+    "hotelUpsellHint": "У вас есть доступ к Hotel PMS. Подключите Channel Manager или выберите пакет Resort на странице тарифов.",
+    "hotelUpsellCta": "Тарифы Hotel",
+    "open": "Открыть →",
+    "waitlist": "Лист ожидания",
+    "financeOpen": "Открыть Finance",
+    "intro": "MVP операционная оболочка по DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое ERA 365?",
+        "a": "Control plane экосистемы ERA: идентичность, организации, подписки и launcher отраслевых модулей."
+      },
+      "sso": {
+        "q": "Как перейти в сателлиты?",
+        "a": "После входа выберите Finance или отраслевой модуль в launcher. SSO-токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где регистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» или через app.era-365.online с VÖEN и выбором модулей."
+      }
+    }
+  },
+  "superAdmin": {
+    "hub": {
+      "title": "Супер-админ",
+      "subtitle": "Управление платформой — billing, MDM, безопасность.",
+      "billingLink": "Billing — цены, пакеты, квоты",
+      "mdmLink": "MDM — реестр компаний",
+      "earlyAccessLink": "Early access — лист ожидания",
+      "securityLink": "Безопасность — споры и state org"
+    },
+    "mdm": {
+      "title": "MDM",
+      "subtitlePrefix": "Сопоставление VÖEN и организаций.",
+      "browseCompanies": "Список компаний",
+      "openCompanyList": "Открыть компании"
+    },
+    "mdmCompanies": {
+      "title": "MDM — компании",
+      "prev": "Назад",
+      "next": "Далее",
+      "page": "Страница {page}"
+    },
+    "security": {
+      "title": "Безопасность",
+      "orgIdPlaceholder": "ID организации",
+      "load": "Загрузить",
+      "loadFailed": "Ошибка загрузки",
+      "disputeIdPlaceholder": "ID спора",
+      "updateDispute": "Обновить спор",
+      "patchFailed": "Ошибка обновления"
+    },
+    "earlyAccess": {
+      "title": "Ранний доступ",
+      "loadingSummary": "Загрузка сводки…",
+      "recentEvents": "Последние события"
+    },
+    "billing": {
+      "loading": "Загрузка…",
+      "foundationLabel": "Foundation (AZN/мес)",
+      "saveFoundation": "Сохранить foundation",
+      "seedCatalog": "Seed каталога",
+      "colModule": "Модуль",
+      "colKey": "Ключ",
+      "colPrice": "AZN/мес",
+      "colActions": "Действия",
+      "save": "Сохранить"
+    },
+    "billingPackages": {
+      "newBundle": "Новый пакет",
+      "loading": "Загрузка…",
+      "colBundle": "Пакет",
+      "colDiscount": "Скидка %",
+      "colModules": "Модули",
+      "colTrial": "Пробный",
+      "colActions": "Действия",
+      "trialYes": "Да",
+      "delete": "Удалить",
+      "deleteConfirm": "Удалить пакет?",
+      "modalTitle": "Создать пакет",
+      "name": "Название",
+      "discount": "Скидка %",
+      "moduleKeys": "Ключи модулей (через запятую)",
+      "create": "Создать"
+    },
+    "billingQuotas": {
+      "loading": "Загрузка…",
+      "yearlyDiscount": "Годовая скидка (%)",
+      "ocrJobs": "OCR-заданий / орг. / месяц",
+      "save": "Сохранить"
+    }
+  },
+  "auth": {
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "home": "Главная",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "all": "Все",
+    "search": "Поиск",
+    "name": "Название",
+    "status": "Статус",
+    "date": "Дата",
+    "guest": "Гость",
+    "notes": "Примечания",
+    "complete": "Завершить",
+    "notFound": "Не найдено",
+    "select": "Выберите…",
+    "failed": "Ошибка",
+    "error": "Ошибка",
+    "loadingFailed": "Ошибка загрузки",
+    "saveFailed": "Ошибка сохранения"
+  },
+  "register": {
+    "title": "Создать аккаунт",
+    "subtitle": "Личный аккаунт в экосистеме ERA 365",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Электронная почта",
+    "password": "Пароль (мин. 8)",
+    "submit": "Зарегистрироваться",
+    "busy": "…",
+    "alreadyHaveAccount": "Уже есть аккаунт? Войти",
+    "registerFailed": "Ошибка регистрации"
+  },
+  "registerOrg": {
+    "title": "Регистрация организации",
+    "subtitle": "Регистрация с VÖEN и названием компании",
+    "orgName": "Название организации",
+    "taxId": "VÖEN",
+    "submit": "Завершить регистрацию",
+    "back": "← Назад",
+    "registerFailed": "Ошибка регистрации"
+  },
+  "terms": {
+    "title": "Пользовательское соглашение",
+    "intro": "Условия использования платформы ERA 365.",
+    "section1Title": "1. Сервис",
+    "section1Body": "ERA 365 — облачная ERP-экосистема. Сервис предоставляется по подписке и выбранным модулям.",
+    "section2Title": "2. Данные",
+    "section2Body": "Данные организации шифруются и обрабатываются только с вашего разрешения.",
+    "section3Title": "3. Обязанности",
+    "section3Body": "Пользователь обязан обеспечивать конфиденциальность учётных данных."
+  },
+  "partner": {
+    "title": "Партнёрская панель",
+    "loading": "Загрузка…",
+    "loginRequired": "Войдите для доступа к партнёрской панели",
+    "login": "Войти",
+    "notPartner": "Партнёрский аккаунт не найден",
+    "back": "← Назад",
+    "referralLink": "Реферальная ссылка",
+    "copyLink": "Копировать ссылку",
+    "qr": "QR-код",
+    "statsTotal": "Всего referral",
+    "statsActive": "Активных",
+    "statsPending": "Ожидающая комиссия"
+  },
+  "admin": {
+    "settings": {
+      "field": "Поле",
+      "value": "Значение",
+      "actions": "Действия",
+      "edit": "Изменить",
+      "save": "Сохранить"
+    }
+  }
+}

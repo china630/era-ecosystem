@@ -24,7 +24,7 @@ GL, NAS, e-qaimə submission — по-прежнему **ERP / fiscal gateway**,
 |-------|----------|------------|-----------------|
 | **P2-A** ERP интеграция (тех.) | [18-erp-integration.md](18-erp-integration.md) | Фаза 1 E1–E5 | 🔴 после ответов чеклиста §C |
 | **P2-B** AZ fiscal & tourism | [17-az-compliance.md](17-az-compliance.md) | ERP или шлюз | 🔴 для перепродажи в AZ |
-| **P2-C** POS / F&B / SPA-касса | [15-pos-fb-spa.md](15-pos-fb-spa.md) · [era-fb-pos](../../era-fb-pos/doc/README.md) | Фаза 1 quick posting | 🟡 **era-fb-pos** сателлит; SPA-касса — **не** отдельный (§H чеклиста 13) |
+| **P2-C** POS / F&B / SPA-касса | [15-pos-fb-spa.md](15-pos-fb-spa.md) · [era-fnb-pos](../../era-fnb-pos/doc/README.md) | Фаза 1 quick posting | 🟡 **era-fnb-pos** сателлит; SPA-касса — **не** отдельный (§H чеклиста 13) |
 | **P2-D** Склад и закупки | [16-stock-procurement.md](16-stock-procurement.md) | POS (списание) | 🟡 / 🟢 |
 | **P2-E** Доп. продукт | — | — | 🟢 |
 

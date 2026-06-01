@@ -11,8 +11,8 @@ const apps = [
   "era-retail-pos",
   "era-logistics",
   "era-construction",
-  "era-crm-field",
-  "era-auto-sto",
+  "era-crm",
+  "era-auto-service",
   "era-clinic",
   "era-wholesale",
 ];

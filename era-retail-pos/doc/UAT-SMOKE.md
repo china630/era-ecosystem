@@ -7,7 +7,7 @@
 ## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: `http://localhost:3000` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite `/sso/callback` session.
 3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
 
@@ -55,3 +55,15 @@
 - [x] M12: Set customer phone / loyalty ref on receipt → visible on paid receipt
 - [x] M7: `GET /api/products/search?q=…` returns cached SKU rows
 - [x] M2 extend: `GET /api/shifts/:id/x-report` + X-report button on `/pos` during open shift
+
+## v1.1 — M14–M16 (DONE)
+
+- [x] M14: `POST /api/stock/check` with SKU + actual qty
+- [x] M15: `GET /api/replenishment/suggestions`
+- [x] M16: supplier-match via Finance proxy (see [SMOKE_ALL_SERVICES.md](../../docs/SMOKE_ALL_SERVICES.md) § v1.1)
+
+## v2.0 — M8–M10 (DONE)
+
+- [x] M8: offline queue UI + `POST /api/offline/sync`
+- [x] M9: fiscal pay path with `ERA_FISCAL_PROVIDER=mock`
+- [x] M10: marketplace webhook idempotency stub

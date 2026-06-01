@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   ModalFooter,
@@ -12,6 +13,9 @@ import {
 } from "@era/satellite-kit/ui";
 
 export default function ClinicAdminSettingsPage() {
+  const t = useTranslations("adminSettings");
+  const tc = useTranslations("common");
+  const tNav = useTranslations("nav");
   const [clinicName, setClinicName] = useState("Demo clinic");
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(clinicName);
@@ -19,41 +23,41 @@ export default function ClinicAdminSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl p-6">
       <PageHeader
-        title="Clinic settings"
-        subtitle="Admin — UI playbook (list + ModalShell)"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={SECONDARY_BUTTON_CLASS}>
-            ← Home
+            ← {tNav("home")}
           </Link>
         }
       />
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
-            <th className="p-3">Field</th>
-            <th className="p-3">Value</th>
-            <th className="p-3 text-right">Actions</th>
+            <th className="p-3">{tc("field")}</th>
+            <th className="p-3">{tc("value")}</th>
+            <th className="p-3 text-right">{tc("actions")}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="p-3 font-medium">Clinic name</td>
+            <td className="p-3 font-medium">{t("clinicName")}</td>
             <td className="p-3">{clinicName}</td>
             <td className="p-3 text-right">
               <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => { setDraft(clinicName); setOpen(true); }}>
-                Edit
+                {tc("edit")}
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <ModalShell open={open} title="Edit clinic" onClose={() => setOpen(false)}>
+      <ModalShell open={open} title={t("editClinic")} onClose={() => setOpen(false)}>
         <input
           className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />
-        <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setClinicName(draft.trim() || clinicName); setOpen(false); }} submitLabel="Save" />
+        <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setClinicName(draft.trim() || clinicName); setOpen(false); }} submitLabel={tc("save")} />
       </ModalShell>
     </div>
   );

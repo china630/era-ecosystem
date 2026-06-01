@@ -1,0 +1,38 @@
+{
+  "common": {
+    "locale": "ru",
+    "accessDenied": "Нет доступа к этому разделу."
+  },
+  "nav": {
+    "home": "Главная"
+  },
+  "header": {
+    "settings": "Настройки",
+    "help": "Справка",
+    "profileMenu": "Меню аккаунта",
+    "invoicesQuota": "Счета",
+    "employeesQuota": "Сотрудники"
+  },
+  "auth": {
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

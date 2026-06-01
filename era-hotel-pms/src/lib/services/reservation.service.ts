@@ -205,11 +205,32 @@ export async function checkInReservation(id: string) {
     void notifyClinicCheckIn(id, updated).catch((e) =>
       console.error('Clinic episode hook failed', e),
     );
+    if (
+      process.env.ERA_DOOR_LOCK_ENABLED === '1' &&
+      updated.room?.roomNumber
+    ) {
+      const { getDoorLockAdapter } = await import(
+        '@/lib/integrations/door-lock-adapter'
+      );
+      void getDoorLockAdapter()
+        .unlockRoom({
+          roomNumber: updated.room.roomNumber,
+          reservationId: id,
+        })
+        .catch((e) => console.error('Door lock unlock on check-in failed', e));
+    }
     return result;
   });
 }
 
-async function notifyClinicCheckIn(reservationId: string, reservation: { guest: { fullName: string; passportNumber: string; phone: string }; ratePlan: { medicalFlag: boolean }; stay?: { id: string } | null }) {
+async function notifyClinicCheckIn(
+  reservationId: string,
+  reservation: {
+    guest: { fullName: string; passportNumber: string | null; phone: string | null };
+    ratePlan: { medicalFlag: boolean };
+    stay?: { id: string } | null;
+  },
+) {
   if (!reservation.ratePlan.medicalFlag) return;
   const baseUrl = process.env.CLINIC_API_URL?.trim();
   if (!baseUrl) return;

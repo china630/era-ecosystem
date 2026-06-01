@@ -2,8 +2,8 @@
 
 POS with grocery, apparel, electronics, pharmacy presets. **PRD v1.0** — benchmarks, modules R0–R4, user stories.
 
-- Host: `retail.era.az` (port 3300)
-- Entitlement: `industry_retail_ecom`
+- Host: `retail-pos.era-365.online` (port 3300)
+- Entitlement: `industry_retail`
 - Docs: [PRD](./PRD.md) · [DELIVERY](./doc/DELIVERY-RETAIL.md)
 
 ```bash

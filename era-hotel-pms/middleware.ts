@@ -1,40 +1,33 @@
 import { NextResponse } from 'next/server';
+import {
+  authCookieName,
+  eraPathnameRequestHeaders,
+  getBearerOrCookieToken,
+  isPublicApiPath,
+  redirectNoStore,
+  verifySatelliteSession,
+} from '@era/satellite-kit/auth/middleware-edge';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
 import {
   isPosBridgeApiPath,
   verifyPosBridgeFromHeaders,
-} from '@/lib/pos-bridge-auth';
+} from '@/lib/pos-bridge-auth-edge';
 
-const AUTH_COOKIE = process.env.AUTH_COOKIE_NAME ?? 'era_session';
+const COOKIE = authCookieName();
 
-const PUBLIC_API_PREFIXES = [
-  '/api/auth/login',
-  '/api/auth/sso/exchange',
-  '/api/locale',
+const PUBLIC_API_EXTRA = [
   '/api/integration/mock-receiver',
   '/api/integration/mock-licensing',
   '/api/integration/erp/inbound',
 ];
 
-function isPublicApi(pathname: string): boolean {
-  return PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p));
-}
-
-function getToken(request: NextRequest): string | undefined {
-  const cookie = request.cookies.get(AUTH_COOKIE)?.value;
-  if (cookie) return cookie;
-  const auth = request.headers.get('authorization');
-  if (auth?.startsWith('Bearer ')) return auth.slice(7);
-  return undefined;
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const reqHeaders = eraPathnameRequestHeaders(request.headers, pathname);
 
   if (pathname.startsWith('/api')) {
-    if (isPublicApi(pathname)) {
-      return NextResponse.next();
+    if (isPublicApiPath(pathname, PUBLIC_API_EXTRA)) {
+      return NextResponse.next({ request: { headers: reqHeaders } });
     }
 
     if (
@@ -44,22 +37,22 @@ export async function middleware(request: NextRequest) {
         request.headers.get('authorization'),
       )
     ) {
-      return NextResponse.next();
+      return NextResponse.next({ request: { headers: reqHeaders } });
     }
 
-    const token = getToken(request);
+    const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
-      const session = await verifyToken(token);
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('x-user-id', session.sub);
-      requestHeaders.set('x-user-role', session.role);
-      requestHeaders.set('x-user-login', session.login);
-      requestHeaders.set('x-user-fullname', session.fullName);
-      return NextResponse.next({ request: { headers: requestHeaders } });
+      const session = await verifySatelliteSession(token);
+      const headers = new Headers(reqHeaders);
+      headers.set('x-user-id', session.sub);
+      headers.set('x-user-role', session.role);
+      headers.set('x-user-login', session.login);
+      headers.set('x-user-fullname', session.fullName);
+      return NextResponse.next({ request: { headers } });
     } catch {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
@@ -68,25 +61,27 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/login' ||
     pathname === '/sso/callback' ||
+    pathname === '/help' ||
+    pathname.startsWith('/help/') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
   ) {
-    return NextResponse.next();
+    return NextResponse.next({ request: { headers: reqHeaders } });
   }
 
-  const token = getToken(request);
+  const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
   if (!token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(loginUrl);
+    return redirectNoStore(loginUrl);
   }
 
   try {
-    await verifyToken(token);
-    return NextResponse.next();
+    await verifySatelliteSession(token);
+    return NextResponse.next({ request: { headers: reqHeaders } });
   } catch {
     const loginUrl = new URL('/login', request.url);
-    return NextResponse.redirect(loginUrl);
+    return redirectNoStore(loginUrl);
   }
 }
 

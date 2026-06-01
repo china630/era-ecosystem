@@ -26,7 +26,13 @@ function resolveSentryTunnelRoute(): string | boolean | undefined {
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["@erafinance/ui", "@erafinance/i18n", "@erafinance/api-contracts"],
+  transpilePackages: [
+    "@era/i18n-common",
+    "@era/satellite-kit",
+    "@erafinance/ui",
+    "@erafinance/i18n",
+    "@erafinance/api-contracts",
+  ],
   /** Клиент ходит на тот же origin (`/api/...`), Next проксирует на бэкенд — меньше проблем с CORS и блокировками. */
   async rewrites() {
     return [
@@ -57,6 +63,7 @@ const nextConfig: NextConfig = {
       { source: "/settings/mapping", destination: "/accounting/mapping", permanent: true },
       { source: "/settings/chart", destination: "/accounting/chart", permanent: true },
       { source: "/settings/finance/ifrs-mapping", destination: "/accounting/ifrs-mapping", permanent: true },
+      { source: "/help", destination: "/#faq", permanent: false },
     ];
   },
 };

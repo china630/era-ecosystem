@@ -37,7 +37,7 @@ Add or verify these variables in your secrets manager (Vault) and runtime `.env`
 ### Shared infrastructure (same as core ERP deploy)
 
 - Health: load balancer or synthetic checks should call **`GET /api/health`** on the API origin.
-- Docker / Redis / backups / DR: see [`docs/deploy/README.md`](./README.md) and [`docs/launch/STAGE_B_INFRASTRUCTURE.md`](../launch/STAGE_B_INFRASTRUCTURE.md).
+- Docker / Redis / backups / DR: see [`docs/deploy/README.md`](./README.md) and [`DR_RUNBOOK.md`](./DR_RUNBOOK.md).
 
 ### Existing required variables (must still be present)
 

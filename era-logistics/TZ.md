@@ -18,8 +18,8 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-LOGIST
 | Param | Value |
 |-------|-------|
 | Port | 3301 |
-| Host | `logistics.era.az` |
-| Entitlement | `industry_logistics_customs` |
+| Host | `logistics.era-365.online` |
+| Entitlement | `industry_logistics` |
 | Docker | umbrella [docker-compose.yml](../docker-compose.yml) service `logistics` |
 
 ## Data model (L1 target)

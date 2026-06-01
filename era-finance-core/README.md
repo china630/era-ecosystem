@@ -2,9 +2,13 @@
 
 Monorepo: `apps/web`, `apps/api`, `packages/database`. See `.cursor/rules` and `PRD.md` / `TZ.md` for product and technical specs.
 
+**Docs index:** [docs/README.md](./docs/README.md) · **User help:** [docs/USER_DOCUMENTATION.md](../docs/USER_DOCUMENTATION.md) (in-app `/help` only).
+
+**Local dev:** [docs/LOCAL_FOLDER_DEV.md](../docs/LOCAL_FOLDER_DEV.md) · Web **3100**, API **4100**, control plane **4000** · UI shell: [DESIGN.md](../DESIGN.md) § App shell, `app/app-shell.tsx` + `@era/satellite-kit/ui`.
+
 ## Production deploy
 
-Deploy docs center: **[docs/deploy/README.md](./docs/deploy/README.md)**.
+**Ecosystem:** [docs/SETUP_AND_RUN.md](../docs/SETUP_AND_RUN.md). **Finance ERP only:** [docs/deploy/FINANCE-ERP-DEPLOY.md](./docs/deploy/FINANCE-ERP-DEPLOY.md) → [docs/deploy/README.md](./docs/deploy/README.md).
 
 1. Copy **`env.production.example`** → `.env` in the repo root and fill secrets (`POSTGRES_PASSWORD`, `JWT_*`, `REDIS_URL`, `CORS_ORIGINS`, …).
 2. Follow **[docs/deploy/deploy.ru.md](./docs/deploy/deploy.ru.md)** (or [docs/deploy/deploy.md](./docs/deploy/deploy.md) in English).

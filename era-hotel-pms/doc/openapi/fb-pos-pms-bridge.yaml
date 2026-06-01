@@ -3,10 +3,10 @@ info:
   title: ERA — fb-pos ↔ hotel-pms bridge
   version: 0.3.0
   description: |
-    Контракт интеграции **era-fb-pos** (клиент) и **era-hotel-pms** (сервер folio / in-house).
+    Контракт интеграции **era-fnb-pos** (клиент) и **era-hotel-pms** (сервер folio / in-house).
 
     - **Реализовано** (Stage 17): room-charge + idempotency, in-house, folio-summary,
-      pos-shift-status, room-charges lookup; PMS webhook on check-out (`FB_POS_WEBHOOK_URL`).
+      pos-shift-status, room-charges lookup; PMS webhook on check-out (`FNB_POS_WEBHOOK_URL`).
     - Lite calendar: `resources` / `reservations` (session auth).
 
     См. также: [23-pos-bridge.md](../clone-spec/23-pos-bridge.md),

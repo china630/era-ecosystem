@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  ColorLegend,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
@@ -17,6 +19,9 @@ type SlotsResponse = {
 };
 
 export default function SchedulingPage() {
+  const t = useTranslations("scheduling");
+  const tc = useTranslations("common");
+  const tNav = useTranslations("nav");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [practitionerCode, setPractitionerCode] = useState("");
   const [data, setData] = useState<SlotsResponse | null>(null);
@@ -35,18 +40,18 @@ export default function SchedulingPage() {
   return (
     <>
       <PageHeader
-        title="Day schedule"
-        subtitle="K-05 — practitioner day grid (slots API stub)"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
+            {tNav("home")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <div className="flex flex-wrap gap-4 text-[13px]">
           <label className="flex items-center gap-2">
-            Date
+            {t("date")}
             <input
               type="date"
               className="rounded border px-2 py-1"
@@ -55,10 +60,10 @@ export default function SchedulingPage() {
             />
           </label>
           <label className="flex items-center gap-2">
-            Practitioner code
+            {t("practitionerCode")}
             <input
               className="rounded border px-2 py-1"
-              placeholder="optional"
+              placeholder={t("optional")}
               value={practitionerCode}
               onChange={(e) => setPractitionerCode(e.target.value)}
             />
@@ -66,15 +71,23 @@ export default function SchedulingPage() {
         </div>
 
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading slots…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{t("loadingSlots")}</p>
         ) : !data ? (
-          <p className="text-[13px] text-red-600">Failed to load schedule.</p>
+          <p className="text-[13px] text-red-600">{t("loadFailed")}</p>
         ) : (
           <>
             <p className="text-[13px] text-[#7F8C8D]">
               {data.date}
-              {data.practitionerCode ? ` · ${data.practitionerCode}` : " · all practitioners"}
+              {data.practitionerCode
+                ? ` · ${data.practitionerCode}`
+                : ` · ${t("allPractitioners")}`}
             </p>
+            <ColorLegend
+              items={[
+                { id: "available", label: "Available", swatchClassName: "bg-green-50" },
+                { id: "busy", label: "Unavailable", swatchClassName: "bg-slate-100" },
+              ]}
+            />
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
               {data.slots.map((slot) => (
                 <div
@@ -89,9 +102,7 @@ export default function SchedulingPage() {
                 </div>
               ))}
             </div>
-            <p className="text-[12px] text-[#7F8C8D]">
-              Drag reschedule stub — use appointments API to move blocks (K3 MVP).
-            </p>
+            <p className="text-[12px] text-[#7F8C8D]">{t("rescheduleStub")}</p>
           </>
         )}
       </div>

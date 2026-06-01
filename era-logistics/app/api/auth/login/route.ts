@@ -1,19 +1,25 @@
-import { NextResponse } from "next/server";
-import { authCookieName, signSatelliteSession } from "@era/satellite-kit";
-import { jsonError, jsonOk, handleRouteError } from "@/lib/api-utils";
-import { prisma } from "@/lib/prisma";
+import {
+  authCookieName,
+  findUserByCredential,
+  isSatelliteUserLoginAllowed,
+  signSatelliteSession,
+  verifySatelliteUserPassword,
+} from "@era/satellite-kit";
 import { z } from "zod";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { prisma } from "@/lib/prisma";
 
 const schema = z.object({ login: z.string().min(1), password: z.string().min(1) });
 
 export async function POST(request: Request) {
   try {
     const body = schema.parse(await request.json());
-    const user = await prisma.user.findUnique({
-      where: { login: body.login },
-      include: { role: true },
-    });
-    if (!user || user.passwordHash === "sso:no-password") {
+    const user = await findUserByCredential(prisma, body.login);
+    if (!user || !isSatelliteUserLoginAllowed(user)) {
+      return jsonError("Invalid credentials", 401);
+    }
+    const valid = await verifySatelliteUserPassword(body.password, user);
+    if (!valid) {
       return jsonError("Invalid credentials", 401);
     }
     const token = await signSatelliteSession({
@@ -23,7 +29,12 @@ export async function POST(request: Request) {
       fullName: user.fullName,
     });
     const res = jsonOk({
-      user: { id: user.id, login: user.login, fullName: user.fullName, role: user.role.code },
+      user: {
+        id: user.id,
+        login: user.login,
+        fullName: user.fullName,
+        role: user.role.code,
+      },
       token,
     });
     res.cookies.set(authCookieName(), token, {

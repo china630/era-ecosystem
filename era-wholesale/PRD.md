@@ -1,7 +1,7 @@
 # ERA Wholesale — Product Requirements Document (PRD)
 
 > B2B опт: заказы, отсрочка, сборка. AR/лимиты/shipment invoice — **Finance**.  
-> Entitlement: `industry_wholesale` · Host: `wholesale.era.az` (3305)
+> Entitlement: `industry_wholesale` · Host: `wholesale.era-365.online` (3305)
 
 ---
 
@@ -42,14 +42,14 @@
 
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
-| M0 | Shell | **MVP** | — |
-| M1 | B2B order entry | **MVP** | buyerCounterpartyId |
-| M2 | Credit limit display | **MVP** | Read Finance AR |
-| M3 | Pick/pack workflow | **MVP** | — |
-| M4 | Confirm shipment | **MVP** | `ORDER_CONFIRMED` |
-| M5 | Delivery note / TTN | **MVP** | Печать отгрузочного документа |
-| M6 | Pick wave / route (lite) | **MVP** | Волна сборки склада |
-| M7 | EDI / buyer API export | **PLANNED (v1.1)** | Buyer API |
+| M0 | Shell | **DONE** | — |
+| M1 | B2B order entry | **DONE** | buyerCounterpartyId |
+| M2 | Credit limit display | **DONE** | Read Finance AR |
+| M3 | Pick/pack workflow | **DONE** | — |
+| M4 | Confirm shipment | **DONE** | `ORDER_CONFIRMED` |
+| M5 | Delivery note / TTN | **DONE** | Печать отгрузочного документа |
+| M6 | Pick wave / route (lite) | **DONE** | Волна сборки склада |
+| M7 | EDI / buyer API export | **DONE** | Buyer API |
 
 См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 

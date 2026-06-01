@@ -1,0 +1,91 @@
+# syntax=docker/dockerfile:1
+# ERA Finance Core — Next.js web (:3000), Traefik host finance-core.era-365.online
+# Build context MUST be umbrella repo root (packages/i18n-common, satellite-kit):
+#   docker build -f era-finance-core/Dockerfile.web -t era-finance-web .
+
+FROM node:22-alpine AS builder
+
+RUN apk add --no-cache python3 make g++ openssl
+
+WORKDIR /workspace
+
+COPY packages/i18n-common/package.json packages/i18n-common/package-lock.json* ./packages/i18n-common/
+COPY packages/era-contracts/package.json packages/era-contracts/package-lock.json* ./packages/era-contracts/
+COPY packages/satellite-kit/package.json packages/satellite-kit/package-lock.json* ./packages/satellite-kit/
+COPY packages/era-storage/package.json packages/era-storage/package-lock.json* ./packages/era-storage/
+COPY packages/i18n-common ./packages/i18n-common
+COPY packages/era-contracts ./packages/era-contracts
+COPY packages/era-storage ./packages/era-storage
+COPY packages/satellite-kit ./packages/satellite-kit
+
+RUN cd packages/i18n-common && npm install && npm run build \
+  && cd ../era-contracts && npm install && npm run build \
+  && cd ../era-storage && npm install && npm run build \
+  && cd ../satellite-kit && npm install && npm run build
+
+COPY era-finance-core/package.json era-finance-core/package-lock.json ./era-finance-core/
+COPY era-finance-core/apps/web/package.json ./era-finance-core/apps/web/
+COPY era-finance-core/packages/database/package.json ./era-finance-core/packages/database/
+COPY era-finance-core/packages/api-contracts/package.json ./era-finance-core/packages/api-contracts/
+COPY era-finance-core/packages/i18n/package.json ./era-finance-core/packages/i18n/
+COPY era-finance-core/packages/ui/package.json ./era-finance-core/packages/ui/
+
+COPY era-finance-core/packages/database ./era-finance-core/packages/database
+COPY era-finance-core/packages/api-contracts ./era-finance-core/packages/api-contracts
+COPY era-finance-core/packages/i18n ./era-finance-core/packages/i18n
+COPY era-finance-core/packages/ui ./era-finance-core/packages/ui
+COPY era-finance-core/apps/web ./era-finance-core/apps/web
+
+WORKDIR /workspace/era-finance-core
+
+ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+ARG NEXT_PUBLIC_API_URL=http://finance-core:4100
+ARG NEXT_PUBLIC_CONTROL_PLANE_URL=http://orchestrator:4000
+ARG NEXT_PUBLIC_ORCH_WEB_URL=http://127.0.0.1:3000
+ARG NEXT_PUBLIC_SENTRY_DSN=
+ARG SENTRY_AUTH_TOKEN=
+ARG SENTRY_ORG=
+ARG SENTRY_PROJECT_WEB=
+ARG SENTRY_TUNNEL_PATH=
+ARG SENTRY_UPLOAD_SOURCEMAPS=0
+
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_CONTROL_PLANE_URL=${NEXT_PUBLIC_CONTROL_PLANE_URL}
+ENV NEXT_PUBLIC_ORCH_WEB_URL=${NEXT_PUBLIC_ORCH_WEB_URL}
+ENV NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+ENV SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+ENV SENTRY_ORG=${SENTRY_ORG}
+ENV SENTRY_PROJECT_WEB=${SENTRY_PROJECT_WEB}
+ENV SENTRY_TUNNEL_PATH=${SENTRY_TUNNEL_PATH}
+ENV SENTRY_UPLOAD_SOURCEMAPS=${SENTRY_UPLOAD_SOURCEMAPS}
+
+RUN npm ci
+RUN npm run build -w @erafinance/api-contracts \
+  && npm run build -w @erafinance/web
+RUN npm prune --omit=dev
+
+FROM node:22-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3100
+
+RUN apk add --no-cache wget \
+  && addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
+
+COPY --from=builder --chown=nextjs:nodejs /workspace/era-finance-core /app
+
+USER nextjs
+
+EXPOSE 3100
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=5 \
+  CMD wget -qO- http://127.0.0.1:3100/ >/dev/null 2>&1 || exit 1
+
+CMD ["npm", "run", "start", "-w", "@erafinance/web"]

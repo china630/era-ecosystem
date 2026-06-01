@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "title": "ERA 365 Orchestrator",
+    "description": "Control plane — identity, billing, industry launcher"
+  },
+  "login": {
+    "title": "ERA 365",
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "createAccount": "Create account",
+    "registerOrg": "Organization registration",
+    "demoHint": "Platform super-admin: see tmp/era-local-credentials.md after bootstrap"
+  },
+  "home": {
+    "loading": "Loading…",
+    "title": "ERA 365 — modules",
+    "subtitle": "ERA industry satellite",
+    "loadingEntitlements": "Loading entitlements…",
+    "hotelUpsellTitle": "Upgrade your Hotel PMS",
+    "hotelUpsellHint": "You have Hotel PMS access. Add Channel Manager or choose the Resort bundle on pricing.",
+    "hotelUpsellCta": "View Hotel pricing",
+    "open": "Open →",
+    "waitlist": "Waitlist",
+    "financeOpen": "Open Finance",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "superAdmin": {
+    "hub": {
+      "title": "Super-admin",
+      "subtitle": "Platform administration — billing, MDM, security.",
+      "billingLink": "Billing — pricing, packages, quotas",
+      "mdmLink": "MDM — company registry",
+      "earlyAccessLink": "Early access — waitlist",
+      "securityLink": "Security — disputes and org state"
+    },
+    "mdm": {
+      "title": "MDM",
+      "subtitlePrefix": "VÖEN and organization matching.",
+      "browseCompanies": "Company list",
+      "openCompanyList": "Open companies"
+    },
+    "mdmCompanies": {
+      "title": "MDM — companies",
+      "prev": "Back",
+      "next": "Next",
+      "page": "Page {page}"
+    },
+    "security": {
+      "title": "Security",
+      "orgIdPlaceholder": "Organization ID",
+      "load": "Load",
+      "loadFailed": "Load failed",
+      "disputeIdPlaceholder": "Dispute ID",
+      "updateDispute": "Update dispute",
+      "patchFailed": "Update failed"
+    },
+    "earlyAccess": {
+      "title": "Early access",
+      "loadingSummary": "Loading summary…",
+      "recentEvents": "Recent events"
+    },
+    "billing": {
+      "loading": "Loading…",
+      "foundationLabel": "Foundation (AZN/mo)",
+      "saveFoundation": "Save foundation",
+      "seedCatalog": "Seed catalog",
+      "colModule": "Module",
+      "colKey": "Key",
+      "colPrice": "AZN/mo",
+      "colActions": "Actions",
+      "save": "Save"
+    },
+    "billingPackages": {
+      "newBundle": "New bundle",
+      "loading": "Loading…",
+      "colBundle": "Bundle",
+      "colDiscount": "Discount %",
+      "colModules": "Modules",
+      "colTrial": "Trial",
+      "colActions": "Actions",
+      "trialYes": "Yes",
+      "delete": "Delete",
+      "deleteConfirm": "Delete bundle?",
+      "modalTitle": "Create bundle",
+      "name": "Name",
+      "discount": "Discount %",
+      "moduleKeys": "Module keys (comma-separated)",
+      "create": "Create"
+    },
+    "billingQuotas": {
+      "loading": "Loading…",
+      "yearlyDiscount": "Yearly discount (%)",
+      "ocrJobs": "OCR jobs / org / month",
+      "save": "Save"
+    }
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "common": {
+    "loading": "Loading…",
+    "home": "Home",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "register": {
+    "title": "Create account",
+    "subtitle": "Personal account in the ERA 365 ecosystem",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "email": "Email",
+    "password": "Password (min. 8)",
+    "submit": "Register",
+    "busy": "…",
+    "alreadyHaveAccount": "Already have an account? Sign in",
+    "registerFailed": "Registration failed"
+  },
+  "registerOrg": {
+    "title": "Organization registration",
+    "subtitle": "Register with VÖEN and company name",
+    "orgName": "Organization name",
+    "taxId": "VÖEN",
+    "submit": "Complete registration",
+    "back": "← Back",
+    "registerFailed": "Registration failed"
+  },
+  "terms": {
+    "title": "User agreement",
+    "intro": "Terms of use for the ERA 365 platform.",
+    "section1Title": "1. Service",
+    "section1Body": "ERA 365 is a cloud ERP ecosystem. The service is provided by subscription and selected modules.",
+    "section2Title": "2. Data",
+    "section2Body": "Organization data is encrypted and processed only with your permission.",
+    "section3Title": "3. Responsibilities",
+    "section3Body": "The user must keep account credentials confidential."
+  },
+  "partner": {
+    "title": "Partner dashboard",
+    "loading": "Loading…",
+    "loginRequired": "Sign in to access the partner dashboard",
+    "login": "Sign in",
+    "notPartner": "Partner account not found",
+    "back": "← Back",
+    "referralLink": "Referral link",
+    "copyLink": "Copy link",
+    "qr": "QR code",
+    "statsTotal": "Total referrals",
+    "statsActive": "Active",
+    "statsPending": "Pending commission"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "title": "ERA CRM Field",
+    "description": "Спутник полевых продаж и CRM"
+  },
+  "login": {
+    "title": "ERA CRM Field",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA CRM Field",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия"
+  },
+  "leads": {
+    "title": "ERA CRM Field",
+    "subtitle": "Pipeline — лиды по стадиям",
+    "visits": "Визиты",
+    "inbox": "Inbox",
+    "myLeads": "Мои лиды",
+    "loadingPipeline": "Загрузка pipeline…",
+    "prefill": "Inbox pre-fill: channel={channel}, contact={contactRef}",
+    "owner": "Владелец",
+    "assign": "Назначить",
+    "unassigned": "Не назначен",
+    "next": "Следующий",
+    "followUp": "Follow-up",
+    "convert": "Конвертировать",
+    "converted": "Лид конвертирован — событие {id}",
+    "followUpScheduled": "Follow-up запланирован {id}"
+  },
+  "visits": {
+    "title": "Полевые визиты",
+    "subtitle": "C2 — журнал визитов",
+    "pipeline": "Pipeline",
+    "logVisit": "Записать визит",
+    "lead": "Лид",
+    "selectLead": "Выберите лид…",
+    "address": "Адрес / место",
+    "latitude": "Широта",
+    "longitude": "Долгота",
+    "notes": "Примечания",
+    "selectLeadError": "Выберите лид",
+    "logged": "Визит записан — событие {title}",
+    "recent": "Недавние визиты",
+    "empty": "Визитов пока нет."
+  },
+  "inbox": {
+    "title": "Канальный inbox",
+    "subtitle": "C2 — WA/IG metadata stub",
+    "pipeline": "Pipeline",
+    "newThread": "Новый thread stub",
+    "channel": "Канал",
+    "contactRef": "Контакт ref",
+    "preview": "Превью",
+    "addThread": "Добавить thread stub",
+    "contactRequired": "Нужен контакт ref",
+    "threadCreated": "Thread stub создан (только metadata)",
+    "threads": "Threads",
+    "empty": "Inbox пуст.",
+    "linked": "связан",
+    "createLead": "Создать лид"
+  },
+  "adminSettings": {
+    "title": "Параметры CRM",
+    "subtitle": "UI playbook + MDM VÖEN lookup",
+    "leads": "Leads",
+    "teamName": "Название команды",
+    "voenLookup": "VÖEN lookup",
+    "lookup": "Поиск",
+    "orgFound": "Org {id}…",
+    "notFound": "Не найдено",
+    "editTeam": "Изменить команду"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

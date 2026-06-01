@@ -1,0 +1,38 @@
+{
+  "name": "@era/i18n-common",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared locale helpers for ERA next-intl apps",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./client": {
+      "types": "./dist/intl-client-provider.d.ts",
+      "default": "./dist/intl-client-provider.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "next": "^14.0.0 || ^15.0.0",
+    "next-intl": "^4.0.0",
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.4",
+    "next": "^15.3.3",
+    "next-intl": "^4.1.0",
+    "react": "^19.1.0",
+    "typescript": "^5.7.3"
+  }
+}

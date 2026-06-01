@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "ERA Construction",
+    "description": "Спутник строительства и проектов"
+  },
+  "login": {
+    "title": "ERA Construction",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA Construction",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "create": "Создать",
+    "notFound": "Не найдено",
+    "select": "Выберите…"
+  },
+  "projects": {
+    "title": "ERA Construction",
+    "subtitle": "C2 — проекты, план/факт, заявки",
+    "requisitions": "Заявки",
+    "empty": "Нет проектов — POST /api/projects для demo.",
+    "progressActs": "{count} акт(ов) прогресса"
+  },
+  "projectsDetail": {
+    "project": "Проект",
+    "requisitions": "Заявки",
+    "projects": "Проекты",
+    "loadFailed": "Не удалось загрузить проект",
+    "plannedBoq": "План (BOQ)",
+    "approvedProgress": "Утверждённый прогресс",
+    "variance": "Отклонение",
+    "planVsActual": "План vs факт (C-04)",
+    "item": "Позиция",
+    "plannedQty": "План кол-во",
+    "requisitionQty": "Заявка кол-во",
+    "materialRequisitions": "Заявки на материалы",
+    "noRequisitions": "Заявок пока нет."
+  },
+  "fieldOps": {
+    "title": "Полевые операции (W2)",
+    "subtitle": "M6 дневник · M7 punch list · M9 претензии субподрядчиков",
+    "project": "Проект",
+    "dailyLog": "Дневник (M6)",
+    "weather": "Погода",
+    "crewCount": "Численность бригады",
+    "notes": "Примечания",
+    "reportedBy": "Сообщил",
+    "saveLog": "Сохранить дневник",
+    "logSaved": "Дневник сохранён",
+    "failed": "Ошибка",
+    "punchListLink": "Punch list и претензии в деталях проекта →"
+  },
+  "materialRequisitions": {
+    "title": "Заявки на материалы",
+    "subtitle": "C2 — создать заявку по проекту",
+    "projects": "Проекты",
+    "newRequisition": "Новая заявка",
+    "projectCode": "Код проекта",
+    "itemCode": "Код позиции",
+    "description": "Описание",
+    "qty": "Кол-во",
+    "createFailed": "Ошибка создания",
+    "created": "Заявка для {code}"
+  },
+  "adminSettings": {
+    "title": "Параметры объекта",
+    "subtitle": "UI playbook — список + ModalShell",
+    "siteName": "Название объекта",
+    "editSite": "Изменить объект"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

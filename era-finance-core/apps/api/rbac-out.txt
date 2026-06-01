@@ -1,0 +1,21 @@
+﻿node.exe : FAIL test/rbac/rbac-scanner.spec.ts (17.611 s)
+строка:1 знак:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (FAIL test/rbac/...c.ts (17.611 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  RBAC Mutation Auto-Scanner
+    ├Ч ensures non-public mutation endpoints have guard metadata (7313 ms)
+
+  тЧП RBAC Mutation Auto-Scanner тА║ ensures non-public mutation endpoints have guard metadata
+
+
+
+
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        18.115 s, estimated 24 s
+Ran all test suites matching /rbac-scanner/i.

@@ -7,7 +7,7 @@
 |----------|----------|
 | **Продукт** | ERA Construction (`era-construction`) |
 | **Entitlement** | `industry_construction` |
-| **Host** | `construction.era.az` (3302) |
+| **Host** | `construction.era-365.online` (3302) |
 
 ---
 
@@ -58,19 +58,19 @@
 
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
-| M0 | Shell | **MVP** | — |
-| M1 | Project / site | **PLANNED** | — |
-| M2 | BOQ (смета) | **PLANNED** | — |
-| M3 | Material requisition | **PLANNED** | PO in Finance Phase 2 |
-| M4 | Progress act (КС) | **MVP** | `PROGRESS_ACT_APPROVED` |
+| M0 | Shell | **DONE** | — |
+| M1 | Project / site | **DONE** | — |
+| M2 | BOQ (смета) | **DONE** | stub C1 |
+| M3 | Material requisition | **DONE** | PO in Finance Phase 2 |
+| M4 | Progress act (КС) | **DONE** | `PROGRESS_ACT_APPROVED` |
 | M5 | Photo report | **DEFERRED** | — |
-| M6 | Field daily log (прораб) | **MVP** | ERPs/05 §3 |
-| M7 | Punch list / defects | **MVP** | Snag list → assignee |
-| M8 | Gantt / CPM schedule | **PLANNED (v1.1)** | ERPs/05 §2 |
-| M9 | Subcontractor progress claims | **MVP** | Lite portal; Finance contracts |
-| M10 | Site equipment / machine hours | **PLANNED (v1.1)** | ERPs/05 §6 |
-| M11 | CDE / drawing versions | **PLANNED (v1.1)** | ERPs/05 §7 |
-| M12 | Labor timesheets / SKUD | **PLANNED (v1.1)** | ERPs/05 §8 |
+| M6 | Field daily log (прораб) | **DONE** | ERPs/05 §3 |
+| M7 | Punch list / defects | **DONE** | Snag list → assignee |
+| M8 | Gantt / CPM schedule | **DONE** | ERPs/05 §2 |
+| M9 | Subcontractor progress claims | **DONE** | Lite portal; Finance contracts |
+| M10 | Site equipment / machine hours | **DONE** | ERPs/05 §6 |
+| M11 | CDE / drawing versions | **DONE** | ERPs/05 §7 |
+| M12 | Labor timesheets / SKUD | **DONE** | ERPs/05 §8 |
 
 См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 

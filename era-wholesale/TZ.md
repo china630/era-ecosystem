@@ -7,7 +7,7 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-WHOLES
 | Layer | Choice |
 |-------|--------|
 | Runtime | Next.js 15, Prisma 6, PostgreSQL `era_wholesale` |
-| Port | 3305 · Host `wholesale.era.az` |
+| Port | 3305 · Host `wholesale.era-365.online` |
 | Entitlement | `industry_wholesale` |
 
 ## Data model (W1 target)

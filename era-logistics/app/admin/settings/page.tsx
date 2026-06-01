@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   ModalFooter,
@@ -12,6 +13,8 @@ import {
 } from "@era/satellite-kit/ui";
 
 export default function LogisticsSettingsPage() {
+  const t = useTranslations("adminSettings");
+  const tc = useTranslations("common");
   const [fleetName, setFleetName] = useState("Demo fleet");
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(fleetName);
@@ -19,25 +22,25 @@ export default function LogisticsSettingsPage() {
   return (
     <div className="mx-auto max-w-3xl p-6">
       <PageHeader
-        title="Fleet settings"
-        subtitle="UI playbook — list + ModalShell"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/trips" className={SECONDARY_BUTTON_CLASS}>
-            Trips
+            {t("trips")}
           </Link>
         }
       />
       <table className={`${CARD_CONTAINER_CLASS} mt-4 w-full text-left text-sm`}>
         <thead>
           <tr className="border-b border-[#D5DADF] text-[#7F8C8D]">
-            <th className="p-3">Field</th>
-            <th className="p-3">Value</th>
-            <th className="p-3 text-right">Actions</th>
+            <th className="p-3">{tc("field")}</th>
+            <th className="p-3">{tc("value")}</th>
+            <th className="p-3 text-right">{tc("actions")}</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td className="p-3 font-medium">Fleet name</td>
+            <td className="p-3 font-medium">{t("fleetName")}</td>
             <td className="p-3">{fleetName}</td>
             <td className="p-3 text-right">
               <button
@@ -48,13 +51,13 @@ export default function LogisticsSettingsPage() {
                   setOpen(true);
                 }}
               >
-                Edit
+                {tc("edit")}
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <ModalShell open={open} title="Edit fleet" onClose={() => setOpen(false)}>
+      <ModalShell open={open} title={t("editFleet")} onClose={() => setOpen(false)}>
         <input
           className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm"
           value={draft}
@@ -66,7 +69,7 @@ export default function LogisticsSettingsPage() {
             setFleetName(draft.trim() || fleetName);
             setOpen(false);
           }}
-          submitLabel="Save"
+          submitLabel={tc("save")}
         />
       </ModalShell>
     </div>

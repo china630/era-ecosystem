@@ -1,17 +1,8 @@
-import { cookies } from "next/headers";
-import { PricingPageView } from "../../components/pricing/pricing-page-view";
-import { uiLangRuAz } from "../../lib/i18n/ui-lang";
-import { fetchPublicPricingSnapshot } from "../../lib/pricing/fetch-public-pricing";
+import { redirect } from "next/navigation";
 
-async function resolvePricingLocale(): Promise<"az" | "ru"> {
-  const cookieStore = await cookies();
-  const fromCookie = cookieStore.get("erafinance_i18n_lang")?.value;
-  if (fromCookie) return uiLangRuAz(fromCookie);
-  return "az";
-}
+const ORCH_WEB =
+  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000";
 
-export default async function PublicPricingPage() {
-  const locale = await resolvePricingLocale();
-  const snapshot = await fetchPublicPricingSnapshot();
-  return <PricingPageView initialLocale={locale} snapshot={snapshot} />;
+export default function FinancePricingRedirectPage() {
+  redirect(`${ORCH_WEB.replace(/\/$/, "")}/pricing`);
 }

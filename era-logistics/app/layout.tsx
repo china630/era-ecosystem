@@ -1,20 +1,31 @@
 import type { Metadata } from "next";
-import { APP_SHELL_CLASS, PlatformSessionBarServer } from "@era/satellite-kit/ui";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
+import { APP_SHELL_CLASS, SatelliteAppProviders, SatelliteRootChrome } from "@era/satellite-kit/ui";
+import LogisticsOpsShell from "@/components/LogisticsOpsShell";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "ERA Logistics",
-  description: "ERA industry satellite — operational shell",
-};
+export const dynamic = "force-dynamic";
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("meta");
+  return { title: t("title"), description: t("description") };
+}
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={APP_SHELL_CLASS}>
-        <div className="mx-auto max-w-5xl px-4 py-6">
-          <PlatformSessionBarServer />
-          {children}
-        </div>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <SatelliteAppProviders>
+            <SatelliteRootChrome>
+              <LogisticsOpsShell>{children}</LogisticsOpsShell>
+            </SatelliteRootChrome>
+          </SatelliteAppProviders>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

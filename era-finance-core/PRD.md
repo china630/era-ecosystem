@@ -13,11 +13,13 @@
 
 | Параметр | Значение |
 |----------|----------|
-| **Продукт** | Модульная SaaS-платформа для управления финансами и бизнес-процессами (B2B / B2B2C) |
+| **Продукт** | **ERA Finance** — accounting data plane (GL, documents, inventory, payroll, compliance) в экосистеме ERA |
+| **Роль в экосистеме** | **Не** точка входа SaaS: регистрация, launcher, billing SoT, industry SSO — **`era-orchestrator`** ([CONTROL_PLANE_ARCHITECTURE.md](../docs/CONTROL_PLANE_ARCHITECTURE.md)) |
 | **Целевая аудитория** | Малый и средний бизнес в Азербайджане, индивидуальные предприниматели, государственные учреждения и бюджетные организации (B2G) |
 | **Технологический стек** | Next.js, NestJS, Prisma, PostgreSQL, Redis, BullMQ, Docker Compose |
-| **Репозиторий** | Monorepo: `apps/web`, `apps/api`, `packages/database` |
-| **Связанные документы** | [TZ.md](./TZ.md) |
+| **Репозиторий** | `era-finance-core`: `apps/web`, `apps/api`, `packages/database` |
+| **Синхронизация PRD ↔ TZ** | **2026-05-26** — §3.2.1 control plane, billing on orchestrator (TZ §0.1, §0.0 billing rows) |
+| **Связанные документы** | [TZ.md](./TZ.md) · umbrella [SETUP_AND_RUN.md](../docs/SETUP_AND_RUN.md), [INTEGRATION_SSO_EVENTS.md](../docs/INTEGRATION_SSO_EVENTS.md), [USER_DOCUMENTATION.md](../docs/USER_DOCUMENTATION.md) |
 | **Карта разделов** | §1–2 — видение и цели; §3 — архитектура; §4 — модули продукта **1–9** и **§4.12** — зафиксированные доработки по плану улучшения ERP (**§4.4.2** — международные продажи/закупки); §5–7 — дорожная карта (v2–v4), в т.ч. **§5.1** — системные шаблоны и онбординг (v1.1 / v2.0); **§6.1.1** — Integrations: DVX (**поэтапная стратегия**: файлы → RPA → S2S); **§6.8** — Integrations: WhatsApp Business API; §8 — рамки текущей редакции; §9 — модель данных; §10–11 — NFR и приёмка; §12 — зафиксированные решения; **§13** — Integrations: **ƏMAS** (в т.ч. **§13.0** поэтапная стратегия DOST RIM); **§14** — **Phase 14.1: Risk & Compliance (ERM)** (платный модуль **`compliance_pro`**, см. **§14.1–§14.2**); **§15** — **Phase 15: Zero-Knowledge & State Identity Escrow** (**`FEAT-SEC-CRYPTO-001`**, PLANNED); **§16** — **Phase 16: Hybrid Limits Tier + Premium Trial Gate** (**`FEAT-BIL-POSTPAID-001`**, PARTIAL); **§17** — история версий PRD |
 
 ---
@@ -87,6 +89,8 @@
 
 ### 3.2. Модель доступа: «Пользователь — Организация» (Many-to-Many)
 
+**Точка входа (экосистема):** регистрация организации и industry launcher — **orchestrator** (`app.era-365.online`). Finance сохраняет legacy API/UI для прямого входа и handoff (`/auth/cp-handoff`); новые клиенты — через CP ([SETUP_AND_RUN.md](../docs/SETUP_AND_RUN.md)).
+
 **Цель:** одно физическое лицо может управлять несколькими бизнес-единицами или работать в них под едиными учётными данными.
 
 - **Изоляция identity:** профиль пользователя (email, пароль) отделён от данных организаций.
@@ -107,7 +111,7 @@
 
 #### 3.2.1. Control plane: RBAC и владение (целевая модель)
 
-**[x] COMPLETED (Phase A, 2026-05-25)** — **канонический RBAC**, **владение организацией** и **арбитраж аккаунта** реализованы в **`era-365-orchestrator`**; Finance проксирует мутации при `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default); спутники — потребители JWT claims через `executeSatelliteSsoExchange`.
+**[x] COMPLETED (Phase A, 2026-05-25)** — **канонический RBAC**, **владение организацией** и **арбитраж аккаунта** реализованы в **`era-orchestrator`**; Finance проксирует мутации при `ERA_CONTROL_PLANE_RBAC_PROXY=true` (default); спутники — потребители JWT claims через `executeSatelliteSsoExchange`.
 
 | Ответственность | Orchestrator (source of truth) | Finance / satellite (consumer) |
 |-----------------|--------------------------------|--------------------------------|
@@ -116,7 +120,7 @@
 | Membership, `UserRole` per org | [x] migrate | JWT `roles[]`; legacy `OrganizationUser` dual-read during cutover |
 | Access request (join by VÖEN) | [x] migrate | Proxy `/auth/join-org`, `/team/access-requests/*` → orchestrator |
 | Ownership dispute / arbitration | [x] migrate | Orchestrator `DisputeModule`; Finance freeze guard on legacy paths |
-| Billing / subscription mutations | — | Finance API, guard **OWNER** only |
+| Billing / subscription SoT | [x] migrate | Orchestrator API/DB; Finance **web** proxies `/api/billing/*`, `/api/subscription/*` → CP (`resolveApiUrl`); Finance API keeps **quota assert** + ERP `BillingAccessGuard` on ledger mutations |
 | Domain finance policy (Post/Approve, payroll money) | — | Finance guards по `roles[]` из JWT |
 
 **Инвариант:** роль **OWNER** = владелец бизнеса и аккаунта SaaS (биллинг, карта, transfer ownership). В спутниках отображается как **`BUSINESS_OWNER`** (маппинг `OWNER` / `DIRECTOR`) — см. [SATELLITE_DOCUMENTATION.md](../docs/SATELLITE_DOCUMENTATION.md).
@@ -145,7 +149,7 @@
 ### 4.1. Модуль 1: IAM & Multi-tenancy
 
 - Связь **пользователь — организация** в модели **many-to-many**; переключение активной организации без повторного входа (см. §3.2).
-- **Целевая модель IAM:** identity + membership + ownership — **orchestrator** (§3.2.1); Finance — доменные политики и биллинг.
+- **Целевая модель IAM:** identity + membership + ownership — **orchestrator** (§3.2.1); Finance — доменные политики учёта, **ERP guards** (`BillingAccessGuard`, квоты на мутации GL/документов). Коммерческий биллинг SoT — orchestrator (§3.2.1).
 - Регистрация организации и администратора; при необходимости — запрос доступа к уже существующей организации по VÖEN.
 - На этапе регистрации организации выбор **ОПФ (`legalForm`)** **обязателен**; `kind` больше не вводится вручную и вычисляется сервером: `STATE_AGENCY -> BUDGET`, `NGO -> NGO`, иначе `COMMERCIAL`.
 - RBAC (базовые + операционные роли): **Owner**, **Admin**, **Accountant**, **User**, **PROCUREMENT**, **AUDITOR**, **WAREHOUSE_KEEPER**, **HR_OFFICER**, **HR_MANAGER**, **DEPARTMENT_HEAD**; платформенная роль **SUPER_ADMIN** вынесена отдельно (см. §5.1, §7.6).
@@ -621,8 +625,8 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 | **RETAIL_ECOM** | Магазины, Instagram-продажи | +15 AZN/мес. за точку продаж → [`era-retail-pos`](../era-retail-pos) |
 | **LOGISTICS_CUSTOMS** | Экспедиторы, перевозчики | +25 AZN/мес. за автопарк → [`era-logistics`](../era-logistics) |
 | **CONSTRUCTION** | Сметы, объекты, акты | +20 AZN/мес. за проект → [`era-construction`](../era-construction) |
-| **CRM_WHATSAPP** | Pre-sale, визиты (не Finance CRM) | +10 AZN/мес. → [`era-crm-field`](../era-crm-field) |
-| **AUTO_STO** | Авто СТО, заказ-наряды | +18 AZN/мес. → [`era-auto-sto`](../era-auto-sto) |
+| **CRM_WHATSAPP** | Pre-sale, визиты (не Finance CRM) | +10 AZN/мес. → [`era-crm`](../era-crm) |
+| **AUTO_STO** | Авто СТО, заказ-наряды | +18 AZN/мес. → [`era-auto-service`](../era-auto-service) |
 | **CLINIC** | Запись, приём | +22 AZN/мес. → [`era-clinic`](../era-clinic) |
 | **WHOLESALE** | B2B опт | +20 AZN/мес. → [`era-wholesale`](../era-wholesale) |
 
@@ -910,7 +914,9 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 
 ### 7.6. Платформа: Super-Admin Back-office
 
-**Цель:** централизованное управление всей платформой, пользователями и глобальными настройками системы.
+**Экосистема (2026-05+):** канонический Super-Admin для **billing, MDM, early-access, org security** — **`era-orchestrator`** (`app.era-365.online` → `/super-admin/*`). В **Finance web** те же URL сохранены для обратной совместимости: API billing/subscription/referrals/early-access уходит на CP через `resolveApiUrl` ([TZ.md](./TZ.md) §0.1). **NAS, i18n overrides, customs tariffs, Finance landing `/`** — по-прежнему Finance API/DB (§7.6.2, §7.6.4).
+
+**Цель:** централизованное управление платформой, пользователями и глобальными настройками (разделение контуров — см. таблицу ниже).
 
 | Направление | Описание |
 |-------------|----------|
@@ -1433,7 +1439,7 @@ ERA Finance **не навязывает** обязательную синхро�
 
 ### 14.2. Идентификаторы задач (PRD ↔ TZ ↔ roadmap)
 
-Единый префикс для трассировки в **`docs/modules-roadmap.html`**, **`docs/modules-roadmap-facts.html`** и чеклистах релиза. **Правило синхронизации:** в отчёте *Facts* статус **COMPLETED** по строке с `Task ID` допустим только если в **PRD** для того же ID стоит **[x] COMPLETED**; для **[ ] PLANNED** факт-статус не может быть «полностью внедрено» без обновления PRD.
+Единый префикс для трассировки в **PRD §14.2** (таблицы ниже) и чеклистах релиза. **Правило:** статус **COMPLETED** по `Task ID` допустим только если в **PRD** для того же ID стоит **[x] COMPLETED**; для **[ ] PLANNED** нельзя помечать «полностью внедрено» без обновления PRD.
 
 | Task ID | Уровень | Описание | PRD | Статус (PRD) |
 |---------|---------|----------|------|----------------|
@@ -1456,9 +1462,9 @@ ERA Finance **не навязывает** обязательную синхро�
 | **FEAT-SEC-CRYPTO-001** | Фича (платформа) | Zero-Knowledge multi-tenant encryption + 3-tier recovery + ASAN/SİMA state escrow | §15 | [ ] PLANNED |
 | **FEAT-BIL-POSTPAID-001** | Фича (платформа) | Hybrid limits tiers (T1–T3), 90-day trial, premium trial shield, split monthly invoice (Asia/Baku) | §16 | [~] PARTIAL |
 
-### 14.2.1. Идентификаторы строк отчётов `modules-roadmap*.html`
+### 14.2.1. Дополнительные Task ID (модули M1–M10 и платформа)
 
-Ниже — **канонические Task ID** для строк **одной и той же** темы в **`docs/modules-roadmap.html`** и **`docs/modules-roadmap-facts.html`** (колонка **Task ID**). Статусы **PRD Req** в HTML выводятся из последнего столбца; **Facts** не помечают **COMPLETED**, если здесь **[ ] PLANNED** для того же ID.
+Канонические идентификаторы для сверки DELIVERY и релизных чеклистов (статус — колонка **PRD** ниже).
 
 | Task ID | Тема (как в отчёте) | Статус (PRD) |
 |---------|---------------------|---------------|
@@ -1759,11 +1765,12 @@ Alerts only from Invoice/Act workflows to verified counterparty profiles.
 | **2026.06.19** | Текущая | **Phase 15 (PLANNED):** Zero-Knowledge multi-tenant encryption — DEK/KEK envelope, таблица **`UserOrganizationKey`**, трёхуровневое recovery (BIP-39 seed, Owner OMRK, ASAN İmza/SİMA state escrow); **§15**, Task ID **`FEAT-SEC-CRYPTO-001`**; техспека — [TZ.md](./TZ.md) **§23**. |
 | **2026.06.23** | Текущая | **Spend-tier billing pivot:** metered unit prices + tier spend ceilings (0/10/50/200 AZN); trial B (meter в trial); регистрация **`TIER_0`**; **`BillingMeterService`**; month-start + intraday rhythm — **§16**, [TZ.md](./TZ.md) **§24**. |
 | **2026.05.28** | Текущая | **Marketplace:** `organization_bundles`, API marketplace/toggle-bundle, дедуп в month-start счёте; UI **`/settings/subscription`**; публичный **`/pricing`** — каталог модулей с ценами — **§16.9**, **§7.6.5** (P11–P12); [TZ.md](./TZ.md) §14.8.3a, §24.7. |
+| **2026.05.26** | Текущая | **Ecosystem alignment:** PRD метаданные (data plane, не entry point); §3.2 orchestrator registration; §7.6 Super-Admin split (billing/MDM → Orch); синхронизация с TZ §0.1/§15; legacy Finance go-live docs removed — umbrella [SETUP_AND_RUN.md](../docs/SETUP_AND_RUN.md), [USER_DOCUMENTATION.md](../docs/USER_DOCUMENTATION.md). |
 | **2026.06.22** | Архив | **Pricing matrix v2 + TIER_0:** 5-колоночная витрина (заменена spend-tier в **2026.06.23**). |
 | **2026.06.21** | Текущая | **Маркетинговый UX (лендинг + витрина):** SEO **h1/h2/h3**, CTA «3 ay pulsuz», Arena 1C (8 раундов, ƏMAS), Zero-Knowledge тезисы; **`/pricing`** — Light Tech Canvas, LEGO tier matrix, ERA Core **0 AZN×3 мес.**, premium grid + Lock — **§7.6.5**, **§16.6**; [TZ.md](./TZ.md) **§15.3.3**, **§24.8**. |
 | **2026.06.20** | Текущая | **Phase 16 pivot (hybrid billing):** отмена micro-debt / **Credit Tier T4**; **`TariffTier` T1–T3** — лимиты ресурсов; **90-дневный trial** (база ERP **0 AZN**); **Premium Trial Shield** для **`tax_pro` / `trade_pro` / `compliance_pro`**; split-invoice **1-го числа Asia/Baku**; **`POST /api/billing/activate-premium`**; **§5.0.2**, **§16**, [TZ.md](./TZ.md) **§24**. |
 | **2026.06.18** | Текущая | **Лендинг и trial:** маркетинговый **`/`** (RSC, AZ/RU), ERP-дашборд **`/home`**, **`GET /api/public/landing-modules`**, таблица **`landing_module_marketing`**, Super-Admin редактор; trial-пакет **`TRIAL_3_MONTHS`** (`PricingBundle.slug`), срок **+3 мес. Asia/Baku**, исключение **`compliance_pro`** с **`tax_pro`/`trade_pro`** — **§7.3**, **§7.6.4**; [TZ.md](./TZ.md) §14.3, §15.3.2. |
-| **2026.06.17** | Текущая | **ERM / roadmap sync:** Phase **14.1** formalized as paid **`compliance_pro`** + **§14.2** task IDs (`MOD-*` / `FEAT-*`); **§1.4** в TZ — локальность данных (AZ-first / EU DC); **§21.2.1** — целевые SLA по ключевым модулям (Customs / Tax / Treasury); manufacturing deep-dive **TZ §10.2.0** (BOM, WIP target vs `ManufacturingRelease`, overhead); отчёты **`docs/modules-roadmap*.html`** — колонки Task ID / Owner / Priority и правило согласования Facts ↔ PRD. |
+| **2026.06.17** | Текущая | **ERM / roadmap sync:** Phase **14.1** formalized as paid **`compliance_pro`** + **§14.2** task IDs (`MOD-*` / `FEAT-*`); **§1.4** в TZ — локальность данных (AZ-first / EU DC); **§21.2.1** — целевые SLA по ключевым модулям (Customs / Tax / Treasury); manufacturing deep-dive **TZ §10.2.0** (BOM, WIP target vs `ManufacturingRelease`, overhead); реестр Task ID — **PRD §14.2** (без отдельных HTML-отчётов). |
 | **2026.06.16** | Текущая | **Risk & Compliance (ERM), phase 1:** продуктовые **§14–§14.1** — модуль **`compliance_pro`**, дашборд **`/compliance`**, индикатор риска в шапке, порог **200 000 AZN** (ориентир по НДС), записи **`RiskAudit`** (статусы **PENDING / MITIGATED / IGNORED**), rule-based сканеры и BullMQ по расписанию; техспека — [TZ.md](./TZ.md) **§22**; миграция **`20260210120000_risk_audits_erm`**. |
 
 ### 16.1. Принцип ведения истории (дальше)

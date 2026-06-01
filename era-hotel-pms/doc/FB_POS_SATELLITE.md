@@ -1,8 +1,8 @@
 # F&B POS documentation moved
 
-Canonical **era-fb-pos** specification lives in the sibling submodule:
+Canonical **era-fnb-pos** specification lives in the sibling submodule:
 
-**[`../../era-fb-pos/doc/README.md`](../../era-fb-pos/doc/README.md)**
+**[`../../era-fnb-pos/doc/README.md`](../../era-fnb-pos/doc/README.md)**
 
 ## What stays in era-hotel-pms
 
@@ -11,7 +11,7 @@ Canonical **era-fb-pos** specification lives in the sibling submodule:
 - Quick posting on folio (WA0135)
 - OpenAPI server copy: [`openapi/fb-pos-pms-bridge.yaml`](./openapi/fb-pos-pms-bridge.yaml)
 
-## What moved to era-fb-pos
+## What moved to era-fnb-pos
 
 - `doc/fb-pos/*` product spec
 - Floor / KDS / waiter UI (`http://localhost:3200` in dev)

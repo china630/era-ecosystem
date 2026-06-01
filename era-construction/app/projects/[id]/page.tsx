@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -38,6 +39,8 @@ type Requisition = {
 };
 
 export default function ProjectDetailPage() {
+  const t = useTranslations("projectsDetail");
+  const tc = useTranslations("common");
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
 
@@ -56,7 +59,7 @@ export default function ProjectDetailPage() {
     const planData = await planRes.json();
     const reqData = await reqRes.json();
     if (!planRes.ok) {
-      setMessage(planData.error ?? "Failed to load project");
+      setMessage(planData.error ?? t("loadFailed"));
       setPlan(null);
     } else {
       setPlan(planData);
@@ -66,7 +69,7 @@ export default function ProjectDetailPage() {
       allReqs.filter((r: { project?: { id: string } }) => r.project?.id === id),
     );
     setLoading(false);
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     void load();
@@ -75,41 +78,41 @@ export default function ProjectDetailPage() {
   return (
     <>
       <PageHeader
-        title={plan?.projectName ?? "Project"}
+        title={plan?.projectName ?? t("project")}
         subtitle={plan?.projectCode ?? id}
         actions={
           <div className="flex gap-2">
             <Link href="/material-requisitions" className={PRIMARY_BUTTON_CLASS}>
-              Requisitions
+              {t("requisitions")}
             </Link>
             <Link href="/projects" className={PRIMARY_BUTTON_CLASS}>
-              Projects
+              {t("projects")}
             </Link>
           </div>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} space-y-6 p-6`}>
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : !plan ? (
-          <p className="text-[13px] text-red-600">{message || "Not found"}</p>
+          <p className="text-[13px] text-red-600">{message || tc("notFound")}</p>
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded border p-3 text-[13px]">
-                <div className="text-[#7F8C8D]">Planned (BOQ)</div>
+                <div className="text-[#7F8C8D]">{t("plannedBoq")}</div>
                 <div className="text-lg font-semibold">
                   {plan.totals.plannedAmountNet.toFixed(2)} AZN
                 </div>
               </div>
               <div className="rounded border p-3 text-[13px]">
-                <div className="text-[#7F8C8D]">Approved progress</div>
+                <div className="text-[#7F8C8D]">{t("approvedProgress")}</div>
                 <div className="text-lg font-semibold">
                   {plan.totals.progressApprovedNet.toFixed(2)} AZN
                 </div>
               </div>
               <div className="rounded border p-3 text-[13px]">
-                <div className="text-[#7F8C8D]">Variance</div>
+                <div className="text-[#7F8C8D]">{t("variance")}</div>
                 <div className="text-lg font-semibold">
                   {plan.totals.varianceAmountNet.toFixed(2)} AZN
                 </div>
@@ -117,14 +120,14 @@ export default function ProjectDetailPage() {
             </div>
 
             <div>
-              <h2 className="mb-2 text-[13px] font-semibold">Plan vs actual (C-04)</h2>
+              <h2 className="mb-2 text-[13px] font-semibold">{t("planVsActual")}</h2>
               <table className="w-full text-left text-[13px]">
                 <thead>
                   <tr className="border-b text-[#7F8C8D]">
-                    <th className="py-2">Item</th>
-                    <th>Planned qty</th>
-                    <th>Requisition qty</th>
-                    <th>Variance</th>
+                    <th className="py-2">{t("item")}</th>
+                    <th>{t("plannedQty")}</th>
+                    <th>{t("requisitionQty")}</th>
+                    <th>{t("variance")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -143,9 +146,9 @@ export default function ProjectDetailPage() {
             </div>
 
             <div>
-              <h2 className="mb-2 text-[13px] font-semibold">Material requisitions</h2>
+              <h2 className="mb-2 text-[13px] font-semibold">{t("materialRequisitions")}</h2>
               {requisitions.length === 0 ? (
-                <p className="text-[13px] text-[#7F8C8D]">No requisitions yet.</p>
+                <p className="text-[13px] text-[#7F8C8D]">{t("noRequisitions")}</p>
               ) : (
                 <ul className="space-y-2 text-[13px]">
                   {requisitions.map((r) => (

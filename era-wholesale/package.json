@@ -4,9 +4,9 @@
   "private": true,
   "description": "B2B orders, credit limits, picking",
   "scripts": {
-    "dev": "next dev -p 3305",
+    "dev": "next dev -p 3209",
     "build": "prisma generate && next build",
-    "start": "next start -p 3305",
+    "start": "next start -p 3209",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
@@ -19,7 +19,9 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "zod": "^3.25.36",
-    "jose": "^6.0.11"
+    "jose": "^6.0.11",
+    "@era/i18n-common": "file:../packages/i18n-common",
+    "next-intl": "^4.12.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.21",

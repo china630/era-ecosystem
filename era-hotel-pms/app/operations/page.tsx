@@ -1,13 +1,18 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -61,6 +66,9 @@ export default function OperationsPage() {
   const [registerId, setRegisterId] = useState('REG-01');
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shiftModalOpen, setShiftModalOpen] = useState(false);
+
+  const openShiftFormId = 'open-cash-shift-form';
   const [tourismFailed, setTourismFailed] = useState<
     { id: string; eventKind: string; errorMessage: string | null; reservation: { guest: { fullName: string } } }[]
   >([]);
@@ -103,7 +111,8 @@ export default function OperationsPage() {
 
   const hasOpenShift = status?.openShift?.status === 'OPEN';
 
-  async function openShift() {
+  async function openShift(e: React.FormEvent) {
+    e.preventDefault();
     setBusy(true);
     setMsg(null);
     try {
@@ -115,6 +124,7 @@ export default function OperationsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? tc('failed'));
       setMsg(t('shiftOpened'));
+      setShiftModalOpen(false);
       await loadStatus();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : tc('error'));
@@ -212,23 +222,14 @@ export default function OperationsPage() {
             <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('noOpenShift')}</p>
           )}
           {!hasOpenShift && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              <input
-                placeholder={t('cashierPlaceholder')}
-                className={MODAL_INPUT_CLASS}
-                value={cashier}
-                onChange={(e) => setCashier(e.target.value)}
-              />
-              <input
-                placeholder={t('registerPlaceholder')}
-                className={`w-28 ${MODAL_INPUT_CLASS}`}
-                value={registerId}
-                onChange={(e) => setRegisterId(e.target.value)}
-              />
-              <button type="button" disabled={busy} onClick={openShift} className={PRIMARY_BUTTON_CLASS}>
-                {t('openShift')}
-              </button>
-            </div>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setShiftModalOpen(true)}
+              className={PRIMARY_BUTTON_CLASS}
+            >
+              {t('openShift')}
+            </button>
           )}
           {hasOpenShift && (
             <button type="button" disabled={busy} onClick={closeShift} className={SECONDARY_BUTTON_CLASS}>
@@ -239,7 +240,12 @@ export default function OperationsPage() {
       )}
 
       <PageSection className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('nightAudit')}</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('nightAudit')}</h2>
+          <Link href="/reports/end-of-day-logs" className="text-[13px] text-[#2980B9] hover:underline">
+            {t('viewEodLogs')}
+          </Link>
+        </div>
         <ul className="mb-4 space-y-1 text-[13px] text-[#7F8C8D]">
           <li>
             {t('inHouse')} {status?.inHouseCount ?? tc('dash')}
@@ -331,6 +337,47 @@ export default function OperationsPage() {
           </ul>
         </PageSection>
       )}
+
+      <EraModal
+        open={shiftModalOpen}
+        title={t('openShift')}
+        onClose={() => setShiftModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={openShiftFormId}
+            onCancel={() => setShiftModalOpen(false)}
+            busy={busy}
+            submitLabel={t('openShift')}
+          />
+        }
+      >
+        <form id={openShiftFormId} onSubmit={openShift} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-cashier">
+              {t('cashierPlaceholder')}
+            </label>
+            <input
+              id="shift-cashier"
+              placeholder={t('cashierPlaceholder')}
+              className={MODAL_INPUT_CLASS}
+              value={cashier}
+              onChange={(e) => setCashier(e.target.value)}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="shift-register">
+              {t('registerPlaceholder')}
+            </label>
+            <input
+              id="shift-register"
+              placeholder={t('registerPlaceholder')}
+              className={MODAL_INPUT_CLASS}
+              value={registerId}
+              onChange={(e) => setRegisterId(e.target.value)}
+            />
+          </div>
+        </form>
+      </EraModal>
     </AppShell>
   );
 }

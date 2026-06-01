@@ -4,7 +4,7 @@
 
 **Источники:** [PRD.md](../../PRD.md) §3–§4, [TZ.md](../../TZ.md) §0.0, §2, §6.0, §7, §10–§11; навигация по коду — `.cursor/rules/erafinance-module-map.mdc`.
 
-**Не дублирует** пошаговые объяснения UI: для бухгалтера см. [manual-buhgalter.md](../manual-accountant/manual-buhgalter.md).
+**Не дублирует** пользовательскую справку: см. in-app `/help` и [USER_DOCUMENTATION.md](../../../docs/USER_DOCUMENTATION.md).
 
 ---
 
@@ -347,6 +347,7 @@
 | ID | Модуль | Роли | Предусловия | Шаги | Ожидаемый результат |
 |----|--------|------|-------------|------|---------------------|
 | **HLD-01** | §4.12 | `OWNER` | ≥2 организации у пользователя | `/companies`: создать **холдинг**, привязать дочерние org | Карточки в секциях холдинга / свободные компании |
+| **HLD-04** | Shell | `OWNER` | ≥2 org или холдинг | В **header** (справа): профиль → **переключатель компании** ▾ → выбрать другую org; ссылка «Мои компании» → `/companies` | Контекст org меняется; sidebar без горизонтального скролла на длинных подписях |
 | **HLD-02** | §1.1 | `OWNER` | Холдинг с базовой валютой | `/holding/[id]/dashboard`: cash & bank, sync банков | Суммы в базовой валюте холдинга |
 | **HLD-03** | §1.1 | `OWNER` | Движения в дочерних орг | Сводный P&L за период (Monthly Slices — проверка на уровне «разумных сумм») | Нет явного double-count; валюта конвертации согласована |
 
@@ -410,7 +411,7 @@
 
 - [PRD.md](../../PRD.md) — продуктовые модули §4, онбординг §4.1, закрытие §4.2.  
 - [TZ.md](../../TZ.md) — IAM §2, treasury §6.0, HR §7, inventory §10–11.  
-- [manual-buhgalter.md](../manual-accountant/manual-buhgalter.md) — пользовательские процедуры.  
+- [USER_DOCUMENTATION.md](../../../docs/USER_DOCUMENTATION.md) — in-app `/help`.  
 - `.cursor/rules/erafinance-module-map.mdc` — соответствие API ↔ Web.
 
 ---

@@ -1,13 +1,13 @@
-import { getRequestConfig } from 'next-intl/server';
-import { cookies } from 'next/headers';
-import { LOCALE_COOKIE, resolveLocale, type Locale } from './config';
+import { createNextIntlRequest } from "@era/i18n-common/server";
+import type { Locale } from "@era/i18n-common";
+import azMessages from "../../messages/az.json";
+import enMessages from "../../messages/en.json";
+import ruMessages from "../../messages/ru.json";
 
-export default getRequestConfig(async () => {
-  const cookieStore = await cookies();
-  const locale: Locale = resolveLocale(cookieStore.get(LOCALE_COOKIE)?.value);
+const APP_MESSAGES: Record<Locale, Record<string, unknown>> = {
+  az: azMessages as Record<string, unknown>,
+  en: enMessages as Record<string, unknown>,
+  ru: ruMessages as Record<string, unknown>,
+};
 
-  return {
-    locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
-  };
-});
+export default createNextIntlRequest(async (locale) => APP_MESSAGES[locale]);

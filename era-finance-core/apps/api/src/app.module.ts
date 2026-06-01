@@ -57,6 +57,8 @@ import { SystemCatalogModule } from "./system-catalog/system-catalog.module";
 import { PlatformRecoveryModule } from "./platform-recovery/platform-recovery.module";
 import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.guard";
 import { SatelliteIntegrationModule } from "./integration/integration.module";
+import { IndustryHandoffsModule } from "./industry-handoffs/industry-handoffs.module";
+import { BillingModule } from "./billing/billing.module";
 
 const apiEnvFiles = apiEnvFilePaths();
 const useControlPlaneAuth =
@@ -114,6 +116,8 @@ const useControlPlaneAuth =
     SystemCatalogModule,
     PlatformRecoveryModule,
     SatelliteIntegrationModule,
+    IndustryHandoffsModule,
+    BillingModule,
   ],
   controllers: [AppController],
   providers: [

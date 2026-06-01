@@ -1,4 +1,4 @@
-/** @deprecated Lite calendar moved to era-fb-pos; kept for backward compatibility. */
+/** @deprecated Lite calendar moved to era-fnb-pos; kept for backward compatibility. */
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';

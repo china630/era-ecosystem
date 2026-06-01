@@ -1,5 +1,5 @@
 // Finance data plane schema. Control-plane models (billing, subscription, RBAC)
-// are owned by era-365-orchestrator (@era365/database). See CONTROL_PLANE_BOUNDARY.md.
+// are owned by era-orchestrator (@era365/database). See CONTROL_PLANE_BOUNDARY.md.
 generator client {
   provider = "prisma-client-js"
 }
@@ -3976,6 +3976,83 @@ enum HoldingAccessRole {
   ADMIN
   ACCOUNTANT
   VIEWER
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([organizationId, productId], map: "industry_replenishment_org_product_uidx")
+  @@index([organizationId, status])
+  @@map("industry_replenishment_suggestions")
+}
+
+model IndustrySupplierInvoiceMatch {
+  id                    String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId        String   @map("organization_id") @db.Uuid
+  invoiceRef            String   @map("invoice_ref")
+  purchaseTransactionId String?  @map("purchase_transaction_id") @db.Uuid
+  counterpartyId        String?  @map("counterparty_id") @db.Uuid
+  matchStatus           String   @map("match_status")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, invoiceRef])
+  @@map("industry_supplier_invoice_matches")
+}
+
+model IndustryTariffRule {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  zoneFrom       String?  @map("zone_from")
+  zoneTo         String?  @map("zone_to")
+  baseRate       Decimal  @map("base_rate") @db.Decimal(19, 4)
+  perKgRate      Decimal  @default(0) @map("per_kg_rate") @db.Decimal(19, 4)
+  currency       String   @default("AZN")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, active])
+  @@map("industry_tariff_rules")
+}
+
+model IndustryCodSettlement {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  shipmentRef    String   @map("shipment_ref")
+  totalCod       Decimal  @map("total_cod") @db.Decimal(19, 4)
+  driverShare    Decimal  @map("driver_share") @db.Decimal(19, 4)
+  hubShare       Decimal  @map("hub_share") @db.Decimal(19, 4)
+  clientShare    Decimal  @map("client_share") @db.Decimal(19, 4)
+  status         String   @default("SETTLED")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([organizationId, shipmentRef])
+  @@map("industry_cod_settlements")
 }
 
 enum IntegrationSyncStatus {

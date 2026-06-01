@@ -7,7 +7,7 @@ Run from umbrella root after `cp .env.example .env`.
 ## Hosts file
 
 ```
-127.0.0.1 app.era.az api.era.az hotel.era.az pos.era.az retail.era.az logistics.era.az construction.era.az crm.era.az auto.era.az wholesale.era.az clinic.era.az
+127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online retail-pos.era-365.online logistics.era-365.online construction.era-365.online crm.era-365.online auto-service.era-365.online wholesale.era-365.online clinic.era-365.online
 ```
 
 ## Docker full stack
@@ -20,25 +20,58 @@ docker compose ps
 
 Apply migrations before smoke (see [SETUP_AND_RUN.md](./SETUP_AND_RUN.md)): Finance `20260525180000_contracts_gov_budget`, orchestrator schema.
 
+## Locale smoke (az | ru | en)
+
+On each **web** node with `LocaleToggle` / language switcher:
+
+1. Open app in private window → `document.documentElement.lang` should be **`az`** (default).
+2. Switch **RU** → UI labels change; cookie `era_i18n_lang=ru`; refresh keeps RU.
+3. Switch **EN** → where overlay exists, EN strings show; missing keys show **az** (next-intl merge or i18next fallback).
+4. **Finance:** landing `/#faq` accordion + footer legal links; `/help` redirects to `/#faq`; `/pricing` redirects to Orch.
+5. **Orchestrator:** `/help` FAQ (canonical), `/terms`, `/pricing`; login has `POST /api/locale`.
+6. **Industry satellites:** login uses `AuthLoginCard`; footer FAQ → Orch `/help`; links via `orchPublicHref()`.
+
+Legacy cookies (`NEXT_LOCALE`, `erafinance_i18n_lang`) should still resolve for one release.
+
+## Orchestrator public hub (local ports)
+
+| URL | Expected |
+|-----|----------|
+| http://127.0.0.1:3000/pricing | 200 — storefront; data from `GET /v1/public/pricing` |
+| http://127.0.0.1:3000/help | 200 — FAQ az/ru/en |
+| http://127.0.0.1:3000/terms | 200 — user agreement |
+| http://127.0.0.1:3000/register | 200 — signup form |
+| http://127.0.0.1:3100/pricing | 302/307 → Orch pricing |
+| http://127.0.0.1:3100/register | 302/307 → Orch register |
+
+Scripts: `node tools/smoke-platform-home.mjs`, `node tools/smoke-satellite-login.mjs`.
+
 ## HTTP health (public satellites)
 
 | URL | Expected |
 |-----|----------|
-| http://hotel.era.az/api/health or /login | 200 |
-| http://pos.era.az/api/health or / | 200 |
-| http://retail.era.az/api/health | 200 JSON ok |
-| http://logistics.era.az/api/health | 200 |
-| http://construction.era.az/api/health | 200 |
-| http://crm.era.az/api/health | 200 |
-| http://auto.era.az/api/health | 200 |
-| http://wholesale.era.az/api/health | 200 |
-| http://clinic.era.az/api/health | 200 |
-| http://api.era.az/auth/login | 405/400 (route alive) |
+| https://hotel-pms.era-365.online/api/health or /login | 200 |
+| https://fnb-pos.era-365.online/api/health or / | 200 |
+| http://retail-pos.era-365.online/api/health | 200 JSON ok |
+| http://logistics.era-365.online/api/health | 200 |
+| http://construction.era-365.online/api/health | 200 |
+| http://crm.era-365.online/api/health | 200 |
+| http://auto-service.era-365.online/api/health | 200 |
+| http://wholesale.era-365.online/api/health | 200 |
+| http://clinic.era-365.online/api/health | 200 |
+| https://api.era-365.online/auth/login | 405/400 (route alive) |
+
+## Finance (Traefik)
+
+| URL | Expected |
+|-----|----------|
+| https://finance-core.era-365.online/ | 200 (landing or redirect to login) |
+| https://finance-core.era-365.online/api/health | 200 JSON ok (Next rewrite → `finance-core:4100`) |
 
 ## Internal (not on Traefik)
 
-- Finance API: `curl http://localhost:4000/api/health` if port published for dev
-- Docker network: `http://finance-core:4000/api/health`
+- Finance API direct (Docker exec / network): `http://finance-core:4100/api/health`
+- Local dev without Traefik: `curl http://127.0.0.1:4000/api/health` if API port published
 
 ## Local build (without Docker)
 
@@ -54,31 +87,31 @@ Repeat for each new app under `era-*`.
 
 ```bash
 # Login (demo owner from Finance seed)
-TOKEN=$(curl -s -X POST http://localhost:4100/auth/login \
+TOKEN=$(curl -s -X POST http://localhost:4000/auth/login \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"demo.owner@erafinance.local\",\"password\":\"DemoLocal#2026\"}" \
   | jq -r .accessToken)
 
 # List memberships
-curl -s http://localhost:4100/memberships -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:4000/memberships -H "Authorization: Bearer $TOKEN"
 
 # Join org by VÖEN (orchestrator canonical; Finance proxies same path under /api/auth/join-org)
-curl -s -X POST http://localhost:4100/auth/join-org \
+curl -s -X POST http://localhost:4000/auth/join-org \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"taxId\":\"9900000002\",\"message\":\"Smoke test join\"}"
 
 # List pending access requests (OWNER/ADMIN)
-curl -s http://localhost:4100/team/access-requests -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:4000/team/access-requests -H "Authorization: Bearer $TOKEN"
 
 # Approve / decline (replace REQUEST_ID)
-curl -s -X POST "http://localhost:4100/team/access-requests/REQUEST_ID/approve" \
+curl -s -X POST "http://localhost:4000/team/access-requests/REQUEST_ID/approve" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"role\":\"USER\"}"
 
 # Transfer ownership (OWNER only; replace NEW_OWNER_USER_ID)
-curl -s -X POST http://localhost:4100/organizations/transfer-ownership \
+curl -s -X POST http://localhost:4000/organizations/transfer-ownership \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"newOwnerUserId\":\"NEW_OWNER_USER_ID\"}"
@@ -91,7 +124,7 @@ Dispute routes (super-admin Bearer): `POST /admin/organizations/:orgId/disputes`
 Set `ERA_AUTH_MODE=control-plane` and shared `ERA_JWT_SECRET`, then:
 
 ```bash
-curl -s http://localhost:4000/api/subscription/me \
+curl -s http://localhost:4100/api/subscription/me \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -103,13 +136,13 @@ Requires module entitlements on the active org (`contract_management_pro`, `gov_
 
 ```bash
 # Contract registry
-curl -s http://localhost:4000/api/contracts -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:4100/api/contracts -H "Authorization: Bearer $TOKEN"
 
 # Budget years (use Demo Budget Agency org context)
-curl -s http://localhost:4000/api/gov-budget/years -H "Authorization: Bearer $TOKEN"
+curl -s http://localhost:4100/api/gov-budget/years -H "Authorization: Bearer $TOKEN"
 
 # Budget limit check
-curl -s -X POST http://localhost:4000/api/gov-budget/check-limit \
+curl -s -X POST http://localhost:4100/api/gov-budget/check-limit \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "{\"budgetLineId\":\"<uuid>\",\"amount\":100}"
@@ -122,7 +155,7 @@ Web UI: `/contracts`, `/gov-budget` on Finance web `:3000`.
 With stack up and `SATELLITE_EVENT_SERVICE_TOKEN` set:
 
 ```bash
-curl -X POST http://retail.era.az/api/events/dispatch \
+curl -X POST http://retail-pos.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
   -d "{\"type\":\"SATELLITE_RETAIL_SALE_COMPLETED\",\"payload\":{\"outletId\":\"o1\",\"registerId\":\"r1\",\"shiftId\":\"s1\",\"receiptId\":\"rc1\",\"preset\":\"grocery\",\"amountNet\":10,\"currency\":\"AZN\",\"paymentMethod\":\"CASH\",\"lineCount\":1}}"
 ```
@@ -135,20 +168,20 @@ Set `ERA_SATELLITE_ORGANIZATION_ID` to a valid finance org UUID and ensure org h
 
 | # | Host | `type` | Worker log hint |
 |---|------|--------|-----------------|
-| 1 | hotel.era.az | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | `transaction=` + `invoice=` |
-| 2 | retail.era.az | `SATELLITE_RETAIL_SALE_COMPLETED` | `transaction=` + `invoice=` |
-| 3 | retail.era.az | `SATELLITE_RETAIL_SHIFT_CLOSED` | `Retail shift closed (cash recon stub)` |
-| 4 | logistics.era.az | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | `transaction=` |
-| 5 | construction.era.az | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | `transaction=` + `invoice=` |
-| 6 | crm.era.az | `SATELLITE_CRM_LEAD_CONVERTED` | `transaction=` + `invoice=` |
-| 7 | crm.era.az | `SATELLITE_CRM_VISIT_LOGGED` | `CRM visit logged:` |
-| 8 | auto.era.az | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | `transaction=` + `invoice=` |
-| 9 | clinic.era.az | `SATELLITE_CLINIC_VISIT_COMPLETED` | `transaction=` + `invoice=` |
-| 10 | clinic.era.az | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | `transaction=` + `invoice=` |
-| 11 | wholesale.era.az | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | `transaction=` + `invoice=` |
-| 12 | hotel.era.az | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | multi-line NAS journal |
-| 13 | hotel.era.az | `SATELLITE_HOTEL_INVOICE_ISSUED` | draft sales invoice |
-| 14 | hotel.era.az | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | agency CL meta |
+| 1 | hotel-pms.era-365.online | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | `transaction=` + `invoice=` |
+| 2 | retail-pos.era-365.online | `SATELLITE_RETAIL_SALE_COMPLETED` | `transaction=` + `invoice=` |
+| 3 | retail-pos.era-365.online | `SATELLITE_RETAIL_SHIFT_CLOSED` | `Retail shift closed (cash recon stub)` |
+| 4 | logistics.era-365.online | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | `transaction=` |
+| 5 | construction.era-365.online | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | `transaction=` + `invoice=` |
+| 6 | crm.era-365.online | `SATELLITE_CRM_LEAD_CONVERTED` | `transaction=` + `invoice=` |
+| 7 | crm.era-365.online | `SATELLITE_CRM_VISIT_LOGGED` | `CRM visit logged:` |
+| 8 | auto-service.era-365.online | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | `transaction=` + `invoice=` |
+| 9 | clinic.era-365.online | `SATELLITE_CLINIC_VISIT_COMPLETED` | `transaction=` + `invoice=` |
+| 10 | clinic.era-365.online | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | `transaction=` + `invoice=` |
+| 11 | wholesale.era-365.online | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | `transaction=` + `invoice=` |
+| 12 | hotel-pms.era-365.online | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | multi-line NAS journal |
+| 13 | hotel-pms.era-365.online | `SATELLITE_HOTEL_INVOICE_ISSUED` | draft sales invoice |
+| 14 | hotel-pms.era-365.online | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | agency CL meta |
 
 ### Idempotency replay
 
@@ -159,29 +192,29 @@ Example payloads:
 
 ```bash
 # Logistics trip
-curl -X POST http://logistics.era.az/api/events/dispatch \
+curl -X POST http://logistics.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
   -d "{\"type\":\"SATELLITE_LOGISTICS_TRIP_COMPLETED\",\"payload\":{\"tripId\":\"t1\",\"vehicleId\":\"v1\",\"freightAmount\":100,\"currency\":\"AZN\"}}"
 
 # Logistics L2 — POD + fuel + rollup (after trip created)
-curl -X POST http://logistics.era.az/api/trips/<id>/pod -H "Content-Type: application/json" \
+curl -X POST http://logistics.era-365.online/api/trips/<id>/pod -H "Content-Type: application/json" \
   -d "{\"recipient\":\"Warehouse B\",\"notes\":\"Signed by manager\"}"
-curl -X POST http://logistics.era.az/api/trips/<id>/fuel-report -H "Content-Type: application/json" \
+curl -X POST http://logistics.era-365.online/api/trips/<id>/fuel-report -H "Content-Type: application/json" \
   -d "{\"liters\":45.5,\"cost\":68.25}"
-curl "http://logistics.era.az/api/reports/fuel?from=2026-05-01&to=2026-05-31"
+curl "http://logistics.era-365.online/api/reports/fuel?from=2026-05-01&to=2026-05-31"
 
 # Retail shift closed
-curl -X POST http://retail.era.az/api/events/dispatch \
+curl -X POST http://retail-pos.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
   -d "{\"type\":\"SATELLITE_RETAIL_SHIFT_CLOSED\",\"payload\":{\"shiftId\":\"s1\",\"outletId\":\"o1\",\"registerId\":\"r1\",\"preset\":\"grocery\",\"totalSales\":500,\"receiptCount\":12,\"currency\":\"AZN\"}}"
 
 # CRM visit logged
-curl -X POST http://crm.era.az/api/events/dispatch \
+curl -X POST http://crm.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
   -d "{\"type\":\"SATELLITE_CRM_VISIT_LOGGED\",\"payload\":{\"visitId\":\"v1\",\"leadId\":\"l1\",\"channel\":\"visit\"}}"
 
 # Clinic lab order completed
-curl -X POST http://clinic.era.az/api/events/dispatch \
+curl -X POST http://clinic.era-365.online/api/events/dispatch \
   -H "Content-Type: application/json" \
   -d "{\"type\":\"SATELLITE_CLINIC_LAB_ORDER_COMPLETED\",\"payload\":{\"labOrderId\":\"lo1\",\"patientRef\":\"p1\",\"testCode\":\"CBC\",\"amountNet\":25,\"currency\":\"AZN\"}}"
 ```
@@ -239,12 +272,12 @@ Room charge from fb-pos uses `HOTEL_PMS_URL`; stub with `FB_POS_PMS_STUB=1` for 
 Run on PR / nightly (see `.github/workflows/ecosystem-smoke.yml`):
 
 1. `npm run build` in `packages/era-contracts`, `packages/satellite-kit`
-2. `npm run build` in `era-365-orchestrator/apps/api`, `era-finance-core/apps/api`
+2. `npm run build` in `era-orchestrator/apps/api`, `era-finance-core/apps/api`
 3. Health curls against docker-compose stack (optional job)
 
 ## Hospitality Nafta — Wave 3 / 4 (hotel, clinic, MDM, fb-pos)
 
-Requires hotel-pms @ `:3000`, clinic @ `:3300`, orchestrator @ `:4100`, fb-pos @ `:3200` after seed.
+Requires hotel-pms @ `:3000`, clinic @ `:3300`, orchestrator @ `:4000`, fb-pos @ `:3200` after seed.
 
 ```bash
 # HN-1 — night audit package EOD (reception session cookie or Bearer)
@@ -263,7 +296,7 @@ curl -s -X POST http://localhost:3300/api/sanatorium/episodes/from-stay \
 curl -s http://localhost:3300/api/sanatorium/episodes -H "Cookie: era_clinic_session=..."
 
 # HN-P — MDM health + org register (internal)
-curl -s http://localhost:4100/internal/v1/mdm/health
+curl -s http://localhost:4000/internal/v1/mdm/health
 
 # HN-7 — transfers
 curl -s http://localhost:3000/api/transfers -H "Cookie: era_hotel_session=..."
@@ -277,7 +310,7 @@ curl -s -X POST http://localhost:3200/api/tickets \
 
 ## Hospitality Nafta — Wave 5 (GL, invoices, contract pricing)
 
-Requires hotel-pms @ `:3000`, optional orchestrator @ `:4100` + finance worker for GL journal smoke.
+Requires hotel-pms @ `:3000`, optional orchestrator @ `:4000` + finance worker for GL journal smoke.
 
 ```bash
 # NW-1 — revenue GL mappings + night audit E1
@@ -306,7 +339,7 @@ All 7 industry apps use `executeSatelliteSsoExchange` — session includes `BUSI
 
 ```bash
 # After orchestrator issues signed SSO payload:
-curl -X POST http://retail.era.az/api/auth/sso/exchange \
+curl -X POST http://retail-pos.era-365.online/api/auth/sso/exchange \
   -H "Content-Type: application/json" \
   -d "{\"email\":\"user@example.com\",\"fullName\":\"Demo\",\"organizationId\":\"<org-uuid>\",\"financeRole\":\"OWNER\",\"expiresAt\":1999999999,\"signature\":\"<hmac>\"}"
 ```
@@ -326,7 +359,7 @@ With `ERA_SATELLITE_ORGANIZATION_ID` and orchestrator `@ :4100`:
 | fb-pos | `POST /api/tickets/{id}/pay` | portal, pay, `fb-table-{id}` slot |
 | hotel-pms | issue folio invoice | portal, pay; `GET /api/hotel/integration-settings` → `platformSubscription` |
 
-Orchestrator: `GET /platform/booking/v1/slots?resourceKey=pickup` (Bearer org token). Full checklist: [UAT-SMOKE-PLATFORM.md](../era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md) § Wave E.
+Orchestrator: `GET /platform/booking/v1/slots?resourceKey=pickup` (Bearer org token). Full checklist: [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md) § Wave E.
 
 ## v1.0 — Platform hooks (delivery, loyalty, domains)
 
@@ -355,15 +388,15 @@ node era-hotel-pms/scripts/test-pos-bridge.mjs
 # ERA_AUTH_MODE=control-plane on finance-core → login → GET billing summary
 
 # Platform Wave E/F on staging with ERA_SATELLITE_ORGANIZATION_ID
-# See era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md
+# See era-orchestrator/doc/UAT-SMOKE-PLATFORM.md
 ```
 
-| Service | Dev URL | Health |
-|---------|---------|--------|
-| orchestrator | http://127.0.0.1:4100 | `/health` |
-| finance-api | http://127.0.0.1:4000 | `/api/health` |
-| hotel-pms | http://127.0.0.1:3000 | `/api/health` |
-| fb-pos | http://127.0.0.1:3200 | `/api/health` |
+| Service | Dev URL (umbrella) | Health |
+|---------|-------------------|--------|
+| orchestrator | http://127.0.0.1:4000 | `/health` |
+| finance-api | http://127.0.0.1:4100 | `/api/health` |
+| hotel-pms | http://127.0.0.1:3201 | `/api/health` |
+| fb-pos | http://127.0.0.1:3202 | `/api/health` |
 
 ## v1.0 — Industry modules (quartet)
 
@@ -384,7 +417,7 @@ curl -s -X POST http://localhost:3300/api/receipts/<RECEIPT_ID>/apply-promo \
   -d '{"discountPercent":10}'
 ```
 
-### era-crm-field (:3303)
+### era-crm (:3303)
 
 ```bash
 curl -s -X POST http://localhost:3303/api/visits \
@@ -424,7 +457,7 @@ curl -s -X POST http://localhost:3305/api/projects/<PROJECT_ID>/daily-logs \
   -d '{"logDate":"2026-05-28","crewCount":12,"notes":"Concrete pour"}'
 ```
 
-### era-auto-sto
+### era-auto-service
 
 ```bash
 curl -s "http://localhost:3307/api/vehicles/history?plate=10-AA-001"
@@ -458,7 +491,7 @@ curl -s http://localhost:3304/api/driver/trips
 curl -s http://localhost:3304/api/tracking/<TRACKING_TOKEN>
 ```
 
-### era-crm-field (scoring)
+### era-crm (scoring)
 
 ```bash
 curl -s -X POST http://localhost:3303/api/leads/<LEAD_ID>/score
@@ -473,7 +506,7 @@ curl -s -X PATCH http://localhost:3306/api/appointments/<ID>/reschedule \
   -d '{"scheduledAt":"2026-06-01T09:00:00.000Z","roomCode":"RM-2"}'
 ```
 
-### era-fb-pos
+### era-fnb-pos
 
 ```bash
 curl -s http://localhost:3200/api/delivery-inbox
@@ -488,4 +521,133 @@ curl -s -X POST http://localhost:3200/api/tickets/<TICKET_ID>/fire-course \
 curl -s http://localhost:3000/api/admin/yield-rules
 curl -s http://localhost:3000/api/admin/maintenance
 curl -s "http://localhost:3000/api/room-service/qr?roomId=101"
+```
+
+## v1.1 — Finance handoffs + satellites (2026-05-26)
+
+Finance (JWT + org context):
+
+```bash
+curl -s -X POST http://localhost:4100/api/inventory/stock-check -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"sku":"DEMO-001","actualQty":5}'
+curl -s http://localhost:4100/api/inventory/replenishment-suggestions -H "Authorization: Bearer $TOKEN"
+curl -s -X POST http://localhost:4100/api/logistics/rate-quote -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"weightKg":12}'
+curl -s -X POST http://localhost:4100/api/purchases/supplier-match -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"invoiceRef":"INV-001"}'
+```
+
+Retail / logistics / clinic / auto / wholesale / CRM / FB / hotel:
+
+```bash
+curl -s -X POST http://localhost:3301/api/stock/check -H "Content-Type: application/json" -d '{"sku":"PLU-001","actualQty":3}'
+curl -s http://localhost:3301/api/replenishment/suggestions
+curl -s -X POST http://localhost:3302/api/shipments/<TRIP_ID>/rate -H "Content-Type: application/json" -d '{"weightKg":10}'
+curl -s -X POST http://localhost:3306/api/lab/import -H "Content-Type: application/json" -d '{"patientRefId":"<ID>","testCode":"CBC","results":[{"analyte":"WBC","value":"5.1"}]}'
+curl -s "http://localhost:3305/api/edi/export?format=json" -H "x-api-key: wholesale-edi-demo"
+curl -s -X POST http://localhost:3200/api/labor/clock -H "Content-Type: application/json" -d '{"staffCode":"W1","pin":"1234","eventType":"CLOCK_IN"}'
+curl -s -X POST "http://localhost:3000/api/admin/reports/email-cron?secret=hotel-email-cron-dev"
+```
+
+## v2.0 — Platform Live, MDM cutover, fiscal, offline
+
+**Env:** `PLATFORM_ADDONS_MODE=live` · `ERA_MDM_REGISTRATION_CUTOVER=true` (Finance blocks local register) · `ERA_FISCAL_PROVIDER=mock` · `WHATSAPP_BUSINESS_MODE=live`
+
+### Orchestrator — platform Live
+
+```bash
+# Booking cancel + idempotency (Bearer org JWT)
+curl -s -X POST http://localhost:4000/platform/booking/v1/appointments/<ID>/cancel \
+  -H "Authorization: Bearer $ORCH_TOKEN" -H "Idempotency-Key: smoke-cancel-1"
+
+# Portal session + documents
+curl -s -X POST http://localhost:4000/platform/portal/v1/sessions \
+  -H "Authorization: Bearer $ORCH_TOKEN" -H "Content-Type: application/json" \
+  -d '{"customerRef":"demo","pin":"1234"}'
+curl -s http://localhost:4000/platform/portal/v1/documents?customerRef=demo \
+  -H "Authorization: Bearer $ORCH_TOKEN"
+
+# Loyalty earn / burn
+curl -s -X POST http://localhost:4000/platform/loyalty/v1/earn \
+  -H "Authorization: Bearer $ORCH_TOKEN" -H "Content-Type: application/json" \
+  -d '{"customerRef":"demo","points":10}'
+```
+
+### MDM registration (Orch only when cutover on)
+
+```bash
+# Finance register must 409/redirect when ERA_MDM_REGISTRATION_CUTOVER=true
+curl -s -X POST http://localhost:4000/auth/register -H "Content-Type: application/json" \
+  -d '{"email":"new@example.com","password":"x","voen":"1234567890"}'
+
+# Canonical path
+curl -s -X POST http://localhost:4000/auth/register-organization \
+  -H "Content-Type: application/json" \
+  -d '{"email":"new@example.com","password":"x","voen":"1234567890","legalName":"Demo LLC"}'
+```
+
+### Retail — offline, KKM, marketplace
+
+```bash
+curl -s -X POST http://localhost:3301/api/offline/sync -H "Content-Type: application/json" \
+  -d '{"receipts":[{"localId":"off-1","total":10,"lines":[]}]}'
+curl -s -X POST http://localhost:3301/api/receipts/<ID>/pay -H "Content-Type: application/json" -d '{}'
+curl -s -X POST http://localhost:3301/api/integrations/marketplace \
+  -H "Content-Type: application/json" -d '{"provider":"umico","event":"order.created","payload":{}}'
+```
+
+### Auto tool crib · Clinic portal · CRM WhatsApp · Hotel v2
+
+```bash
+curl -s http://localhost:3304/api/tools
+curl -s -X POST http://localhost:3304/api/tools/checkout -H "Content-Type: application/json" \
+  -d '{"toolId":"<ID>","technicianRef":"tech-1"}'
+curl -s -X POST http://localhost:3306/api/portal/session -H "Content-Type: application/json" \
+  -d '{"patientRef":"<ID>","pin":"1234"}'
+# CRM: WHATSAPP_BUSINESS_MODE=live on lead stage change
+curl -s -X PATCH http://localhost:3303/api/leads/<ID>/stage -H "Content-Type: application/json" \
+  -d '{"stage":"QUALIFIED"}'
+curl -s "http://localhost:3000/api/public/booking/rates?nights=2"
+curl -s -X POST http://localhost:3000/api/integrations/door-lock/unlock \
+  -H "Content-Type: application/json" -d '{"roomId":"<ROOM_ID>"}'
+```
+
+## Module maturity — Auto M1 / M3 / M4
+
+```bash
+# Vehicle card
+curl -s -X POST http://localhost:3304/api/vehicles \
+  -H "Content-Type: application/json" \
+  -d '{"plate":"10-AA-100","vin":"WVWZZZ","customerName":"Demo"}'
+
+# Work order with plate (auto-links CustomerVehicle)
+WO=$(curl -s -X POST http://localhost:3304/api/work-orders \
+  -H "Content-Type: application/json" \
+  -d '{"code":"WO-SMOKE-1","vehiclePlate":"10-AA-100"}' | jq -r .id)
+
+# Labor + parts lines (roll up on complete)
+curl -s -X POST "http://localhost:3304/api/work-orders/$WO/labor-lines" \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Oil change","hours":1,"rateAzn":50}'
+curl -s -X POST "http://localhost:3304/api/work-orders/$WO/part-lines" \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Filter","sku":"FLT-1","qty":1,"unitPrice":25}'
+curl -s -X POST "http://localhost:3304/api/work-orders/$WO/complete" \
+  -H "Content-Type: application/json" -d '{}'
+```
+
+## pre-GA — Platform hooks, billing meter, offline UI
+
+**Env:** `NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED=true` (retail) · `ERA_DOOR_LOCK_ENABLED=1` (hotel check-in unlock)
+
+```bash
+# After hotel folio payment — platform hooks (ERA_SATELLITE_ORGANIZATION_ID set)
+curl -s -X POST http://localhost:3000/api/folios -H "Cookie: era_hotel_session=..." \
+  -H "Content-Type: application/json" -d '{"folioId":"<ID>","amount":10,"paymentMethod":"CASH"}'
+
+# OTA stub
+curl -s -X POST http://localhost:3000/api/integrations/ota/bookingcom \
+  -H "Content-Type: application/json" -d '{"event":"reservation.created"}'
+
+# Finance Phase 16 admin meter (super-admin JWT)
+curl -s -X PATCH http://localhost:4100/api/admin/config/billing/meter-unit-pricing \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H "Content-Type: application/json" \
+  -d '{"pricePerWhatsappAlertAzn":0.05}'
 ```

@@ -1,4 +1,4 @@
-/** @deprecated Table reservations UI lives in era-fb-pos. */
+/** @deprecated Table reservations UI lives in era-fnb-pos. */
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';

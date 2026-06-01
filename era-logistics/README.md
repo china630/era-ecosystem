@@ -2,8 +2,8 @@
 
 Fleet, trips, POD
 
-- Host: `logistics.era.az` (port 3301)
-- Entitlement: `industry_logistics_customs`
+- Host: `logistics.era-365.online` (port 3301)
+- Entitlement: `industry_logistics`
 - Docs: [PRD](./PRD.md) · [DELIVERY](./doc/DELIVERY-LOGISTICS.md)
 
 ```bash

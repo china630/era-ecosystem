@@ -6,7 +6,7 @@
 | Параметр | Значение |
 |----------|----------|
 | **Продукт** | ERA Hotel PMS (`era-hotel-pms`) |
-| **Host** | `hotel.era.az` (3000) |
+| **Host** | `hotel-pms.era-365.online` (3000) |
 | **Статус** | Phase 1–2 largely **DONE** (see DELIVERY) |
 
 ---
@@ -19,15 +19,15 @@
 
 ### 1.2. Решение
 
-Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bridge для **era-fb-pos**.
+Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bridge для **era-fnb-pos**.
 
 ### 1.3. Связанные продукты
 
 | Продукт | Связь |
 |---------|-------|
-| **era-fb-pos** | Room charge, POS shift → NA block |
+| **era-fnb-pos** | Room charge, POS shift → NA block |
 | **era-finance-core** | E1/E2/E5/E6, GL, tourism registry |
-| **era-365-orchestrator** | SSO, satellite events |
+| **era-orchestrator** | SSO, satellite events |
 
 ---
 
@@ -51,28 +51,36 @@ Cloud PMS: бронь, шахматка, folio, HK, medical, ERP bridge, POS bri
 
 ---
 
-## §4. Modules
+## §4. Feature areas
 
 ### Core (delivered)
 
-| ID | Module | Status | Doc |
-|----|--------|--------|-----|
-| M1–M10 | PMS core (book, folio, NA, HK, channel) | **DONE** | DELIVERY Stages 1–4 |
-| M11 | ERP / satellite events | **DONE** | Stage 10–12 |
-| M12 | Medical / sanatorium scheduling | **DONE** | procedures |
-| M13 | Banquets BEO | **MVP** | `/banquets` |
-| M14 | Stock MVP | **MVP** | `/admin/stock` |
-| M15 | Agency / invoices read | **DONE** | reports → Finance |
-| M16 | POS bridge (fb-pos) | **DONE** | Stage 17 |
+| Feature area | Scope | Status | Doc |
+|--------------|-------|--------|-----|
+| **PMS Core** | Book, folio, NA, HK, channel stub | **DONE** | DELIVERY Stages 1–4 |
+| **ERP / satellite events** | Outbound integration | **DONE** | Stage 10–12 |
+| **Medical / sanatorium scheduling** | Procedures, sanatorium | **DONE** | `/procedures`, `/medical` |
+| **Banquets BEO** | Event orders | **DONE** | `/banquets` |
+| **Stock MVP** | Hotel stock catalog | **DONE** | `/admin/stock` |
+| **Agency / invoices read** | Reports → Finance | **DONE** | reports |
+| **POS bridge (F&B)** | Room charge, calendar | **DONE** | Stage 17 |
+| **Yield management** | Dynamic BAR | **DONE** | contract pricing |
+| **Guest loyalty tiers** | Platform hook | **DONE** | `platform_loyalty` |
+| **Room service QR** | fb-pos bridge | **DONE** | SATELLITE + fnb-pos |
+| **Maintenance work orders** | Ops | **DONE** | SATELLITE |
 
-| M20 | Yield management (dynamic BAR) | **MVP** | SATELLITE |
-| M21 | Guest loyalty tiers | **MVP** | **PLATFORM** `loyalty` |
-| M22 | Room service QR → fb-pos | **MVP** | SATELLITE + fb-pos |
-| M23 | Maintenance work orders | **MVP** | SATELLITE |
-
-См. [MODULES_CATALOG](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
+Commercial submodule keys: see [`docs/adr/hotel-module-taxonomy.md`](../docs/adr/hotel-module-taxonomy.md) and [`doc/ELEKTRAWEB-PARITY.md`](./doc/ELEKTRAWEB-PARITY.md).
 
 Full checklist: [doc/DELIVERY.md](./doc/DELIVERY.md)
+
+### Internal traceability (appendix — not for UI)
+
+| Legacy ID | Maps to feature area above |
+|-----------|----------------------------|
+| M1–M10 | PMS Core |
+| M11 | ERP / satellite events |
+| M12–M17 | Medical, banquets, stock, agency, POS bridge |
+| M20–M23 | Yield, loyalty hook, room-service QR, maintenance WO |
 
 ---
 
@@ -89,7 +97,7 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 |-----------|----------|
 | Outbound ERP | E1/E2/E5/E6, OpenAPI in `doc/openapi/` |
 | Inbound ERP | E6 webhook |
-| fb-pos | [fb-pos-pms-bridge.yaml](./doc/openapi/fb-pos-pms-bridge.yaml) |
+| fnb-pos | [fnb-pos-pms-bridge.yaml](./doc/openapi/fnb-pos-pms-bridge.yaml) |
 | Orchestrator | `SATELLITE_HOTEL_*` events |
 
 ---

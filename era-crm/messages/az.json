@@ -1,0 +1,127 @@
+{
+  "meta": {
+    "title": "ERA CRM Field",
+    "description": "Sahə satışı və CRM peyk modulu"
+  },
+  "login": {
+    "title": "ERA CRM Field",
+    "subtitle": "Hesabınızla daxil olun",
+    "login": "Login",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "Daxil olunur…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA CRM Field",
+    "subtitle": "ERA sənaye peyk modulu"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identiklik, abunəlik və sənaye modulları vahid control plane (ERA 365) və Finance ERP üzərindən birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olmaq olar?",
+        "a": "ERA Finance və ya ERA 365 Orchestrator-dan bu modula keçid edin — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra Orchestrator-da «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN ilə."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "save": "Saxla",
+    "edit": "Redaktə et",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar"
+  },
+  "leads": {
+    "title": "ERA CRM Field",
+    "subtitle": "Pipeline — mərhələyə görə leadlər",
+    "visits": "Vizitlər",
+    "inbox": "Inbox",
+    "myLeads": "Mənim leadlərim",
+    "loadingPipeline": "Pipeline yüklənir…",
+    "prefill": "Inbox pre-fill: channel={channel}, contact={contactRef}",
+    "owner": "Sahib",
+    "assign": "Təyin et",
+    "unassigned": "Təyin olunmayıb",
+    "next": "Növbəti",
+    "followUp": "Follow-up",
+    "convert": "Konvert et",
+    "converted": "Lead konvert edildi — hadisə göndərildi {id}",
+    "followUpScheduled": "Follow-up planlandı {id}"
+  },
+  "visits": {
+    "title": "Sahə vizitləri",
+    "subtitle": "C2 — vizit jurnalı və son aktivlik",
+    "pipeline": "Pipeline",
+    "logVisit": "Vizit qeyd et",
+    "lead": "Lead",
+    "selectLead": "Lead seçin…",
+    "address": "Ünvan / yer",
+    "latitude": "Enlik",
+    "longitude": "Uzunluq",
+    "notes": "Qeydlər",
+    "selectLeadError": "Lead seçin",
+    "logged": "Vizit qeydə alındı — hadisə göndərildi {title}",
+    "recent": "Son vizitlər",
+    "empty": "Hələ vizit qeyd olunmayıb."
+  },
+  "inbox": {
+    "title": "Kanal inbox",
+    "subtitle": "C2 — WA/IG metadata stub (canlı mesajlaşma yoxdur)",
+    "pipeline": "Pipeline",
+    "newThread": "Yeni thread stub",
+    "channel": "Kanal",
+    "contactRef": "Kontakt ref",
+    "preview": "Önizləmə",
+    "addThread": "Thread stub əlavə et",
+    "contactRequired": "Kontakt ref tələb olunur",
+    "threadCreated": "Thread stub yaradıldı (yalnız metadata)",
+    "threads": "Threadlər",
+    "empty": "Hələ inbox thread yoxdur.",
+    "linked": "bağlı",
+    "createLead": "Lead yarat"
+  },
+  "adminSettings": {
+    "title": "CRM parametrləri",
+    "subtitle": "UI playbook + MDM VÖEN lookup",
+    "leads": "Leads",
+    "teamName": "Komanda adı",
+    "voenLookup": "VÖEN lookup",
+    "lookup": "Axtar",
+    "orgFound": "Org {id}…",
+    "notFound": "Tapılmadı",
+    "editTeam": "Komandanı redaktə et"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "title": "ERA Clinic",
+    "description": "Спутник клиники и медицинских операций"
+  },
+  "login": {
+    "title": "ERA Clinic",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA Clinic",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "complete": "Завершить",
+    "all": "Все"
+  },
+  "appointments": {
+    "title": "ERA Clinic",
+    "subtitle": "Операционная MVP-оболочка — UI по DESIGN.md.",
+    "shellNote": "Реестры и формы добавления/редактирования будут в модалках по DESIGN.md."
+  },
+  "labOrders": {
+    "title": "Лабораторные заказы",
+    "subtitle": "K2 — список, фильтр статуса, завершение",
+    "criticalOnly": "Только критические результаты (M5)",
+    "statusFilter": "Фильтр статуса",
+    "empty": "Лабораторных заказов пока нет."
+  },
+  "labOrdersDetail": {
+    "title": "Workflow лабораторного заказа",
+    "subtitle": "K2 — заказ {id}…",
+    "backToList": "К списку",
+    "notFound": "Заказ не найден.",
+    "status": "Статус",
+    "visit": "визит",
+    "steps": {
+      "collect": "Взять образец",
+      "results": "Ввести результаты",
+      "publish": "Опубликовать",
+      "complete": "Завершить и выставить счёт"
+    },
+    "markCollected": "Отметить взятым (K-08)",
+    "resultLines": "Строки результатов (K-09)",
+    "code": "Код",
+    "value": "Значение",
+    "addLine": "+ Добавить строку",
+    "saveResults": "Сохранить результаты",
+    "publishToDoctor": "Опубликовать врачу (K-10)",
+    "completeBilling": "Завершить и отправить billing event (K-11)",
+    "completed": "Завершено",
+    "published": "опубликовано",
+    "actionFailed": "Ошибка действия"
+  },
+  "scheduling": {
+    "title": "Расписание дня",
+    "subtitle": "K-05 — сетка дня практика (slots API stub)",
+    "date": "Дата",
+    "practitionerCode": "Код практика",
+    "optional": "необязательно",
+    "loadingSlots": "Загрузка слотов…",
+    "loadFailed": "Не удалось загрузить расписание.",
+    "allPractitioners": "все практики",
+    "rescheduleStub": "Stub переноса — appointments API для блоков (K3 MVP)."
+  },
+  "executive": {
+    "title": "Исполнительная сводка",
+    "subtitle": "K-14 — дневные KPI клиники (без GL в спутнике)",
+    "accessDenied": "Доступ только для BUSINESS_OWNER (Finance OWNER/DIRECTOR через SSO).",
+    "loadFailed": "Не удалось загрузить сводку.",
+    "visitsToday": "Визиты сегодня",
+    "labRevenueToday": "Выручка лаборатории сегодня",
+    "openLabOrders": "Открытые лаб. заказы"
+  },
+  "sanatorium": {
+    "title": "Санаторий in-house",
+    "subtitle": "K5 — клинические эпизоды для отельных stays (US-06, US-07)",
+    "saved": "Сохранено",
+    "failed": "Ошибка",
+    "inHouseList": "Список in-house",
+    "guest": "Гость",
+    "stay": "Проживание",
+    "noEpisodes": "Нет открытых эпизодов — оформите гостя с medical package в PMS.",
+    "complaints": "Жалобы",
+    "newComplaint": "Новая жалоба",
+    "add": "Добавить",
+    "diagnoses": "Диагнозы",
+    "description": "Описание",
+    "addDiagnosis": "Добавить диагноз",
+    "labOrders": "Лаб. заказы",
+    "workflow": "workflow",
+    "orderLab": "Заказать лаб."
+  },
+  "adminSettings": {
+    "title": "Параметры клиники",
+    "subtitle": "Admin — UI playbook (список + ModalShell)",
+    "clinicName": "Название клиники",
+    "editClinic": "Изменить клинику"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

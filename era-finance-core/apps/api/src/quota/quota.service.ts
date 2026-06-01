@@ -1,4 +1,5 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, Optional } from "@nestjs/common";
+import { BillingMeterService } from "../billing/billing-meter.service";
 import { TariffTier } from "@erafinance/database";
 import { bakuMonthBounds, billingPeriodKeyBaku } from "../billing/baku-billing.util";
 import { DEFAULT_TIER_SPEND_CEILINGS_AZN } from "../billing/tier-spend-ceiling";
@@ -19,7 +20,22 @@ export class QuotaService {
     private readonly cp: ControlPlanePrismaService,
     private readonly systemConfig: SystemConfigService,
     private readonly controlPlane: ControlPlaneClient,
+    @Optional() private readonly billingMeter?: BillingMeterService,
   ) {}
+
+  private async recordMeter(
+    organizationId: string,
+    kind: "WHATSAPP_ALERT" | "INVOICE_CREATED" | "OCR_PAGE",
+    quantity = 1,
+  ): Promise<void> {
+    if (!this.billingMeter) return;
+    try {
+      await this.billingMeter.recordUsage(organizationId, kind, quantity);
+    } catch (e) {
+      this.logger.warn(`Billing meter ${kind}: ${(e as Error).message}`);
+      throw e;
+    }
+  }
 
   private async getSubscriptionTier(organizationId: string): Promise<TariffTier> {
     const orgId = resolveOrganizationUuid(organizationId);
@@ -48,6 +64,8 @@ export class QuotaService {
 
   async assertInvoiceQuota(organizationId: string): Promise<void> {
     await this.controlPlane.assertQuota({ organizationId, kind: "invoice" });
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (orgId) await this.recordMeter(orgId, "INVOICE_CREATED", 1);
   }
 
   async assertWhatsappQuota(organizationId: string, quantity = 1): Promise<void> {
@@ -68,6 +86,7 @@ export class QuotaService {
       where: { id: orgId },
       data: { whatsappAlertsUsed: used + quantity, billingPeriodKey: periodKey },
     });
+    await this.recordMeter(orgId, "WHATSAPP_ALERT", quantity);
   }
 
   async assertOcrQuota(organizationId: string, pages = 1): Promise<void> {
@@ -87,6 +106,7 @@ export class QuotaService {
       where: { id: orgId },
       data: { ocrPagesUsed: used + pages },
     });
+    await this.recordMeter(orgId, "OCR_PAGE", pages);
   }
 
   async getQuotaSnapshot(organizationId: string) {

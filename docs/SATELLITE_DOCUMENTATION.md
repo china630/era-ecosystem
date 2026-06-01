@@ -6,7 +6,8 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 
 | Document | Path |
 |----------|------|
-| Global UI/UX | [`DESIGN.md`](../DESIGN.md) — shared tokens/components: `@era/satellite-kit/ui` |
+| Global UI/UX | [`DESIGN.md`](../DESIGN.md) — **§ App shell** (header order, sidebar width); kit: `@era/satellite-kit/ui` |
+| Local subfolder dev | [`LOCAL_FOLDER_DEV.md`](./LOCAL_FOLDER_DEV.md) — flat monorepo, ports, package build |
 | Run all services | [`SETUP_AND_RUN.md`](./SETUP_AND_RUN.md) |
 | SSO & event bus | [`INTEGRATION_SSO_EVENTS.md`](./INTEGRATION_SSO_EVENTS.md) |
 | Readiness matrices | [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) — DELIVERY %, API × app, integrations; **refresh:** skill `era-readiness-matrix` or `node scripts/delivery-readiness.mjs` (§1) + `node scripts/readiness-coverage.mjs` (§4) |
@@ -16,7 +17,18 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Modules catalog + roadmap | [MODULES_CATALOG.md](./MODULES_CATALOG.md#industry-module-roadmap) |
 | Industry research (reference) | [ERPs/README.md](../ERPs/README.md) |
 | Development roadmap | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) |
+| Implementation plans index | [IMPLEMENTATION_PLANS.md](./IMPLEMENTATION_PLANS.md) |
+| In-app user help (policy) | [USER_DOCUMENTATION.md](./USER_DOCUMENTATION.md) |
+| Control plane architecture | [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) |
+| CP-BILLING migration (archive) | [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) |
+| Platform add-ons | [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
+| Local UAT gaps | [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) |
+| Quartet smoke (Hot/FB/Fin/Orch) | [QUARTET_UAT.md](./QUARTET_UAT.md) |
+| Hospitality ↔ Finance boundary | [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md) |
+| Satellite UI playbook | [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) — **`EraAppRouteShell`**, header slots, sidebar checklist |
+| Finance ERP docs index | [era-finance-core/docs/README.md](../era-finance-core/docs/README.md) |
 | Finance bridge pattern (ADR) | [satellite-finance-bridge-pattern.md](./adr/satellite-finance-bridge-pattern.md) |
+| CP ↔ Finance handoff (ADR) | [cp-finance-handoff.md](./adr/cp-finance-handoff.md) |
 
 ## Per-satellite layout
 
@@ -34,6 +46,40 @@ era-{name}/
       01-finance-boundary.md
 ```
 
+## i18n stacks (ecosystem contract)
+
+| Web node | Stack | Locales | Default | Cookie | Fallback |
+|----------|-------|---------|---------|--------|----------|
+| **era-finance-core** | `react-i18next` + `@erafinance/i18n` | az, ru, en | **az** | `era_i18n_lang` (+ legacy `erafinance_i18n_lang`) | EN/RU → az (`fallbackLng`) |
+| **era-hotel-pms**, **era-fnb-pos** | `next-intl` + `@era/i18n-common` | az, ru, en | **az** | `era_i18n_lang` (+ legacy `NEXT_LOCALE`) | deep-merge on `messages/az.json` |
+| **era-orchestrator** web | `next-intl` + `@era/i18n-common` | az, ru, en | **az** | `era_i18n_lang` | same |
+| **Industry satellites** (retail, logistics, clinic, auto, wholesale, construction, crm) | `next-intl` + `@era/i18n-common` | az, ru, en | **az** | `era_i18n_lang` | same |
+
+Shared package: [`packages/i18n-common`](../packages/i18n-common) (`resolveLocale`, `mergeMessages`, `createNextIntlRequest`, `common.{az,ru,en}.json`). Public UI: `@era/satellite-kit/ui` — `LocaleToggle`, `FaqSection`, `PublicLegalFooter`, `resolveLegalUrls`.
+
+Hotel detail: [era-hotel-pms/doc/i18n.md](../era-hotel-pms/doc/i18n.md). Switcher posts to `POST /api/locale`.
+
+## In-app help (satellites)
+
+User-facing FAQ on industry apps links to **Orchestrator** `/help` via `orchPublicHref("/help")`. Local satellite `/help` may exist for ops; canonical copy lives in `era-orchestrator/apps/web/messages/*.json`. Legal links: env `NEXT_PUBLIC_ERA_*` or Orch `/terms`. Policy: [USER_DOCUMENTATION.md](./USER_DOCUMENTATION.md).
+
+## Public login UI (`AuthLoginCard`)
+
+All industry satellites, Orchestrator, and Finance `/login` share the same layout ([DESIGN.md](../DESIGN.md)):
+
+| Element | Implementation |
+|---------|----------------|
+| Card | `@era/satellite-kit/ui` → `AuthLoginCard` |
+| Copy | `@era/i18n-common` keys `auth.*` (+ app overlays) |
+| Locale toggle | Header row, right of title — `SatelliteLocaleToggle` / Finance `LanguageSwitcher` |
+| Credential field | Login **or** email **or** phone (single field) + password |
+| Links (order) | need account → register org → pricing → FAQ; user agreement → Orch `/terms` |
+| Cross-app URLs | `orchPublicHref()` from `@era/satellite-kit/ui` (not main kit barrel) |
+
+**API:** `POST /api/auth/login` on each satellite resolves user by login/email/phone and verifies scrypt hash (`@era/satellite-kit/auth`). SSO path unchanged: `POST /api/auth/sso/exchange`.
+
+**Middleware:** whitelist `POST /api/locale` and public pages (`/login`, `/help`) so locale switch works without session.
+
 ## PRD.md required sections
 
 1. **Vision** — scope and explicit out-of-scope
@@ -46,7 +92,7 @@ era-{name}/
 
 ## Identity & RBAC (control plane)
 
-**Целевая архитектура:** единый **RBAC и владение аккаунтом** на **`era-365-orchestrator`**; Finance и спутники — **потребители** JWT и membership, без дублирования «владельца SaaS» в доменных БД спутников.
+**Целевая архитектура:** единый **RBAC и владение аккаунтом** на **`era-orchestrator`**; Finance и спутники — **потребители** JWT и membership, без дублирования «владельца SaaS» в доменных БД спутников.
 
 | Контур | Что хранит / решает |
 |--------|---------------------|
@@ -73,14 +119,14 @@ era-{name}/
 | era-retail-pos | `app/api/auth/sso/exchange/route.ts` | yes |
 | era-logistics | same pattern | yes |
 | era-construction | same pattern | yes |
-| era-crm-field | same pattern | yes |
-| era-auto-sto | same pattern | yes |
+| era-crm | same pattern | yes |
+| era-auto-service | same pattern | yes |
 | era-wholesale | same pattern | yes |
 | era-clinic | same pattern | yes |
 
 Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
 
-**Hybrid (v1.0):** `era-fb-pos` and `era-hotel-pms` keep **local operational** users (waiter, reception, FB_MANAGER). **Platform** users (OWNER/DIRECTOR/ADMIN/ACCOUNTANT) enter via **Orchestrator SSO** → `financeRole` in session; RBAC mutations stay in Finance/Orch only.
+**Hybrid (v1.0):** `era-fnb-pos` and `era-hotel-pms` keep **local operational** users (waiter, reception, FB_MANAGER). **Platform** users (OWNER/DIRECTOR/ADMIN/ACCOUNTANT) enter via **Orchestrator SSO** → `financeRole` in session; RBAC mutations stay in Finance/Orch only.
 
 ### UAT-SMOKE template — SSO paths (required in every `era-*/doc/UAT-SMOKE.md`)
 
@@ -88,7 +134,7 @@ Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-r
 ## SSO paths (platform entry — v1.0)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: `http://localhost:3000` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite `/sso/callback` session.
 3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
 
@@ -119,12 +165,12 @@ UI: [`@era/satellite-kit/ui`](../packages/satellite-kit/ui) (DESIGN.md tokens, P
 
 | App | PRD | DELIVERY | Port | Host |
 |-----|-----|----------|------|------|
-| era-hotel-pms | [PRD](../era-hotel-pms/PRD.md) | [DELIVERY](../era-hotel-pms/doc/DELIVERY.md) | 3000 | hotel.era.az |
-| era-fb-pos | [PRD](../era-fb-pos/PRD.md) | [DELIVERY-FB](../era-fb-pos/doc/DELIVERY-FB.md) | 3200 | pos.era.az |
-| era-retail-pos | [PRD](../era-retail-pos/PRD.md) | [DELIVERY-RETAIL](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 3300 | retail.era.az |
-| era-logistics | [PRD](../era-logistics/PRD.md) | [DELIVERY-LOGISTICS](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 3301 | logistics.era.az |
-| era-construction | [PRD](../era-construction/PRD.md) | [DELIVERY-CONSTRUCTION](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 3302 | construction.era.az |
-| era-crm-field | [PRD](../era-crm-field/PRD.md) | [DELIVERY-CRM](../era-crm-field/doc/DELIVERY-CRM.md) | 3303 | crm.era.az |
-| era-auto-sto | [PRD](../era-auto-sto/PRD.md) | [DELIVERY-AUTO](../era-auto-sto/doc/DELIVERY-AUTO.md) | 3304 | auto.era.az |
-| era-wholesale | [PRD](../era-wholesale/PRD.md) | [DELIVERY-WHOLESALE](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 3305 | wholesale.era.az |
-| era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) | 3306 | clinic.era.az |
+| era-hotel-pms | [PRD](../era-hotel-pms/PRD.md) | [DELIVERY](../era-hotel-pms/doc/DELIVERY.md) | 3201 | hotel-pms.era-365.online |
+| era-fnb-pos | [PRD](../era-fnb-pos/PRD.md) | [DELIVERY-FB](../era-fnb-pos/doc/DELIVERY-FB.md) | 3202 | fnb-pos.era-365.online |
+| era-retail-pos | [PRD](../era-retail-pos/PRD.md) | [DELIVERY-RETAIL](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 3204 | retail-pos.era-365.online |
+| era-logistics | [PRD](../era-logistics/PRD.md) | [DELIVERY-LOGISTICS](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 3205 | logistics.era-365.online |
+| era-construction | [PRD](../era-construction/PRD.md) | [DELIVERY-CONSTRUCTION](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 3206 | construction.era-365.online |
+| era-crm | [PRD](../era-crm/PRD.md) | [DELIVERY-CRM](../era-crm/doc/DELIVERY-CRM.md) | 3207 | crm.era-365.online |
+| era-auto-service | [PRD](../era-auto-service/PRD.md) | [DELIVERY-AUTO](../era-auto-service/doc/DELIVERY-AUTO.md) | 3208 | auto-service.era-365.online |
+| era-wholesale | [PRD](../era-wholesale/PRD.md) | [DELIVERY-WHOLESALE](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 3209 | wholesale.era-365.online |
+| era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) | 3203 | clinic.era-365.online |

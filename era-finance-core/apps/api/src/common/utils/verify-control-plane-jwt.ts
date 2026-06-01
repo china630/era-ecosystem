@@ -36,7 +36,7 @@ export async function verifyControlPlaneAccessToken(
   config: ConfigService,
 ): Promise<ControlPlaneJwtPayload | null> {
   const issuer =
-    config.get<string>("ERA_JWT_ISSUER") ?? "era-365-orchestrator";
+    config.get<string>("ERA_JWT_ISSUER") ?? "era-orchestrator";
   const audience =
     config.get<string>("ERA_JWT_AUDIENCE_FINANCE") ?? "era-finance-core";
   const secret =

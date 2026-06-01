@@ -1,8 +1,12 @@
 import type { Metadata } from 'next';
-import { NextIntlClientProvider } from 'next-intl';
+import { Suspense } from 'react';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
-import { PlatformSessionBarServer } from '@era/satellite-kit/ui';
+import { APP_SHELL_CLASS, SatelliteAppProviders, SatelliteRootChrome } from '@era/satellite-kit/ui';
+import { HotelIntlProvider } from '@/components/HotelIntlProvider';
+import HotelOpsShell from '@/components/HotelOpsShell';
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('meta');
@@ -22,13 +26,16 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
-      <body>
-        <NextIntlClientProvider messages={messages}>
-          <div className="mx-auto max-w-6xl px-4 py-2">
-            <PlatformSessionBarServer />
-          </div>
-          {children}
-        </NextIntlClientProvider>
+      <body className={APP_SHELL_CLASS}>
+        <HotelIntlProvider locale={locale} messages={messages}>
+          <SatelliteAppProviders>
+            <SatelliteRootChrome>
+              <Suspense fallback={null}>
+                <HotelOpsShell>{children}</HotelOpsShell>
+              </Suspense>
+            </SatelliteRootChrome>
+          </SatelliteAppProviders>
+        </HotelIntlProvider>
       </body>
     </html>
   );

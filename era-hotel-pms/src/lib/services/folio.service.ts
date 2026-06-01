@@ -89,7 +89,7 @@ export async function postPayment(input: {
 }) {
   const folio = await prisma.folio.findUnique({
     where: { id: input.folioId },
-    include: { reservation: true },
+    include: { reservation: { include: { guest: true } } },
   });
   if (!folio) throw new Error('Folio not found');
   if (folio.status !== 'OPEN') throw new Error('Folio is not open');
@@ -139,6 +139,22 @@ export async function postPayment(input: {
       }),
     );
   }
+
+  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  if (organizationId && input.amount > 0) {
+    const { runHotelFolioPlatformHooks } = await import(
+      '@/lib/integration/platform-commerce'
+    );
+    void runHotelFolioPlatformHooks({
+      folioId: input.folioId,
+      amountAzn: input.amount,
+      sourceEntityType: 'folio_payment',
+      sourceEntityId: payment.id,
+      description: `Folio payment ${input.paymentMethod}`,
+      guestPhone: folio.reservation.guest.phone,
+    }).catch((e) => console.error('Platform hooks on folio payment failed', e));
+  }
+
   return payment;
 }
 

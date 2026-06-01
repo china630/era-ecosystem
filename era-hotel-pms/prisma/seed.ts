@@ -5,6 +5,7 @@ import {
   serializePermissions,
 } from '../src/lib/auth/permissions';
 import { hashPassword } from '../src/lib/auth/password';
+import { seedFoDemo } from './seed-fo-demo';
 
 const prisma = new PrismaClient();
 
@@ -45,7 +46,12 @@ async function main() {
   await prisma.hotelRevenueGlMapping.deleteMany();
   await prisma.folio.deleteMany();
   await prisma.stay.deleteMany();
+  await prisma.reservationNote.deleteMany();
+  await prisma.reservationGuest.deleteMany();
+  await prisma.reservationDailyRate.deleteMany();
   await prisma.reservation.deleteMany();
+  await prisma.reservationGroup.deleteMany();
+  await prisma.lostFoundItem.deleteMany();
   await prisma.cashShift.deleteMany();
   await prisma.guest.deleteMany();
   await prisma.room.deleteMany();
@@ -114,6 +120,28 @@ async function main() {
       passwordHash: managerHash,
       roleId: roles[ROLE_CODES.MANAGER],
       department: 'Front Office',
+    },
+  });
+
+  const demoHash = await hashPassword(
+    process.env.ECOSYSTEM_DEMO_PASSWORD ?? '12345678',
+  );
+  await prisma.user.upsert({
+    where: { login: 'chingiz@era.com' },
+    create: {
+      login: 'chingiz@era.com',
+      email: 'chingiz@era.com',
+      fullName: 'Chingiz Demo',
+      passwordHash: demoHash,
+      roleId: roles[ROLE_CODES.HOTEL_ADMIN],
+      department: 'Management',
+      isCrossSystem: true,
+    },
+    update: {
+      email: 'chingiz@era.com',
+      passwordHash: demoHash,
+      roleId: roles[ROLE_CODES.HOTEL_ADMIN],
+      isCrossSystem: true,
     },
   });
 
@@ -234,8 +262,8 @@ async function main() {
     },
   });
 
-  await prisma.bookingSource.create({ data: { code: 'WALKIN', name: 'Walk-in' } });
-  await prisma.bookingSource.create({ data: { code: 'OTA', name: 'OTA channels' } });
+  const sourceWalkin = await prisma.bookingSource.create({ data: { code: 'WALKIN', name: 'Walk-in' } });
+  const sourceOta = await prisma.bookingSource.create({ data: { code: 'OTA', name: 'OTA channels' } });
 
   const rooms = await Promise.all(
     [
@@ -253,147 +281,6 @@ async function main() {
       }),
     ),
   );
-
-  const guest1 = await prisma.guest.create({
-    data: {
-      fullName: 'Ali Mammadov',
-      passportNumber: 'AA1234567',
-      phone: '+994501234567',
-    },
-  });
-
-  const guest2 = await prisma.guest.create({
-    data: {
-      fullName: 'Nafta Sanatorium LLC',
-      passportNumber: 'CORP-001',
-      phone: '+994121234567',
-      voen: '1234567890',
-    },
-  });
-
-  const room201 = rooms.find((r) => r.roomNumber === '201')!;
-
-  await prisma.reservation.create({
-    data: {
-      roomTypeId: typeDlx.id,
-      roomId: room201.id,
-      guestId: guest1.id,
-      ratePlanId: rateMedical.id,
-      mealPlanId: mealHB.id,
-      checkInDate: new Date(),
-      checkOutDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-      status: 'IN_HOUSE',
-      paymentMethod: PaymentMethod.CARD,
-      totalAmount: 0,
-    },
-  });
-
-  await prisma.room.update({ where: { id: room201.id }, data: { status: 'OCCUPIED' } });
-  const medRes = await prisma.reservation.findFirst({
-    where: { guestId: guest1.id, status: 'IN_HOUSE' },
-  });
-  if (medRes) {
-    await prisma.stay.create({
-      data: { reservationId: medRes.id, actualCheckIn: new Date() },
-    });
-    await prisma.folio.create({ data: { reservationId: medRes.id, type: 'GUEST', status: 'OPEN' } });
-    const tomorrow = new Date(Date.now() + 86400000);
-    tomorrow.setHours(10, 0, 0, 0);
-    const end = new Date(tomorrow.getTime() + 45 * 60000);
-    await prisma.procedureAppointment.create({
-      data: {
-        reservationId: medRes.id,
-        serviceId: svcMassage.id,
-        staffName: 'Dr. Hasanova',
-        placeCode: 'SPA-1',
-        startAt: tomorrow,
-        endAt: end,
-        status: 'BOOKED',
-      },
-    });
-    const pickup = new Date(Date.now() + 2 * 86400000);
-    pickup.setHours(14, 30, 0, 0);
-    await prisma.transferOrder.create({
-      data: {
-        reservationId: medRes.id,
-        direction: 'IN',
-        flightNo: 'J2-812',
-        pickupAt: pickup,
-        vehicleId: vehicleVan1.id,
-        status: 'CONFIRMED',
-        price: 35,
-        notes: 'Ganja airport arrival',
-      },
-    });
-  }
-
-  const room101 = rooms.find((r) => r.roomNumber === '101')!;
-  const active = await prisma.reservation.create({
-    data: {
-      roomTypeId: typeStd.id,
-      roomId: room101.id,
-      guestId: guest2.id,
-      ratePlanId: rateStd.id,
-      checkInDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      checkOutDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      status: 'IN_HOUSE',
-      paymentMethod: PaymentMethod.COMPANY_ACCOUNT,
-      totalAmount: 0,
-    },
-  });
-
-  await prisma.room.update({ where: { id: room101.id }, data: { status: 'OCCUPIED' } });
-  await prisma.stay.create({ data: { reservationId: active.id, actualCheckIn: new Date(Date.now() - 86400000) } });
-
-  const guestFolio = await prisma.folio.create({
-    data: { reservationId: active.id, type: 'GUEST', status: 'OPEN' },
-  });
-  const companyFolio = await prisma.folio.create({
-    data: { reservationId: active.id, type: 'COMPANY', status: 'OPEN' },
-  });
-
-  await prisma.folioCharge.create({
-    data: {
-      folioId: companyFolio.id,
-      revenueCodeId: revRoom.id,
-      departmentId: deptAcc.id,
-      amount: 120,
-      qty: 2,
-      description: 'Room nights (company)',
-      businessDate: new Date(),
-    },
-  });
-  await prisma.folioCharge.create({
-    data: {
-      folioId: guestFolio.id,
-      revenueCodeId: revFood.id,
-      departmentId: deptRest.id,
-      amount: 45,
-      qty: 2,
-      description: 'Dinner set',
-      businessDate: new Date(),
-    },
-  });
-
-  await prisma.folioPayment.create({
-    data: {
-      folioId: companyFolio.id,
-      amount: 240,
-      paymentMethod: PaymentMethod.COMPANY_ACCOUNT,
-    },
-  });
-  await prisma.folioPayment.create({
-    data: {
-      folioId: guestFolio.id,
-      amount: 90,
-      paymentMethod: PaymentMethod.CARD,
-    },
-  });
-
-  await prisma.reservation.update({
-    where: { id: active.id },
-    data: { totalAmount: 0 },
-  });
 
   const agency = await prisma.agency.create({
     data: { code: 'TRAVEL-AZ', name: 'Demo Travel Agency', voen: '1234567890' },
@@ -440,23 +327,6 @@ async function main() {
       pricePerPax: 85,
     },
   });
-  const beoDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  beoDate.setHours(0, 0, 0, 0);
-  await prisma.banquetEvent.create({
-    data: {
-      referenceNo: 'BEO-SEED-001',
-      eventName: 'Corporate dinner — Demo Travel',
-      saloonId: banquetSaloon.id,
-      menuPackageId: banquetMenu.id,
-      reservationId: active.id,
-      eventDate: beoDate,
-      pax: 60,
-      advanceAmount: 500,
-      contactName: 'Demo Travel Agency',
-      status: 'DRAFT',
-    },
-  });
-
   const wh = await prisma.warehouse.create({
     data: { code: 'MAIN', name: 'Main kitchen store' },
   });
@@ -474,40 +344,51 @@ async function main() {
     },
   });
 
-  const room102 = rooms.find((r) => r.roomNumber === '102')!;
-  await prisma.reservation.create({
-    data: {
-      roomTypeId: typeStd.id,
-      roomId: room102.id,
-      guestId: guest1.id,
-      ratePlanId: rateStd.id,
-      checkInDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      checkOutDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000),
-      status: 'CONFIRMED',
-      paymentMethod: PaymentMethod.CARD,
-      totalAmount: 120 * 3,
-    },
+  await seedFoDemo(prisma, {
+    rooms,
+    typeStd,
+    typeDlx,
+    typeSuite,
+    rateStd,
+    rateMedical,
+    mealHB,
+    mealBB,
+    agency,
+    sourceWalkin,
+    sourceOta,
+    revRoom,
+    revFood,
+    deptAcc,
+    deptRest,
+    vehicleVan1,
   });
 
-  const unassigned = await prisma.reservation.create({
+  const sampleRes = await prisma.reservation.findFirst({ where: { status: 'IN_HOUSE' } });
+
+  const beoDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  beoDate.setHours(0, 0, 0, 0);
+  await prisma.banquetEvent.create({
     data: {
-      roomTypeId: typeStd.id,
-      guestId: guest1.id,
-      ratePlanId: rateStd.id,
-      checkInDate: new Date(),
-      checkOutDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-      status: 'CONFIRMED',
-      paymentMethod: PaymentMethod.CASH,
-      totalAmount: 240,
+      referenceNo: 'BEO-SEED-001',
+      eventName: 'Corporate dinner — Demo Travel',
+      saloonId: banquetSaloon.id,
+      menuPackageId: banquetMenu.id,
+      reservationId: sampleRes?.id,
+      eventDate: beoDate,
+      pax: 60,
+      advanceAmount: 500,
+      contactName: 'Demo Travel Agency',
+      status: 'DRAFT',
     },
   });
 
   console.log('Seed complete', {
     rooms: rooms.length,
-    unassigned: unassigned.id,
-    inHouse: active.id,
     agency: agency.id,
     warehouse: wh.id,
+    sampleInHouse: sampleRes?.resNo ?? sampleRes?.id,
+    guestCount: await prisma.guest.count(),
+    reservationCount: await prisma.reservation.count(),
   });
 }
 

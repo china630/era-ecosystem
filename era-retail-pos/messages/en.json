@@ -1,0 +1,146 @@
+{
+  "meta": {
+    "title": "ERA Retail POS",
+    "description": "Retail POS — ERA industry satellite"
+  },
+  "nav": {
+    "home": "Home",
+    "pos": "POS",
+    "stockCheck": "Stock check",
+    "replenishment": "Replenishment",
+    "settings": "Settings",
+    "executive": "Executive"
+  },
+  "login": {
+    "title": "ERA Retail POS",
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "title": "ERA Retail POS",
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API",
+    "openPos": "Open main screen"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "pos": {
+        "q": "Where is the POS screen?",
+        "a": "After sign-in open Main screen (/pos) for sales and stock."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "home": "Home",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "pos": {
+    "title": "ERA Retail POS",
+    "subtitle": "Preset checkout — shift, lines, payment, return, Z-close",
+    "outletPreset": "Outlet preset",
+    "paymentMethod": "Payment method",
+    "cash": "Cash",
+    "card": "Card",
+    "openShift": "Open shift",
+    "addReceipt": "Add receipt",
+    "pay": "Pay",
+    "return": "Return",
+    "xReport": "X-report",
+    "closeShift": "Close shift",
+    "productSearch": "Product search (SKU / barcode)",
+    "find": "Find",
+    "promoCode": "Promo code (SAVE10, HALF)",
+    "apply": "Apply",
+    "customerPhone": "Customer phone",
+    "loyaltyRef": "Loyalty ref",
+    "lineDescription": "Line description",
+    "unitPrice": "Unit price (AZN)",
+    "qty": "Qty",
+    "pluSku": "PLU / SKU",
+    "barcode": "Barcode",
+    "size": "Size",
+    "color": "Color",
+    "serial": "Serial",
+    "batch": "Batch",
+    "weightedItem": "Weighted item",
+    "weightKg": "Weight (kg)",
+    "rxRequired": "Prescription required",
+    "rxApprovedBy": "Prescription approved by",
+    "receiptLines": "Receipt lines",
+    "voidLine": "Void line",
+    "shift": "Shift",
+    "receipt": "Receipt",
+    "online": "Online",
+    "queued": "{count} queued",
+    "offlineMode": "Offline — payments queued locally"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

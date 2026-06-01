@@ -84,3 +84,19 @@ export const SIDEBAR_LINK_ACTIVE_CLASS =
 export const FORM_FIELD_GROUP_CLASS = "space-y-1.5";
 
 export const FORM_STACK_CLASS = "space-y-4";
+
+export const LINK_ACCENT_CLASS =
+  "text-[13px] font-medium text-[#2980B9] hover:text-[#2471A3] hover:underline";
+
+export const FORM_INPUT_CLASS =
+  "box-border h-9 min-h-9 w-full rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px] text-[#34495E] placeholder:text-[#7F8C8D] focus:outline-none focus:ring-1 focus:ring-[#2980B9] disabled:bg-[#F4F5F7]";
+
+/** Expanded sidebar width (280px) — matches Finance MainSidebar. */
+export const APP_SIDEBAR_WIDTH = "17.5rem";
+export const APP_SIDEBAR_WIDTH_CLASS = "w-[17.5rem]";
+export const APP_SIDEBAR_COLLAPSED_CLASS = "lg:w-[4.5rem]";
+export const APP_SIDEBAR_OFFSET_CLASS = "lg:pl-[17.5rem]";
+export const APP_SIDEBAR_COLLAPSED_OFFSET_CLASS = "lg:pl-[4.5rem]";
+export const APP_SIDEBAR_LEFT_CLASS = "lg:left-[17.5rem]";
+export const APP_SIDEBAR_COLLAPSED_LEFT_CLASS = "lg:left-[4.5rem]";
+export const APP_HEADER_OFFSET_CLASS = "pt-16";

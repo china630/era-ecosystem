@@ -4,16 +4,19 @@
   "private": true,
   "description": "POS with grocery, apparel, electronics, pharmacy presets",
   "scripts": {
-    "dev": "next dev -p 3300",
+    "dev": "next dev -p 3204",
     "build": "prisma generate && next build",
-    "start": "next start -p 3300",
+    "start": "next start -p 3204",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
   },
   "dependencies": {
     "@era/contracts": "file:../packages/era-contracts",
+    "@era/i18n-common": "file:../packages/i18n-common",
     "@era/satellite-kit": "file:../packages/satellite-kit",
+    "@era/storage": "file:../packages/era-storage",
+    "next-intl": "^4.12.0",
     "@prisma/client": "^6.9.0",
     "jose": "^6.2.3",
     "next": "^15.3.3",

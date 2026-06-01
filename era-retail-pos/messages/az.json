@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "title": "ERA Retail POS",
+    "description": "Pərakəndə satış — ERA sənaye satelliti"
+  },
+  "login": {
+    "title": "ERA Retail POS",
+    "subtitle": "Satış nöqtəsinə daxil olun",
+    "login": "Giriş",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO"
+  },
+  "home": {
+    "title": "ERA Retail POS",
+    "subtitle": "ERA sənaye satelliti",
+    "intro": "DESIGN.md ilə uyğun MVP əməliyyat qabığı.",
+    "healthLink": "Health API",
+    "openPos": "Əsas ekranı aç"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "Haradan daxil olmaq olar?",
+        "a": "ERA 365 Orchestrator (app.era-365.online) və ya ERA Finance launcher-indən SSO ilə bu satellitə keçin."
+      },
+      "sso": {
+        "q": "SSO necə işləyir?",
+        "a": "Platforma giriş tokeni avtomatik ötürülür — ayrıca parol yalnız lokal fallback üçündür."
+      },
+      "pos": {
+        "q": "POS ekranı haradadır?",
+        "a": "Daxil olduqdan sonra «Əsas ekran» (/pos) — satış və stok əməliyyatları."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "home": "Əsas"
+  },
+  "pos": {
+    "title": "ERA Retail POS",
+    "subtitle": "Preset kassa — növbə, sətirlər, ödəniş, qaytarma, Z-bağlama",
+    "outletPreset": "Mağaza preset",
+    "paymentMethod": "Ödəniş üsulu",
+    "cash": "Nağd",
+    "card": "Kart",
+    "openShift": "Növbə aç",
+    "addReceipt": "Çek əlavə et",
+    "pay": "Ödə",
+    "return": "Qaytarma",
+    "xReport": "X-hesabat",
+    "closeShift": "Növbə bağla",
+    "productSearch": "Məhsul axtarışı (SKU / barkod)",
+    "find": "Tap",
+    "promoCode": "Promo kod (SAVE10, HALF)",
+    "apply": "Tətbiq et",
+    "customerPhone": "Müştəri telefonu",
+    "loyaltyRef": "Loyalty ref",
+    "lineDescription": "Sətir təsviri",
+    "unitPrice": "Vahid qiymət (AZN)",
+    "qty": "Miqdar",
+    "pluSku": "PLU / SKU",
+    "barcode": "Barkod",
+    "size": "Ölçü",
+    "color": "Rəng",
+    "serial": "Seriya",
+    "batch": "Partiya",
+    "weightedItem": "Çəkili məhsul",
+    "weightKg": "Çəki (kq)",
+    "rxRequired": "Resept tələb olunur",
+    "rxApprovedBy": "Resept təsdiqi",
+    "receiptLines": "Çek sətirləri",
+    "voidLine": "Sətiri ləğv et",
+    "shift": "Növbə",
+    "receipt": "Çek",
+    "online": "Onlayn",
+    "queued": "{count} növbədə",
+    "offlineMode": "Oflayn rejim — ödənişlər lokal növbəyə düşür"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

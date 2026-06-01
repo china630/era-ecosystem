@@ -8,4 +8,4 @@
 
 **Продуктовая и техническая база:** [PRD.md](../../PRD.md) (модули §4), [TZ.md](../../TZ.md) (IAM §2, treasury §6.0, HR §7 и др.), карта кода — `.cursor/rules/erafinance-module-map.mdc`.
 
-**Пользовательские инструкции (не тест-кейсы):** [docs/manual-accountant/manual-buhgalter.md](../manual-accountant/manual-buhgalter.md).
+**Пользовательская справка:** in-app `/help` — [USER_DOCUMENTATION.md](../../../docs/USER_DOCUMENTATION.md).

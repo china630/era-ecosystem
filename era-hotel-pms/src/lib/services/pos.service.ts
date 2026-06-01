@@ -134,5 +134,24 @@ export async function postRoomCharge(
     );
   }
 
+  const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  if (organizationId && input.amount > 0 && charge.folioId) {
+    const reservationRow = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { guest: true },
+    });
+    const { runHotelFolioPlatformHooks } = await import(
+      '@/lib/integration/platform-commerce'
+    );
+    void runHotelFolioPlatformHooks({
+      folioId: charge.folioId,
+      amountAzn: input.amount,
+      sourceEntityType: 'pos_room_charge',
+      sourceEntityId: charge.id,
+      description: input.description,
+      guestPhone: reservationRow?.guest.phone,
+    }).catch((e) => console.error('Platform hooks on room charge failed', e));
+  }
+
   return { charge, reservationId, idempotent: false };
 }

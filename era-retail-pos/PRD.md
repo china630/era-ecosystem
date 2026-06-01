@@ -6,10 +6,10 @@
 | Параметр | Значение |
 |----------|----------|
 | **Продукт** | ERA Retail POS (`era-retail-pos`) |
-| **Entitlement** | `industry_retail_ecom` |
-| **Host** | `retail.era.az` (port 3300) |
+| **Entitlement** | `industry_retail` |
+| **Host** | `retail-pos.era-365.online` (port 3300) |
 | **Аудитория** | Магазины, Instagram-продажи, аптеки, электроника, одежда (SMB AZ) |
-| **Связанные системы** | `era-finance-core` (GL, склад, каталог master), `era-365-orchestrator` (SSO, events) |
+| **Связанные системы** | `era-finance-core` (GL, склад, каталог master), `era-orchestrator` (SSO, events) |
 
 **Статусы модулей (§4):** `PLANNED` · `IN_PROGRESS` · `MVP` · `DONE` · `DEFERRED`
 
@@ -90,32 +90,32 @@ RBAC: операционные роли в satellite DB; membership/OWNER — or
 
 | ID | Module | Benchmark | Status | Finance handoff |
 |----|--------|-----------|--------|-----------------|
-| M0 | Platform shell (health, SSO, layout) | Square shell | **MVP** | — |
-| M1 | Tenant & outlet setup | Lightspeed locations | **PLANNED** | — |
-| M2 | Register & shift (open/X/Z) | Lightspeed / 1C Z-отчёт | **MVP** | `SATELLITE_RETAIL_SHIFT_CLOSED` |
-| M3 | Checkout & receipt | Square checkout | **MVP** | `SATELLITE_RETAIL_SALE_COMPLETED` |
-| M4 | Payments (cash/card/split) | Lightspeed payments | **MVP** | В payload `paymentMethod` |
-| M5 | Returns & void line | Square returns | **MVP** | Negative sale event (Phase 2) |
-| M6 | Preset engine | Internal | **MVP** | `preset` в payload |
-| M6a | Preset grocery | LS Retail | **MVP** | — |
-| M6b | Preset apparel | Lightspeed variants | **MVP** | — |
-| M6c | Preset electronics | Square serial | **MVP** | — |
-| M6d | Preset pharmacy | PharmacyKeeper OTC | **MVP** | — |
-| M7 | Product lookup (read cache) | Square catalog search | **MVP** | `GET /api/products/search` + `ProductCache` |
-| M8 | Offline queue & replay | Square offline | **DEFERRED** | — |
-| M9 | Fiscal device (KKM) | Local AZ providers | **DEFERRED** | Finance kassa module |
-| M10 | Marketplace sync | Umico/Kaspi | **DEFERRED** | Stock in Finance |
-| **M11** | **Promotions at checkout (lite)** | Lightspeed promos | **MVP** | `POST /api/receipts/:id/apply-promo` до оплаты; [`platform_loyalty`](../docs/PLATFORM_ADDONS.md) later. |
-| **M12** | **Customer at POS** | Square customer on sale | **MVP** | `customerPhone`, `loyaltyRef` на `Receipt`. |
+| M0 | Platform shell (health, SSO, layout) | Square shell | **DONE** | — |
+| M1 | Tenant & outlet setup | Lightspeed locations | **DONE** | Shift preset + outlet name on open |
+| M2 | Register & shift (open/X/Z) | Lightspeed / 1C Z-отчёт | **DONE** | `SATELLITE_RETAIL_SHIFT_CLOSED` |
+| M3 | Checkout & receipt | Square checkout | **DONE** | `SATELLITE_RETAIL_SALE_COMPLETED` |
+| M4 | Payments (cash/card/split) | Lightspeed payments | **DONE** | В payload `paymentMethod` |
+| M5 | Returns & void line | Square returns | **DONE** | Negative sale event (Phase 2) |
+| M6 | Preset engine | Internal | **DONE** | `preset` в payload |
+| M6a | Preset grocery | LS Retail | **DONE** | — |
+| M6b | Preset apparel | Lightspeed variants | **DONE** | — |
+| M6c | Preset electronics | Square serial | **DONE** | — |
+| M6d | Preset pharmacy | PharmacyKeeper OTC | **DONE** | — |
+| M7 | Product lookup (read cache) | Square catalog search | **DONE** | `GET /api/products/search` + `ProductCache` |
+| M8 | Offline queue & replay | Square offline | **DONE** | IndexedDB + `POST /api/offline/sync` |
+| M9 | Fiscal device (KKM) | Local AZ providers | **DONE** | `ERA_FISCAL_PROVIDER`; receipt pay |
+| M10 | Marketplace sync | Umico/Kaspi | **DONE** | `POST /api/integrations/marketplace` |
+| **M11** | **Promotions at checkout (lite)** | Lightspeed promos | **DONE** | `POST /api/receipts/:id/apply-promo` до оплаты; [`platform_loyalty`](../docs/PLATFORM_ADDONS.md) later. |
+| **M12** | **Customer at POS** | Square customer on sale | **DONE** | `customerPhone`, `loyaltyRef` на `Receipt`. |
 
-**M2 (extend):** X-отчёт по смене без Z-close — `GET /api/shifts/:id/x-report` (**MVP**).
+**M2 (extend):** X-отчёт по смене без Z-close — `GET /api/shifts/:id/x-report` (**DONE**).
 
 | ID | Module | Benchmark | Status | Finance handoff |
 |----|--------|-----------|--------|-----------------|
-| M13 | Omnichannel OMS (BOPIS, pickup slots) | Shopify OMS | **MVP** | [`platform_delivery`](../docs/PLATFORM_ADDONS.md) |
-| M14 | Mobile stock / shelf label check | WMS lite | **PLANNED (v1.1)** | Inventory **Finance** |
-| M15 | Auto-replenishment suggest | 1C заказ | **PLANNED (v1.1)** | **Finance** purchases |
-| M16 | Supplier SRM / invoice match | — | **PLANNED (v1.1)** | **Finance** |
+| M13 | Omnichannel OMS (BOPIS, pickup slots) | Shopify OMS | **DONE** | [`platform_delivery`](../docs/PLATFORM_ADDONS.md) |
+| M14 | Mobile stock / shelf label check | WMS lite | **DONE** | Inventory **Finance** |
+| M15 | Auto-replenishment suggest | 1C заказ | **DONE** | **Finance** purchases |
+| M16 | Supplier SRM / invoice match | — | **DONE** | **Finance** |
 
 ---
 

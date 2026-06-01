@@ -1,0 +1,114 @@
+{
+  "az": {
+    "nav": {
+      "chessboard": "Otaq şahmatı",
+      "roomPlan": "Otaq planı",
+      "newBooking": "Yeni rezervasiya",
+      "inHouse": "Qalan qonaqlar",
+      "operations": "Əməliyyatlar",
+      "sectionCore": "PMS əsas",
+      "sectionReports": "Hesabatlar",
+      "actualCheckTimes": "Faktiki giriş/çıxış vaxtları",
+      "reservationList": "Rezervasiya siyahısı",
+      "groupReservations": "Qrup rezervasiyaları",
+      "endOfDayLogs": "Gün sonu jurnalları",
+      "roomChanges": "Otaq dəyişikliyi planları",
+      "dailyInhouseList": "Gündəlik in-house siyahı",
+      "guests": "Qonaq profilləri",
+      "sectionHousekeeping": "Otaq xidməti və şahmat",
+      "sectionDistribution": "Paylanma və B2B satış",
+      "sectionGuests": "Qonaq profilləri və tapşırıqlar",
+      "sectionGeneral": "Ümumi"
+    },
+    "roomPlan": {
+      "title": "Otaq planı",
+      "groupByType": "Otaq tipinə görə",
+      "groupByFloor": "Mərtəbəyə görə",
+      "groupFlat": "Bütün otaqlar",
+      "groupingLabel": "Qruplaşdırma",
+      "periodLabel": "Dövr",
+      "legendAria": "Rezervasiya status rəngləri",
+      "legendOoo": "Satışda deyil / xidmətdən kənar",
+      "print": "Çap"
+    },
+    "reservationStatus": {
+      "CONFIRMED": "Təsdiqlənib",
+      "IN_HOUSE": "Qalır",
+      "OPTION": "Opsiya",
+      "CHECKED_OUT": "Çıxıb",
+      "CANCELLED": "Ləğv",
+      "NO_SHOW": "Gəlməyib",
+      "OOO": "Satışda deyil"
+    },
+    "booking": {
+      "title": "Yeni rezervasiya",
+      "newGuest": "+ Yeni qonaq",
+      "createBooking": "Rezervasiya yarat"
+    },
+    "guestCard": {
+      "createTitle": "Yeni qonaq — qonaq kartı"
+    },
+    "guestsPage": {
+      "title": "Qonaq profilləri",
+      "subtitle": "Qonaq reyestri — kartla əlavə et və redaktə et",
+      "addGuest": "Qonaq əlavə et",
+      "viewProfile": "Kartı aç"
+    }
+  },
+  "ru": {
+    "nav": {
+      "chessboard": "Шахматка",
+      "roomPlan": "План номеров",
+      "newBooking": "Новая резервация",
+      "inHouse": "Проживающие",
+      "operations": "Операции",
+      "sectionCore": "Ядро PMS",
+      "sectionReports": "Отчёты",
+      "actualCheckTimes": "Фактические время заезда/выезда",
+      "reservationList": "Список бронирований",
+      "groupReservations": "Групповые бронирования",
+      "endOfDayLogs": "Журнал закрытия дня",
+      "roomChanges": "Планы смены номера",
+      "dailyInhouseList": "Список in-house на день",
+      "guests": "Профили гостей",
+      "sectionHousekeeping": "Хозяйственная служба",
+      "sectionDistribution": "Дистрибуция и B2B",
+      "sectionGuests": "Профили гостей",
+      "sectionGeneral": "Общее"
+    },
+    "roomPlan": {
+      "title": "План номеров",
+      "groupByType": "По типу номера",
+      "groupByFloor": "По этажу",
+      "groupFlat": "Все номера",
+      "groupingLabel": "Группировка",
+      "periodLabel": "Период",
+      "legendAria": "Цвета статусов брони",
+      "legendOoo": "Не в продаже / выведен",
+      "print": "Печать"
+    },
+    "reservationStatus": {
+      "CONFIRMED": "Подтверждено",
+      "IN_HOUSE": "Проживает",
+      "OPTION": "Опция",
+      "CHECKED_OUT": "Выселен",
+      "CANCELLED": "Отменено",
+      "NO_SHOW": "Не заезд",
+      "OOO": "Не в продаже"
+    },
+    "booking": {
+      "title": "Новая резервация",
+      "newGuest": "+ Новый гость",
+      "createBooking": "Создать бронь"
+    },
+    "guestCard": {
+      "createTitle": "Новый гость — карточка гостя"
+    },
+    "guestsPage": {
+      "title": "Профили гостей",
+      "subtitle": "Реестр гостей — добавление и правка в карточке",
+      "addGuest": "Добавить гостя",
+      "viewProfile": "Открыть карточку"
+    }
+  }
+}

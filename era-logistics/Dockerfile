@@ -28,8 +28,8 @@ COPY --from=builder /app/package.json ./package.json
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 USER nextjs
-EXPOSE 3301
-ENV PORT=3301
+EXPOSE 3205
+ENV PORT=3205
 ENV HOSTNAME=0.0.0.0
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
   CMD wget -qO- http://127.0.0.1:3301/api/health || exit 1

@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "title": "ERA Wholesale",
+    "description": "Спутник оптовых B2B операций"
+  },
+  "login": {
+    "title": "ERA Wholesale",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA Wholesale",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия",
+    "create": "Создать"
+  },
+  "orders": {
+    "title": "ERA Wholesale",
+    "subtitle": "Операционная MVP-оболочка по DESIGN.md.",
+    "shellNote": "Реестры и формы будут в модалках по DESIGN.md."
+  },
+  "pickLists": {
+    "title": "Списки комплектации",
+    "subtitle": "W2 — подтверждение сборки + кредитный лимит",
+    "orders": "Заказы",
+    "createPickList": "Создать pick list",
+    "selectOrder": "Выберите заказ…",
+    "sku": "SKU",
+    "qtyOrdered": "Заказано",
+    "creditCheck": "Проверка кредитного лимита",
+    "counterpartyId": "Counterparty ID",
+    "checkCredit": "Проверить кредит",
+    "limit": "Лимит",
+    "openPickLists": "Открытые pick lists",
+    "confirmPick": "Подтвердить сборку",
+    "createFailed": "Ошибка создания",
+    "pickCreated": "Pick list для {order}",
+    "pickConfirmFailed": "Ошибка подтверждения",
+    "picked": "Собрано {sku}",
+    "creditFailed": "Ошибка проверки кредита"
+  },
+  "adminSettings": {
+    "title": "Параметры опта",
+    "subtitle": "Admin — UI playbook",
+    "pickLists": "Pick lists",
+    "warehouse": "Склад",
+    "editWarehouse": "Изменить склад"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

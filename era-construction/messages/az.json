@@ -1,0 +1,124 @@
+{
+  "meta": {
+    "title": "ERA Construction",
+    "description": "Tikinti və layihə idarəetməsi peyk modulu"
+  },
+  "login": {
+    "title": "ERA Construction",
+    "subtitle": "Hesabınızla daxil olun",
+    "login": "Login",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "Daxil olunur…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA Construction",
+    "subtitle": "ERA sənaye peyk modulu"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identiklik, abunəlik və sənaye modulları vahid control plane (ERA 365) və Finance ERP üzərindən birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olmaq olar?",
+        "a": "ERA Finance və ya ERA 365 Orchestrator-dan bu modula keçid edin — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra Orchestrator-da «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN ilə."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "save": "Saxla",
+    "edit": "Redaktə et",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "create": "Yarat",
+    "notFound": "Tapılmadı",
+    "select": "Seçin…"
+  },
+  "projects": {
+    "title": "ERA Construction",
+    "subtitle": "C2 — layihələr, plan faktiki, tələblər",
+    "requisitions": "Tələblər",
+    "empty": "Layihə yoxdur — demo üçün POST /api/projects.",
+    "progressActs": "{count} tərəqqi aktı"
+  },
+  "projectsDetail": {
+    "project": "Layihə",
+    "requisitions": "Tələblər",
+    "projects": "Layihələr",
+    "loadFailed": "Layihə yüklənmədi",
+    "plannedBoq": "Plan (BOQ)",
+    "approvedProgress": "Təsdiqlənmiş tərəqqi",
+    "variance": "Fərq",
+    "planVsActual": "Plan vs faktiki (C-04)",
+    "item": "Maddə",
+    "plannedQty": "Plan miqdar",
+    "requisitionQty": "Tələb miqdar",
+    "materialRequisitions": "Material tələbləri",
+    "noRequisitions": "Hələ tələb yoxdur."
+  },
+  "fieldOps": {
+    "title": "Sahə əməliyyatları (W2)",
+    "subtitle": "M6 gündəlik jurnal · M7 punch list · M9 subpodratçı iddiaları",
+    "project": "Layihə",
+    "dailyLog": "Gündəlik jurnal (M6)",
+    "weather": "Hava",
+    "crewCount": "Briqada sayı",
+    "notes": "Qeydlər",
+    "reportedBy": "Hesabat verən",
+    "saveLog": "Jurnalı saxla",
+    "logSaved": "Gündəlik jurnal saxlanıldı",
+    "failed": "Uğursuz oldu",
+    "punchListLink": "Punch list və iddialar layihə detalında →"
+  },
+  "materialRequisitions": {
+    "title": "Material tələbləri",
+    "subtitle": "C2 — layihədən tələb yarat",
+    "projects": "Layihələr",
+    "newRequisition": "Yeni tələb",
+    "projectCode": "Layihə kodu",
+    "itemCode": "Maddə kodu",
+    "description": "Təsvir",
+    "qty": "Miqdar",
+    "createFailed": "Yaratma uğursuz oldu",
+    "created": "{code} üçün tələb yaradıldı"
+  },
+  "adminSettings": {
+    "title": "Obyekt parametrləri",
+    "subtitle": "UI playbook — siyahı + ModalShell",
+    "siteName": "Obyekt adı",
+    "editSite": "Obyekti redaktə et"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

@@ -2,6 +2,8 @@
 
 import { ModalFooter, ModalShell } from '@era/satellite-kit/ui';
 import { useTranslations } from 'next-intl';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
 
 export function EraModal({
@@ -22,7 +24,13 @@ export function EraModal({
   maxWidthClass?: string;
 }) {
   const tc = useTranslations('common');
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  if (!open || !mounted) return null;
+
+  return createPortal(
     <ModalShell
       open={open}
       title={title}
@@ -33,7 +41,8 @@ export function EraModal({
       closeLabel={tc('close')}
     >
       {children}
-    </ModalShell>
+    </ModalShell>,
+    document.body,
   );
 }
 

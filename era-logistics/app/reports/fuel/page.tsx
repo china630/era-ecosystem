@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -42,6 +43,8 @@ function defaultTo() {
 }
 
 export default function FuelReportPage() {
+  const t = useTranslations("fuelReport");
+  const tc = useTranslations("common");
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
   const [report, setReport] = useState<FuelReport | null>(null);
@@ -59,18 +62,18 @@ export default function FuelReportPage() {
   return (
     <>
       <PageHeader
-        title="Fuel report"
-        subtitle="Fleet rollup by vehicle (L-05)"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/trips" className={PRIMARY_BUTTON_CLASS}>
-            Trips
+            {t("trips")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
         <div className="flex flex-wrap items-end gap-4 text-[13px]">
           <label>
-            From
+            {t("from")}
             <input
               type="date"
               className="mt-1 block rounded border px-2 py-1"
@@ -79,7 +82,7 @@ export default function FuelReportPage() {
             />
           </label>
           <label>
-            To
+            {t("to")}
             <input
               type="date"
               className="mt-1 block rounded border px-2 py-1"
@@ -90,23 +93,23 @@ export default function FuelReportPage() {
         </div>
 
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : report ? (
           <>
             <p className="text-[13px]">
-              Total: <strong>{report.totals.liters.toFixed(2)} L</strong>,{" "}
+              {t("total")}: <strong>{report.totals.liters.toFixed(2)} L</strong>,{" "}
               <strong>{report.totals.cost.toFixed(2)} {report.currency}</strong> (
-              {report.totals.tripCount} trips)
+              {t("tripsCount", { count: report.totals.tripCount })})
             </p>
 
             {report.byVehicle.length > 0 && (
               <table className="w-full text-left text-[13px] border-collapse">
                 <thead>
                   <tr className="border-b">
-                    <th className="py-2 pr-4">Plate</th>
-                    <th className="py-2 pr-4">Trips</th>
-                    <th className="py-2 pr-4">Liters</th>
-                    <th className="py-2">Cost</th>
+                    <th className="py-2 pr-4">{t("plate")}</th>
+                    <th className="py-2 pr-4">{t("trips")}</th>
+                    <th className="py-2 pr-4">L</th>
+                    <th className="py-2">{report.currency}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,36 +129,36 @@ export default function FuelReportPage() {
               <table className="w-full text-left text-[13px] border-collapse">
                 <thead>
                   <tr className="border-b">
-                    <th className="py-2 pr-4">Trip</th>
-                    <th className="py-2 pr-4">Plate</th>
-                    <th className="py-2 pr-4">Liters</th>
-                    <th className="py-2">Cost</th>
+                    <th className="py-2 pr-4">{t("trip")}</th>
+                    <th className="py-2 pr-4">{t("plate")}</th>
+                    <th className="py-2 pr-4">L</th>
+                    <th className="py-2">{report.currency}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {report.trips.map((t) => (
-                    <tr key={t.id} className="border-b">
+                  {report.trips.map((trip) => (
+                    <tr key={trip.id} className="border-b">
                       <td className="py-2 pr-4">
                         <Link
-                          href={`/trips/${t.id}`}
+                          href={`/trips/${trip.id}`}
                           className="text-[#2980B9] hover:underline"
                         >
-                          {t.id.slice(0, 8)}
+                          {trip.id.slice(0, 8)}
                         </Link>
                       </td>
-                      <td className="py-2 pr-4">{t.plate}</td>
+                      <td className="py-2 pr-4">{trip.plate}</td>
                       <td className="py-2 pr-4">
-                        {t.liters != null ? t.liters.toFixed(2) : "—"}
+                        {trip.liters != null ? trip.liters.toFixed(2) : "—"}
                       </td>
                       <td className="py-2">
-                        {t.cost != null ? t.cost.toFixed(2) : "—"}
+                        {trip.cost != null ? trip.cost.toFixed(2) : "—"}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p className="text-[13px] text-[#7F8C8D]">No fuel data in range.</p>
+              <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
             )}
           </>
         ) : null}

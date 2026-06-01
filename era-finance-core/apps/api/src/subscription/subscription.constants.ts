@@ -39,7 +39,7 @@ export const ModuleEntitlement = {
   /** Customs / trade portal capture (e-customs widget) + related premium flows. */
   TRADE_PRO: "trade_pro",
   /**
-   * Extended tenant recovery (retention / replay) when exposed as a paid add-on — see STAGE_D_BILLING.md.
+   * Extended tenant recovery (retention / replay) when exposed as a paid add-on — see docs/deploy/PRE-RELEASE-CHECKLIST.md and TZ §21.
    * Today recovery admin APIs are super-admin only; this slug is reserved for constructor billing alignment.
    */
   RECOVERY_PRO: "recovery_pro",
@@ -52,14 +52,24 @@ export const ModuleEntitlement = {
   /** Annual budget plan and execution for B2G organizations. */
   GOV_BUDGET_PRO: "gov_budget_pro",
   /** Industry Solutions verticals (beta; explicit tenant toggle). */
-  INDUSTRY_RETAIL_ECOM: "industry_retail_ecom",
-  INDUSTRY_LOGISTICS_CUSTOMS: "industry_logistics_customs",
+  INDUSTRY_RETAIL: "industry_retail",
+  INDUSTRY_LOGISTICS: "industry_logistics",
   INDUSTRY_CONSTRUCTION: "industry_construction",
-  INDUSTRY_CRM_WHATSAPP: "industry_crm_whatsapp",
-  INDUSTRY_AUTO_STO: "industry_auto_sto",
+  INDUSTRY_CRM: "industry_crm",
+  INDUSTRY_AUTO_SERVICE: "industry_auto_service",
   INDUSTRY_CLINIC: "industry_clinic",
   INDUSTRY_WHOLESALE: "industry_wholesale",
   INDUSTRY_HOTEL_PMS: "industry_hotel_pms",
+  INDUSTRY_FNB_POS: "industry_fnb_pos",
+  /** @deprecated Legacy slug — dual-read in SubscriptionAccessService */
+  INDUSTRY_RETAIL_ECOM: "industry_retail_ecom",
+  /** @deprecated Legacy slug */
+  INDUSTRY_LOGISTICS_CUSTOMS: "industry_logistics_customs",
+  /** @deprecated Legacy slug */
+  INDUSTRY_CRM_WHATSAPP: "industry_crm_whatsapp",
+  /** @deprecated Legacy slug */
+  INDUSTRY_AUTO_STO: "industry_auto_sto",
+  /** @deprecated Legacy slug */
   INDUSTRY_FB_POS: "industry_fb_pos",
 } as const;
 

@@ -58,6 +58,6 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 ## Planned — v1.1
 
-- [ ] M10: Rate matrix / tariff engine (Finance)
-- [ ] M11: COD split & clearing (Finance)
-- [ ] M12: Hub cross-dock scanning
+- [x] M10: Rate matrix / tariff engine (Finance)
+- [x] M11: COD split & clearing (Finance)
+- [x] M12: Hub cross-dock scanning

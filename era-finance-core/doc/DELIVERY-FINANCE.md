@@ -13,7 +13,7 @@ Finance core — quartet product path (Track C).
 
 - [x] 13 legacy `@era/contracts` ingress types → worker
 - [x] **FB-10** `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` → COGS/WIP journal (`satellite-event-dispatch.service.ts`)
-- [ ] Finance registration → MDM full cutover (Orch ADR §5 — not quartet blocker)
+- [x] Finance registration → MDM full cutover — `ERA_MDM_REGISTRATION_CUTOVER` redirects to Orchestrator
 
 ## Quartet smoke
 

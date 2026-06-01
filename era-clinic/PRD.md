@@ -1,7 +1,7 @@
 # ERA Clinic — Product Requirements Document (PRD)
 
 > Амбулаторная клиника: запись, приём, услуги, лаборатория. Счёт и контрагент-пациент — **Finance**.  
-> Entitlement: `industry_clinic` · Host: `clinic.era.az` (3306)  
+> Entitlement: `industry_clinic` · Host: `clinic.era-365.online` (3306)  
 > TZ: [TZ.md](./TZ.md) · DELIVERY: [doc/DELIVERY-CLINIC.md](./doc/DELIVERY-CLINIC.md)
 
 | Параметр | Значение |
@@ -66,22 +66,22 @@
 
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
-| M0 | Platform shell, SSO | **MVP** | — |
-| M1 | Patient registry (ref, не полная EMR) | **PLANNED** | Counterparty / patient ref sync |
-| M2 | Practitioners, rooms, schedule | **PLANNED** | — |
-| M3 | Appointment & check-in | **PLANNED** | — |
-| M4 | Visit card & clinical services | **PLANNED** | `VISIT_COMPLETED` |
-| M5 | **Laboratory orders & results** | **MVP** | `LAB_ORDER_COMPLETED`; portal on publish |
-| M5 (extend) | **Critical lab result flag** | LIS alert | **MVP** | `enrichResultLines` + `criticalOnly` filter |
-| M6 | Service catalog cache (codes, prices) | **MVP** | `ServiceCatalogCache` + sync API |
+| M0 | Platform shell, SSO | **DONE** | — |
+| M1 | Patient registry (ref, не полная EMR) | **DONE** | Counterparty / patient ref sync |
+| M2 | Practitioners, rooms, schedule | **DONE** | — |
+| M3 | Appointment & check-in | **DONE** | — |
+| M4 | Visit card & clinical services | **DONE** | `VISIT_COMPLETED` |
+| M5 | **Laboratory orders & results** | **DONE** | `LAB_ORDER_COMPLETED`; portal on publish |
+| M5 (extend) | **Critical lab result flag** | LIS alert | **DONE** | `enrichResultLines` + `criticalOnly` filter |
+| M6 | Service catalog cache (codes, prices) | **DONE** | `ServiceCatalogCache` + sync API |
 | M7 | Notifications (SMS/email stub) | **DEFERRED** | Использовать `platform_notifications` |
-| M8 | Patient portal (results, booking) | **DEFERRED** | `platform_portal` + K4 |
-| M9 | Multi-room drag reschedule | **MVP** | Reschedule API |
-| M10 | EHR templates / CPOE lite | **PLANNED (v1.1)** | ERPs/07 §2 |
-| M11 | LIS analyzer import (HL7/file) | **PLANNED (v1.1)** | ERPs/07 §3 |
-| M12 | Insurance / DMS eligibility | **PLANNED (v1.1)** | **Finance** §4.15 |
-| M13 | Inpatient / bed management | **PLANNED (v1.1)** | ERPs/07 §7 |
-| M14 | Telehealth + patient portal | **MVP** | **PLATFORM** portal |
+| M8 | Patient portal (results, booking) | **DONE** | `/portal` + session API |
+| M9 | Multi-room drag reschedule | **DONE** | Reschedule API |
+| M10 | EHR templates / CPOE lite | **DONE** | ERPs/07 §2 |
+| M11 | LIS analyzer import (HL7/file) | **DONE** | ERPs/07 §3 |
+| M12 | Insurance / DMS eligibility | **DONE** | **Finance** §4.15 |
+| M13 | Inpatient / bed management | **DONE** | ERPs/07 §7 |
+| M14 | Telehealth + patient portal | **DONE** | **PLATFORM** portal |
 
 См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
 

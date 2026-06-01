@@ -5,9 +5,23 @@
   },
   "locale": {
     "label": "Language",
-    "en": "English",
-    "ru": "Russian",
-    "az": "Azerbaijani"
+    "en": "EN",
+    "ru": "RU",
+    "az": "AZ"
+  },
+  "notifications": {
+    "bellAria": "Notifications",
+    "title": "Notifications",
+    "empty": "No notifications",
+    "markAll": "Mark all read",
+    "close": "Close"
+  },
+  "header": {
+    "settings": "Settings",
+    "help": "Help",
+    "profileMenu": "Account menu",
+    "invoicesQuota": "Invoices",
+    "employeesQuota": "Staff"
   },
   "nav": {
     "chessboard": "Chessboard",
@@ -23,6 +37,7 @@
     "stock": "Stock",
     "users": "Users",
     "housekeeping": "Housekeeping",
+    "hkMobile": "HK mobile",
     "channel": "Channel",
     "contractPricing": "Contract pricing",
     "medical": "Medical",
@@ -30,6 +45,47 @@
     "transfers": "Transfers",
     "banquets": "Banquets",
     "operations": "Operations",
+    "inHouse": "In-house guests",
+    "guests": "Guest profiles",
+    "executive": "Executive summary",
+    "forecast": "Occupancy forecast",
+    "esas": "Əsas",
+    "sectionCore": "PMS Core",
+    "sectionReports": "Reports",
+    "actualCheckTimes": "Actual check-in / out times",
+    "sectionFrontOffice": "Front Office & Reservations",
+    "sectionHousekeeping": "Housekeeping & Room Rack",
+    "sectionNightAudit": "Night Audit",
+    "sectionFrontCash": "Front Cash",
+    "sectionDistribution": "Distribution & B2B Sales",
+    "sectionChannel": "Channel Manager",
+    "sectionContracts": "Contracts & Yield",
+    "sectionGuests": "Guest Profiles & Tasks",
+    "sectionSpa": "SPA & Scheduling",
+    "sectionTransfers": "Transfers",
+    "sectionBanquets": "Banquets & BEO",
+    "sectionMedical": "Medical & Sanatorium",
+    "sectionSetup": "Advanced Setup",
+    "sectionGeneral": "General",
+    "reservationList": "Reservation list",
+    "groupReservations": "Group reservations",
+    "foWithNotes": "FO with notes",
+    "reservationTimes": "Reservation times",
+    "roomChanges": "Room change plans",
+    "endOfDayLogs": "End of day logs",
+    "dailyInhouseList": "Daily in-house list",
+    "minibarControl": "Minibar control",
+    "maidManagement": "Maid management",
+    "closedRoomList": "Closed rooms (OOO)",
+    "lostAndFound": "Lost & found",
+    "promotionCodes": "Promotion codes",
+    "travelAgencies": "Travel agencies",
+    "childMatrix": "Child matrix",
+    "airportTransfer": "Airport transfer confirmation",
+    "spaReservationList": "SPA reservation list",
+    "serviceStaffMatch": "Service-staff match",
+    "placesAndRooms": "Places & massage rooms",
+    "distributionModule": "Distribution module",
     "logout": "Logout"
   },
   "auth": {
@@ -39,7 +95,25 @@
     "signIn": "Sign in",
     "signingIn": "Signing in…",
     "loginFailed": "Login failed",
-    "demoHint": "Demo: admin / admin123 · reception / reception123 · manager / manager123"
+    "demoHint": "Demo: admin / admin123 · reception / reception123 · manager / manager123",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
   },
   "common": {
     "loading": "Loading…",
@@ -76,7 +150,7 @@
     "time": "Time",
     "since": "since",
     "dash": "—",
-    "all": "ALL",
+    "all": "All",
     "failedStatus": "failed",
     "medicalSuffix": " (medical)",
     "quota": "quota",
@@ -85,7 +159,18 @@
     "noPermissionMedical": "No medical permission.",
     "noPermissionHousekeeping": "No housekeeping permission.",
     "noPermissionRoomPlan": "No permission to view room plan.",
-    "noPermissionReports": "Reports require Manager, Night Auditor, or Admin role."
+    "noPermissionReports": "Reports require Manager, Night Auditor, or Admin role.",
+    "home": "Home",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "search": "Search",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed",
+    "accessDenied": "You do not have access to this section."
   },
   "chessboard": {
     "subtitle": "Room chessboard — Nafta satellite",
@@ -110,7 +195,160 @@
     "eventQueued": "queued/retry",
     "roomStatusUpdated": "Room {number} → {status}",
     "failedLoadRooms": "Failed to load rooms",
-    "quickPosting": "Quick posting"
+    "quickPosting": "Quick posting",
+    "openReservationCard": "Reservation card",
+    "relocated": "Guest relocated to new room"
+  },
+  "rackPayStatus": {
+    "PAID": "Paid",
+    "PARTIAL": "Partial",
+    "UNPAID": "Unpaid",
+    "NONE": "—"
+  },
+  "executiveDashboard": {
+    "title": "Əsas — Executive cockpit",
+    "subtitle": "Daily Flash Report: occupancy, ADR, RevPAR, revenue, receivables (PMS).",
+    "hotelStatus": "Hotel status",
+    "status": {
+      "NORMAL": "Normal",
+      "RISK": "At risk",
+      "CRITICAL": "Critical"
+    },
+    "statusHint": {
+      "NORMAL": "Occupancy and receivables within targets.",
+      "RISK": "Watch occupancy deviation or overdue balances.",
+      "CRITICAL": "Immediate management attention required."
+    },
+    "section": {
+      "flash": "Daily flash",
+      "revenue": "Revenue",
+      "receivables": "Receivables (city ledger)",
+      "operations": "Today operations"
+    },
+    "occupancy": {
+      "title": "Occupancy today",
+      "fact": "Actual (in-house)",
+      "plan": "On the books",
+      "deviation": "Deviation",
+      "roomsNote": "rooms fact / plan"
+    },
+    "revenue": {
+      "today": "Today",
+      "mtd": "MTD",
+      "ytd": "YTD",
+      "breakdownToday": "Today by segment",
+      "room": "Room",
+      "fb": "F&B",
+      "spa": "Spa",
+      "medical": "Medical"
+    },
+    "receivables": {
+      "total": "Total outstanding",
+      "overdue": "Overdue (>7d)",
+      "overdueHint": "Follow up with agencies and direct bill accounts"
+    },
+    "kpi": {
+      "occupancyPct": "Occupancy %",
+      "guestsInHouse": "Guests in-house",
+      "arrivalsToday": "Arrivals today",
+      "departuresToday": "Departures today",
+      "revenueToday": "Revenue today",
+      "outstandingBalance": "Outstanding balance",
+      "adr": "ADR",
+      "revpar": "RevPAR"
+    },
+    "drill": {
+      "title": "Quick links",
+      "forecast": "Forecast 7–90 days",
+      "rack": "Room rack",
+      "inHouse": "In-house list",
+      "operations": "Night audit"
+    }
+  },
+  "forecastDashboard": {
+    "title": "Occupancy forecast",
+    "subtitle": "On-the-books occupancy by day (confirmed, in-house, option).",
+    "backExecutive": "Executive cockpit",
+    "horizonLabel": "Horizon",
+    "horizonDays": "{count} days",
+    "summary": {
+      "title": "Summary",
+      "avg": "Average occupancy",
+      "peak": "Peak occupancy",
+      "peakDate": "Peak date"
+    },
+    "chart": {
+      "title": "Occupancy by day"
+    },
+    "table": {
+      "title": "Daily detail",
+      "date": "Date",
+      "sold": "Sold / capacity",
+      "available": "Available",
+      "occupancy": "Occupancy %"
+    }
+  },
+  "roomRack": {
+    "loading": "Loading rooms…",
+    "searchRoom": "Room no.",
+    "searchPlaceholder": "Search…",
+    "occupied": "Occupied",
+    "vacant": "Vacant",
+    "hkStatus": "HK status",
+    "cleanOnly": "Clean only",
+    "dirtyOnly": "Dirty only",
+    "occupancy": "Occupancy",
+    "occupiedOnly": "Occupied only",
+    "vacantOnly": "Vacant only",
+    "floor": "Floor",
+    "allFloors": "All floors",
+    "roomTypes": "Room types",
+    "quickBook": "Quick book",
+    "filterDate": "Date",
+    "reservationFilter": "Reservation",
+    "resFilter": {
+      "all": "All",
+      "arrival": "Arrival today",
+      "in_house": "In-house",
+      "departure": "Departure today"
+    },
+    "allRoomTypes": "All types",
+    "resetFilters": "Reset filters",
+    "procedures": "{count} proc.",
+    "dragHint": "Drag guest to another room to relocate",
+    "forecastDisabled": "Forecast (coming soon)",
+    "legendAria": "Room rack color legend",
+    "legend": {
+      "vacant": "Vacant",
+      "occupied": "Occupied",
+      "arrival": "Arrival today",
+      "departure": "Departure today",
+      "cleaning": "Cleaning",
+      "notReady": "Not ready"
+    }
+  },
+  "inHousePage": {
+    "title": "In-house guests",
+    "room": "Room",
+    "guest": "Guest",
+    "folio": "Folio",
+    "openFolio": "Open folio",
+    "empty": "No in-house guests."
+  },
+  "guestsPage": {
+    "title": "Guest profiles",
+    "subtitle": "Guest registry — add and edit via modal",
+    "name": "Full name",
+    "nationality": "Nationality",
+    "phone": "Phone",
+    "passport": "Passport",
+    "foreign": "Foreign",
+    "addGuest": "Add guest",
+    "viewProfile": "View profile",
+    "editGuest": "Edit guest",
+    "empty": "No guests yet.",
+    "created": "Guest created",
+    "updated": "Guest saved"
   },
   "roomStatus": {
     "AVAILABLE": "Available",
@@ -167,6 +405,7 @@
     "shiftOpened": "Cash shift opened",
     "shiftClosed": "Cash shift closed",
     "nightAudit": "Night audit (NA-01)",
+    "viewEodLogs": "View end-of-day logs",
     "inHouse": "In-house:",
     "businessDay": "Business day:",
     "cashShiftStatus": "Cash shift:",
@@ -188,14 +427,28 @@
   },
   "booking": {
     "title": "New booking (PMS-01)",
+    "reservationCardTitle": "Reservation",
+    "tabGuests": "Guests",
+    "tabPricing": "Pricing",
+    "tabFolio": "Folio",
+    "tabNotes": "Notes",
+    "quotePending": "Select dates and rate plan for a quote.",
+    "folioTabHint": "Folio lines appear after the reservation is saved.",
+    "notesTabHint": "Internal notes — Wave B.",
     "roomType": "Room type",
     "ratePlan": "Rate plan",
     "guest": "Guest",
     "cancelNewGuest": "Cancel new guest",
     "newGuest": "+ New guest",
     "fullName": "Full name",
-    "passport": "Passport",
+    "nationality": "Nationality",
+    "nationalityAz": "Azerbaijan",
+    "nationalityForeign": "Foreign",
+    "passport": "Passport / travel document",
+    "passportOptional": "Passport (optional if FIN provided)",
     "phone": "Phone",
+    "phoneOptional": "Phone (optional)",
+    "finOptional": "FIN (AZ only, optional — MDM lookup)",
     "saveGuest": "Save guest",
     "checkIn": "Check-in",
     "checkOut": "Check-out",
@@ -205,6 +458,272 @@
     "createBooking": "Create booking",
     "guestCreated": "Guest created: {name}",
     "bookingCreated": "Booking created: {id}"
+  },
+  "reservationCard": {
+    "stay": "Stay",
+    "voucherNo": "Voucher no.",
+    "adults": "Adults",
+    "market": "Market",
+    "segment": "Segment",
+    "name": "Name",
+    "surname": "Surname",
+    "nationality": "Nationality",
+    "passport": "Passport",
+    "booker": "Booker",
+    "vipType": "VIP type",
+    "accomType": "Accom. type",
+    "recordType": "Record type",
+    "tripReason": "Trip reason",
+    "total": "Total",
+    "calcDaily": "Calculate daily prices",
+    "chargeAll": "Charge all room prices",
+    "chargeAllDone": "Posted {count} night(s)",
+    "agency": "Agency",
+    "individual": "Individual",
+    "mealPlan": "Meal plan",
+    "child11_6": "Child 11–6",
+    "child5_2": "Child 5–2",
+    "child1_0": "Child 0–1",
+    "stayDate": "Date",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "print": "Print",
+    "newReservation": "New reservation",
+    "title": "Reservation card",
+    "department": "Department",
+    "amount": "Amount",
+    "posting": "Posting",
+    "getPayment": "Get payment",
+    "folioTab": {
+      "all": "All",
+      "agency": "Agency",
+      "guest": "Guest"
+    },
+    "noteType": {
+      "EXTRA_REQ": "Extra requirements",
+      "RES_NOTE": "Reservation note",
+      "CIN_NOTE": "Check-in note",
+      "COUT_NOTE": "Check-out note",
+      "ROOM_NOTE": "Room note",
+      "CANCEL_NOTE": "Cancel note",
+      "PAYMENT_NOTE": "Payment note",
+      "PRICE_NOTE": "Price note",
+      "INVOICE_NOTE": "Invoice note",
+      "CONFIRMATION": "Confirmation",
+      "GENERAL_NOTE": "General note",
+      "ARRIVAL_POSTPONED": "Arrival postponed",
+      "DEPARTURE_EXTENDED": "Departure extended",
+      "SET_ARRIVAL_EARLY": "Set arrival early",
+      "SET_DEPARTURE_EARLY": "Set departure early"
+    },
+    "bottom": {
+      "details": "Details",
+      "notes": "Notes ({count})",
+      "creditCard": "Credit card",
+      "packages": "Packages",
+      "tasks": "Tasks ({count})",
+      "folioRouting": "Folio routing"
+    }
+  },
+  "guestCard": {
+    "title": "Guest card",
+    "createTitle": "New guest — guest card",
+    "idReader": "ID Reader / Scanner",
+    "stats": {
+      "totalVisit": "Total visit",
+      "totalNights": "Total nights",
+      "totalRevenue": "Total revenue",
+      "avgRate": "L.Avg. room rate",
+      "bonus": "Bonus",
+      "surveys": "Surveys avg.",
+      "comments": "Comments",
+      "preferences": "Preferences"
+    },
+    "greyList": "Grey list",
+    "problematic": "Problematic",
+    "tabIdentity": "Identity / Contact",
+    "tabCrm": "CRM",
+    "tabReservations": "Reservation details",
+    "tabDetails": "Details",
+    "tabLoyalty": "Loyalty",
+    "tabTimeShare": "Time share",
+    "comingSoon": "Coming soon",
+    "documents": "Documents",
+    "contacts": "Contacts",
+    "addresses": "Addresses",
+    "addDocument": "Add document",
+    "toolbar": {
+      "copy": "Copy",
+      "print": "Print"
+    },
+    "fields": {
+      "fullName": "Full name",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "nationality": "Nationality",
+      "vipType": "VIP type"
+    },
+    "grid": {
+      "type": "Type",
+      "number": "Number",
+      "contact": "Phone / email",
+      "address": "Address"
+    },
+    "consent": {
+      "gdpr": "GDPR consent",
+      "sms": "SMS consent",
+      "whatsapp": "WhatsApp consent"
+    },
+    "crm": {
+      "tasks": "Tasks",
+      "preferences": "Preferences",
+      "allergens": "Allergens",
+      "interests": "Interests / hobbies",
+      "facilityReservations": "Facility reservations",
+      "specialDates": "Special dates",
+      "healthInfo": "Health info",
+      "medicalHistory": "Medical history",
+      "procedures": "Procedures / SPA",
+      "labTests": "Lab tests",
+      "transfers": "Transfers",
+      "notes": "Special notes",
+      "comments": "Comments",
+      "guestRegistry": "Guest registry"
+    },
+    "resDetail": {
+      "reservations": "Reservations",
+      "inHouse": "In-house",
+      "groups": "Group reservations",
+      "transfers": "Transfers",
+      "folio": "Guest folio"
+    },
+    "details": {
+      "phone": "Phone",
+      "email": "Email",
+      "accountingHint": "Accounting integration — Finance boundary for invoices."
+    }
+  },
+  "inhouseDaily": {
+    "title": "Daily in-house list",
+    "inHouse": "In-house",
+    "departuresToday": "Departures today",
+    "room": "Room",
+    "guest": "Guest",
+    "type": "Type",
+    "departure": "Departure"
+  },
+  "endOfDayLogs": {
+    "title": "End of day logs",
+    "businessDay": "Business day",
+    "status": "Status",
+    "started": "Started",
+    "steps": "Steps"
+  },
+  "foWithNotes": {
+    "title": "FO with notes",
+    "guest": "Guest",
+    "arrival": "Arrival",
+    "notes": "Notes"
+  },
+  "reservationTimes": {
+    "title": "Reservation times",
+    "guest": "Guest",
+    "plannedIn": "Planned check-in",
+    "plannedOut": "Planned check-out",
+    "actualIn": "Actual check-in",
+    "actualOut": "Actual check-out"
+  },
+  "roomChanges": {
+    "title": "Room change plans",
+    "guest": "Guest",
+    "from": "From",
+    "to": "To",
+    "effective": "Effective",
+    "status": "Status"
+  },
+  "promotionCodes": {
+    "title": "Promotion codes",
+    "code": "Code",
+    "discount": "Discount %",
+    "active": "Active"
+  },
+  "travelAgencies": {
+    "title": "Travel agencies",
+    "code": "Code",
+    "name": "Name",
+    "commission": "Commission %",
+    "active": "Active"
+  },
+  "childMatrix": {
+    "title": "Child pricing matrix",
+    "ageFrom": "Age from",
+    "ageTo": "Age to",
+    "discount": "Discount %"
+  },
+  "closedRoomList": {
+    "title": "Closed rooms (OOO)",
+    "room": "Room",
+    "status": "Status",
+    "type": "Type"
+  },
+  "maidManagement": {
+    "title": "Maid management",
+    "code": "Code",
+    "name": "Name",
+    "tasks": "Tasks"
+  },
+  "placesAndRooms": {
+    "title": "Places & massage rooms"
+  },
+  "spaReservationList": {
+    "title": "SPA reservation list",
+    "openScheduler": "Open procedure scheduler"
+  },
+  "serviceStaffMatch": {
+    "title": "Service-staff match",
+    "staff": "Staff",
+    "service": "Service",
+    "appointments": "Appointments"
+  },
+  "airportTransfer": {
+    "title": "Airport transfer confirmation",
+    "allTransfers": "All transfers"
+  },
+  "minibarControl": {
+    "title": "Minibar control"
+  },
+  "lostAndFound": {
+    "title": "Lost & found",
+    "date": "Date",
+    "location": "Location",
+    "description": "Description",
+    "status": "Status"
+  },
+  "reservationList": {
+    "title": "Reservations",
+    "add": "Add reservation",
+    "notes": "Notes",
+    "filterNotes": "With notes only",
+    "room": "Room",
+    "hk": "HK",
+    "agency": "Agency",
+    "guest": "Guest",
+    "arrival": "Arrival",
+    "departure": "Departure",
+    "roomType": "Room type",
+    "adult": "Adult",
+    "children": "Children",
+    "state": "State",
+    "resId": "Res. ID"
+  },
+  "groupReservations": {
+    "title": "Group reservations",
+    "code": "Group code",
+    "name": "Group name",
+    "rooms": "Rooms",
+    "guests": "Guests",
+    "add": "Add group",
+    "balance": "Group balance"
   },
   "contractPricing": {
     "title": "Contract discounts & supplements",
@@ -243,6 +762,7 @@
   },
   "channel": {
     "title": "Channel",
+    "availabilityMatrix": "Availability matrix",
     "stopSell": "Stop sell (CH-01)",
     "stopSellHint": "Set quota to 0 for a date (all room types or one).",
     "allRoomTypes": "All room types",
@@ -345,15 +865,38 @@
     "empty": "No banquet events yet"
   },
   "roomPlan": {
-    "title": "Room Plan",
-    "subtitle": "PMS-04 — Gantt by room (WA0209)",
+    "title": "Room plan",
+    "groupByType": "By room type",
+    "groupByFloor": "By floor",
+    "availability": "Free",
+    "groupFlat": "All rooms",
+    "groupingLabel": "Grouping",
+    "periodLabel": "Period",
+    "moved": "Reservation moved to new room",
+    "openCard": "Reservation card",
     "days": "{count} days",
     "extendTo": "Extended to {date}",
     "plusOneNight": "+1 night",
     "plusTwoNights": "+2 nights",
     "folio": "Folio",
     "unassigned": "Unassigned:",
-    "failedLoad": "Failed to load"
+    "failedLoad": "Failed to load",
+    "legendAria": "Reservation status colors",
+    "legendOoo": "Out of order / out of service",
+    "legendTurnover": "Same-day turnover (notched start)",
+    "roomColumn": "Room",
+    "tooltipResNo": "Reservation no.",
+    "tooltipStatus": "Status",
+    "tooltipCheckIn": "Check-in",
+    "tooltipCheckOut": "Check-out",
+    "tooltipRoom": "Room",
+    "tooltipRoomType": "Room type",
+    "tooltipAgency": "Agency",
+    "tooltipSource": "Source",
+    "tooltipPayment": "Payment",
+    "tooltipTotal": "Total",
+    "tooltipAdults": "Adults",
+    "print": "Print"
   },
   "reports": {
     "occupancyTitle": "Occupancy report",
@@ -490,5 +1033,50 @@
     "openInFinance": "Open in ERA Finance",
     "openInventoryInFinance": "Open warehouse in ERA Finance",
     "openPurchasesInFinance": "Open purchases in ERA Finance"
+  },
+  "billing": {
+    "moduleLockedTitle": "{module} is not on your plan",
+    "moduleLockedHint": "Enable this hotel module in ERA 365 Orchestrator billing or choose a Resort/Sanatorium bundle.",
+    "upgradeOnOrchestrator": "Upgrade on Orchestrator /pricing",
+    "channelModule": "Channel Manager"
+  },
+  "login": {
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
   }
 }

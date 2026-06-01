@@ -17,6 +17,10 @@ export async function GET() {
       return jsonError('Unauthorized', 401);
     }
 
+    const profile = await prisma.hotelProfile.findFirst({
+      select: { name: true, organizationId: true },
+    });
+
     return jsonOk({
       id: user.id,
       login: user.login,
@@ -25,6 +29,8 @@ export async function GET() {
       department: user.department,
       permissions: userPermissions(user),
       rolePermissions: permissionsForRole(user.role.code),
+      organizationName: profile?.name ?? null,
+      organizationId: profile?.organizationId ?? null,
     });
   } catch (err) {
     return handleRouteError(err);

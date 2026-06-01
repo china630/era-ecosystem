@@ -33,7 +33,8 @@ export function ModalShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/40 p-4 pb-6 pt-24"
+      style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
       onClick={onClose}
       role="presentation"
     >

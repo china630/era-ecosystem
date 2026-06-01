@@ -5,7 +5,7 @@ const sso = `
 ## SSO paths (platform entry - SP9/P2)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: \`http://localhost:3100\` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: \`http://localhost:3000\` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite \`/sso/callback\` session.
 3. Smoke: \`node scripts/sso-launch-smoke.mjs\` (\`ERA_SSO_SHARED_SECRET\` aligned).
 
@@ -17,12 +17,12 @@ const sso = `
 
 const dirs = [
   "era-hotel-pms",
-  "era-fb-pos",
+  "era-fnb-pos",
   "era-retail-pos",
   "era-logistics",
   "era-construction",
-  "era-crm-field",
-  "era-auto-sto",
+  "era-crm",
+  "era-auto-service",
   "era-clinic",
   "era-wholesale",
 ];

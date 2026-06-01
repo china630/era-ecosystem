@@ -20,6 +20,7 @@ import {
 import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+import HotelModuleUpgradeBanner from '@/components/HotelModuleUpgradeBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -58,6 +59,13 @@ export default function ChannelPage() {
   const [stopSellModalOpen, setStopSellModalOpen] = useState(false);
   const [logErrorModalOpen, setLogErrorModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [availFrom, setAvailFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [availTo, setAvailTo] = useState(
+    new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10),
+  );
+  const [availability, setAvailability] = useState<
+    Array<{ roomTypeCode: string; days: Array<{ date: string; available: number; stopSell: boolean }> }>
+  >([]);
 
   const load = useCallback(async () => {
     const [eRes, sRes, rtRes] = await Promise.all([
@@ -68,7 +76,11 @@ export default function ChannelPage() {
     if (eRes.ok) setErrors(await eRes.json());
     if (sRes.ok) setStopSells(await sRes.json());
     if (rtRes.ok) setRoomTypes(await rtRes.json());
-  }, []);
+    const aRes = await fetch(
+      `/api/channel/availability?from=${availFrom}&to=${availTo}`,
+    );
+    if (aRes.ok) setAvailability(await aRes.json());
+  }, [availFrom, availTo]);
 
   useEffect(() => {
     setErrorText(t('defaultSyncError'));
@@ -147,7 +159,45 @@ export default function ChannelPage() {
   return (
     <AppShell maxWidthClass="max-w-3xl">
       <PageHeader title={t('title')} />
+      <HotelModuleUpgradeBanner moduleKey="hotel_distribution" moduleLabelKey="distributionModule" />
       <StatusMessage>{msg}</StatusMessage>
+
+      <PageSection className="mb-6">
+        <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('availabilityMatrix')}</h2>
+        <div className="mb-2 flex gap-2">
+          <input type="date" className="rounded border px-2 py-1 text-[13px]" value={availFrom} onChange={(e) => setAvailFrom(e.target.value)} />
+          <input type="date" className="rounded border px-2 py-1 text-[13px]" value={availTo} onChange={(e) => setAvailTo(e.target.value)} />
+        </div>
+        <div className="overflow-x-auto text-[12px]">
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t('roomType')}</th>
+                {availability[0]?.days.map((d) => (
+                  <th key={d.date} className={DATA_TABLE_TH_LEFT_CLASS}>
+                    {d.date.slice(5)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {availability.map((row) => (
+                <tr key={row.roomTypeCode} className={DATA_TABLE_TR_CLASS}>
+                  <td className={DATA_TABLE_TD_CLASS}>{row.roomTypeCode}</td>
+                  {row.days.map((d) => (
+                    <td
+                      key={d.date}
+                      className={`${DATA_TABLE_TD_CLASS} ${d.stopSell ? 'bg-rose-100' : ''}`}
+                    >
+                      {d.available}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </PageSection>
 
       <PageSection className="mb-6">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">

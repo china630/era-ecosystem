@@ -4,10 +4,10 @@
 
 
 
-## SSO paths (platform entry � v1.0)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: `http://localhost:3000` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite `/sso/callback` session.
 3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
 

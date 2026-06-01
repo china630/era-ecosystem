@@ -3,11 +3,21 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  ColorLegend,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  ModalFooter,
+  ModalShell,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
 } from "@era/satellite-kit/ui";
+
+const resultsFormId = "lab-results-form";
 
 type LabOrder = {
   id: string;
@@ -23,12 +33,7 @@ type LabOrder = {
 
 type ResultLine = { code: string; value: string; unit?: string };
 
-const STEPS = [
-  { key: "COLLECTED", label: "Collect sample" },
-  { key: "RESULT_READY", label: "Enter results" },
-  { key: "PUBLISHED", label: "Publish" },
-  { key: "COMPLETED", label: "Complete & bill" },
-] as const;
+const STEP_KEYS = ["collect", "results", "publish", "complete"] as const;
 
 function stepIndex(status: string): number {
   if (status === "ORDERED") return 0;
@@ -39,6 +44,8 @@ function stepIndex(status: string): number {
 }
 
 export default function LabOrderDetailPage() {
+  const t = useTranslations("labOrdersDetail");
+  const tc = useTranslations("common");
   const params = useParams();
   const id = params.id as string;
   const [order, setOrder] = useState<LabOrder | null>(null);
@@ -48,6 +55,7 @@ export default function LabOrderDetailPage() {
   const [resultLines, setResultLines] = useState<ResultLine[]>([
     { code: "WBC", value: "", unit: "10^9/L" },
   ]);
+  const [resultsModalOpen, setResultsModalOpen] = useState(false);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -82,12 +90,20 @@ export default function LabOrderDetailPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setError(data.error ?? "Action failed");
+      setError(data.error ?? t("actionFailed"));
       setBusy(false);
       return;
     }
     setOrder(data);
     setBusy(false);
+    if (path === "results") setResultsModalOpen(false);
+  }
+
+  async function saveResults(e: React.FormEvent) {
+    e.preventDefault();
+    await runAction("results", {
+      lines: resultLines.filter((l) => l.code && l.value),
+    });
   }
 
   const currentStep = order ? stepIndex(order.status) : 0;
@@ -95,19 +111,19 @@ export default function LabOrderDetailPage() {
   return (
     <>
       <PageHeader
-        title="Lab order workflow"
-        subtitle={`K2 — order ${id.slice(0, 8)}…`}
+        title={t("title")}
+        subtitle={t("subtitle", { id: id.slice(0, 8) })}
         actions={
           <Link href="/lab-orders" className={PRIMARY_BUTTON_CLASS}>
-            Back to list
+            {t("backToList")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-6`}>
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : !order ? (
-          <p className="text-[13px] text-red-600">Order not found.</p>
+          <p className="text-[13px] text-red-600">{t("notFound")}</p>
         ) : (
           <>
             <div className="text-[13px] space-y-1">
@@ -115,15 +131,22 @@ export default function LabOrderDetailPage() {
                 <strong>{order.testCode}</strong> — {order.patientRef.fullName}
               </div>
               <div className="text-[#7F8C8D]">
-                Status: {order.status} · {order.amountNet} AZN
-                {order.visitId ? ` · visit ${order.visitId.slice(0, 8)}…` : ""}
+                {t("status")}: {order.status} · {order.amountNet} AZN
+                {order.visitId ? ` · ${t("visit")} ${order.visitId.slice(0, 8)}…` : ""}
               </div>
             </div>
 
+            <ColorLegend
+              items={[
+                { id: "done", label: t("steps.complete"), swatchClassName: "bg-green-50" },
+                { id: "current", label: t("steps.collect"), swatchClassName: "bg-blue-50" },
+                { id: "pending", label: t("steps.publish"), swatchClassName: "bg-slate-100" },
+              ]}
+            />
             <ol className="flex flex-wrap gap-2">
-              {STEPS.map((step, idx) => (
+              {STEP_KEYS.map((stepKey, idx) => (
                 <li
-                  key={step.key}
+                  key={stepKey}
                   className={`rounded border px-3 py-2 text-[12px] ${
                     idx < currentStep
                       ? "border-green-500 bg-green-50 text-green-800"
@@ -132,7 +155,7 @@ export default function LabOrderDetailPage() {
                         : "border-slate-200 text-[#7F8C8D]"
                   }`}
                 >
-                  {idx + 1}. {step.label}
+                  {idx + 1}. {t(`steps.${stepKey}`)}
                 </li>
               ))}
             </ol>
@@ -146,62 +169,20 @@ export default function LabOrderDetailPage() {
                 disabled={busy}
                 onClick={() => runAction("collect")}
               >
-                Mark collected (K-08)
+                {t("markCollected")}
               </button>
             )}
 
             {(order.status === "COLLECTED" ||
               order.status === "IN_PROGRESS") && (
-              <div className="space-y-3">
-                <p className="text-[13px] font-medium">Result lines (K-09)</p>
-                {resultLines.map((line, idx) => (
-                  <div key={idx} className="flex flex-wrap gap-2 text-[13px]">
-                    <input
-                      className="rounded border px-2 py-1"
-                      placeholder="Code"
-                      value={line.code}
-                      onChange={(e) => {
-                        const next = [...resultLines];
-                        next[idx] = { ...next[idx], code: e.target.value };
-                        setResultLines(next);
-                      }}
-                    />
-                    <input
-                      className="rounded border px-2 py-1"
-                      placeholder="Value"
-                      value={line.value}
-                      onChange={(e) => {
-                        const next = [...resultLines];
-                        next[idx] = { ...next[idx], value: e.target.value };
-                        setResultLines(next);
-                      }}
-                    />
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  className="text-[13px] text-[#2980B9]"
-                  onClick={() =>
-                    setResultLines([...resultLines, { code: "", value: "" }])
-                  }
-                >
-                  + Add line
-                </button>
-                <div>
-                  <button
-                    type="button"
-                    className={PRIMARY_BUTTON_CLASS}
-                    disabled={busy}
-                    onClick={() =>
-                      runAction("results", {
-                        lines: resultLines.filter((l) => l.code && l.value),
-                      })
-                    }
-                  >
-                    Save results
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={busy}
+                onClick={() => setResultsModalOpen(true)}
+              >
+                {t("saveResults")}
+              </button>
             )}
 
             {order.status === "RESULT_READY" && (
@@ -217,7 +198,7 @@ export default function LabOrderDetailPage() {
                   disabled={busy}
                   onClick={() => runAction("publish")}
                 >
-                  Publish to doctor (K-10)
+                  {t("publishToDoctor")}
                 </button>
               </div>
             )}
@@ -229,21 +210,75 @@ export default function LabOrderDetailPage() {
                 disabled={busy}
                 onClick={() => runAction("complete")}
               >
-                Complete & dispatch billing event (K-11)
+                {t("completeBilling")}
               </button>
             )}
 
             {order.status === "COMPLETED" && (
               <p className="text-[13px] text-green-700">
-                Completed
+                {t("completed")}
                 {order.publishedAt
-                  ? ` · published ${new Date(order.publishedAt).toLocaleString()}`
+                  ? ` · ${t("published")} ${new Date(order.publishedAt).toLocaleString()}`
                   : ""}
               </p>
             )}
           </>
         )}
       </div>
+
+      <ModalShell
+        open={resultsModalOpen}
+        title={t("resultLines")}
+        onClose={() => setResultsModalOpen(false)}
+        closeLabel={tc("close")}
+        footer={
+          <ModalFooter
+            formId={resultsFormId}
+            onCancel={() => setResultsModalOpen(false)}
+            busy={busy}
+            submitLabel={t("saveResults")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <form id={resultsFormId} onSubmit={saveResults} className={FORM_STACK_CLASS}>
+          {resultLines.map((line, idx) => (
+            <div key={idx} className="grid grid-cols-2 gap-2">
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("code")}</label>
+                <input
+                  className={MODAL_INPUT_CLASS}
+                  value={line.code}
+                  onChange={(e) => {
+                    const next = [...resultLines];
+                    next[idx] = { ...next[idx], code: e.target.value };
+                    setResultLines(next);
+                  }}
+                />
+              </div>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("value")}</label>
+                <input
+                  className={MODAL_INPUT_CLASS}
+                  value={line.value}
+                  onChange={(e) => {
+                    const next = [...resultLines];
+                    next[idx] = { ...next[idx], value: e.target.value };
+                    setResultLines(next);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="text-[13px] text-[#2980B9]"
+            onClick={() => setResultLines([...resultLines, { code: "", value: "" }])}
+          >
+            {t("addLine")}
+          </button>
+        </form>
+      </ModalShell>
     </>
   );
 }

@@ -1,0 +1,156 @@
+{
+  "auth": {
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "meta": {
+    "title": "ERA Construction",
+    "description": "Retail POS — ERA industry satellite"
+  },
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "fieldOps": "Field ops",
+    "materialRequisitions": "Material requisitions",
+    "settings": "Settings"
+  },
+  "login": {
+    "title": "ERA Construction",
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Loading…",
+    "title": "ERA Construction",
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "create": "Create",
+    "notFound": "Not found",
+    "select": "Select…",
+    "home": "Home",
+    "cancel": "Cancel",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "projects": {
+    "title": "ERA Construction",
+    "subtitle": "C2 — projects, plan/actual, requisitions",
+    "requisitions": "Requisitions",
+    "empty": "No projects — POST /api/projects for demo.",
+    "progressActs": "{count} progress certificate(s)"
+  },
+  "projectsDetail": {
+    "project": "Project",
+    "requisitions": "Requisitions",
+    "projects": "Projects",
+    "loadFailed": "Could not load project",
+    "plannedBoq": "Plan (BOQ)",
+    "approvedProgress": "Approved progress",
+    "variance": "Variance",
+    "planVsActual": "Plan vs actual (C-04)",
+    "item": "Line item",
+    "plannedQty": "Planned qty",
+    "requisitionQty": "Requisition qty",
+    "materialRequisitions": "Material requisitions",
+    "noRequisitions": "No requisitions yet."
+  },
+  "fieldOps": {
+    "title": "Field operations (W2)",
+    "subtitle": "M6 diary · M7 punch list · M9 subcontractor claims",
+    "project": "Project",
+    "dailyLog": "Diary (M6)",
+    "weather": "Weather",
+    "crewCount": "Crew headcount",
+    "notes": "Notes",
+    "reportedBy": "Reported by",
+    "saveLog": "Save diary",
+    "logSaved": "Diary saved",
+    "failed": "Error",
+    "punchListLink": "Punch list and claims in project details →"
+  },
+  "materialRequisitions": {
+    "title": "Material requisitions",
+    "subtitle": "C2 — create requisition for project",
+    "projects": "Projects",
+    "newRequisition": "New requisition",
+    "projectCode": "Code project",
+    "itemCode": "Code line",
+    "description": "Description",
+    "qty": "Qty",
+    "createFailed": "Error creation",
+    "created": "Requisition for {code}"
+  },
+  "adminSettings": {
+    "title": "Site settings",
+    "subtitle": "UI playbook — list + ModalShell",
+    "siteName": "Site name",
+    "editSite": "Edit site"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

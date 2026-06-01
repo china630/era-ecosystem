@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { Locale } from "@era/i18n-common";
 import { buildPricingStorefrontView } from "../../lib/pricing/build-pricing-storefront-view";
 import { computePricingTotals } from "../../lib/pricing/compute-pricing-totals";
 import { getPricingStorefrontUiCopy } from "../../lib/i18n/pricing-storefront-copy";
@@ -26,7 +27,10 @@ export function PricingPageView({
   initialLocale: "ru" | "az";
   snapshot: PublicPricingResponse;
 }) {
-  const [locale, setLocale] = useState(initialLocale);
+  const [locale, setLocale] = useState<"az" | "ru">(initialLocale);
+  const onLocaleChange = (next: Locale) => {
+    if (next === "az" || next === "ru") setLocale(next);
+  };
   const [selectedTierId, setSelectedTierId] =
     useState<"TIER_0" | "TIER_1" | "TIER_2" | "TIER_3">("TIER_0");
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
@@ -69,7 +73,7 @@ export function PricingPageView({
             ERA Finance
           </Link>
           <div className="flex items-center gap-2">
-            <LandingLanguageToggle locale={locale} onLocaleChange={setLocale} />
+            <LandingLanguageToggle locale={locale} onLocaleChange={onLocaleChange} />
             <Link href="/login" className={PRICING_LOGIN_BTN_CLASS}>
               {view.hero.ctaLogin}
             </Link>
@@ -80,8 +84,8 @@ export function PricingPageView({
       {view.unavailable ? (
         <p className="mx-auto max-w-6xl px-4 py-6 text-sm text-amber-800">
           {locale === "ru"
-            ? "Каталог цен временно недоступен. Показаны только тексты интерфейса."
-            : "Qiymət kataloqu müvəqqəti əlçatan deyil. Yalnız interfeys mətnləri göstərilir."}
+            ? "������� ��� �������� ����������. �������� ������ ������ ����������."
+            : "Qiym?t kataloqu muv?qq?ti ?lcatan deyil. Yaln?z interfeys m?tnl?ri gost?rilir."}
         </p>
       ) : null}
 

@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: "20"
       - name: Install and build orchestrator web
-        working-directory: era-365-orchestrator/apps/web
+        working-directory: era-orchestrator/apps/web
         run: |
           npm install
           npm run build
@@ -52,13 +52,13 @@ jobs:
         with:
           node-version: "20"
       - name: Install orchestrator API
-        working-directory: era-365-orchestrator
+        working-directory: era-orchestrator
         run: npm ci
       - name: Generate Prisma client
-        working-directory: era-365-orchestrator/packages/database
+        working-directory: era-orchestrator/packages/database
         run: npx prisma generate
       - name: Build orchestrator API
-        working-directory: era-365-orchestrator/apps/api
+        working-directory: era-orchestrator/apps/api
         run: npm run build
 
   build-finance-api:
@@ -94,7 +94,7 @@ jobs:
           npx prisma generate
           npm run build
       - name: Build fb-pos
-        working-directory: era-fb-pos
+        working-directory: era-fnb-pos
         run: |
           npm ci
           npx prisma generate

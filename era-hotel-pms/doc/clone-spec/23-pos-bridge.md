@@ -1,6 +1,6 @@
-# POS bridge (era-hotel-pms ↔ era-fb-pos)
+# POS bridge (era-hotel-pms ↔ era-fnb-pos)
 
-Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS, and POS Z-shift live in `era-fb-pos` (Stage 16+).
+Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS, and POS Z-shift live in `era-fnb-pos` (Stage 16+).
 
 Архитектурные решения Nafta и матрица «PMS vs ERP» — [13-nafta-validation-checklist.md](13-nafta-validation-checklist.md) §H.
 
@@ -11,7 +11,7 @@ Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS,
 | Термин | Значение |
 |--------|----------|
 | **POS** | Point of Sale — касса точки продаж (ресторан, бар, SPA-касса, терминал). **Не** отдельный модуль «магазин» в нашей архитектуре. |
-| **era-fb-pos** | Сателлит **F&B** = **Food & Beverage** POS: зал, меню, чеки, KDS, смена официанта. Ресторан в отеле и **вне** отеля. |
+| **era-fnb-pos** | Сателлит **F&B** = **Food & Beverage** POS: зал, меню, чеки, KDS, смена официанта. Ресторан в отеле и **вне** отеля. |
 | **Quick posting** | WA0135 в PMS — быстрое начисление на folio (FOOD, SPA, …) **без** карты зала. |
 | **STOCK** | Склад/закупки — **ERA Finance / ERP**, не операционный учёт в `era-hotel-pms`. |
 
@@ -33,20 +33,20 @@ Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS,
 └─────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────┐
-│  era-fb-pos (будущее)                   │
+│  era-fnb-pos (будущее)                   │
 │  чеки, зал, KKM на месте                │
 └──────────────────┬──────────────────────┘
          «на номер» ──► room-charge ──► PMS folio
          walk-in / вне отеля ──► только ERP (+ KKM)
 ```
 
-**Вывод:** `era-fb-pos` как независимый сателлит **не заменяет** связь с PMS для продаж **на номер** — иначе баланс folio и night audit не сходятся. В финядро события уходят **в дополнение**, не вместо PMS.
+**Вывод:** `era-fnb-pos` как независимый сателлит **не заменяет** связь с PMS для продаж **на номер** — иначе баланс folio и night audit не сходятся. В финядро события уходят **в дополнение**, не вместо PMS.
 
 ---
 
 ## Матрица интеграций
 
-| Сценарий | hotel-pms | era-fb-pos | ERA Finance |
+| Сценарий | hotel-pms | era-fnb-pos | ERA Finance |
 |----------|-----------|------------|-------------|
 | Ресторан в отеле, **на номер** | **Обязательно** (`room-charge`) | Источник чека | Да |
 | Ресторан в отеле, оплата на месте | Опционально | Да | Да (KKM) |
@@ -66,7 +66,7 @@ Phase 2 Stage 14 — **lite bridge** in the satellite PMS. Full floor plan, KDS,
 2. **Medical** — процедуры, alerts; начисления вне пакета номера — MED-04.
 3. **POS calendar** в PMS — слоты (кабинет), не касса.
 
-Отдельный сателлит **era-spa-pos** для санатория **не планируем** без нового scope: медицина уже в hotel-pms; услуги по гипотезе **включены в оплату номера** (см. чеклист D3). Отдельный SPA-сателлит — только если появится стойка SPA с KKM и меню как в ресторане; тогда сначала рассмотреть **outlet SPA в era-fb-pos**.
+Отдельный сателлит **era-spa-pos** для санатория **не планируем** без нового scope: медицина уже в hotel-pms; услуги по гипотезе **включены в оплату номера** (см. чеклист D3). Отдельный SPA-сателлит — только если появится стойка SPA с KKM и меню как в ресторане; тогда сначала рассмотреть **outlet SPA в era-fnb-pos**.
 
 ---
 
@@ -117,8 +117,8 @@ Optional link to PMS `reservationId` or free-text `guestName`.
 | Артефакт | Путь |
 |----------|------|
 | OpenAPI 3.0 (implemented + planned) | [fb-pos-pms-bridge.yaml](../openapi/fb-pos-pms-bridge.yaml) |
-| Wireflow room charge | [09-wireflow-ticket-to-folio.md](../../era-fb-pos/doc/09-wireflow-ticket-to-folio.md) |
-| Wireflow cash/card (без PMS) | [10-wireflow-cash-fiscal.md](../../era-fb-pos/doc/10-wireflow-cash-fiscal.md) |
+| Wireflow room charge | [09-wireflow-ticket-to-folio.md](../../era-fnb-pos/doc/09-wireflow-ticket-to-folio.md) |
+| Wireflow cash/card (без PMS) | [10-wireflow-cash-fiscal.md](../../era-fnb-pos/doc/10-wireflow-cash-fiscal.md) |
 | PMS bridge tasks | [DELIVERY.md](../DELIVERY.md) Stage 17 |
 | Umbrella monorepo | [MONOREPO.md](../MONOREPO.md) |
 

@@ -2,7 +2,7 @@
 
 Sites, BOQ, progress acts
 
-- Host: `construction.era.az` (port 3302)
+- Host: `construction.era-365.online` (port 3302)
 - Entitlement: `industry_construction`
 - Docs: [PRD](./PRD.md) · [DELIVERY](./doc/DELIVERY-CONSTRUCTION.md)
 

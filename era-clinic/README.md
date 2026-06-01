@@ -2,7 +2,7 @@
 
 Appointments, visits, services
 
-- Host: `clinic.era.az` (port 3306)
+- Host: `clinic.era-365.online` (port 3306)
 - Entitlement: `industry_clinic`
 - Docs: [PRD](./PRD.md) · [DELIVERY](./doc/DELIVERY-CLINIC.md)
 

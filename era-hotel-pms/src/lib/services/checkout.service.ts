@@ -57,7 +57,7 @@ export async function checkoutReservation(id: string): Promise<CheckoutResult> {
 
   const dispatch = await dispatchReservationCompleted(completed);
   const { notifyFbPosReservationLifecycle } = await import(
-    '@/lib/integration/fb-pos-webhook'
+    '@/lib/integration/fnb-pos-webhook'
   );
   void notifyFbPosReservationLifecycle({
     eventType: 'reservation_checked_out',

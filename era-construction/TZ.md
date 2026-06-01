@@ -18,7 +18,7 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CONSTR
 | Param | Value |
 |-------|-------|
 | Port | 3302 |
-| Host | `construction.era.az` |
+| Host | `construction.era-365.online` |
 | Entitlement | `industry_construction` |
 
 ## Data model (C1 target)

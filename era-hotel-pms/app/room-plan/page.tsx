@@ -3,13 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import {
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
-} from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
-import RoomPlanGrid from '@/components/RoomPlanGrid';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+import { FilterMenuButton, PageHeader, SECONDARY_BUTTON_CLASS, showApiError, showSuccess } from '@era/satellite-kit/ui';
+import { EraModal } from '@/components/EraModal';
+import ReservationCardModal from '@/components/ReservationCardModal';
+import RoomPlanGrid, { type RoomPlanGroup, type RoomPlanRoom } from '@/components/RoomPlanGrid';
+import { StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -21,22 +19,34 @@ interface ReservationBar {
   status: string;
   guest: { fullName: string };
   roomType: { code: string };
-  totalAmount?: number;
 }
 
 interface RoomPlanData {
   from: string;
   days: number;
-  rooms: {
-    id: string;
-    roomNumber: string;
-    floor: number;
-    status: string;
-    roomType: { code: string };
-  }[];
+  availabilityByDay: Record<string, number>;
+  groups: {
+    byType: Array<{
+      key: string;
+      label: string;
+      roomCount: number;
+      rooms: RoomPlanRoom[];
+      availabilityByDay: Record<string, number>;
+    }>;
+    byFloor: Array<{
+      key: string;
+      label: string;
+      roomCount: number;
+      rooms: RoomPlanRoom[];
+      availabilityByDay: Record<string, number>;
+    }>;
+  };
+  rooms: RoomPlanRoom[];
   reservations: ReservationBar[];
   unassigned: ReservationBar[];
 }
+
+type GroupMode = 'flat' | 'type' | 'floor';
 
 export default function RoomPlanPage() {
   const { can } = useAuth();
@@ -44,8 +54,10 @@ export default function RoomPlanPage() {
   const tc = useTranslations('common');
   const tRes = useTranslations('reservationStatus');
   const [days, setDays] = useState(14);
+  const [groupMode, setGroupMode] = useState<GroupMode>('type');
   const [data, setData] = useState<RoomPlanData | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [cardReservationId, setCardReservationId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -62,6 +74,31 @@ export default function RoomPlanPage() {
 
   const selected = data?.reservations.find((r) => r.id === selectedId)
     ?? data?.unassigned.find((r) => r.id === selectedId);
+
+  async function moveReservation(reservationId: string, toRoomId: string) {
+    if (!can(PERMISSIONS.RESERVATIONS_WRITE)) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/relocate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId: toRoomId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showApiError(json, tc('updateFailed'));
+        return;
+      }
+      showSuccess(t('moved'));
+      setSelectedId(null);
+      await load();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : tc('updateError'));
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function extendNights(n: number) {
     if (!selected) return;
@@ -88,53 +125,90 @@ export default function RoomPlanPage() {
   }
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return (
-      <AppShell maxWidthClass="max-w-[1400px]">
-        <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionRoomPlan')}</p>
-      </AppShell>
-    );
+    return <p className="text-[13px] text-[#7F8C8D]">{tc('noPermissionRoomPlan')}</p>;
   }
 
+  const groups: RoomPlanGroup[] | undefined =
+    groupMode === 'type'
+      ? (data?.groups.byType as RoomPlanGroup[])
+      : groupMode === 'floor'
+        ? (data?.groups.byFloor as RoomPlanGroup[])
+        : undefined;
+
   return (
-    <AppShell maxWidthClass="max-w-[1400px]">
+    <div className="min-w-0 w-full">
       <PageHeader
         title={t('title')}
-        subtitle={t('subtitle')}
         actions={
-          <>
-            {[14, 30].map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDays(d)}
-                className={days === d ? PRIMARY_BUTTON_CLASS : SECONDARY_BUTTON_CLASS}
-              >
-                {t('days', { count: d })}
-              </button>
-            ))}
-          </>
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterMenuButton
+              label={t('groupingLabel')}
+              value={groupMode}
+              options={[
+                { value: 'type', label: t('groupByType') },
+                { value: 'floor', label: t('groupByFloor') },
+                { value: 'flat', label: t('groupFlat') },
+              ]}
+              onChange={(v) => setGroupMode(v as GroupMode)}
+            />
+            <FilterMenuButton
+              label={t('periodLabel')}
+              value={String(days)}
+              options={[
+                { value: '14', label: t('days', { count: 14 }) },
+                { value: '21', label: t('days', { count: 21 }) },
+                { value: '30', label: t('days', { count: 30 }) },
+              ]}
+              onChange={(v) => setDays(Number(v))}
+            />
+            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => window.print()}>
+              {t('print')}
+            </button>
+          </div>
         }
       />
 
       <StatusMessage>{msg}</StatusMessage>
 
       {selected && can(PERMISSIONS.RESERVATIONS_WRITE) && (
-        <PageSection className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-[#34495E]">
-          <span>
-            <strong>{selected.guest.fullName}</strong> — {tRes(selected.status as 'CONFIRMED')} ·{' '}
-            {selected.checkInDate.slice(0, 10)} → {selected.checkOutDate.slice(0, 10)}
-          </span>
-          <button type="button" disabled={busy} onClick={() => extendNights(1)} className={SECONDARY_BUTTON_CLASS}>
-            {t('plusOneNight')}
-          </button>
-          <button type="button" disabled={busy} onClick={() => extendNights(2)} className={SECONDARY_BUTTON_CLASS}>
-            {t('plusTwoNights')}
-          </button>
-          <Link href={`/folio/${selected.id}`} className="text-[#2980B9] hover:underline">
-            {t('folio')}
-          </Link>
-        </PageSection>
+        <EraModal
+          open={!!selectedId}
+          title={selected.guest.fullName}
+          subtitle={`${tRes(selected.status as 'CONFIRMED')} · ${selected.checkInDate.slice(0, 10)} → ${selected.checkOutDate.slice(0, 10)}`}
+          onClose={() => setSelectedId(null)}
+        >
+          <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#34495E]">
+            <button type="button" disabled={busy} onClick={() => extendNights(1)} className={SECONDARY_BUTTON_CLASS}>
+              {t('plusOneNight')}
+            </button>
+            <button type="button" disabled={busy} onClick={() => extendNights(2)} className={SECONDARY_BUTTON_CLASS}>
+              {t('plusTwoNights')}
+            </button>
+            <button
+              type="button"
+              className="text-[#2980B9] hover:underline"
+              onClick={() => {
+                setCardReservationId(selected.id);
+                setSelectedId(null);
+              }}
+            >
+              {t('openCard')}
+            </button>
+            <Link href={`/folio/${selected.id}`} className="text-[#2980B9] hover:underline">
+              {t('folio')}
+            </Link>
+          </div>
+        </EraModal>
       )}
+
+      <ReservationCardModal
+        open={Boolean(cardReservationId)}
+        reservationId={cardReservationId}
+        onClose={() => {
+          setCardReservationId(null);
+          void load();
+        }}
+      />
 
       {data?.unassigned && data.unassigned.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-2 text-[13px]">
@@ -162,10 +236,43 @@ export default function RoomPlanPage() {
           days={data.days}
           rooms={data.rooms as never}
           reservations={data.reservations as never}
+          availabilityByDay={data.availabilityByDay}
+          groups={groups}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={(id) => {
+            setSelectedId(id);
+            if (id) setCardReservationId(id);
+          }}
+          onMoveReservation={
+            can(PERMISSIONS.RESERVATIONS_WRITE)
+              ? (reservationId, toRoomId) => moveReservation(reservationId, toRoomId)
+              : undefined
+          }
+          onResizeEnd={
+            can(PERMISSIONS.RESERVATIONS_WRITE)
+              ? async (reservationId, newCheckOutIso) => {
+                  setBusy(true);
+                  setMsg(null);
+                  try {
+                    const res = await fetch(`/api/reservations/${reservationId}/schedule`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ checkOutDate: newCheckOutIso }),
+                    });
+                    const json = await res.json();
+                    if (!res.ok) throw new Error(json.error ?? tc('updateFailed'));
+                    setMsg(t('extendTo', { date: newCheckOutIso.slice(0, 10) }));
+                    await load();
+                  } catch (e) {
+                    setMsg(e instanceof Error ? e.message : tc('updateError'));
+                  } finally {
+                    setBusy(false);
+                  }
+                }
+              : undefined
+          }
         />
       )}
-    </AppShell>
+    </div>
   );
 }

@@ -18,7 +18,7 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-RETAIL
 | Param | Value |
 |-------|-------|
 | Port | 3300 |
-| Host | `retail.era.az` |
+| Host | `retail-pos.era-365.online` |
 | Docker | [Dockerfile](./Dockerfile), umbrella [docker-compose.yml](../docker-compose.yml) service `retail-pos` |
 
 ## Data model (R1 target)

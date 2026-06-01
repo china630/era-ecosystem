@@ -1,16 +1,17 @@
-/**
- * Два UI-языка ERA: только явный `ru`, всё остальное (включая пустой код) — `az`.
- * Согласовано с `client-i18n.ts` / переключателем языка.
- */
+import { intlLocaleTag, uiLang, type Locale } from "@era/i18n-common";
+
+export type { Locale };
+
+/** @deprecated Use `uiLang` — kept for gradual migration. */
 export function uiLangRuAz(lang: string | undefined | null): "ru" | "az" {
-  const s = String(lang ?? "")
-    .split("-")[0]
-    ?.trim()
-    .toLowerCase();
-  return s === "ru" ? "ru" : "az";
+  const l = uiLang(lang);
+  return l === "ru" ? "ru" : "az";
 }
 
-/** Локаль для `Intl` / `toLocaleString` по текущему `i18n.language`. */
+export { uiLang, intlLocaleTag };
+
+/** @deprecated Use `intlLocaleTag`. */
 export function intlLocaleRuAz(lang: string | undefined | null): "ru-RU" | "az-AZ" {
-  return uiLangRuAz(lang) === "ru" ? "ru-RU" : "az-AZ";
+  const tag = intlLocaleTag(lang);
+  return tag.startsWith("ru") ? "ru-RU" : "az-AZ";
 }

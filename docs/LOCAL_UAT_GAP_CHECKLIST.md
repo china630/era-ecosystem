@@ -3,9 +3,9 @@
 Living checklist for **«потыкать систему на локалке»**: what exists today vs product target.  
 Not a delivery % score — use [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) for API levels.
 
-**Last updated:** 2026-05-26
+**Last updated:** 2026-05-30
 
-**Last verified (P01):** 2026-05-26 — matrices refreshed via `delivery-readiness.mjs` + `readiness-coverage.mjs`.
+**Last verified:** 2026-05-30 — unified **AuthLoginCard** login UI; Orchestrator **public hub** (`/pricing`, `/help`, `/terms`, `/register`, `/partner`); multi-credential satellite login; `@era/storage` add-on `platform_storage`.
 
 **Related:** [SETUP_AND_RUN.md](./SETUP_AND_RUN.md) · [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · [SATELLITE_DOCUMENTATION.md](./SATELLITE_DOCUMENTATION.md) · [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) (SP8 hybrid RBAC)
 
@@ -26,7 +26,7 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 
 ## 1. Platform entry & modules (launcher)
 
-**Product model (SP9):** одна **главная точка входа** — **Orchestrator web** (`:3100` / `app.era.az`). Всё остальное — **модули подписки**, открываемые с домашней страницы Orch (не отдельные «лаунчеры» на сателлитах).
+**Product model (SP9):** одна **главная точка входа** — **Orchestrator web** (`:3000` / `app.era-365.online`). Всё остальное — **модули подписки**, открываемые с домашней страницы Orch (не отдельные «лаунчеры» на сателлитах).
 
 | Layer | What it is | Launcher host? |
 |-------|------------|----------------|
@@ -47,11 +47,11 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 
 | Piece | Path |
 |-------|------|
-| Orch home + industry | [`era-365-orchestrator/apps/web/app/page.tsx`](../era-365-orchestrator/apps/web/app/page.tsx), [`industry/[vertical]`](../era-365-orchestrator/apps/web/app/industry/[vertical]/page.tsx) |
+| Orch home + industry | [`era-orchestrator/apps/web/app/page.tsx`](../era-orchestrator/apps/web/app/page.tsx), [`industry/[vertical]`](../era-orchestrator/apps/web/app/industry/[vertical]/page.tsx) |
 | Shared module config | [`packages/satellite-kit/src/platform/industry-modules.ts`](../packages/satellite-kit/src/platform/industry-modules.ts) |
 | Finance (no launcher) | `/industry/*` → redirect to Orch; sidebar Industry removed (SP9-2) |
 
-**Local UAT:** Orch `http://localhost:3100` → login → module tile → **Open** (SSO for verticals, new tab for Finance). [QUARTET_UAT.md](./QUARTET_UAT.md) · `node scripts/sso-launch-smoke.mjs`.
+**Local UAT:** Orch `http://localhost:3000` → login → module tile → **Open** (SSO for verticals, new tab for Finance). Public pages: `/pricing`, `/help`, `/terms`, `/register`. [QUARTET_UAT.md](./QUARTET_UAT.md) · `node scripts/sso-launch-smoke.mjs`.
 
 ---
 
@@ -61,34 +61,37 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 
 | Capability | Fin | Orch | Satellites |
 |------------|-----|------|------------|
-| Login | **Done** | **Done** (API) | **N/A** (use Finance/Orch) |
+| Login | **Done** (links to Orch hub) | **Done** (web + API) | **N/A** (use Finance/Orch) |
 | Refresh token | **Done** | **Done** | **N/A** |
-| Register user | **Redirect** → Orch | **Done** | **N/A** |
+| Register user | **Redirect** → Orch | **Done** (`?ref=` referral capture) | **N/A** |
 | Register organization (VÖEN) | **Redirect** → Orch | **Done** (MDM + membership) | **N/A** |
 | Memberships / switch-org UI | **Done** (CP proxy) | **Done** (API) | **N/A** |
 | Join org / team / transfer ownership | **Done** (proxy) | **Done** (API) | **N/A** |
 
-Finance: `/login` (ERP session); `/register*`, `/settings/team` → redirect to Orch.  
-Orch: `POST /auth/login`, `GET /memberships`, `POST /auth/switch-organization` — smoke: [UAT-SMOKE-RBAC.md](../era-365-orchestrator/doc/UAT-SMOKE-RBAC.md).
+Finance: `/login` (ERP session, Orch links); `/register*`, `/pricing` → redirect to Orch (`NEXT_PUBLIC_ORCH_WEB_URL=:3000`).  
+Orch: `POST /auth/login`, public `/pricing`, `/help`, `/terms`, `/partner` — smoke: [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md).  
+**Bootstrap:** `npm run bootstrap:local` seeds super-admins in **both** `era_orchestrator` and `era_finance`.
 
 ### 2.2 Satellite auth (per app)
 
 | App | Local login | SSO `POST /api/auth/sso/exchange` | Local register | Ops roles (local DB) | Platform bar (Finance links) |
 |-----|-------------|-----------------------------------|----------------|----------------------|------------------------------|
-| **Hot** | **Done** | **Done** | **N/A** | **Done** (PMS roles) | **Done** |
-| **FB** | **Done** | **Done** | **N/A** | **Done** (WAITER/MANAGER) | **Done** |
-| **Ret** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **Log** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **Con** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **CRM** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **Auto** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **Cli** | **Done** | **Done** | **N/A** | **Done** | **Done** |
-| **Who** | **Done** | **Done** | **N/A** | **Done** | **Done** |
+| **Hot** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** (PMS roles) | **Done** |
+| **FB** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** (WAITER/MANAGER) | **Done** |
+| **Ret** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **Log** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **Con** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **CRM** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **Auto** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **Cli** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
+| **Who** | **Done** (AuthLoginCard) | **Done** | **N/A** | **Done** | **Done** |
 
 **Gaps**
 
 - [x] End-to-end **Orch → SSO → satellite** documented per app in each `UAT-SMOKE.md` (P2)
 - [x] FB/Hotel: launcher SSO smoke in [QUARTET_UAT.md](./QUARTET_UAT.md) when `ERA_SSO_SHARED_SECRET` aligned
+- [x] Unified login UI (`AuthLoginCard`) + login/email/phone on all satellites (2026-05-30)
+- [x] Locale toggle on `/login` without 401 (`POST /api/locale` public)
 - [x] No satellite exposes `/register` — only Orch + Finance redirect (P7)
 
 **Local UAT (ops):** `waiter`/`admin` from app `UAT-SMOKE.md`.  
@@ -105,10 +108,10 @@ Orch: `POST /auth/login`, `GET /memberships`, `POST /auth/switch-organization` �
 | Org security / disputes UI | **Redirect** → Orch | **Done** | **Done** (org lookup form) |
 | MDM companies/counterparties UI | **Redirect** → Orch | **Done** (internal API) | **Done** (companies table) |
 | Early-access admin | **Redirect** → Orch | **Done** | **Done** |
-| NAS / i18n / reference data hub | **Done** (Finance GL) | **Partial** | **N/A** |
-| `isSuperAdmin` gate | **Redirect** → Orch | **Done** | **Done** |
+| NAS / i18n / reference data hub | **Done** (`/admin/data` on Finance web) | **Partial** | **N/A** |
+| `isSuperAdmin` gate | **Redirect** → Orch (platform UI) | **Done** | **Done** |
 
-**Local UAT:** `http://localhost:3100/super-admin` with `isSuperAdmin` user. Finance `/super-admin` redirects to Orch ([ADR](./adr/orch-admin-shell.md)).
+**Local UAT:** `npm run bootstrap:local` from repo root → login `http://localhost:3000` with platform super-admin (see `tmp/era-local-credentials.md`). Orch `/super-admin` for billing/MDM; Finance `/admin/data` for NAS/i18n/customs. Finance `/super-admin/*` redirects to Orch ([ADR](./adr/orch-admin-shell.md)).
 
 ---
 
@@ -117,8 +120,8 @@ Orch: `POST /auth/login`, `GET /memberships`, `POST /auth/switch-organization` �
 | Capability | Fin | Orch | Satellites |
 |------------|-----|------|------------|
 | `Holding` entity + members | **Done** | **Missing** | **N/A** |
-| Attach org to holding | **Done** | **Missing** | **N/A** |
-| Consolidated P&L / dashboard | **Done** (`/holding`, reporting) | **Missing** | **N/A** |
+| Attach org to holding | **Done** | **N/A (Finance-only)** | **N/A** |
+| Consolidated P&L / dashboard | **Done** (`/holding`, reporting) | **N/A (Finance-only)** | **N/A** |
 | Multi-org switcher (user memberships) | **Done** | **Done** (API) | **N/A** |
 
 **Architecture note:** Holding is **financial consolidation**, not control-plane tenant identity. Orch JWT carries **one** `organizationId`; holding does not need to be duplicated on FB/Hotel.
@@ -137,43 +140,58 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 |-----|------------------------------|---------------------------|---------------------|------------------------|
 | **Fin** | **Done** | **Done** | **Done** | **Done** (reference) |
 | **Orch web** | **Partial** | **Partial** (early-access modal) | **Done** (`APP_SHELL_CLASS`, header nav) | **Partial** |
-| **Hot** | **Done** | **Done** (`EraModal`) | **Done** | **Partial** (strong PMS, not ERP clone) |
-| **FB** | **Partial** | **Partial** | **Partial** (nav only) | **Partial** (floor/KDS ops) |
-| **Ret** | **Done** | **Partial** | **Partial** | **Partial** |
-| **Log** | **Done** | **Partial** | **Partial** | **Partial** |
-| **Con** | **Done** | **Partial** | **Partial** | **Partial** |
-| **CRM** | **Done** | **Partial** | **Partial** | **Partial** |
-| **Auto** | **Done** | **Partial** | **Partial** | **Partial** |
-| **Cli** | **Done** | **Partial** | **Partial** | **Partial** (executive page) |
-| **Who** | **Done** | **Partial** | **Partial** | **Partial** |
+| **Hot** | **Done** | **Done** (`EraModal`) | **Done** (`EraAppRouteShell`) | **Partial** (strong PMS, not ERP clone) |
+| **FB** | **Partial** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** (floor/KDS ops) |
+| **Ret** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Log** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Con** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **CRM** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Auto** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
+| **Cli** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** (executive page) |
+| **Who** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
 
 **Gaps (ecosystem-wide UI program)**
 
 - [x] UI playbook doc: [`UI_PLAYBOOK_SATELLITES.md`](./UI_PLAYBOOK_SATELLITES.md) (P6)
 - [ ] Audit each app admin routes: replace full-page forms with modals where Finance does (P06 in progress)
 - [x] Orch web: `APP_SHELL_CLASS` + header nav + early-access modal
+- [x] Finance + satellites: **`EraAppRouteShell`** — profile → org → bell → locale → tier bar ([`DESIGN.md`](../DESIGN.md) § App shell)
+- [ ] Finance sidebar: long AZ/RU labels — vertical scroll only (no horizontal scroll)
+- [ ] Hotel: org **label** in header after profile; hidden for local admin without org
+- [ ] Tier bar: quota colors (&lt;70% / 70–90% / ≥90%) when org has subscription
 
-**Not a blocker** for API/smoke UAT; **is a blocker** for «ощущение одного продукта».
+**Local UAT (shell):** Finance `/companies` + org switcher in header; Hotel chessboard with fixed header; new satellite scaffold must not put logout in sidebar footer.
+
+### 5.1 UI i18n (ecosystem)
+
+| Capability | Fin | Orch | Hot | FB | Industry ×7 |
+|------------|-----|------|-----|-----|-------------|
+| Locales az / ru / en | **Done** | **Done** | **Done** | **Done** | **Done** (shell + feature pages) |
+| Cookie `era_i18n_lang` | **Done** | **Done** | **Done** | **Done** | **Done** |
+| FAQ + legal footer | **Done** (`/#faq`) | **Done** (`/help`) | **Partial** | **Done** | **Done** (`/help`) |
+| Full ERP UI EN copy | **Partial** (fallback → az) | — | — | — | — |
+
+**Local UAT:** locale smoke in [SMOKE_ALL_SERVICES.md](./SMOKE_ALL_SERVICES.md). Finance: `npm run i18n:audit`.
 
 ---
 
 ## 6. Global registry — MDM (companies & persons)
 
-**Canonical host:** Orchestrator `era_mdm` — [`era-mdm-phase1.md`](../era-365-orchestrator/doc/adr/era-mdm-phase1.md)
+**Canonical host:** Orchestrator `era_mdm` — [`era-mdm-phase1.md`](../era-orchestrator/doc/adr/era-mdm-phase1.md)
 
 | Capability | Orch API | Fin UI/API | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |------------|----------|------------|-----|-----|-----|-----|-----|-----|------|-----|-----|
 | `GlobalLegalEntity` (VÖEN) | **Done** | **Done** (super-admin + counterparty adapter) | **Partial** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Partial** | **Missing** |
 | `GlobalNaturalPerson` | **Done** (API) | **Partial** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Partial** | **Missing** |
 | `globalPersonId` on domain records | — | — | **Done** (guest + MDM lookup) | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Done** | **Missing** |
-| Org register via `mdm/organizations/register` | **Done** | **Partial** (Finance still has local register path) | — | — | — | — | — | — | — | — | — |
+| Org register via `mdm/organizations/register` | **Done** | **Done** (`ERA_MDM_REGISTRATION_CUTOVER` → Orch only) | — | — | — | — | — | — | — | — | — |
 | Satellite calls Orch MDM for lookup | **N/A** | **Done** (Finance) | **Done** (person lookup API) | **Missing** | **Missing** | **Missing** | **Partial** | **Partial** | **Partial** | **Partial** | **Partial** |
 
 **Clinic:** `PatientRef.globalPersonId`, sanatorium episodes.
 
 **Hotel:** `Guest.globalPersonId` in Prisma + FIN lookup on new guest (P5).
 
-**CRM / Finance boundary:** lead convert → Finance counterparty; no local MDM duplicate ([`era-crm-field/doc/clone-spec/01-finance-boundary.md`](../era-crm-field/doc/clone-spec/01-finance-boundary.md)).
+**CRM / Finance boundary:** lead convert → Finance counterparty; no local MDM duplicate ([`era-crm/doc/clone-spec/01-finance-boundary.md`](../era-crm/doc/clone-spec/01-finance-boundary.md)).
 
 **Gaps**
 

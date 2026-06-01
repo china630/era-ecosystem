@@ -70,12 +70,16 @@ Platform client: `@era/satellite-kit` via `src/integration/control-plane-platfor
 
 ## Planned — v1.1
 
-- [ ] M14: Mobile stock / label check (WMS lite)
-- [ ] M15: Auto-replenishment / PO suggest (Finance)
-- [ ] M16: Supplier contracts & invoice match (Finance)
+- [x] M14: Mobile stock / label check (WMS lite)
+- [x] M15: Auto-replenishment / PO suggest (Finance)
+- [x] M16: Supplier contracts & invoice match (Finance)
+
+## Pre-GA
+
+- [x] M8 offline UI — IndexedDB queue + `/pos` banner (`NEXT_PUBLIC_OFFLINE_QUEUE_ENABLED`)
 
 ## Planned — v2.0
 
-- [ ] M8: Offline queue
-- [ ] M9: KKM integration
-- [ ] M10: Umico/Kaspi sync
+- [x] M8: Offline queue
+- [x] M9: KKM integration
+- [x] M10: Umico/Kaspi sync

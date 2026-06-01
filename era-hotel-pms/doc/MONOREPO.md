@@ -1,6 +1,8 @@
 # ERA Umbrella Monorepo — план объединения
 
-> **Цель:** один репозиторий для `era-hotel-pms`, `era-fb-pos`, общих контрактов и документации — без потери ссылок и истории спеки.  
+> **Superseded:** реализовано как flat monorepo **`era-ecosystem`** (корень репозитория). Канон: [`docs/LOCAL_FOLDER_DEV.md`](../../docs/LOCAL_FOLDER_DEV.md), [`docs/SETUP_AND_RUN.md`](../../docs/SETUP_AND_RUN.md). Ниже — архив плана до объединения.
+
+> **Цель:** один репозиторий для `era-hotel-pms`, `era-fnb-pos`, общих контрактов и документации — без потери ссылок и истории спеки.  
 > **Статус:** планирование (текущий код живёт в `era-hotel-pms` как single-repo).
 
 См. полный реестр файлов: [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md).
@@ -22,7 +24,7 @@ era-hospitality/                    # umbrella (рабочее имя; зафи�
 │   │   ├── src/
 │   │   ├── package.json            # name: @era/hotel-pms
 │   │   └── README.md               # → doc/ ниже
-│   └── fb-pos/                     # ← будущий era-fb-pos
+│   └── fb-pos/                     # ← будущий era-fnb-pos
 │       ├── app/
 │       ├── prisma/
 │       ├── package.json            # name: @era/fb-pos
@@ -79,7 +81,7 @@ era-hospitality/                    # umbrella (рабочее имя; зафи�
 | Путь | Назначение |
 |------|------------|
 | `doc/clone-spec/*.md` | ТЗ hotel-pms |
-| `doc/fb-pos/*.md` | ТЗ era-fb-pos |
+| `doc/fb-pos/*.md` | ТЗ era-fnb-pos |
 | `doc/clone-spec/23-pos-bridge.md` | Серверный контракт room-charge |
 | `doc/openapi/fb-pos-pms-bridge.yaml` | OpenAPI моста |
 | `doc/fb-pos/09-wireflow-*.md` | Сквозные сценарии |
@@ -219,7 +221,7 @@ Profile `all` — интеграционные тесты room-charge E2E.
 
 ---
 
-## 8. Отдельный repo `era-fb-pos` — когда не нужен
+## 8. Отдельный repo `era-fnb-pos` — когда не нужен
 
 При umbrella **отдельный репозиторий fb-pos не создаём**. Вместо [08-extraction](fb-pos/08-extraction-to-satellite-repo.md) §1 — папка `apps/fb-pos`.
 

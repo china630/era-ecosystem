@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -16,6 +17,8 @@ type Project = {
 };
 
 export default function ProjectsPage() {
+  const t = useTranslations("projects");
+  const tc = useTranslations("common");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,21 +35,19 @@ export default function ProjectsPage() {
   return (
     <>
       <PageHeader
-        title="ERA Construction"
-        subtitle="C2 — projects, plan vs actual, requisitions"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/material-requisitions" className={PRIMARY_BUTTON_CLASS}>
-            Requisitions
+            {t("requisitions")}
           </Link>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6`}>
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : projects.length === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">
-            No projects — POST /api/projects to create demo data.
-          </p>
+          <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
         ) : (
           <ul className="space-y-2">
             {projects.map((p) => (
@@ -57,7 +58,7 @@ export default function ProjectsPage() {
                 >
                   <span className="font-semibold">{p.code}</span> — {p.name}
                   <span className="ml-2 text-[#7F8C8D]">
-                    {p.progressActs.length} progress act(s)
+                    {t("progressActs", { count: p.progressActs.length })}
                   </span>
                 </Link>
               </li>

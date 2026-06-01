@@ -1,0 +1,151 @@
+{
+  "meta": {
+    "title": "ERA Clinic",
+    "description": "Klinika və tibbi əməliyyatlar peyk modulu"
+  },
+  "login": {
+    "title": "ERA Clinic",
+    "subtitle": "Hesabınızla daxil olun",
+    "login": "Login",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "Daxil olunur…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA Clinic",
+    "subtitle": "ERA sənaye peyk modulu"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identiklik, abunəlik və sənaye modulları vahid control plane (ERA 365) və Finance ERP üzərindən birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olmaq olar?",
+        "a": "ERA Finance və ya ERA 365 Orchestrator-dan bu modula keçid edin — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra Orchestrator-da «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN ilə."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "save": "Saxla",
+    "edit": "Redaktə et",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "complete": "Tamamla",
+    "all": "Hamısı"
+  },
+  "appointments": {
+    "title": "ERA Clinic",
+    "subtitle": "Əməliyyat MVP qabığı — UI DESIGN.md-ə uyğundur.",
+    "shellNote": "Reyestr ekranları və əlavə/redaktə axınları DESIGN.md-ə uyğun modallarla tətbiq olunacaq."
+  },
+  "labOrders": {
+    "title": "Laboratoriya sifarişləri",
+    "subtitle": "K2 — siyahı, status filtri, tamamlama",
+    "criticalOnly": "Yalnız kritik nəticələr (M5)",
+    "statusFilter": "Status filtri",
+    "empty": "Hələ laboratoriya sifarişi yoxdur."
+  },
+  "labOrdersDetail": {
+    "title": "Laboratoriya sifarişi iş axını",
+    "subtitle": "K2 — sifariş {id}…",
+    "backToList": "Siyahıya qayıt",
+    "notFound": "Sifariş tapılmadı.",
+    "status": "Status",
+    "visit": "vizit",
+    "steps": {
+      "collect": "Nümunə götür",
+      "results": "Nəticələri daxil et",
+      "publish": "Dərc et",
+      "complete": "Tamamla və hesabla"
+    },
+    "markCollected": "Götürüldü kimi qeyd et (K-08)",
+    "resultLines": "Nəticə sətirləri (K-09)",
+    "code": "Kod",
+    "value": "Dəyər",
+    "addLine": "+ Sətir əlavə et",
+    "saveResults": "Nəticələri saxla",
+    "publishToDoctor": "Həkimə dərc et (K-10)",
+    "completeBilling": "Tamamla və hesabla hadisəsini göndər (K-11)",
+    "completed": "Tamamlandı",
+    "published": "dərc edildi",
+    "actionFailed": "Əməliyyat uğursuz oldu"
+  },
+  "scheduling": {
+    "title": "Gün cədvəli",
+    "subtitle": "K-05 — praktikant gün şəbəkəsi (slots API stub)",
+    "date": "Tarix",
+    "practitionerCode": "Praktikant kodu",
+    "optional": "istəyə bağlı",
+    "loadingSlots": "Slotlar yüklənir…",
+    "loadFailed": "Cədvəl yüklənmədi.",
+    "allPractitioners": "bütün praktikantlar",
+    "rescheduleStub": "Yenidən planlaşdırma stub — blokları köçürmək üçün appointments API (K3 MVP)."
+  },
+  "executive": {
+    "title": "İcraçı xülasə",
+    "subtitle": "K-14 — gündəlik klinika KPI (satellitdə GL yoxdur)",
+    "accessDenied": "Giriş yalnız BUSINESS_OWNER üçün (Finance OWNER/DIRECTOR SSO ilə).",
+    "loadFailed": "Xülasə yüklənmədi.",
+    "visitsToday": "Bu gün vizitlər",
+    "labRevenueToday": "Bu gün lab gəliri",
+    "openLabOrders": "Açıq lab sifarişləri"
+  },
+  "sanatorium": {
+    "title": "Sanatoriya daxili",
+    "subtitle": "K5 — otel qalışları üçün klinik epizodlar (US-06, US-07)",
+    "saved": "Saxlanıldı",
+    "failed": "Uğursuz oldu",
+    "inHouseList": "Daxili siyahı",
+    "guest": "Qonaq",
+    "stay": "Qalış",
+    "noEpisodes": "Açıq epizod yoxdur — PMS-də tibbi paket qonağını qeydiyyata alın.",
+    "complaints": "Şikayətlər",
+    "newComplaint": "Yeni şikayət",
+    "add": "Əlavə et",
+    "diagnoses": "Diaqnozlar",
+    "description": "Təsvir",
+    "addDiagnosis": "Diaqnoz əlavə et",
+    "labOrders": "Lab sifarişləri",
+    "workflow": "iş axını",
+    "orderLab": "Lab sifariş et"
+  },
+  "adminSettings": {
+    "title": "Klinika parametrləri",
+    "subtitle": "Admin — UI playbook (siyahı + ModalShell)",
+    "clinicName": "Klinika adı",
+    "editClinic": "Klinikanı redaktə et"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

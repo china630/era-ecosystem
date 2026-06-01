@@ -1,18 +1,11 @@
-export const locales = ['en', 'ru', 'az'] as const;
+export {
+  locales,
+  defaultLocale,
+  ERA_I18N_COOKIE,
+  isLocale,
+  resolveLocale,
+  type Locale,
+} from "@era/i18n-common";
 
-export type Locale = (typeof locales)[number];
-
-export const defaultLocale: Locale = 'en';
-
-export const LOCALE_COOKIE = 'NEXT_LOCALE';
-
-export function isLocale(value: string): value is Locale {
-  return (locales as readonly string[]).includes(value);
-}
-
-export function resolveLocale(cookieValue: string | undefined): Locale {
-  if (cookieValue && isLocale(cookieValue)) return cookieValue;
-  const env = process.env.DEFAULT_LOCALE;
-  if (env && isLocale(env)) return env;
-  return defaultLocale;
-}
+/** @deprecated Read `ERA_I18N_COOKIE`; kept for one release. */
+export const LOCALE_COOKIE = "era_i18n_lang";

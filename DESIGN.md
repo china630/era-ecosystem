@@ -1,6 +1,6 @@
 # DESIGN.md — ERA Ecosystem (Global UI/UX)
 
-**Final single source of truth** for all ERA product UI (umbrella `DESIGN.md`; apps under `era-finance-core`, `era-365-orchestrator`, and industry satellites). Satellite doc standard: [`docs/SATELLITE_DOCUMENTATION.md`](docs/SATELLITE_DOCUMENTATION.md).
+**Final single source of truth** for all ERA product UI (umbrella `DESIGN.md`; apps under `era-finance-core`, `era-orchestrator`, and industry satellites). Satellite doc standard: [`docs/SATELLITE_DOCUMENTATION.md`](docs/SATELLITE_DOCUMENTATION.md).
 
 Code tokens: `apps/web/lib/design-system.ts`, `apps/web/lib/form-styles.ts`, `apps/web/lib/form-classes.ts`. New and refactored screens **must** match this document; divergent legacy UI is **debt to remove**, not an alternate standard.
 
@@ -146,10 +146,70 @@ Row actions live in the **last** column (e.g. **`w-[120px]`**). **Lucide** icons
 
 ---
 
+## CRUD pattern — modal-only (industry satellites)
+
+- **Index screens:** table or card grid + toolbar; **Add** opens a modal (never a dedicated create route).
+- **Edit / delete:** row action → modal confirmation or edit modal.
+- **Master data:** `EraDataGrid` in `@era/satellite-kit/ui` — modal CRUD hooks; inline edit only for trivial fields.
+- **Exceptions (operational canvases):** POS floor, KDS, Room Plan Gantt, Room Rack — full-viewport layouts; not full-page CRUD forms.
+- **Reservation Card (hotel):** large modal ~90% viewport (`max-w-[min(90vw,1400px)]`) with tabs (Guests · Pricing · Folio · Notes) — ElectraWeb parity; see `ReservationCardModal`.
+
+---
+
+## Ops shell — full viewport (`EraAppShellLayout`)
+
+Authenticated satellite routes use **`EraAppRouteShell`** / **`EraAppShellLayout`** from `@era/satellite-kit/ui` (Finance reference: `era-finance-core/apps/web/app/app-shell.tsx`):
+
+- **Fixed header** (`EraAppHeader`) + **left sidebar** (`EraAppSidebar`, width **`17.5rem`** / `w-[17.5rem]`; collapsed rail **`4.5rem`** on `lg+`).
+- Sidebar: **`overflow-x-hidden`**, sub-item labels **`truncate`** — vertical scroll only.
+- **No `max-w-*`** on authenticated content — only `/login`, `/help`, marketing may constrain width.
+- **Do not** put locale toggle, user name, or logout in the **sidebar footer** — they belong in the global header.
+- **Do not** put create/add actions (`+`, «New …», modal openers) in the **sidebar** — primary **Add** belongs on the index screen toolbar (`PageHeader.actions` / grid toolbar). Header **left** quick links (Finance-style) may open frequent flows; sidebar links are **navigation only** (`href` routes).
+
+### Header — right cluster (left → right)
+
+| Order | Element | Finance | Satellites |
+|-------|---------|---------|------------|
+| 1 | Locale | `LanguageSwitcher` / `SatelliteHeaderLocale` | **`SatelliteHeaderLocale`** — buttons **AZ**, **RU**, **EN** |
+| 2 | Organization | **`OrgSwitcher`** dropdown (holdings, switch org) | **Static label** (`HeaderOrganization variant="label"`) from platform session |
+| 3 | Notifications | `InAppNotificationBell` | `SatelliteNotificationBell` |
+| 4 | Profile menu | Avatar icon → Profile, Settings, Logout | `HeaderProfileMenu` (avatar only in bar) |
+| 5 | Tier usage | `HeaderTierUsageBar` (quota % bars) | `useControlPlaneSubscription` or app snapshot; hidden without org |
+
+Kit exports: `EraAppHeader`, `EraAppSidebar`, `EraAppShellLayout`, `EraAppRouteShell`, `HeaderProfileMenu`, `HeaderOrganization`, `HeaderTierUsageBar`, `useControlPlaneSubscription`. Details: [`UI_PLAYBOOK_SATELLITES.md`](docs/UI_PLAYBOOK_SATELLITES.md).
+
+### Tier bar colors
+
+Quota fill percentage: **&lt;70%** sky/blue, **70–90%** amber, **≥90%** red. Tooltip shows tier id and current/max per meter.
+
+---
+
+## Legacy ops shell (`EraOpsShell`)
+
+**Deprecated for new work.** Existing `EraOpsRouteShell` without fixed header is replaced by `EraAppRouteShell`. Operational canvases (POS floor, KDS, Room Rack) remain full-viewport inside the shell main area.
+
+---
+
 ## Special instructions
 
 - Desktop tables: prefer horizontal layout.
 - **Numeric data:** right-aligned.
+
+---
+
+## Public auth pages (`/login`, `/register`)
+
+Applies to Orchestrator, Finance, and all industry satellites.
+
+- **Background:** `#EBEDF0` (Light Tech Canvas) — full viewport center card.
+- **Card:** `CARD_CONTAINER_CLASS` / `rounded-2xl`, white surface, muted border `#D5DADF`.
+- **Header row:** page title (left, `#34495E`) + **locale toggle** (right) on the same line.
+- **Fields:** single credential input (login, email, or phone) + password; `FORM_INPUT_CLASS` / `rounded-lg`, `h-9`, focus ring `#2980B9`.
+- **Primary action:** full-width submit button, `#2980B9`.
+- **Links below submit (order):** need account → register organization → view pricing → FAQ; separate block for user agreement (→ Orchestrator `/terms`).
+- **Implementation:** `@era/satellite-kit/ui` → `AuthLoginCard`; copy from `@era/i18n-common` `auth.*`; cross-app URLs via `orchPublicHref()`.
+
+Do **not** duplicate one-off login layouts per satellite — extend `AuthLoginCard` props for product-specific titles only.
 
 ---
 

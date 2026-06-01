@@ -90,8 +90,8 @@
 | 20 | [20-seat-licensing.md](20-seat-licensing.md) | Квоты мест ERA Core ↔ сателлит |
 | 21 | [21-satellite-rbac.md](21-satellite-rbac.md) | JWT, роли, SSO (код) |
 | 22 | [22-outbound-integration-policy.md](22-outbound-integration-policy.md) | Real-time folio → ERP + настройки отключения |
-| 23 | [23-pos-bridge.md](23-pos-bridge.md) | Мост PMS ↔ era-fb-pos (room-charge) |
-| — | **[../../era-fb-pos/doc/README.md](../../era-fb-pos/doc/README.md)** | **Спека era-fb-pos** (сателлит) |
+| 23 | [23-pos-bridge.md](23-pos-bridge.md) | Мост PMS ↔ era-fnb-pos (room-charge) |
+| — | **[../../era-fnb-pos/doc/README.md](../../era-fnb-pos/doc/README.md)** | **Спека era-fnb-pos** (сателлит) |
 
 
 

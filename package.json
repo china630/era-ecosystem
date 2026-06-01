@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "bootstrap:local": "node tools/bootstrap-local.mjs --reset-password --migrate-satellites",
+    "bootstrap:local:demo": "node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites",
+    "credentials:write": "node tools/write-local-credentials.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
+  }
+}

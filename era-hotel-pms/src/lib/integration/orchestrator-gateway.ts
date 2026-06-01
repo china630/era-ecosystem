@@ -126,7 +126,7 @@ export type OrchestratorGatewayResult = {
 };
 
 /**
- * Publishes typed satellite events to era-365-orchestrator ingress.
+ * Publishes typed satellite events to era-orchestrator ingress.
  * `POST ${ORCHESTRATOR_EVENT_URL}/api/v1/satellite-events` with service token.
  */
 export async function publishToOrchestratorGateway(

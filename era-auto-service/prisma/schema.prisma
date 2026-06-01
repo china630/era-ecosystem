@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  outlets   Outlet[]
+}
+
+enum WorkOrderStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Outlet {
+  id        String   @id @default(cuid())
+  tenantId  String
+  code      String
+  name      String
+  preset    String?
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, code])
+}
+
+model CustomerVehicle {
+  id                    String      @id @default(cuid())
+  plate                 String
+  vin                   String?
+  customerName          String?
+  phone                 String?
+  financeCounterpartyId String?
+  workOrders            WorkOrder[]
+  createdAt             DateTime    @default(now())
+
+  @@unique([plate])
+  @@index([vin])
+}
+
+model WorkOrder {
+  id                 String          @id @default(cuid())
+  code               String          @unique
+  vehicleId          String?
+  vehicle            CustomerVehicle? @relation(fields: [vehicleId], references: [id])
+  vehiclePlate       String?
+  vin                String?
+  status             WorkOrderStatus @default(OPEN)
+  laborAmount        Decimal         @default(0) @db.Decimal(12, 2)
+  partsAmount        Decimal         @default(0) @db.Decimal(12, 2)
+  partsStatus        String          @default("NONE")
+  intakeNotes        String?
+  intakePhotoUrls    String?
+  intakeCompletedAt  DateTime?
+  shopFloorStartedAt DateTime?
+  shopFloorEndedAt   DateTime?
+  completedAt        DateTime?
+  appointment        Appointment?
+  laborLines         WorkOrderLaborLine[]
+  partLines          WorkOrderPartLine[]
+  createdAt          DateTime        @default(now())
+
+  @@index([vehiclePlate])
+  @@index([vin])
+  @@index([vehicleId])
+}
+
+model WorkOrderLaborLine {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  description String
+  hours       Decimal   @default(1) @db.Decimal(8, 2)
+  rateAzn     Decimal   @db.Decimal(12, 2)
+  amountAzn   Decimal   @db.Decimal(12, 2)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId])
+}
+
+model WorkOrderPartLine {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  sku         String?
+  description String
+  qty         Decimal   @default(1) @db.Decimal(12, 3)
+  unitPrice   Decimal   @db.Decimal(12, 2)
+  amountAzn   Decimal   @db.Decimal(12, 2)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  @@index([workOrderId])
+}
+
+model Bay {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  lifts     Lift[]
+  createdAt DateTime @default(now())
+}
+
+model Lift {
+  id        String   @id @default(cuid())
+  bayId     String
+  code      String
+  bay       Bay      @relation(fields: [bayId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([bayId, code])
+}
+
+model PartsCatalogEntry {
+  id        String   @id @default(cuid())
+  sku       String
+  name      String
+  vinPrefix String?
+  crossRef  String?
+  createdAt DateTime @default(now())
+
+  @@index([vinPrefix])
+  @@index([sku])
+}
+
+model Appointment {
+  id           String    @id @default(cuid())
+  vehiclePlate String
+  customerName String?
+  scheduledAt  DateTime
+  status       String    @default("SCHEDULED")
+  bayId        String?
+  liftId       String?
+  workOrderId  String?   @unique
+  workOrder    WorkOrder? @relation(fields: [workOrderId], references: [id])
+  createdAt    DateTime  @default(now())
+
+  @@index([scheduledAt, status])
+}
+
+model Tool {
+  id        String         @id @default(cuid())
+  code      String         @unique
+  name      String
+  checkouts ToolCheckout[]
+  createdAt DateTime       @default(now())
+}
+
+model ToolCheckout {
+  id           String    @id @default(cuid())
+  toolId       String
+  checkedOutBy String
+  checkedOutAt DateTime  @default(now())
+  returnedAt   DateTime?
+  tool         Tool      @relation(fields: [toolId], references: [id])
+
+  @@index([toolId, returnedAt])
+}
+
+model Role {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  permissionsJson String   @default("[]")
+  users           User[]
+}
+
+model User {
+  id              String    @id @default(cuid())
+  login           String    @unique
+  email           String?
+  phone           String?   @unique
+  fullName        String
+  passwordHash    String
+  roleId          String
+  role            Role      @relation(fields: [roleId], references: [id])
+  status          String    @default("ACTIVE")
+  isCrossSystem   Boolean   @default(false) @map("is_cross_system")
+  lastLoginAt     DateTime? @map("last_login_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+}

@@ -3,9 +3,18 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  ColorLegend,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  ModalFooter,
+  ModalShell,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
@@ -30,13 +39,21 @@ type Trip = {
 
 const STATUS_STEPS = ["PLANNED", "IN_TRANSIT", "DELIVERED", "COMPLETED"] as const;
 
+const podFormId = "trip-pod-form";
+const fuelFormId = "trip-fuel-form";
+
 export default function TripDetailPage() {
+  const t = useTranslations("tripsDetail");
+  const tc = useTranslations("common");
   const params = useParams();
   const id = typeof params.id === "string" ? params.id : "";
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [podModalOpen, setPodModalOpen] = useState(false);
+  const [fuelModalOpen, setFuelModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const [podRecipient, setPodRecipient] = useState("");
   const [podNotes, setPodNotes] = useState("");
@@ -51,7 +68,7 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/trips/${id}`);
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Trip not found");
+      setMessage(data.error ?? t("notFound"));
       setTrip(null);
       setLoading(false);
       return;
@@ -64,7 +81,7 @@ export default function TripDetailPage() {
     setFuelLiters(data.fuelLiters != null ? String(data.fuelLiters) : "");
     setFuelCost(data.fuelCost != null ? String(data.fuelCost) : "");
     setLoading(false);
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     void loadTrip();
@@ -79,15 +96,16 @@ export default function TripDetailPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Status update failed");
+      setMessage(data.error ?? t("statusUpdateFailed"));
       return;
     }
     setTrip(data);
-    setMessage(`Status → ${data.status}`);
+    setMessage(t("statusChanged", { status: data.status }));
   }
 
   async function savePod(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     setMessage("");
     const res = await fetch(`/api/trips/${id}/pod`, {
       method: "POST",
@@ -100,21 +118,25 @@ export default function TripDetailPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     if (!res.ok) {
-      setMessage(data.error ?? "POD save failed");
+      setMessage(data.error ?? t("podSaveFailed"));
       return;
     }
     setTrip(data);
-    setMessage("POD saved");
+    setMessage(t("podSaved"));
+    setPodModalOpen(false);
   }
 
   async function saveFuel(e: React.FormEvent) {
     e.preventDefault();
+    setBusy(true);
     setMessage("");
     const liters = parseFloat(fuelLiters);
     const cost = parseFloat(fuelCost);
     if (!Number.isFinite(liters) || liters <= 0 || !Number.isFinite(cost) || cost < 0) {
-      setMessage("Enter valid liters and cost");
+      setBusy(false);
+      setMessage(t("invalidFuel"));
       return;
     }
     const res = await fetch(`/api/trips/${id}/fuel-report`, {
@@ -123,12 +145,14 @@ export default function TripDetailPage() {
       body: JSON.stringify({ liters, cost }),
     });
     const data = await res.json();
+    setBusy(false);
     if (!res.ok) {
-      setMessage(data.error ?? "Fuel report failed");
+      setMessage(data.error ?? t("fuelReportFailed"));
       return;
     }
     await loadTrip();
-    setMessage(`Fuel recorded: ${data.liters} L, ${data.cost} AZN`);
+    setMessage(t("fuelRecorded", { liters: data.liters, cost: data.cost }));
+    setFuelModalOpen(false);
   }
 
   async function issueWaybill() {
@@ -136,19 +160,18 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/trips/${id}/waybill`, { method: "POST" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Waybill failed");
+      setMessage(data.error ?? t("waybillFailed"));
       return;
     }
     setTrip(data);
-    setMessage(`Waybill issued: ${data.waybillNumber}`);
+    setMessage(t("waybillIssued", { number: data.waybillNumber }));
   }
 
   async function completeTrip() {
     setMessage("");
     if (!trip?.podCapturedAt) {
       const strict = process.env.NEXT_PUBLIC_STRICT_POD === "true";
-      const warn =
-        "No POD captured yet. Save POD before completing, or proceed anyway.";
+      const warn = t("podWarn");
       if (strict) {
         setMessage(warn);
         return;
@@ -158,25 +181,27 @@ export default function TripDetailPage() {
     const res = await fetch(`/api/trips/${id}/complete`, { method: "POST" });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error ?? "Complete failed");
+      setMessage(data.error ?? t("completeFailed"));
       return;
     }
     setTrip(data);
-    setMessage("Trip completed — event dispatched");
+    setMessage(t("tripCompleted"));
   }
 
   if (loading) {
     return (
-      <p className={`${CARD_CONTAINER_CLASS} p-6 text-[13px] text-[#7F8C8D]`}>Loading…</p>
+      <p className={`${CARD_CONTAINER_CLASS} p-6 text-[13px] text-[#7F8C8D]`}>
+        {tc("loading")}
+      </p>
     );
   }
 
   if (!trip) {
     return (
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-3`}>
-        <p className="text-[13px]">{message || "Trip not found"}</p>
+        <p className="text-[13px]">{message || t("notFound")}</p>
         <Link href="/trips" className={PRIMARY_BUTTON_CLASS}>
-          Back to trips
+          {t("backToTrips")}
         </Link>
       </div>
     );
@@ -187,11 +212,11 @@ export default function TripDetailPage() {
   return (
     <>
       <PageHeader
-        title={`Trip ${trip.id.slice(0, 8)}`}
+        title={t("tripTitle", { id: trip.id.slice(0, 8) })}
         subtitle={`${trip.vehicle.plate}${trip.routeCode ? ` · ${trip.routeCode}` : ""}`}
         actions={
           <Link href="/trips" className={PRIMARY_BUTTON_CLASS}>
-            All trips
+            {t("allTrips")}
           </Link>
         }
       />
@@ -199,13 +224,24 @@ export default function TripDetailPage() {
         {message && <p className="text-[13px]">{message}</p>}
 
         <section className="space-y-2 text-[13px]">
-          <h2 className="font-semibold">Overview</h2>
+          <h2 className="font-semibold">{t("overview")}</h2>
           <p>
-            Vehicle: <strong>{trip.vehicle.plate}</strong>
+            {t("vehicle")}: <strong>{trip.vehicle.plate}</strong>
             {trip.vehicle.model ? ` (${trip.vehicle.model})` : ""}
           </p>
-          <p>Freight: {Number(trip.freightAmount).toFixed(2)} AZN</p>
-          <p>Status: <strong>{trip.status}</strong></p>
+          <p>
+            {t("freight")}: {Number(trip.freightAmount).toFixed(2)} AZN
+          </p>
+          <p>
+            {t("status")}: <strong>{trip.status}</strong>
+          </p>
+          <ColorLegend
+            ariaLabel={t("status")}
+            items={[
+              { id: "active", label: "Reached", swatchClassName: "bg-[#2980B9]" },
+              { id: "pending", label: "Upcoming", swatchClassName: "bg-[#ECF0F1]" },
+            ]}
+          />
           <ol className="flex flex-wrap gap-2">
             {STATUS_STEPS.map((s, i) => (
               <li
@@ -221,7 +257,7 @@ export default function TripDetailPage() {
         </section>
 
         <section className="space-y-2 text-[13px] border-t pt-4">
-          <h2 className="font-semibold">Waybill (M3)</h2>
+          <h2 className="font-semibold">{t("waybill")}</h2>
           {trip.waybillNumber ? (
             <p>
               <strong>{trip.waybillNumber}</strong>
@@ -230,17 +266,17 @@ export default function TripDetailPage() {
                 : ""}
             </p>
           ) : (
-            <p className="text-[12px] text-[#7F8C8D]">Not issued yet.</p>
+            <p className="text-[12px] text-[#7F8C8D]">{t("notIssued")}</p>
           )}
           {!trip.waybillNumber && (
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void issueWaybill()}>
-              Issue waybill
+              {t("issueWaybill")}
             </button>
           )}
         </section>
 
         <section className="space-y-2 text-[13px]">
-          <h2 className="font-semibold">Status actions</h2>
+          <h2 className="font-semibold">{t("statusActions")}</h2>
           <div className="flex flex-wrap gap-2">
             {trip.status === "PLANNED" && (
               <button
@@ -248,7 +284,7 @@ export default function TripDetailPage() {
                 className={PRIMARY_BUTTON_CLASS}
                 onClick={() => advanceStatus("IN_TRANSIT")}
               >
-                Start trip
+                {t("startTrip")}
               </button>
             )}
             {trip.status === "IN_TRANSIT" && (
@@ -257,100 +293,150 @@ export default function TripDetailPage() {
                 className={PRIMARY_BUTTON_CLASS}
                 onClick={() => advanceStatus("DELIVERED")}
               >
-                Mark delivered
+                {t("markDelivered")}
               </button>
             )}
             {trip.status !== "COMPLETED" && trip.status !== "CANCELLED" && (
               <button
                 type="button"
-                className="rounded border border-[#2980B9] px-3 py-1 text-[12px] text-[#2980B9]"
+                className={SECONDARY_BUTTON_CLASS}
                 onClick={() => void completeTrip()}
               >
-                Complete trip
+                {t("completeTrip")}
               </button>
             )}
           </div>
         </section>
 
-        <form onSubmit={savePod} className="space-y-3 text-[13px] border-t pt-4">
-          <h2 className="font-semibold">POD (L-04)</h2>
-          <label className="block">
-            Recipient *
+        <section className="space-y-2 text-[13px] border-t pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">{t("pod")}</h2>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setPodModalOpen(true)}>
+              {t("savePod")}
+            </button>
+          </div>
+          {trip.podCapturedAt && (
+            <p className="text-[12px] text-[#7F8C8D]">
+              {t("captured")}: {new Date(trip.podCapturedAt).toLocaleString()}
+              {trip.podRecipient ? ` · ${trip.podRecipient}` : ""}
+            </p>
+          )}
+        </section>
+
+        <section className="space-y-2 text-[13px] border-t pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">{t("fuelReport")}</h2>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setFuelModalOpen(true)}>
+              {t("saveFuel")}
+            </button>
+          </div>
+          {trip.fuelLiters != null && (
+            <p className="text-[12px] text-[#7F8C8D]">
+              {t("liters")}: {trip.fuelLiters} · {t("costAzn")}: {trip.fuelCost}
+            </p>
+          )}
+        </section>
+      </div>
+
+      <ModalShell
+        open={podModalOpen}
+        title={t("pod")}
+        onClose={() => setPodModalOpen(false)}
+        closeLabel={tc("close")}
+        footer={
+          <ModalFooter
+            formId={podFormId}
+            onCancel={() => setPodModalOpen(false)}
+            busy={busy}
+            submitLabel={t("savePod")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <form id={podFormId} onSubmit={savePod} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("recipient")}</label>
             <input
-              className="mt-1 w-full rounded border px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={podRecipient}
               onChange={(e) => setPodRecipient(e.target.value)}
               required
             />
-          </label>
-          <label className="block">
-            Photo URL (stub)
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("photoUrl")}</label>
             <input
-              className="mt-1 w-full rounded border px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={podPhotoUrl}
               onChange={(e) => setPodPhotoUrl(e.target.value)}
               placeholder="https://…"
             />
-          </label>
-          <label className="block">
-            Signature URL (stub)
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("signatureUrl")}</label>
             <input
-              className="mt-1 w-full rounded border px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               value={podSignatureUrl}
               onChange={(e) => setPodSignatureUrl(e.target.value)}
               placeholder="https://…"
             />
-          </label>
-          <label className="block">
-            Notes
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("notes")}</label>
             <textarea
-              className="mt-1 w-full rounded border px-2 py-1"
+              className={MODAL_INPUT_CLASS}
               rows={2}
               value={podNotes}
               onChange={(e) => setPodNotes(e.target.value)}
             />
-          </label>
-          {trip.podCapturedAt && (
-            <p className="text-[12px] text-[#7F8C8D]">
-              Captured: {new Date(trip.podCapturedAt).toLocaleString()}
-            </p>
-          )}
-          <button type="submit" className={PRIMARY_BUTTON_CLASS}>
-            Save POD
-          </button>
+          </div>
         </form>
+      </ModalShell>
 
-        <form onSubmit={saveFuel} className="space-y-3 text-[13px] border-t pt-4">
-          <h2 className="font-semibold">Fuel report (L-05)</h2>
-          <div className="flex flex-wrap gap-4">
-            <label>
-              Liters
+      <ModalShell
+        open={fuelModalOpen}
+        title={t("fuelReport")}
+        onClose={() => setFuelModalOpen(false)}
+        closeLabel={tc("close")}
+        footer={
+          <ModalFooter
+            formId={fuelFormId}
+            onCancel={() => setFuelModalOpen(false)}
+            busy={busy}
+            submitLabel={t("saveFuel")}
+            cancelLabel={tc("cancel")}
+          />
+        }
+      >
+        <form id={fuelFormId} onSubmit={saveFuel} className={FORM_STACK_CLASS}>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t("liters")}</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="mt-1 block rounded border px-2 py-1"
+                className={MODAL_INPUT_CLASS}
                 value={fuelLiters}
                 onChange={(e) => setFuelLiters(e.target.value)}
+                required
               />
-            </label>
-            <label>
-              Cost (AZN)
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t("costAzn")}</label>
               <input
                 type="number"
                 step="0.01"
                 min="0"
-                className="mt-1 block rounded border px-2 py-1"
+                className={MODAL_INPUT_CLASS}
                 value={fuelCost}
                 onChange={(e) => setFuelCost(e.target.value)}
+                required
               />
-            </label>
+            </div>
           </div>
-          <button type="submit" className={PRIMARY_BUTTON_CLASS}>
-            Save fuel report
-          </button>
         </form>
-      </div>
+      </ModalShell>
     </>
   );
 }

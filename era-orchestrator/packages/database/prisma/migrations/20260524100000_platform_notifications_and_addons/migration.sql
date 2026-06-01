@@ -1,0 +1,2 @@
+-- Platform notifications and add-ons are included in 20260520100000_control_plane_baseline.
+-- Kept for migration history compatibility (no-op).

@@ -6,7 +6,7 @@ Living snapshot of **code + DELIVERY** readiness.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
-Last updated: 2026-05-26 (MODULES_CATALOG W1/W2 sync + `delivery-readiness.mjs` + `readiness-coverage.mjs`)
+Last updated: 2026-06-01 (era-hotel-pms Wave B ElectraWeb FO parity · DELIVERY see era-hotel-pms/doc/DELIVERY.md § Wave B)
 
 ---
 
@@ -46,7 +46,7 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 | Memberships / switch-org | Live | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | RBAC join / access / transfer / disputes | Live | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | Entitlements validate (server) | Live | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| Platform session (`financeRole` + org via SSO) | N/A | N/A | Live | MVP | Live | Live | Live | Live | Live | Live | Live |
+| Platform session (`financeRole` + org via SSO) | N/A | N/A | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 | Operational RBAC (local User/Role) | N/A | N/A | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 | MDM `internal/v1/mdm` | N/A | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 
@@ -54,16 +54,16 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 
 ### 2.2 Billing and commercial (post CP-BILLING)
 
-Commercial API lives on **era-365-orchestrator**; Finance web proxies via `/cp/*` ([CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md)). Satellites use **billing snapshot consumer** only.
+Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md)). Satellites use **billing snapshot consumer** only.
 
 #### 2.2.1 Subscription and entitlements
 
 | API | Fin | Orch | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |-----|-----|------|-----|-----|-----|-----|-----|-----|------|-----|-----|
-| `GET /v1/subscription/me` (consumer) | Live | Live | Live | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
+| `GET /v1/subscription/me` (consumer) | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 | `POST /v1/subscription/select-plan`, module patch | Live | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
 | `internal/v1/entitlements/validate` | Live | Live | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A | N/A |
-| `GET /api/platform/billing-snapshot` (satellite route) | — | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
+| `GET /api/platform/billing-snapshot` (satellite route) | — | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 
 #### 2.2.2 Owner billing (`v1/billing/*`)
 
@@ -88,12 +88,12 @@ Commercial API lives on **era-365-orchestrator**; Finance web proxies via `/cp/*
 | API | Orch | Fin | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |-----|------|-----|-----|-----|-----|-----|-----|-----|------|-----|-----|
 | **notifications** `v1/send` | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live |
-| **booking** slots/appointments | Impl MVP | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
-| **portal** magic links | Impl MVP | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
-| **payments** payment-links | Impl MVP | Live | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
-| **loyalty** | Impl MVP | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
-| **domains** | Impl MVP | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
-| **delivery** | Impl MVP | — | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP | MVP |
+| **booking** slots/appointments | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **portal** magic links | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **payments** payment-links | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **loyalty** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **domains** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **delivery** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 
 ### 2.4 Event bus and Finance worker
 
@@ -132,16 +132,16 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | Satellite | SSO (CP) | Events → Fin | Platform notif | Platform booking | Portal / pay | Finance boundary | Other |
 |-----------|----------|--------------|----------------|------------------|--------------|------------------|-------|
 | finance-core | Live | Live (13) | Live | — | Live | SoT | Launcher |
-| orchestrator | Impl | Impl | Live (B2) | MVP (B3) | MVP (B4–B8) | Billing SoT | MDM |
-| hotel-pms | Live | Live | Live | MVP (spa) | MVP | Live | FB bridge; partial platform §4 hooks |
-| fb-pos | Live | Live | Live | MVP | MVP | Events | Hotel bridge |
-| retail-pos | Live | Live | Live | MVP | MVP | Events | Full platform §4 hooks |
-| logistics | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
-| construction | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
-| crm-field | Live | Live | Live | MVP | MVP | MDM | Platform §4 hooks |
-| auto-sto | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
-| clinic | Live | Live | Live | MVP | MVP | Events | Platform §4 hooks |
-| wholesale | Live | Live | Live | MVP | MVP | MVP credit | Platform §4 hooks |
+| orchestrator | Live | Impl | Live (B2) | Live (B3–B8) | Live | Billing SoT | MDM cutover |
+| hotel-pms | Live | Live | Live | Live (spa) | Live | Live | FB bridge; full §4 hooks (pre-GA) |
+| fb-pos | Live | Live | Live | Live | Live | Events | Hotel bridge; full §4 hooks (pre-GA) |
+| retail-pos | Live | Live | Live | Live | Live | Events | v2.0 fiscal/offline/marketplace; full §4 hooks |
+| logistics | Live | Live | Live | Live | Live | Events | Full §4 hooks |
+| construction | Live | Live | Live | Live | Live | Events | Full §4 hooks |
+| crm-field | Live | Live | Live | Live | Live | MDM | v2.0 WhatsApp live; full §4 hooks |
+| auto-sto | Live | Live | Live | Live | Live | Events | v2.0 tool crib; full §4 hooks |
+| clinic | Live | Live | Live | Live | Live | Events | v2.0 `/portal`; full §4 hooks |
+| wholesale | Live | Live | Live | Live | Live | Live | Full §4 hooks |
 
 ---
 
@@ -149,19 +149,19 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 
 | Application | DELIVERY file | Done | Open | **%** |
 |-------------|---------------|------|------|-------|
-| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 138 | 10 | 93% |
-| era-fb-pos | [DELIVERY-FB.md](../era-fb-pos/doc/DELIVERY-FB.md) | 42 | 1 | 98% |
-| era-retail-pos | [DELIVERY-RETAIL.md](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 38 | 4 | 90% |
-| era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 36 | 5 | 88% |
-| era-construction | [DELIVERY-CONSTRUCTION.md](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 17 | 1 | 94% |
-| era-auto-sto | [DELIVERY-AUTO.md](../era-auto-sto/doc/DELIVERY-AUTO.md) | 15 | 2 | 88% |
-| era-wholesale | [DELIVERY-WHOLESALE.md](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 18 | 1 | 95% |
-| era-crm-field | [DELIVERY-CRM.md](../era-crm-field/doc/DELIVERY-CRM.md) | 25 | 2 | 93% |
-| era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 26 | 1 | 96% |
-| era-365-orchestrator | [DELIVERY-ORCHESTRATOR.md](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) | 30 | 1 | 97% |
-| era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 9 | 1 | 90% |
+| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 146 | 0 | 100% |
+| era-fnb-pos | [DELIVERY-FB.md](../era-fnb-pos/doc/DELIVERY-FB.md) | 43 | 0 | 100% |
+| era-retail-pos | [DELIVERY-RETAIL.md](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 45 | 0 | 100% |
+| era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 43 | 0 | 100% |
+| era-construction | [DELIVERY-CONSTRUCTION.md](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 21 | 0 | 100% |
+| era-auto-service | [DELIVERY-AUTO.md](../era-auto-service/doc/DELIVERY-AUTO.md) | 22 | 0 | 100% |
+| era-wholesale | [DELIVERY-WHOLESALE.md](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 19 | 0 | 100% |
+| era-crm | [DELIVERY-CRM.md](../era-crm/doc/DELIVERY-CRM.md) | 27 | 0 | 100% |
+| era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 29 | 0 | 100% |
+| era-orchestrator | [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) | 31 | 0 | 100% |
+| era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 10 | 0 | 100% |
 
-**Aggregate (11 DELIVERY files):** 394/423 (**93%**). Regenerate: `node scripts/delivery-readiness.mjs`.
+**Aggregate (11 DELIVERY files):** 436/436 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
 
 ---
 
@@ -178,33 +178,45 @@ Regenerate: `node scripts/readiness-coverage.mjs` (full table) or `node scripts/
 | Billing snapshot consumer | 11/11 | 100% | 11/11 (100%) |
 | Billing API host | 1/1 | 100% | 1/11 (9%, Orch only) |
 | Platform notifications | 10/11 | 91% | 11/11 (100%) |
-| Platform booking | 8/10 | 80% | 9/11 (82%) |
-| Platform portal | 7/10 | 70% | 8/11 (73%) |
-| Platform payments | 9/11 | 82% | 9/11 (82%) |
-| Platform loyalty | 8/10 | 80% | 8/11 (73%) |
-| Platform domains | 9/10 | 90% | 9/11 (82%) |
-| Platform delivery | 8/10 | 80% | 8/11 (73%) |
-| Hotel↔FB bridge **(roles)** | 2/2 | **100%** | Hot provider + FB consumer ([pms-bridge](../era-fb-pos/src/lib/pms-bridge-client.ts)) |
+| Platform booking | 9/10 | 90% | 10/11 (91%) |
+| Platform portal | 9/10 | 90% | 10/11 (91%) |
+| Platform payments | 11/11 | 100% | 11/11 (100%) |
+| Platform loyalty | 10/10 | 100% | 10/11 (91%) |
+| Platform domains | 10/10 | 100% | 10/11 (91%) |
+| Platform delivery | 10/10 | 100% | 10/11 (91%) |
+| Hotel↔FB bridge **(roles)** | 2/2 | **100%** | Hot provider + FB consumer ([pms-bridge](../era-fnb-pos/src/lib/pms-bridge-client.ts)) |
 
 **N/A by design (consumer):** Fin — booking, portal, loyalty, domains, delivery; all apps except Orch — billing host.
 
-**Coverage notes (2026-05-26):** `readiness-coverage.mjs` — gaps on **hotel-pms** / **fb-pos** for portal, pay, loyalty, delivery (v1.0 partial vs retail/clinic). Orch rows use **H** for booking/portal host in §4.2.
+**Coverage notes (2026-05-27):** Consumer booking/portal **9/10 (90%)** = all **9 satellites** ✓; **Orch** is API **host** (`H`), excluded from consumer numerator (not a gap). Notifications **10/11** = **Fin** is dispatch **host** (`H`) only. All satellites use `runPlatformCommerceHooks` / direct CP-B3–B8 callers. MDM register: Orch when `ERA_MDM_REGISTRATION_CUTOVER=true`.
+
+**i18n (2026-05-27):** All web nodes — contract `az|ru|en`, default `az`, cookie `era_i18n_lang`; Finance `i18n:audit` OK. Not a §4 integration metric — see [SATELLITE_DOCUMENTATION § i18n](./SATELLITE_DOCUMENTATION.md#i18n-stacks-ecosystem-contract).
 
 ### 4.2 App × family checklist
 
 | App | Bill.snap | Bill.host | Notif | Book | Portal | Pay | Loy | Dom | Del |
 |-----|-----------|-----------|-------|------|--------|-----|-----|-----|-----|
 | era-finance-core | ✓ | N/A | H | N/A | N/A | ✓ | N/A | N/A | N/A |
-| era-365-orchestrator | ✓ | ✓ | ✓ | H | H | ✓ | ✓ | ✓ | ✓ |
-| era-hotel-pms | ✓ | N/A | ✓ | ✓ | — | — | — | ✓ | — |
-| era-fb-pos | ✓ | N/A | ✓ | — | — | — | — | — | — |
+| era-orchestrator | ✓ | ✓ | ✓ | H | H | ✓ | ✓ | ✓ | ✓ |
+| era-hotel-pms | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| era-fnb-pos | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | era-retail-pos | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | era-logistics | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | era-construction | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| era-crm-field | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| era-auto-sto | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| era-crm | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| era-auto-service | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | era-clinic | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | era-wholesale | ✓ | N/A | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+### 4.3 Integration MVP — explicit gaps
+
+**None** on pay/commerce paths after 2026-05-26 regen. Residual product MVP (not §4 integration):
+
+| Gap | Owner | Note |
+|-----|-------|------|
+| FB table booking on pay | era-fnb-pos | Optional `createBookingSlot` on reservation — not required for folio/room-charge hooks |
+| Finance tier Manufacturing / IFRS | era-finance-core | Tier 2+/3 module UAT — not integration matrix |
+| Satellite `subscription/me` depth | per-app | Consumer **Live** via billing-snapshot proxy; deep plan UI remains Orch-only |
 
 ---
 
@@ -216,4 +228,33 @@ Regenerate: `node scripts/readiness-coverage.mjs` (full table) or `node scripts/
 | §1 counts only | `node scripts/delivery-readiness.mjs` |
 | §4 coverage | `node scripts/readiness-coverage.mjs` |
 | Contracts | [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) |
-| Manual verification | Per-app `UAT-SMOKE.md`, [SMOKE_ALL_SERVICES.md](./SMOKE_ALL_SERVICES.md), [UAT-SMOKE-PLATFORM.md](../era-365-orchestrator/doc/UAT-SMOKE-PLATFORM.md) |
+| Manual verification | Per-app `UAT-SMOKE.md`, [SMOKE_ALL_SERVICES.md](./SMOKE_ALL_SERVICES.md), [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md) |
+
+---
+
+## 6. Open testing gate (2026-05-27)
+
+**DELIVERY 100% ≠ production-ready.** Use this table before inviting external testers (Nafta, partners).
+
+| Gate | Status | Evidence / action |
+|------|--------|-----------------|
+| **Closed / local UAT** (engineering) | **Go** | P0–P7 + SP7 done — [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md); stack [SETUP_AND_RUN.md](./SETUP_AND_RUN.md) |
+| **Quartet smoke** (Orch · Fin · Hot · FB) | **Go** | [QUARTET_UAT.md](./QUARTET_UAT.md), `node scripts/quartet-smoke.mjs`, POS bridge |
+| **Platform smoke** (billing, addons, RBAC) | **Go** | [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md) |
+| **All satellites health + SSO** | **Go** | [SMOKE_ALL_SERVICES.md](./SMOKE_ALL_SERVICES.md) § HTTP health + locale smoke |
+| **Integration matrix §4** | **Go** | Pay 11/11; loyalty/domains/delivery 10/10 satellites; booking/portal 9/9 satellites (Orch = host) |
+| **Finance i18n audit** | **Go** | `npm run i18n:audit` in `era-finance-core` |
+| **Ecosystem i18n shell** | **Go** | Login/home/help + feature pages on industry apps; ERP full az/ru; EN via fallback |
+| **Staging / prod deploy** | **Before external** | Backups, migrations, env legal URLs, `ERA_*` secrets — Finance [PRE-RELEASE-CHECKLIST](../era-finance-core/docs/deploy/PRE-RELEASE-CHECKLIST.md) |
+| **Nafta on-site sign-off** | **Before GA** | [13-nafta-validation-checklist.md](../era-hotel-pms/doc/clone-spec/13-nafta-validation-checklist.md), multi-VÖEN org model |
+| **Product polish** | **Non-blocking** | UI modals audit (P06 partial), MDM on satellites, Manufacturing/IFRS tier 2+ |
+
+**Verdict:** **Можно идти на открытые (закрытые) тесты** для команды Nafta / внутренних пилотов на **localhost/staging** по чеклистам §8 [LOCAL_UAT](./LOCAL_UAT_GAP_CHECKLIST.md) и [QUARTET_UAT](./QUARTET_UAT.md). **Публичный GA** — после staging deploy, smoke green, и фиксации открытых вопросов D3 / multi-VÖEN (см. Nafta docs).
+
+### What to do next (priority)
+
+1. **Staging compose** — один `.env`, миграции всех БД, прогон `SMOKE_ALL_SERVICES` + locale smoke end-to-end.
+2. **Nafta pilot script** — Orch → Hotel+FB SSO → night audit → room-charge → Finance GL handoff; clinic sanatorium episode по `reservationId`.
+3. **Optional product** — FB table booking via `createBookingSlot` on pay (§4.3); не блокер UAT.
+4. **UI program** (не блокер тестов) — admin modals, FB floor polish, Hotel FAQ block.
+5. **Manufacturing / IFRS** — только если пилот требует tier 2+ Finance modules.

@@ -13,7 +13,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { ControlPlaneClient } from "./control-plane.client";
 
 /**
- * Validates tenant billing / entitlements via era-365-orchestrator.
+ * Validates tenant billing / entitlements via era-orchestrator.
  * Falls back to legacy organizations.billing_status when control plane is down.
  */
 @Injectable()

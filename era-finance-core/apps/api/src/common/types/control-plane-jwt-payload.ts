@@ -1,6 +1,6 @@
 import type { UserRole } from "@erafinance/database";
 
-/** JWT claims issued by era-365-orchestrator (HS256 phase A; RS256 + JWKS later). */
+/** JWT claims issued by era-orchestrator (HS256 phase A; RS256 + JWKS later). */
 export type ControlPlaneJwtPayload = {
   sub: string;
   email: string;

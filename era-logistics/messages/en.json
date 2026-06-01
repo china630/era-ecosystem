@@ -1,0 +1,183 @@
+{
+  "auth": {
+    "loginFailed": "Login failed",
+    "footerLegalNavAria": "Legal links and help",
+    "footerFaq": "FAQ",
+    "footerTerms": "Terms of use",
+    "footerPrivacy": "Privacy",
+    "footerStatus": "Status",
+    "loginTitle": "Sign in",
+    "loginId": "Username / email / phone",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Sign in",
+    "submitBusy": "…",
+    "needAccount": "No account? Register",
+    "registerOrgLink": "Register with company and VÖEN",
+    "viewPricing": "Pricing and plans",
+    "userAgreement": "User agreement",
+    "localeToggleAria": "Language",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  },
+  "meta": {
+    "title": "ERA Logistics",
+    "description": "Retail POS — ERA industry satellite"
+  },
+  "nav": {
+    "home": "Home",
+    "trips": "Trips",
+    "fleet": "Fleet",
+    "customs": "Customs",
+    "fuelReport": "Fuel report",
+    "settings": "Settings"
+  },
+  "login": {
+    "title": "ERA Logistics",
+    "subtitle": "Sign in to your account",
+    "login": "Login",
+    "password": "Password",
+    "submit": "Sign in",
+    "busy": "…",
+    "ssoHint": "Or SSO via ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Loading…",
+    "title": "ERA Logistics",
+    "subtitle": "ERA industry satellite",
+    "intro": "MVP operational shell per DESIGN.md.",
+    "healthLink": "Health API"
+  },
+  "help": {
+    "title": "Frequently asked questions",
+    "items": {
+      "platform": {
+        "q": "What is the ERA platform?",
+        "a": "In the ERA ecosystem, identity, subscriptions, and industry modules are unified through the ERA 365 control plane and Finance ERP."
+      },
+      "sso": {
+        "q": "How do I sign in with SSO?",
+        "a": "Open this module from ERA Finance or ERA 365 Orchestrator — the token is passed automatically."
+      },
+      "register": {
+        "q": "Where do I register an organization?",
+        "a": "After first sign-in use Organization registration in Orchestrator or app.era-365.online with VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "save": "Save",
+    "edit": "Edit",
+    "field": "Field",
+    "value": "Value",
+    "actions": "Actions",
+    "home": "Home",
+    "cancel": "Cancel",
+    "all": "All",
+    "search": "Search",
+    "name": "Name",
+    "status": "Status",
+    "date": "Date",
+    "guest": "Guest",
+    "notes": "Notes",
+    "complete": "Complete",
+    "notFound": "Not found",
+    "select": "Select…",
+    "failed": "Failed",
+    "error": "Error",
+    "loadingFailed": "Load failed",
+    "saveFailed": "Save failed"
+  },
+  "trips": {
+    "title": "ERA Logistics",
+    "subtitle": "Trips — open details for POD, fuel, and workflow",
+    "fuelReport": "Fuel report",
+    "empty": "No trips yet."
+  },
+  "tripsDetail": {
+    "tripTitle": "Trip {id}",
+    "allTrips": "All trips",
+    "notFound": "Trip not found",
+    "backToTrips": "To trips",
+    "overview": "Overview",
+    "vehicle": "Transport",
+    "freight": "Freight",
+    "status": "Status",
+    "waybill": "Waybill (M3)",
+    "notIssued": "Not issued yet.",
+    "issueWaybill": "Issue waybill",
+    "statusActions": "Actions by status",
+    "startTrip": "Start trip",
+    "markDelivered": "Mark delivered",
+    "completeTrip": "Complete trip",
+    "pod": "POD (L-04)",
+    "recipient": "Recipient",
+    "photoUrl": "Photo URL (stub)",
+    "signatureUrl": "Signature URL (stub)",
+    "notes": "Notes",
+    "captured": "Recorded",
+    "savePod": "Save POD",
+    "fuelReport": "Fuel report (L-05)",
+    "liters": "Liters",
+    "costAzn": "Amount (AZN)",
+    "saveFuel": "Save fuel report",
+    "statusUpdateFailed": "Could not update status",
+    "podSaveFailed": "Could not save POD",
+    "podSaved": "POD saved",
+    "invalidFuel": "Enter valid liters and amount",
+    "fuelReportFailed": "Fuel report error",
+    "fuelRecorded": "Fuel recorded: {liters} L, {cost} AZN",
+    "waybillFailed": "Error waybill",
+    "waybillIssued": "Waybill issued: {number}",
+    "completeFailed": "Could not complete",
+    "tripCompleted": "Trip completed — event sent",
+    "podWarn": "POD not recorded yet. Save POD before completing or continue.",
+    "statusChanged": "Status → {status}"
+  },
+  "fleet": {
+    "title": "Fleet compliance",
+    "subtitle": "M7 — documents expiring within {days} days",
+    "loadFailed": "Could not load warnings",
+    "empty": "No upcoming expirations.",
+    "expires": "expires"
+  },
+  "customs": {
+    "title": "Customs status",
+    "subtitle": "SP7 L3 — declarations in Finance Trade Pro; logistics reads status here",
+    "backTrips": "← Trips",
+    "body": "Finance Core (`industry_logistics`) owns full GTK / e-customs and tariff data. The satellite shows trip readiness.",
+    "openFinance": "Open Finance customs module →",
+    "financeUrlHint": "Set NEXT_PUBLIC_FINANCE_WEB_URL for the link.",
+    "uatHint": "Local UAT: complete trip with POD, verify Finance worker events, then process customs in Finance UI."
+  },
+  "fuelReport": {
+    "title": "Fuel report",
+    "subtitle": "Fleet summary (L-05)",
+    "trips": "Trips",
+    "from": "From",
+    "to": "To",
+    "total": "Total",
+    "tripsCount": "{count} trips",
+    "plate": "Number",
+    "trip": "Trip",
+    "empty": "No fuel data for the period."
+  },
+  "adminSettings": {
+    "title": "Fleet settings",
+    "subtitle": "UI playbook — list + ModalShell",
+    "trips": "Trips",
+    "fleetName": "Fleet name",
+    "editFleet": "Edit fleet"
+  },
+  "admin": {
+    "settings": {
+      "field": "Field",
+      "value": "Value",
+      "actions": "Actions",
+      "edit": "Edit",
+      "save": "Save"
+    }
+  }
+}

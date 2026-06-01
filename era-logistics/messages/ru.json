@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "title": "ERA Logistics",
+    "description": "Спутник логистики и транспорта"
+  },
+  "login": {
+    "title": "ERA Logistics",
+    "subtitle": "Войдите в учётную запись",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "busy": "Вход…",
+    "ssoHint": "Или войдите через SSO ERA Finance / Orchestrator"
+  },
+  "home": {
+    "loading": "Загрузка…",
+    "title": "ERA Logistics",
+    "subtitle": "Отраслевой спутник ERA"
+  },
+  "help": {
+    "title": "Частые вопросы",
+    "items": {
+      "platform": {
+        "q": "Что такое платформа ERA?",
+        "a": "В экосистеме ERA идентичность, подписки и отраслевые модули объединены через control plane ERA 365 и Finance ERP."
+      },
+      "sso": {
+        "q": "Как войти через SSO?",
+        "a": "Перейдите в этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически."
+      },
+      "register": {
+        "q": "Где зарегистрировать организацию?",
+        "a": "После первого входа — «Регистрация организации» в Orchestrator или через app.era-365.online с VÖEN."
+      }
+    }
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "save": "Сохранить",
+    "edit": "Изменить",
+    "field": "Поле",
+    "value": "Значение",
+    "actions": "Действия"
+  },
+  "trips": {
+    "title": "ERA Logistics",
+    "subtitle": "Рейсы — откройте детали для POD, топлива и workflow",
+    "fuelReport": "Отчёт по топливу",
+    "empty": "Рейсов пока нет."
+  },
+  "tripsDetail": {
+    "tripTitle": "Рейс {id}",
+    "allTrips": "Все рейсы",
+    "notFound": "Рейс не найден",
+    "backToTrips": "К рейсам",
+    "overview": "Обзор",
+    "vehicle": "Транспорт",
+    "freight": "Фрахт",
+    "status": "Статус",
+    "waybill": "Товарно-транспортная накладная (M3)",
+    "notIssued": "Ещё не выдана.",
+    "issueWaybill": "Выдать накладную",
+    "statusActions": "Действия по статусу",
+    "startTrip": "Начать рейс",
+    "markDelivered": "Отметить доставленным",
+    "completeTrip": "Завершить рейс",
+    "pod": "POD (L-04)",
+    "recipient": "Получатель",
+    "photoUrl": "URL фото (stub)",
+    "signatureUrl": "URL подписи (stub)",
+    "notes": "Примечания",
+    "captured": "Зафиксировано",
+    "savePod": "Сохранить POD",
+    "fuelReport": "Отчёт по топливу (L-05)",
+    "liters": "Литры",
+    "costAzn": "Сумма (AZN)",
+    "saveFuel": "Сохранить отчёт по топливу",
+    "statusUpdateFailed": "Не удалось обновить статус",
+    "podSaveFailed": "Не удалось сохранить POD",
+    "podSaved": "POD сохранён",
+    "invalidFuel": "Введите корректные литры и сумму",
+    "fuelReportFailed": "Ошибка отчёта по топливу",
+    "fuelRecorded": "Топливо записано: {liters} L, {cost} AZN",
+    "waybillFailed": "Ошибка накладной",
+    "waybillIssued": "Накладная выдана: {number}",
+    "completeFailed": "Не удалось завершить",
+    "tripCompleted": "Рейс завершён — событие отправлено",
+    "podWarn": "POD ещё не зафиксирован. Сохраните POD перед завершением или продолжите.",
+    "statusChanged": "Статус → {status}"
+  },
+  "fleet": {
+    "title": "Соответствие парка",
+    "subtitle": "M7 — документы, истекающие в течение {days} дн.",
+    "loadFailed": "Не удалось загрузить предупреждения",
+    "empty": "Нет предстоящих истечений.",
+    "expires": "истекает"
+  },
+  "customs": {
+    "title": "Таможенный статус",
+    "subtitle": "SP7 L3 — декларации в Finance Trade Pro; логистика читает статус здесь",
+    "backTrips": "← Рейсы",
+    "body": "Полные данные GTK / e-таможни и тарифов ведёт Finance Core (`industry_logistics`). Спутник показывает готовность по рейсу.",
+    "openFinance": "Открыть таможенный модуль Finance →",
+    "financeUrlHint": "Укажите NEXT_PUBLIC_FINANCE_WEB_URL для ссылки.",
+    "uatHint": "Локальный UAT: завершите рейс с POD, проверьте приём событий в Finance worker, затем оформите таможню в Finance UI."
+  },
+  "fuelReport": {
+    "title": "Отчёт по топливу",
+    "subtitle": "Сводка по ТС (L-05)",
+    "trips": "Рейсы",
+    "from": "С",
+    "to": "По",
+    "total": "Итого",
+    "tripsCount": "{count} рейсов",
+    "plate": "Номер",
+    "trip": "Рейс",
+    "empty": "Нет данных по топливу за период."
+  },
+  "adminSettings": {
+    "title": "Параметры парка",
+    "subtitle": "UI playbook — список + ModalShell",
+    "trips": "Рейсы",
+    "fleetName": "Название парка",
+    "editFleet": "Изменить парк"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

@@ -40,7 +40,7 @@
 | doc/DOCUMENTATION-INDEX.md | x |
 | doc/clone-spec/01-finance-boundary.md billing note | x |
 
-## era-fb-pos
+## era-fnb-pos
 
 | Doc | HN-4 | HN-8 |
 |-----|:----:|:----:|
@@ -49,7 +49,7 @@
 | PRD.md §8 | if fix | x |
 | doc/DOCUMENTATION-INDEX.md | if touch | x |
 
-## era-365-orchestrator
+## era-orchestrator
 
 | Doc | HN-P |
 |-----|:----:|

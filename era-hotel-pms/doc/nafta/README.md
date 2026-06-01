@@ -9,9 +9,9 @@ Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full s
 | SAN-PKG | Medical package / Route To Board Folio | era-hotel-pms | HN-1 Stage 18 | US-01, US-05 |
 | PROC-SCHED | Spa Reservation List | era-hotel-pms | HN-2 PROC-SCHED | US-03, US-08 |
 | MEDICAL-REC | Guest medical card, Lab Test Results | era-clinic | HN-3 K5 | US-06, US-07 |
-| FB-POS | Restaurant room charge | era-fb-pos | HN-4 (regression) | Stage 17 |
+| FB-POS | Restaurant room charge | era-fnb-pos | HN-4 (regression) | Stage 17 |
 | FOLIO | Night audit / EOD | era-hotel-pms | HN-1 EOD | US-05 |
-| MDM | Global person / consent (future citizen portal) | era-365-orchestrator | HN-P | — |
+| MDM | Global person / consent (future citizen portal) | era-orchestrator | HN-P | — |
 
 ## Deferred (NotebookLM — beyond Wave 4)
 

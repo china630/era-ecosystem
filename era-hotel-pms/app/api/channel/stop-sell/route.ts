@@ -9,6 +9,7 @@ import {
   listStopSells,
   removeStopSell,
 } from '@/lib/services/channel.service';
+import { requireHotelModule } from '@/lib/hotel-module-gate';
 
 const createSchema = z.object({
   date: z.string().min(1),
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution');
     const url = new URL(request.url);
     const from = url.searchParams.get('from');
     const to = url.searchParams.get('to');
@@ -37,6 +39,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution');
     const body = createSchema.parse(await request.json());
     const row = await createStopSell({
       date: new Date(body.date),
@@ -53,6 +56,7 @@ export async function DELETE(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.CHANNEL_MANAGE);
+    await requireHotelModule('hotel_distribution');
     const id = new URL(request.url).searchParams.get('id');
     if (!id) throw new Error('id query param required');
     await removeStopSell(id);

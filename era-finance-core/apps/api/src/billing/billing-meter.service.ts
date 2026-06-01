@@ -1,5 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { BillingStatus, Prisma, TariffTier } from "@erafinance/database";
+import {
+  BillingStatus,
+  Prisma,
+  SubscriptionInvoiceStatus,
+  TariffTier,
+  UserRole,
+} from "@erafinance/database";
 import { Prisma as ControlPrisma } from "@era365/database";
 import { resolveOrganizationUuid } from "../common/organization-id.util";
 import { ControlPlanePrismaService } from "../control-plane/control-plane-prisma.service";
@@ -175,6 +181,7 @@ export class BillingMeterService {
     );
 
     if (spendReachedTierCeiling(spentAzn, ceiling)) {
+      await this.ensureIntradayTierInvoice(orgId, tier, ceiling, spentAzn);
       await this.prisma.organization.update({
         where: { id: orgId },
         data: { billingStatus: BillingStatus.SOFT_BLOCK },
@@ -217,6 +224,90 @@ export class BillingMeterService {
         billingStatus: BillingStatus.ACTIVE,
       },
     });
+  }
+
+  /**
+   * Idempotent same-day tier-ceiling invoice for owner (PRD §16.4 intraday).
+   */
+  async ensureIntradayTierInvoice(
+    organizationId: string,
+    tier: TariffTier,
+    ceilingAzn: number,
+    spentAzn: number,
+  ): Promise<void> {
+    const orgId = resolveOrganizationUuid(organizationId);
+    if (!orgId) return;
+
+    const ownerId = await this.resolveOwnerUserId(orgId);
+    if (!ownerId) return;
+
+    const periodKey = billingPeriodKeyBaku();
+    const intradayMarker = `Intraday tier ceiling ${tier} ${periodKey}`;
+
+    const existing = await this.prisma.subscriptionInvoice.findFirst({
+      where: {
+        userId: ownerId,
+        billingPeriod: periodKey,
+        items: {
+          some: {
+            organizationId: orgId,
+            description: { contains: intradayMarker },
+          },
+        },
+      },
+    });
+    if (existing) return;
+
+    const org = await this.prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { name: true },
+    });
+    const amountAzn = Math.max(0, Math.round(spentAzn * 100) / 100);
+    const now = new Date();
+    const periodStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
+    );
+    const periodEnd = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999),
+    );
+    const dateOnly = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+    );
+
+    await this.prisma.subscriptionInvoice.create({
+      data: {
+        userId: ownerId,
+        amount: new Prisma.Decimal(amountAzn),
+        status: SubscriptionInvoiceStatus.ISSUED,
+        date: dateOnly,
+        periodStart,
+        periodEnd,
+        billingPeriod: periodKey,
+        items: {
+          create: {
+            organizationId: orgId,
+            description: `${intradayMarker} — ${org?.name ?? orgId} (ceiling ${ceilingAzn} AZN)`,
+            amount: new Prisma.Decimal(amountAzn),
+          },
+        },
+      },
+    });
+    this.logger.log(
+      `Intraday tier invoice issued for org ${orgId} owner ${ownerId} (${amountAzn} AZN)`,
+    );
+  }
+
+  private async resolveOwnerUserId(organizationId: string): Promise<string | null> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { ownerId: true },
+    });
+    if (org?.ownerId) return org.ownerId;
+    const m = await this.prisma.organizationMembership.findFirst({
+      where: { organizationId, role: UserRole.OWNER },
+      orderBy: { joinedAt: "asc" },
+    });
+    return m?.userId ?? null;
   }
 
   async bumpTierAfterIntradayPayment(organizationId: string): Promise<void> {

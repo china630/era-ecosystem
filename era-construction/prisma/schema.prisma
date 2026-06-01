@@ -37,7 +37,61 @@ model Project {
   dailyLogs            DailyLog[]
   punchListItems       PunchListItem[]
   subcontractorClaims  SubcontractorClaim[]
+  projectTasks         ProjectTask[]
+  equipmentLogs        EquipmentLog[]
+  drawingRevisions     DrawingRevision[]
+  timesheetEntries     TimesheetEntry[]
   createdAt            DateTime              @default(now())
+}
+
+model ProjectTask {
+  id          String    @id @default(cuid())
+  projectId   String
+  name        String
+  startDate   DateTime  @db.Date
+  endDate     DateTime  @db.Date
+  dependsOnId String?
+  progressPct Int       @default(0)
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model EquipmentLog {
+  id           String   @id @default(cuid())
+  projectId    String
+  equipmentCode String
+  hours        Decimal  @db.Decimal(10, 2)
+  logDate      DateTime @db.Date
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([projectId, logDate])
+}
+
+model DrawingRevision {
+  id          String   @id @default(cuid())
+  projectId   String
+  drawingCode String
+  revision    String
+  fileName    String?
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@index([projectId, drawingCode])
+}
+
+model TimesheetEntry {
+  id         String   @id @default(cuid())
+  projectId  String
+  workerRef  String
+  hours      Decimal  @db.Decimal(10, 2)
+  workDate   DateTime @db.Date
+  source     String   @default("CSV")
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@index([projectId, workDate])
 }
 
 model DailyLog {
@@ -132,6 +186,7 @@ model User {
   id              String    @id @default(cuid())
   login           String    @unique
   email           String?
+  phone           String?   @unique
   fullName        String
   passwordHash    String
   roleId          String

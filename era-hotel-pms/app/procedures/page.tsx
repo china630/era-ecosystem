@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Plus } from 'lucide-react';
 import {
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
@@ -11,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -34,6 +36,8 @@ type Appointment = {
 };
 type Reservation = { id: string; guest: { fullName: string }; status: string; room: { roomNumber: string } | null };
 
+const bookFormId = 'book-procedure-form';
+
 export default function ProceduresPage() {
   const { can } = useAuth();
   const t = useTranslations('procedures');
@@ -47,6 +51,8 @@ export default function ProceduresPage() {
   const [placeCode, setPlaceCode] = useState('SPA-1');
   const [startAt, setStartAt] = useState('');
   const [msg, setMsg] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [procRes, resRes] = await Promise.all([
@@ -65,6 +71,15 @@ export default function ProceduresPage() {
     load();
   }, [load]);
 
+  function openBookModal() {
+    setReservationId('');
+    setStaffName('Dr. Hasanova');
+    setPlaceCode('SPA-1');
+    setStartAt('');
+    if (services[0]?.id) setServiceId(services[0].id);
+    setModalOpen(true);
+  }
+
   if (!can(PERMISSIONS.MEDICAL_MANAGE)) {
     return (
       <AppShell>
@@ -73,11 +88,13 @@ export default function ProceduresPage() {
     );
   }
 
-  async function book() {
+  async function book(e: React.FormEvent) {
+    e.preventDefault();
     if (!reservationId || !serviceId || !startAt) {
       setMsg(t('missingFields'));
       return;
     }
+    setBusy(true);
     const start = new Date(startAt);
     const svc = services.find((s) => s.id === serviceId);
     const end = new Date(start.getTime() + (svc?.durationMin ?? 30) * 60000);
@@ -94,8 +111,12 @@ export default function ProceduresPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('booked') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (res.ok) {
+      setModalOpen(false);
+      await load();
+    }
   }
 
   async function finish(id: string, action: 'finish' | 'no_show') {
@@ -119,61 +140,17 @@ export default function ProceduresPage() {
 
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <StatusMessage>{msg}</StatusMessage>
-
-      <PageSection>
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('bookSlot')}</h2>
-        <div className={`${FORM_STACK_CLASS} max-w-xl`}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-            >
-              <option value="">{tc('select')}</option>
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('service')}</label>
-            <select className={MODAL_INPUT_CLASS} value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.code} — {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('staff')}</label>
-              <input className={MODAL_INPUT_CLASS} value={staffName} onChange={(e) => setStaffName(e.target.value)} />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('place')}</label>
-              <input className={MODAL_INPUT_CLASS} value={placeCode} onChange={(e) => setPlaceCode(e.target.value)} />
-            </div>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('startAt')}</label>
-            <input
-              type="datetime-local"
-              className={MODAL_INPUT_CLASS}
-              value={startAt}
-              onChange={(e) => setStartAt(e.target.value)}
-            />
-          </div>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={book}>
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openBookModal}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t('book')}
           </button>
-        </div>
-      </PageSection>
+        }
+      />
+      <StatusMessage>{msg}</StatusMessage>
 
       <PageSection>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('schedule')}</h2>
@@ -225,6 +202,69 @@ export default function ProceduresPage() {
           </table>
         </div>
       </PageSection>
+
+      <EraModal
+        open={modalOpen}
+        title={t('bookSlot')}
+        onClose={() => setModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={bookFormId}
+            onCancel={() => setModalOpen(false)}
+            busy={busy}
+            submitLabel={t('book')}
+          />
+        }
+      >
+        <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
+            <select
+              className={MODAL_INPUT_CLASS}
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+              required
+            >
+              <option value="">{tc('select')}</option>
+              {reservations.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('service')}</label>
+            <select className={MODAL_INPUT_CLASS} value={serviceId} onChange={(e) => setServiceId(e.target.value)} required>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.code} — {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('staff')}</label>
+              <input className={MODAL_INPUT_CLASS} value={staffName} onChange={(e) => setStaffName(e.target.value)} />
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('place')}</label>
+              <input className={MODAL_INPUT_CLASS} value={placeCode} onChange={(e) => setPlaceCode(e.target.value)} />
+            </div>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('startAt')}</label>
+            <input
+              type="datetime-local"
+              className={MODAL_INPUT_CLASS}
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              required
+            />
+          </div>
+        </form>
+      </EraModal>
     </AppShell>
   );
 }

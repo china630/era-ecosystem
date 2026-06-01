@@ -8,7 +8,6 @@ export function isPublicWebPath(pathname: string): boolean {
   if (pathname === "/auth/cp-handoff") return true;
   if (pathname === "/register") return true;
   if (pathname === "/register-org") return true;
-  if (pathname === "/help") return true;
   if (pathname === "/pricing") return true;
   if (pathname.startsWith("/dispute/")) return true;
   if (pathname.startsWith("/verify/")) return true;
@@ -21,7 +20,7 @@ export function isPublicWebPath(pathname: string): boolean {
 /** Routes rendered without ERP `AppShell` chrome. */
 export function isBarePublicWebPath(pathname: string): boolean {
   if (pathname === "/") return true;
-  if (pathname === "/help") return true;
+  if (pathname === "/login") return true;
   if (pathname === "/pricing") return true;
   if (pathname.startsWith("/portal")) return true;
   if (pathname.startsWith("/verify/")) return true;

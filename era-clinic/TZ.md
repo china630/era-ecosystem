@@ -7,7 +7,7 @@ Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CLINIC
 | Layer | Choice |
 |-------|--------|
 | Runtime | Next.js 15, Prisma 6, PostgreSQL `era_clinic` |
-| Port | 3306 · Host `clinic.era.az` |
+| Port | 3306 · Host `clinic.era-365.online` |
 | Entitlement | `industry_clinic` |
 
 ## Data model (K1 target)

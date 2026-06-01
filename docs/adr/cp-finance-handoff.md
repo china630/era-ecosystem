@@ -5,7 +5,7 @@
 
 ## Context
 
-Orchestrator is the single platform entry (`:3100`). Finance remains the data plane for GL, holding, and NAS. Platform users open Finance from the Orch home tile without a second password when `ERA_AUTH_MODE=control-plane`.
+Orchestrator is the single platform entry (`:3000` web, `:4000` API). Finance remains the data plane for GL, holding, and NAS. Platform users open Finance from the Orch home tile without a second password when `ERA_AUTH_MODE=control-plane`.
 
 ## Decision
 

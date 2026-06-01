@@ -1,102 +1,197 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DATA_TABLE_VIEWPORT_CLASS } from '@era/satellite-kit/ui';
+import { useTranslations } from 'next-intl';
+import { ColorLegend } from '@era/satellite-kit/ui';
+import { RoomPlanBar } from '@/components/room-plan/RoomPlanBar';
+import {
+  barLayoutOffset,
+  calendarDateKey,
+  computePlacedBars,
+  parseCalendarDate,
+} from '@/components/room-plan/shapes';
+import type {
+  ReservationStatus,
+  RoomPlanGroup,
+  RoomPlanReservationBar,
+  RoomPlanRoom,
+} from '@/components/room-plan/types';
 
-type ReservationStatus =
-  | 'OPTION'
-  | 'CONFIRMED'
-  | 'IN_HOUSE'
-  | 'CHECKED_OUT'
-  | 'CANCELLED'
-  | 'NO_SHOW';
+export type {
+  ReservationStatus,
+  RoomPlanGroup,
+  RoomPlanReservationBar,
+  RoomPlanRoom,
+  RoomStatus,
+} from '@/components/room-plan/types';
 
-type RoomStatus =
-  | 'AVAILABLE'
-  | 'OCCUPIED'
-  | 'DIRTY'
-  | 'CLEAN'
-  | 'INSPECTED'
-  | 'OOO'
-  | 'OOS'
-  | 'MAINTENANCE';
+const ROOM_COL_W = 120;
+const DAY_MIN_W = 52;
+const ROW_H = 36;
 
-interface Room {
-  id: string;
-  roomNumber: string;
-  floor: number;
-  status: RoomStatus;
-  roomType: { code: string };
-}
-
-interface ReservationBar {
-  id: string;
-  roomId: string | null;
-  checkInDate: string;
-  checkOutDate: string;
-  status: ReservationStatus;
-  guest: { fullName: string };
-  roomType: { code: string };
-}
-
-const statusBarStyles: Record<ReservationStatus, string> = {
-  CONFIRMED: 'bg-[#2980B9]/15 border-[#2980B9]/50 text-[#34495E]',
-  IN_HOUSE: 'bg-amber-50 border-amber-400/60 text-amber-900',
-  OPTION: 'bg-[#F1F5F9] border-[#D5DADF] text-[#7F8C8D]',
-  CHECKED_OUT: 'bg-[#EBEDF0] border-[#D5DADF] text-[#7F8C8D]',
-  CANCELLED: 'bg-[#F1F5F9] border-[#D5DADF] text-[#7F8C8D]',
-  NO_SHOW: 'bg-rose-50 border-rose-400/60 text-rose-800',
+const statusSwatch: Record<ReservationStatus, string> = {
+  CONFIRMED: 'bg-[#2980B9]',
+  IN_HOUSE: 'bg-amber-500',
+  OPTION: 'bg-slate-300',
+  CHECKED_OUT: 'bg-neutral-400',
+  CANCELLED: 'bg-rose-500',
+  NO_SHOW: 'bg-rose-600',
 };
 
-function parseDay(iso: string): Date {
-  const d = new Date(iso);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function gridCols(days: number): string {
+  return `${ROOM_COL_W}px repeat(${days}, minmax(${DAY_MIN_W}px, 1fr))`;
 }
 
-function daysBetween(from: Date, to: Date): number {
-  return Math.round((to.getTime() - from.getTime()) / 86400000);
+function stickyRoomClass(extra = '') {
+  return `sticky left-0 z-10 border-r border-[#D5DADF] bg-inherit ${extra}`;
 }
 
-function nightCount(checkIn: Date, checkOut: Date): number {
-  return Math.max(1, daysBetween(checkIn, checkOut));
+function RoomLabelCell({ room }: { room: RoomPlanRoom }) {
+  const isOoo = room.status === 'OOO' || room.status === 'OOS';
+  return (
+    <div
+      className={`${stickyRoomClass(isOoo ? 'bg-red-50 text-red-800' : 'bg-white')} flex flex-col justify-center border-t border-[#D5DADF] px-2 py-1`}
+      style={{ minHeight: ROW_H }}
+    >
+      <span className="text-[13px] font-medium leading-tight">{room.roomNumber}</span>
+      <span className="text-[10px] leading-tight text-[#7F8C8D]">
+        fl.{room.floor} · {room.roomType.code}
+      </span>
+    </div>
+  );
 }
 
-interface PlacedBar {
-  reservation: ReservationBar;
-  colStart: number;
-  span: number;
+function TimelineCells({
+  from,
+  days,
+  room,
+  roomBars,
+  selectedId,
+  onSelect,
+  onResizeEnd,
+  onMoveReservation,
+}: {
+  from: Date;
+  days: number;
+  room: RoomPlanRoom;
+  roomBars: RoomPlanReservationBar[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
+  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+}) {
+  const isOoo = room.status === 'OOO' || room.status === 'OOS';
+  const placed = computePlacedBars(from, days, roomBars);
+  const dayBg = isOoo ? 'bg-red-50/80' : 'bg-white';
+
+  return (
+    <div
+      className="relative border-t border-[#D5DADF]"
+      style={{
+        gridColumn: `2 / span ${days}`,
+        minHeight: ROW_H,
+      }}
+      onDragOver={(e) => {
+        if (!onMoveReservation) return;
+        e.preventDefault();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const resId = e.dataTransfer.getData('reservationId');
+        if (resId && onMoveReservation) onMoveReservation(resId, room.id);
+      }}
+    >
+      <div
+        className="grid h-full w-full"
+        style={{ gridTemplateColumns: `repeat(${days}, minmax(${DAY_MIN_W}px, 1fr))` }}
+      >
+        {Array.from({ length: days }, (_, i) => (
+          <div key={`${room.id}-d-${i}`} className={`border-r border-[#D5DADF]/50 ${dayBg}`} />
+        ))}
+      </div>
+      {placed.map((cell) => {
+        const bar = cell.reservation;
+        const { leftPct, widthPct } = barLayoutOffset(days, cell);
+        return (
+          <div
+            key={bar.id}
+            className="absolute inset-y-0 z-[2] flex items-center py-0.5"
+            style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+          >
+            <RoomPlanBar
+              bar={bar}
+              shape={{
+                turnoverStart: cell.turnoverStart,
+                turnoverEnd: cell.turnoverEnd,
+                sameDayStay: cell.sameDayStay,
+              }}
+              selected={selectedId === bar.id}
+              draggable={Boolean(onResizeEnd || onMoveReservation)}
+              onSelect={() => onSelect(selectedId === bar.id ? null : bar.id)}
+              onDragStart={(e) => {
+                if (!onMoveReservation && !onResizeEnd) return;
+                e.dataTransfer.setData('reservationId', bar.id);
+              }}
+              onDragEnd={(e) => {
+                if (!onResizeEnd) return;
+                const row = e.currentTarget.parentElement?.parentElement;
+                if (!row) return;
+                const rect = row.getBoundingClientRect();
+                const relX = e.clientX - rect.left;
+                const dayWidth = rect.width / days;
+                const endCol = Math.min(
+                  days,
+                  Math.max(cell.colStart + 1, Math.round(relX / Math.max(dayWidth, 1))),
+                );
+                const extraNights = endCol - cell.colStart - cell.span;
+                if (extraNights > 0) {
+                  const co = parseCalendarDate(bar.checkOutDate);
+                  co.setDate(co.getDate() + extraNights);
+                  onResizeEnd(bar.id, co.toISOString());
+                }
+              }}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function placeBarsForRoom(
-  from: Date,
-  days: number,
-  roomBars: ReservationBar[],
-): (PlacedBar | null)[] {
-  const cells: (PlacedBar | null)[] = Array(days).fill(null);
-
-  for (const r of roomBars) {
-    const ci = parseDay(r.checkInDate);
-    const co = parseDay(r.checkOutDate);
-    let colStart = daysBetween(from, ci);
-    let span = nightCount(ci, co);
-    if (colStart < 0) {
-      span += colStart;
-      colStart = 0;
-    }
-    if (colStart >= days) continue;
-    span = Math.min(span, days - colStart);
-    if (span < 1) continue;
-
-    const placed: PlacedBar = { reservation: r, colStart, span };
-    if (cells[colStart] === null) {
-      cells[colStart] = placed;
-      for (let i = 1; i < span; i++) {
-        if (colStart + i < days) cells[colStart + i] = placed;
-      }
-    }
-  }
-  return cells;
+function RoomRow({
+  from,
+  days,
+  room,
+  barsByRoom,
+  selectedId,
+  onSelect,
+  onResizeEnd,
+  onMoveReservation,
+}: {
+  from: Date;
+  days: number;
+  room: RoomPlanRoom;
+  barsByRoom: Map<string, RoomPlanReservationBar[]>;
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
+  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
+}) {
+  return (
+    <>
+      <RoomLabelCell room={room} />
+      <TimelineCells
+        from={from}
+        days={days}
+        room={room}
+        roomBars={barsByRoom.get(room.id) ?? []}
+        selectedId={selectedId}
+        onSelect={onSelect}
+        onResizeEnd={onResizeEnd}
+        onMoveReservation={onMoveReservation}
+      />
+    </>
+  );
 }
 
 export default function RoomPlanGrid({
@@ -104,30 +199,40 @@ export default function RoomPlanGrid({
   days,
   rooms,
   reservations,
+  availabilityByDay,
+  groups,
   selectedId,
   onSelect,
+  onResizeEnd,
+  onMoveReservation,
 }: {
   fromIso: string;
   days: number;
-  rooms: Room[];
-  reservations: ReservationBar[];
+  rooms: RoomPlanRoom[];
+  reservations: RoomPlanReservationBar[];
+  availabilityByDay?: Record<string, number>;
+  groups?: RoomPlanGroup[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  onResizeEnd?: (reservationId: string, newCheckOutIso: string) => void;
+  onMoveReservation?: (reservationId: string, toRoomId: string) => void;
 }) {
-  const from = useMemo(() => parseDay(fromIso), [fromIso]);
+  const t = useTranslations('roomPlan');
+  const tRes = useTranslations('reservationStatus');
+  const from = useMemo(() => parseCalendarDate(fromIso), [fromIso]);
 
   const dateHeaders = useMemo(() => {
+    const base = parseCalendarDate(fromIso);
     const headers: string[] = [];
     for (let i = 0; i < days; i++) {
-      const d = new Date(from);
-      d.setDate(d.getDate() + i);
-      headers.push(d.toISOString().slice(0, 10));
+      const d = new Date(base.getTime() + i * 86400000);
+      headers.push(calendarDateKey(d.toISOString()));
     }
     return headers;
-  }, [from, days]);
+  }, [fromIso, days]);
 
   const barsByRoom = useMemo(() => {
-    const map = new Map<string, ReservationBar[]>();
+    const map = new Map<string, RoomPlanReservationBar[]>();
     for (const r of reservations) {
       if (!r.roomId) continue;
       const list = map.get(r.roomId) ?? [];
@@ -137,83 +242,114 @@ export default function RoomPlanGrid({
     return map;
   }, [reservations]);
 
-  const colTemplate = `120px repeat(${days}, minmax(52px, 1fr))`;
+  const avail = availabilityByDay ?? {};
+  const cols = gridCols(days);
+  const minTableW = ROOM_COL_W + days * DAY_MIN_W;
+
+  const legendItems = (Object.keys(statusSwatch) as ReservationStatus[]).map((status) => ({
+    id: status,
+    label: tRes(status),
+    swatchClassName: statusSwatch[status],
+  }));
+
+  const renderRoomBlock = (roomList: RoomPlanRoom[]) =>
+    roomList.map((room) => (
+      <div key={room.id} className="contents">
+        <RoomRow
+          from={from}
+          days={days}
+          room={room}
+          barsByRoom={barsByRoom}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          onResizeEnd={onResizeEnd}
+          onMoveReservation={onMoveReservation}
+        />
+      </div>
+    ));
 
   return (
-    <div className={DATA_TABLE_VIEWPORT_CLASS}>
-      <div className="min-w-max">
-        <div className="grid gap-px bg-[#D5DADF] text-xs" style={{ gridTemplateColumns: colTemplate }}>
-          <div className="sticky left-0 z-20 bg-[#F8FAFC] px-2 py-2 text-[13px] font-semibold text-[#34495E]">
-            Room
+    <div className="w-full space-y-3">
+      <ColorLegend
+        ariaLabel={t('legendAria')}
+        items={[
+          ...legendItems,
+          { id: 'ooo', label: t('legendOoo'), swatchClassName: 'bg-red-600' },
+          {
+            id: 'turnover',
+            label: t('legendTurnover'),
+            swatchClassName: 'bg-[#2980B9]',
+          },
+        ]}
+      />
+      <div className="w-full overflow-x-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm">
+        <div
+          className="grid w-full"
+          style={{
+            gridTemplateColumns: cols,
+            minWidth: minTableW,
+          }}
+        >
+          <div
+            className={`${stickyRoomClass('z-20 bg-[#F8FAFC]')} flex items-center border-b border-[#D5DADF] px-2 text-[13px] font-semibold text-[#34495E]`}
+            style={{ minHeight: ROW_H }}
+          >
+            {t('roomColumn')}
           </div>
           {dateHeaders.map((d) => (
-            <div key={d} className="bg-[#F8FAFC] px-1 py-2 text-center text-[13px] text-[#7F8C8D]">
+            <div
+              key={d}
+              className="flex items-center justify-center border-b border-r border-[#D5DADF]/50 bg-[#F8FAFC] px-1 text-center text-[13px] text-[#7F8C8D]"
+              style={{ minHeight: ROW_H }}
+            >
               {d.slice(5)}
             </div>
           ))}
 
-          {rooms.map((room) => {
-            const isOoo = room.status === 'OOO' || room.status === 'OOS';
-            const roomBars = barsByRoom.get(room.id) ?? [];
-            const cells = placeBarsForRoom(from, days, roomBars);
-            const rendered = new Set<string>();
+          <div
+            className={`${stickyRoomClass('z-20 bg-[#EBF5FB]')} flex items-center border-b border-[#D5DADF] px-2 text-[11px] font-medium text-[#2980B9]`}
+            style={{ minHeight: ROW_H }}
+          >
+            {t('availability')}
+          </div>
+          {dateHeaders.map((d) => (
+            <div
+              key={`avail-${d}`}
+              className="flex items-center justify-center border-b border-r border-[#D5DADF]/50 bg-[#EBF5FB] py-1 text-center text-[11px] font-semibold text-[#2980B9]"
+              style={{ minHeight: ROW_H }}
+            >
+              {avail[d] ?? '—'}
+            </div>
+          ))}
 
-            return (
-              <div key={room.id} className="contents">
-                <div
-                  className={`sticky left-0 z-10 flex flex-col justify-center border-t border-[#D5DADF] px-2 py-2 ${
-                    isOoo ? 'bg-[#EBEDF0] text-[#7F8C8D]' : 'bg-white'
-                  }`}
-                >
-                  <span className="font-medium text-[#34495E]">{room.roomNumber}</span>
-                  <span className="text-[#7F8C8D]">
-                    fl.{room.floor} · {room.roomType.code}
-                    {isOoo && ` · ${room.status}`}
-                  </span>
-                </div>
-                {cells.map((cell, colIdx) => {
-                  if (cell && cell.colStart !== colIdx) {
-                    return (
-                      <div
-                        key={`${room.id}-skip-${colIdx}`}
-                        className={`min-h-[44px] border-t border-[#D5DADF] ${isOoo ? 'bg-[#EBEDF0]/80' : 'bg-white'}`}
-                      />
-                    );
-                  }
-                  if (cell && !rendered.has(cell.reservation.id)) {
-                    rendered.add(cell.reservation.id);
-                    const bar = cell.reservation;
-                    const selected = selectedId === bar.id;
-                    return (
-                      <div
-                        key={`${room.id}-bar-${bar.id}`}
-                        className={`flex min-h-[44px] items-stretch border-t border-[#D5DADF] p-0.5 ${isOoo ? 'bg-[#EBEDF0]/80' : 'bg-[#F8FAFC]'}`}
-                        style={{ gridColumn: `span ${cell.span}` }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => onSelect(selected ? null : bar.id)}
-                          onDoubleClick={() => window.location.assign(`/folio/${bar.id}`)}
-                          className={`w-full truncate rounded-lg border px-1 py-1 text-left text-[10px] ${statusBarStyles[bar.status]} ${selected ? 'ring-2 ring-[#2980B9]' : ''}`}
-                          title={`${bar.guest.fullName} — double-click folio`}
-                        >
-                          {bar.guest.fullName}
-                        </button>
-                      </div>
-                    );
-                  }
-                  return (
+          {groups
+            ? groups.map((g) => (
+                <div key={g.key} className="contents">
+                  <div
+                    className={`${stickyRoomClass('bg-[#2980B9]/10')} border-t border-[#2980B9]/30 px-2 py-1.5 text-[12px] font-semibold text-[#2980B9]`}
+                    style={{ gridColumn: '1 / -1', minHeight: ROW_H }}
+                  >
+                    {g.label} ({g.roomCount})
+                  </div>
+                  <div
+                    className={`${stickyRoomClass('bg-[#F8FAFC]')} flex items-center border-t border-[#D5DADF] px-2 text-[10px] text-[#7F8C8D]`}
+                    style={{ minHeight: ROW_H }}
+                  >
+                    {t('availability')}
+                  </div>
+                  {dateHeaders.map((d) => (
                     <div
-                      key={`${room.id}-empty-${colIdx}`}
-                      className={`min-h-[44px] border-t border-[#D5DADF] ${
-                        isOoo ? 'bg-[#EBEDF0]/80' : 'bg-white'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-            );
-          })}
+                      key={`${g.key}-avail-${d}`}
+                      className="flex items-center justify-center border-t border-r border-[#D5DADF]/50 bg-[#F8FAFC] text-[10px] font-medium text-[#7F8C8D]"
+                      style={{ minHeight: ROW_H }}
+                    >
+                      {g.availabilityByDay[d] ?? '—'}
+                    </div>
+                  ))}
+                  {renderRoomBlock(g.rooms)}
+                </div>
+              ))
+            : renderRoomBlock(rooms)}
         </div>
       </div>
     </div>

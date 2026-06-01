@@ -1,6 +1,8 @@
 -- Risk & Compliance (ERM) system-generated alerts
 -- Idempotent: safe if enums/table were created earlier (e.g. db push or partial apply).
 
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 DO $t$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'RiskAuditType') THEN
     CREATE TYPE "RiskAuditType" AS ENUM ('TAX', 'FRAUD', 'COMPLIANCE');
@@ -51,7 +53,9 @@ CREATE INDEX IF NOT EXISTS "risk_audits_org_status_sev_idx" ON "risk_audits"("or
 CREATE INDEX IF NOT EXISTS "risk_audits_org_type_idx" ON "risk_audits"("organization_id", "type");
 
 DO $t$ BEGIN
-  ALTER TABLE "risk_audits" ADD CONSTRAINT "risk_audits_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  IF to_regclass('public.organizations') IS NOT NULL THEN
+    ALTER TABLE "risk_audits" ADD CONSTRAINT "risk_audits_organization_id_fkey" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $t$;

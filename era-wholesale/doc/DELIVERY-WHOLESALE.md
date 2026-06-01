@@ -45,4 +45,4 @@ Client: `@era/satellite-kit`.
 
 ## Planned — v1.1
 
-- [ ] M7: EDI / buyer API export
+- [x] M7: EDI / buyer API export

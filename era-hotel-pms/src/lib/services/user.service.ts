@@ -53,9 +53,13 @@ export async function createUser(input: {
   });
 }
 
-export async function getUserByLogin(login: string) {
-  return prisma.user.findUnique({
-    where: { login },
+export async function getUserByLogin(credential: string) {
+  const id = credential.trim();
+  if (!id) return null;
+  return prisma.user.findFirst({
+    where: {
+      OR: [{ login: id }, { email: id }, { phone: id }],
+    },
     include: { role: true },
   });
 }

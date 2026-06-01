@@ -145,27 +145,16 @@ export async function issueFolioInvoice(folioId: string) {
   );
   let payUrl: string | undefined;
   if (organizationId && amountAzn > 0) {
-    const { runPlatformCommerceHooks } = await import('@era/satellite-kit');
-    const hooks = await runPlatformCommerceHooks({
-      organizationId,
-      portal: { entityType: 'folio', entityId: folioId },
-      payment: {
-        amountAzn,
-        sourceEntityType: 'fiscal_document',
-        sourceEntityId: doc.id,
-        description: `Invoice ${invoiceNumber}`,
-      },
-      delivery: {
-        sourceEntityType: 'fiscal_document',
-        sourceEntityId: doc.id,
-        externalRef: folioId,
-      },
-      loyalty: {
-        code: `HOTEL-FOLIO-${doc.id.slice(0, 8)}`,
-        name: 'Hotel folio promotion',
-        discountValue: 5,
-        metadata: { folioId, fiscalDocumentId: doc.id },
-      },
+    const { runHotelFolioPlatformHooks } = await import(
+      '@/lib/integration/platform-commerce'
+    );
+    const hooks = await runHotelFolioPlatformHooks({
+      folioId,
+      amountAzn,
+      sourceEntityType: 'fiscal_document',
+      sourceEntityId: doc.id,
+      description: `Invoice ${invoiceNumber}`,
+      guestPhone: folio.reservation.guest.phone,
     });
     payUrl = hooks.payUrl;
   }

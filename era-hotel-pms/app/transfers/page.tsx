@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Plus } from 'lucide-react';
 import {
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
@@ -11,6 +12,7 @@ import {
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { PageHeader } from '@era/satellite-kit/ui';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -48,6 +50,8 @@ type Reservation = {
   room: { roomNumber: string } | null;
 };
 
+const bookFormId = 'book-transfer-form';
+
 export default function TransfersPage() {
   const { can } = useAuth();
   const t = useTranslations('transfers');
@@ -63,6 +67,8 @@ export default function TransfersPage() {
   const [notes, setNotes] = useState('');
   const [assignVehicleId, setAssignVehicleId] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     const [transferRes, resRes] = await Promise.all([
@@ -80,6 +86,16 @@ export default function TransfersPage() {
     load();
   }, [load]);
 
+  function openBookModal() {
+    setReservationId('');
+    setDirection('IN');
+    setFlightNo('');
+    setPickupAt('');
+    setPrice('35');
+    setNotes('');
+    setModalOpen(true);
+  }
+
   if (!can(PERMISSIONS.RESERVATIONS_WRITE)) {
     return (
       <AppShell>
@@ -88,11 +104,13 @@ export default function TransfersPage() {
     );
   }
 
-  async function book() {
+  async function book(e: React.FormEvent) {
+    e.preventDefault();
     if (!reservationId || !pickupAt || !price) {
       setMsg(t('missingFields'));
       return;
     }
+    setBusy(true);
     const res = await fetch('/api/transfers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,8 +124,12 @@ export default function TransfersPage() {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('booked') : data.error ?? tc('error'));
-    if (res.ok) await load();
+    if (res.ok) {
+      setModalOpen(false);
+      await load();
+    }
   }
 
   async function assign(orderId: string) {
@@ -139,75 +161,17 @@ export default function TransfersPage() {
 
   return (
     <AppShell>
-      <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <StatusMessage>{msg}</StatusMessage>
-
-      <PageSection>
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('bookTransfer')}</h2>
-        <div className={`${FORM_STACK_CLASS} max-w-xl`}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={reservationId}
-              onChange={(e) => setReservationId(e.target.value)}
-            >
-              <option value="">{tc('select')}</option>
-              {reservations.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('direction')}</label>
-              <select
-                className={MODAL_INPUT_CLASS}
-                value={direction}
-                onChange={(e) => setDirection(e.target.value as 'IN' | 'OUT')}
-              >
-                <option value="IN">{t('directionIn')}</option>
-                <option value="OUT">{t('directionOut')}</option>
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('flightNo')}</label>
-              <input className={MODAL_INPUT_CLASS} value={flightNo} onChange={(e) => setFlightNo(e.target.value)} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('pickupAt')}</label>
-              <input
-                type="datetime-local"
-                className={MODAL_INPUT_CLASS}
-                value={pickupAt}
-                onChange={(e) => setPickupAt(e.target.value)}
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('price')}</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                className={MODAL_INPUT_CLASS}
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('notes')}</label>
-            <input className={MODAL_INPUT_CLASS} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={book}>
+      <PageHeader
+        title={t('title')}
+        subtitle={t('subtitle')}
+        actions={
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openBookModal}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t('book')}
           </button>
-        </div>
-      </PageSection>
+        }
+      />
+      <StatusMessage>{msg}</StatusMessage>
 
       <PageSection>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('schedule')}</h2>
@@ -286,6 +250,84 @@ export default function TransfersPage() {
           </table>
         </div>
       </PageSection>
+
+      <EraModal
+        open={modalOpen}
+        title={t('bookTransfer')}
+        onClose={() => setModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={bookFormId}
+            onCancel={() => setModalOpen(false)}
+            busy={busy}
+            submitLabel={t('book')}
+          />
+        }
+      >
+        <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('guestStay')}</label>
+            <select
+              className={MODAL_INPUT_CLASS}
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+              required
+            >
+              <option value="">{tc('select')}</option>
+              {reservations.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.guest.fullName} · {r.room?.roomNumber ?? '—'}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('direction')}</label>
+              <select
+                className={MODAL_INPUT_CLASS}
+                value={direction}
+                onChange={(e) => setDirection(e.target.value as 'IN' | 'OUT')}
+              >
+                <option value="IN">{t('directionIn')}</option>
+                <option value="OUT">{t('directionOut')}</option>
+              </select>
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('flightNo')}</label>
+              <input className={MODAL_INPUT_CLASS} value={flightNo} onChange={(e) => setFlightNo(e.target.value)} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('pickupAt')}</label>
+              <input
+                type="datetime-local"
+                className={MODAL_INPUT_CLASS}
+                value={pickupAt}
+                onChange={(e) => setPickupAt(e.target.value)}
+                required
+              />
+            </div>
+            <div className={FORM_FIELD_GROUP_CLASS}>
+              <label className={MODAL_FIELD_LABEL_CLASS}>{t('price')}</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                className={MODAL_INPUT_CLASS}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('notes')}</label>
+            <input className={MODAL_INPUT_CLASS} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </div>
+        </form>
+      </EraModal>
     </AppShell>
   );
 }

@@ -100,14 +100,26 @@ function PosBridgeTestModal({
   );
 }
 
-function E6Simulator({ onDone }: { onDone: () => void }) {
+function E6SimulatorModal({
+  open,
+  onClose,
+  onDone,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const t = useTranslations('integration');
   const tc = useTranslations('common');
   const [invoiceRef, setInvoiceRef] = useState('');
   const [status, setStatus] = useState('accepted');
   const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const formId = 'e6-simulator-form';
 
-  async function send() {
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
     setMsg(null);
     const res = await fetch('/api/integration/erp/simulate', {
       method: 'POST',
@@ -120,28 +132,54 @@ function E6Simulator({ onDone }: { onDone: () => void }) {
       }),
     });
     const data = await res.json();
+    setBusy(false);
     setMsg(res.ok ? t('e6Applied', { status: data.document?.fiscalStatus }) : data.error ?? tc('failed'));
-    if (res.ok) onDone();
+    if (res.ok) {
+      onDone();
+      onClose();
+    }
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <input
-        placeholder={t('invoiceRefPlaceholder')}
-        className={`min-w-[16rem] flex-1 ${MODAL_INPUT_CLASS}`}
-        value={invoiceRef}
-        onChange={(e) => setInvoiceRef(e.target.value)}
-      />
-      <select className={MODAL_INPUT_CLASS} value={status} onChange={(e) => setStatus(e.target.value)}>
-        <option value="sent">{t('fiscalSent')}</option>
-        <option value="accepted">{t('fiscalAccepted')}</option>
-        <option value="rejected">{t('fiscalRejected')}</option>
-      </select>
-      <button type="button" onClick={send} className={PRIMARY_BUTTON_CLASS}>
-        {t('sendE6')}
-      </button>
-      {msg && <span className="w-full text-[13px] text-[#7F8C8D]">{msg}</span>}
-    </div>
+    <EraModal
+      open={open}
+      title={t('e6Title')}
+      onClose={onClose}
+      footer={
+        <EraModalFooter
+          formId={formId}
+          onCancel={onClose}
+          busy={busy}
+          submitLabel={t('sendE6')}
+        />
+      }
+    >
+      <form id={formId} onSubmit={send} className={FORM_STACK_CLASS}>
+        {msg && <p className="text-[13px] text-[#7F8C8D]">{msg}</p>}
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="e6-invoice">
+            {t('invoiceRefPlaceholder')}
+          </label>
+          <input
+            id="e6-invoice"
+            placeholder={t('invoiceRefPlaceholder')}
+            className={MODAL_INPUT_CLASS}
+            value={invoiceRef}
+            onChange={(e) => setInvoiceRef(e.target.value)}
+          />
+        </div>
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="e6-status">
+            {tc('status')}
+          </label>
+          <select id="e6-status" className={MODAL_INPUT_CLASS} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="sent">{t('fiscalSent')}</option>
+            <option value="accepted">{t('fiscalAccepted')}</option>
+            <option value="rejected">{t('fiscalRejected')}</option>
+          </select>
+        </div>
+      </form>
+    </EraModal>
   );
 }
 
@@ -242,6 +280,7 @@ export default function IntegrationAdminPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [posModalOpen, setPosModalOpen] = useState(false);
+  const [e6ModalOpen, setE6ModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [sRes, lRes, glRes] = await Promise.all([
@@ -459,7 +498,9 @@ export default function IntegrationAdminPage() {
       <PageSection className="mb-6">
         <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t('e6Title')}</h2>
         <p className="mb-3 text-[13px] text-[#7F8C8D]">{t('e6Hint')}</p>
-        <E6Simulator onDone={() => load()} />
+        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setE6ModalOpen(true)}>
+          {t('sendE6')}
+        </button>
       </PageSection>
 
       <PageSection className="mb-6">
@@ -530,6 +571,7 @@ export default function IntegrationAdminPage() {
       </PageSection>
 
       <PosBridgeTestModal open={posModalOpen} onClose={() => setPosModalOpen(false)} />
+      <E6SimulatorModal open={e6ModalOpen} onClose={() => setE6ModalOpen(false)} onDone={() => load()} />
     </AppShell>
   );
 }

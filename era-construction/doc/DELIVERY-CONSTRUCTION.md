@@ -44,7 +44,7 @@ PRD M6–M12 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 ## Planned — v1.1
 
-- [ ] M8: Gantt / CPM scheduling
-- [ ] M10: Site equipment / machine hours
-- [ ] M11: CDE / drawing versions
-- [ ] M12: Labor timesheets / SKUD
+- [x] M8: Gantt / CPM scheduling
+- [x] M10: Site equipment / machine hours
+- [x] M11: CDE / drawing versions
+- [x] M12: Labor timesheets / SKUD

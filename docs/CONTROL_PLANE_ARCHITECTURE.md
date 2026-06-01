@@ -1,6 +1,6 @@
 # Control plane architecture (ERA 365 Orchestrator)
 
-**Status:** CP-BILLING cutover in progress (2026-05). Billing API, referrals, early-access, and Super-Admin pricing run on **orchestrator**; Finance web routes billing calls via `/cp/v1/*`; Finance API `QuotaService` delegates to `POST /internal/v1/quota/assert`. ERP signup still creates local `organization_subscriptions` row until CP-BILLING-5.
+**Status:** CP-BILLING **done** (2026-05). Billing API, referrals, early-access, and Super-Admin pricing run on **orchestrator**; Finance web routes billing calls via `/cp/v1/*`; Finance API `QuotaService` delegates to `POST /internal/v1/quota/assert`. Cutover checklist: [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md).
 
 ## Why reorganize
 
@@ -13,7 +13,18 @@ ERA started as **Finance-only** — identity, subscription, billing, and entitle
 
 **Rule:** anything **cross-tenant, cross-satellite, or commercial** (billing, entitlements, platform add-ons, public pricing) → **orchestrator**. Finance keeps **ledger, documents, inventory, tax, and GL dispatch** for accounting events.
 
-See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-365-orchestrator/doc/adr/control-plane-billing-migration.md](../era-365-orchestrator/doc/adr/control-plane-billing-migration.md).
+### Commercial taxonomy (satellite vs module vs tier vs add-on)
+
+| Layer | What it is | Storage / keys |
+|-------|------------|----------------|
+| **Satellite** | Industry vertical app (launcher tile) | `industry_*` gate in `pricing_modules` (`catalog_kind = SATELLITE`) |
+| **Module** | Billable feature area inside a satellite or ERP | `hotel_*`, `inventory`, … (`catalog_kind = MODULE`; `satellite_key` FK for hotel) |
+| **Tier** | Resource limits (users, invoices, storage, WA, OCR) | `OrganizationSubscription.currentTier` + quota matrix |
+| **Add-on** | Cross-product platform service | `platform_*` (`catalog_kind = ADDON`) |
+
+Hotel PMS uses **9** submodule keys (`hotel_core`, `hotel_housekeeping`, …) — see [`adr/hotel-module-taxonomy.md`](./adr/hotel-module-taxonomy.md) and [`adr/orchestrator-satellite-vs-module.md`](./adr/orchestrator-satellite-vs-module.md).
+
+See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-orchestrator/doc/adr/control-plane-billing-migration.md](../era-orchestrator/doc/adr/control-plane-billing-migration.md).
 
 ---
 
@@ -21,8 +32,8 @@ See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-365-orchestrator/doc/
 
 ```text
                     ┌─────────────────────────────┐
-                    │   era-365-orchestrator      │
-                    │   (control plane :4100)     │
+                    │   era-orchestrator      │
+                    │   (control plane :4000)     │
                     ├─────────────────────────────┤
                     │ Identity · SSO · RBAC       │
                     │ Billing · entitlements      │
@@ -84,7 +95,9 @@ Timezone for billing period: **Asia/Baku** unless noted otherwise in TZ.
 | Platform monthly invoice generation | Finance cron | **Orchestrator** |
 | `billingStatus` SOFT/HARD block | Finance + CP `TenantBilling` | **Orchestrator** (enforce via entitlements validate) |
 | Pricing catalog (Foundation, modules, bundles) | Finance Super-Admin | **Orchestrator** admin API; Finance web may proxy UI temporarily |
-| Public pricing `GET /public/pricing` | Finance | **Orchestrator** |
+| Public pricing `GET /v1/public/pricing` + web `/pricing` | Finance (redirect) | **Orchestrator** |
+| Public FAQ `/help`, terms `/terms`, partner `/partner` | Split | **Orchestrator web** |
+| User/org registration web | Split | **Orchestrator web** (`?ref=` on register) |
 | Usage meter events | Finance `UsageMeterEvent` | **Orchestrator** (`usage_meter_events` in CP schema) |
 | Early access waitlist (optional) | Finance | **Orchestrator** marketing plane |
 | **Platform add-ons** | Partially Finance (WhatsApp quotas) | **Orchestrator** — see [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
@@ -122,7 +135,7 @@ Timezone for billing period: **Asia/Baku** unless noted otherwise in TZ.
 
 ## Database strategy
 
-Orchestrator CP schema (`era-365-orchestrator/packages/database`) already mirrors billing tables during migration (`tenant_billing`, `organization_modules`, `usage_meter_events`, …) with comment *“Shares PostgreSQL with era-finance-core during migration”*.
+Orchestrator CP schema (`era-orchestrator/packages/database`) already mirrors billing tables during migration (`tenant_billing`, `organization_modules`, `usage_meter_events`, …) with comment *“Shares PostgreSQL with era-finance-core during migration”*.
 
 **Phases:**
 
@@ -162,5 +175,5 @@ Contracts package: extend **`@era/contracts`** with platform event types and ent
 - [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md)
 - [MODULES_CATALOG.md](./MODULES_CATALOG.md)
 - [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md)
-- [era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md)
+- [era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md)
 - Finance [PRD.md](../era-finance-core/PRD.md) §7, §16 (billing detail until fully migrated)

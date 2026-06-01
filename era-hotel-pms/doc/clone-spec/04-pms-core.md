@@ -367,3 +367,7 @@ Pick-up: индивидуальные брони из block.
 ## Референс экранов
 
 WA0104–0107, WA0109–0110, WA0115–0117, WA0120–0121, WA0123–0127, WA0131, WA0150, WA0173–0174, WA0178–0179, WA0184, WA0188, WA0192, WA0206, WA0209, WA0212, WA0143, WA0169, WA0106.
+
+## ERA Wave B (ElectraWeb FO)
+
+Reservation Card pricing APIs, FO report routes: [../FRONT-OFFICE-ELECTRAWEB.md](../FRONT-OFFICE-ELECTRAWEB.md).

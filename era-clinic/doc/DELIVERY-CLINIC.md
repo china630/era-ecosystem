@@ -29,12 +29,12 @@ PRD: [../PRD.md](../PRD.md)
 - [x] Scheduling day view stub — `/scheduling` + `GET /api/scheduling/slots`
 - [x] Discount audit (K-13) — `VisitDiscountAudit`, `POST /api/visits/[id]/discount`
 - [x] Executive dashboard (K-14) — `/executive` + `GET /api/executive/summary` (`BUSINESS_OWNER`)
-- [ ] Multi-room schedule (drag reschedule — deferred MVP+)
+- [x] Multi-room schedule (drag reschedule) — см. Product modules M9 (v1.0)
 
 ## K4
 
-- [ ] LIS file import — **PLANNED (v1.1)** (not blocking portal/pay hooks)
-- [ ] Patient portal (deferred module M8)
+- [x] LIS file import — **v1.1** (M11)
+- [x] Patient portal (deferred module M8) — `/portal` + `/api/portal/session`
 
 ## K5 — Sanatorium bridge (Wave 3 Nafta)
 
@@ -81,7 +81,7 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
 ## Planned — v1.1
 
-- [ ] M10: EHR templates / CPOE lite
-- [ ] M11: LIS analyzer import
-- [ ] M12: Insurance / DMS eligibility
-- [ ] M13: Inpatient / bed management
+- [x] M10: EHR templates / CPOE lite
+- [x] M11: LIS analyzer import
+- [x] M12: Insurance / DMS eligibility
+- [x] M13: Inpatient / bed management

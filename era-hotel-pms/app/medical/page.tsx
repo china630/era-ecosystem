@@ -49,6 +49,7 @@ export default function MedicalPage() {
   const [orderType, setOrderType] = useState('LAB');
   const [msg, setMsg] = useState<string | null>(null);
   const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [labModalOpen, setLabModalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -70,6 +71,7 @@ export default function MedicalPage() {
   }, [load]);
 
   const alertFormId = 'create-alert-form';
+  const labOrderFormId = 'create-lab-order-form';
 
   async function createAlert(e: React.FormEvent) {
     e.preventDefault();
@@ -89,7 +91,9 @@ export default function MedicalPage() {
     await load();
   }
 
-  async function createOrder() {
+  async function createOrder(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
     const res = await fetch('/api/medical/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,6 +101,7 @@ export default function MedicalPage() {
     });
     const data = await res.json();
     if (!res.ok) {
+      setBusy(false);
       setMsg(data.error);
       return;
     }
@@ -112,7 +117,9 @@ export default function MedicalPage() {
       }),
     });
     const labData = await labRes.json();
+    setBusy(false);
     setMsg(labRes.ok ? t('orderLabResult', { test: labData.testName }) : labData.error);
+    if (labRes.ok) setLabModalOpen(false);
     await load();
   }
 
@@ -163,21 +170,10 @@ export default function MedicalPage() {
       </PageSection>
 
       <PageSection className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('orderLab')}</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={reservationId}
-            onChange={(e) => setReservationId(e.target.value)}
-          >
-            {reservations.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.guest.fullName} ({tRes(r.status as 'IN_HOUSE')})
-              </option>
-            ))}
-          </select>
-          <input className={MODAL_INPUT_CLASS} value={orderType} onChange={(e) => setOrderType(e.target.value)} />
-          <button type="button" onClick={createOrder} className={PRIMARY_BUTTON_CLASS}>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('orderLab')}</h2>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setLabModalOpen(true)}>
+            <Plus className="h-4 w-4" aria-hidden />
             {t('createOrderLab')}
           </button>
         </div>
@@ -234,6 +230,52 @@ export default function MedicalPage() {
               className={MODAL_INPUT_CLASS}
               value={alertMsg}
               onChange={(e) => setAlertMsg(e.target.value)}
+            />
+          </div>
+        </form>
+      </EraModal>
+
+      <EraModal
+        open={labModalOpen}
+        title={t('orderLab')}
+        onClose={() => setLabModalOpen(false)}
+        footer={
+          <EraModalFooter
+            formId={labOrderFormId}
+            onCancel={() => setLabModalOpen(false)}
+            busy={busy}
+            submitLabel={t('createOrderLab')}
+          />
+        }
+      >
+        <form id={labOrderFormId} onSubmit={createOrder} className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="lab-reservation">
+              {tc('guest')}
+            </label>
+            <select
+              id="lab-reservation"
+              className={MODAL_INPUT_CLASS}
+              value={reservationId}
+              onChange={(e) => setReservationId(e.target.value)}
+              required
+            >
+              {reservations.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.guest.fullName} ({tRes(r.status as 'IN_HOUSE')})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="lab-order-type">
+              {t('orderLab')}
+            </label>
+            <input
+              id="lab-order-type"
+              className={MODAL_INPUT_CLASS}
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value)}
             />
           </div>
         </form>

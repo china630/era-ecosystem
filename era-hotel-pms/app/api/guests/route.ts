@@ -1,18 +1,10 @@
-import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
+import { createGuestSchema } from '@/lib/guest-input';
 import { createGuest, listGuests } from '@/lib/services/guest.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-
-const createSchema = z.object({
-  fullName: z.string().min(1),
-  voen: z.string().nullable().optional(),
-  passportNumber: z.string().min(1),
-  phone: z.string().min(1),
-  globalPersonId: z.string().nullable().optional(),
-});
 
 export async function GET() {
   try {
@@ -29,7 +21,7 @@ export async function POST(request: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.RESERVATIONS_WRITE);
-    const body = createSchema.parse(await request.json());
+    const body = createGuestSchema.parse(await request.json());
     const guest = await createGuest(body);
     return jsonOk(serialize(guest), 201);
   } catch (err) {

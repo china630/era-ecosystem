@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "title": "ERA Auto STO",
+    "description": "Avtoservis və STO peyk modulu"
+  },
+  "login": {
+    "title": "ERA Auto STO",
+    "subtitle": "Hesabınızla daxil olun",
+    "login": "Login",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "busy": "Daxil olunur…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO ilə daxil olun"
+  },
+  "home": {
+    "loading": "Yüklənir…",
+    "title": "ERA Auto STO",
+    "subtitle": "ERA sənaye peyk modulu"
+  },
+  "help": {
+    "title": "Tez-tez verilən suallar",
+    "items": {
+      "platform": {
+        "q": "ERA platforması nədir?",
+        "a": "ERA ekosistemində identiklik, abunəlik və sənaye modulları vahid control plane (ERA 365) və Finance ERP üzərindən birləşir."
+      },
+      "sso": {
+        "q": "SSO ilə necə daxil olmaq olar?",
+        "a": "ERA Finance və ya ERA 365 Orchestrator-dan bu modula keçid edin — token avtomatik ötürülür."
+      },
+      "register": {
+        "q": "Təşkilatı harada qeydiyyatdan keçirmək olar?",
+        "a": "İlk girişdən sonra Orchestrator-da «Təşkilat qeydiyyatı» və ya app.era-365.online üzərindən VÖEN ilə."
+      }
+    }
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "save": "Saxla",
+    "edit": "Redaktə et",
+    "field": "Sahə",
+    "value": "Dəyər",
+    "actions": "Əməliyyatlar",
+    "lookup": "Axtar",
+    "create": "Yarat"
+  },
+  "appointments": {
+    "title": "Görüşlər",
+    "subtitle": "A2 — servis slotları bron et",
+    "workOrders": "İş sifarişləri",
+    "bookTitle": "Görüş bron et",
+    "vehiclePlate": "Nömrə nişanı",
+    "customerName": "Müştəri adı",
+    "book": "Bron et",
+    "upcoming": "Gözlənilən",
+    "bookingFailed": "Bron uğursuz oldu",
+    "booked": "{plate} bron edildi"
+  },
+  "workOrders": {
+    "title": "İş sifarişləri",
+    "subtitle": "M1 nəqliyyat kartı · M3 əmək · M4 ehtiyat hissələri",
+    "vehicleCard": "M1 — Müştəri nəqliyyatı",
+    "plate": "Nömrə",
+    "customerName": "Müştəri adı",
+    "voen": "VÖEN (Finance counterpart)",
+    "counterparty": "Counterparty",
+    "saveVehicle": "Nəqliyyat kartını saxla",
+    "newWorkOrder": "Yeni iş sifarişi",
+    "woCode": "İS kodu",
+    "createWorkOrder": "İş sifarişi yarat",
+    "orders": "Sifarişlər",
+    "selected": "Seçilmiş",
+    "laborLine": "M3 Əmək sətri",
+    "addLabor": "Əmək əlavə et",
+    "partLine": "M4 Hissə sətri",
+    "addPart": "Hissə əlavə et",
+    "completeWorkOrder": "İş sifarişini tamamla",
+    "vehicleSaved": "Nəqliyyat kartı saxlanıldı",
+    "counterpartyLinked": "Counterparty bağlandı: {id}…",
+    "voenNotFound": "VÖEN Finance MDM-də tapılmadı",
+    "workOrderCreated": "İş sifarişi {code} yaradıldı",
+    "laborAdded": "Əmək sətri əlavə edildi",
+    "partAdded": "Hissə sətri əlavə edildi",
+    "completed": "İş sifarişi tamamlandı"
+  },
+  "adminSettings": {
+    "title": "Servis parametrləri",
+    "subtitle": "UI playbook — Fleet bundle admin",
+    "appointments": "Görüşlər",
+    "workshop": "Servis",
+    "editWorkshop": "Servisi redaktə et"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

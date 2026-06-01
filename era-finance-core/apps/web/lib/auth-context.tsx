@@ -143,6 +143,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const u = sessionStorage.getItem(USER_KEY);
       const o = sessionStorage.getItem(ORGS_KEY);
       const a = sessionStorage.getItem(ACCESS_FLAGS_KEY);
+      // Orphan token (no user payload) — clear to avoid blank login screen
+      if (t && !u) {
+        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+        clearAccessTokenCookie();
+        t = null;
+      }
       setToken(t);
       if (t) {
         setAccessTokenCookie(t);

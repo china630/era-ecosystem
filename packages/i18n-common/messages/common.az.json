@@ -1,0 +1,38 @@
+{
+  "common": {
+    "locale": "az",
+    "accessDenied": "Bu bölməyə giriş yoxdur."
+  },
+  "nav": {
+    "home": "Əsas"
+  },
+  "header": {
+    "settings": "Parametrlər",
+    "help": "Kömək",
+    "profileMenu": "Hesab menyusu",
+    "invoicesQuota": "Qaimələr",
+    "employeesQuota": "İşçilər"
+  },
+  "auth": {
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

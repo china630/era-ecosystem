@@ -1,0 +1,763 @@
+{
+  "meta.title": {
+    "ru": "ERA Hotel PMS",
+    "az": "ERA Hotel PMS"
+  },
+  "notifications.bellAria": {
+    "ru": "Уведомления",
+    "az": "Bildirişlər"
+  },
+  "notifications.title": {
+    "ru": "Уведомления",
+    "az": "Bildirişlər"
+  },
+  "notifications.empty": {
+    "ru": "Нет уведомлений",
+    "az": "Bildiriş yoxdur"
+  },
+  "notifications.markAll": {
+    "ru": "Отметить все прочитанными",
+    "az": "Hamısını oxunmuş kimi işarələ"
+  },
+  "notifications.close": {
+    "ru": "Закрыть",
+    "az": "Bağla"
+  },
+  "header.settings": {
+    "ru": "Настройки",
+    "az": "Parametrlər"
+  },
+  "header.help": {
+    "ru": "Справка",
+    "az": "Kömək"
+  },
+  "header.profileMenu": {
+    "ru": "Меню аккаунта",
+    "az": "Hesab menyusu"
+  },
+  "header.invoicesQuota": {
+    "ru": "Счета",
+    "az": "Hesab-fakturalar"
+  },
+  "header.employeesQuota": {
+    "ru": "Персонал",
+    "az": "Personal"
+  },
+  "nav.hkMobile": {
+    "ru": "HK mobile",
+    "az": "HK mobile"
+  },
+  "nav.inHouse": {
+    "ru": "Проживающие гости",
+    "az": "Qonaqlar (in-house)"
+  },
+  "nav.guests": {
+    "ru": "Профили гостей",
+    "az": "Qonaq profilləri"
+  },
+  "nav.executive": {
+    "ru": "Сводка для руководства",
+    "az": "İdarəetmə xülasəsi"
+  },
+  "nav.sectionCore": {
+    "ru": "Ядро PMS",
+    "az": "PMS Core"
+  },
+  "nav.sectionFrontOffice": {
+    "ru": "Фронт-офис и бронирования",
+    "az": "Front office və rezervasiyalar"
+  },
+  "nav.sectionHousekeeping": {
+    "ru": "Хозяйственная служба и Room Rack",
+    "az": "Housekeeping və Room Rack"
+  },
+  "nav.sectionNightAudit": {
+    "ru": "Night Audit",
+    "az": "Night Audit"
+  },
+  "nav.sectionFrontCash": {
+    "ru": "Front Cash",
+    "az": "Front Cash"
+  },
+  "nav.sectionDistribution": {
+    "ru": "Дистрибуция и B2B-продажи",
+    "az": "Distribusiya və B2B satış"
+  },
+  "nav.sectionChannel": {
+    "ru": "Channel Manager",
+    "az": "Channel Manager"
+  },
+  "nav.sectionContracts": {
+    "ru": "Контракты и yield",
+    "az": "Müqavilələr və yield"
+  },
+  "nav.sectionGuests": {
+    "ru": "Профили гостей и задачи",
+    "az": "Qonaq profilləri və tapşırıqlar"
+  },
+  "nav.sectionSpa": {
+    "ru": "SPA и расписание",
+    "az": "SPA və cədvəl"
+  },
+  "nav.sectionTransfers": {
+    "ru": "Трансферы",
+    "az": "Transferlər"
+  },
+  "nav.sectionBanquets": {
+    "ru": "Банкеты и BEO",
+    "az": "Banketlər və BEO"
+  },
+  "nav.sectionMedical": {
+    "ru": "Медицина и санаторий",
+    "az": "Tibbi kontur və sanatoriya"
+  },
+  "nav.sectionSetup": {
+    "ru": "Расширенная настройка",
+    "az": "Genişləndirilmiş quraşdırma"
+  },
+  "nav.sectionGeneral": {
+    "ru": "Общее",
+    "az": "Ümumi"
+  },
+  "nav.reservationList": {
+    "ru": "Список бронирований",
+    "az": "Rezervasiya siyahısı"
+  },
+  "nav.groupReservations": {
+    "ru": "Групповые бронирования",
+    "az": "Qrup rezervasiyaları"
+  },
+  "nav.endOfDayLogs": {
+    "ru": "Журнал закрытия дня",
+    "az": "Gün sonu jurnalları"
+  },
+  "nav.maidManagement": {
+    "ru": "Управление горничными",
+    "az": "Xadimə idarəetməsi"
+  },
+  "nav.airportTransfer": {
+    "ru": "Подтверждение трансфера из аэропорта",
+    "az": "Hava limanı transferinin təsdiqi"
+  },
+  "nav.spaReservationList": {
+    "ru": "Список бронирований SPA",
+    "az": "SPA rezervasiya siyahısı"
+  },
+  "nav.serviceStaffMatch": {
+    "ru": "Сопоставление услуг и персонала",
+    "az": "Xidmət–personal uyğunlaşdırması"
+  },
+  "nav.placesAndRooms": {
+    "ru": "Помещения и массажные кабинеты",
+    "az": "Məkanlar və masaj otaqları"
+  },
+  "nav.distributionModule": {
+    "ru": "Модуль дистрибуции",
+    "az": "Distribusiya modulu"
+  },
+  "auth.footerLegalNavAria": {
+    "ru": "Юридические ссылки и справка",
+    "az": "Hüquqi keçidlər və kömək"
+  },
+  "auth.footerFaq": {
+    "ru": "FAQ",
+    "az": "FAQ"
+  },
+  "auth.footerTerms": {
+    "ru": "Условия использования",
+    "az": "İstifadə şərtləri"
+  },
+  "auth.footerPrivacy": {
+    "ru": "Конфиденциальность",
+    "az": "Məxfilik"
+  },
+  "auth.footerStatus": {
+    "ru": "Статус",
+    "az": "Status"
+  },
+  "auth.loginTitle": {
+    "ru": "Вход",
+    "az": "Daxil ol"
+  },
+  "auth.loginId": {
+    "ru": "Логин / email / телефон",
+    "az": "İstifadəçi adı / e-poçt / telefon"
+  },
+  "auth.email": {
+    "ru": "Email",
+    "az": "E-poçt"
+  },
+  "auth.submitLogin": {
+    "ru": "Войти",
+    "az": "Daxil ol"
+  },
+  "auth.submitBusy": {
+    "ru": "…",
+    "az": "…"
+  },
+  "auth.needAccount": {
+    "ru": "Нет аккаунта? Зарегистрироваться",
+    "az": "Hesabınız yoxdur? Qeydiyyat"
+  },
+  "auth.registerOrgLink": {
+    "ru": "Регистрация компании с VÖEN",
+    "az": "Şirkət və VÖEN ilə qeydiyyat"
+  },
+  "auth.viewPricing": {
+    "ru": "Тарифы и планы",
+    "az": "Qiymətlər və planlar"
+  },
+  "auth.userAgreement": {
+    "ru": "Пользовательское соглашение",
+    "az": "İstifadəçi razılaşması"
+  },
+  "auth.localeToggleAria": {
+    "ru": "Язык",
+    "az": "Dil"
+  },
+  "auth.localeAz": {
+    "ru": "AZ",
+    "az": "AZ"
+  },
+  "auth.localeRu": {
+    "ru": "RU",
+    "az": "RU"
+  },
+  "auth.localeEn": {
+    "ru": "EN",
+    "az": "EN"
+  },
+  "common.actions": {
+    "ru": "Действия",
+    "az": "Əməliyyatlar"
+  },
+  "common.dash": {
+    "ru": "—",
+    "az": "—"
+  },
+  "common.failedStatus": {
+    "ru": "ошибка",
+    "az": "uğursuz"
+  },
+  "common.azn": {
+    "ru": "AZN",
+    "az": "AZN"
+  },
+  "common.home": {
+    "ru": "Главная",
+    "az": "Əsas səhifə"
+  },
+  "common.edit": {
+    "ru": "Редактировать",
+    "az": "Redaktə et"
+  },
+  "common.field": {
+    "ru": "Поле",
+    "az": "Sahə"
+  },
+  "common.value": {
+    "ru": "Значение",
+    "az": "Dəyər"
+  },
+  "common.search": {
+    "ru": "Поиск",
+    "az": "Axtarış"
+  },
+  "common.notes": {
+    "ru": "Примечания",
+    "az": "Qeydlər"
+  },
+  "common.complete": {
+    "ru": "Завершить",
+    "az": "Tamamla"
+  },
+  "common.notFound": {
+    "ru": "Не найдено",
+    "az": "Tapılmadı"
+  },
+  "common.loadingFailed": {
+    "ru": "Ошибка загрузки",
+    "az": "Yükləmə uğursuz oldu"
+  },
+  "common.saveFailed": {
+    "ru": "Ошибка сохранения",
+    "az": "Saxlama uğursuz oldu"
+  },
+  "common.accessDenied": {
+    "en": "You do not have access to this section.",
+    "ru": "Нет доступа к этому разделу.",
+    "az": "Bu bölməyə giriş yoxdur."
+  },
+  "chessboard.openReservationCard": {
+    "ru": "Карточка бронирования",
+    "az": "Rezervasiya kartı"
+  },
+  "roomRack.loading": {
+    "ru": "Загрузка номеров…",
+    "az": "Otaqlar yüklənir…"
+  },
+  "roomRack.searchRoom": {
+    "ru": "№ номера",
+    "az": "Otaq №"
+  },
+  "roomRack.searchPlaceholder": {
+    "ru": "Поиск…",
+    "az": "Axtarış…"
+  },
+  "roomRack.occupied": {
+    "ru": "Занят",
+    "az": "Dolu"
+  },
+  "roomRack.vacant": {
+    "ru": "Свободен",
+    "az": "Boş"
+  },
+  "roomRack.hkStatus": {
+    "ru": "Статус HK",
+    "az": "HK statusu"
+  },
+  "roomRack.cleanOnly": {
+    "ru": "Только чистые",
+    "az": "Yalnız təmiz"
+  },
+  "roomRack.dirtyOnly": {
+    "ru": "Только грязные",
+    "az": "Yalnız çirkli"
+  },
+  "roomRack.occupancy": {
+    "ru": "Загрузка",
+    "az": "Doluluq"
+  },
+  "roomRack.occupiedOnly": {
+    "ru": "Только занятые",
+    "az": "Yalnız dolu"
+  },
+  "roomRack.vacantOnly": {
+    "ru": "Только свободные",
+    "az": "Yalnız boş"
+  },
+  "roomRack.floor": {
+    "ru": "Этаж",
+    "az": "Mərtəbə"
+  },
+  "roomRack.allFloors": {
+    "ru": "Все этажи",
+    "az": "Bütün mərtəbələr"
+  },
+  "roomRack.roomTypes": {
+    "ru": "Типы номеров",
+    "az": "Otaq növləri"
+  },
+  "roomRack.quickBook": {
+    "ru": "Быстрое бронирование",
+    "az": "Sürətli rezervasiya"
+  },
+  "roomRack.filterDate": {
+    "ru": "Дата",
+    "az": "Tarix"
+  },
+  "roomRack.reservationFilter": {
+    "ru": "Бронирование",
+    "az": "Rezervasiya"
+  },
+  "roomRack.resFilter.all": {
+    "ru": "Все",
+    "az": "Hamısı"
+  },
+  "roomRack.resFilter.arrival": {
+    "ru": "Заезд сегодня",
+    "az": "Bu gün gəliş"
+  },
+  "roomRack.resFilter.in_house": {
+    "ru": "Проживающие",
+    "az": "In-house"
+  },
+  "roomRack.resFilter.departure": {
+    "ru": "Выезд сегодня",
+    "az": "Bu gün çıxış"
+  },
+  "roomRack.allRoomTypes": {
+    "ru": "Все типы",
+    "az": "Bütün növlər"
+  },
+  "roomRack.resetFilters": {
+    "ru": "Сбросить фильтры",
+    "az": "Filtrləri sıfırla"
+  },
+  "roomRack.forecastDisabled": {
+    "ru": "Прогноз (скоро)",
+    "az": "Proqnoz (tezliklə)"
+  },
+  "roomRack.legendAria": {
+    "ru": "Легенда цветов Room Rack",
+    "az": "Room Rack rəng əfsunəsi"
+  },
+  "roomRack.legend.vacant": {
+    "ru": "Свободен",
+    "az": "Boş"
+  },
+  "roomRack.legend.occupied": {
+    "ru": "Занят",
+    "az": "Dolu"
+  },
+  "roomRack.legend.arrival": {
+    "ru": "Заезд сегодня",
+    "az": "Bu gün gəliş"
+  },
+  "roomRack.legend.departure": {
+    "ru": "Выезд сегодня",
+    "az": "Bu gün çıxış"
+  },
+  "roomRack.legend.cleaning": {
+    "ru": "Уборка",
+    "az": "Təmizlik"
+  },
+  "roomRack.legend.notReady": {
+    "ru": "Не готов",
+    "az": "Hazır deyil"
+  },
+  "inHousePage.title": {
+    "ru": "Проживающие гости",
+    "az": "Qonaqlar (in-house)"
+  },
+  "inHousePage.room": {
+    "ru": "Номер",
+    "az": "Otaq"
+  },
+  "inHousePage.guest": {
+    "ru": "Гость",
+    "az": "Qonaq"
+  },
+  "inHousePage.folio": {
+    "ru": "Folio",
+    "az": "Folio"
+  },
+  "inHousePage.openFolio": {
+    "ru": "Открыть folio",
+    "az": "Folio aç"
+  },
+  "inHousePage.empty": {
+    "ru": "Нет проживающих гостей.",
+    "az": "In-house qonaq yoxdur."
+  },
+  "guestsPage.title": {
+    "ru": "Профили гостей",
+    "az": "Qonaq profilləri"
+  },
+  "guestsPage.subtitle": {
+    "ru": "Реестр гостей — добавление и редактирование в модальном окне",
+    "az": "Qonaq reyestri — modal pəncərədə əlavə və redaktə"
+  },
+  "guestsPage.name": {
+    "ru": "ФИО",
+    "az": "Tam ad"
+  },
+  "guestsPage.nationality": {
+    "ru": "Гражданство",
+    "az": "Milliyyət"
+  },
+  "guestsPage.phone": {
+    "ru": "Телефон",
+    "az": "Telefon"
+  },
+  "guestsPage.passport": {
+    "ru": "Паспорт",
+    "az": "Pasport"
+  },
+  "guestsPage.foreign": {
+    "ru": "Иностранец",
+    "az": "Xarici"
+  },
+  "guestsPage.addGuest": {
+    "ru": "Добавить гостя",
+    "az": "Qonaq əlavə et"
+  },
+  "guestsPage.viewProfile": {
+    "ru": "Просмотр профиля",
+    "az": "Profilə bax"
+  },
+  "guestsPage.editGuest": {
+    "ru": "Редактировать гостя",
+    "az": "Qonağı redaktə et"
+  },
+  "guestsPage.empty": {
+    "ru": "Гостей пока нет.",
+    "az": "Hələ qonaq yoxdur."
+  },
+  "guestsPage.created": {
+    "ru": "Гость создан",
+    "az": "Qonaq yaradıldı"
+  },
+  "guestsPage.updated": {
+    "ru": "Гость сохранён",
+    "az": "Qonaq saxlanıldı"
+  },
+  "folio.chargeLine": {
+    "ru": "+ {description} ({code}) {amount} AZN",
+    "az": "+ {description} ({code}) {amount} AZN"
+  },
+  "folio.kkmReceipt": {
+    "ru": "— KKM {receiptId}",
+    "az": "— KKM {receiptId}"
+  },
+  "operations.cashShiftOk": {
+    "ru": "OK",
+    "az": "OK"
+  },
+  "operations.noShowMarked": {
+    "ru": "No-show: {name}",
+    "az": "No-show: {name}"
+  },
+  "booking.nationality": {
+    "ru": "Гражданство",
+    "az": "Milliyyət"
+  },
+  "booking.nationalityAz": {
+    "ru": "Азербайджан",
+    "az": "Azərbaycan"
+  },
+  "booking.nationalityForeign": {
+    "ru": "Иностранец",
+    "az": "Xarici"
+  },
+  "booking.passportOptional": {
+    "ru": "Паспорт (необязательно, если указан FIN)",
+    "az": "Pasport (FIN göstərilibsə, isteğe bağlı)"
+  },
+  "booking.phoneOptional": {
+    "ru": "Телефон (необязательно)",
+    "az": "Telefon (isteğe bağlı)"
+  },
+  "booking.finOptional": {
+    "ru": "FIN (только AZ, необязательно — поиск в MDM)",
+    "az": "FIN (yalnız AZ, isteğe bağlı — MDM axtarışı)"
+  },
+  "guestCard.tabCrm": {
+    "ru": "CRM",
+    "az": "CRM"
+  },
+  "reservationList.hk": {
+    "ru": "HK",
+    "az": "HK"
+  },
+  "channel.stopSell": {
+    "ru": "Stop sell (CH-01)",
+    "az": "Stop sell (CH-01)"
+  },
+  "channel.otaRef": {
+    "ru": "OTA ref",
+    "az": "OTA ref"
+  },
+  "roomPlan.groupByType": {
+    "ru": "По типу номера",
+    "az": "Otaq növünə görə"
+  },
+  "roomPlan.groupByFloor": {
+    "ru": "По этажу",
+    "az": "Mərtəbəyə görə"
+  },
+  "roomPlan.availability": {
+    "ru": "Свободно",
+    "az": "Boş"
+  },
+  "roomPlan.groupFlat": {
+    "ru": "Все номера",
+    "az": "Bütün otaqlar"
+  },
+  "roomPlan.openCard": {
+    "ru": "Карточка бронирования",
+    "az": "Rezervasiya kartı"
+  },
+  "roomPlan.legendAria": {
+    "ru": "Цвета статусов бронирования",
+    "az": "Rezervasiya status rəngləri"
+  },
+  "roomPlan.legendOoo": {
+    "ru": "Out of order / out of service",
+    "az": "Out of order / out of service"
+  },
+  "reports.cityLedger": {
+    "ru": "City ledger",
+    "az": "City ledger"
+  },
+  "masterData.ratePlanLine": {
+    "ru": "{code} — {name} ({price} AZN){medical}",
+    "az": "{code} — {name} ({price} AZN){medical}"
+  },
+  "masterData.revenueCodeLine": {
+    "ru": "{code} — {name}",
+    "az": "{code} — {name}"
+  },
+  "integration.eventChargePosted": {
+    "ru": "FOLIO_CHARGE_POSTED",
+    "az": "FOLIO_CHARGE_POSTED"
+  },
+  "integration.eventPaymentReceived": {
+    "ru": "FOLIO_PAYMENT_RECEIVED",
+    "az": "FOLIO_PAYMENT_RECEIVED"
+  },
+  "integration.eventChargeVoided": {
+    "ru": "FOLIO_CHARGE_VOIDED",
+    "az": "FOLIO_CHARGE_VOIDED"
+  },
+  "integration.eventReservationCompleted": {
+    "ru": "RESERVATION_COMPLETED",
+    "az": "RESERVATION_COMPLETED"
+  },
+  "integration.eventInvoiceIssued": {
+    "ru": "INVOICE_ISSUED (E2)",
+    "az": "INVOICE_ISSUED (E2)"
+  },
+  "integration.eventPaymentFiscalized": {
+    "ru": "PAYMENT_FISCALIZED (E7)",
+    "az": "PAYMENT_FISCALIZED (E7)"
+  },
+  "integration.eventCityLedger": {
+    "ru": "CITY_LEDGER_SNAPSHOT (E4)",
+    "az": "CITY_LEDGER_SNAPSHOT (E4)"
+  },
+  "integration.eventMasterData": {
+    "ru": "MASTER_DATA_SYNC (E5)",
+    "az": "MASTER_DATA_SYNC (E5)"
+  },
+  "integration.eventNightAudit": {
+    "ru": "NIGHT_AUDIT_CLOSED (E1)",
+    "az": "NIGHT_AUDIT_CLOSED (E1)"
+  },
+  "integration.platformSubscription": {
+    "ru": "Подписка платформы (Orch)",
+    "az": "Platforma abunəliyi (Orch)"
+  },
+  "integration.platformSubscriptionHint": {
+    "ru": "Снимок биллинга только для чтения — для платформенных хуков по entitlements.",
+    "az": "Entitlement əsaslı platforma hook-ları üçün yalnız oxuma rejimində billing snapshot."
+  },
+  "integration.fiscalSent": {
+    "ru": "отправлено",
+    "az": "göndərildi"
+  },
+  "integration.fiscalAccepted": {
+    "ru": "принято",
+    "az": "qəbul edildi"
+  },
+  "integration.fiscalRejected": {
+    "ru": "отклонено",
+    "az": "rədd edildi"
+  },
+  "fiscalStatus.PENDING": {
+    "ru": "PENDING",
+    "az": "PENDING"
+  },
+  "fiscalStatus.SENT": {
+    "ru": "SENT",
+    "az": "SENT"
+  },
+  "fiscalStatus.ACCEPTED": {
+    "ru": "ACCEPTED",
+    "az": "ACCEPTED"
+  },
+  "fiscalStatus.REJECTED": {
+    "ru": "REJECTED",
+    "az": "REJECTED"
+  },
+  "billing.moduleLockedTitle": {
+    "ru": "{module} не входит в ваш тариф",
+    "az": "{module} planınızda yoxdur"
+  },
+  "billing.moduleLockedHint": {
+    "ru": "Подключите этот модуль отеля в биллинге ERA 365 Orchestrator или выберите пакет Resort/Sanatorium.",
+    "az": "Bu otel modulunu ERA 365 Orchestrator billing-də aktiv edin və ya Resort/Sanatorium paketini seçin."
+  },
+  "billing.upgradeOnOrchestrator": {
+    "ru": "Обновить в Orchestrator /pricing",
+    "az": "Orchestrator /pricing-də yüksəlt"
+  },
+  "billing.channelModule": {
+    "ru": "Channel Manager",
+    "az": "Channel Manager"
+  },
+  "login.subtitle": {
+    "ru": "Войдите в свой аккаунт",
+    "az": "Hesabınıza daxil olun"
+  },
+  "login.login": {
+    "ru": "Логин",
+    "az": "Login"
+  },
+  "login.password": {
+    "ru": "Пароль",
+    "az": "Şifrə"
+  },
+  "login.submit": {
+    "ru": "Войти",
+    "az": "Daxil ol"
+  },
+  "login.busy": {
+    "ru": "…",
+    "az": "…"
+  },
+  "login.ssoHint": {
+    "ru": "Или SSO через ERA Finance / Orchestrator",
+    "az": "Və ya ERA Finance / Orchestrator vasitəsilə SSO"
+  },
+  "home.subtitle": {
+    "ru": "Отраслевой спутник ERA",
+    "az": "ERA sənaye peyki"
+  },
+  "home.intro": {
+    "ru": "MVP операционная оболочка по DESIGN.md.",
+    "az": "DESIGN.md-ə uyğun MVP əməliyyat qabığı."
+  },
+  "home.healthLink": {
+    "ru": "Health API",
+    "az": "Health API"
+  },
+  "help.title": {
+    "ru": "Часто задаваемые вопросы",
+    "az": "Tez-tez verilən suallar"
+  },
+  "help.items.platform.q": {
+    "ru": "Что такое платформа ERA?",
+    "az": "ERA platforması nədir?"
+  },
+  "help.items.platform.a": {
+    "ru": "В экосистеме ERA идентификация, подписки и отраслевые модули объединены через плоскость управления ERA 365 и Finance ERP.",
+    "az": "ERA ekosistemində identifikasiya, abunəliklər və sənaye modulları ERA 365 idarəetmə müstəvisi və Finance ERP vasitəsilə vahid edilir."
+  },
+  "help.items.sso.q": {
+    "ru": "Как войти через SSO?",
+    "az": "SSO ilə necə daxil olmaq olar?"
+  },
+  "help.items.sso.a": {
+    "ru": "Откройте этот модуль из ERA Finance или ERA 365 Orchestrator — токен передаётся автоматически.",
+    "az": "Bu modulu ERA Finance və ya ERA 365 Orchestrator-dan açın — token avtomatik ötürülür."
+  },
+  "help.items.register.q": {
+    "ru": "Где зарегистрировать организацию?",
+    "az": "Təşkilatı harada qeydiyyatdan keçirmək olar?"
+  },
+  "help.items.register.a": {
+    "ru": "После первого входа используйте регистрацию организации в Orchestrator или на app.era-365.online с VÖEN.",
+    "az": "İlk girişdən sonra Orchestrator-da və ya app.era-365.online-da VÖEN ilə təşkilat qeydiyyatından istifadə edin."
+  },
+  "admin.settings.field": {
+    "ru": "Поле",
+    "az": "Sahə"
+  },
+  "admin.settings.value": {
+    "ru": "Значение",
+    "az": "Dəyər"
+  },
+  "admin.settings.actions": {
+    "ru": "Действия",
+    "az": "Əməliyyatlar"
+  },
+  "admin.settings.edit": {
+    "ru": "Редактировать",
+    "az": "Redaktə et"
+  },
+  "admin.settings.save": {
+    "ru": "Сохранить",
+    "az": "Saxla"
+  }
+}

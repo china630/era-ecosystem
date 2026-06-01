@@ -66,6 +66,7 @@ export default function CompaniesPage() {
   const [createHoldingOpen, setCreateHoldingOpen] = useState(false);
 
   const [tree, setTree] = useState<OrganizationsTree | null>(null);
+  const [treeLoading, setTreeLoading] = useState(true);
   const [holdings, setHoldings] = useState<HoldingListItem[]>([]);
   const [holdingUiErr, setHoldingUiErr] = useState<string | null>(null);
   const [holdingBusyOrgId, setHoldingBusyOrgId] = useState<string | null>(null);
@@ -74,20 +75,25 @@ export default function CompaniesPage() {
 
   const loadHoldingUi = useCallback(async () => {
     setHoldingUiErr(null);
-    const [treeRes, holdingsRes] = await Promise.all([
-      apiFetch("/api/organizations/tree"),
-      apiFetch("/api/holdings"),
-    ]);
-    if (!treeRes.ok) {
-      setHoldingUiErr(`${t("common.loadErr")}: ${treeRes.status}`);
-      setTree(null);
-      return;
-    }
-    setTree((await treeRes.json()) as OrganizationsTree);
-    if (holdingsRes.ok) {
-      setHoldings((await holdingsRes.json()) as HoldingListItem[]);
-    } else {
-      setHoldings([]);
+    setTreeLoading(true);
+    try {
+      const [treeRes, holdingsRes] = await Promise.all([
+        apiFetch("/api/organizations/tree"),
+        apiFetch("/api/holdings"),
+      ]);
+      if (!treeRes.ok) {
+        setHoldingUiErr(`${t("common.loadErr")}: ${treeRes.status}`);
+        setTree(null);
+        return;
+      }
+      setTree((await treeRes.json()) as OrganizationsTree);
+      if (holdingsRes.ok) {
+        setHoldings((await holdingsRes.json()) as HoldingListItem[]);
+      } else {
+        setHoldings([]);
+      }
+    } finally {
+      setTreeLoading(false);
     }
   }, [t]);
 
@@ -263,6 +269,27 @@ export default function CompaniesPage() {
         </div>
       ) : null}
 
+      {treeLoading ? (
+        <div className={`${CARD_CONTAINER_CLASS} p-6 text-sm text-muted-foreground`}>
+          {t("common.loading")}
+        </div>
+      ) : null}
+
+      {!treeLoading && tree && holdingSections.length === 0 && freeOrganizations.length === 0 ? (
+        <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-6`}>
+          <p className="text-sm text-muted-foreground">{t("companiesPage.freeNone")}</p>
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => setCreateModalOpen(true)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            {t("companiesPage.modals.createCompanyTitle")}
+          </button>
+        </div>
+      ) : null}
+
+      {!treeLoading ? (
       <div className="space-y-7">
         {holdingSections.map((holding) => (
           <section key={holding.id} className={`${CARD_CONTAINER_CLASS} space-y-4 p-5`}>
@@ -350,6 +377,7 @@ export default function CompaniesPage() {
           )}
         </section>
       </div>
+      ) : null}
 
       <VoenRequestModal open={voenModalOpen} onClose={() => setVoenModalOpen(false)} />
       <CreateCompanyModal open={createModalOpen} onClose={() => setCreateModalOpen(false)} />

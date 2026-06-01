@@ -6,15 +6,15 @@ Finance **Industry Solutions** (painted-door + entitlements) maps to live umbrel
 
 | EarlyAccess key | Entitlement slug | Satellite app | Public host | Finance env (web) |
 |-----------------|------------------|---------------|-------------|-------------------|
-| RETAIL_ECOM | `industry_retail_ecom` | era-retail-pos | retail.era.az | `NEXT_PUBLIC_SATELLITE_RETAIL_URL` |
-| LOGISTICS_CUSTOMS | `industry_logistics_customs` | era-logistics | logistics.era.az | `NEXT_PUBLIC_SATELLITE_LOGISTICS_URL` |
-| CONSTRUCTION | `industry_construction` | era-construction | construction.era.az | `NEXT_PUBLIC_SATELLITE_CONSTRUCTION_URL` |
-| CRM_WHATSAPP | `industry_crm_whatsapp` | era-crm-field | crm.era.az | `NEXT_PUBLIC_SATELLITE_CRM_URL` |
-| AUTO_STO | `industry_auto_sto` | era-auto-sto | auto.era.az | `NEXT_PUBLIC_SATELLITE_AUTO_URL` |
-| CLINIC | `industry_clinic` | era-clinic | clinic.era.az | `NEXT_PUBLIC_SATELLITE_CLINIC_URL` |
-| WHOLESALE | `industry_wholesale` | era-wholesale | wholesale.era.az | `NEXT_PUBLIC_SATELLITE_WHOLESALE_URL` |
-| HOTEL_PMS | `industry_hotel_pms` | era-hotel-pms | hotel.era.az | `NEXT_PUBLIC_SATELLITE_HOTEL_URL` |
-| FB_POS | `industry_fb_pos` | era-fb-pos | fb.era.az | `NEXT_PUBLIC_SATELLITE_FB_POS_URL` |
+| RETAIL_ECOM | `industry_retail` | era-retail-pos | retail-pos.era-365.online | `NEXT_PUBLIC_SATELLITE_RETAIL_URL` |
+| LOGISTICS_CUSTOMS | `industry_logistics` | era-logistics | logistics.era-365.online | `NEXT_PUBLIC_SATELLITE_LOGISTICS_URL` |
+| CONSTRUCTION | `industry_construction` | era-construction | construction.era-365.online | `NEXT_PUBLIC_SATELLITE_CONSTRUCTION_URL` |
+| CRM_WHATSAPP | `industry_crm` | era-crm | crm.era-365.online | `NEXT_PUBLIC_SATELLITE_CRM_URL` |
+| AUTO_STO | `industry_auto_service` | era-auto-service | auto-service.era-365.online | `NEXT_PUBLIC_SATELLITE_AUTO_URL` |
+| CLINIC | `industry_clinic` | era-clinic | clinic.era-365.online | `NEXT_PUBLIC_SATELLITE_CLINIC_URL` |
+| WHOLESALE | `industry_wholesale` | era-wholesale | wholesale.era-365.online | `NEXT_PUBLIC_SATELLITE_WHOLESALE_URL` |
+| HOTEL_PMS | `industry_hotel_pms` | era-hotel-pms | hotel-pms.era-365.online | `NEXT_PUBLIC_SATELLITE_HOTEL_URL` |
+| FB_POS | `industry_fnb_pos` | era-fnb-pos | fnb-pos.era-365.online | `NEXT_PUBLIC_SATELLITE_FNB_POS_URL` |
 
 ## Hospitality Nafta boundary
 
@@ -34,11 +34,11 @@ See [HOSPITALITY_FINANCE_BOUNDARY.md](../../docs/HOSPITALITY_FINANCE_BOUNDARY.md
 
 Satellites emit typed events → orchestrator → finance `SatelliteEventWorker` → `SatelliteEventDispatchService` (GL + draft invoices). Idempotency: `satellite_events_processed` by `(organizationId, correlationId)`.
 
-**Billing & entitlements** are migrating to **era-365-orchestrator** — see [CONTROL_PLANE_ARCHITECTURE.md](../../docs/CONTROL_PLANE_ARCHITECTURE.md).
+**Billing & entitlements:** **era-orchestrator** is SoT — [CONTROL_PLANE_ARCHITECTURE.md](../../docs/CONTROL_PLANE_ARCHITECTURE.md) · [CP-BILLING-MIGRATION.md](../../docs/CP-BILLING-MIGRATION.md).
 
-Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`, Wave 5 FIN-01): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
+Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
 
-**Live** in Finance dispatch (Wave 5 / H-P0): `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` (see [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md)).
+**Live** in Finance dispatch: `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` — [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md).
 
 ## CRM boundary
 

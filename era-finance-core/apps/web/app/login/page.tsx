@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
+import { uiLang } from "@era/i18n-common";
+import { AuthLoginCard, showApiError } from "@era/satellite-kit/ui";
 import { apiBaseUrl, apiFetch, emitClientApiError } from "../../lib/api-client";
 import type { AuthUser, OrgSummary } from "../../lib/auth-context";
 import { useAuth } from "../../lib/auth-context";
-import { LINK_ACCENT_CLASS, PRIMARY_BUTTON_CLASS } from "../../lib/design-system";
 import { LanguageSwitcher } from "../language-switcher";
-import { PublicLegalFooter } from "../../components/public-legal-footer";
 
 const LOGIN_RECENT_EMAILS_KEY = "erafinance_login_recent_emails";
 const MAX_RECENT_EMAILS = 10;
@@ -37,12 +36,13 @@ function rememberLoginEmail(email: string) {
   try {
     localStorage.setItem(LOGIN_RECENT_EMAILS_KEY, JSON.stringify(next));
   } catch {
-    // ignore quota / private mode
+    // ignore
   }
 }
 
 export default function LoginPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = uiLang(i18n.language);
   const { login, token, ready, user } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -53,9 +53,7 @@ export default function LoginPage() {
   useEffect(() => {
     const recent = loadRecentLoginEmails();
     setRecentEmails(recent);
-    if (recent.length > 0) {
-      setEmail(recent[0]);
-    }
+    if (recent.length > 0) setEmail(recent[0]);
   }, []);
 
   useEffect(() => {
@@ -67,7 +65,7 @@ export default function LoginPage() {
     router.replace("/home");
   }, [ready, token, user, router]);
 
-  if (ready && token) return null;
+  if (ready && token && user) return null;
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -79,6 +77,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) {
+        showApiError(await res.text().catch(() => null), t("auth.loginFailed"));
         return;
       }
       const data = (await res.json()) as {
@@ -89,78 +88,55 @@ export default function LoginPage() {
       const orgs = data.organizations ?? [];
       rememberLoginEmail(email);
       login(data.accessToken, data.user, orgs);
-      const target =
-        orgs.length === 0 ? "/companies" : orgs.length > 1 ? "/companies" : "/";
+      const target = orgs.length === 0 ? "/companies" : orgs.length > 1 ? "/companies" : "/";
       window.location.assign(target);
     } catch {
-      emitClientApiError(
-        503,
-        t("auth.apiUnreachable", { url: apiBaseUrl() }),
-      );
+      emitClientApiError(503, t("auth.apiUnreachable", { url: apiBaseUrl() }));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-200 flex flex-col items-center justify-center p-6">
-      <div className="w-full max-w-md bg-white rounded-xl border border-slate-100 shadow-md p-8">
-        <div className="mb-6">
-          <LanguageSwitcher />
-        </div>
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">{t("auth.loginTitle")}</h1>
-        <form onSubmit={(e) => void onSubmit(e)} className="grid gap-4" autoComplete="on">
-          <datalist id="erafinance-login-recent-emails">
-            {recentEmails.map((e) => (
-              <option key={e} value={e} />
-            ))}
-          </datalist>
-          <label className="block text-sm font-medium text-gray-700">
-            {t("auth.email")}
-            <input
-              type="email"
-              name="email"
-              required
-              autoComplete="username"
-              list="erafinance-login-recent-emails"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full mt-1.5"
-            />
-          </label>
-          <label className="block text-sm font-medium text-gray-700">
-            {t("auth.password")}
-            <input
-              type="password"
-              name="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full mt-1.5"
-            />
-          </label>
-          <button type="submit" disabled={busy} className={`${PRIMARY_BUTTON_CLASS} w-full`}>
-            {t("auth.submitLogin")}
-          </button>
-        </form>
-        <p className="mt-6 text-sm">
-          <Link href="/register" className={LINK_ACCENT_CLASS}>
-            {t("auth.needAccount")}
-          </Link>
-        </p>
-        <p className="mt-2 text-center text-sm">
-          <Link href="/pricing" className={LINK_ACCENT_CLASS}>
-            {t("auth.viewPricing")}
-          </Link>
-        </p>
-        <p className="mt-3 rounded-lg border border-[#D5DADF] bg-[#EBEDF0] px-3 py-2.5 text-sm text-center">
-          <Link href="/register-org" className={LINK_ACCENT_CLASS}>
-            {t("auth.registerOrgLink")}
-          </Link>
-        </p>
-        <PublicLegalFooter />
-      </div>
-    </main>
+    <AuthLoginCard
+      locale={locale}
+      emailMode
+      localeControl={<LanguageSwitcher />}
+      legalAppPrefix="ERAFINANCE"
+      labels={{
+        loginTitle: t("auth.loginTitle"),
+        loginId: t("auth.email"),
+        email: t("auth.email"),
+        password: t("auth.password"),
+        submitLogin: t("auth.submitLogin"),
+        submitBusy: t("auth.submitBusy"),
+        needAccount: t("auth.needAccount"),
+        registerOrgLink: t("auth.registerOrgLink"),
+        viewPricing: t("auth.viewPricing"),
+        userAgreement: t("auth.userAgreement"),
+        footerLegalNavAria: t("auth.footerLegalNavAria"),
+        footerFaq: t("auth.footerFaq"),
+        footerTerms: t("auth.footerTerms"),
+        footerPrivacy: t("auth.footerPrivacy"),
+        footerStatus: t("auth.footerStatus"),
+        localeToggleAria: t("language"),
+        localeAz: t("az"),
+        localeRu: t("ru"),
+        localeEn: "EN",
+      }}
+      loginId={email}
+      password={password}
+      onLoginIdChange={setEmail}
+      onPasswordChange={setPassword}
+      onSubmit={onSubmit}
+      busy={busy}
+      formExtras={
+        <datalist id="erafinance-login-recent-emails">
+          {recentEmails.map((e) => (
+            <option key={e} value={e} />
+          ))}
+        </datalist>
+      }
+    />
   );
 }

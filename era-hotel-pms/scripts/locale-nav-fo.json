@@ -1,0 +1,94 @@
+{
+  "ru": {
+    "nav": {
+      "esas": "Главная",
+      "chessboard": "Шахматка",
+      "roomPlan": "План номеров",
+      "newBooking": "Новая резервация",
+      "inHouse": "Проживающие",
+      "operations": "Операции",
+      "sectionCore": "Ядро PMS",
+      "sectionReports": "Отчёты",
+      "actualCheckTimes": "Фактические время заезда/выезда",
+      "reservationList": "Список бронирований",
+      "groupReservations": "Групповые бронирования",
+      "endOfDayLogs": "Журнал закрытия дня",
+      "roomChanges": "Планы смены номера",
+      "dailyInhouseList": "Список in-house на день",
+      "guests": "Профили гостей"
+    },
+    "executiveDashboard": {
+      "title": "Главная — панель руководителя",
+      "subtitle": "Операционные KPI на бизнес-день (PMS). GL и холдинг — в Finance.",
+      "kpi": {
+        "occupancyPct": "Загрузка %",
+        "guestsInHouse": "Гостей in-house",
+        "arrivalsToday": "Заезды сегодня",
+        "departuresToday": "Выезды сегодня",
+        "revenueToday": "Выручка дня",
+        "outstandingBalance": "Дебиторка",
+        "adr": "ADR",
+        "revpar": "RevPAR"
+      },
+      "drill": {
+        "rack": "Шахматка",
+        "inHouse": "Проживающие",
+        "operations": "Ночной аудит"
+      }
+    },
+    "rackPayStatus": {
+      "PAID": "Оплачено",
+      "PARTIAL": "Частично",
+      "UNPAID": "Не оплачено",
+      "NONE": "—"
+    }
+  },
+  "az": {
+    "nav": {
+      "esas": "Əsas",
+      "chessboard": "Otaq şahmatı",
+      "roomPlan": "Otaq planı",
+      "newBooking": "Yeni rezervasiya",
+      "inHouse": "Qalan qonaqlar",
+      "operations": "Əməliyyatlar",
+      "sectionCore": "PMS əsas",
+      "sectionReports": "Hesabatlar",
+      "actualCheckTimes": "Faktiki giriş/çıxış vaxtları",
+      "reservationList": "Rezervasiya siyahısı",
+      "groupReservations": "Qrup rezervasiyaları",
+      "endOfDayLogs": "Gün sonu jurnalları",
+      "roomChanges": "Otaq dəyişikliyi planları",
+      "dailyInhouseList": "Gündəlik in-house siyahı",
+      "guests": "Qonaq profilləri"
+    },
+    "executiveDashboard": {
+      "title": "Əsas — idarəetmə paneli",
+      "subtitle": "Biznes günü üçün əməliyyat KPI (PMS). GL və holding — Finance-də.",
+      "kpi": {
+        "occupancyPct": "Doluluq %",
+        "guestsInHouse": "Oteldə qonaqlar",
+        "arrivalsToday": "Bu gün gəlişlər",
+        "departuresToday": "Bu gün çıxışlar",
+        "revenueToday": "Günün gəliri",
+        "outstandingBalance": "Borclar",
+        "adr": "ADR",
+        "revpar": "RevPAR"
+      },
+      "drill": {
+        "rack": "Otaq şahmatı",
+        "inHouse": "Qalanlar siyahısı",
+        "operations": "Gecə auditi"
+      }
+    },
+    "rackPayStatus": {
+      "PAID": "Ödənilib",
+      "PARTIAL": "Qismən",
+      "UNPAID": "Ödənilməyib",
+      "NONE": "—"
+    },
+    "booking": {
+      "title": "Yeni rezervasiya",
+      "createBooking": "Rezervasiya yarat"
+    }
+  }
+}

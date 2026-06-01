@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  ColorLegend,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
@@ -17,6 +19,9 @@ type LabOrder = {
 };
 
 export default function LabOrdersPage() {
+  const t = useTranslations("labOrders");
+  const tc = useTranslations("common");
+  const tNav = useTranslations("nav");
   const [orders, setOrders] = useState<LabOrder[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [criticalOnly, setCriticalOnly] = useState(false);
@@ -43,11 +48,11 @@ export default function LabOrdersPage() {
   return (
     <>
       <PageHeader
-        title="Laboratory orders"
-        subtitle="K2 — order list, status filter, complete action"
+        title={t("title")}
+        subtitle={t("subtitle")}
         actions={
           <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            Home
+            {tNav("home")}
           </Link>
         }
       />
@@ -61,10 +66,18 @@ export default function LabOrdersPage() {
               setCriticalOnly(e.target.checked);
             }}
           />
-          Critical results only (M5)
+          {t("criticalOnly")}
         </label>
+        <ColorLegend
+          className="mb-2"
+          items={[
+            { id: "ordered", label: "ORDERED", swatchClassName: "bg-slate-100" },
+            { id: "ready", label: "RESULT_READY", swatchClassName: "bg-blue-50" },
+            { id: "done", label: "COMPLETED", swatchClassName: "bg-green-50" },
+          ]}
+        />
         <label className="flex items-center gap-2 text-[13px]">
-          Status filter
+          {t("statusFilter")}
           <select
             className="rounded border px-2 py-1"
             value={statusFilter}
@@ -73,7 +86,7 @@ export default function LabOrdersPage() {
               setStatusFilter(e.target.value);
             }}
           >
-            <option value="">All</option>
+            <option value="">{tc("all")}</option>
             <option value="ORDERED">ORDERED</option>
             <option value="COLLECTED">COLLECTED</option>
             <option value="RESULT_READY">RESULT_READY</option>
@@ -82,9 +95,9 @@ export default function LabOrdersPage() {
           </select>
         </label>
         {loading ? (
-          <p className="text-[13px] text-[#7F8C8D]">Loading…</p>
+          <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : orders.length === 0 ? (
-          <p className="text-[13px] text-[#7F8C8D]">No lab orders yet.</p>
+          <p className="text-[13px] text-[#7F8C8D]">{t("empty")}</p>
         ) : (
           <ul className="space-y-2">
             {orders.map((order) => (
@@ -110,7 +123,7 @@ export default function LabOrdersPage() {
                     className={PRIMARY_BUTTON_CLASS}
                     onClick={() => completeOrder(order.id)}
                   >
-                    Complete
+                    {tc("complete")}
                   </button>
                 )}
               </li>

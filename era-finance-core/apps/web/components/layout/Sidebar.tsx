@@ -56,6 +56,7 @@ import {
   Handshake,
 } from "lucide-react";
 import type { AuthUser } from "../../lib/auth-context";
+import { EraAppSidebar } from "@era/satellite-kit/ui";
 
 type SidebarLayout = {
   /** Collapsed rail только на lg+; на мобильном выезде — всегда полная ширина. */
@@ -292,7 +293,7 @@ function SideNavItem(props: {
       )}
       <span
         className={[
-          "min-w-0 flex-1 text-sm font-medium",
+          "min-w-0 flex-1 truncate text-sm font-medium",
           layoutCollapsed && !props.nested ? "lg:sr-only" : "",
         ].join(" ")}
       >
@@ -397,7 +398,7 @@ function SideNavSubItem(props: {
       ) : (
         <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary/70 shrink-0" />
       )}
-      <span className="font-medium">{props.label}</span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{props.label}</span>
     </Link>
   );
 }
@@ -479,12 +480,6 @@ export function MainSidebar({
 
   const layoutCollapsed = Boolean(sidebarCollapsed && layoutWide);
 
-  const panelClass = [
-    "fixed left-0 top-0 z-[50] flex h-screen w-64 flex-col border-r border-[#D5DADF] bg-white shadow-xl transition-[transform,width] duration-200 ease-out lg:z-40 lg:shadow-none",
-    layoutWide && sidebarCollapsed ? "lg:w-[4.5rem]" : "lg:w-64",
-    mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-  ].join(" ");
-
   const sidebarLayout: SidebarLayout = {
     layoutCollapsed,
     openFlyoutKey,
@@ -492,19 +487,39 @@ export function MainSidebar({
   };
 
   return (
-    <aside id="app-main-sidebar" className={panelClass}>
-      <div className={["shrink-0 p-5", layoutCollapsed ? "lg:px-2 lg:py-4" : ""].join(" ")}>
-        <SidebarLogo layoutCollapsed={layoutCollapsed} />
-      </div>
-      <div className="mx-3 h-px shrink-0 bg-gray-200" />
-      <SidebarLayoutContext.Provider value={sidebarLayout}>
-        <nav
-          className={[
-            "erafinance-sidebar-scroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto px-3 pb-3 pt-2 max-h-screen",
-            layoutCollapsed ? "lg:px-2" : "",
-          ].join(" ")}
-          aria-label="Main navigation"
+    <EraAppSidebar
+      id="app-main-sidebar"
+      mobileNavOpen={mobileNavOpen}
+      sidebarCollapsed={layoutCollapsed}
+      navClassName={layoutCollapsed ? "lg:px-2" : ""}
+      header={
+        <>
+          <div className={["shrink-0 p-5", layoutCollapsed ? "lg:px-2 lg:py-4" : ""].join(" ")}>
+            <SidebarLogo layoutCollapsed={layoutCollapsed} />
+          </div>
+          <div className="mx-3 h-px shrink-0 bg-gray-200" />
+        </>
+      }
+      footer={
+        <button
+          type="button"
+          className="hidden w-full items-center justify-center rounded-lg border border-transparent p-2 text-gray-600 transition hover:border-gray-200 hover:bg-white/70 lg:flex"
+          onClick={onToggleSidebarCollapsed}
+          aria-label={
+            sidebarCollapsed
+              ? t("nav.sidebarExpandAria", { defaultValue: "Expand sidebar" })
+              : t("nav.sidebarCollapseAria", { defaultValue: "Collapse sidebar" })
+          }
         >
+          {sidebarCollapsed ? (
+            <PanelRightClose className="h-5 w-5 shrink-0" aria-hidden />
+          ) : (
+            <PanelLeftClose className="h-5 w-5 shrink-0" aria-hidden />
+          )}
+        </button>
+      }
+    >
+      <SidebarLayoutContext.Provider value={sidebarLayout}>
         <SideNavItem
           href="/home"
           label={t("nav.home")}
@@ -1079,55 +1094,32 @@ export function MainSidebar({
             sectionActive={navSections.superAdminNavActive}
           >
             <SideNavItem
-              href="/super-admin/data"
+              href="/admin/data"
               label={t("nav.superAdminData")}
-              isActive={pathname.startsWith("/super-admin/data")}
+              isActive={pathname.startsWith("/admin/data")}
               icon={Database}
               nested
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/super-admin/billing/pricing"
+              href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/super-admin/billing/pricing`}
               label={t("nav.superAdminBilling")}
-              isActive={pathname.startsWith("/super-admin/billing")}
+              isActive={false}
               icon={CreditCard}
               nested
               onNavClick={onNavClick}
             />
             <SideNavItem
-              href="/super-admin"
+              href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/super-admin`}
               label={t("nav.superAdmin")}
-              isActive={
-                pathname.startsWith("/super-admin") &&
-                !pathname.startsWith("/super-admin/data") &&
-                !pathname.startsWith("/super-admin/billing")
-              }
+              isActive={false}
               icon={ShieldCheck}
               nested
               onNavClick={onNavClick}
             />
           </CollapsibleNavSection>
         ) : null}
-        </nav>
-        <div className="mt-auto hidden shrink-0 border-t border-gray-200 p-2 lg:block">
-          <button
-            type="button"
-            className="flex w-full items-center justify-center rounded-lg border border-transparent p-2 text-gray-600 transition hover:border-gray-200 hover:bg-white/70"
-            onClick={onToggleSidebarCollapsed}
-            aria-label={
-              sidebarCollapsed
-                ? t("nav.sidebarExpandAria", { defaultValue: "Expand sidebar" })
-                : t("nav.sidebarCollapseAria", { defaultValue: "Collapse sidebar" })
-            }
-          >
-            {sidebarCollapsed ? (
-              <PanelRightClose className="h-5 w-5 shrink-0" aria-hidden />
-            ) : (
-              <PanelLeftClose className="h-5 w-5 shrink-0" aria-hidden />
-            )}
-          </button>
-        </div>
       </SidebarLayoutContext.Provider>
-    </aside>
+    </EraAppSidebar>
   );
 }

@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Restoran zalı, sifarişlər və KDS"
+  },
+  "login": {
+    "title": "ERA F&B POS",
+    "login": "Giriş",
+    "password": "Şifrə",
+    "submit": "Daxil ol",
+    "demoHint": "Demo: waiter/waiter və ya manager/manager",
+    "subtitle": "Hesabınıza daxil olun",
+    "busy": "…",
+    "ssoHint": "Və ya ERA Finance / Orchestrator SSO"
+  },
+  "nav": {
+    "dashboard": "İcmal",
+    "floor": "Zal",
+    "orders": "Sifarişlər",
+    "kds": "KDS",
+    "menu": "Menyu",
+    "integration": "İnteqrasiya",
+    "calendar": "Stol rezervasiyası",
+    "brand": "ERA F&B POS"
+  },
+  "home": {
+    "title": "F&B POS",
+    "subtitle": "Zal xəritəsi, çeklər, mətbəx ekranı və fiskal hesablaşma. Qonaq foliosu və gecə auditi <hotelPms>era-hotel-pms</hotelPms> (köprü API) vasitəsilə qalır.",
+    "openFloor": "Zalı aç",
+    "activeOrders": "Aktiv sifarişlər",
+    "kitchenDisplay": "Mətbəx ekranı"
+  },
+  "floor": {
+    "title": "Zal xəritəsi"
+  },
+  "kds": {
+    "title": "Mətbəx ekranı"
+  },
+  "executive": {
+    "title": "İcra icmalı",
+    "subtitle": "F&B — sahib baxışı (billing Finance / Orchestrator-da)",
+    "restricted": "Platforma rolları ilə məhduddur (OWNER/DIRECTOR/ADMIN/ACCOUNTANT Orch SSO vasitəsilə).",
+    "organization": "Təşkilat",
+    "financeRole": "Finance rolu",
+    "openFinance": "Finance aç →"
+  },
+  "admin": {
+    "settings": {
+      "title": "Outlet parametrləri",
+      "subtitle": "Admin — UI playbook (siyahı + ModalShell)",
+      "field": "Sahə",
+      "value": "Dəyər",
+      "actions": "Əməliyyatlar",
+      "outletName": "Outlet adı",
+      "edit": "Redaktə",
+      "editOutlet": "Outlet redaktə",
+      "save": "Saxla",
+      "defaultOutletName": "Demo outlet"
+    },
+    "menu": {
+      "title": "Menyu admin"
+    },
+    "integration": {
+      "title": "İnteqrasiya və billing",
+      "loadFailed": "Yükləmə uğursuz oldu",
+      "organization": "Təşkilat",
+      "kkmDriver": "KKM sürücü",
+      "e8Consumption": "E8 istehlak",
+      "enabled": "aktiv",
+      "disabledEnv": "deaktiv (env)",
+      "platformSubscription": "Platform abunəliyi (yalnız oxuma)"
+    }
+  },
+  "sso": {
+    "signingIn": "Daxil olunur…"
+  },
+  "orders": {
+    "title": "Aktiv sifarişlər",
+    "openTickets": "Açıq çeklər",
+    "ticketActions": "Əməliyyatlar",
+    "loading": "Yüklənir…",
+    "noTickets": "Açıq çek yoxdur.",
+    "selectTicket": "Çek seçin",
+    "fireKitchen": "Mətbəxə",
+    "payCash": "Nağd ödəniş",
+    "openKds": "KDS aç",
+    "void": "Ləğv",
+    "applyDiscount": "Endirim %",
+    "splitSelected": "Seçilmişləri ayır",
+    "selectLinesToSplit": "Ayırmaq üçün sətirləri seçin",
+    "roleHint": "Ofisiant — fire/ödəniş; menecer — ləğv, endirim və Z-close."
+  },
+  "calendar": {
+    "title": "Stol rezervasiyası",
+    "table": "Stol",
+    "time": "Vaxt",
+    "guest": "Qonaq",
+    "pax": "Nəfər",
+    "book": "Rezerv et",
+    "openTicket": "Çek aç",
+    "reserved": "Rezerv edildi",
+    "failed": "Xəta"
+  },
+  "common": {
+    "azn": "AZN",
+    "loading": "Yüklənir…",
+    "emDash": "—"
+  },
+  "auth": {
+    "loginFailed": "Giriş uğursuz oldu",
+    "footerLegalNavAria": "Hüquqi keçidlər və kömək",
+    "footerFaq": "FAQ",
+    "footerTerms": "İstifadə şərtləri",
+    "footerPrivacy": "Məxfilik",
+    "footerStatus": "Status",
+    "loginTitle": "Giriş",
+    "loginId": "Ləqəb / e-poçt / telefon",
+    "email": "E-poçt",
+    "password": "Şifrə",
+    "submitLogin": "Daxil ol",
+    "submitBusy": "…",
+    "needAccount": "Hesab yoxdur? Qeydiyyatdan keçin",
+    "registerOrgLink": "Şirkəti qeydiyyatdan keçirin",
+    "viewPricing": "Tariflər və qiymətlər",
+    "userAgreement": "İstifadəçi razılaşması",
+    "localeToggleAria": "Dil",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

@@ -16,6 +16,9 @@
     "./src/pricing-postpaid-copy.ts",
     "./src/pricing-storefront-copy.ts"
   ],
+  "dependencies": {
+    "@era/i18n-common": "file:../../../packages/i18n-common"
+  },
   "devDependencies": {
     "typescript": "^5.7.3"
   }

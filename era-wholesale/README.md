@@ -2,7 +2,7 @@
 
 B2B orders, credit limits, picking
 
-- Host: `wholesale.era.az` (port 3305)
+- Host: `wholesale.era-365.online` (port 3305)
 - Entitlement: `industry_wholesale`
 - Docs: [PRD](./PRD.md) · [DELIVERY](./doc/DELIVERY-WHOLESALE.md)
 

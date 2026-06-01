@@ -42,6 +42,8 @@ import {
   PatchTemplateAccountDto,
   UpsertTemplateAccountDto,
 } from "./dto/admin-template-account.dto";
+import { PatchMeterUnitPricingDto } from "./dto/patch-meter-unit-pricing.dto";
+import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
 
 @ApiTags("admin")
 @ApiBearerAuth("bearer")
@@ -332,6 +334,18 @@ export class AdminController {
   @ApiOperation({ summary: "Enums and contract whitelists (read-only)" })
   adminReferenceSnapshot() {
     return this.catalog.getReferenceSnapshot();
+  }
+
+  @Patch("config/billing/meter-unit-pricing")
+  @ApiOperation({ summary: "Phase 16 meter unit prices (super-admin)" })
+  patchMeterUnitPricing(@Body() dto: PatchMeterUnitPricingDto) {
+    return this.admin.patchMeterUnitPricing(dto);
+  }
+
+  @Patch("config/billing/tier-spend-ceilings")
+  @ApiOperation({ summary: "Phase 16 tier spend ceilings (super-admin)" })
+  patchTierSpendCeilings(@Body() dto: PatchTierSpendCeilingsDto) {
+    return this.admin.patchTierSpendCeilings(dto);
   }
 
   @Post("impersonate/:userId")

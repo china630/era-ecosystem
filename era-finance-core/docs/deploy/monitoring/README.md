@@ -25,4 +25,4 @@ BullMQ uses the same Redis as the API (`REDIS_URL`). For queue depth inspection 
 
 ## Telegram / external alerts
 
-Application-level webhooks (audit integrity, BullMQ failures) use env vars documented in `env.production.example` and `docs/launch/STAGE_B_INFRASTRUCTURE.md`.
+Application-level webhooks (audit integrity, BullMQ failures) use env vars documented in `env.production.example` and [PRE-RELEASE-CHECKLIST.md](../PRE-RELEASE-CHECKLIST.md).

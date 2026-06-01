@@ -9,6 +9,9 @@ dist/
 **/dist/
 *.tsbuildinfo
 
+# Local dev credentials (never commit)
+tmp/era-local-credentials.md
+
 # Docker persistent data (never commit)
 docker-data/
 

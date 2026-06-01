@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../../../../packages/satellite-kit/src/**/*.{js,ts,jsx,tsx}";
+@source "../../node_modules/@era/satellite-kit/dist/**/*.{js,mjs}";
 
 @layer base {
   html,

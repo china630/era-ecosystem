@@ -5,10 +5,10 @@
 
 
 
-## SSO paths (platform entry � v1.0)
+## SSO paths (platform entry � v1.0)
 
 ### Owner path (Orchestrator)
-1. Login at Orchestrator web: `http://localhost:3100` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
+1. Login at Orchestrator web: `http://localhost:3000` ([QUARTET_UAT.md](../../docs/QUARTET_UAT.md)).
 2. Home → industry tile → **Open** → satellite `/sso/callback` session.
 3. Smoke: `node scripts/sso-launch-smoke.mjs` (`ERA_SSO_SHARED_SECRET` aligned).
 
@@ -78,6 +78,13 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 ## 9. Room plan & occupancy (PMS-04, PMS-06)
 
+Room plan UI (Wave C+):
+
+- [ ] Room numbers stay in the **left column** while scrolling dates
+- [ ] Bars show **arrow tip** on the last night; **notched start** when checkout = next check-in (e.g. room 203 chain)
+- [ ] Hover a bar → tooltip with res no., guest, dates, agency, payment
+- [ ] Table uses **full content width**; row height compact (~36px)
+
 1. `/room-plan` � extend +1 night on bar.
 2. `/reports/occupancy` � 30-day grid loads.
 
@@ -110,7 +117,7 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 1. `/banquets` as `manager` � seed shows DRAFT BEO for **NAFTANI-HALL**.
 2. **Confirm** � hall blocked on POS calendar; deposit 500 AZN posted to company guest folio (room 101).
-3. `cd era-fb-pos && npm run dev` � open shift on outlet `BANQUET`.
+3. `cd era-fnb-pos && npm run dev` � open shift on outlet `BANQUET`.
 4. `POST http://localhost:3200/api/tickets` with `{ "outletCode": "BANQUET", "beoId": "<event-id>", "guestName": "Corporate dinner" }`.
 5. Add extras line; optional room charge to in-house guest folio.
 
@@ -140,11 +147,11 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 ## 11. FB-POS bridge (Stage 17 / SP3)
 
-Requires `era-fb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.
+Requires `era-fnb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.
 
 1. Check in a guest to room **201** (or use seed in-house guest).
 2. From host: `node scripts/test-pos-bridge.mjs` � in-house lookup + idempotent room-charge + shift status.
-3. Start fb-pos: `cd era-fb-pos && npm run dev` (set `HOTEL_PMS_URL=http://127.0.0.1:3000`).
+3. Start fb-pos: `cd era-fnb-pos && npm run dev` (set `HOTEL_PMS_URL=http://127.0.0.1:3000`).
 4. `POST http://localhost:3200/api/shifts/open` with `{ "outletCode": "RESTAURANT" }`.
 5. Create ticket + `POST .../fire` + mark KDS DONE; `PATCH` ticket with `roomNumber: "201"`.
 6. `POST http://localhost:3200/api/tickets/{id}/room-charge` � expect **201** from PMS.
@@ -166,6 +173,41 @@ Requires `era-fb-pos` on :3200 and matching `POS_BRIDGE_SECRET` on both apps.
 4. Folio invoice � hooks gated by entitlement (`runPlatformCommerceHooks`)
 
 See [QUARTET_UAT.md](../../docs/QUARTET_UAT.md).
+
+## 12. Wave B — Front Office parity (2026-06-01)
+
+Prerequisite: `npx prisma migrate deploy` (includes `20260601120000_wave_b_full`).
+
+1. Open `/` → click occupied/vacant room → **Reservation Card** opens.
+2. **Pricing tab:** **Calculate daily prices** → grid of nights; **Charge all** → ROOM lines on folio (no duplicate for same night).
+3. Create booking from list **Add** → card stays open after save (`onCreated`).
+4. `/reports/reservations/notes` redirects to list with `?hasNotes=1`; **Edit** opens card Notes tab.
+5. `/reports/inhouse-daily` — pick date, in-house + departures grids.
+6. `/reports/end-of-day-logs` — after `/operations` night audit, runs listed.
+7. `/channel` — availability matrix for date range.
+8. `/housekeeping/closed-rooms` — OOO/OOS rooms (not parity stub).
+9. `/guests` → open **Guest card** → Identity tab → add document.
+
+## 13. Wave C — Front Office product (2026-06-01)
+
+Prerequisite: `docker compose build --no-cache hotel-pms && docker compose up -d hotel-pms`; logs show `[migrate] database is up to date`. Hard refresh `http://localhost:3201` (Ctrl+F5).
+
+### Navigation & Əsas
+1. Core menu order: **Əsas** → Şahmatka → Plan → List → Group → In-house → EOD logs → Room changes → Daily inhouse → Operations.
+2. No **FO with notes** in Core; no **New booking** in header.
+3. `/bookings/new` redirects to `/?openReservation=1`.
+4. `/executive` (manager/admin): seven KPI cards (occupancy %, in-house, arrivals/departures, revenue, AR, ADR, RevPAR).
+5. Reports section: **Actual check-in/out times** → `/reports/reservation-times` (not in Core).
+
+### Room rack & plan
+6. Rack tile shows: status, guest name, stay dates, pay badge, procedure count.
+7. Drag in-house/confirmed reservation to another room → confirm → room updates (HK-03 enforced).
+8. `/room-plan`: **Grouping** and **Period** dropdowns (14/21/30); drag bar to another room row.
+
+### Lists & cards
+9. `/reports/reservations`: notes column, amber rows with notes, filter **With notes**; `/reports/reservations/notes` → `?hasNotes=1`.
+10. **+** on vacant rack tile opens reservation create with `roomId`; create/edit share toolbar + bottom bar chrome.
+11. Guest card: stats bar, CRM + Reservation Details button grids (not three links only).
 
 ## Pass criteria
 

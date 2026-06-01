@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "title": "ERA F&B POS",
+    "description": "Зал, заказы и KDS ресторана"
+  },
+  "login": {
+    "title": "ERA F&B POS",
+    "login": "Логин",
+    "password": "Пароль",
+    "submit": "Войти",
+    "demoHint": "Демо: waiter/waiter или manager/manager",
+    "subtitle": "Войдите в аккаунт",
+    "busy": "…",
+    "ssoHint": "Или SSO через ERA Finance / Orchestrator"
+  },
+  "nav": {
+    "dashboard": "Главная",
+    "floor": "Зал",
+    "orders": "Заказы",
+    "kds": "KDS",
+    "menu": "Меню",
+    "integration": "Интеграция",
+    "calendar": "Бронь столов",
+    "brand": "ERA F&B POS"
+  },
+  "home": {
+    "title": "F&B POS",
+    "subtitle": "Карта зала, чеки, экран кухни и фискальный расчёт. Гостевой folio и ночной аудит остаются в <hotelPms>era-hotel-pms</hotelPms> (bridge API).",
+    "openFloor": "Открыть зал",
+    "activeOrders": "Активные заказы",
+    "kitchenDisplay": "Экран кухни"
+  },
+  "floor": {
+    "title": "Карта зала"
+  },
+  "kds": {
+    "title": "Экран кухни"
+  },
+  "executive": {
+    "title": "Сводка для руководства",
+    "subtitle": "F&B — вид владельца (бilling в Finance / Orchestrator)",
+    "restricted": "Доступ ограничен платформенными ролями (OWNER/DIRECTOR/ADMIN/ACCOUNTANT через Orch SSO).",
+    "organization": "Организация",
+    "financeRole": "Роль Finance",
+    "openFinance": "Открыть Finance →"
+  },
+  "admin": {
+    "settings": {
+      "title": "Настройки outlet",
+      "subtitle": "Admin — UI playbook (список + ModalShell)",
+      "field": "Поле",
+      "value": "Значение",
+      "actions": "Действия",
+      "outletName": "Название outlet",
+      "edit": "Изменить",
+      "editOutlet": "Редактировать outlet",
+      "save": "Сохранить",
+      "defaultOutletName": "Demo outlet"
+    },
+    "menu": {
+      "title": "Админ меню"
+    },
+    "integration": {
+      "title": "Интеграция и billing",
+      "loadFailed": "Не удалось загрузить",
+      "organization": "Организация",
+      "kkmDriver": "Драйвер KKM",
+      "e8Consumption": "E8 consumption",
+      "enabled": "включено",
+      "disabledEnv": "отключено (env)",
+      "platformSubscription": "Подписка платформы (только чтение)"
+    }
+  },
+  "sso": {
+    "signingIn": "Вход…"
+  },
+  "orders": {
+    "title": "Активные заказы",
+    "openTickets": "Открытые чеки",
+    "ticketActions": "Действия",
+    "loading": "Загрузка…",
+    "noTickets": "Нет открытых чеков.",
+    "selectTicket": "Выберите чек",
+    "fireKitchen": "На кухню",
+    "payCash": "Оплата наличными",
+    "openKds": "Открыть KDS",
+    "void": "Сторно",
+    "applyDiscount": "Скидка %",
+    "splitSelected": "Разделить выбранные",
+    "selectLinesToSplit": "Выберите строки для разделения",
+    "roleHint": "Официант — fire/оплата; менеджер — void, скидка и Z-close."
+  },
+  "calendar": {
+    "title": "Бронь столов",
+    "table": "Стол",
+    "time": "Время",
+    "guest": "Гость",
+    "pax": "Гостей",
+    "book": "Забронировать",
+    "openTicket": "Открыть чек",
+    "reserved": "Забронировано",
+    "failed": "Ошибка"
+  },
+  "common": {
+    "azn": "AZN",
+    "loading": "Загрузка…",
+    "emDash": "—"
+  },
+  "auth": {
+    "loginFailed": "Ошибка входа",
+    "footerLegalNavAria": "Юридические ссылки и справка",
+    "footerFaq": "FAQ",
+    "footerTerms": "Условия использования",
+    "footerPrivacy": "Конфиденциальность",
+    "footerStatus": "Статус",
+    "loginTitle": "Вход",
+    "loginId": "Ник / email / телефон",
+    "email": "Email",
+    "password": "Пароль",
+    "submitLogin": "Войти",
+    "submitBusy": "…",
+    "needAccount": "Нет аккаунта? Зарегистрироваться",
+    "registerOrgLink": "Регистрация с компанией и VÖEN",
+    "viewPricing": "Тарифы и цены",
+    "userAgreement": "Пользовательское соглашение",
+    "localeToggleAria": "Язык",
+    "localeAz": "AZ",
+    "localeRu": "RU",
+    "localeEn": "EN"
+  }
+}

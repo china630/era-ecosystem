@@ -10,7 +10,7 @@ async function buildPayload(reservationId: string) {
   const propertyCode = await getPropertyCode();
   return {
     fullName: res.guest.fullName,
-    passportNumber: res.guest.passportNumber,
+    passportNumber: res.guest.passportNumber ?? res.guest.nationalIdFin ?? '',
     checkInDate: res.checkInDate.toISOString().slice(0, 10),
     checkOutDate: res.checkOutDate.toISOString().slice(0, 10),
     roomNumber: res.room?.roomNumber ?? null,

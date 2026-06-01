@@ -33,6 +33,24 @@ enum PaymentMethod {
   COMPANY_ACCOUNT
 }
 
+enum ReservationNoteType {
+  EXTRA_REQ
+  RES_NOTE
+  CIN_NOTE
+  COUT_NOTE
+  ROOM_NOTE
+  CANCEL_NOTE
+  PAYMENT_NOTE
+  PRICE_NOTE
+  INVOICE_NOTE
+  CONFIRMATION
+  GENERAL_NOTE
+  ARRIVAL_POSTPONED
+  DEPARTURE_EXTENDED
+  SET_ARRIVAL_EARLY
+  SET_DEPARTURE_EARLY
+}
+
 enum FolioType {
   GUEST
   COMPANY
@@ -179,6 +197,7 @@ model User {
   id           String     @id @default(uuid())
   login        String     @unique
   email        String?
+  phone        String?    @unique
   passwordHash String
   fullName     String
   department   String?
@@ -205,6 +224,7 @@ model RoomType {
   reservations  Reservation[]
   ratePlans     RatePlan[]
   stopSells     ChannelStopSell[]
+  channelRoomMappings ChannelRoomMapping[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 }
@@ -229,6 +249,10 @@ model Room {
   status       RoomStatus         @default(AVAILABLE)
   reservations Reservation[]
   hkTasks      HousekeepingTask[]
+  closures     RoomClosure[]
+  minibarPosts MinibarPosting[]
+  roomChangesFrom RoomChangePlan[] @relation("RoomChangeFrom")
+  roomChangesTo   RoomChangePlan[] @relation("RoomChangeTo")
   createdAt    DateTime           @default(now())
   updatedAt    DateTime           @updatedAt
 }
@@ -255,6 +279,7 @@ model RatePlan {
   packageLines  RatePlanPackageLine[]
   procedureInclusions RatePlanProcedureInclusion[]
   contractPricingRules ContractPricingRule[]
+  channelRateMappings  ChannelRateMapping[]
 }
 
 model RatePlanPackageLine {
@@ -349,11 +374,14 @@ model BookingSource {
 }
 
 model Agency {
-  id           String        @id @default(uuid())
-  code         String        @unique
-  name         String
-  voen         String?
-  reservations Reservation[]
+  id                   String              @id @default(uuid())
+  code                 String              @unique
+  name                 String
+  voen                 String?
+  commissionPercent    Decimal?            @db.Decimal(5, 2)
+  active               Boolean             @default(true)
+  reservations         Reservation[]
+  reservationGroups    ReservationGroup[]
   contractPricingRules ContractPricingRule[]
 }
 
@@ -382,15 +410,91 @@ model ContractPricingRule {
 }
 
 model Guest {
-  id             String         @id @default(uuid())
-  globalPersonId String?
-  fullName       String
-  voen           String?
-  passportNumber String
-  phone          String
-  loyaltyTier    String?
-  reservations   Reservation[]
-  medicalAlerts  MedicalAlert[]
+  id                 String         @id @default(uuid())
+  globalPersonId     String?
+  fullName           String
+  firstName          String?
+  lastName           String?
+  middleName         String?
+  title              String?
+  gender             String?
+  nationality        String         @default("AZ")
+  nationalIdFin      String?
+  voen               String?
+  passportNumber     String?
+  phone              String?
+  email              String?
+  loyaltyTier        String?
+  vipType            String?
+  birthDate          DateTime?
+  birthPlace         String?
+  occupation         String?
+  registrationNumber String?
+  vehiclePlate       String?
+  greyList           Boolean        @default(false)
+  problematic        Boolean        @default(false)
+  hotelName          String?
+  visitCount         Int            @default(0)
+  gdprConfirmed      Boolean        @default(false)
+  smsConsent         Boolean        @default(false)
+  whatsappConsent    Boolean        @default(false)
+  phoneConsent       Boolean        @default(false)
+  emailConsent       Boolean        @default(false)
+  callBack           Boolean        @default(false)
+  reservations       Reservation[]
+  medicalAlerts      MedicalAlert[]
+  documents          GuestDocument[]
+  contacts           GuestContact[]
+  addresses          GuestAddress[]
+  lostFoundItems     LostFoundItem[]
+}
+
+model GuestDocument {
+  id           String   @id @default(uuid())
+  guestId      String
+  guest        Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  docType      String
+  docNumber    String
+  issuedAt     DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestContact {
+  id        String  @id @default(uuid())
+  guestId   String
+  guest     Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  kind      String
+  value     String
+  isPrimary Boolean @default(false)
+
+  @@index([guestId])
+}
+
+model GuestAddress {
+  id        String  @id @default(uuid())
+  guestId   String
+  guest     Guest   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  kind      String
+  line1     String
+  line2     String?
+  city      String?
+  country   String?
+
+  @@index([guestId])
+}
+
+model ReservationGroup {
+  id           String        @id @default(uuid())
+  code         String        @unique
+  name         String?
+  agencyId     String?
+  agency       Agency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  reservations Reservation[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Reservation {
@@ -409,12 +513,46 @@ model Reservation {
   source        BookingSource?    @relation(fields: [sourceId], references: [id])
   agencyId      String?
   agency        Agency?           @relation(fields: [agencyId], references: [id])
+  groupId       String?
+  group         ReservationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   checkInDate   DateTime
   checkOutDate  DateTime
   status        ReservationStatus @default(CONFIRMED)
   paymentMethod PaymentMethod
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  voucherNo     String?
+  roomCount     Int               @default(1)
+  adults        Int               @default(1)
+  children11_6  Int               @default(0)
+  children5_2   Int               @default(0)
+  children1_0   Int               @default(0)
+  market        String?
+  segment       String?
+  rateType      String?
+  booker        String?
+  guestRep      String?
+  paidBy        String?
+  vipType       String?
+  accomType     String?
+  recordType    String?
+  specialStates String?
+  tripReason    String?
+  resGroup      String?
+  colorCode     String?
+  resNo         String?
+  shareNo       String?
+  optionDate    DateTime?
+  optionState   String?
+  salesProject  String?
+  useManualRate Boolean           @default(false)
+  manualDailyRate Decimal?        @db.Decimal(12, 2)
+  discountActive  Boolean         @default(false)
+  isLocked        Boolean         @default(false)
   stay          Stay?
+  paxGuests     ReservationGuest[]
+  notes         ReservationNote[]
+  dailyRates    ReservationDailyRate[]
+  roomChanges   RoomChangePlan[]
   folios        Folio[]
   channelErrors ChannelSyncError[]
   medicalOrders   MedicalOrder[]
@@ -433,6 +571,192 @@ model Reservation {
   @@index([guestId])
   @@index([roomTypeId])
   @@index([agencyId])
+  @@index([groupId])
+}
+
+model ReservationGuest {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  title         String?
+  gender        String?
+  firstName     String?
+  lastName      String?
+  nationality   String?
+  birthDate     DateTime?
+  age           Int?
+  idCardNo      String?
+  passportNo    String?
+  isPrimary     Boolean     @default(false)
+  sortOrder     Int         @default(0)
+
+  @@index([reservationId])
+}
+
+model ReservationNote {
+  id            String              @id @default(uuid())
+  reservationId String
+  reservation   Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  noteType      ReservationNoteType
+  text          String              @default("")
+
+  @@unique([reservationId, noteType])
+  @@index([reservationId])
+}
+
+model ReservationDailyRate {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  stayDate      DateTime    @db.Date
+  amount        Decimal     @db.Decimal(12, 2)
+  manualFlag    Boolean     @default(false)
+
+  @@unique([reservationId, stayDate])
+  @@index([reservationId])
+}
+
+model RoomChangePlan {
+  id            String              @id @default(uuid())
+  reservationId String
+  reservation   Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromRoomId    String?
+  fromRoom      Room?               @relation("RoomChangeFrom", fields: [fromRoomId], references: [id])
+  toRoomId      String?
+  toRoom        Room?               @relation("RoomChangeTo", fields: [toRoomId], references: [id])
+  effectiveAt   DateTime
+  status        RoomChangeStatus    @default(PENDING)
+  notes         String?
+  createdAt     DateTime            @default(now())
+
+  @@index([reservationId])
+  @@index([effectiveAt])
+}
+
+enum RoomChangeStatus {
+  PENDING
+  APPLIED
+  CANCELLED
+}
+
+model PromotionCode {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  discountPercent Decimal @db.Decimal(5, 2)
+  validFrom      DateTime @db.Date
+  validTo        DateTime? @db.Date
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model ChildPricingMatrix {
+  id             String   @id @default(uuid())
+  ageFrom        Int
+  ageTo          Int
+  discountPercent Decimal @db.Decimal(5, 2)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model RoomClosure {
+  id        String   @id @default(uuid())
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  startDate DateTime @db.Date
+  endDate   DateTime? @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([roomId])
+}
+
+model Housekeeper {
+  id        String             @id @default(uuid())
+  code      String             @unique
+  name      String
+  active    Boolean            @default(true)
+  tasks     HousekeepingTask[]
+  createdAt DateTime           @default(now())
+}
+
+model MinibarItem {
+  id        String           @id @default(uuid())
+  code      String           @unique
+  name      String
+  price     Decimal          @db.Decimal(12, 2)
+  active    Boolean          @default(true)
+  postings  MinibarPosting[]
+}
+
+model MinibarPosting {
+  id            String      @id @default(uuid())
+  roomId        String
+  room          Room        @relation(fields: [roomId], references: [id])
+  itemId        String
+  item          MinibarItem @relation(fields: [itemId], references: [id])
+  qty           Int         @default(1)
+  reservationId String?
+  postedAt      DateTime    @default(now())
+
+  @@index([roomId])
+}
+
+model LostFoundItem {
+  id          String            @id @default(uuid())
+  foundDate   DateTime          @db.Date
+  location    String
+  description String
+  status      LostFoundStatus   @default(OPEN)
+  guestId     String?
+  guest       Guest?            @relation(fields: [guestId], references: [id])
+  createdAt   DateTime          @default(now())
+}
+
+enum LostFoundStatus {
+  OPEN
+  RETURNED
+  DISPOSED
+}
+
+model SpaPlace {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  capacity  Int      @default(1)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Channel {
+  id           String               @id @default(uuid())
+  code         String               @unique
+  name         String
+  active       Boolean              @default(true)
+  roomMappings ChannelRoomMapping[]
+  rateMappings ChannelRateMapping[]
+  createdAt    DateTime             @default(now())
+}
+
+model ChannelRoomMapping {
+  id           String   @id @default(uuid())
+  channelId    String
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  roomTypeId   String
+  roomType     RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  otaRoomCode  String
+
+  @@unique([channelId, roomTypeId])
+}
+
+model ChannelRateMapping {
+  id           String   @id @default(uuid())
+  channelId    String
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  ratePlanId   String
+  ratePlan     RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  otaRateCode  String
+
+  @@unique([channelId, ratePlanId])
 }
 
 model Stay {
@@ -544,13 +868,15 @@ model NightAuditRun {
 }
 
 model HousekeepingTask {
-  id        String                 @id @default(uuid())
-  roomId    String
-  room      Room                   @relation(fields: [roomId], references: [id])
-  status    HousekeepingTaskStatus @default(PENDING)
-  notes     String?
-  createdAt DateTime               @default(now())
-  updatedAt DateTime               @updatedAt
+  id            String                 @id @default(uuid())
+  roomId        String
+  room          Room                   @relation(fields: [roomId], references: [id])
+  housekeeperId String?
+  housekeeper   Housekeeper?           @relation(fields: [housekeeperId], references: [id], onDelete: SetNull)
+  status        HousekeepingTaskStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 }
 
 model ChannelSyncError {

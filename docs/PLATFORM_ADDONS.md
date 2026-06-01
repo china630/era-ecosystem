@@ -1,6 +1,6 @@
 # Platform add-ons catalog
 
-Cross-cutting commercial services sold **on top of** ERA Core and industry satellites. Implemented and billed from **era-365-orchestrator** (control plane), not from individual vertical apps.
+Cross-cutting commercial services sold **on top of** ERA Core and industry satellites. Implemented and billed from **era-orchestrator** (control plane), not from individual vertical apps.
 
 **Billing model:** see [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) — modules/add-ons on **monthly post-paid** invoice; metered channels (messages, storage over tier) on **live tier/quota accumulation**.
 
@@ -11,7 +11,7 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 1. **One entitlement slug per add-on** in `organization_modules` / pricing catalog (e.g. `platform_notifications`, `platform_booking`).
 2. **One API** per add-on family under `/platform/*` on orchestrator; satellites call with org service token or user JWT.
 3. **No duplicate billing** in Finance or satellites — Finance only posts **accounting** entries if needed (e.g. recognize platform revenue internally).
-4. **Separate from vertical CRM** — e.g. `industry_crm_whatsapp` = pre-sale conversations; Notifications Pack = transactional outbound.
+4. **Separate from vertical CRM** — e.g. `industry_crm` = pre-sale conversations; Notifications Pack = transactional outbound.
 
 ---
 
@@ -20,12 +20,13 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 | Slug (draft) | Name | Primary users | Monetization | Status |
 |--------------|------|---------------|--------------|--------|
 | `platform_notifications` | **Notifications Pack** | All verticals + Finance | Tier-included WA/email alerts + meter overlimit; SMS as Pro | **Production-ready (CP-B2)** on orchestrator |
-| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | +AZN/mo per bookable resource group | **MVP API** (CP-B3) |
-| `platform_portal` | **Customer Portal** | All B2C-facing verticals | Basic included; white-label + custom domain premium | **MVP API** (CP-B4) |
-| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | % or fixed per successful payment | **MVP API** (CP-B5) |
-| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | +AZN/mo; marketing messages use Notifications meter | **MVP API** (CP-B6) |
-| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **MVP API** (CP-B7) |
-| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **MVP API** (CP-B8) |
+| `platform_booking` | **Online Booking Widget** | Clinic, auto-sto, retail pickup, hotel spa | +AZN/mo per bookable resource group | **Live** (CP-B3, v2.0) |
+| `platform_portal` | **Customer Portal** | All B2C-facing verticals | Basic included; white-label + custom domain premium | **Live** (CP-B4, v2.0) |
+| `platform_payments` | **Payment links & deposits** | Finance invoices, booking deposits | % or fixed per successful payment | **Live** (CP-B5, v2.0) |
+| `platform_loyalty` | **Loyalty & promotions** | Retail, clinic storefront | +AZN/mo; marketing messages use Notifications meter | **Live** (CP-B6, v2.0) |
+| `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **Live** (CP-B7, v2.0) |
+| `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **Live** (CP-B8, v2.0) |
+| `platform_storage` | **Cloud object storage (S3)** | All products (attachments, exports) | +AZN/mo + GB meter over tier | **Live** (shared `@era/storage`) |
 
 **Bundles (commercial packaging):**
 
@@ -34,6 +35,8 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 | **Commerce** | notifications + payments + delivery + domain | retail e-commerce |
 | **Care** | booking + notifications + portal | clinic |
 | **Fleet & Service** | booking + notifications + vehicle reminders | auto-sto |
+
+**Not platform add-ons:** ElectraWeb hotel features (Channel Manager, SPA, Guest tasks, Banquets…) are **`hotel_*` modules** in `pricing_modules`, gated by `industry_hotel_pms`. See [`docs/adr/hotel-module-taxonomy.md`](./adr/hotel-module-taxonomy.md) and [`MODULES_CATALOG.md`](./MODULES_CATALOG.md) § Hospitality.
 
 ---
 
@@ -76,7 +79,7 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 - **Over tier included count:** meter `pricePerWhatsappAlertAzn` → `accumulatedBalance` in current period.
 - **Legacy:** `whatsappOutboundMessagesBalance` prepaid — **deprecated**; do not extend.
 
-### Boundary vs `industry_crm_whatsapp`
+### Boundary vs `industry_crm`
 
 | | CRM + WhatsApp (vertical) | Notifications Pack |
 |--|---------------------------|-------------------|
@@ -166,6 +169,20 @@ Response: `messageId`, `deliveryStatus`; async webhook from provider updates out
 
 ---
 
+## 8. Cloud object storage (`platform_storage`)
+
+**Purpose:** Shared attachments and exports (invoice PDFs, satellite uploads, export archives) via S3-compatible storage or local disk in dev.
+
+**Package:** [`packages/era-storage`](../packages/era-storage) — `createStorageService()`, drivers `local` and `s3`. Finance API imports `@era/storage` in `storage.module.ts`.
+
+**Satellite integration:** import `@era/storage` **only in server routes** (e.g. `app/api/uploads/route.ts`). Do **not** re-export from `@era/satellite-kit` main barrel (webpack `node:fs` on client). Gate routes with entitlement check + `PLATFORM_STORAGE_ENABLED=true`.
+
+**Reference:** `era-retail-pos/app/api/uploads/route.ts`.
+
+**Monetization:** module fee + GB meter over tier included storage (`maxStorageGb`).
+
+---
+
 ## Entitlements in pricing catalog
 
 Add to orchestrator `pricing_modules` (Super-Admin):
@@ -180,6 +197,7 @@ Add to orchestrator `pricing_modules` (Super-Admin):
 | `platform_loyalty` | MODULE | Loyalty engine |
 | `platform_domain` | MODULE | Custom domain |
 | `platform_delivery` | MODULE | Delivery orchestration |
+| `platform_storage` | MODULE | S3 / object storage add-on |
 
 Industry slugs (`industry_clinic`, `industry_hotel_pms`, …) remain **separate** — they gate satellite app access; platform add-ons gate **shared services** inside those apps.
 
@@ -192,7 +210,21 @@ Industry slugs (`industry_clinic`, `industry_hotel_pms`, …) remain **separate*
 | **CP-BILLING** | Entire commercial control plane Finance → orchestrator — [CP-BILLING-MIGRATION.md](./CP-BILLING-MIGRATION.md) |
 | **CP-PLATFORM-*** | Platform add-ons **after** CP-BILLING (Notifications, Booking, Portal, …) — [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
 
-Track in [era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-365-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) section CP-BILLING / CP-PLATFORM.
+Track in [era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) section CP-BILLING / CP-PLATFORM.
+
+---
+
+## Live mode (v2.0) — environment
+
+| Add-on | Variable | Default | Notes |
+|--------|----------|---------|-------|
+| All platform APIs | `PLATFORM_ADDONS_MODE` | `live` | `mvp` restores v1.0 stub responses |
+| Booking | `PLATFORM_BOOKING_WEBHOOK_URL` | — | Outbound cancel/confirm |
+| Delivery | `PLATFORM_DELIVERY_WEBHOOK_URL` | — | Status transitions |
+| Notifications WA | `WHATSAPP_BUSINESS_MODE` | `mock` | `live` → WABA adapter |
+| Storage | `PLATFORM_STORAGE_ENABLED` | `false` | `true` + `STORAGE_DRIVER=s3` for uploads |
+| Storage S3 | `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | — | Local dev: `STORAGE_DRIVER=local`, `STORAGE_LOCAL_PATH` |
+| Idempotency / audit | (Prisma) | on in live | `PlatformIdempotencyRecord`, `PlatformAuditLog` |
 
 ---
 
