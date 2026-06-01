@@ -19,15 +19,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Build era-contracts
-        working-directory: packages/era-contracts
-        run: npm ci && npm run build
-      - name: Build satellite-kit
-        working-directory: packages/satellite-kit
-        run: npm ci && npm run build
-      - name: Build i18n-common
-        working-directory: packages/i18n-common
-        run: npm ci && npm run build
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
 
   orchestrator:
     runs-on: ubuntu-latest
@@ -38,6 +31,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Install and test orchestrator
         working-directory: era-orchestrator
         run: |
@@ -143,6 +138,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Build and test ${{ matrix.dir }}
         working-directory: ${{ matrix.dir }}
         run: |
