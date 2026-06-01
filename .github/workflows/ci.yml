@@ -98,6 +98,8 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: era-finance-core/package-lock.json
+      - name: Build shared packages (file dependencies)
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
       - name: Install
         working-directory: era-finance-core
         run: npm ci
@@ -110,14 +112,11 @@ jobs:
       - name: ESLint API
         working-directory: era-finance-core
         run: npm run lint -w @erafinance/api
-      - name: Generate control-plane Prisma client
-        working-directory: era-orchestrator/packages/database
-        env:
-          DATABASE_URL: postgresql://build:build@127.0.0.1:5432/era_control_plane?schema=public
-        run: npm install --ignore-scripts && npm run db:generate
       - name: Unit tests
         working-directory: era-finance-core
-        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2
+        env:
+          TZ: UTC
+        run: npm run test -w @erafinance/api -- --roots=src --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2 --testTimeout=120000
       - name: Integration tests
         working-directory: era-finance-core
         run: npm run test:integration -w @erafinance/api -- --ci

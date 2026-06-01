@@ -83,7 +83,8 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 
 ## CI notes
 
-- **Shared packages** (`ci.yml` jobs `packages`, `orchestrator`, `satellite`): [`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh) builds `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit` in order.
+- **Shared packages** ([`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh)): `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit`. Runs in `packages`, `orchestrator`, `satellite`, and **`finance`** jobs (`@era/contracts`, `@era/storage` need `dist/`; not committed).
+- **Finance + control plane**: `@era365/database` uses the **committed** Prisma client under `era-orchestrator/packages/database/generated/`. Do not run a separate `npm install` in that package during finance CI — a second `@prisma/client` copy breaks Jest.
 - **Data Hub** depends on `@erafinance/database` via `file:../../../era-finance-core/packages/database`. CI runs [`scripts/ci-prepare-finance-database.sh`](../scripts/ci-prepare-finance-database.sh) before `npm ci` in `era-data-hub`, so `prisma` exists when npm links the package.
 
 ## Related docs
