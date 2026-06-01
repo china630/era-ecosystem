@@ -81,6 +81,11 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 | `ENV_FILE` | Full production `.env` body |
 | `GHCR_PULL_TOKEN` | PAT with `read:packages` for droplet `docker login` |
 
+## CI notes
+
+- **Shared packages** (`ci.yml` jobs `packages`, `orchestrator`, `satellite`): [`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh) builds `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit` in order.
+- **Data Hub** depends on `@erafinance/database` via `file:../../../era-finance-core/packages/database`. CI runs [`scripts/ci-prepare-finance-database.sh`](../scripts/ci-prepare-finance-database.sh) before `npm ci` in `era-data-hub`, so `prisma` exists when npm links the package.
+
 ## Related docs
 
 - [DEPLOY_DIGITALOCEAN.md](./DEPLOY_DIGITALOCEAN.md) — droplet bootstrap
