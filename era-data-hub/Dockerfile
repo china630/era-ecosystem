@@ -8,6 +8,8 @@ RUN apk add --no-cache python3 make g++ openssl
 WORKDIR /workspace
 
 COPY era-finance-core/packages/database/package.json ./era-finance-core/packages/database/
+COPY era-finance-core/packages/database/prisma.config.ts ./era-finance-core/packages/database/
+COPY era-finance-core/packages/database/tsconfig.chart.json ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/prisma ./era-finance-core/packages/database/prisma
 COPY era-finance-core/packages/database/index.js ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/index.d.ts ./era-finance-core/packages/database/
@@ -24,8 +26,9 @@ ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 WORKDIR /workspace/era-data-hub
 RUN npm install 2>/dev/null || true
 WORKDIR /workspace/era-finance-core/packages/database
-RUN npm install --include=dev 2>/dev/null || npm install
-RUN npx prisma generate 2>/dev/null || true
+RUN npm install --include=dev --ignore-scripts \
+  && npx prisma generate \
+  && npm run build:chart
 
 WORKDIR /workspace/era-data-hub
 RUN npm install && npm run build -w @era/data-hub-database && npm run build -w @era/data-hub-api
