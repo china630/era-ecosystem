@@ -112,11 +112,13 @@ jobs:
       - name: ESLint API
         working-directory: era-finance-core
         run: npm run lint -w @erafinance/api
+      - name: Prepare API test dependencies
+        run: chmod +x scripts/ci-prepare-finance-api-tests.sh && ./scripts/ci-prepare-finance-api-tests.sh
       - name: Unit tests
         working-directory: era-finance-core
         env:
           TZ: UTC
-        run: npm run test -w @erafinance/api -- --roots=src --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2 --testTimeout=120000
+        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2 --testTimeout=120000
       - name: Integration tests
         working-directory: era-finance-core
         run: npm run test:integration -w @erafinance/api -- --ci
