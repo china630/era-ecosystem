@@ -1,0 +1,82 @@
+# Production / staging — pull pre-built images from GHCR (no local build).
+# Usage:
+#   export IMAGE_TAG=dev-abc1234
+#   export GHCR_IMAGE_PREFIX=ghcr.io/<owner>/era-ecosystem
+#   docker compose -f docker-compose.prod.yml --env-file .env pull
+#   ./docker/scripts/migrate-all.sh
+#   docker compose -f docker-compose.prod.yml --env-file .env up -d
+# Local dev with build: docker-compose.yml
+
+name: era-ecosystem-prod
+
+include:
+  - docker-compose.yml
+
+x-ghcr-image: &ghcr-image
+  pull_policy: always
+
+services:
+  orchestrator:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/orchestrator:${IMAGE_TAG:?set IMAGE_TAG}
+
+  data-hub:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/data-hub:${IMAGE_TAG}
+
+  finance-core:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/finance-core:${IMAGE_TAG}
+
+  finance-web:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/finance-web:${IMAGE_TAG}
+
+  hotel-pms:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/hotel-pms:${IMAGE_TAG}
+
+  fnb-pos:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/fnb-pos:${IMAGE_TAG}
+
+  clinic:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/clinic:${IMAGE_TAG}
+
+  retail-pos:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/retail-pos:${IMAGE_TAG}
+
+  logistics:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/logistics:${IMAGE_TAG}
+
+  construction:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/construction:${IMAGE_TAG}
+
+  crm:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/crm:${IMAGE_TAG}
+
+  auto-service:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/auto-service:${IMAGE_TAG}
+
+  wholesale:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/wholesale:${IMAGE_TAG}

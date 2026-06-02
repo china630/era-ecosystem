@@ -14,16 +14,10 @@ export function LocaleToggle({
   locale: Locale;
   onChange?: (next: Locale) => void;
   variant?: "buttons";
-  labels?: {
-    groupAria?: string;
-    az?: string;
-    ru?: string;
-    en?: string;
-  };
+  labels?: Partial<Record<Locale, string>> & { groupAria?: string };
 }) {
   if (variant !== "buttons") return null;
-  const labelFor = (code: Locale) =>
-    labels?.[code] ?? code.toUpperCase();
+  const labelFor = (code: Locale) => labels?.[code] ?? code.toUpperCase();
   return (
     <div
       className="inline-flex gap-1 rounded-lg border border-[#D5DADF] bg-white p-1 shadow-sm"

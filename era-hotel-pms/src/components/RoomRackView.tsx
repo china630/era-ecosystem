@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
@@ -13,7 +13,7 @@ import {
 import {
   RACK_BORDER_CLASS,
   RACK_SWATCH_CLASS,
-  RACK_TEXT_CLASS,
+  rackNumberTextClass,
   canQuickBookRoom,
   type RackDisplayState,
 } from '@/lib/room-rack-display';
@@ -53,6 +53,10 @@ export type RoomRackRoom = {
     payStatus?: RackPayStatus;
     procedureCount?: number;
     procedurePending?: number;
+    agencyId?: string | null;
+    agencyCode?: string | null;
+    sourceId?: string | null;
+    sourceCode?: string | null;
   }>;
   rackDisplayState?: RackDisplayState;
 };
@@ -89,8 +93,7 @@ function rackBorder(room: RoomRackRoom): string {
 }
 
 function rackText(room: RoomRackRoom): string {
-  if (room.rackDisplayState) return RACK_TEXT_CLASS[room.rackDisplayState];
-  return 'text-[#34495E]';
+  return rackNumberTextClass(room);
 }
 
 function dayStart(d: Date): number {
@@ -134,6 +137,25 @@ export default function RoomRackView({
   const [occupiedOnly, setOccupiedOnly] = useState(false);
   const [vacantOnly, setVacantOnly] = useState(false);
   const [resFilter, setResFilter] = useState<ResFilter>('all');
+  const [agencyFilter, setAgencyFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
+  const [payFilter, setPayFilter] = useState<string>('all');
+  const [agencies, setAgencies] = useState<Array<{ id: string; code: string }>>([]);
+  const [sources, setSources] = useState<Array<{ id: string; code: string }>>([]);
+
+  useEffect(() => {
+    void Promise.all([
+      fetch('/api/agencies').then((r) => r.json()),
+      fetch('/api/master/booking-sources').then((r) => r.json()),
+    ]).then(([ag, src]) => {
+      if (Array.isArray(ag)) {
+        setAgencies(ag.map((x: { id: string; code: string }) => ({ id: x.id, code: x.code })));
+      }
+      if (Array.isArray(src)) {
+        setSources(src.map((x: { id: string; code: string }) => ({ id: x.id, code: x.code })));
+      }
+    });
+  }, []);
 
   const roomTypes = useMemo(() => {
     const codes = new Set(rooms.map((r) => r.roomType.code));
@@ -160,6 +182,28 @@ export default function RoomRackView({
       if (occupiedOnly && !isOccupied) return false;
       if (vacantOnly && isOccupied) return false;
 
+      if (agencyFilter !== 'all') {
+        const active =
+          room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
+        if (!active) return false;
+        if (agencyFilter === '') {
+          if (active.agencyId) return false;
+        } else if (active.agencyId !== agencyFilter) {
+          return false;
+        }
+      }
+      if (sourceFilter !== 'all') {
+        const active =
+          room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
+        if (!active || active.sourceId !== sourceFilter) return false;
+      }
+      if (payFilter !== 'all') {
+        const active =
+          room.reservations.find((r) => r.status === 'IN_HOUSE') ??
+          room.reservations.find((r) => r.payStatus && r.payStatus !== 'NONE') ??
+          room.reservations[0];
+        if (!active?.payStatus || active.payStatus !== payFilter) return false;
+      }
       if (resFilter !== 'all') {
         const active =
           room.reservations.find((r) => r.status === 'IN_HOUSE') ?? room.reservations[0];
@@ -190,6 +234,9 @@ export default function RoomRackView({
     vacantOnly,
     resFilter,
     filterDay,
+    agencyFilter,
+    sourceFilter,
+    payFilter,
   ]);
 
   const occupiedCount = rooms.filter(
@@ -215,6 +262,9 @@ export default function RoomRackView({
     setOccupiedOnly(false);
     setVacantOnly(false);
     setResFilter('all');
+    setAgencyFilter('all');
+    setSourceFilter('all');
+    setPayFilter('all');
     setFilterDate(new Date().toISOString().slice(0, 10));
   }
 
@@ -246,6 +296,34 @@ export default function RoomRackView({
         <div className="flex gap-3 text-[12px] text-[#7F8C8D]">
           <span>{t('occupied')}: {occupiedCount}</span>
           <span>{t('vacant')}: {vacantCount}</span>
+        </div>
+        <div>
+          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterAgency')}</label>
+          <select className={FORM_INPUT_CLASS} value={agencyFilter} onChange={(e) => setAgencyFilter(e.target.value)}>
+            <option value="all">{t('allAgencies')}</option>
+            <option value="">{t('individualOnly')}</option>
+            {agencies.map((a) => (
+              <option key={a.id} value={a.id}>{a.code}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterSource')}</label>
+          <select className={FORM_INPUT_CLASS} value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+            <option value="all">{t('allSources')}</option>
+            {sources.map((s) => (
+              <option key={s.id} value={s.id}>{s.code}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block font-semibold text-[#34495E]">{t('filterPayStatus')}</label>
+          <select className={FORM_INPUT_CLASS} value={payFilter} onChange={(e) => setPayFilter(e.target.value)}>
+            <option value="all">{t('allPayStatuses')}</option>
+            {(['PAID', 'PARTIAL', 'UNPAID', 'NONE'] as RackPayStatus[]).map((p) => (
+              <option key={p} value={p}>{tPay(p)}</option>
+            ))}
+          </select>
         </div>
         <div>
           <p className="mb-2 font-semibold text-[#34495E]">{t('reservationFilter')}</p>

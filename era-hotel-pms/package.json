@@ -22,7 +22,7 @@
     "verify:i18n": "node scripts/verify-i18n-keys.mjs",
     "sync:i18n": "node scripts/restore-and-sync-i18n.mjs",
     "i18n:fill-missing": "node scripts/apply-missing-i18n.mjs",
-    "test": "jest --passWithNoTests",
+    "test": "jest --ci",
     "test:e2e": "playwright test"
   },
   "prisma": {

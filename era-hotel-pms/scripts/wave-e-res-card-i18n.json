@@ -1,0 +1,15 @@
+{
+  "reservationCard.nights": { "az": "Gecələr", "ru": "Ночей" },
+  "reservationCard.preferredLocation": { "az": "Üstünlük verilən yer", "ru": "Предпочт. расположение" },
+  "reservationCard.preferredBed": { "az": "Üstünlük verilən çarpayı", "ru": "Предпочт. кровать" },
+  "reservationCard.givenRoomType": { "az": "Verilmiş otaq tipi", "ru": "Выданный тип номера" },
+  "reservationCard.contractRef": { "az": "Müqavilə ref.", "ru": "Ссылка на договор" },
+  "reservationCard.attach": { "az": "Əlavə", "ru": "Вложения" },
+  "reservationCard.lightning": { "az": "Sürətli", "ru": "Быстрые" },
+  "reservationCard.folioTab.first": { "az": "1-ci şəxs", "ru": "1-е лицо" },
+  "reservationCard.folioTab.second": { "az": "2-ci şəxs", "ru": "2-е лицо" },
+  "reservationCard.currency": { "az": "Valyuta", "ru": "Валюта" },
+  "reservationCard.fixPrice": { "az": "Sabit qiymət", "ru": "Фикс. цена" },
+  "reservationCard.discountPct": { "az": "Endirim %", "ru": "Скидка %" },
+  "reservationCard.repeatGuest": { "az": "Təkrar qonaq", "ru": "Повтор гостя" }
+}

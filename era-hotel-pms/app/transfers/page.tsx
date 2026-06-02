@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
@@ -54,6 +55,8 @@ const bookFormId = 'book-transfer-form';
 
 export default function TransfersPage() {
   const { can } = useAuth();
+  const searchParams = useSearchParams();
+  const guestIdFilter = searchParams.get('guestId');
   const t = useTranslations('transfers');
   const tc = useTranslations('common');
   const [orders, setOrders] = useState<TransferOrder[]>([]);
@@ -71,16 +74,21 @@ export default function TransfersPage() {
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
+    const transferQ = guestIdFilter ? `?guestId=${encodeURIComponent(guestIdFilter)}` : '';
     const [transferRes, resRes] = await Promise.all([
-      fetch('/api/transfers'),
-      fetch('/api/reservations?status=IN_HOUSE'),
+      fetch(`/api/transfers${transferQ}`),
+      fetch(
+        guestIdFilter
+          ? `/api/reservations?guestId=${encodeURIComponent(guestIdFilter)}`
+          : '/api/reservations?status=IN_HOUSE',
+      ),
     ]);
     const transferData = await transferRes.json();
     const resData = await resRes.json();
     setOrders(transferData.orders ?? []);
     setVehicles(transferData.vehicles ?? []);
     setReservations(Array.isArray(resData) ? resData : []);
-  }, []);
+  }, [guestIdFilter]);
 
   useEffect(() => {
     load();

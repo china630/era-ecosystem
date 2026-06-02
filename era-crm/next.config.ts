@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
   transpilePackages: ["@era/i18n-common", "@era/satellite-kit"],
+  outputFileTracingIncludes: {
+    "/*": [
+      "./messages/**/*",
+      "./node_modules/@era/i18n-common/messages/**/*",
+      "../packages/i18n-common/messages/**/*",
+    ],
+  },
+  serverExternalPackages: ["@prisma/client"],
   async headers() {
     return [
       {

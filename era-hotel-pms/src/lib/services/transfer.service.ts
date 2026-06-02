@@ -7,11 +7,13 @@ export async function listTransferOrders(filters?: {
   from?: Date;
   to?: Date;
   reservationId?: string;
+  guestId?: string;
   status?: string;
   direction?: string;
 }) {
   const where: Record<string, unknown> = {};
   if (filters?.reservationId) where.reservationId = filters.reservationId;
+  if (filters?.guestId) where.reservation = { guestId: filters.guestId };
   if (filters?.status) where.status = filters.status;
   if (filters?.direction) where.direction = filters.direction;
   if (filters?.from || filters?.to) {

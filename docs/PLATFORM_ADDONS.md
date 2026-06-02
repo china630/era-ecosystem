@@ -27,6 +27,7 @@ Cross-cutting commercial services sold **on top of** ERA Core and industry satel
 | `platform_domain` | **Custom domain & white-label** | Storefront, portal, booking | +AZN/mo per domain | **Live** (CP-B7, v2.0) |
 | `platform_delivery` | **Delivery orchestration** | Retail e-commerce + logistics | +AZN/mo + per-shipment meter | **Live** (CP-B8, v2.0) |
 | `platform_storage` | **Cloud object storage (S3)** | All products (attachments, exports) | +AZN/mo + GB meter over tier | **Live** (shared `@era/storage`) |
+| `platform_reference_data` | **ERA Data Hub (Reference Data / DaaS)** | All verticals + external API clients | API-key plans + per-call meter; compliance shelf premium | **Live** (validate-key Pass 2) — [ADR era-data-hub](./adr/era-data-hub.md), [consumer guide](../era-data-hub/doc/DATA-HUB-CONSUMER.md) |
 
 **Bundles (commercial packaging):**
 
@@ -198,6 +199,7 @@ Add to orchestrator `pricing_modules` (Super-Admin):
 | `platform_domain` | MODULE | Custom domain |
 | `platform_delivery` | MODULE | Delivery orchestration |
 | `platform_storage` | MODULE | S3 / object storage add-on |
+| `platform_reference_data` | ADDON | ERA Data Hub — справочники как DaaS ([ADR](./adr/era-data-hub.md)) |
 
 Industry slugs (`industry_clinic`, `industry_hotel_pms`, …) remain **separate** — they gate satellite app access; platform add-ons gate **shared services** inside those apps.
 
@@ -225,6 +227,11 @@ Track in [era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc
 | Storage | `PLATFORM_STORAGE_ENABLED` | `false` | `true` + `STORAGE_DRIVER=s3` for uploads |
 | Storage S3 | `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | — | Local dev: `STORAGE_DRIVER=local`, `STORAGE_LOCAL_PATH` |
 | Idempotency / audit | (Prisma) | on in live | `PlatformIdempotencyRecord`, `PlatformAuditLog` |
+| Reference Data (Data Hub) | `PLATFORM_REFERENCE_DATA_MODE` | `mvp` on hub | `live` → orchestrator `POST /platform/reference-data/v1/validate-key` |
+| Reference Data keys | `REFERENCE_DATA_VALID_API_KEYS` | — | `key:orgUuid` comma list on orchestrator |
+| Hub dev keys | `DATA_HUB_DEV_API_KEYS` | `dev-data-hub-key` | MVP mode on `era-data-hub` |
+
+Consumer integration: [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
 ---
 

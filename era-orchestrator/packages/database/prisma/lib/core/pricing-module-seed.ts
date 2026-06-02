@@ -89,6 +89,13 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     sortOrder: 22,
     isPremium: false,
   },
+  {
+    key: "platform_reference_data",
+    name: "ERA Data Hub (Reference Data API)",
+    pricePerMonth: 29,
+    sortOrder: 23,
+    isPremium: false,
+  },
   ...INDUSTRY_SATELLITE_SEED.map((s) => ({
     key: s.key,
     name: s.name,

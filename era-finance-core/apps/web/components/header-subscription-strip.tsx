@@ -4,9 +4,9 @@ import { format, parseISO } from "date-fns";
 import { az as azLocale, ru as ruLocale } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 import { HeaderTierUsageBar } from "@era/satellite-kit/ui";
-import { useAuth } from "../../lib/auth-context";
-import { uiLangRuAz } from "../../lib/i18n/ui-lang";
-import { useSubscription } from "../../lib/subscription-context";
+import { useAuth } from "../lib/auth-context";
+import { uiLangRuAz } from "../lib/i18n/ui-lang";
+import { useSubscription } from "../lib/subscription-context";
 
 function shortDemoEnd(iso: string, lang: string): string {
   const d = parseISO(iso);

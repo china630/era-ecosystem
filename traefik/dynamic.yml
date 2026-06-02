@@ -6,7 +6,9 @@ http:
     apex-redirect:
       rule: Host(`era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       middlewares:
         - apex-to-app
       service: orchestrator-web
@@ -15,79 +17,113 @@ http:
     orchestrator-app:
       rule: Host(`app.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: orchestrator-web
 
     orchestrator-api:
       rule: Host(`api.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: orchestrator-api
 
     finance-web:
       rule: Host(`finance-core.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: finance-web
 
     finance-api:
       rule: Host(`finance-api.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: finance-api
+
+    data-hub:
+      rule: Host(`data.era-365.online`)
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      service: data-hub
 
     hotel-pms:
       rule: Host(`hotel-pms.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: hotel-pms
 
     fnb-pos:
       rule: Host(`fnb-pos.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: fnb-pos
 
     retail-pos:
       rule: Host(`retail-pos.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: retail-pos
 
     logistics:
       rule: Host(`logistics.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: logistics
 
     construction:
       rule: Host(`construction.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: construction
 
     crm:
       rule: Host(`crm.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: crm
 
     auto-service:
       rule: Host(`auto-service.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: auto-service
 
     wholesale:
       rule: Host(`wholesale.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: wholesale
 
     clinic:
       rule: Host(`clinic.era-365.online`)
       entryPoints:
-        - web
+        - websecure
+      tls:
+        certResolver: letsencrypt
       service: clinic
 
   middlewares:
@@ -117,6 +153,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://finance-core:4100"
+
+    data-hub:
+      loadBalancer:
+        servers:
+          - url: "http://data-hub:4200"
 
     hotel-pms:
       loadBalancer:

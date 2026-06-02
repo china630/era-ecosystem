@@ -1,7 +1,8 @@
 # Front Office — ElectraWeb parity (ERA)
 
-> Operational guide for FO screens in **era-hotel-pms** (Wave A + B + **Wave C**).  
-> Source: [`Electraweb/front office.md`](../../Electraweb/front office.md).
+> Operational guide for FO screens in **era-hotel-pms** (Wave A–D).  
+> Legacy AZ spec (`Electraweb/front office.md`) merged here and into [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md) (2026-06-04).  
+> **Line-by-line status (Done / Partial / Planned):** [FRONT-OFFICE-STATUS.md](./FRONT-OFFICE-STATUS.md).
 
 ## Wave C — Core navigation order
 
@@ -37,7 +38,28 @@
 | Unified reservation card create/edit | `ReservationCardModal` + `ReservationCardToolbar` | C |
 | Guest card CRM grids | `GuestCardModal` tabs CRM / Res. details | C |
 | Notes in reservation list | `/api/reports/reservations-grid` | C |
-| Header AZ/RU/EN → org → bell → profile | `satellite-kit` + `HotelOpsShell` | A/B |
+| Header AZ/RU/EN → org → bell → profile | `satellite-kit` + `HotelOpsShell` | A/B (D1: DOM = Locale → Bell → Org → Profile) |
+
+## Wave D1 — Reservation card depth (2026-06-02)
+
+| Spec item | Implementation | Wave |
+|-----------|----------------|------|
+| Rack filters agency/source/pay | `RoomRackView` aside + `room-rack.service` | D1 |
+| Reservation left panel all schema fields | `ReservationCardLeftPanel` | D1 |
+| Guests/pricing/folio/notes tabs | `reservation-card/*` panels | D1 |
+| Bottom bar + sub-modal stubs enabled | `ReservationCardBottomBar` | D1 → D2 full modals |
+
+## Wave D2 — Guest card + sub-modals (2026-06-02)
+
+| Spec item | Implementation | Wave |
+|-----------|----------------|------|
+| Guest card split + toolbar copy/print | `guest-card/*`, `GuestCardToolbar` | D2 |
+| Identity grids + 6 consents | `GuestCardIdentityTab` | D2 |
+| Details tab editable fields | `GuestCardDetailsTab` + guest PATCH | D2 |
+| Loyalty / time-share grids | `GuestLoyaltyCard`, `GuestTimeShareAgreement` | D2 |
+| CRM notes/tasks routes | `/guests/:id/notes`, `/guests/:id/tasks` | D2 |
+| Group page UX | `GroupCreateModal`, `ReservationCardModal` from row | D2 |
+| Credit card / packages / tasks / routing | `ReservationCardSubModals` + APIs | D2 |
 
 ## Reservation Card
 
@@ -47,7 +69,10 @@
 
 ## Guest Card
 
-- **Component:** `GuestCardModal` — stats bar, 6 tabs, CRM action grid, identity CRUD.
+- **Component:** `GuestCardModal` — stats bar, 6 tabs, split panels under `src/components/guest-card/`.
+- **Routes:** `/guests/:id/*` CRM pages — see [GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md).
+- **Satellites:** Medical/finance buttons use `satellite-links.ts` / `finance-links.ts` (not `/medical` in hotel).
+- **API:** `GET/PATCH /api/guests/:id/full`, documents/contacts/addresses, loyalty-cards, time-shares.
 - **API:** `/api/guests/:id/full`, documents, contacts, addresses, loyalty.
 
 ## API (Wave C)
@@ -60,6 +85,8 @@
 
 ## Related
 
+- [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md)
 - [ELEKTRAWEB-PARITY.md](./ELEKTRAWEB-PARITY.md)
-- [UAT-SMOKE.md](./UAT-SMOKE.md)
+- [UAT-SMOKE.md](./UAT-SMOKE.md) §14–16
 - [DELIVERY.md](./DELIVERY.md) — Wave C checklist
+- [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md)

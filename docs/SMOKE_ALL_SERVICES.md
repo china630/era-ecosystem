@@ -7,7 +7,7 @@ Run from umbrella root after `cp .env.example .env`.
 ## Hosts file
 
 ```
-127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online retail-pos.era-365.online logistics.era-365.online construction.era-365.online crm.era-365.online auto-service.era-365.online wholesale.era-365.online clinic.era-365.online
+127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online data.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online retail-pos.era-365.online logistics.era-365.online construction.era-365.online crm.era-365.online auto-service.era-365.online wholesale.era-365.online clinic.era-365.online
 ```
 
 ## Docker full stack
@@ -68,9 +68,25 @@ Scripts: `node tools/smoke-platform-home.mjs`, `node tools/smoke-satellite-login
 | https://finance-core.era-365.online/ | 200 (landing or redirect to login) |
 | https://finance-core.era-365.online/api/health | 200 JSON ok (Next rewrite → `finance-core:4100`) |
 
+## ERA Data Hub (Traefik)
+
+| URL | Expected |
+|-----|----------|
+| https://data.era-365.online/healthz | 200 JSON `service: era-data-hub` |
+| https://data.era-365.online/registry/v1/fx/rates?symbols=USD,EUR | 200 with `X-Api-Key: dev-data-hub-key` |
+
+See [era-data-hub/doc/UAT-SMOKE.md](../era-data-hub/doc/UAT-SMOKE.md).
+
+From repo root (hub + ingest when `ERA_DATA_HUB_DATA_SOURCE=hub`):
+
+```bash
+node scripts/smoke-data-hub.mjs
+```
+
 ## Internal (not on Traefik)
 
 - Finance API direct (Docker exec / network): `http://finance-core:4100/api/health`
+- Data Hub direct: `http://data-hub:4200/healthz`
 - Local dev without Traefik: `curl http://127.0.0.1:4000/api/health` if API port published
 
 ## Local build (without Docker)
@@ -269,11 +285,19 @@ Room charge from fb-pos uses `HOTEL_PMS_URL`; stub with `FB_POS_PMS_STUB=1` for 
 
 ## CI checklist (S8 / PP7)
 
-Run on PR / nightly (see `.github/workflows/ecosystem-smoke.yml`):
+Automated via GitHub Actions ([`docs/CI_CD.md`](./CI_CD.md)):
 
-1. `npm run build` in `packages/era-contracts`, `packages/satellite-kit`
-2. `npm run build` in `era-orchestrator/apps/api`, `era-finance-core/apps/api`
-3. Health curls against docker-compose stack (optional job)
+| Workflow | What it verifies |
+|----------|------------------|
+| [`ci.yml`](../.github/workflows/ci.yml) | Packages, orchestrator/finance tests, satellite build+jest |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | 13 images pushed to GHCR |
+| [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | `docker-compose.prod.yml` pull, migrate, `ecosystem-smoke-all.mjs` |
+
+Manual parity:
+
+1. `npm run build` in `packages/era-contracts`, `packages/satellite-kit`, `packages/i18n-common`
+2. `npm run build` in `era-orchestrator`, `era-finance-core`
+3. `node scripts/ecosystem-smoke-all.mjs` with stack up (see ports in [`ECOSYSTEM_URLS.md`](./ECOSYSTEM_URLS.md))
 
 ## Hospitality Nafta — Wave 3 / 4 (hotel, clinic, MDM, fb-pos)
 

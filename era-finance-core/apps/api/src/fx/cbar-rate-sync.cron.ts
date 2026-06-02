@@ -27,6 +27,13 @@ export class CbarRateSyncCron {
   }
 
   private async runSafe(): Promise<void> {
+    if (
+      (process.env.ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED ?? "false").toLowerCase() ===
+      "true"
+    ) {
+      this.logger.debug("CBAR ingest skipped (ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED)");
+      return;
+    }
     try {
       await this.sync.syncTodayFromCbar();
     } catch (e) {

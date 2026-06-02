@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { decimalToNumber } from '@/lib/decimal';
+import { decimalToNumber, toDecimal } from '@/lib/decimal';
 
 export async function getGuestStats(id: string) {
   const guest = await prisma.guest.findUnique({ where: { id } });
@@ -72,14 +72,47 @@ export async function patchGuestFull(
     phoneConsent: boolean;
     emailConsent: boolean;
     callBack: boolean;
+    nationalIdFin: string | null;
+    voen: string | null;
+    passportNumber: string | null;
+    occupation: string | null;
+    registrationNumber: string | null;
+    vehiclePlate: string | null;
+    hotelName: string | null;
+    visaType: string | null;
+    visaNumber: string | null;
+    visaExpiry: string | null;
+    maritalStatus: string | null;
+    fatherName: string | null;
+    motherName: string | null;
+    verificationStatus: string | null;
+    marriageDate: string | null;
+    bonusPercent: number | null;
+    phoneVerified: boolean;
+    emailVerified: boolean;
+    isLocked: boolean;
   }>,
 ) {
-  const { birthDate, ...rest } = input;
+  const { birthDate, visaExpiry, marriageDate, bonusPercent, ...rest } = input;
   await prisma.guest.update({
     where: { id },
     data: {
       ...rest,
       birthDate: birthDate === undefined ? undefined : birthDate ? new Date(birthDate) : null,
+      visaExpiry:
+        visaExpiry === undefined ? undefined : visaExpiry ? new Date(visaExpiry) : null,
+      marriageDate:
+        marriageDate === undefined
+          ? undefined
+          : marriageDate
+            ? new Date(marriageDate)
+            : null,
+      bonusPercent:
+        bonusPercent === undefined
+          ? undefined
+          : bonusPercent === null
+            ? null
+            : toDecimal(bonusPercent),
     },
   });
   return getGuestFull(id);

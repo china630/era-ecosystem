@@ -35,7 +35,12 @@ describe("CustomsTaxCalculatorService", () => {
       }),
     };
 
-    const calc = new CustomsTaxCalculatorService(tariffs as never);
+    const dataHub = {
+      isEnabled: jest.fn().mockReturnValue(false),
+      getTariff: jest.fn(),
+    };
+
+    const calc = new CustomsTaxCalculatorService(tariffs as never, dataHub as never);
     const out = await calc.computeLines(
       [
         {

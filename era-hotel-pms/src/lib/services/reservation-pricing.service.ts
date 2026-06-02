@@ -41,7 +41,15 @@ export async function recalcReservationDailyRates(reservationId: string) {
       ? decimalToNumber(res.manualDailyRate)
       : quote.adjustedNightly;
 
-  const rows: Array<{ stayDate: Date; amount: number; manualFlag: boolean }> = [];
+  const discountPct = res.discountActive ? 0 : null;
+  const rows: Array<{
+    stayDate: Date;
+    amount: number;
+    manualFlag: boolean;
+    currencyCode: string;
+    fixPrice: boolean;
+    discountPct: number | null;
+  }> = [];
   for (const night of nights) {
     const existing = res.dailyRates.find(
       (d) => d.stayDate.toDateString() === night.toDateString(),
@@ -51,9 +59,19 @@ export async function recalcReservationDailyRates(reservationId: string) {
         stayDate: night,
         amount: decimalToNumber(existing.amount),
         manualFlag: true,
+        currencyCode: existing.currencyCode ?? 'AZN',
+        fixPrice: existing.fixPrice,
+        discountPct: existing.discountPct ? decimalToNumber(existing.discountPct) : null,
       });
     } else {
-      rows.push({ stayDate: night, amount: nightly, manualFlag: false });
+      rows.push({
+        stayDate: night,
+        amount: nightly,
+        manualFlag: false,
+        currencyCode: 'AZN',
+        fixPrice: res.useManualRate,
+        discountPct,
+      });
     }
   }
 
@@ -66,6 +84,9 @@ export async function recalcReservationDailyRates(reservationId: string) {
           stayDate: r.stayDate,
           amount: toDecimal(r.amount),
           manualFlag: r.manualFlag,
+          currencyCode: r.currencyCode,
+          fixPrice: r.fixPrice,
+          discountPct: r.discountPct != null ? toDecimal(r.discountPct) : null,
         },
       }),
     ),
@@ -106,6 +127,9 @@ export async function chargeAllRoomNights(reservationId: string) {
       stayDate: r.stayDate,
       amount: toDecimal(r.amount),
       manualFlag: r.manualFlag,
+      currencyCode: r.currencyCode,
+      fixPrice: r.fixPrice,
+      discountPct: r.discountPct != null ? toDecimal(r.discountPct) : null,
     }));
   }
 
@@ -148,6 +172,9 @@ export async function listDailyRates(reservationId: string) {
     id: r.id,
     stayDate: r.stayDate,
     amount: decimalToNumber(r.amount),
+    currencyCode: r.currencyCode,
+    fixPrice: r.fixPrice,
+    discountPct: r.discountPct ? decimalToNumber(r.discountPct) : null,
     manualFlag: r.manualFlag,
   }));
 }

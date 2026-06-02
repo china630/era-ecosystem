@@ -1,5 +1,6 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { SimpleCrudPage } from '@/components/wave-b/SimpleCrudPage';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,11 +8,16 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 
 export default function LostAndFoundPage() {
   const { can } = useAuth();
+  const searchParams = useSearchParams();
+  const guestId = searchParams.get('guestId');
   const t = useTranslations('lostAndFound');
+  const apiPath = guestId
+    ? `/api/housekeeping/lost-found?guestId=${encodeURIComponent(guestId)}`
+    : '/api/housekeeping/lost-found';
   return (
     <SimpleCrudPage
       title={t('title')}
-      apiPath="/api/housekeeping/lost-found"
+      apiPath={apiPath}
       canWrite={can(PERMISSIONS.HOUSEKEEPING_MANAGE)}
       onAdd={async () => {
         const location = window.prompt('Location');
@@ -24,6 +30,7 @@ export default function LostAndFoundPage() {
             foundDate: new Date().toISOString().slice(0, 10),
             location,
             description,
+            ...(guestId ? { guestId } : {}),
           }),
         });
         window.location.reload();

@@ -45,12 +45,15 @@ After changing kit or contracts, rebuild the package and restart the app dev ser
 | Orchestrator API (control plane) | **4000** | **4000** |
 | Finance Web | **3100** | **3100** |
 | Finance API | **4100** (internal; web proxies `/api`) | **4100** |
+| ERA Data Hub API | **4200** | **4200** |
 | Hotel PMS | **3201** | **3000** (standalone `era-hotel-pms/docker-compose`) |
 | F&B POS | **3202** | varies |
 | PostgreSQL | 5432 | 5432 |
 | Redis | 6379 | 6379 |
 
 `CONTROL_PLANE_URL` / `NEXT_PUBLIC_CONTROL_PLANE_URL` → **`http://127.0.0.1:4000`** (Orchestrator API, not Finance).
+
+**ERA Data Hub:** `ERA_DATA_HUB_DATA_SOURCE=finance_ro` (default) reads finance via `FINANCE_RO_DATABASE_URL`; `hub` uses `era_data_hub` after `npm run db:sync-from-finance` in `era-data-hub/`. Redis db **4**.
 
 ---
 
@@ -70,6 +73,8 @@ Use bootstrap when you need platform super-admin, demo org, and cross-app SSO sm
 ## Per-app quick start
 
 ### era-orchestrator
+
+> Legacy folder `era-365-orchestrator/` (DB-only duplicate) was removed 2026-06-04 — use **`era-orchestrator`** only.
 
 ```bash
 cd era-orchestrator

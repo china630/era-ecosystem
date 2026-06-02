@@ -90,6 +90,19 @@ Cross-product polish shipped without a version bump:
 
 ---
 
+## ERA Data Hub (Reference Data / DaaS) — Pass 2 shipped 2026-06-02
+
+Сервис **`era-data-hub`** (`data.era-365.online`), продукт `platform_reference_data`. Спека и вынос из ядра: [ADR era-data-hub](./adr/era-data-hub.md) · планы: [Pass 1](../.cursor/plans/era_data_hub_p1_6337429e.plan.md) · [Pass 2](../.cursor/plans/era_data_hub_pass_2_7f78d60e.plan.md) · [DELIVERY](../era-data-hub/doc/DELIVERY-DATA-HUB.md).
+
+| Этап | Scope | Статус |
+|------|-------|--------|
+| Пилот | Курсы (1) → Банки/IBAN (7+8) → VÖEN (6) | **Done** — CBAR ingest in hub, finance consumer |
+| P1 green/yellow | 1, 2, 3, 6, 7, 8, 9, 10, 11, 12 | **Live** — Redis cache, hub SoR cutover path |
+| Orchestrator keys | `validate-key` + audit meter | **Live** (dev keys + entitlement) |
+| P2/P3 red | 4, 5, 13–24 | **Planned** |
+
+---
+
 ## Standards
 
 - [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — naming rules

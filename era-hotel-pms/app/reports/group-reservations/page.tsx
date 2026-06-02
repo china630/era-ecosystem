@@ -6,6 +6,8 @@ import { EraDataGrid, PageHeader, PRIMARY_BUTTON_CLASS } from '@era/satellite-ki
 import AppShell, { StatusMessage } from '@/components/layout/AppShell';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
+import { GroupCreateModal } from '@/components/GroupCreateModal';
+import ReservationCardModal from '@/components/ReservationCardModal';
 
 type GroupRow = {
   id: string;
@@ -26,6 +28,8 @@ export default function GroupReservationsPage() {
   const tc = useTranslations('common');
   const [rows, setRows] = useState<GroupRow[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [cardId, setCardId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/reservation-groups');
@@ -41,22 +45,6 @@ export default function GroupReservationsPage() {
     void load();
   }, [load]);
 
-  async function addGroup() {
-    const code = window.prompt('Group code');
-    if (!code?.trim()) return;
-    const res = await fetch('/api/reservation-groups', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code.trim() }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setMsg(data.error ?? tc('failed'));
-      return;
-    }
-    await load();
-  }
-
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
     return (
       <AppShell>
@@ -71,7 +59,7 @@ export default function GroupReservationsPage() {
         title={t('title')}
         actions={
           can(PERMISSIONS.RESERVATIONS_WRITE) ? (
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void addGroup()}>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
               {t('add')}
             </button>
           ) : undefined
@@ -84,7 +72,7 @@ export default function GroupReservationsPage() {
           { key: 'name', header: t('name'), render: (r) => r.name ?? '—' },
           {
             key: 'agency',
-            header: 'Agency',
+            header: t('agency'),
             render: (r) => r.agency?.code ?? '—',
           },
           {
@@ -101,14 +89,37 @@ export default function GroupReservationsPage() {
             key: 'guests',
             header: t('guests'),
             render: (r) =>
-              r.reservations
-                .map((x) => `${x.guest.fullName}${x.room ? ` (${x.room.roomNumber})` : ''}`)
-                .join(', ') || '—',
+              r.reservations.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  {r.reservations.map((x) => (
+                    <button
+                      key={x.id}
+                      type="button"
+                      className="text-left font-mono text-[12px] text-[#2980B9] hover:underline"
+                      onClick={() => setCardId(x.id)}
+                    >
+                      {x.guest.fullName}
+                      {x.room ? ` · ${x.room.roomNumber}` : ''}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                '—'
+              ),
           },
         ]}
         rows={rows as (GroupRow & Record<string, unknown>)[]}
         rowKey={(r) => r.id}
         emptyMessage={tc('empty')}
+      />
+      <GroupCreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => void load()} />
+      <ReservationCardModal
+        open={Boolean(cardId)}
+        reservationId={cardId}
+        onClose={() => {
+          setCardId(null);
+          void load();
+        }}
       />
     </AppShell>
   );

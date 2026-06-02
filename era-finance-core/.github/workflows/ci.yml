@@ -1,10 +1,10 @@
-name: CI
+# MOVED to repo root: .github/workflows/ci.yml (finance job).
+# This file is kept for reference only; GitHub does not run workflows from nested .github folders in umbrella repos.
+
+name: CI (deprecated — use umbrella ci.yml)
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+  workflow_dispatch:
 
 jobs:
   build-and-lint:

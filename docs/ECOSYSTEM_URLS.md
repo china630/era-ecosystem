@@ -16,6 +16,7 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 | 2 | Finance ERP | `era-finance-core` | `finance-web` | `finance-core` | 3100 | `https://finance-core.era-365.online/` |
 | 3 | Finance API | `era-finance-core` | `finance-core` | `finance-api` ‡ | 4100 | `https://finance-api.era-365.online/` |
 | — | Orchestrator API | `era-orchestrator` | `orchestrator` | `api` | 4000 | `https://api.era-365.online/` |
+| 4 | ERA Data Hub | `era-data-hub` | `data-hub` | `data` | 4200 | `https://data.era-365.online/` |
 
 ‡ Finance API public route: enable with `ERA_FINANCE_API_PUBLIC=true` (open architecture). Internal always: `http://finance-core:4100`.
 
@@ -71,6 +72,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | 3201–3209 | Industry satellites (see table above) |
 | 4000 | Orchestrator API |
 | 4100 | Finance API |
+| 4200 | ERA Data Hub API |
 | 5432 | PostgreSQL |
 | 6379 | Redis |
 | 8080 | Traefik dashboard (dev) |
@@ -126,6 +128,10 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Finance web | `NEXT_PUBLIC_FINANCE_WEB_URL` | `http://127.0.0.1:3100` |
 | Storage add-on gate | `PLATFORM_STORAGE_ENABLED` | `true` — enables upload API routes |
 | S3 driver | `STORAGE_DRIVER`, `S3_*`, `AWS_*` | See [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) § platform_storage |
+| Data Hub (internal) | `ERA_DATA_HUB_URL` | `http://data-hub:4200` |
+| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `false` / `true` on finance-core |
+| Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
+| Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
 
 **JWT issuer (current):** `era-orchestrator`
 
@@ -139,6 +145,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 127.0.0.1 hotel-pms.era-365.online fnb-pos.era-365.online clinic.era-365.online retail-pos.era-365.online
 127.0.0.1 logistics.era-365.online construction.era-365.online crm.era-365.online
 127.0.0.1 auto-service.era-365.online wholesale.era-365.online
+127.0.0.1 data.era-365.online
 ```
 
 ---
@@ -158,6 +165,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | `AUTO_SERVICE_DB` | `era_auto_service` |
 | `WHOLESALE_DB` | `era_wholesale` |
 | `CLINIC_DB` | `era_clinic` |
+| `DATA_HUB_DB` | `era_data_hub` |
 
 After DB name changes: reset dev volume (`docker compose down` + remove `docker-data/postgres`) or run rename migration.
 

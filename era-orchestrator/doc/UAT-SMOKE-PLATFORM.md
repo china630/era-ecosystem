@@ -148,3 +148,10 @@ Apply to shared PostgreSQL (or `npx prisma db push` in `packages/database`):
 3. Hotel folio invoice — createShipment + HOTEL-FOLIO promotion.
 4. FB ticket pay with delivery:true — createShipment.
 5. node scripts/readiness-coverage.mjs — consumer delivery/loyalty/domains at 100% (10/10).
+
+## CP-REFERENCE-DATA — Data Hub API keys (Pass 2)
+
+1. Enable module `platform_reference_data` on test org (or `REFERENCE_DATA_SKIP_ENTITLEMENT=1` on orchestrator).
+2. `POST http://127.0.0.1:4000/platform/reference-data/v1/validate-key` with `Authorization: Bearer <CONTROL_PLANE_SERVICE_TOKEN>` and body `{ "apiKey": "dev-data-hub-key" }` — expect `{ valid: true, organizationId, metered: true }`.
+3. Data hub `PLATFORM_REFERENCE_DATA_MODE=live` + same key — `GET http://127.0.0.1:4200/registry/v1/fx/rates?symbols=USD` with `X-Api-Key` — 200.
+4. Invalid key — 401 from validate-key; hub returns `INVALID_API_KEY`.

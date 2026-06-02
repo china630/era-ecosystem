@@ -6,6 +6,7 @@ import { LoyaltyModule } from "./loyalty/loyalty.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { PaymentsModule } from "./payments/payments.module";
 import { PortalModule } from "./portal/portal.module";
+import { ReferenceDataModule } from "./reference-data/reference-data.module";
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { PortalModule } from "./portal/portal.module";
     DomainsModule,
     DeliveryModule,
     NotificationsModule,
+    ReferenceDataModule,
   ],
 })
 export class PlatformModule {}
