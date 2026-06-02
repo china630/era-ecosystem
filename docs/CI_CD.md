@@ -86,7 +86,7 @@ node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 - **Shared packages** ([`scripts/ci-build-packages.sh`](../scripts/ci-build-packages.sh)): `era-contracts` → `i18n-common` → `era-storage` → `satellite-kit`. Runs in `packages`, `orchestrator`, `satellite`, and **`finance`** jobs (`@era/contracts`, `@era/storage` need `dist/`; not committed).
 - **Finance unit tests**: before Jest, [`scripts/ci-prepare-finance-api-tests.sh`](../scripts/ci-prepare-finance-api-tests.sh) builds `@erafinance/api-contracts` (`dist/`) and installs `@prisma/client` + `@prisma/client-runtime-utils` only under `era-orchestrator/packages/database` (for the committed generated client). Do **not** run `prisma generate` there — avoids a second generated client in the finance tree.
 - **Data Hub** depends on `@erafinance/database` via `file:../../../era-finance-core/packages/database`. CI runs [`scripts/ci-prepare-finance-database.sh`](../scripts/ci-prepare-finance-database.sh) before `npm ci` in `era-data-hub`, so `prisma` exists when npm links the package.
-- **GHCR satellite images** use shared [`docker/scripts/docker-migrate-deploy.mjs`](../docker/scripts/docker-migrate-deploy.mjs) (copied in `docker/Dockerfile.satellite`). **Data Hub** Docker build copies `era-finance-core/packages/database/index.js` (not `index.ts`).
+- **GHCR satellite images** use shared [`docker/scripts/docker-migrate-deploy.mjs`](../docker/scripts/docker-migrate-deploy.mjs) (copied in `docker/Dockerfile.satellite`). **Data Hub** image: `era-data-hub/Dockerfile` installs `@erafinance/database` with `npm install --ignore-scripts`, then `prisma generate` + `build:chart` (needs `prisma.config.ts`, `tsconfig.chart.json`, and `index.js` — not `index.ts`).
 
 ## Related docs
 
