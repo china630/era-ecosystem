@@ -11,3 +11,4 @@ CREATE DATABASE era_crm;
 CREATE DATABASE era_auto_service;
 CREATE DATABASE era_wholesale;
 CREATE DATABASE era_clinic;
+CREATE DATABASE era_data_hub;

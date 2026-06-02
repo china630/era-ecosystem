@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { ColorLegend } from '@era/satellite-kit/ui';
+import { rackNumberTextClass } from '@/lib/room-rack-display';
 import { RoomPlanBar } from '@/components/room-plan/RoomPlanBar';
 import {
   barLayoutOffset,
@@ -48,12 +49,16 @@ function stickyRoomClass(extra = '') {
 
 function RoomLabelCell({ room }: { room: RoomPlanRoom }) {
   const isOoo = room.status === 'OOO' || room.status === 'OOS';
+  const numCls = rackNumberTextClass({
+    status: room.status,
+    rackDisplayState: undefined,
+  });
   return (
     <div
-      className={`${stickyRoomClass(isOoo ? 'bg-red-50 text-red-800' : 'bg-white')} flex flex-col justify-center border-t border-[#D5DADF] px-2 py-1`}
+      className={`${stickyRoomClass(isOoo ? 'bg-red-50' : 'bg-white')} flex flex-col justify-center border-t border-[#D5DADF] px-2 py-1`}
       style={{ minHeight: ROW_H }}
     >
-      <span className="text-[13px] font-medium leading-tight">{room.roomNumber}</span>
+      <span className={`text-[13px] font-bold leading-tight ${numCls}`}>{room.roomNumber}</span>
       <span className="text-[10px] leading-tight text-[#7F8C8D]">
         fl.{room.floor} · {room.roomType.code}
       </span>

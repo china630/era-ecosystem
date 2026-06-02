@@ -13,11 +13,12 @@ const schema = z.object({
   guestId: z.string().uuid().optional(),
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const session = await getSessionFromHeaders();
     assertPermission(session, PERMISSIONS.HOUSEKEEPING_MANAGE);
-    return jsonOk(serialize(await listLostFound()));
+    const guestId = new URL(req.url).searchParams.get('guestId') ?? undefined;
+    return jsonOk(serialize(await listLostFound(guestId)));
   } catch (err) {
     return handleRouteError(err);
   }

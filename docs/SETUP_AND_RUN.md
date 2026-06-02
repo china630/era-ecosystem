@@ -40,6 +40,7 @@
 | Orchestrator API | 4000 | `api.era-365.online` |
 | Finance API | 4100 | **не публикуется** (прокси через Finance Web) |
 | Finance Web | 3100 | `finance-core.era-365.online` |
+| ERA Data Hub API | 4200 | `data.era-365.online` |
 | Hotel PMS | 3201 | `hotel-pms.era-365.online` |
 | F&B POS | 3202 | `fnb-pos.era-365.online` |
 | PostgreSQL | 5432 | — |
@@ -65,7 +66,7 @@ cd era-ecosystem
 Добавьте в `C:\Windows\System32\drivers\etc\hosts` (Windows) или `/etc/hosts` (Linux/macOS):
 
 ```
-127.0.0.1 app.era-365.online api.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online
+127.0.0.1 app.era-365.online api.era-365.online data.era-365.online finance-core.era-365.online hotel-pms.era-365.online fnb-pos.era-365.online
 ```
 
 ### Общий `.env` (корень umbrella)
@@ -202,8 +203,9 @@ npm run db:bootstrap-local   # migrate + seed (dev)
 
 # Hotel
 cd era-hotel-pms
-npx prisma migrate deploy
+npx prisma migrate deploy   # includes Wave D2: 20260602120000_wave_d2_guest_res_submodals
 npm run db:seed
+# After pull with new UI keys: node scripts/apply-wave-d3-fo-i18n.mjs && npm run verify:i18n
 
 # F&B POS
 cd era-fnb-pos
@@ -373,6 +375,19 @@ npm run dev:api
 npm run dev:web
 ```
 
+### ERA Data Hub consumer flags (optional)
+
+When finance reads reference data from the hub:
+
+```env
+ERA_DATA_HUB_ENABLED=true
+ERA_DATA_HUB_URL=http://127.0.0.1:4200
+DATA_HUB_SERVICE_TOKEN=dev-data-hub-service-token
+ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true   # when hub owns CBAR (ERA_DATA_HUB_DATA_SOURCE=hub)
+```
+
+See [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
+
 ### Swagger / health
 
 - API: http://localhost:4100/api/health  
@@ -380,6 +395,59 @@ npm run dev:web
 - Swagger (dev): http://localhost:4100/docs  
 
 Подробный deploy: umbrella — этот файл; Finance ERP only — [`era-finance-core/docs/deploy/FINANCE-ERP-DEPLOY.md`](../era-finance-core/docs/deploy/FINANCE-ERP-DEPLOY.md).
+
+---
+
+## 6b. era-data-hub (Reference Data / DaaS)
+
+**Роль:** глобальные справочники (FX, календарь, HS, VÖEN, банки, гео, UoM, налоги, CoA). Публикуется на `data.era-365.online`.
+
+| Компонент | Путь | Порт |
+|-----------|------|------|
+| API (NestJS) | `apps/api` | **4200** |
+| Prisma | `packages/database` | DB `era_data_hub` |
+
+### Настройка
+
+```bash
+cd era-data-hub
+cp .env.example .env
+```
+
+```env
+DATABASE_URL=postgresql://era:era_dev_password@127.0.0.1:5432/era_data_hub?schema=public
+FINANCE_RO_DATABASE_URL=postgresql://era:era_dev_password@127.0.0.1:5432/era_finance?schema=public
+ERA_DATA_HUB_DATA_SOURCE=finance_ro   # hub after cutover
+REDIS_URL=redis://127.0.0.1:6379/4
+DATA_HUB_SERVICE_TOKEN=dev-data-hub-service-token
+DATA_HUB_DEV_API_KEYS=dev-data-hub-key
+CONTROL_PLANE_URL=http://127.0.0.1:4000
+CONTROL_PLANE_SERVICE_TOKEN=dev-control-plane-token
+```
+
+Finance must be seeded first (`cbar_official_rates`, banks, geo, tariffs).
+
+### Запуск
+
+```bash
+npm install
+npm run db:migrate
+npm run db:seed
+npm run dev
+```
+
+Phase 1 cutover (copy reference rows from finance RO):
+
+```bash
+npm run db:sync-from-finance
+# then ERA_DATA_HUB_DATA_SOURCE=hub
+```
+
+Docker: `docker compose up -d data-hub` (depends on `finance-core` + `postgres` + `redis`).
+
+Smoke: `node scripts/smoke-data-hub.mjs` from repo root.
+
+Docs: [era-data-hub/README.md](../era-data-hub/README.md) · [DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
 ---
 

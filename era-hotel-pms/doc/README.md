@@ -18,6 +18,8 @@
 | **Прайс по модулям** | [nafta/license-pricing.csv](nafta/license-pricing.csv) |
 | **Пробелы для Азербайджана** | [reference/elektraweb-gap-analysis-az-global.md](reference/elektraweb-gap-analysis-az-global.md) |
 | **Маркетинговый каталог модулей** | [reference/elektraweb-modules-catalog.md](reference/elektraweb-modules-catalog.md) |
+| **Front Office (ElectraWeb parity)** | [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) · [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) |
+| **Guest Card CRM** | [GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md) · индекс после удаления `Electraweb/`: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md) |
 
 ## Структура папок
 

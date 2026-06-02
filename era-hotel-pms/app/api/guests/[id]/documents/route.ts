@@ -9,6 +9,11 @@ import { createGuestDocument, listGuestDocuments } from '@/lib/services/wave-b-m
 const schema = z.object({
   docType: z.string(),
   docNumber: z.string(),
+  serialNo: z.string().nullable().optional(),
+  issuingAuthority: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  issuePlace: z.string().nullable().optional(),
+  isPrimary: z.boolean().optional(),
   issuedAt: z.coerce.date().optional(),
   expiresAt: z.coerce.date().optional(),
 });

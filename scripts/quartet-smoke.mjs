@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Quartet smoke: Finance + Orchestrator + Hotel + FB health (no auth required).
+ * Quartet smoke: Orchestrator + Finance + Hotel + F&B health (no auth required).
  * Usage: node scripts/quartet-smoke.mjs
- * Optional: PMS_URL, FB_URL, FINANCE_URL, ORCH_URL
+ * Optional: PMS_URL, FNB_URL, FINANCE_URL, ORCH_URL (defaults per docs/ECOSYSTEM_URLS.md)
  */
 const targets = [
-  { name: "orchestrator", url: process.env.ORCH_URL ?? "http://127.0.0.1:4100", path: "/health" },
-  { name: "finance-api", url: process.env.FINANCE_URL ?? "http://127.0.0.1:4000", path: "/api/health" },
-  { name: "hotel-pms", url: process.env.PMS_URL ?? "http://127.0.0.1:3000", path: "/api/health" },
-  { name: "fb-pos", url: process.env.FB_URL ?? "http://127.0.0.1:3200", path: "/api/health" },
+  { name: "orchestrator", url: process.env.ORCH_URL ?? "http://127.0.0.1:4000", path: "/health" },
+  { name: "finance-api", url: process.env.FINANCE_URL ?? "http://127.0.0.1:4100", path: "/api/health" },
+  { name: "hotel-pms", url: process.env.PMS_URL ?? "http://127.0.0.1:3201", path: "/api/health" },
+  { name: "fnb-pos", url: process.env.FNB_URL ?? "http://127.0.0.1:3202", path: "/api/health" },
 ];
 
 let failed = 0;

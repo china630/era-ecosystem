@@ -59,6 +59,7 @@ services:
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./docker-data/letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - era-network
@@ -118,6 +119,37 @@ services:
     networks:
       - era-network
 
+  data-hub:
+    build:
+      context: .
+      dockerfile: era-data-hub/Dockerfile
+    container_name: era-data-hub
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: "4200"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${DATA_HUB_DB:-era_data_hub}?schema=public
+      FINANCE_RO_DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
+      ERA_DATA_HUB_DATA_SOURCE: ${ERA_DATA_HUB_DATA_SOURCE:-finance_ro}
+      REDIS_URL: redis://redis:6379/4
+      DATA_HUB_SERVICE_TOKEN: ${DATA_HUB_SERVICE_TOKEN:-dev-data-hub-service-token}
+      DATA_HUB_DEV_API_KEYS: ${DATA_HUB_DEV_API_KEYS:-dev-data-hub-key}
+      PLATFORM_REFERENCE_DATA_MODE: ${PLATFORM_REFERENCE_DATA_MODE:-mvp}
+      DATA_HUB_FINANCE_CATALOG_ROOT: /catalog/finance
+      CONTROL_PLANE_URL: http://orchestrator:4000
+      CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      finance-core:
+        condition: service_healthy
+    ports:
+      - "${DATA_HUB_API_PUBLISH_PORT:-4200}:4200"
+    networks:
+      - era-network
+
   finance-core:
     build:
       context: .
@@ -127,6 +159,9 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
+      ERA_DATA_HUB_URL: http://data-hub:4200
+      ERA_DATA_HUB_ENABLED: ${ERA_DATA_HUB_ENABLED:-false}
+      DATA_HUB_SERVICE_TOKEN: ${DATA_HUB_SERVICE_TOKEN:-dev-data-hub-service-token}
       REDIS_URL: redis://redis:6379/1
       API_PORT: "4100"
       CONTROL_PLANE_URL: http://orchestrator:4000

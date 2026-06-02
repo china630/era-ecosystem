@@ -6,7 +6,7 @@ Living snapshot of **code + DELIVERY** readiness.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
-Last updated: 2026-06-01 (era-hotel-pms Wave B ElectraWeb FO parity · DELIVERY see era-hotel-pms/doc/DELIVERY.md § Wave B)
+Last updated: 2026-06-04 (era-hotel-pms Guest CRM ElectraWeb · [GUEST-CRM-ELECTRAWEB.md](../era-hotel-pms/doc/GUEST-CRM-ELECTRAWEB.md) · [FRONT-OFFICE-STATUS.md](../era-hotel-pms/doc/FRONT-OFFICE-STATUS.md))
 
 ---
 
@@ -94,6 +94,10 @@ Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([
 | **loyalty** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 | **domains** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
 | **delivery** | Live | — | Live | Live | Live | Live | Live | Live | Live | Live | Live |
+| **reference_data** `validate-key` | Live | — | — | — | — | — | — | — | — | — | — |
+| Registry API (`data.era-365.online`) | — | — | — | — | — | — | — | — | — | — | — |
+
+**Data Hub registry:** **Live** on dedicated service `era-data-hub` (:4200); Finance consumer **Live** when `ERA_DATA_HUB_ENABLED=true`. External B2B uses API keys via orchestrator validate-key.
 
 ### 2.4 Event bus and Finance worker
 
@@ -133,7 +137,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 |-----------|----------|--------------|----------------|------------------|--------------|------------------|-------|
 | finance-core | Live | Live (13) | Live | — | Live | SoT | Launcher |
 | orchestrator | Live | Impl | Live (B2) | Live (B3–B8) | Live | Billing SoT | MDM cutover |
-| hotel-pms | Live | Live | Live | Live (spa) | Live | Live | FB bridge; full §4 hooks (pre-GA) |
+| hotel-pms | Live | Live | Live | Live (spa) | Live | Live | FO E–G + Guest CRM P0+P1 ([STATUS](../era-hotel-pms/doc/FRONT-OFFICE-STATUS.md)) |
 | fb-pos | Live | Live | Live | Live | Live | Events | Hotel bridge; full §4 hooks (pre-GA) |
 | retail-pos | Live | Live | Live | Live | Live | Events | v2.0 fiscal/offline/marketplace; full §4 hooks |
 | logistics | Live | Live | Live | Live | Live | Events | Full §4 hooks |
@@ -149,7 +153,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 
 | Application | DELIVERY file | Done | Open | **%** |
 |-------------|---------------|------|------|-------|
-| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 146 | 0 | 100% |
+| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 180 | 0 | 100% |
 | era-fnb-pos | [DELIVERY-FB.md](../era-fnb-pos/doc/DELIVERY-FB.md) | 43 | 0 | 100% |
 | era-retail-pos | [DELIVERY-RETAIL.md](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 45 | 0 | 100% |
 | era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 43 | 0 | 100% |
@@ -160,8 +164,18 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 29 | 0 | 100% |
 | era-orchestrator | [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) | 31 | 0 | 100% |
 | era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 10 | 0 | 100% |
+| era-data-hub | [DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) | 48 | 0 | 100% |
 
-**Aggregate (11 DELIVERY files):** 436/436 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
+**Aggregate (12 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 470/470 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
+
+### ElectraWeb FO product readiness (≠ DELIVERY %)
+
+| Metric | Value | Doc |
+|--------|-------|-----|
+| FO spec line items **Done** | 44 | [FRONT-OFFICE-STATUS.md](../era-hotel-pms/doc/FRONT-OFFICE-STATUS.md) |
+| **Partial** (CRM G6, rack R7) | 4 | same |
+| **Planned** backlog | 0 | B1 mock done; B2 CRM deferred |
+| FO i18n | E/F scripts | `apply-wave-e-res-card-i18n.mjs`, `apply-wave-f-guest-i18n.mjs`, `apply-wave-d3-fo-i18n.mjs` |
 
 ---
 

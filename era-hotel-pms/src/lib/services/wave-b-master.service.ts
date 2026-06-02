@@ -144,8 +144,9 @@ export async function postMinibar(input: {
   return posting;
 }
 
-export async function listLostFound() {
+export async function listLostFound(guestId?: string) {
   return prisma.lostFoundItem.findMany({
+    where: guestId ? { guestId } : undefined,
     include: { guest: true },
     orderBy: { foundDate: 'desc' },
     take: 200,
@@ -191,9 +192,36 @@ export async function listGuestDocuments(guestId: string) {
 
 export async function createGuestDocument(
   guestId: string,
-  input: { docType: string; docNumber: string; issuedAt?: Date; expiresAt?: Date },
+  input: {
+    docType: string;
+    docNumber: string;
+    serialNo?: string | null;
+    issuingAuthority?: string | null;
+    nationality?: string | null;
+    issuePlace?: string | null;
+    isPrimary?: boolean;
+    issuedAt?: Date;
+    expiresAt?: Date;
+  },
 ) {
   return prisma.guestDocument.create({ data: { guestId, ...input } });
+}
+
+export async function updateGuestDocument(
+  id: string,
+  input: Partial<{
+    docType: string;
+    docNumber: string;
+    serialNo: string | null;
+    issuingAuthority: string | null;
+    nationality: string | null;
+    issuePlace: string | null;
+    isPrimary: boolean;
+    issuedAt: Date | null;
+    expiresAt: Date | null;
+  }>,
+) {
+  return prisma.guestDocument.update({ where: { id }, data: input });
 }
 
 export async function listGuestContacts(guestId: string) {

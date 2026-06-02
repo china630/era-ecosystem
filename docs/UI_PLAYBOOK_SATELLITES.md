@@ -23,13 +23,15 @@ Reference implementations:
 | Hotel (pilot) | `era-hotel-pms/src/components/HotelOpsShell.tsx` — FO routes: see [FRONT-OFFICE-ELECTRAWEB.md](../era-hotel-pms/doc/FRONT-OFFICE-ELECTRAWEB.md) |
 | Retail / others | `src/components/*OpsShell.tsx` |
 
-### Header right cluster (read left → right)
+### Header right cluster (ERA / legacy ElektraWeb: read **right → left** = Profile → Organization → Bell → Locale)
+
+DOM order (LTR): **Locale → Bell → Organization → Profile → TierBar** (`EraAppHeader` in `@era/satellite-kit`).
 
 ```mermaid
 flowchart LR
-  L[Locale AZ/RU/EN] --> O[Organization]
-  O --> N[Notifications]
-  N --> P[Profile icon]
+  L[Locale AZ/RU/EN] --> N[Notifications]
+  N --> O[Organization]
+  O --> P[Profile icon]
   P --> T[TierUsageBar]
 ```
 

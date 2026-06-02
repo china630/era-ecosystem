@@ -28,3 +28,20 @@ export function financeDeepLink(target: FinanceDeepLinkTarget): string | null {
 export function isFinanceDeepLinkConfigured(): boolean {
   return financeWebBaseUrl() !== null;
 }
+
+export type FinanceGuestTarget = 'folios' | 'expenses';
+
+const GUEST_PATHS: Record<FinanceGuestTarget, string> = {
+  folios: '/folios',
+  expenses: '/reports/guest-expenses',
+};
+
+export function financeGuestDeepLink(
+  guestId: string,
+  target: FinanceGuestTarget,
+): string | null {
+  const base = financeWebBaseUrl();
+  if (!base) return null;
+  const q = new URLSearchParams({ guestId });
+  return `${base}${GUEST_PATHS[target]}?${q.toString()}`;
+}

@@ -1,0 +1,69 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: GHCR tag (e.g. dev-abc1234 or dev)
+        required: false
+        default: dev
+  workflow_run:
+    workflows: ["Build and push images"]
+    branches: [dev]
+    types: [completed]
+
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 30
+    steps:
+      - name: Resolve git SHA
+        id: sha
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.sha.outputs.value }}
+
+      - name: Resolve image tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            short=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+            echo "value=dev-${short}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd /opt/era-ecosystem
+            git fetch origin
+            git checkout "${{ steps.sha.outputs.value }}"
+            cat > .env <<'ENVEOF'
+            ${{ secrets.ENV_FILE }}
+            ENVEOF
+            echo "IMAGE_TAG=${{ steps.tag.outputs.value }}" >> .env
+            owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem" >> .env
+            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            docker compose -f docker-compose.prod.yml pull
+            chmod +x docker/scripts/migrate-all.sh
+            COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker image prune -f
+            node scripts/ecosystem-smoke-all.mjs

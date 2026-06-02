@@ -2,7 +2,9 @@
 
 Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Domain PRDs and technical specs live inside each app.
 
-**Docs:** [`docs/ECOSYSTEM_URLS.md`](./docs/ECOSYSTEM_URLS.md) · [`docs/DEVELOPMENT_ROADMAP.md`](./docs/DEVELOPMENT_ROADMAP.md) · [`docs/SATELLITE_DOCUMENTATION.md`](./docs/SATELLITE_DOCUMENTATION.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md) · [`docs/DEPLOY_DIGITALOCEAN.ru.md`](./docs/DEPLOY_DIGITALOCEAN.ru.md)
+[![CI](https://github.com/china630/era-ecosystem/actions/workflows/ci.yml/badge.svg)](https://github.com/china630/era-ecosystem/actions/workflows/ci.yml)
+
+**Docs:** [`docs/ECOSYSTEM_URLS.md`](./docs/ECOSYSTEM_URLS.md) · [`docs/CI_CD.md`](./docs/CI_CD.md) · [`docs/DEPLOY_DIGITALOCEAN.md`](./docs/DEPLOY_DIGITALOCEAN.md) · [`docs/DEVELOPMENT_ROADMAP.md`](./docs/DEVELOPMENT_ROADMAP.md) · [`docs/SETUP_AND_RUN.md`](./docs/SETUP_AND_RUN.md) · [`docs/SMOKE_ALL_SERVICES.md`](./docs/SMOKE_ALL_SERVICES.md)
 
 **Platform-first (Phase A, 2026-05-25):** orchestrator is source of truth for RBAC/ownership; all industry satellites share `executeSatelliteSsoExchange` with `BUSINESS_OWNER` mapping; Finance supports `ERA_AUTH_MODE=control-plane`; contracts and gov-budget modules are complete. **Phase B** satellite depth is in progress — see roadmap.
 
@@ -29,6 +31,7 @@ Composable ERP umbrella repository. Global UI/UX: [`DESIGN.md`](./DESIGN.md). Do
 | `packages/satellite-kit` | SSO, UI tokens, `AuthLoginCard` (`@era/satellite-kit`) |
 | `packages/era-storage` | Local + S3 object storage (`@era/storage`, add-on `platform_storage`) |
 | `era-finance-core` | Financial data plane — [PRD](era-finance-core/PRD.md) |
+| `era-data-hub` | Reference Data / DaaS (`data.era-365.online`) — [PRD](era-data-hub/PRD.md) |
 | `era-orchestrator` | Control plane + **public hub** (`/pricing`, `/help`, `/terms`, `/register`) — [PRD](era-orchestrator/PRD.md) |
 
 **Public hub (Orchestrator `:3000`):** login, registration, pricing, FAQ, terms, partner dashboard. Finance and satellites link via `NEXT_PUBLIC_ORCH_WEB_URL`. Details: [`docs/ECOSYSTEM_URLS.md`](./docs/ECOSYSTEM_URLS.md).
@@ -47,6 +50,7 @@ docker compose up -d --build
 | `api.era-365.online` | Control plane API (:4000) |
 | `finance-core.era-365.online` | Finance Web (:3100) |
 | `finance-api.era-365.online` | Finance API (:4100, when public) |
+| `data.era-365.online` | ERA Data Hub API (:4200) |
 | `hotel-pms.era-365.online` … `clinic.era-365.online` | Industry satellites (:3201–3209) |
 
 `finance-core` API is also reachable internally at `http://finance-core:4100`.

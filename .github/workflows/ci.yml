@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, master]
+  push:
+    branches: [dev, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
+
+  orchestrator:
+    runs-on: ubuntu-latest
+    needs: packages
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
+      - name: Install and test orchestrator
+        working-directory: era-orchestrator
+        run: |
+          npm ci
+          npm run db:generate
+          npm run test:api
+          npm run build
+
+  data-hub:
+    runs-on: ubuntu-latest
+    needs: packages
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: "Prepare erafinance database (file dependency)"
+        run: chmod +x scripts/ci-prepare-finance-database.sh && ./scripts/ci-prepare-finance-database.sh
+      - name: Build data-hub
+        working-directory: era-data-hub
+        run: npm ci && npm run build
+
+  finance:
+    runs-on: ubuntu-latest
+    needs: packages
+    timeout-minutes: 45
+    env:
+      DATABASE_URL: postgresql://erafinance:erafinance@127.0.0.1:5432/erafinance?schema=public
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_SECRET: ci-jwt-secret
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret
+      NODE_ENV: test
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 10
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: erafinance
+          POSTGRES_PASSWORD: erafinance
+          POSTGRES_DB: erafinance
+        options: >-
+          --health-cmd "pg_isready -U erafinance -d erafinance"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: era-finance-core/package-lock.json
+      - name: Build shared packages (file dependencies)
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
+      - name: Install
+        working-directory: era-finance-core
+        run: npm ci
+      - name: Prisma migrate deploy
+        working-directory: era-finance-core
+        run: npm run db:migrate:deploy
+      - name: Validate posting role presets
+        working-directory: era-finance-core/packages/database
+        run: npx tsx prisma/scripts/validate-posting-roles.ts
+      - name: ESLint API
+        working-directory: era-finance-core
+        run: npm run lint -w @erafinance/api
+      - name: Prepare API test dependencies
+        run: chmod +x scripts/ci-prepare-finance-api-tests.sh && ./scripts/ci-prepare-finance-api-tests.sh
+      - name: Unit tests
+        working-directory: era-finance-core
+        env:
+          TZ: UTC
+        run: npm run test -w @erafinance/api -- --testPathPattern=src/ --testPathIgnorePatterns=e2e-spec --ci --forceExit --maxWorkers=2 --testTimeout=120000
+      - name: Integration tests
+        working-directory: era-finance-core
+        run: npm run test:integration -w @erafinance/api -- --ci
+      - name: Build monorepo
+        working-directory: era-finance-core
+        env:
+          NODE_ENV: production
+        run: npm run build
+
+  satellite:
+    runs-on: ubuntu-latest
+    needs: packages
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+          - era-hotel-pms
+          - era-fnb-pos
+          - era-clinic
+          - era-retail-pos
+          - era-logistics
+          - era-construction
+          - era-crm
+          - era-auto-service
+          - era-wholesale
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
+      - name: Build and test ${{ matrix.dir }}
+        working-directory: ${{ matrix.dir }}
+        env:
+          CI: "true"
+        run: |
+          npm ci
+          npx prisma generate
+          npm test
+          npm run build
+          if [ -f .eslintrc.json ] || [ -f eslint.config.mjs ] || [ -f eslint.config.js ]; then
+            npm run lint
+          fi

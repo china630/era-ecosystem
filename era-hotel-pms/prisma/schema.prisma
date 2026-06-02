@@ -222,6 +222,7 @@ model RoomType {
   baseQuota     Int
   rooms         Room[]
   reservations  Reservation[]
+  givenRoomReservations Reservation[] @relation("GivenRoomType")
   ratePlans     RatePlan[]
   stopSells     ChannelStopSell[]
   channelRoomMappings ChannelRoomMapping[]
@@ -441,23 +442,281 @@ model Guest {
   phoneConsent       Boolean        @default(false)
   emailConsent       Boolean        @default(false)
   callBack           Boolean        @default(false)
+  visaType           String?
+  visaNumber         String?
+  visaExpiry         DateTime?
+  maritalStatus      String?
+  fatherName         String?
+  motherName         String?
+  verificationStatus String?
+  marriageDate       DateTime?      @db.Date
+  bonusPercent       Decimal?       @db.Decimal(5, 2)
+  phoneVerified      Boolean        @default(false)
+  emailVerified      Boolean        @default(false)
+  isLocked           Boolean        @default(false)
   reservations       Reservation[]
+  loyaltyPointEntries GuestLoyaltyPointEntry[]
   medicalAlerts      MedicalAlert[]
   documents          GuestDocument[]
   contacts           GuestContact[]
   addresses          GuestAddress[]
+  loyaltyCards       GuestLoyaltyCard[]
+  timeShareAgreements GuestTimeShareAgreement[]
+  notes              GuestNote[]
+  tasks              GuestTask[]
   lostFoundItems     LostFoundItem[]
+  tags               GuestTag[]
+  archiveFiles       GuestArchiveFile[]
+  preferences        GuestPreference[]
+  allergens          GuestAllergen[]
+  specialDates       GuestSpecialDate[]
+  favoriteRooms      GuestFavoriteRoom[]
+  comments           GuestComment[]
+  surveys            GuestSurvey[]
+  incidents          GuestIncident[]
+  communications     GuestCommunication[]
+  contactLogs        GuestContactLog[]
+  familyMembers      GuestFamily[]       @relation("GuestFamilyOwner")
+  familyOf           GuestFamily[]       @relation("GuestFamilyRelated")
+  bookerReservations Reservation[]       @relation("ReservationBooker")
 }
 
-model GuestDocument {
+model GuestTag {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([guestId, name])
+  @@index([guestId])
+}
+
+model GuestArchiveFile {
+  id         String   @id @default(uuid())
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  title      String
+  docType    String
+  mimeType   String?
+  sizeBytes  Int?
+  storageKey String
+  createdAt  DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestPreference {
+  id         String   @id @default(uuid())
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  preference String
+  note       String?
+  importance String?
+  department String?
+  createdAt  DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestAllergen {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  allergen  String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestSpecialDate {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  dateType  String
+  eventDate DateTime @db.Date
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestFavoriteRoom {
+  id         String   @id @default(uuid())
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  roomNumber String
+  roomType   String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestComment {
+  id          String   @id @default(uuid())
+  guestId     String
+  guest       Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  commentDate DateTime @default(now())
+  state       String   @default("NEW")
+  comment     String
+  answer      String?
+  source      String?
+  actionType  String?
+  createdAt   DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestSurvey {
+  id         String   @id @default(uuid())
+  guestId    String
+  guest      Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  surveyName String
+  filledAt   DateTime @db.Date
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestIncident {
+  id            String   @id @default(uuid())
+  guestId       String
+  guest         Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  incidentDate  DateTime @default(now())
+  location      String
+  description   String
+  action        String?
+  createdAt     DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestCommunication {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  channel   String
+  subject   String?
+  body      String
+  recipient String?
+  status    String   @default("STUB")
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestContactLog {
+  id          String   @id @default(uuid())
+  guestId     String
+  guest       Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  contactDate DateTime @default(now())
+  channel     String
+  operator    String?
+  result      String?
+  createdAt   DateTime @default(now())
+
+  @@index([guestId])
+}
+
+model GuestFamily {
+  id              String   @id @default(uuid())
+  guestId         String
+  guest           Guest    @relation("GuestFamilyOwner", fields: [guestId], references: [id], onDelete: Cascade)
+  relatedGuestId  String
+  relatedGuest    Guest    @relation("GuestFamilyRelated", fields: [relatedGuestId], references: [id], onDelete: Cascade)
+  relationship    String
+  createdAt       DateTime @default(now())
+
+  @@unique([guestId, relatedGuestId])
+  @@index([guestId])
+}
+
+model GuestLoyaltyCard {
+  id         String    @id @default(uuid())
+  guestId    String
+  guest      Guest     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  cardNumber String
+  tier       String?
+  points     Decimal?  @db.Decimal(12, 2)
+  active     Boolean   @default(true)
+  issuedAt   DateTime?
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([guestId])
+}
+
+model GuestLoyaltyPointEntry {
   id           String   @id @default(uuid())
   guestId      String
   guest        Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
-  docType      String
-  docNumber    String
-  issuedAt     DateTime?
-  expiresAt    DateTime?
+  entryDate    DateTime @db.Date
+  points       Decimal  @db.Decimal(12, 2)
+  description  String?
+  balanceAfter Decimal? @db.Decimal(12, 2)
   createdAt    DateTime @default(now())
+
+  @@index([guestId])
+  @@index([entryDate])
+}
+
+model GuestTimeShareAgreement {
+  id         String    @id @default(uuid())
+  guestId    String
+  guest      Guest     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  contractNo String
+  unitCode   String?
+  weekNo     Int?
+  status     String    @default("ACTIVE")
+  validFrom  DateTime? @db.Date
+  validTo    DateTime? @db.Date
+  createdAt  DateTime  @default(now())
+
+  @@index([guestId])
+}
+
+model GuestNote {
+  id        String   @id @default(uuid())
+  guestId   String
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  noteType  String   @default("GENERAL")
+  text      String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([guestId])
+}
+
+model GuestTask {
+  id        String    @id @default(uuid())
+  guestId   String
+  guest     Guest     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  title     String
+  status    String    @default("OPEN")
+  dueAt     DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([guestId])
+}
+
+model GuestDocument {
+  id                String   @id @default(uuid())
+  guestId           String
+  guest             Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  docType           String
+  docNumber         String
+  serialNo          String?
+  issuingAuthority  String?
+  nationality       String?
+  issuePlace        String?
+  isPrimary         Boolean  @default(false)
+  issuedAt          DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime @default(now())
 
   @@index([guestId])
 }
@@ -530,6 +789,8 @@ model Reservation {
   segment       String?
   rateType      String?
   booker        String?
+  bookerGuestId String?
+  bookerGuest   Guest?            @relation("ReservationBooker", fields: [bookerGuestId], references: [id], onDelete: SetNull)
   guestRep      String?
   paidBy        String?
   vipType       String?
@@ -548,7 +809,13 @@ model Reservation {
   manualDailyRate Decimal?        @db.Decimal(12, 2)
   discountActive  Boolean         @default(false)
   isLocked        Boolean         @default(false)
+  preferredLocation String?
+  preferredBed      String?
+  givenRoomTypeId   String?
+  givenRoomType     RoomType?       @relation("GivenRoomType", fields: [givenRoomTypeId], references: [id], onDelete: SetNull)
+  contractRef       String?
   stay          Stay?
+  attachments   ReservationAttachment[]
   paxGuests     ReservationGuest[]
   notes         ReservationNote[]
   dailyRates    ReservationDailyRate[]
@@ -563,15 +830,57 @@ model Reservation {
   procedureAppointments ProcedureAppointment[]
   transferOrders    TransferOrder[]
   banquetEvents     BanquetEvent[]
+  paymentCards      ReservationPaymentCard[]
+  packageLines      ReservationPackageLine[]
+  tasks             ReservationTask[]
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
 
   @@index([status])
   @@index([roomId])
   @@index([guestId])
+  @@index([bookerGuestId])
   @@index([roomTypeId])
   @@index([agencyId])
   @@index([groupId])
+}
+
+model ReservationPaymentCard {
+  id             String      @id @default(uuid())
+  reservationId  String
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  cardBrand      String?
+  lastFour       String
+  expiryMonth    Int?
+  expiryYear     Int?
+  holderName     String?
+  createdAt      DateTime    @default(now())
+
+  @@index([reservationId])
+}
+
+model ReservationPackageLine {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  packageCode   String
+  packageName   String
+  amount        Decimal     @db.Decimal(12, 2)
+  createdAt     DateTime    @default(now())
+
+  @@index([reservationId])
+}
+
+model ReservationTask {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  title         String
+  status        String      @default("OPEN")
+  dueAt         DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@index([reservationId])
 }
 
 model ReservationGuest {
@@ -587,8 +896,24 @@ model ReservationGuest {
   age           Int?
   idCardNo      String?
   passportNo    String?
+  memberNo      String?
+  payStatus     String?
+  externalResId String?
+  guestState    String?
   isPrimary     Boolean     @default(false)
   sortOrder     Int         @default(0)
+
+  @@index([reservationId])
+}
+
+model ReservationAttachment {
+  id            String      @id @default(uuid())
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fileName      String
+  mimeType      String?
+  fileSize      Int?
+  createdAt     DateTime    @default(now())
 
   @@index([reservationId])
 }
@@ -610,6 +935,9 @@ model ReservationDailyRate {
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
   stayDate      DateTime    @db.Date
   amount        Decimal     @db.Decimal(12, 2)
+  currencyCode  String      @default("AZN")
+  fixPrice      Boolean     @default(false)
+  discountPct   Decimal?    @db.Decimal(5, 2)
   manualFlag    Boolean     @default(false)
 
   @@unique([reservationId, stayDate])
@@ -825,6 +1153,8 @@ model FolioCharge {
   qty           Int         @default(1)
   description   String
   businessDate  DateTime
+  paxNo         Int?
+  invoiceRef    String?
   createdAt     DateTime    @default(now())
 }
 
