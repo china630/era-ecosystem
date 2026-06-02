@@ -124,6 +124,8 @@ jobs:
         run: npm run test:integration -w @erafinance/api -- --ci
       - name: Build monorepo
         working-directory: era-finance-core
+        env:
+          NODE_ENV: production
         run: npm run build
 
   satellite:
