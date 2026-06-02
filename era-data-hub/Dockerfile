@@ -9,7 +9,6 @@ WORKDIR /workspace
 
 COPY era-finance-core/packages/database/package.json ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/prisma ./era-finance-core/packages/database/prisma
-COPY era-finance-core/packages/database/index.ts ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/index.js ./era-finance-core/packages/database/
 COPY era-finance-core/packages/database/index.d.ts ./era-finance-core/packages/database/
 
