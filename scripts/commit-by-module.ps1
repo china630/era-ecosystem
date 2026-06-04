@@ -21,6 +21,10 @@ Commit-Paths "feat(data-hub): docker build fixes and API health tests" @(
 Commit-Paths "feat(finance-core): core waves 1-4 orchestrator network UX" @(
   "era-finance-core"
 )
+# Never commit local npm cache (see era-finance-core/D*/npm-cache)
+if (Test-Path "era-finance-core") {
+  git ls-files "era-finance-core/*npm-cache*" 2>$null | ForEach-Object { git rm -r --cached $_ -q 2>$null }
+}
 foreach ($sat in @(
   "era-hotel-pms", "era-fnb-pos", "era-clinic", "era-retail-pos",
   "era-logistics", "era-construction", "era-crm", "era-auto-service", "era-wholesale"
