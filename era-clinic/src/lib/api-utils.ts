@@ -8,6 +8,11 @@ import {
   verifySatelliteSession,
   type SatelliteSessionPayload,
 } from "@era/satellite-kit";
+import {
+  CLINIC_ROLE,
+  sessionHasClinicRole,
+  type ClinicRoleCode,
+} from "@/lib/clinic-roles";
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -56,4 +61,18 @@ export function hasBusinessOwnerRole(
     sessionHasRole(session, SATELLITE_ROLE.BUSINESS_OWNER) ||
     session.isOwner === true
   );
+}
+
+export function requireClinicRole(
+  session: SatelliteSessionPayload | null,
+  allowed: ClinicRoleCode[],
+): NextResponse | null {
+  if (!session) return jsonError("Unauthorized", 401);
+  if (
+    hasClinicAdminRole(session) ||
+    sessionHasClinicRole(session.role, allowed)
+  ) {
+    return null;
+  }
+  return jsonError("Forbidden", 403);
 }

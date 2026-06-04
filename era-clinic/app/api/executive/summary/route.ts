@@ -6,6 +6,7 @@ import {
   handleRouteError,
 } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { getCapacitySummary } from "@/lib/capacity.service";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -46,12 +47,15 @@ export async function GET() {
       0,
     );
 
+    const capacity = await getCapacitySummary(today);
+
     return jsonOk({
       date: today.toISOString().slice(0, 10),
       visitsToday,
       labRevenueToday,
       openLabOrders,
       currency: "AZN",
+      capacity,
     });
   } catch (err) {
     return handleRouteError(err);

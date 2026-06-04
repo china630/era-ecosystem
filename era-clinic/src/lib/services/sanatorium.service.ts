@@ -53,7 +53,11 @@ export async function listInHouseEpisodes(organizationId?: string) {
     include: {
       patientRef: true,
       complaints: { orderBy: { recordedAt: 'desc' }, take: 3 },
-      diagnoses: { orderBy: { recordedAt: 'desc' }, take: 3 },
+      diagnoses: {
+        orderBy: { recordedAt: 'desc' },
+        take: 3,
+        include: { icdCode: true },
+      },
       labOrders: { orderBy: { createdAt: 'desc' }, take: 5 },
     },
     orderBy: { openedAt: 'desc' },
@@ -68,10 +72,20 @@ export async function addComplaint(episodeId: string, text: string) {
 
 export async function addDiagnosis(
   episodeId: string,
-  input: { icdCode?: string; description: string },
+  input: { icdCode?: string; icdCodeId?: string; description: string },
 ) {
+  let icdCodeId = input.icdCodeId;
+  if (!icdCodeId && input.icdCode) {
+    const icd = await prisma.icdCode.findUnique({ where: { code: input.icdCode } });
+    icdCodeId = icd?.id;
+  }
   return prisma.clinicalDiagnosis.create({
-    data: { episodeId, icdCode: input.icdCode ?? null, description: input.description },
+    data: {
+      episodeId,
+      icdCodeId: icdCodeId ?? null,
+      icdCodeText: input.icdCode ?? null,
+      description: input.description,
+    },
   });
 }
 
@@ -99,7 +113,7 @@ export async function getEpisode(id: string) {
     include: {
       patientRef: true,
       complaints: { orderBy: { recordedAt: 'desc' } },
-      diagnoses: { orderBy: { recordedAt: 'desc' } },
+      diagnoses: { orderBy: { recordedAt: 'desc' }, include: { icdCode: true } },
       labOrders: { orderBy: { createdAt: 'desc' } },
     },
   });

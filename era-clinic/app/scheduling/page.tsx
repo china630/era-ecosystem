@@ -20,14 +20,15 @@ type SlotsResponse = {
 
 export default function SchedulingPage() {
   const t = useTranslations("scheduling");
-  const tc = useTranslations("common");
   const tNav = useTranslations("nav");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [practitionerCode, setPractitionerCode] = useState("");
   const [data, setData] = useState<SlotsResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [dragFrom, setDragFrom] = useState<string | null>(null);
+  const [msg, setMsg] = useState("");
 
-  useEffect(() => {
+  function loadSlots() {
     setLoading(true);
     const params = new URLSearchParams({ date });
     if (practitionerCode) params.set("practitionerCode", practitionerCode);
@@ -35,7 +36,35 @@ export default function SchedulingPage() {
       .then((res) => res.json())
       .then(setData)
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    loadSlots();
   }, [date, practitionerCode]);
+
+  async function rescheduleTo(time: string) {
+    if (!dragFrom) return;
+    const apptRes = await fetch("/api/appointments");
+    const appts = await apptRes.json();
+    const list = Array.isArray(appts) ? appts : (appts.data ?? []);
+    const match = list.find(
+      (a: { scheduledAt: string }) =>
+        new Date(a.scheduledAt).toISOString().slice(11, 16) === dragFrom,
+    );
+    if (!match) {
+      setMsg(t("noAppointment"));
+      return;
+    }
+    const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
+    const res = await fetch(`/api/appointments/${match.id}/reschedule`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduledAt }),
+    });
+    setMsg(res.ok ? t("rescheduled") : t("rescheduleFailed"));
+    setDragFrom(null);
+    loadSlots();
+  }
 
   return (
     <>
@@ -48,7 +77,7 @@ export default function SchedulingPage() {
           </Link>
         }
       />
-      <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+      <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-6`}>
         <div className="flex flex-wrap gap-4 text-[13px]">
           <label className="flex items-center gap-2">
             {t("date")}
@@ -84,25 +113,33 @@ export default function SchedulingPage() {
             </p>
             <ColorLegend
               items={[
-                { id: "available", label: "Available", swatchClassName: "bg-green-50" },
-                { id: "busy", label: "Unavailable", swatchClassName: "bg-slate-100" },
+                { id: "available", label: t("available"), swatchClassName: "bg-green-50" },
+                { id: "busy", label: t("unavailable"), swatchClassName: "bg-slate-100" },
               ]}
             />
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
               {data.slots.map((slot) => (
-                <div
+                <button
                   key={slot.time}
+                  type="button"
+                  draggable={slot.available}
+                  onDragStart={() => setDragFrom(slot.time)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => void rescheduleTo(slot.time)}
                   className={`rounded border px-2 py-3 text-center text-[12px] ${
-                    slot.available
-                      ? "border-green-200 bg-green-50 text-green-800"
-                      : "border-slate-200 bg-slate-100 text-slate-500 line-through"
+                    dragFrom === slot.time
+                      ? "border-blue-400 bg-blue-50"
+                      : slot.available
+                        ? "border-green-200 bg-green-50 text-green-800"
+                        : "border-slate-200 bg-slate-100 text-slate-500 line-through"
                   }`}
                 >
                   {slot.time}
-                </div>
+                </button>
               ))}
             </div>
-            <p className="text-[12px] text-[#7F8C8D]">{t("rescheduleStub")}</p>
+            <p className="text-[12px] text-[#7F8C8D]">{t("dragHint")}</p>
+            {msg && <p className="text-sm text-slate-600">{msg}</p>}
           </>
         )}
       </div>

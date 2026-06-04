@@ -19,8 +19,14 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const reqHeaders = withPath(request);
 
+  const clinicPublicApi = [
+    "/api/portal/session",
+    "/api/sanatorium/episodes/from-stay",
+    "/api/integration/hotel-lifecycle",
+    "/api/booking",
+  ];
   if (pathname.startsWith("/api")) {
-    if (isPublicApiPath(pathname)) {
+    if (isPublicApiPath(pathname, clinicPublicApi)) {
       return NextResponse.next({ request: { headers: reqHeaders } });
     }
     const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);
@@ -42,7 +48,9 @@ export async function middleware(request: NextRequest) {
     pathname === "/login" ||
     pathname === "/sso/callback" ||
     pathname === "/help" ||
-    pathname.startsWith("/help/")
+    pathname.startsWith("/help/") ||
+    pathname === "/portal" ||
+    pathname.startsWith("/booking")
   ) {
     return NextResponse.next({ request: { headers: reqHeaders } });
   }

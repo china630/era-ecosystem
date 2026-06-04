@@ -3,6 +3,17 @@
     "title": "ERA Clinic",
     "description": "Спутник клиники и медицинских операций"
   },
+  "nav": {
+    "home": "Главная",
+    "appointments": "Приёмы",
+    "scheduling": "Расписание",
+    "labOrders": "Лаборатория",
+    "sanatorium": "Санаторий",
+    "doctor": "Очередь врача",
+    "nurse": "Процедуры",
+    "cashier": "Касса",
+    "settings": "Настройки"
+  },
   "login": {
     "title": "ERA Clinic",
     "subtitle": "Войдите в учётную запись",
@@ -83,14 +94,49 @@
   },
   "scheduling": {
     "title": "Расписание дня",
-    "subtitle": "K-05 — сетка дня практика (slots API stub)",
+    "subtitle": "Слоты с учётом ресурсов и перенос drag",
     "date": "Дата",
     "practitionerCode": "Код практика",
     "optional": "необязательно",
     "loadingSlots": "Загрузка слотов…",
     "loadFailed": "Не удалось загрузить расписание.",
     "allPractitioners": "все практики",
-    "rescheduleStub": "Stub переноса — appointments API для блоков (K3 MVP)."
+    "available": "Свободно",
+    "unavailable": "Занято",
+    "dragHint": "Перетащите слот для переноса приёма (в тот же день).",
+    "rescheduled": "Приём перенесён.",
+    "rescheduleFailed": "Не удалось перенести.",
+    "noAppointment": "Нет приёма в исходное время."
+  },
+  "doctor": {
+    "title": "Очередь врача",
+    "subtitle": "Check-in и визиты в работе",
+    "empty": "Очередь пуста."
+  },
+  "nurse": {
+    "title": "Очередь процедур",
+    "subtitle": "Запланированные процедуры для медсестёр",
+    "done": "Выполнено"
+  },
+  "cashier": {
+    "title": "Касса клиники",
+    "subtitle": "Смена, оплата, фискал (@era/fiscal)",
+    "openShift": "Открыть смену",
+    "pay": "Принять оплату"
+  },
+  "booking": {
+    "title": "Запись на приём",
+    "subtitle": "Публичная запись (platform/booking при настройке)",
+    "name": "ФИО",
+    "phone": "Телефон",
+    "submit": "Записаться",
+    "success": "Приём создан.",
+    "error": "Ошибка записи."
+  },
+  "portal": {
+    "title": "Портал пациента",
+    "token": "Токен портала или QR",
+    "load": "Загрузить визиты"
   },
   "executive": {
     "title": "Исполнительная сводка",

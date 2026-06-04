@@ -31,6 +31,9 @@
     "scheduling": "Scheduling",
     "labOrders": "Lab orders",
     "sanatorium": "Sanatorium",
+    "doctor": "Doctor queue",
+    "nurse": "Nurse procedures",
+    "cashier": "Cashier",
     "settings": "Settings"
   },
   "login": {
@@ -129,14 +132,49 @@
   },
   "scheduling": {
     "title": "Daily schedule",
-    "subtitle": "K-05 — daily practice grid (slots API stub)",
+    "subtitle": "Resource-aware slots and drag reschedule",
     "date": "Date",
     "practitionerCode": "Code practice",
     "optional": "optional",
     "loadingSlots": "Loading slots…",
     "loadFailed": "Could not load schedule.",
     "allPractitioners": "all practices",
-    "rescheduleStub": "Transfer stub — appointments API for blocks (K3 MVP)."
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "dragHint": "Drag a slot to move an appointment (same-day reschedule).",
+    "rescheduled": "Appointment rescheduled.",
+    "rescheduleFailed": "Reschedule failed.",
+    "noAppointment": "No appointment at source time."
+  },
+  "doctor": {
+    "title": "Doctor queue",
+    "subtitle": "Checked-in and in-progress visits",
+    "empty": "No patients in queue."
+  },
+  "nurse": {
+    "title": "Procedure queue",
+    "subtitle": "Scheduled procedures for nursing",
+    "done": "Complete"
+  },
+  "cashier": {
+    "title": "Clinic cashier",
+    "subtitle": "Shift, payment, and fiscal receipt (@era/fiscal)",
+    "openShift": "Open shift",
+    "pay": "Collect payment"
+  },
+  "booking": {
+    "title": "Book an appointment",
+    "subtitle": "Public web booking (orchestrator platform/booking when configured)",
+    "name": "Full name",
+    "phone": "Phone",
+    "submit": "Book",
+    "success": "Appointment created.",
+    "error": "Booking failed."
+  },
+  "portal": {
+    "title": "Patient portal",
+    "token": "Portal or QR token",
+    "load": "Load my visits"
   },
   "executive": {
     "title": "Executive summary",
