@@ -66,6 +66,16 @@ export function computeRevpar(roomRevenue: number, roomsTotal: number): number {
   return roomRevenue / roomsTotal;
 }
 
+async function fetchClinicCapacitySummary(
+  refDate: Date,
+): Promise<Record<string, unknown> | null> {
+  const { fetchClinicCapacitySummary: fetchCap } = await import(
+    '@/lib/integration/clinic-capacity-client'
+  );
+  const row = await fetchCap(refDate);
+  return row ? (row as Record<string, unknown>) : null;
+}
+
 type ChargeRow = {
   amount: Decimal;
   qty: number;
@@ -247,9 +257,12 @@ export async function getExecutiveDashboard(dateInput?: Date): Promise<Executive
     lastWeek: lastWeek.revpar,
   };
 
+  const clinicCapacity = await fetchClinicCapacitySummary(day);
+
   return {
     date: day.toISOString().slice(0, 10),
     hotelStatus,
+    clinicCapacity,
     occupancy: {
       factPct: today.factPct,
       planPct: today.planPct,

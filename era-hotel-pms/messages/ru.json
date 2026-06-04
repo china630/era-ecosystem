@@ -32,6 +32,7 @@
     "invoices": "Все счета",
     "reconciliation": "Сверка",
     "posCalendar": "Календарь POS",
+    "souvenirShop": "Сувенирный магазин (ритейл)",
     "masterData": "НСИ",
     "integration": "Интеграция",
     "stock": "Склад",
@@ -55,6 +56,11 @@
     "actualCheckTimes": "Фактические время заезда/выезда",
     "sectionFrontOffice": "Фронт-офис и бронирования",
     "sectionHousekeeping": "Хозяйственная служба и шахматка",
+    "sectionService": "Сервис и обслуживание",
+    "serviceOps": "Заявки на обслуживание",
+    "serviceGuestPortal": "Форма заявки гостя",
+    "sectionMigration": "Миграционный учёт PRO",
+    "migrationQueue": "Очередь регистраций",
     "sectionNightAudit": "Ночной аудит",
     "sectionFrontCash": "Фронт-касса",
     "sectionDistribution": "Дистрибуция и B2B",
@@ -993,6 +999,16 @@
     "taskDone": "Task done → room {status}",
     "roomInspected": "Room {room} → Inspected",
     "roomOoo": "Room {room} out of order"
+  },
+  "migration": {
+    "title": "Миграционный учёт PRO",
+    "subtitle": "Регистрации гостей для миграционной службы",
+    "guest": "Гость",
+    "status": "Статус",
+    "reservation": "Бронь",
+    "created": "Создано",
+    "empty": "Нет записей",
+    "loadFailed": "Не удалось загрузить очередь"
   },
   "channel": {
     "title": "Channel",

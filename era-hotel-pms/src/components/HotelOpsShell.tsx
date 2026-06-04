@@ -13,6 +13,7 @@ import {
   Car,
   ClipboardList,
   FileBarChart,
+  FileText,
   HeartPulse,
   Home,
   LayoutGrid,
@@ -22,6 +23,7 @@ import {
   Package,
   Radio,
   Settings,
+  ShoppingBag,
   Smartphone,
   Sparkles,
   TrendingUp,
@@ -59,6 +61,14 @@ function posCalendarHref(): string {
     process.env.NEXT_PUBLIC_FNB_POS_URL ??
     process.env.NEXT_PUBLIC_FB_POS_URL ??
     'http://localhost:3202'
+  );
+}
+
+function souvenirRetailHref(): string {
+  return (
+    process.env.NEXT_PUBLIC_SATELLITE_RETAIL_URL ??
+    process.env.NEXT_PUBLIC_RETAIL_POS_URL ??
+    'http://localhost:3204'
   );
 }
 
@@ -256,6 +266,41 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'lostAndFound',
               icon: Package,
               show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS),
+            },
+          ]),
+        },
+        {
+          id: 'hotel_service',
+          title: t('sectionService'),
+          icon: Wrench,
+          items: sectionItems([
+            {
+              id: 'svc-ops',
+              href: '/service',
+              labelKey: 'serviceOps',
+              icon: Wrench,
+              show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS),
+            },
+            {
+              id: 'svc-guest',
+              href: '/service/guest',
+              labelKey: 'serviceGuestPortal',
+              icon: Smartphone,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
+            },
+          ]),
+        },
+        {
+          id: 'hotel_migration_pro',
+          title: t('sectionMigration'),
+          icon: FileText,
+          items: sectionItems([
+            {
+              id: 'migration-queue',
+              href: '/migration',
+              labelKey: 'migrationQueue',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
             },
           ]),
         },
@@ -472,6 +517,14 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: posCalendarHref(),
               labelKey: 'posCalendar',
               icon: CalendarDays,
+              external: true,
+              show: can(PERMISSIONS.RESERVATIONS_READ),
+            },
+            {
+              id: 'gn-retail',
+              href: souvenirRetailHref(),
+              labelKey: 'souvenirShop',
+              icon: ShoppingBag,
               external: true,
               show: can(PERMISSIONS.RESERVATIONS_READ),
             },
