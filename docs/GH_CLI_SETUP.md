@@ -4,8 +4,14 @@
 
 ## Установка
 
-1. Скачать MSI: https://github.com/cli/cli/releases/latest (`gh_*_windows_amd64.msi`)
-2. Или: `winget install GitHub.cli` (при ошибке сертификата — MSI вручную)
+Путь по умолчанию в этом проекте: `D:\Program Files (x86)\GitHub CLI\gh.exe`
+
+```powershell
+# Добавить в PATH (один раз)
+.\scripts\setup-gh-path.ps1
+```
+
+Альтернатива: MSI с https://github.com/cli/cli/releases/latest или `winget install GitHub.cli`.
 
 ## Авторизация
 
