@@ -130,7 +130,7 @@ export function envelopeToGuestCheckedInEvent(
   organizationId: string,
 ): SatelliteHotelGuestCheckedInEvent | null {
   if (envelope.eventType !== SATELLITE_HOTEL_GUEST_CHECKED_IN) return null;
-  const payload = envelope.payload as SatelliteHotelGuestCheckedInEvent["payload"];
+  const payload = envelope.payload as unknown as SatelliteHotelGuestCheckedInEvent["payload"];
   return {
     type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
     organizationId,
@@ -146,7 +146,7 @@ export function envelopeToGuestCheckedOutEvent(
   organizationId: string,
 ): SatelliteHotelGuestCheckedOutEvent | null {
   if (envelope.eventType !== SATELLITE_HOTEL_GUEST_CHECKED_OUT) return null;
-  const payload = envelope.payload as SatelliteHotelGuestCheckedOutEvent["payload"];
+  const payload = envelope.payload as unknown as SatelliteHotelGuestCheckedOutEvent["payload"];
   return {
     type: SATELLITE_HOTEL_GUEST_CHECKED_OUT,
     organizationId,
@@ -162,7 +162,7 @@ export function envelopeToRoomChangedEvent(
   organizationId: string,
 ): SatelliteHotelRoomChangedEvent | null {
   if (envelope.eventType !== SATELLITE_HOTEL_ROOM_CHANGED) return null;
-  const payload = envelope.payload as SatelliteHotelRoomChangedEvent["payload"];
+  const payload = envelope.payload as unknown as SatelliteHotelRoomChangedEvent["payload"];
   return {
     type: SATELLITE_HOTEL_ROOM_CHANGED,
     organizationId,
