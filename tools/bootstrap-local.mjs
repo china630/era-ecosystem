@@ -15,7 +15,13 @@ import { fileURLToPath } from "node:url";
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function loadRootEnv() {
-  const envPath = path.join(root, ".env");
+  for (const envPath of [path.join(root, ".env"), path.join(root, ".env.local")]) {
+    if (!fs.existsSync(envPath)) continue;
+    loadEnvFile(envPath);
+  }
+}
+
+function loadEnvFile(envPath) {
   if (!fs.existsSync(envPath)) return;
   for (const line of fs.readFileSync(envPath, "utf8").split(/\r?\n/)) {
     const trimmed = line.trim();
@@ -49,8 +55,32 @@ const pgPass = process.env.POSTGRES_PASSWORD ?? "era_dev_password";
 const pgHost = process.env.POSTGRES_HOST ?? "localhost";
 const pgPort = process.env.POSTGRES_PUBLISH_PORT ?? "5432";
 
+function encodePgPassword(pass) {
+  return encodeURIComponent(pass);
+}
+
 function dbUrl(dbName) {
-  return `postgresql://${pgUser}:${pgPass}@${pgHost}:${pgPort}/${dbName}?schema=public`;
+  return `postgresql://${pgUser}:${encodePgPassword(pgPass)}@${pgHost}:${pgPort}/${dbName}?schema=public`;
+}
+
+function dockerContainerRunning(name) {
+  const r = spawnSync(
+    `docker ps --format "{{.Names}}" | findstr /x "${name}"`,
+    { shell: true, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  );
+  return (r.stdout ?? "").includes(name);
+}
+
+function runDockerExec(label, container, shCmd) {
+  process.stdout.write(`\n[bootstrap] ${label} (docker:${container})\n`);
+  const r = spawnSync(`docker exec ${container} sh -lc ${JSON.stringify(shCmd)}`, {
+    shell: true,
+    stdio: "inherit",
+    encoding: "utf8",
+  });
+  if (r.status !== 0) {
+    throw new Error(`${label} failed (exit ${r.status ?? "unknown"})`);
+  }
 }
 
 function run(label, cmd, cwd, extraEnv = {}) {
@@ -89,12 +119,20 @@ const satelliteDirs = [
 
 async function main() {
   if (!skipOrch) {
-    run(
-      "orchestrator migrate deploy",
-      "npm run db:migrate:deploy -w @era365/database",
-      path.join(root, "era-orchestrator"),
-      { DATABASE_URL: dbUrl("era_orchestrator") },
-    );
+    if (dockerContainerRunning("era-orchestrator")) {
+      runDockerExec(
+        "orchestrator migrate deploy",
+        "era-orchestrator",
+        "cd /app/packages/database && npx prisma migrate deploy",
+      );
+    } else {
+      run(
+        "orchestrator migrate deploy",
+        "npm run db:migrate:deploy -w @era365/database",
+        path.join(root, "era-orchestrator"),
+        { DATABASE_URL: dbUrl("era_orchestrator") },
+      );
+    }
     runOptional(
       "ensure era_mdm database",
       `docker exec era-postgres psql -U ${pgUser} -d postgres -c "CREATE DATABASE era_mdm"`,
