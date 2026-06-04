@@ -24,7 +24,8 @@ describe("CounterpartiesController degraded mode", () => {
       findOrCreateByVoen: jest.fn().mockRejectedValue(new Error("e-taxes down")),
       syncDirectoryAfterLocalSave: jest.fn().mockResolvedValue(undefined),
     } as any;
-    const controller = new CounterpartiesController(prisma, svc);
+    const mdm = { lookupByFin: jest.fn() } as any;
+    const controller = new CounterpartiesController(prisma, svc, mdm);
 
     const out = await controller.create("org-1", {
       name: "Manual LLC",
@@ -49,7 +50,8 @@ describe("CounterpartiesController degraded mode", () => {
         .fn()
         .mockResolvedValue({ mergedIntoId: "target-id", sourceId: "source-id" }),
     } as any;
-    const controller = new CounterpartiesController(prisma, svc);
+    const mdm = { lookupByFin: jest.fn() } as any;
+    const controller = new CounterpartiesController(prisma, svc, mdm);
 
     const out = await controller.merge("org-1", {
       sourceId: "11111111-1111-4111-8111-111111111111",

@@ -2,6 +2,7 @@ import { Prisma } from "@erafinance/database";
 import { OpeningBalancesService } from "../../src/migration/opening-balances.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import type { AccountingService, PostTransactionLine } from "../../src/accounting/accounting.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 describe("OpeningBalancesService (finance import)", () => {
   it("posts opening balances and keeps technical account 000 balanced", async () => {
@@ -95,7 +96,7 @@ describe("OpeningBalancesService (finance import)", () => {
         ),
     } as unknown as AccountingService;
 
-    const service = new OpeningBalancesService(prisma, accounting);
+    const service = new OpeningBalancesService(prisma, accounting, createMockPostingResolver());
     const result = await service.importFinance(organizationId, [
       {
         accountCode: "101",

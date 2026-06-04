@@ -130,11 +130,17 @@ describe("NetworkDocumentService (intercompany)", () => {
       accounting as never,
       postingResolver,
     );
+    const orchestratorTransport = { deliver: jest.fn().mockResolvedValue(undefined) };
+    const config = { get: jest.fn().mockReturnValue(undefined) };
+    const eqaimePrefill = { buildForDocument: jest.fn().mockResolvedValue(null) };
     const documents = new NetworkDocumentService(
       prisma as never,
       match,
       posting,
       inProcess,
+      orchestratorTransport as never,
+      config as never,
+      eqaimePrefill as never,
     );
 
     return { documents, posting, prisma, journalCalls, accounting, match };

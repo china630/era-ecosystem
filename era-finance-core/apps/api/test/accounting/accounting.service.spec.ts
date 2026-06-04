@@ -3,6 +3,7 @@ import { LedgerType } from "@erafinance/database";
 import { AccountingService } from "../../src/accounting/accounting.service";
 import type { IfrsAutoMappingService } from "../../src/accounting/ifrs-auto-mapping.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 describe("AccountingService", () => {
   const ifrsAutoMappingStub = {
@@ -56,7 +57,7 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub);
+    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
     const out = await svc.postTransaction({
@@ -81,7 +82,7 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub);
+    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
     await expect(
@@ -110,7 +111,7 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub);
+    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
     await expect(
@@ -137,7 +138,7 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub);
+    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
     await expect(
@@ -162,7 +163,7 @@ describe("AccountingService", () => {
         fn(tx),
       ),
     } as unknown as PrismaService;
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub);
+    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
 
     await expect(
       svc.postTransaction({

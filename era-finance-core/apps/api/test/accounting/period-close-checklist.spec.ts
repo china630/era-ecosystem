@@ -1,4 +1,5 @@
 import { AccountingService } from "../../src/accounting/accounting.service";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 describe("AccountingService period-close checklist hardening", () => {
   function makeService(overrides?: {
@@ -21,7 +22,7 @@ describe("AccountingService period-close checklist hardening", () => {
           { count: BigInt(overrides?.brokenJournalLinks ?? 0) },
         ]),
     };
-    const svc = new AccountingService(prisma as any, {} as any);
+    const svc = new AccountingService(prisma as any, {} as any, createMockPostingResolver());
     return { svc, prisma };
   }
 
