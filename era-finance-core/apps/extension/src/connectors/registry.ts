@@ -2,8 +2,14 @@ import type { PortalConnector } from "./types";
 import { customsConnector } from "./customs";
 import { emasConnector } from "./emas";
 import { etaxesConnector } from "./etaxes";
+import { migrationConnector } from "./migration";
 
-const all: PortalConnector[] = [emasConnector, etaxesConnector, customsConnector];
+const all: PortalConnector[] = [
+  emasConnector,
+  etaxesConnector,
+  customsConnector,
+  migrationConnector,
+];
 
 export function matchPortal(url: string | URL): PortalConnector | null {
   const u = typeof url === "string" ? new URL(url) : url;

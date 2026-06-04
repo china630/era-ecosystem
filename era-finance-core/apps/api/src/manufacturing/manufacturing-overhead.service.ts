@@ -102,14 +102,18 @@ export class ManufacturingOverheadService {
       where: { id: dto.driverId, organizationId },
     });
     if (!driver) throw new NotFoundException("Overhead driver not found");
+    const [creditDefault, debitDefault] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "MANUFACTURING_OVERHEAD_CREDIT"),
+      this.posting.resolveAccountCode(organizationId, "FINISHED_GOODS"),
+    ]);
     return this.prisma.overheadPool.create({
       data: {
         organizationId,
         period: dto.period.trim(),
         totalAmount: new Decimal(dto.totalAmount),
         sourceAccountCode: dto.sourceAccountCode.trim(),
-        creditAccountCode: (dto.creditAccountCode ?? "741").trim(),
-        debitAccountCode: (dto.debitAccountCode ?? "204").trim(),
+        creditAccountCode: (dto.creditAccountCode ?? creditDefault).trim(),
+        debitAccountCode: (dto.debitAccountCode ?? debitDefault).trim(),
         driverId: dto.driverId,
       },
       include: { driver: true },
@@ -227,8 +231,12 @@ export class ManufacturingOverheadService {
       organizationId,
       "MANUFACTURING_OVERHEAD_CREDIT",
     );
+    const debitDefault = await this.posting.resolveAccountCode(
+      organizationId,
+      "FINISHED_GOODS",
+    );
     const credit = dto.creditAccountCode?.trim() ?? defaultCreditCode;
-    const debit = dto.debitAccountCode?.trim() ?? "204";
+    const debit = dto.debitAccountCode?.trim() ?? debitDefault;
     const source = dto.sourceAccountCode?.trim() ?? credit;
 
     let allocationsCreated = 0;

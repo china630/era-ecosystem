@@ -12,6 +12,7 @@ import {
   pickAccountDisplayName,
   Prisma,
 } from "@erafinance/database";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreateAccountMappingDto } from "./dto/create-account-mapping.dto";
 import type { CreateBankAccountDto } from "./dto/create-bank-account.dto";
@@ -25,7 +26,10 @@ const Decimal = Prisma.Decimal;
 
 @Injectable()
 export class AccountsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly posting: PostingAccountResolver,
+  ) {}
 
   listAccounts(organizationId: string, ledgerType: LedgerType, locale?: string | null) {
     return this.prisma.account
@@ -371,18 +375,22 @@ export class AccountsService {
   ): Promise<void> {
     await this.mirrorNasToIfrs(organizationId, db);
 
+    const [receivableCode, revenueCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "TRADE_RECEIVABLE"),
+      this.posting.resolveAccountCode(organizationId, "SALES_REVENUE"),
+    ]);
     const nas211 = await db.account.findFirst({
       where: {
         organizationId,
         ledgerType: LedgerType.NAS,
-        code: "211",
+        code: receivableCode,
       },
     });
     const nas601 = await db.account.findFirst({
       where: {
         organizationId,
         ledgerType: LedgerType.NAS,
-        code: "601",
+        code: revenueCode,
       },
     });
     if (!nas211 || !nas601) {
@@ -642,8 +650,10 @@ export class AccountsService {
     if (!code || !name) {
       throw new BadRequestException("code and name are required");
     }
-    if (!code.startsWith("221.")) {
-      throw new BadRequestException("code must start with 221.");
+    const mainBank = await this.posting.resolveAccountCode(organizationId, "MAIN_BANK");
+    const bankPrefix = `${mainBank}.`;
+    if (!code.startsWith(bankPrefix)) {
+      throw new BadRequestException(`code must start with ${bankPrefix}`);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -656,11 +666,11 @@ export class AccountsService {
       }
 
       const parent = await tx.account.findFirst({
-        where: { organizationId, ledgerType: LedgerType.NAS, code: "221" },
+        where: { organizationId, ledgerType: LedgerType.NAS, code: mainBank },
         select: { id: true },
       });
       if (!parent) {
-        throw new NotFoundException("Parent bank account 221 not found");
+        throw new NotFoundException(`Parent bank account ${mainBank} not found`);
       }
 
       return tx.account.create({

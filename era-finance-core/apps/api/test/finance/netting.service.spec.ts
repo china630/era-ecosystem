@@ -3,10 +3,8 @@ import { Prisma } from "@erafinance/database";
 import { InvoiceStatus, LedgerType } from "@erafinance/database";
 import { AccountingService } from "../../src/accounting/accounting.service";
 import { NettingService } from "../../src/accounting/netting.service";
-import {
-  PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-  RECEIVABLE_ACCOUNT_CODE,
-} from "../../src/ledger.constants";
+const PAYABLE_SUPPLIERS_ACCOUNT_CODE = "531";
+const RECEIVABLE_ACCOUNT_CODE = "211";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 

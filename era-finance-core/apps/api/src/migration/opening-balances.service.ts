@@ -13,6 +13,7 @@ import {
   StockMovementType,
 } from "@erafinance/database";
 import { AccountingService, type PostTransactionLine } from "../accounting/accounting.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { assertWarehouseNotUnderReconciliation } from "../inventory/inventory-reconciliation-lock";
 import { PrismaService } from "../prisma/prisma.service";
 import {
@@ -30,6 +31,7 @@ import { OpeningBalanceHrLineDto } from "./dto/opening-balance-hr-line.dto";
 import { OpeningBalanceInventoryLineDto } from "./dto/opening-balance-inventory-line.dto";
 
 const Decimal = Prisma.Decimal;
+/** SYSTEM_OPENING_CONTRA — not a PostingRole */
 const OPENING_ACCOUNT_CODE = "000";
 
 function shouldCreditTargetAccount(code: string): boolean {
@@ -42,6 +44,7 @@ export class OpeningBalancesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   private async ensureTechnicalOpeningAccount(
@@ -251,8 +254,14 @@ export class OpeningBalancesService {
         const qty = new Decimal(line.quantity);
         const unit = new Decimal(line.costPrice);
         const amount = qty.mul(unit);
+        const [finishedGoodsCode, inventoryGoodsCode] = await Promise.all([
+          this.posting.resolveAccountCode(organizationId, "FINISHED_GOODS", tx),
+          this.posting.resolveAccountCode(organizationId, "INVENTORY_GOODS", tx),
+        ]);
         const invAccountCode =
-          warehouse.inventoryAccountCode === "204" ? "204" : "201";
+          warehouse.inventoryAccountCode === finishedGoodsCode
+            ? finishedGoodsCode
+            : inventoryGoodsCode;
 
         const currentItem = await tx.stockItem.findUnique({
           where: {

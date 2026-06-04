@@ -156,7 +156,12 @@ export function FloatingWidget(props: {
           </div>
         ) : null}
         <AwaitAsanStep authState={authState} t={t} />
-        {step >= 2 && props.flow !== "customs" ? (
+        {step >= 2 && props.flow === "migration" ? (
+          <p style={{ fontSize: 12, margin: "8px 0", color: "#475569" }}>
+            {t("extension.portal.flowMigration")} — prefill skeleton only; no portal submit.
+          </p>
+        ) : null}
+        {step >= 2 && props.flow !== "customs" && props.flow !== "migration" ? (
           <AutofillStep
             t={t}
             doc={document}

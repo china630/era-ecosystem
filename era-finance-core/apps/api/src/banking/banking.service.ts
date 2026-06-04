@@ -315,18 +315,23 @@ export class BankingService {
     }
     const desc = dto.description?.trim() || "Manual bank entry";
 
+    const [charterCode, mainBank] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "CHARTER_CAPITAL"),
+      this.posting.resolveAccountCode(organizationId, "MAIN_BANK"),
+    ]);
+
     // Capital contribution policy:
-    // - Bank contribution goes through manualBankEntry as Dr 221* / Cr 301.
-    // - Cash contribution goes through KMO in CashOrderService as Dr 101* / Cr 301.
-    if (offset === "301") {
+    // - Bank contribution goes through manualBankEntry as Dr MAIN_BANK* / Cr CHARTER_CAPITAL.
+    // - Cash contribution goes through KMO in CashOrderService as Dr CASH_AZN* / Cr CHARTER_CAPITAL.
+    if (offset === charterCode) {
       if (dto.type !== BankStatementLineType.INFLOW) {
         throw new BadRequestException(
-          "Capital contribution to equity (301) must be INFLOW for bank entry (Dr 221* / Cr 301)",
+          `Capital contribution to equity (${charterCode}) must be INFLOW for bank entry (Dr ${mainBank}* / Cr ${charterCode})`,
         );
       }
-      if (!(bank === "221" || bank.startsWith("221."))) {
+      if (!(bank === mainBank || bank.startsWith(`${mainBank}.`))) {
         throw new BadRequestException(
-          "Capital contribution to equity (301) must use settlement bank account 221*",
+          `Capital contribution to equity (${charterCode}) must use settlement bank account ${mainBank}*`,
         );
       }
     }

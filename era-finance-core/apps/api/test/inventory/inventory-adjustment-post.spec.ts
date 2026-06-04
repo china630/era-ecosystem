@@ -5,7 +5,7 @@ import {
   UserRole,
 } from "@erafinance/database";
 import { createTestInventoryService } from "../helpers/mock-posting-resolver";
-import { MISC_OPERATING_EXPENSE_ACCOUNT_CODE } from "../../src/ledger.constants";
+const MISC_OPERATING_EXPENSE_ACCOUNT_CODE = "731";
 import { mockTxInventoryReconciliationClear } from "../helpers/mock-prisma-tx-reconciliation";
 
 describe("InventoryService.postAdjustment (physical / write-off)", () => {

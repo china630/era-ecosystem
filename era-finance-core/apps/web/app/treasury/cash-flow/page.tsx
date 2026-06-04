@@ -7,6 +7,7 @@ import { apiFetch } from "../../../lib/api-client";
 import { useAuth } from "../../../lib/auth-context";
 import { PageHeader } from "../../../components/layout/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../../components/ui/select";
+import { ListPaginationFooter } from "../../../components/list-pagination-footer";
 import {
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
@@ -75,15 +76,11 @@ export default function CashFlowProjectionPage() {
     <div className="space-y-6">
       <PageHeader
         title={t("cashFlowProjection.title")}
-        subtitle={
-          <div className="space-y-2">
-            <p className="m-0">{t("cashFlowProjection.subtitle")}</p>
-            <p className="m-0 text-[13px] leading-snug text-[#95A5A6]">{t("cashFlowProjection.algorithmHint")}</p>
-          </div>
-        }
-        leading={
-          <label className="flex flex-wrap items-center gap-2">
-            <span className="text-[13px] font-semibold text-[#34495E]">{t("cashFlowProjection.horizonLabel")}</span>
+        actions={
+          <div className="flex h-8 flex-wrap items-center gap-2">
+            <span className="text-[13px] font-semibold text-[#34495E]">
+              {t("cashFlowProjection.horizonLabel")}
+            </span>
             <Select value={days} onValueChange={setDays}>
               <SelectTrigger className={`${MODAL_INPUT_CLASS} !mt-0 h-9 w-[130px]`} />
               <SelectContent>
@@ -93,9 +90,13 @@ export default function CashFlowProjectionPage() {
                 <SelectItem value="90">90 {t("cashFlowProjection.days")}</SelectItem>
               </SelectContent>
             </Select>
-          </label>
+          </div>
         }
       />
+      <p className="m-0 text-sm text-muted-foreground">{t("cashFlowProjection.subtitle")}</p>
+      <p className="m-0 text-[13px] leading-snug text-[#95A5A6]">
+        {t("cashFlowProjection.algorithmHint")}
+      </p>
 
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t("cashFlowProjection.liquidityWidget")}</h2>
@@ -153,51 +154,17 @@ export default function CashFlowProjectionPage() {
         </table>
       </div>
 
-      {totalRows > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#EBEDF0] pt-3 text-[13px] text-[#34495E]">
-          <label className="flex items-center gap-2">
-            <span className="text-[#7F8C8D]">{t("common.paginationRowsPerPage")}</span>
-            <select
-              className={`${MODAL_INPUT_CLASS} !mt-0 h-9 min-w-[4.5rem]`}
-              value={String(pageSize)}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value) || 15);
-                setPage(1);
-              }}
-            >
-              <option value="7">7</option>
-              <option value="15">15</option>
-              <option value="30">30</option>
-              <option value="60">60</option>
-            </select>
-          </label>
-          <span className="tabular-nums text-[#7F8C8D]">
-            {t("common.paginationPageOf", {
-              page: String(Math.min(page, totalPages)),
-              pages: String(totalPages),
-              total: String(totalRows),
-            })}
-          </span>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              {t("common.paginationPrev")}
-            </button>
-            <button
-              type="button"
-              className={SECONDARY_BUTTON_CLASS}
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              {t("common.paginationNext")}
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <ListPaginationFooter
+        page={page}
+        pageSize={pageSize}
+        total={totalRows}
+        onPageChange={setPage}
+        onPageSizeChange={(n) => {
+          setPageSize(n);
+          setPage(1);
+        }}
+        loading={loading}
+      />
     </div>
   );
 }

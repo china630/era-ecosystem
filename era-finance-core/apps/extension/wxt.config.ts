@@ -22,6 +22,8 @@ export default defineConfig({
       "https://emas.sosial.gov.az/*",
       "https://e-customs.gov.az/*",
       "https://*.customs.gov.az/*",
+      "https://*.migration.gov.az/*",
+      "https://portal.migration.example/*",
     ],
     externally_connectable: {
       matches: [

@@ -3,7 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("@erafinance/database");
 const database_2 = require("@erafinance/database");
 const netting_service_1 = require("../../src/accounting/netting.service");
-const ledger_constants_1 = require("../../src/ledger.constants");
+const mock_posting_resolver_1 = require("../helpers/mock-posting-resolver");
+const PAYABLE_SUPPLIERS_ACCOUNT_CODE = "531";
+const RECEIVABLE_ACCOUNT_CODE = "211";
 describe("NettingService.createNetting (взаимозачёт)", () => {
     const orgId = "00000000-0000-0000-0000-000000000001";
     const cpId = "00000000-0000-0000-0000-0000000000c1";
@@ -59,9 +61,9 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
             },
             account: {
                 findFirst: jest.fn(async ({ where: { code }, }) => {
-                    if (code === ledger_constants_1.RECEIVABLE_ACCOUNT_CODE)
+                    if (code === RECEIVABLE_ACCOUNT_CODE)
                         return { id: "acc-211" };
-                    if (code === ledger_constants_1.PAYABLE_SUPPLIERS_ACCOUNT_CODE)
+                    if (code === PAYABLE_SUPPLIERS_ACCOUNT_CODE)
                         return { id: "acc-531" };
                     return null;
                 }),
@@ -73,14 +75,14 @@ describe("NettingService.createNetting (взаимозачёт)", () => {
             },
             $transaction: jest.fn(async (fn) => fn(tx)),
         };
-        const svc = new netting_service_1.NettingService(prisma, accounting);
+        const svc = new netting_service_1.NettingService(prisma, accounting, (0, mock_posting_resolver_1.createMockPostingResolver)());
         const out = await svc.createNetting(orgId, cpId, 100, database_2.LedgerType.NAS);
         expect(out.transactionId).toBe("txn-net-1");
         expect(accounting.postJournalInTransaction).toHaveBeenCalledTimes(1);
         const j = journalParams[0];
         expect(j.counterpartyId).toBe(cpId);
-        const dr531 = j.lines.find((l) => l.accountCode === ledger_constants_1.PAYABLE_SUPPLIERS_ACCOUNT_CODE);
-        const cr211 = j.lines.find((l) => l.accountCode === ledger_constants_1.RECEIVABLE_ACCOUNT_CODE);
+        const dr531 = j.lines.find((l) => l.accountCode === PAYABLE_SUPPLIERS_ACCOUNT_CODE);
+        const cr211 = j.lines.find((l) => l.accountCode === RECEIVABLE_ACCOUNT_CODE);
         expect(String(dr531?.debit)).toBe("100");
         expect(String(cr211?.credit)).toBe("100");
         expect(tx.invoicePayment.create).toHaveBeenCalled();

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -47,9 +47,16 @@ export function CreateCounterpartyModal({
   const [isVatPayer, setIsVatPayer] = useState(false);
   const [isRiskyTaxpayer, setIsRiskyTaxpayer] = useState<boolean | null>(null);
   const [voenCheckBusy, setVoenCheckBusy] = useState(false);
+  const [voenVerified, setVoenVerified] = useState(false);
+  const [directorName, setDirectorName] = useState("");
+  const [phones, setPhones] = useState<string[]>([""]);
+  const [finCode, setFinCode] = useState("");
+  const [finCheckBusy, setFinCheckBusy] = useState(false);
+  const [finVerified, setFinVerified] = useState(false);
+  const [manualCheckTax, setManualCheckTax] = useState(false);
+  const [manualCheckInternal, setManualCheckInternal] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const lastAutoLookup = useRef<string>("");
+  const fieldsLocked = !voenVerified;
 
   const digits = useMemo(() => taxId.replace(/\D/g, ""), [taxId]);
   const taxValid = digits.length === 10;
@@ -136,6 +143,8 @@ export function CreateCounterpartyModal({
               return prev;
             });
           }
+          setVoenVerified(true);
+          setManualCheckInternal(true);
           if (!allowFallback) {
             return;
           }
@@ -178,6 +187,18 @@ export function CreateCounterpartyModal({
           return prev;
         });
       }
+      const vatRes = await apiFetch(`/api/tax/vat-payer-info?voen=${encodeURIComponent(d)}`);
+      if (vatRes.ok) {
+        const vat = await safeJson<{ name?: string; isVatPayer?: boolean }>(vatRes);
+        if (vat?.name?.trim() && !isPoisonLookupName(vat.name)) {
+          setName(vat.name.trim());
+        }
+        if (vat?.isVatPayer !== undefined) {
+          setIsVatPayer(vat.isVatPayer);
+        }
+      }
+      setVoenVerified(true);
+      setManualCheckTax(true);
     } catch (err) {
       console.error("[checkVoen]", err);
       toast.error(t("counterparties.voenLookupNotFound"));
@@ -188,6 +209,48 @@ export function CreateCounterpartyModal({
 
   async function handleCheckVoen() {
     await checkVoen({ allowFallback: true });
+  }
+
+  async function handleCheckFin() {
+    const fin = finCode.trim().toUpperCase();
+    if (fin.length !== 7) {
+      toast.error(t("counterparties.finInvalid", { defaultValue: "FIN 7 simvol olmalıdır" }));
+      return;
+    }
+    setFinCheckBusy(true);
+    try {
+      const res = await apiFetch("/api/counterparties/lookup-fin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fin }),
+      });
+      if (!res.ok) {
+        toast.error(await res.text());
+        return;
+      }
+      const j = await safeJson<{
+        found?: boolean;
+        fullName?: string | null;
+        message?: string;
+      }>(res);
+      if (!j?.found) {
+        toast.error(
+          t("counterparties.finNotFound", { defaultValue: "FIN tapılmadı" }),
+        );
+        setFinVerified(false);
+        return;
+      }
+      if (j.fullName?.trim() && !isPoisonLookupName(j.fullName)) {
+        setName(j.fullName.trim());
+      }
+      setFinVerified(true);
+      toast.success(t("counterparties.finFound", { defaultValue: "FIN təsdiqləndi" }));
+    } catch (err) {
+      console.error("[handleCheckFin]", err);
+      toast.error(t("counterparties.finLookupErr", { defaultValue: "FIN yoxlanması uğursuz" }));
+    } finally {
+      setFinCheckBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -201,18 +264,16 @@ export function CreateCounterpartyModal({
     setIsVatPayer(false);
     setIsRiskyTaxpayer(null);
     setVoenCheckBusy(false);
+    setVoenVerified(false);
+    setDirectorName("");
+    setPhones([""]);
+    setFinCode("");
+    setFinCheckBusy(false);
+    setFinVerified(false);
+    setManualCheckTax(false);
+    setManualCheckInternal(false);
     setBusy(false);
-    lastAutoLookup.current = "";
   }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (digits.length !== 10) return;
-    if (lastAutoLookup.current === digits) return;
-    lastAutoLookup.current = digits;
-    void checkVoen({ allowFallback: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [digits, open]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -228,6 +289,10 @@ export function CreateCounterpartyModal({
       toast.error(t("counterparties.legalFormRequired"));
       return;
     }
+    if (!voenVerified) {
+      toast.error(t("counterparties.yoxlaFirst", { defaultValue: "Əvvəl Yoxla düyməsinə basın" }));
+      return;
+    }
     setBusy(true);
     const body: Record<string, unknown> = {
       name: name.trim(),
@@ -240,6 +305,10 @@ export function CreateCounterpartyModal({
     if (role) {
       body.role = role;
     }
+    if (directorName.trim()) body.directorName = directorName.trim();
+    const phoneList = phones.map((p) => p.trim()).filter(Boolean);
+    if (phoneList.length) body.phones = phoneList;
+    if (finCode.trim()) body.finCode = finCode.trim();
     const res = await apiFetch("/api/counterparties", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -260,7 +329,7 @@ export function CreateCounterpartyModal({
       open={open}
       title={t("counterparties.newTitle")}
       onClose={onClose}
-      maxWidthClass="max-w-3xl"
+      maxWidthClass="max-w-[calc(42rem*0.7)]"
       footer={
         <SalesModalFooter onCancel={onClose} busy={busy} formId="create-counterparty-form" />
       }
@@ -272,16 +341,6 @@ export function CreateCounterpartyModal({
         className="space-y-4"
       >
         <div>
-          <span className={lbl}>{t("counterparties.name")}</span>
-          <input
-            name="name"
-            autoComplete="organization"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
-        </div>
-        <div>
           <span className={lbl}>{t("counterparties.taxId")}</span>
           <div className="flex w-full min-w-0 items-stretch gap-2 sm:gap-3">
             <input
@@ -290,6 +349,7 @@ export function CreateCounterpartyModal({
               maxLength={10}
               value={digits}
               onChange={(e) => {
+                setVoenVerified(false);
                 setTaxId(e.target.value.replace(/\D/g, "").slice(0, 10));
               }}
               className={`${MODAL_INPUT_CLASS} h-9 min-h-9 min-w-0 flex-1 tabular-nums max-w-none`}
@@ -315,11 +375,33 @@ export function CreateCounterpartyModal({
             </Button>
           </div>
         </div>
+        {(manualCheckTax || manualCheckInternal) && (
+          <div className="flex flex-wrap gap-2 text-[12px]">
+            {manualCheckTax ? (
+              <span className="rounded bg-emerald-100 px-2 py-0.5 text-emerald-900">Tax ✓</span>
+            ) : null}
+            {manualCheckInternal ? (
+              <span className="rounded bg-sky-100 px-2 py-0.5 text-sky-900">MDM ✓</span>
+            ) : null}
+          </div>
+        )}
+        <div>
+          <span className={lbl}>{t("counterparties.name")}</span>
+          <input
+            name="name"
+            autoComplete="organization"
+            value={name}
+            disabled={fieldsLocked}
+            onChange={(e) => setName(e.target.value)}
+            className={MODAL_INPUT_CLASS}
+          />
+        </div>
         <div>
           <span className={lbl}>{t("counterparties.legalFormField")}</span>
           <Select
             key={i18n.language}
             value={legalForm}
+            disabled={fieldsLocked}
             onValueChange={(v) => setLegalForm(v as CounterpartyLegalForm | "")}
           >
             <SelectTrigger className="" />
@@ -335,21 +417,105 @@ export function CreateCounterpartyModal({
             </SelectContent>
           </Select>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[#34495E]">
-          <input type="checkbox" className={MODAL_CHECKBOX_CLASS}
-            checked={isVatPayer}
-            onChange={(e) => setIsVatPayer(e.target.checked)}
+        <div className="grid grid-cols-2 gap-3 items-center">
+          <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[#34495E]">
+            <input
+              type="checkbox"
+              className={MODAL_CHECKBOX_CLASS}
+              disabled={fieldsLocked}
+              checked={isVatPayer}
+              onChange={(e) => setIsVatPayer(e.target.checked)}
+            />
+            <span>{t("counterparties.vatPayerCheckbox")}</span>
+          </label>
+          {isRiskyTaxpayer === true ? (
+            <div className="inline-flex items-center rounded-lg border border-amber-300 bg-amber-100 px-2.5 py-1 text-[13px] font-semibold text-amber-900">
+              {t("counterparties.riskyTaxpayerBadge")}
+            </div>
+          ) : (
+            <span />
+          )}
+        </div>
+        <div>
+          <span className={lbl}>{t("counterparties.director", { defaultValue: "Direktor" })}</span>
+          <input
+            value={directorName}
+            disabled={fieldsLocked}
+            onChange={(e) => setDirectorName(e.target.value)}
+            className={MODAL_INPUT_CLASS}
           />
-          <span>{t("counterparties.vatPayerCheckbox")}</span>
-        </label>
-        {isRiskyTaxpayer === true ? (
-          <div className="inline-flex items-center rounded-lg border border-amber-300 bg-amber-100 px-2.5 py-1 text-[13px] font-semibold text-amber-900">
-            {t("counterparties.riskyTaxpayerBadge")}
+        </div>
+        <div className="space-y-2">
+          <span className={lbl}>{t("counterparties.phones", { defaultValue: "Telefonlar" })}</span>
+          {phones.map((ph, idx) => (
+            <div key={idx} className="flex gap-2">
+              <input
+                value={ph}
+                disabled={fieldsLocked}
+                onChange={(e) => {
+                  const next = [...phones];
+                  next[idx] = e.target.value;
+                  setPhones(next);
+                }}
+                className={MODAL_INPUT_CLASS}
+              />
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={fieldsLocked}
+            onClick={() => setPhones((p) => [...p, ""])}
+          >
+            +
+          </Button>
+        </div>
+        {(role === "SUPPLIER" || legalForm === "INDIVIDUAL") && (
+          <div>
+            <span className={lbl}>FIN</span>
+            <div className="flex w-full min-w-0 items-stretch gap-2">
+              <input
+                value={finCode}
+                disabled={fieldsLocked}
+                maxLength={7}
+                onChange={(e) => {
+                  setFinVerified(false);
+                  setFinCode(e.target.value.toUpperCase().slice(0, 7));
+                }}
+                className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={fieldsLocked || finCheckBusy || finCode.trim().length !== 7}
+                aria-busy={finCheckBusy}
+                className="shrink-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleCheckFin();
+                }}
+              >
+                {finCheckBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  t("counterparties.yoxlaFin", { defaultValue: "Yoxla FIN" })
+                )}
+              </Button>
+            </div>
+            {finVerified ? (
+              <span className="mt-1 inline-block rounded bg-violet-100 px-2 py-0.5 text-[12px] text-violet-900">
+                FIN ✓
+              </span>
+            ) : null}
           </div>
-        ) : null}
+        )}
         <div>
           <span className={lbl}>{t("counterparties.role")}</span>
-          <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+          <Select
+            value={role}
+            disabled={fieldsLocked}
+            onValueChange={(v) => setRole(v as typeof role)}
+          >
             <SelectTrigger className="" />
             <SelectContent>
               <SelectItem value="">{t("counterparties.selectRoleOptional")}</SelectItem>
@@ -365,6 +531,7 @@ export function CreateCounterpartyModal({
           <input
             name="address"
             value={address}
+            disabled={fieldsLocked}
             onChange={(e) => setAddress(e.target.value)}
             className={MODAL_INPUT_CLASS}
           />
@@ -375,6 +542,7 @@ export function CreateCounterpartyModal({
             name="email"
             type="email"
             value={email}
+            disabled={fieldsLocked}
             onChange={(e) => setEmail(e.target.value)}
             className={MODAL_INPUT_CLASS}
           />

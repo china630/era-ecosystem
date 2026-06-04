@@ -21,6 +21,7 @@ import { BankingController } from "./banking.controller";
 import { BankingCredentialsService } from "./banking-credentials.service";
 import { BankingDirectSettingsService } from "./banking-direct-settings.service";
 import { BankingGatewayService } from "./banking-gateway.service";
+import { BankDirectoryService } from "./bank-directory.service";
 import { BankingService } from "./banking.service";
 import { IbanValidationService } from "./iban-validation.service";
 import { UniversalBankExportService } from "./universal-bank-export.service";
@@ -37,6 +38,7 @@ import { UniversalBankExportService } from "./universal-bank-export.service";
   ],
   controllers: [BankingController, BankWebhookController],
   providers: [
+    BankDirectoryService,
     BankingService,
     PashaBankAdapter,
     AbbAdapter,
@@ -54,6 +56,6 @@ import { UniversalBankExportService } from "./universal-bank-export.service";
     BankingCredentialsService,
     BankingDirectSettingsService,
   ],
-  exports: [BankingGatewayService, BankBalancesSyncQueueService],
+  exports: [BankDirectoryService, BankingGatewayService, BankBalancesSyncQueueService],
 })
 export class BankingModule {}

@@ -13,6 +13,10 @@ import { ApiHealthIndicator } from "../api-health-indicator";
 import { HeaderOrganizationSwitcher } from "./header-organization-switcher";
 import type { AuthUser } from "../../lib/auth-context";
 
+/**
+ * Finance shell header (EraAppHeader). `HeaderSubscriptionStrip` adapts
+ * `HeaderTierUsageBar` for the finance subscription snapshot.
+ */
 export function MainHeader({
   onToggleMobileNav,
   mobileNavOpen,

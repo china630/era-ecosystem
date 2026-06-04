@@ -13,8 +13,7 @@ import {
   TimesheetStatus,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
-import { isAzWorkingDay } from "./calendar/az-2026";
-import { countAzWorkingDaysInMonth } from "./payroll-month-calendar";
+import { HrCalendarService } from "./hr-calendar.service";
 import type { TimesheetBatchItemDto } from "./dto/timesheet-batch.dto";
 
 function monthBoundsUtc(year: number, month: number): { start: Date; end: Date; lastDay: number } {
@@ -57,7 +56,10 @@ function defaultHoursForType(t: TimesheetEntryType): Decimal {
 export class TimesheetService {
   private readonly logger = new Logger(TimesheetService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly calendar: HrCalendarService,
+  ) {}
 
   async findByMonthIfExists(
     organizationId: string,
@@ -178,7 +180,7 @@ export class TimesheetService {
           if (existing?.lockedFromAbsence) {
             continue;
           }
-          const work = isAzWorkingDay(year, month - 1, d);
+          const work = await this.calendar.isWorkingDay(isoDay(dayDate));
           const type = work ? TimesheetEntryType.WORK : TimesheetEntryType.OFF;
           const hours = defaultHoursForType(type);
           await tx.timesheetEntry.upsert({
@@ -449,7 +451,7 @@ export class TimesheetService {
       where: { timesheetId },
     });
     const { year, month } = ts;
-    const normWorkingDays = countAzWorkingDaysInMonth(year, month);
+    const normWorkingDays = await this.calendar.countWorkingDaysInMonth(year, month);
 
     const byEmp = new Map<
       string,
@@ -484,7 +486,8 @@ export class TimesheetService {
       }
 
       const d = e.dayDate.getUTCDate();
-      const wd = isAzWorkingDay(year, month - 1, d);
+      const dayIso = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const wd = await this.calendar.isWorkingDay(dayIso);
       let mx = mixEmp.get(e.employeeId);
       if (!mx) {
         mx = { workBizWorkingDays: 0, vacationCalendarDays: 0 };

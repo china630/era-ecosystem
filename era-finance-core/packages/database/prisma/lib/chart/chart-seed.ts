@@ -23,6 +23,11 @@ export type ChartOfAccountsFile = {
   meta?: Record<string, unknown>;
 };
 
+/** Optional read-through from era-data-hub (finance API passes when ERA_DATA_HUB_ENABLED). */
+export type ChartJsonRemoteLoader = (
+  kind: OrganizationKind,
+) => Promise<ChartAccountSeed[] | null>;
+
 function toAccountType(value: string): AccountType {
   const upper = String(value).toUpperCase();
   if (upper in AccountType) {
@@ -74,7 +79,14 @@ export function chartOfAccountsJsonPath(kind: OrganizationKind): string {
 /**
  * Load chart rows for one `OrganizationKind` from catalog JSON (required at runtime for seeds/API).
  */
-export async function loadChartJson(kind: OrganizationKind): Promise<ChartAccountSeed[]> {
+export async function loadChartJson(
+  kind: OrganizationKind,
+  remoteLoader?: ChartJsonRemoteLoader,
+): Promise<ChartAccountSeed[]> {
+  if (remoteLoader) {
+    const remote = await remoteLoader(kind);
+    if (remote?.length) return remote;
+  }
   const path = chartOfAccountsJsonPath(kind);
   const raw = await readFile(path, "utf-8");
   const parsed = JSON.parse(raw) as ChartOfAccountsFile;
@@ -238,6 +250,7 @@ export async function syncChartForOrganization(
   db: PrismaClient | Prisma.TransactionClient,
   organizationId: string,
   kind: OrganizationKind = OrganizationKind.COMMERCIAL,
+  remoteLoader?: ChartJsonRemoteLoader,
 ): Promise<void> {
   const catalogCount = await db.chartOfAccountsEntry.count({
     where: { kind },
@@ -246,7 +259,7 @@ export async function syncChartForOrganization(
   if (catalogCount > 0) {
     accounts = await loadChartTemplateFromDb(db, kind);
   } else {
-    accounts = await loadChartJson(kind);
+    accounts = await loadChartJson(kind, remoteLoader);
     await seedChartOfAccountsCatalogEntries(db, accounts, kind);
   }
   await seedChartOfAccountsForOrganization(db, organizationId, accounts, kind);
@@ -437,10 +450,11 @@ export async function provisionNasAccountsForOrganization(
   db: PrismaClient | Prisma.TransactionClient,
   organizationId: string,
   kind: OrganizationKind,
+  remoteLoader?: ChartJsonRemoteLoader,
 ): Promise<void> {
   const countForKind = await db.templateAccount.count({ where: { kind } });
   if (countForKind === 0) {
-    await syncChartForOrganization(db, organizationId, kind);
+    await syncChartForOrganization(db, organizationId, kind, remoteLoader);
     return;
   }
   await seedOrganizationNasFromTemplateAccounts(db, organizationId, kind);

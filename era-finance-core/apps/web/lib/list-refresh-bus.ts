@@ -15,7 +15,9 @@ export type ListRefreshKey =
   | "manufacturing-releases"
   | "manufacturing-orders"
   | "manufacturing-dashboard"
-  | "fixed-assets-usage";
+  | "fixed-assets-usage"
+  | "prepaid-expenses"
+  | "payables";
 
 /** После складских мутаций обновить реестры остатков / движений / köçürmə / düzəliş. */
 export function notifyInventoryListsRefresh(): void {

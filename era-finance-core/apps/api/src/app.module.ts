@@ -54,6 +54,9 @@ import { NotificationModule } from "./notifications/notification.module";
 import { OcrModule } from "./ocr/ocr.module";
 import { CustomsModule } from "./customs/customs.module";
 import { SystemCatalogModule } from "./system-catalog/system-catalog.module";
+import { PurchasesModule } from "./purchases/purchases.module";
+import { NetworkModule } from "./network/network.module";
+import { OrchestratorModule } from "./orchestrator/orchestrator.module";
 import { PlatformRecoveryModule } from "./platform-recovery/platform-recovery.module";
 import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.guard";
 import { SatelliteIntegrationModule } from "./integration/integration.module";
@@ -116,6 +119,9 @@ const useControlPlaneAuth =
     OcrModule,
     CustomsModule,
     SystemCatalogModule,
+    PurchasesModule,
+    NetworkModule,
+    OrchestratorModule,
     PlatformRecoveryModule,
     SatelliteIntegrationModule,
     IndustryHandoffsModule,

@@ -10,7 +10,12 @@ import {
   upsertGlobalPostingRoleTemplates,
   type Prisma,
 } from "@erafinance/database";
+import {
+  normalizeChartAccountSeedRow,
+  type ChartJsonRemoteLoader,
+} from "@erafinance/database";
 import { AccountsService } from "../accounts/accounts.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AccessControlService } from "../access/access-control.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
@@ -21,7 +26,21 @@ export class OrganizationsService {
     private readonly prisma: PrismaService,
     private readonly access: AccessControlService,
     private readonly accounts: AccountsService,
+    private readonly dataHub: DataHubClientService,
   ) {}
+
+  private chartRemoteLoader(): ChartJsonRemoteLoader | undefined {
+    if (!this.dataHub.isEnabled()) return undefined;
+    return async (kind) => {
+      const body = await this.dataHub.getChartOfAccounts(kind.toLowerCase());
+      if (!body?.accounts) return null;
+      const raw = Array.isArray(body.accounts)
+        ? body.accounts
+        : (body.accounts as { accounts?: unknown[] }).accounts;
+      if (!Array.isArray(raw) || raw.length === 0) return null;
+      return (raw as Record<string, unknown>[]).map(normalizeChartAccountSeedRow);
+    };
+  }
 
   /**
    * Копирует глобальный NAS (`template_accounts`, иначе legacy `chart_of_accounts_entries`) в
@@ -33,7 +52,12 @@ export class OrganizationsService {
     organizationId: string,
     kind: OrganizationKind = OrganizationKind.COMMERCIAL,
   ): Promise<void> {
-    await provisionNasAccountsForOrganization(tx, organizationId, kind);
+    await provisionNasAccountsForOrganization(
+      tx,
+      organizationId,
+      kind,
+      this.chartRemoteLoader(),
+    );
     await upsertGlobalPostingRoleTemplates(tx);
     await this.accounts.bootstrapMultiGaapForNewOrganization(organizationId, tx);
   }

@@ -2,7 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   isSatelliteAutoWorkOrderCompleted,
   isSatelliteClinicLabOrderCompleted,
+  isSatelliteClinicPrescriptionIssued,
+  isSatelliteClinicProcedureCompleted,
   isSatelliteClinicVisitCompleted,
+  isSatelliteHotelGuestCheckedIn,
+  isSatelliteHotelGuestCheckedOut,
+  isSatelliteHotelRoomChanged,
   isSatelliteConstructionProgressActApproved,
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
@@ -17,7 +22,12 @@ import {
   isSatelliteFbStockConsumptionCompleted,
   satelliteAutoWorkOrderCompletedSchema,
   satelliteClinicLabOrderCompletedSchema,
+  satelliteClinicPrescriptionIssuedSchema,
+  satelliteClinicProcedureCompletedSchema,
   satelliteClinicVisitCompletedSchema,
+  satelliteHotelGuestCheckedInSchema,
+  satelliteHotelGuestCheckedOutSchema,
+  satelliteHotelRoomChangedSchema,
   satelliteConstructionProgressActSchema,
   satelliteCrmLeadConvertedSchema,
   satelliteCrmVisitLoggedSchema,
@@ -104,6 +114,26 @@ export class SatelliteEventDispatchService {
     if (isSatelliteClinicLabOrderCompleted(data)) {
       const event = satelliteClinicLabOrderCompletedSchema.parse(data);
       return this.handleClinicLabOrder(organizationId, event);
+    }
+    if (isSatelliteClinicProcedureCompleted(data)) {
+      const event = satelliteClinicProcedureCompletedSchema.parse(data);
+      return this.handleClinicProcedure(organizationId, event);
+    }
+    if (isSatelliteClinicPrescriptionIssued(data)) {
+      const event = satelliteClinicPrescriptionIssuedSchema.parse(data);
+      return this.handleClinicPrescription(organizationId, event);
+    }
+    if (isSatelliteHotelGuestCheckedIn(data)) {
+      const event = satelliteHotelGuestCheckedInSchema.parse(data);
+      return this.handleHotelGuestLifecycle(organizationId, event, "checked_in");
+    }
+    if (isSatelliteHotelGuestCheckedOut(data)) {
+      const event = satelliteHotelGuestCheckedOutSchema.parse(data);
+      return this.handleHotelGuestLifecycle(organizationId, event, "checked_out");
+    }
+    if (isSatelliteHotelRoomChanged(data)) {
+      const event = satelliteHotelRoomChangedSchema.parse(data);
+      return this.handleHotelGuestLifecycle(organizationId, event, "room_changed");
     }
     if (isSatelliteWholesaleOrderConfirmed(data)) {
       const event = satelliteWholesaleOrderConfirmedSchema.parse(data);
@@ -223,7 +253,6 @@ export class SatelliteEventDispatchService {
     const inv = await this.invoices.create(organizationId, {
       counterpartyId,
       dueDate: this.dueDateIso(),
-      debitAccountCode: "101",
       items: [
         {
           description: `${description} (${reference})`,
@@ -262,7 +291,6 @@ export class SatelliteEventDispatchService {
     const invoiceId = await this.invoices.create(organizationId, {
       counterpartyId,
       dueDate: event.payload.issueDate,
-      debitAccountCode: "101",
       items: event.payload.lines.map((line: { description: string; qty: number; amount: number; vatRate?: number }) => ({
         description: `${line.description} (${event.payload.invoiceNumber})`,
         quantity: line.qty,
@@ -653,6 +681,93 @@ export class SatelliteEventDispatchService {
       event.payload.orderId,
     );
     return { transactionId, invoiceId, meta: { orderId: event.payload.orderId } };
+  }
+
+  private async handleClinicProcedure(
+    organizationId: string,
+    event: ReturnType<typeof satelliteClinicProcedureCompletedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    if (event.payload.patientOrigin === "IN_HOUSE") {
+      this.logger.log(
+        `Clinic procedure ${event.payload.procedureCode} billed to folio (reservation=${event.payload.reservationId})`,
+      );
+      return {
+        meta: {
+          procedureCode: event.payload.procedureCode,
+          patientOrigin: "IN_HOUSE",
+          reservationId: event.payload.reservationId,
+          lineCount: event.payload.lines.length,
+        },
+      };
+    }
+    const cpId = await this.resolveCounterpartyId(organizationId);
+    const amount = event.payload.amountNet;
+    const transactionId = await this.prisma.$transaction(async (tx) => {
+      const revenueId = await this.postBalancedJournal(tx, organizationId, {
+        amount,
+        reference: `clinic-procedure:${event.payload.procedureCode}:${event.correlationId}`,
+        description: `Clinic procedure completed (${event.correlationId})`,
+        counterpartyId: cpId,
+      });
+      const [wipDefault, cogsDefault] = await Promise.all([
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_WIP", "WIP_MANUFACTURING", tx),
+        this.satelliteGlAccount(organizationId, "SATELLITE_GL_COGS", "COGS", tx),
+      ]);
+      await this.postBalancedJournal(tx, organizationId, {
+        amount: Math.max(0.01, event.payload.lines.reduce((s, l) => s + l.qty, 0)),
+        reference: `clinic-procedure-cogs:${event.correlationId}`,
+        description: `Clinic procedure consumables (${event.correlationId})`,
+        counterpartyId: cpId,
+        debitAccount: wipDefault,
+        creditAccount: cogsDefault,
+      });
+      return revenueId;
+    });
+    return {
+      transactionId,
+      meta: {
+        procedureCode: event.payload.procedureCode,
+        lineCount: event.payload.lines.length,
+      },
+    };
+  }
+
+  private async handleClinicPrescription(
+    organizationId: string,
+    event: ReturnType<typeof satelliteClinicPrescriptionIssuedSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    this.logger.log(
+      `Clinic prescription issued visit=${event.payload.visitId} lines=${event.payload.lines.length}`,
+    );
+    return {
+      meta: {
+        visitId: event.payload.visitId,
+        patientRef: event.payload.patientRef,
+        lineCount: event.payload.lines.length,
+        patientOrigin: event.payload.patientOrigin,
+      },
+    };
+  }
+
+  private async handleHotelGuestLifecycle(
+    organizationId: string,
+    event: {
+      correlationId: string;
+      payload: { reservationId: string; programCode?: string };
+    },
+    kind: "checked_in" | "checked_out" | "room_changed",
+  ): Promise<SatelliteDispatchResult> {
+    this.logger.log(
+      `Hotel guest lifecycle ${kind} reservation=${event.payload.reservationId} program=${event.payload.programCode ?? "—"}`,
+    );
+    return {
+      meta: {
+        kind,
+        reservationId: event.payload.reservationId,
+        programCode: event.payload.programCode,
+        organizationId,
+      },
+    };
   }
 
   private async handleFbStockConsumption(

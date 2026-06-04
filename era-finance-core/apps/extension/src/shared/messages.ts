@@ -12,7 +12,7 @@ export const MSG = {
   ERP_HANDSHAKE_RESULT: "erafinance:erp:handshakeResult",
 } as const;
 
-export type PortalPrefillFlow = "emuqavile" | "eqaime" | "customs";
+export type PortalPrefillFlow = "emuqavile" | "eqaime" | "customs" | "migration";
 
 export type PortalPrefillMsg =
   | {

@@ -102,6 +102,14 @@
       "parentCode": "131"
     },
     {
+      "code": "133",
+      "nameAz": "Gələcək dövrlərin xərcləri",
+      "nameRu": "Расходы будущих периодов",
+      "nameEn": "Prepaid expenses",
+      "type": "ASSET",
+      "parentCode": "100"
+    },
+    {
       "code": "141",
       "nameAz": "Təbii sərvətlərin dəyəri",
       "nameRu": "Təbii sərvətlərin dəyəri",

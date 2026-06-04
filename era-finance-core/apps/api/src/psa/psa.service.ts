@@ -309,7 +309,6 @@ export class PsaService {
       counterpartyId: project.counterpartyId,
       dueDate: dateToIsoYmdUtc(due),
       items,
-      debitAccountCode: "101",
       projectId: project.id,
     });
 

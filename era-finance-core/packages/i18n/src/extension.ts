@@ -28,6 +28,7 @@ export const extensionResources = {
           flowEmuqavile: "Электронный трудовой договор (e-müqavilə)",
           flowEqaime: "Электронная счёт-фактура (e-qaimə)",
           flowBgdCapture: "Таможенная декларация (BGD) → ERP",
+          flowMigration: "Миграционный учёт (скелет, без отправки)",
         },
         widget: {
           title: "ERA",
@@ -96,6 +97,7 @@ export const extensionResources = {
           flowEmuqavile: "Elektron əmək müqaviləsi (e-müqavilə)",
           flowEqaime: "Elektron qaimə-faktura (e-qaimə)",
           flowBgdCapture: "Gömrük bəyannaməsi (BGD) → ERP",
+          flowMigration: "Miqrasiya uçotu (skelet, göndərmə yoxdur)",
         },
         widget: {
           title: "ERA",

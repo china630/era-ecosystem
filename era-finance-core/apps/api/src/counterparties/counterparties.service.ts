@@ -10,6 +10,8 @@ import {
   CounterpartyRole,
   Prisma,
 } from "@erafinance/database";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
+import { mapHubCompanyToGlobalCounterparty } from "../data-hub/hub-company-map";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { TaxpayerIntegrationService } from "../tax/taxpayer-integration.service";
@@ -34,6 +36,7 @@ export class CounterpartiesService {
     private readonly prisma: PrismaService,
     private readonly directory: GlobalCompanyDirectoryService,
     private readonly taxpayer: TaxpayerIntegrationService,
+    private readonly dataHub: DataHubClientService,
   ) {}
 
   async findOrCreateByVoen(params: {
@@ -120,6 +123,36 @@ export class CounterpartiesService {
     const id = taxId.trim();
     if (!/^\d{10}$/.test(id)) {
       throw new ConflictException("VÖEN must be 10 digits");
+    }
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getCompanyByVoen(id);
+      if (remote) {
+        const mapped = mapHubCompanyToGlobalCounterparty(remote);
+        if (mapped.taxId) {
+          const hydrated = await this.prisma.globalCounterparty.upsert({
+            where: { taxId: id },
+            create: {
+              taxId: id,
+              name: mapped.name.trim() || id,
+              legalAddress: mapped.legalAddress,
+              vatStatus: mapped.vatStatus,
+            },
+            update: {
+              name: mapped.name.trim() || id,
+              legalAddress: mapped.legalAddress,
+              vatStatus: mapped.vatStatus,
+            },
+          });
+          this.directory.scheduleUpsert({
+            taxId: id,
+            name: hydrated.name,
+            legalAddress: hydrated.legalAddress ?? null,
+            phone: null,
+            directorName: null,
+          });
+          return hydrated;
+        }
+      }
     }
     try {
       const cached = await this.prisma.globalCounterparty.findUnique({
