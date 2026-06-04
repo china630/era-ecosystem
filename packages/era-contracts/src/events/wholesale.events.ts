@@ -13,6 +13,9 @@ export const satelliteWholesaleOrderConfirmedSchema =
       amountNet: z.number(),
       currency: z.literal("AZN"),
       lineCount: z.number().int().nonnegative(),
+      channel: z.enum(["B2B", "COUNTER"]).optional(),
+      paymentMethod: z.string().optional(),
+      fiscalNumber: z.string().optional(),
     }),
   });
 

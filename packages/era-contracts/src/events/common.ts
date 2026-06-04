@@ -5,6 +5,10 @@ export const satelliteEventBaseSchema = z.object({
   organizationId: z.string().min(1),
   correlationId: z.string().min(1),
   occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
 });
+
+export const patientOriginSchema = z.enum(["WALK_IN", "IN_HOUSE"]);
+export type PatientOrigin = z.infer<typeof patientOriginSchema>;
 
 export type SatelliteEventBase = z.infer<typeof satelliteEventBaseSchema>;
