@@ -36,7 +36,8 @@ export async function GET(request: Request) {
     organizationId: organizationId || null,
     controlPlaneUrl: process.env.CONTROL_PLANE_URL ?? null,
     platformSubscription,
-    kkmDriver: process.env.KKM_DRIVER ?? "mock",
+    kkmDriver:
+      process.env.ERA_FISCAL_PROVIDER ?? process.env.KKM_DRIVER ?? "mock",
     stockConsumptionEnabled: process.env.STOCK_CONSUMPTION_ENABLED === "true",
   });
 }
