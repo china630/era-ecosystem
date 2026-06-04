@@ -103,6 +103,21 @@ Cross-product polish shipped without a version bump:
 
 ---
 
+## ERA Sanatorium v-next (Clinic ⊕ Hotel ⊕ Retail) — Proposed 2026-06-03
+
+Доработки следующей версии по сателлитам **`era-clinic`** и **`era-hotel-pms`** + кросс-сателлитная интеграция через оркестратор (брокер-медиатор + подключаемые адаптеры `finance-core`/1С). Решения: [ADR sanatorium-vnext](./adr/sanatorium-vnext.md) (SV1–SV14) · план/волны: [SANATORIUM-VNEXT-PLAN.md](./SANATORIUM-VNEXT-PLAN.md).
+
+| Волна | Scope | Статус |
+|-------|-------|--------|
+| 0 — Фундамент | контракты + identity/QR (`era_mdm`) + `patientOrigin` + `AccountingAdapter` | **Proposed** |
+| 1 — UX клиники *(приоритет)* | Smart Scheduler + check-in, карточка визита/CPOE-UI + МКБ, рабочие места врача/медсестры, безопасный портал + виджет, sync каталога, касса + `@era/fiscal` | **Proposed** |
+| 2 — Кросс-санаторий | lifecycle-события отеля, origin-routing на folio, Sanatorium Scheduler, Program Templates + квота, retail reserve/write-off, QR | **Proposed** |
+| 3 — Декаплинг/чистка | удаление медконтура отеля, `external/1С` adapter, сага B2C-путёвки | **Proposed** |
+
+**Future:** `hold` (предавторизация) + политика `deposit\|hold\|none`; единый `@era/fiscal` + реальный НБК KKM; `era-spa-pos`; мед-справочники в Data Hub.
+
+---
+
 ## Standards
 
 - [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — naming rules
