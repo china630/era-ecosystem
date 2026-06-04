@@ -12,6 +12,7 @@ import {
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
 import { isRetailPreset } from "@/lib/retail-preset";
+import { postRoomCharge } from "@/lib/pms-bridge-client";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -20,6 +21,8 @@ const bodySchema = z.object({
   loyaltyRef: z.string().max(64).optional(),
   delivery: z.boolean().optional(),
   customHostname: z.string().max(253).optional(),
+  reservationId: z.string().uuid().optional(),
+  roomNumber: z.string().max(16).optional(),
 });
 
 export async function POST(
@@ -42,14 +45,63 @@ export async function POST(
     if (!receipt) return jsonError("Receipt not found", 404);
     if (receipt.status === "PAID") return jsonOk(receipt);
 
-    const fiscal = await (async () => {
-      const { getRetailFiscalProvider } = await import("@/lib/fiscal-provider");
-      return getRetailFiscalProvider().fiscalizeReceipt({
-        receiptId: id,
-        amountNet: Number(receipt.amountNet),
-        paymentMethod: body.paymentMethod,
-      });
-    })();
+    const {
+      fiscalizeForSatellite,
+      isFiscalPaymentMethod,
+      isFiscalSkipped,
+      resolveOperatingMode,
+      satelliteOrganizationId,
+      shouldFiscalizeOnParent,
+      shouldRouteRevenueToParent,
+    } = await import("@era/satellite-kit");
+
+    const orgId = satelliteOrganizationId();
+    const mode = await resolveOperatingMode(orgId);
+    const amountNet = Number(receipt.amountNet);
+    const method = body.paymentMethod.trim().toUpperCase();
+    const isRoomCharge =
+      method === "ROOM_CHARGE" ||
+      (shouldRouteRevenueToParent(mode) &&
+        Boolean(body.reservationId || body.roomNumber));
+
+    let fiscalNumber: string | null = null;
+    let settlementChannel: string | null = null;
+
+    if (isRoomCharge) {
+      if (!body.reservationId && !body.roomNumber) {
+        return jsonError("reservationId or roomNumber required for room charge", 400);
+      }
+      const charge = await postRoomCharge(
+        {
+          reservationId: body.reservationId,
+          roomNumber: body.roomNumber,
+          revenueCode: "RETAIL",
+          amount: amountNet,
+          description: `Retail ${receipt.outlet.code} — ${receipt.id.slice(0, 8)}`,
+          outletCode: receipt.outlet.code,
+          externalTicketId: receipt.id,
+        },
+        receipt.id,
+      );
+      if (!charge.ok) {
+        return jsonError(`Hotel folio charge failed: ${charge.status}`, 502);
+      }
+      settlementChannel = "HOTEL_FOLIO";
+    } else if (isFiscalPaymentMethod(body.paymentMethod) && !shouldFiscalizeOnParent(mode)) {
+      const outcome = await fiscalizeForSatellite(
+        {
+          documentRef: id,
+          amount: amountNet,
+          paymentMethod: body.paymentMethod,
+          outletCode: receipt.outlet.code,
+        },
+        orgId,
+      );
+      if (!isFiscalSkipped(outcome)) {
+        fiscalNumber = outcome.receiptId;
+      }
+      settlementChannel = "OWN_FISCAL";
+    }
 
     const paid = await prisma.receipt.update({
       where: { id },
@@ -58,16 +110,17 @@ export async function POST(
         paymentMethod: body.paymentMethod,
         customerPhone: body.customerPhone?.trim() || null,
         loyaltyRef: body.loyaltyRef?.trim() || null,
-        fiscalNumber: fiscal.fiscalNumber,
+        fiscalNumber,
         paidAt: new Date(),
+        reservationId: body.reservationId ?? null,
+        roomNumber: body.roomNumber ?? null,
+        settlementChannel,
       },
       include: { lines: true },
     });
 
     const presetRaw = receipt.outlet.preset ?? "grocery";
     const preset = isRetailPreset(presetRaw) ? presetRaw : "grocery";
-    const amountNet = Number(receipt.amountNet);
-
     await dispatchSatelliteEvent({
       type: SATELLITE_RETAIL_SALE_COMPLETED,
       payload: {
