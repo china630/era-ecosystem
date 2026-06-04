@@ -1,8 +1,9 @@
 import { readdir, readFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const API_SRC = join(
-  import.meta.dirname,
+  dirname(fileURLToPath(import.meta.url)),
   "..",
   "..",
   "..",

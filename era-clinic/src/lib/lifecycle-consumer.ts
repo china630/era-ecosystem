@@ -26,7 +26,7 @@ async function ensureEpisodeAndProgram(
     reservationId: p.reservationId,
     guestName: p.guestName ?? "Guest",
     passportNumber: p.reservationId,
-    phone: null,
+    phone: undefined,
     organizationId: event.organizationId,
     globalPersonId: p.globalPersonId ?? event.globalPersonId,
     hotelStayId: p.reservationId,

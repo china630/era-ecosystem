@@ -1000,6 +1000,29 @@
     "roomInspected": "Room {room} → Inspected",
     "roomOoo": "Room {room} out of order"
   },
+  "service": {
+    "title": "Xidmət və texniki baxış",
+    "subtitle": "Qonaq və işçi müraciətləri, təkrarlanan cədvəllər",
+    "requestTitle": "Problem (məs., lampa yanmır)",
+    "room": "Otaq",
+    "add": "Müraciət əlavə et",
+    "created": "Müraciət yaradıldı",
+    "colTitle": "Başlıq",
+    "colRoom": "Otaq",
+    "colStatus": "Status",
+    "colSource": "Mənbə",
+    "start": "Başla",
+    "done": "Hazırdır"
+  },
+  "serviceGuest": {
+    "title": "Problem bildirin",
+    "hint": "Problemi təsvir edin — texniki xidmət xəbərdar olacaq.",
+    "issue": "Nə səhvdir?",
+    "details": "Ətraflı (istəyə görə)",
+    "room": "Otaq nömrəsi",
+    "send": "Müraciət göndər",
+    "thanks": "Təşəkkür edirik — müraciətiniz qəbul olundu."
+  },
   "migration": {
     "title": "Miqrasiya PRO",
     "subtitle": "Qonaqların miqrasiya qeydiyyatı",
