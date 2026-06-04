@@ -22,6 +22,11 @@ enum B2BOrderStatus {
   CANCELLED
 }
 
+enum OrderChannel {
+  B2B
+  COUNTER
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -38,9 +43,13 @@ model B2BOrder {
   id                  String         @id @default(cuid())
   orderNumber         String         @unique
   buyerCounterpartyId String
+  channel             OrderChannel   @default(B2B)
   status              B2BOrderStatus @default(DRAFT)
   amountNet           Decimal        @default(0) @db.Decimal(12, 2)
   lineCount           Int            @default(0)
+  paymentMethod       String?
+  fiscalNumber        String?
+  paidAt              DateTime?
   confirmedAt         DateTime?
   ttnNumber           String?
   ttnIssuedAt         DateTime?
