@@ -236,6 +236,17 @@ exports.Prisma.SatelliteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SatelliteEndpointScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  baseUrl: 'baseUrl',
+  secretCipher: 'secretCipher',
+  enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PricingBundleScalarFieldEnum = {
   id: 'id',
   slug: 'slug',
@@ -318,6 +329,10 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   taxIdCipher: 'taxIdCipher',
   subscriptionPlan: 'subscriptionPlan',
   billingStatus: 'billingStatus',
+  operatingMode: 'operatingMode',
+  parentOrgId: 'parentOrgId',
+  fiscalRouting: 'fiscalRouting',
+  revenueRouting: 'revenueRouting',
   activeModules: 'activeModules',
   storageUsedBytes: 'storageUsedBytes',
   currentCreditTier: 'currentCreditTier',
@@ -764,6 +779,16 @@ exports.PermissionCategory = exports.$Enums.PermissionCategory = {
   INTEGRATIONS: 'INTEGRATIONS'
 };
 
+exports.OrgOperatingMode = exports.$Enums.OrgOperatingMode = {
+  STANDALONE: 'STANDALONE',
+  DEPARTMENT: 'DEPARTMENT'
+};
+
+exports.OrgRouting = exports.$Enums.OrgRouting = {
+  OWN: 'OWN',
+  PARENT: 'PARENT'
+};
+
 exports.AccessRequestStatus = exports.$Enums.AccessRequestStatus = {
   PENDING: 'PENDING',
   ACCEPTED: 'ACCEPTED',
@@ -900,6 +925,7 @@ exports.Prisma.ModelName = {
   Pricing: 'Pricing',
   PricingModule: 'PricingModule',
   Satellite: 'Satellite',
+  SatelliteEndpoint: 'SatelliteEndpoint',
   PricingBundle: 'PricingBundle',
   LandingModuleMarketing: 'LandingModuleMarketing',
   PaymentOrder: 'PaymentOrder',

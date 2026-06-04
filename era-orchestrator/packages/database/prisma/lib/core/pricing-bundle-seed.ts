@@ -27,7 +27,7 @@ export const PRICING_BUNDLE_SEED_DEFAULTS: ReadonlyArray<PricingBundleSeedRow> =
   {
     name: "Hotel City",
     discountPercent: 10,
-    moduleKeys: ["hotel_core", "hotel_housekeeping"],
+    moduleKeys: ["hotel_core", "hotel_housekeeping", "hotel_migration_pro"],
   },
   {
     name: "Hotel Resort",
@@ -35,6 +35,7 @@ export const PRICING_BUNDLE_SEED_DEFAULTS: ReadonlyArray<PricingBundleSeedRow> =
     moduleKeys: [
       "hotel_core",
       "hotel_housekeeping",
+      "hotel_migration_pro",
       "hotel_distribution",
       "hotel_guest_experience",
       "hotel_transfers",
@@ -48,6 +49,7 @@ export const PRICING_BUNDLE_SEED_DEFAULTS: ReadonlyArray<PricingBundleSeedRow> =
     moduleKeys: [
       "hotel_core",
       "hotel_housekeeping",
+      "hotel_migration_pro",
       "hotel_distribution",
       "hotel_guest_experience",
       "hotel_transfers",

@@ -1,9 +1,10 @@
+import { HOTEL_PRICING_MODULE_KEYS } from "@era365/database";
 import { buildHotelModuleEntitlements } from "./hotel-module-entitlements.util";
 
 describe("buildHotelModuleEntitlements", () => {
-  it("returns 9 hotel module flags", () => {
+  it("returns one flag per canonical hotel pricing module key", () => {
     const ent = buildHotelModuleEntitlements(["hotel_core", "hotel_housekeeping"]);
-    expect(Object.keys(ent)).toHaveLength(9);
+    expect(Object.keys(ent)).toHaveLength(HOTEL_PRICING_MODULE_KEYS.length);
     expect(ent.hotel_core).toBe(true);
     expect(ent.hotel_housekeeping).toBe(true);
     expect(ent.hotel_distribution).toBe(false);

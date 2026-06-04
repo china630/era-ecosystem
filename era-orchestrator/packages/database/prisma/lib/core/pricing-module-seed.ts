@@ -122,6 +122,22 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     satelliteKey: "industry_hotel_pms",
   },
   {
+    key: "hotel_service",
+    name: "Service & maintenance",
+    pricePerMonth: 10,
+    sortOrder: 1115,
+    isPremium: false,
+    satelliteKey: "industry_hotel_pms",
+  },
+  {
+    key: "hotel_migration_pro",
+    name: "Migration PRO (guest registration to migration service)",
+    pricePerMonth: 12,
+    sortOrder: 1116,
+    isPremium: true,
+    satelliteKey: "industry_hotel_pms",
+  },
+  {
     key: "hotel_distribution",
     name: "Distribution (Channel Manager & Contracts)",
     pricePerMonth: 27,

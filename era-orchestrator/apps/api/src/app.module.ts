@@ -12,6 +12,7 @@ import { OrganizationModule } from "./organization/organization.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SatelliteEventsModule } from "./satellite-events/satellite-events.module";
 import { MdmModule } from "./mdm/mdm.module";
+import { NetworkModule } from "./network/network.module";
 import { SystemConfigModule } from "./system-config/system-config.module";
 import { AdminModule } from "./admin/admin.module";
 import { BillingModule } from "./billing/billing.module";
@@ -38,6 +39,7 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
     EntitlementsModule,
     SatelliteEventsModule,
     MdmModule,
+    NetworkModule,
     AdminModule,
     BillingModule,
     SubscriptionModule,

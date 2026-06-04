@@ -337,15 +337,36 @@ model PricingModule {
  * Industry satellite metadata (app gate keys `industry_*`).
  */
 model Satellite {
-  key          String          @id
+  key          String              @id
   name         String
-  verticalSlug String          @map("vertical_slug")
-  sortOrder    Int             @default(0) @map("sort_order")
-  createdAt    DateTime        @default(now()) @map("created_at")
-  updatedAt    DateTime        @updatedAt @map("updated_at")
+  verticalSlug String              @map("vertical_slug")
+  sortOrder    Int                 @default(0) @map("sort_order")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
   modules      PricingModule[]
+  endpoints    SatelliteEndpoint[]
 
   @@map("satellites")
+}
+
+/**
+ * Per-organization satellite instance URL + bridge secret for event fan-out.
+ */
+model SatelliteEndpoint {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  satelliteKey   String       @map("satellite_key")
+  baseUrl        String       @map("base_url")
+  secretCipher   String?      @map("secret_cipher")
+  enabled        Boolean      @default(true)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  satellite      Satellite?   @relation(fields: [satelliteKey], references: [key], onDelete: SetNull)
+
+  @@unique([organizationId, satelliteKey])
+  @@index([organizationId])
+  @@map("satellite_endpoints")
 }
 
 model PricingBundle {
@@ -450,6 +471,22 @@ model RolePermission {
 }
 
 /// Shared organizations table (ownerId for BUSINESS_OWNER / billing).
+/// Operating mode of an organization: a standalone legal entity (own VOEN,
+/// own fiscalization + accounting) or a department billed under a parent
+/// (hotel) org. Operational data always stays owned by the org's own DB —
+/// only money routing (fiscal/revenue) may be delegated to the parent.
+enum OrgOperatingMode {
+  STANDALONE
+  DEPARTMENT
+}
+
+/// Where a given financial concern is settled: under the org itself (OWN) or
+/// routed to the parent org (PARENT, e.g. hotel folio / hotel accounting).
+enum OrgRouting {
+  OWN
+  PARENT
+}
+
 model Organization {
   id                         String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                       String
@@ -458,6 +495,10 @@ model Organization {
   taxIdCipher                String?                     @map("tax_id_cipher")
   subscriptionPlan           String?                     @map("subscription_plan")
   billingStatus              BillingStatus               @default(ACTIVE) @map("billing_status")
+  operatingMode              OrgOperatingMode            @default(STANDALONE) @map("operating_mode")
+  parentOrgId                String?                     @map("parent_org_id") @db.Uuid
+  fiscalRouting              OrgRouting                  @default(OWN) @map("fiscal_routing")
+  revenueRouting             OrgRouting                  @default(OWN) @map("revenue_routing")
   activeModules              String[]                    @default([]) @map("active_modules")
   storageUsedBytes           BigInt                      @default(0) @map("storage_used_bytes")
   currentCreditTier          TariffTier?                 @map("current_credit_tier")
@@ -493,9 +534,13 @@ model Organization {
   platformAuditLogs          PlatformAuditLog[]
   platformIdempotencyRecords PlatformIdempotencyRecord[]
   platformLoyaltyLedger      PlatformLoyaltyLedger[]
+  satelliteEndpoints         SatelliteEndpoint[]
   owner                      User?                       @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  parentOrg                  Organization?               @relation("OrgParent", fields: [parentOrgId], references: [id])
+  departments                Organization[]              @relation("OrgParent")
 
   @@index([ownerId])
+  @@index([parentOrgId])
   @@map("organizations")
 }
 

@@ -11,6 +11,18 @@ import {
 } from "../common/utils/mdm-crypto.util";
 import { decryptText } from "../security/pii-crypto.util";
 import { blindIndexForVoen } from "../common/utils/voen-blind-index";
+import {
+  defaultGuestIdentityExpiresAt,
+  signGuestIdentityToken,
+  verifyGuestIdentityToken,
+} from "../common/utils/guest-identity.util";
+import {
+  assertInternalServiceToken,
+  maskPhone,
+} from "../common/utils/internal-service-token.util";
+import * as QRCode from "qrcode";
+
+const FIN_PATTERN = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
 
 @Injectable()
 export class MdmService {
@@ -18,6 +30,10 @@ export class MdmService {
     private readonly mdm: MdmPrismaService,
     private readonly controlPlane: ControlPlanePrismaService,
   ) {}
+
+  assertServiceToken(authorization: string | undefined): void {
+    assertInternalServiceToken(authorization, "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN");
+  }
 
   async registerOrganization(input: {
     name: string;
@@ -69,6 +85,79 @@ export class MdmService {
     return { organizationId: org.id, globalLegalEntityId: legalEntity.id };
   }
 
+  async lookupNaturalPersonByFin(input: {
+    fin: string;
+    requesterOrgId?: string;
+    purpose?: string;
+  }) {
+    const fin = input.fin.trim().toUpperCase();
+    if (!FIN_PATTERN.test(fin)) {
+      throw new BadRequestException("Invalid FIN format");
+    }
+    const finBlindIndex = blindIndexFin(fin);
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { finBlindIndex },
+    });
+    if (!person) {
+      return { found: false as const };
+    }
+
+    await this.logPersonAccess(person.id, input);
+
+    const grant =
+      input.requesterOrgId?.trim()
+        ? await this.mdm.personAccessGrant.findUnique({
+            where: {
+              personId_granteeOrgId: {
+                personId: person.id,
+                granteeOrgId: input.requesterOrgId.trim(),
+              },
+            },
+          })
+        : null;
+
+    const fullName = person.fullNameCipher
+      ? decryptText(person.fullNameCipher)
+      : null;
+    if (!grant && input.requesterOrgId) {
+      return {
+        found: true as const,
+        globalPersonId: person.id,
+        fullName: null,
+        phone: null,
+        masked: true,
+      };
+    }
+
+    return {
+      found: true as const,
+      globalPersonId: person.id,
+      fullName: fullName?.trim() || null,
+      phone: person.phoneCipher
+        ? maskPhone(decryptText(person.phoneCipher))
+        : null,
+      masked: false,
+    };
+  }
+
+  private async logPersonAccess(
+    personId: string,
+    input: { requesterOrgId?: string; purpose?: string },
+  ) {
+    const actorOrgId = input.requesterOrgId?.trim();
+    if (!actorOrgId) return;
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId,
+        actorOrgId,
+        action: "LOOKUP_BY_FIN",
+        metaJson: JSON.stringify({
+          purpose: input.purpose ?? "unspecified",
+        }),
+      },
+    });
+  }
+
   async upsertNaturalPerson(input: {
     fin?: string;
     fullName: string;
@@ -85,10 +174,10 @@ export class MdmService {
       const existing = await this.mdm.globalNaturalPerson.findUnique({
         where: { finBlindIndex },
       });
-      if (existing) return existing;
+      if (existing) return this.mapPersonResponse(existing);
     }
 
-    return this.mdm.globalNaturalPerson.create({
+    const created = await this.mdm.globalNaturalPerson.create({
       data: {
         finBlindIndex,
         finCipher: input.fin ? encryptText(input.fin.trim()) : null,
@@ -96,6 +185,39 @@ export class MdmService {
         phoneCipher: input.phone ? encryptText(input.phone.trim()) : null,
       },
     });
+    return this.mapPersonResponse(created);
+  }
+
+  private mapPersonResponse(person: { id: string }) {
+    return { id: person.id, globalPersonId: person.id };
+  }
+
+  async issueGuestQr(input: { globalPersonId: string; ttlSeconds?: number }) {
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { id: input.globalPersonId },
+    });
+    if (!person) throw new BadRequestException("person not found");
+    const expiresAt = defaultGuestIdentityExpiresAt(input.ttlSeconds);
+    const token = signGuestIdentityToken(person.id, expiresAt);
+    const qrPayload = `era://guest/${token}`;
+    const qrPng = await QRCode.toBuffer(qrPayload, {
+      type: "png",
+      width: 320,
+      margin: 2,
+    });
+    return {
+      globalPersonId: person.id,
+      token,
+      expiresAt,
+      qrPayload,
+      qrPngBase64: qrPng.toString("base64"),
+    };
+  }
+
+  async verifyGuestQr(input: { token: string }) {
+    const verified = verifyGuestIdentityToken(input.token?.trim() ?? "");
+    if (!verified) throw new BadRequestException("invalid or expired token");
+    return verified;
   }
 
   async createAccessRequestStub(input: {
