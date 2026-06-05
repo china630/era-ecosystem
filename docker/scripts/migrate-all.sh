@@ -6,11 +6,17 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.prod.yml}"
+COMPOSE_BASE="${COMPOSE_BASE:-docker-compose.yml}"
 ENV_FILE="${ENV_FILE:-.env}"
-if [[ -f "$ENV_FILE" ]]; then
-  COMPOSE=(docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE")
+if [[ "$COMPOSE_FILE" == "docker-compose.prod.yml" ]]; then
+  COMPOSE_ARGS=(-f "$COMPOSE_BASE" -f "$COMPOSE_FILE")
 else
-  COMPOSE=(docker compose -f "$COMPOSE_FILE")
+  COMPOSE_ARGS=(-f "$COMPOSE_FILE")
+fi
+if [[ -f "$ENV_FILE" ]]; then
+  COMPOSE=(docker compose "${COMPOSE_ARGS[@]}" --env-file "$ENV_FILE")
+else
+  COMPOSE=(docker compose "${COMPOSE_ARGS[@]}")
 fi
 
 run_migrate() {

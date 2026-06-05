@@ -48,6 +48,9 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
+          timeout: 60s
+          command_timeout: 20m
           script_stop: true
           script: |
             set -euo pipefail
@@ -61,9 +64,9 @@ jobs:
             owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem" >> .env
             echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             chmod +x docker/scripts/migrate-all.sh
             COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
             docker image prune -f
             node scripts/ecosystem-smoke-all.mjs
