@@ -11,7 +11,7 @@ const targets = [
   { name: "orchestrator-api", url: process.env.ORCH_URL ?? `${base}:4000`, path: "/health" },
   { name: "finance-api", url: process.env.FINANCE_URL ?? `${base}:4100`, path: "/api/health" },
   { name: "finance-web", url: process.env.FINANCE_WEB_URL ?? `${base}:3100`, path: "/" },
-  { name: "data-hub", url: process.env.DATA_HUB_URL ?? `${base}:4200`, path: "/health" },
+  { name: "data-hub", url: process.env.DATA_HUB_URL ?? `${base}:4200`, path: "/healthz" },
   { name: "hotel-pms", url: process.env.PMS_URL ?? `${base}:3201`, path: "/api/health" },
   { name: "fnb-pos", url: process.env.FNB_URL ?? `${base}:3202`, path: "/api/health" },
   { name: "clinic", url: process.env.CLINIC_URL ?? `${base}:3203`, path: "/api/health" },
