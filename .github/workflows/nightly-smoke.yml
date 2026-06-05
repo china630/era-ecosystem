@@ -35,8 +35,8 @@ jobs:
 
       - name: Pull and start stack
         run: |
-          docker compose -f docker-compose.prod.yml --env-file .env.ci pull
-          docker compose -f docker-compose.prod.yml --env-file .env.ci up -d --wait
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci pull
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d --wait
 
       - name: Migrate databases
         run: |
@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload compose logs on failure
         if: failure()
-        run: docker compose -f docker-compose.prod.yml --env-file .env.ci logs > compose-logs.txt
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci logs > compose-logs.txt
 
       - uses: actions/upload-artifact@v4
         if: failure()

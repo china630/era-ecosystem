@@ -1,16 +1,11 @@
-# Production / staging — pull pre-built images from GHCR (no local build).
-# Usage:
+# Production / staging overlay — GHCR images (no local build).
+# Always merge with base stack:
 #   export IMAGE_TAG=dev-abc1234
 #   export GHCR_IMAGE_PREFIX=ghcr.io/<owner>/era-ecosystem
-#   docker compose -f docker-compose.prod.yml --env-file .env pull
-#   ./docker/scripts/migrate-all.sh
-#   docker compose -f docker-compose.prod.yml --env-file .env up -d
-# Local dev with build: docker-compose.yml
-
-name: era-ecosystem-prod
-
-include:
-  - docker-compose.yml
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env pull
+#   COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d
+# Local dev with build: docker-compose.yml only
 
 x-ghcr-image: &ghcr-image
   pull_policy: always

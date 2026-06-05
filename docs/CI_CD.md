@@ -46,7 +46,7 @@ Deprecated: [`ecosystem-smoke.yml`](../.github/workflows/ecosystem-smoke.yml) (n
 | File | Use |
 |------|-----|
 | [`docker-compose.yml`](../docker-compose.yml) | Dev: `docker compose up --build` |
-| [`docker-compose.prod.yml`](../docker-compose.prod.yml) | Staging/prod/CI: pre-built images only |
+| [`docker-compose.prod.yml`](../docker-compose.prod.yml) | Staging/prod/CI overlay: `-f docker-compose.yml -f docker-compose.prod.yml` |
 
 Env templates: [`.env.production.example`](../.env.production.example), [`.env.ci.example`](../.env.ci.example).
 
