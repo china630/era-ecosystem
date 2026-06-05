@@ -2,7 +2,7 @@
 
 Единый документ для разработки: объединяет ядро Core MVP, расширения v2, интеграции v3 и слой монетизации v4. Сводные продуктовые решения — **[PRD.md](./PRD.md)** (§12 и др.). Детализация REST — **§0.0** ниже и Swagger API.
 
-**Оглавление (верхний уровень):** **§0.0** — реестр ключевых REST; §0 — статус синхронизации; §1 — инфраструктура (**§1.4** — локальность данных AZ); §2–§10 — модули **1–9**; **§6.0** — Treasury + касса/банк; **§7.0** — HR, табель, payroll, ЦФО; §11 — паттерн разработки (**§11.1** — web: `PageHeader`, сайдбар-only); §12–§14 — дорожные карты; **§13.6** — Browser Extension RPA (ERA Finance Assistant); §15 — Super-Admin; §16–§17 — hardening; **§21** — Dispute & Recovery (платформа); **§22** — Risk & Compliance (ERM); **§23** — Zero-Knowledge encryption & State Identity Escrow (**`FEAT-SEC-CRYPTO-001`**, PLANNED); **§24** — Hybrid limits tier + premium trial gate (**`FEAT-BIL-POSTPAID-001`**, PARTIAL).
+**Оглавление (верхний уровень):** **§0.0** — реестр ключевых REST; §0 — статус синхронизации; §1 — инфраструктура (**§1.4** — локальность данных AZ); §2–§10 — модули **1–9**; **§6.0** — Treasury + касса/банк; **§7.0** — HR, табель, payroll, ЦФО; §11 — паттерн разработки (**§11.1** — web: `PageHeader`, сайдбар-only); §12–§14 — дорожные карты; **§13.6** — Browser Extension RPA (ERA Finance Assistant); §15 — Super-Admin; §16–§17 — hardening; **§21** — Dispute & Recovery (платформа); **§22** — Risk & Compliance (ERM); **§23** — Zero-Knowledge encryption & State Identity Escrow (**`FEAT-SEC-CRYPTO-001`**, PLANNED); **§24** — Hybrid limits tier + premium trial gate (**`FEAT-BIL-POSTPAID-001`**, PARTIAL); **§25** — Contract Management; **§26** — Gov Budget; **§27** — Finance Core UI/UX & онбординг доработки (PRD §4.17, `FEAT-FC-UX-001…009`, PLANNED); **§28** — Data Hub consumption + де-хардкод плана счетов (PRD §4.18, `FEAT-FC-DH-*` / `FEAT-FC-COA-001`, PLANNED); **§29** — Внутрисетевой обмен документами и зеркальные проводки (PRD §4.19, `FEAT-FC-NET-001…006`, PLANNED).
 
 **Стандарт статусов (глобально для PRD/TZ):**
 - [x] **COMPLETED (scope):** задача реализована и зафиксирована.
@@ -3088,6 +3088,324 @@ Active org context = O_k:
 | GET | `/api/gov-budget/years/:id/lines` | Строки бюджета |
 | POST | `/api/gov-budget/check-limit` | `{ budgetLineId, amount }` → `allowed` / `blocked` |
 | GET | `/api/gov-budget/years/:id/execution` | Plan vs fact (commitments stub) |
+
+---
+
+## 27. Finance Core — UI/UX & онбординг доработки (PRD §4.17)
+
+### 27.0. Статус и охват
+
+| Поле | Значение |
+|------|----------|
+| **Статус** | [ ] **PLANNED (finance-core-ux-wave-1)** — пакет UX-доработок ядра по ревью локального стенда `localhost:3100`; реализация — **следующая версия** |
+| **PRD** | **[PRD.md](./PRD.md) §4.17** |
+| **Задачи** | `FEAT-FC-UX-001` … `FEAT-FC-UX-009` |
+| **Принцип** | Документируем сейчас; код — в next-version (кроме уже существующих частей, помеченных «в коде»). |
+
+### 27.1. Шапка приложения (FEAT-FC-UX-001) — [~] PARTIAL
+
+**Текущее состояние (в коде):** `apps/web/components/layout/Header.tsx` использует `EraAppHeader` из `@era/satellite-kit/ui` и уже монтирует все требуемые слоты:
+
+| Слот | Компонент | Назначение |
+|------|-----------|------------|
+| `tierBar` | `HeaderSubscriptionStrip` → `HeaderTierUsageBar` | Прогресс-бар тира + квоты (invoices, employees) |
+| `locale` | `LanguageSwitcher` | Выбор языка (AZ/RU) |
+| `organization` | `HeaderOrganizationSwitcher` | Выбор/переключение компании |
+| `notifications` | `InAppNotificationBell` | In-app оповещения (`/api/notifications`) |
+| `profile` | `HeaderProfileMenu` | Профиль, организация, logout |
+
+**Доработка v-next:**
+- Подтвердить **цветовую** градацию прогресс-бара тира (цвет по `tier` и по проценту использования квоты), а не только числовые значения; при необходимости вынести цветовую шкалу в `HeaderTierUsageBar` (satellite-kit) — единообразно со спутниками.
+- Сверить порядок/набор слотов с референсным спутником (например `era-hotel-pms`); расхождения устранить на уровне `EraAppHeader`-конфигурации.
+- Если расхождение видно только на проде — это рассинхрон деплоя; перевыпустить актуальную сборку `apps/web`.
+
+### 27.2. Обязательный выбор компании при логине (FEAT-FC-UX-002) — [ ] PLANNED
+
+**Текущее поведение (`apps/web/app/app-shell.tsx`):** при `user.organizationId == null` `AppShell` делает `router.replace("/companies")`. Это страница, а не блокирующий gate, и она не покрывает кейс «несколько компаний, активная не выбрана».
+
+**Требование:**
+- Ввести **блокирующую модалку** `MandatoryOrgPickerModal`, рендерится в `AppShell` поверх контента, когда: `ready && token && user && !user.organizationId && organizations.length > 1` и путь не в whitelisted (`/login`, `/register*`, super-admin `/admin/data`).
+- Модалка **не закрывается**: без крестика, без обработки Esc, без клика по фону, без кнопки отмены; единственное действие — выбор компании (вызов `switchOrganization(orgId)` из `auth-context`).
+- **Персистентность через F5:** активная организация определяется на сервере (JWT claim `organizationId` / `/api/users/me`), а не localStorage; после перезагрузки при отсутствии активной org модалка открывается снова детерминированно.
+- **Решение (подтверждено):** при **2+** компаниях **всегда** требуется явный выбор при входе — «последнюю активную» компанию **не** авто-восстанавливаем (модалка показывается каждый логин, пока активная org не установлена в текущей сессии).
+- `organizations.length === 1` → авто-`switchOrganization` без модалки. `organizations.length === 0` → текущий сценарий `/companies` (создать/присоединиться).
+- super-admin не блокируется на платформенном контуре.
+
+**Связанные точки:** `auth-context` (`organizations`, `switchOrganization`, `user.organizationId`), `useRequireAuth`. Контракт переключения org — существующий (см. §3.2 selector/Switcher в PRD).
+
+### 27.3. Полноширинные `/banking` и `/banking/cash` (FEAT-FC-UX-003 / 004) — [ ] PLANNED
+
+- Файлы: `apps/web/app/banking/page.tsx`, `apps/web/app/(app)/banking/cash/page.tsx`.
+- Снять ограничители ширины (контейнерные `max-w-*`), привести к `w-full max-w-none` корневого блока — как уже сделано на `apps/web/app/finance/prepaid-expenses/page.tsx` (`<div className="w-full max-w-none …">`).
+- Реестры выписок/ордеров используют `DATA_TABLE_VIEWPORT_CLASS` с горизонтальным скроллом — проверить, что таблицы занимают всю ширину.
+
+### 27.4. Однострочный фильтр Cash Flow (FEAT-FC-UX-005) — [ ] PLANNED
+
+- Экран `/treasury/cash-flow`: контролы прогноза **Üfüq** (горизонт), **gün** (единица), выбор количества дней — объединить в один ряд фильтра.
+- Реализация: разместить контролы в слоте `PageHeader.actions` (или едином `flex items-center gap-2`), высота элементов `h-8` (32px), выравнивание по правому краю таблицы — стандарт тулбара §11.1.
+
+### 27.5. Prepaid Expenses: таблица + модалка + описание (FEAT-FC-UX-006) — [ ] PLANNED
+
+**UI (`apps/web/app/finance/prepaid-expenses/page.tsx`):**
+- Список `<ul>`-карточек заменить на **стандартную таблицу** (`DATA_TABLE_CLASS` + `DATA_TABLE_*` ячейки), колонки: Описание, Сумма, Валюта, Период (start→end), Счета (Дт/Кт), Статус, Действия (постинг месяца). Пагинация — `ListPaginationFooter` (§11.1).
+- Форму создания перенести в **модалку** Create (паттерн `SalesModalShell` / Create-модалок), поля: `totalAmount`, `currency`, `startDate`, `endDate`, `expenseAccountCode`, `prepaidAccountCode`, **`description`** (новое).
+
+**API / модель:**
+- Добавить поле **`description`** (String, optional) в модель `PrepaidExpense` (Prisma) + миграция; пробросить в DTO `CreatePrepaidExpenseDto` и в ответ `list()`.
+- Остальное без изменений: `PrepaidExpensesService.create` строит график `PrepaidExpenseSchedule`, `postMonth` проводит период.
+
+**Связь с проводками (ответ на вопрос) — ДА, через признание периода:**
+- `create()` проводок **не** делает (только график).
+- `postMonth()` (`POST /api/prepaid-expenses/:id/post-month?period=YYYY-MM`) вызывает `AccountingService.postJournalInTransaction` с `ledgerType = NAS`, `isFinal = true`, reference `PREPAID-<id>-<period>`, строки: **Дт `expenseAccountCode` (default `731`)** / **Кт `prepaidAccountCode` (default `133`)** на сумму строки графика; затем `PrepaidExpenseSchedule.status = POSTED` (+`postedTransactionId`); когда `PENDING == 0` → `PrepaidExpense.status = FULLY_AMORTIZED`.
+- Источник: `apps/api/src/prepaid/prepaid-expenses.service.ts`.
+
+**⚠️ HARD_BLOCK_PLATFORM при «Yarat» (ответ на вопрос — это НЕ баг prepaid).**
+- Ошибка `{"statusCode":403,"message":"Organization blocked by platform security (HARD_BLOCK_PLATFORM)","error":"FORBIDDEN"}` возвращает **`DisputeFreezeGuard`** (`apps/api/src/platform-recovery/dispute/dispute-freeze.guard.ts`).
+- Логика: если `OrganizationSecurityState.mode === HARD_BLOCK_PLATFORM`, то **любые** не-GET методы (`POST/PATCH/PUT/DELETE`) по всей организации отклоняются с 403; чтения (GET) проходят. Это платформенный «жёсткий блок» (контур Dispute & Recovery, §21), а не ограничение модуля prepaid.
+- **Кто ставит блок:** не диспут, а ночной cron целостности аудита **`AuditChainCronService.verifyAuditChainDaily`** (`@Cron("0 2 * * *")`, `apps/api/src/audit/audit-chain-cron.service.ts`). Он зовёт `AuditService.verifyOrganizationChain(orgId)`; если хоть одна запись `audit_logs` не проходит проверку хеша (в т.ч. **`hash IS NULL`**) — орг переводится в `HARD_BLOCK_PLATFORM`.
+- **Фактическая первопричина (локальный стенд `localhost:3100`, 2026-06):** демо-сиды вставляли строки `audit_logs` с **`hash = NULL`** (≈260 на орг) в обход рантайма `AuditService` (который пломбирует хеш-цепочку). Ночной cron пометил все 4 демо-орги как скомпрометированные → `HARD_BLOCK_PLATFORM`. Это **не** подмена данных, а пробел сидера.
+- **Recovery-процедура (выполнена):**
+  1. Диагностика: `SELECT mode FROM organization_security_states` (4 орги в HARD_BLOCK); `SELECT count(*) FILTER (WHERE hash IS NULL) FROM audit_logs GROUP BY organization_id` (≈260 null-hash на орг).
+  2. **Reseal** хеш-цепочки: одноразовый Node-скрипт на raw `PrismaClient` (адаптер `@prisma/adapter-pg`), который по каждой орге в порядке `(createdAt asc, id asc)` пересчитывает `computeAuditHash` (`apps/api/dist/audit/audit-hash.js`) с цепочкой `prevHash` и секретом `AUDIT_HASH_SECRET ?? JWT_SECRET`; идемпотентен (повторный прогон → 0 изменений), сохраняет историю.
+  3. Снятие блока: `UPDATE organization_security_states SET mode='NORMAL' WHERE mode='HARD_BLOCK_PLATFORM'`.
+- **Профилактика (backlog):** (а) демо-сиды должны писать `audit_logs` через `AuditService` (или сразу с корректным chained-hash); (б) задать `AUDIT_HASH_SECRET` явно в окружении (сейчас fallback на `JWT_SECRET`); (в) добавить штатную ops-утилиту `audit:reseal` (по аналогии с `audit:verify`) для контролируемого восстановления цепочки.
+
+### 27.6. Контрагенты: модалка «Yeni kontragent» и VÖEN-workflow (FEAT-FC-UX-007) — [ ] PLANNED
+
+**Файл:** `apps/web/components/sales/modals/CreateCounterpartyModal.tsx`.
+
+**Изменения формы (layout):**
+- `maxWidthClass`: `max-w-3xl` → уже́ (≈ −30%, например `max-w-xl`).
+- Порядок полей: **(1) VÖEN (10 rəqəm)** + кнопка **«Yoxla»** в первой строке; остальные поля по умолчанию **disabled** до успешной проверки/ручной разблокировки.
+- Чекбокс **«ƏDV ödəyicisidir»** — в одной строке (grid 2 колонки) с **«Hüquqi təşkilat forması»** (`legalForm`).
+- Перед полем **«Ünvan»** (`address`) добавить:
+  - **«Rəhbərin A.S.A.»** — ФИО руководителя (новое поле `directorName`).
+  - **«Əlaqə nömrələri»** — **динамический список** контактных номеров (мин. 1, кнопка «+ добавить»; формат E.164 +994 как в §2.2). Решение подтверждено: не фиксированные 2 поля, а список с возможностью добавления. Хранение — `phones String[]` (или связанная таблица) в модели контрагента.
+
+**Модель/DTO:** добавить в `Counterparty` (Prisma, шифруемые PII по stage-3) поля `directorName`, контактные номера; пробросить в `create-counterparty.dto.ts` / `update-counterparty.dto.ts` и ответ списка. Сохранить совместимость с merge/integrity (§4.12).
+
+**Workflow «Yoxla» (целевой):**
+1. **Tax / Hüquqi şəxs:** `GET /api/tax/taxpayer-info?voen=<10>` (сервис `TaxpayerIntegrationService.lookupTaxpayerByVoen`, источник `https://new.e-taxes.gov.az/etaxes/services/taxpayer-info`, фильтр «Hüquqi şəxs / VÖEN»). Возвращает `{ name, isVatPayer, address, isRiskyTaxpayer }`. Парсер уже фильтрует SPA/WAF-заглушки (poison-name).
+2. Если найден и `isVatPayer == true` — дополнительный вызов **search-vat-payer** (`https://new.e-taxes.gov.az/etaxes/search-vat-payer`, фильтр VÖEN): орган учёта, ОПФ (`legalForm`), юр. адрес, уставный капитал, фин. год, законный представитель (→ `directorName`), даты регистрации/изменения, долг. **Новый эндпоинт** `GET /api/tax/vat-payer-info?voen=<10>` (расширить `TaxpayerIntegrationService` вторым источником).
+3. Если по юр. лицу не найден — повтор с фильтром **«Fizik şəxs»** (физлицо): ФИО, VÖEN, рискованность, ƏDV, активность, долг.
+4. Не найдено нигде в налоговой → флаг **`manualCheckTax = true`** (бейдж в форме + признак в записи).
+5. Затем поиск по **нашей БД компаний (data-hub)**: уже есть `GET /api/organization/directory/by-voen/:voen` и `GET /api/counterparties/global/by-voen/:voen` (`GlobalCompanyDirectory` / `GlobalCounterparty`). Если не найдено → флаг **`manualCheckInternal = true`**.
+6. Найденные данные подставляются в поля; отсутствующие — пустые.
+7. После проверки **все поля разблокировать** для редактирования (снять `disabled`).
+
+**Текущее состояние (в коде):** модалка уже вызывает по VÖEN: `directory/by-voen`, `counterparties/global/by-voen`, и fallback `tax/taxpayer-info` (см. `checkVoen`), подставляет `name`, `isVatPayer`, `address`. Недостаёт: второй tax-источник (VAT-payer details), ветка «Fizik şəxs», явные флаги manual-check, поля руководителя/телефонов, пассивность полей до «Yoxla», узкий layout.
+
+**Решение по механизму интеграции (подтверждено):** основной путь — **серверный HTTP-парсинг** e-taxes (`TaxpayerIntegrationService`, best-effort, с poison-name фильтром и Redis-кэшем 24ч), как сейчас. Браузерный виджет/RPA — отдельная будущая итерация (коды деятельности и кейсы, недоступные серверу из-за WAF). То есть для wave-1 расширяем именно серверный сервис (добавляем `vat-payer-info` и ветку физлица), без зависимости от расширения.
+
+**Зоны ответственности / напоминание:**
+- БД компаний — отдельное ядро **data-hub** (источник `directory/by-voen`, `GlobalCompanyDirectory`).
+- Инфо граждан — отдельная БД по гражданам (используется для **FIN-кода** физлиц — отдельная итерация).
+
+**На будущее (отдельные итерации, зафиксировано):**
+- Банковские реквизиты контрагента — отдельная модалка из таблицы (`CounterpartyBankAccountsModal` уже есть): если реквизиты есть — список с дополнением.
+- Физлица — поле **FIN-код** (связь с БД граждан).
+- Коды видов деятельности (юр./физ.) — через **браузерное расширение** (RPA, ERA Finance Assistant, §13.6).
+
+### 27.7. Продажи «Ödənişdə Dt» — счета, банковский счёт, валюта (FEAT-FC-UX-008) — [ ] PLANNED
+
+**Файл:** `apps/web/components/sales/modals/CreateInvoiceModal.tsx` (поле `debitAccountCode`, сейчас тип `"101" | "221"` хардкод, опции `invoiceNew.cash101` / `invoiceNew.bank221`).
+
+**Требования:**
+1. **Список денежных счетов по виду организации:** заменить хардкод на список из плана счётов NAS, отфильтрованный по `OrganizationKind` (COMMERCIAL → NAS-COMMERCIAL; BUDGET → NAS-GOV; NGO → NAS-NGO). Источник — новый/существующий справочник денежных счетов (касса/банк) для активной org; кассовые счета **101\***, банковские **221\*** (или их гос/НГО-аналоги). Контракт: например `GET /api/system/money-accounts?purpose=incoming` → `[{ code, name, kind: CASH|BANK, currency? }]`.
+2. **Выбор конкретного банковского счёта:** при выборе банковского счёта показать **второй селектор** активных `BankAccount` организации (у орга может быть несколько счетов). Это и есть точка принятия решения «с какого счёта». Передавать `bankAccountId` в `POST /api/invoices`.
+3. **Привязка валюты к счёту:**
+   - Касса (**101**) → валюта только **AZN** (поле валюты фиксируется в AZN).
+   - Банк → валюта берётся из выбранного `BankAccount` (включая валютные счета); поле `currency` синхронизируется автоматически и блокируется, когда однозначно.
+4. Серверная валидация: `debitAccountCode` / `bankAccountId` принадлежат активной org и совместимы с `OrganizationKind`; валюта документа совместима со счётом.
+
+### 27.8. Закупки «Yeni alış fakturası» — без счёта оплаты на этапе счёта (FEAT-FC-UX-009) — [x] РЕШЕНО (продуктово)
+
+**Решение (ответ на вопрос):** счёт-фактура закупки — **начисление обязательства**, не платёж. При проведении: **Дт 201/2xx/7xx** (ТМЦ/расход) / **Дт 241** (входящий ƏDV, если применимо) — **Кт 531** (расчёты с поставщиками). Выбор кассы/банка/конкретного счёта на этом этапе **не требуется** и не запрашивается.
+
+**Оплата — отдельное событие:**
+- кассовый расходный ордер **MXO** (касса) или **банковский платёж** — там выбирается денежный счёт по логике §27.7 (вид организации → счёт; банк → конкретный `BankAccount`; валюта по счёту);
+- проводка оплаты: **Дт 531 — Кт 101/221**;
+- поддерживает частичные оплаты, отсрочку (`dueDate`), взаимозачёты.
+
+**UI-следствие (рекомендация, подтверждено «и там, и там»):** в модалке «Yeni alış fakturası» оставить только условия оплаты (срок). Действие **«Оплатить»** доступно из **двух** мест (одна и та же серверная операция платежа):
+- **Реестр закупок** — кнопка «Оплатить» в строке счёта (быстрый сценарий: оплатил конкретный документ);
+- **Раздел кредиторки / 531 (задолженность перед поставщиками)** — оплата по контрагенту с возможностью распределения на несколько счетов (FIFO/частичные), сводный взгляд бухгалтера.
+
+Обоснование двойного входа: оба сценария реальны — операционист платит «по документу», бухгалтер закрывает долг «по контрагенту». Оба вызывают единый эндпоинт платежа (создание MXO/банковского платежа + аллокация на счёт-фактуру), поэтому дублирования логики нет — только две точки входа в UI.
+
+---
+
+## 28. Data Hub consumption + де-хардкод плана счетов (PRD §4.18)
+
+### 28.0. Статус и принцип
+
+| Поле | Значение |
+|------|----------|
+| **Статус** | [~] **PARTIAL (data-hub-consumer-wave-1)** — FX/HS уже потребляются; остальное PLANNED |
+| **PRD** | **[PRD.md](./PRD.md) §4.18** · ADR **[docs/adr/era-data-hub.md](../docs/adr/era-data-hub.md)** · **[era-data-hub/TZ.md](../era-data-hub/TZ.md)** (контракт `/registry/v1`) |
+| **Задачи** | `FEAT-FC-DH-001…010`, `FEAT-FC-CIT-001`, `FEAT-FC-COA-001` |
+| **Принцип** | **expand/contract**: хаб = system of record → ядро читает через адаптер (фича-флаг) → потом из ядра убираются ingest/дубли. Per-tenant данные не выносятся. |
+
+**Зафиксированные решения (2026-06):**
+- **D-DH-1.** Эталон плана счетов при онбординге — **Data Hub как единый источник** (`GET /chart-of-accounts?profile=`); локальный `loadPostingRolesJson` / `catalog/national/chart-of-accounts-*.json` остаётся **только как fallback** при недоступности хаба.
+- **D-DH-2.** В scope первой волны входят **все** справочники DH-003…010 (банки/IBAN, VÖEN, календарь, эталон CoA, налоговые ставки/UoM/гео) — приоритет внутри волны по таблице §28.1, но без отсечения.
+- **D-COA-1.** Де-хардкод плана счетов выполняется в **полном объёме** (P1+P2+P3) и закрывается **CI-гард-рейлом** (§28.3), который фиксирует отсутствие новых литералов NAS-кодов.
+
+**Адаптер (есть):** `apps/api/src/data-hub/data-hub-client.service.ts` (`DataHubClientService`): методы `getFxRates`, `getTariff`, `getCompanyByVoen`, `isWorkingDay`. Auth — `Authorization: Bearer <DATA_HUB_SERVICE_TOKEN>` по `era-network`. Флаги: `ERA_DATA_HUB_ENABLED`, `ERA_DATA_HUB_URL`, `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED`. Контракт хаба — `era-data-hub/TZ.md`. Везде сохраняется **fallback** на локальный путь при недоступности хаба или `ERA_DATA_HUB_ENABLED=false`.
+
+### 28.1. Расширение потребления справочников
+
+Текущее потребление и недостающие куски:
+
+| Feature ID | Справочник | Эндпоинт хаба | Потребитель в ядре | Действие |
+|------------|-----------|---------------|---------------------|----------|
+| FEAT-FC-DH-001 | FX rates | `GET /fx/rates`, `/fx/rates/range`, `/fx/convert` | `fx/cbar-rate-sync.service.ts` (read-through), `CurrencyConverterService` | [x] есть; расширить на range/convert при необходимости дашборда |
+| FEAT-FC-DH-002 | HS + тарифы | `GET /hs/:code/tariff` | `customs/customs-tax-calculator.service.ts` | [x] есть; добавить `GET /hs/:code` (словарь) для подсказок HS |
+| FEAT-FC-DH-003 | Календарь АР | `GET /calendar/az/is-working-day`, `/add-business-days` | HR (`timesheet`, `absences`, `payroll-month-calendar`) | [ ] клиент `isWorkingDay` есть → заменить `isAzWorkingDay(...)` на `CalendarClient` (кэш на год); затем удалить `hr/calendar/az-2026.ts` |
+| FEAT-FC-DH-004 | Банки/филиалы | `GET /banks`, `/banks/branches/:code` | `OrganizationBankAccount` (FK на филиал), формы выбора банка | [ ] добавить `getBanks()` / `getBankBranch(code)` в клиент; UI выбора банка/филиала из хаба; локально хранить только IBAN + FK |
+| FEAT-FC-DH-005 | IBAN validate | `GET /iban/validate` | `banking/IbanValidationService` | [ ] чистую валидацию (`validateAzIban`) брать из хаба; платный deep-lookup и аудит остаются в ядре |
+| FEAT-FC-DH-006 | Реестр компаний VÖEN | `GET /companies/:voen` | lookup контрагента (§27.6) | [~] клиент `getCompanyByVoen` есть; включить его в цепочку `checkVoen` (приоритет: хаб → локальный `GlobalCompanyDirectory` → e-taxes); полка C (PII-маскирование) |
+| FEAT-FC-DH-007 | Гео | `GET /geo/countries`, `/geo/cities` | формы адресов/стран | [ ] добавить методы клиента; формы читают из хаба (кэш) |
+| FEAT-FC-DH-008 | UoM | `GET /uom` | каталог номенклатуры, таможня | [ ] добавить метод клиента; справочник UoM из хаба |
+| FEAT-FC-DH-009 | Налоговые ставки | `GET /tax-rates?type=&date=` | налоговые расчёты, ставки ƏDV | [ ] добавить метод; effective-dated ставки из хаба (fallback на локальный `TaxRate`) |
+| FEAT-FC-DH-010 | Эталон плана счетов | `GET /chart-of-accounts?profile=commercial\|budget\|ngo` | онбординг/сверка плана счетов | [ ] **D-DH-1: хаб — единый источник**; добавить `getChartOfAccounts(profile)`; онбординг материализует `Account` орг из эталона хаба; локальный JSON `loadPostingRolesJson` — только fallback |
+
+**Контур работ для каждой строки:** (1) метод в `DataHubClientService` + типы; (2) перевод потребителя на клиент с локальным кэшем (read-through) и fallback; (3) фича-флаг (общий `ERA_DATA_HUB_ENABLED` + при необходимости частный per-domain); (4) на фазе «contract» — отключение/удаление локального ingest (cron/seeds) после стабилизации.
+
+### 28.2. БД граждан (оркестратор) — FEAT-FC-CIT-001
+
+- Реестр граждан АР — **отдельная БД на `era-orchestrator`** (не data-hub, не финядро). Финядро запрашивает данные физлица по **FIN-коду** через сервис оркестратора (service-token, PII-маскирование, согласие/аудит).
+- Потребители: карточка контрагента-физлица (поле FIN-код, §27.6 future), карточка сотрудника (HR) для верификации.
+- Контракт эндпоинта оркестратора — **TBD** (определить вместе с CP); ядро держит только тонкий клиент + кэш на запрос, без хранения реестра.
+
+### 28.3. Де-хардкод плана счетов — FEAT-FC-COA-001
+
+**Правило:** код счёта НР АР **не должен** быть литералом в бизнес/проводочной логике. Источник — только `PostingAccountResolver.resolveAccountCode(orgId, role, tx?)` по ключу `PostingRole` (учёт `OrganizationKind` + override `organization_posting_roles`). Канон ключей — `packages/database/prisma/lib/posting/posting-role.ts` (`POSTING_ROLES`), схемы — `accounting/posting/posting-schema-registry.ts`.
+
+**Недостающие ключи `PostingRole` (добавить в `POSTING_ROLES` + пресеты `posting-roles-{commercial,budget,ngo}.json` + `template_posting_roles` seed):**
+
+| Новый ключ | COMMERCIAL | Назначение |
+|------------|-----------|------------|
+| `PREPAID_ASSET` | `133` | Расходы будущих периодов (актив) — §27.5 |
+| `CHARTER_CAPITAL` | `301` | Уставный капитал (взнос учредителя: касса/банк ↔ 301) |
+| (опц.) карточные банк-счета | `222`–`224` | Если нужны отдельные роли помимо `MAIN_BANK`→`221` |
+
+**Таблица фиксов (аудит 2026-06):**
+
+| Приоритет | Модуль / файл | Хардкод | Целевой ключ / действие |
+|-----------|---------------|---------|--------------------------|
+| P1 | `prepaid/prepaid-expenses.service.ts` (+DTO) | `731`, `133` | `MISC_OPERATING_EXPENSE`, **`PREPAID_ASSET`** через resolver; дефолты убрать |
+| P1 | `invoices/invoices.service.ts` (+DTO) | `101`, `221` | `CASH_AZN`/`MAIN_BANK` (+ §27.7: счёт по виду орг, банковский счёт, валюта) |
+| P1 | `psa/psa.service.ts` | `101` | `CASH_AZN` (или проброс выбранного счёта) |
+| P1 | `integration/satellite-event-dispatch.service.ts` | `101` | `CASH_AZN` через resolver |
+| P2 | `manufacturing/manufacturing-overhead.service.ts` (+DTO) | `741`, `204` | `MANUFACTURING_OVERHEAD_CREDIT`, `FINISHED_GOODS` |
+| P2 | `inventory/inventory.service.ts` | `204` (сравнение) | сравнивать с **resolved** кодом (паттерн `inventory-audit.service.ts`) |
+| P2 | `inventory/dto/*.dto.ts` | `201`, `204` | дискриминатор по роли/виду склада, не по литералу |
+| P2 | `migration/opening-balances.service.ts` | `201`, `204`, `000` | `INVENTORY_GOODS`/`FINISHED_GOODS` через resolver; `000` — системный контра (документировать) |
+| P2 | `organizations/organization-settings.service.ts` | `221` | `MAIN_BANK` |
+| P2 | `accounts/accounts.service.ts` | `211`, `601`, `221` | `TRADE_RECEIVABLE`, `SALES_REVENUE`, `MAIN_BANK` (структурный родитель `221.` — отдельно) |
+| P2 | `accounting/bank-subaccount.service.ts` | `221` | `MAIN_BANK` (родитель маски субсчёта) |
+| P2 | `accounting/accounting.service.ts` | `241` (fallback) | `VAT_INPUT` |
+| P2 | `banking/banking.service.ts`, `banking-registry.helper.ts` | `101`, `221–224`, `301` | `CASH_AZN`/`MAIN_BANK` префиксы; `301` → **`CHARTER_CAPITAL`** |
+| P2 | `kassa/cash-order.service.ts` | `101`, `301` | `CASH_AZN` префикс; `301` → **`CHARTER_CAPITAL`** |
+| P3 | `reports/financial-report.service.ts`, `reporting/reporting.service.ts` | агрегация по префиксам (`101/221–224/201/204/...`) | допускается как **отчётная** классификация по семействам; документировать как разрешённое исключение (не проводки) |
+| P3 | `common/cash-account-code.util.ts` | `101/102` (валидатор), `211/531/538` (анти-касса) | оставить как **валидатор префиксов** (разрешённое исключение) |
+| cleanup | `ledger.constants.ts` | все коммерческие коды | удалить файл (нет активных импортов) |
+
+**Разрешённые исключения (не считаются хардкодом):** резолвер и пресеты ролей; seeds/catalog (`packages/database`); валидаторы **семейств/префиксов** счетов (касса 101/102, банк 221–224) — это правила НР АР, а не выбор конкретного счёта; отчётная агрегация по префиксам; `scripts/local-mock-seed.ts` (dev).
+
+**Гард-рейл (CI):** добавить тест/линт-правило, запрещающее литералы NAS-кодов (regex на `accountCode:\s*["']\d{3}` и явные `"\d{3}(\.\d+)?"` в проводках) в `apps/api/src/**` вне whitelist выше. Ориентир — существующий `packages/database/prisma/scripts/validate-posting-roles.ts`.
+
+### 28.4. Acceptance
+
+- `DataHubClientService` расширен методами DH-004…010; потребители переведены с фича-флагом и fallback; локальные ingest-cron/seed отключаются на фазе «contract».
+- HR использует `CalendarClient` вместо `az-2026.ts`; lookup контрагента включает хаб (§27.6).
+- В `POSTING_ROLES` добавлены `PREPAID_ASSET`, `CHARTER_CAPITAL`; пресеты и seed обновлены; все P1/P2 фиксы переведены на resolver.
+- CI-гард-рейл активен; `ledger.constants.ts` удалён.
+- Per-tenant данные (проводки, счета орг, выписки, декларации, карточки контрагентов) не вынесены в хаб.
+
+---
+
+## 29. Внутрисетевой обмен документами и зеркальные проводки (PRD §4.19)
+
+### 29.0. Статус и решения
+
+| Поле | Значение |
+|------|----------|
+| **Статус** | [ ] **PLANNED (intercompany-network-wave-1)** |
+| **PRD** | **[PRD.md](./PRD.md) §4.19** |
+| **Задачи** | `FEAT-FC-NET-001…006` |
+
+**Зафиксированные решения:**
+- **D-NET-1.** На стороне получателя B — **входящий ящик + подтверждение**. Молчаливого автопостинга в чужую книгу нет; B выбирает роль дебета, НДС-к-зачёту и период.
+- **D-NET-2.** Легальный источник — **e-Qaimə**; наш обмен только **предзаполняет** его (не подменяет).
+- **D-NET-3.** Приём сетевых документов — **opt-in** настройка организации B.
+- **D-NET-4.** **Eventual consistency** через outbox + идемпотентность по `correlationId`; единой кросс-тенантной транзакции нет.
+
+### 29.1. Матчинг контрагент → тенант (FEAT-FC-NET-001)
+
+При создании исходящего счёта (`InvoicesService.create`) и/или по событию сателлита: взять `Counterparty.taxIdBlindIndex` и найти `Organization` с тем же `taxIdBlindIndex` (`@unique`). Если найдено и `organizationId(B) != organizationId(A)` и у B включён opt-in (D-NET-3) — кандидат на сетевой документ. Fallback: матч по `GlobalCounterparty.globalId`. Без VÖEN/blind-index — обычный локальный счёт, без сети.
+
+### 29.2. Модель данных
+
+Новая сущность `NetworkDocument` (рабочее имя; per-tenant строки на **обе** стороны через общий `correlationId`):
+
+| Поле | Назначение |
+|------|-----------|
+| `id`, `correlationId` | идемпотентность; `correlationId` общий для пары A/B |
+| `issuerOrgId`, `recipientOrgId` | стороны (оба — реальные тенанты) |
+| `sourceInvoiceId` | исходящий счёт у A (источник) |
+| `recipientInboxStatus` | `PENDING_REVIEW` → `ACCEPTED` / `REJECTED` / `POSTED` / `SUPERSEDED` |
+| `currency`, `totalNet`, `vatAmount`, `totalGross` | суммы из источника (неизменны для B) |
+| `lines` (JSON) | строки документа (описание, кол-во, цена, ставка НДС) |
+| `recipientDebitRole` | выбранная B роль дебета (NULL до подтверждения) |
+| `recipientClaimsVat` | берёт ли B НДС к зачёту |
+| `recipientTransactionId` | проводка B после подтверждения |
+| `eQaimeRef` | связь с e-Qaimə (Фаза 3) |
+
+### 29.3. Потоки
+
+**Исходящий (A):** в `InvoicesService.create` после успешного постинга A — хук: если §29.1 дал тенанта B с opt-in, создать `NetworkDocument` (`PENDING_REVIEW`) через **outbox** (идемпотентно по `correlationId`). HTTP-ответ A не блокируется (fire-and-forget, как `scheduleUpsert`).
+
+**Входящий (B):** UI «Входящие документы» показывает `PENDING_REVIEW`.
+- **Принять:** B выбирает `recipientDebitRole` (+ `recipientClaimsVat`, дата/период) → зеркальная проводка через `AccountingService.postJournalInTransaction` + `PostingAccountResolver` в книге B → статус `POSTED`, `recipientTransactionId` заполнен.
+- **Отклонить:** статус `REJECTED` (с причиной); проводки нет.
+- Корректировка/сторно у A → новый документ `SUPERSEDED` старого (по `correlationId`).
+
+### 29.4. Семантика зеркала (роли, не литералы)
+
+| Сторона | Дебет | Кредит |
+|---------|-------|--------|
+| Продавец A | `TRADE_RECEIVABLE` | `SALES_REVENUE` + `VAT_OUTPUT` |
+| Покупатель B | **выбор B**: `INVENTORY_GOODS` / `MISC_OPERATING_EXPENSE` / ОС / РБП (+ `VAT_INPUT`, если берёт) | `SUPPLIER_PAYABLE` |
+
+Все коды резолвятся через `PostingAccountResolver` по `OrganizationKind` каждой стороны (§28.3) — никаких литералов. Суммы/НДС/валюта/№ документа берутся из источника; роль дебета и период — выбор B.
+
+### 29.5. Изоляция и безопасность
+
+- Книги, audit-цепочки и `OrganizationSecurityState` у A и B **раздельны**. Постинг у B уважает его period-lock, `HARD_BLOCK`, согласования (как любой ручной счёт).
+- B получает только документ, **адресованный самому B** (он и так сторона сделки) — приватность не нарушается; opt-in обязателен.
+- Идемпотентность по `correlationId`: повторная доставка не плодит дубли.
+
+### 29.6. e-Qaimə (Фаза 3, FEAT-FC-NET-005)
+
+`NetworkDocument` маппится на e-Qaimə для предзаполнения портального счёта; `eQaimeRef` связывает наш документ с легальным. Расхождение «наш ↔ e-Qaimə» подсвечивается в сверке. ERA-обмен не является юр. заменой e-Qaimə.
+
+### 29.7. Автонеттинг (FEAT-FC-NET-006)
+
+Для пары резидентов встречные AR/AP сводятся схемой `NETTING` (`SUPPLIER_PAYABLE` ↔ `TRADE_RECEIVABLE`) с двусторонним подтверждением; обе книги авторитетны, поэтому акт взаимозачёта достоверен.
+
+### 29.8. Кросс-деплой (Фаза 3)
+
+Сейчас все тенанты в одной БД finance-core → матчинг и ящик делаются in-core. Заложить интерфейс обмена так, чтобы при размещении B в другом деплое доставка шла через оркестратор (CP-mediated), без изменения модели документа.
+
+### 29.9. Acceptance
+
+- Матчинг VÖEN→тенант работает; при opt-in B исходящий счёт A создаёт `NetworkDocument PENDING_REVIEW`.
+- B видит входящие, «Принять» с выбором роли дебета даёт корректную зеркальную проводку по ролям (комм./гос/НГО); «Отклонить» не постит.
+- Идемпотентность по `correlationId`; period-lock/`HARD_BLOCK`/согласования B соблюдаются.
+- Автопостинг (Фаза 2) только за флагом и только для безопасных ролей; активы/запасы — всегда review.
+- Per-tenant изоляция сохранена; единой кросс-тенантной транзакции нет.
 
 ---
 

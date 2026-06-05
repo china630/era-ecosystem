@@ -39,6 +39,8 @@ export const POSTING_ROLES = [
   "ACCOUNTABLE_PERSONS",
   "BUDGET_FUNDING_RECEIVED",
   "BUDGET_PAYROLL_EXPENSE",
+  "PREPAID_ASSET",
+  "CHARTER_CAPITAL",
 ] as const;
 
 export type PostingRole = (typeof POSTING_ROLES)[number];

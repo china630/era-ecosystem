@@ -1,4 +1,6 @@
 import { prisma } from '@/lib/prisma';
+import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
+import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
@@ -105,7 +107,7 @@ export async function createReservation(input: {
   const { nightly } = applyContractRuleToNightly(baseNightly, rule);
   const totalAmount = toDecimal(nightly * nights);
 
-  return prisma.reservation.create({
+  const reservation = await prisma.reservation.create({
     data: {
       roomTypeId: input.roomTypeId,
       guestId: input.guestId,
@@ -122,6 +124,20 @@ export async function createReservation(input: {
     },
     include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
   });
+
+  if (reservation.ratePlan.medicalFlag) {
+    await assertSanatoriumBookingAllowed(reservation.checkInDate);
+    void dispatchSanatoriumBookingCreated({
+      reservationId: reservation.id,
+      programCode: reservation.ratePlan.code,
+      globalPersonId: reservation.guest.globalPersonId ?? undefined,
+      guestName: reservation.guest.fullName,
+      checkInDate: reservation.checkInDate.toISOString(),
+      checkOutDate: reservation.checkOutDate.toISOString(),
+    }).catch(() => null);
+  }
+
+  return reservation;
 }
 
 export async function assignRoom(reservationId: string, roomId: string) {
@@ -205,9 +221,17 @@ export async function checkInReservation(id: string) {
     const result = await getReservation(id);
     const { submitTourismCheckIn } = await import('@/lib/services/tourism.service');
     void submitTourismCheckIn(id).catch((e) => console.error('Tourism check-in failed', e));
-    void notifyClinicCheckIn(id, updated).catch((e) =>
-      console.error('Clinic episode hook failed', e),
+    const { dispatchGuestCheckedIn } = await import(
+      '@/lib/integration/guest-lifecycle-events'
     );
+    void dispatchGuestCheckedIn({
+      reservationId: id,
+      roomNumber: updated.room?.roomNumber ?? undefined,
+      programCode: updated.ratePlan.medicalFlag ? updated.ratePlan.code : undefined,
+      guestName: updated.guest.fullName,
+      checkInDate: reservation.checkInDate.toISOString(),
+      checkOutDate: reservation.checkOutDate.toISOString(),
+    }).catch((e) => console.error('Guest lifecycle check-in failed', e));
     if (
       process.env.ERA_DOOR_LOCK_ENABLED === '1' &&
       updated.room?.roomNumber
@@ -223,37 +247,6 @@ export async function checkInReservation(id: string) {
         .catch((e) => console.error('Door lock unlock on check-in failed', e));
     }
     return result;
-  });
-}
-
-async function notifyClinicCheckIn(
-  reservationId: string,
-  reservation: {
-    guest: { fullName: string; passportNumber: string | null; phone: string | null };
-    ratePlan: { medicalFlag: boolean };
-    stay?: { id: string } | null;
-  },
-) {
-  if (!reservation.ratePlan.medicalFlag) return;
-  const baseUrl = process.env.CLINIC_API_URL?.trim();
-  if (!baseUrl) return;
-
-  const stay = await prisma.stay.findUnique({ where: { reservationId } });
-  const secret = process.env.CLINIC_BRIDGE_SECRET ?? '';
-  await fetch(`${baseUrl.replace(/\/$/, '')}/api/sanatorium/episodes/from-stay`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(secret ? { 'X-Clinic-Bridge-Secret': secret } : {}),
-    },
-    body: JSON.stringify({
-      reservationId,
-      hotelStayId: stay?.id ?? null,
-      guestName: reservation.guest.fullName,
-      passportNumber: reservation.guest.passportNumber,
-      phone: reservation.guest.phone,
-      organizationId: process.env.HOTEL_ORGANIZATION_ID ?? 'nafta-sanatorium-org',
-    }),
   });
 }
 

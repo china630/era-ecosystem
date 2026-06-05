@@ -6,6 +6,7 @@ describe("CounterpartiesService.scanMergeIntegrity (M3/M4)", () => {
       prisma as ConstructorParameters<typeof CounterpartiesService>[0],
       {} as ConstructorParameters<typeof CounterpartiesService>[1],
       {} as ConstructorParameters<typeof CounterpartiesService>[2],
+      {} as ConstructorParameters<typeof CounterpartiesService>[3],
     );
   }
 

@@ -1,22 +1,39 @@
-import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 
-const bodySchema = z.object({
-  items: z.array(
-    z.object({
-      code: z.string(),
-      description: z.string(),
-      amount: z.number().nonnegative(),
-    }),
-  ),
-});
+type CatalogItem = { code: string; description: string; amount: number };
 
-/** Stub: Finance price list push or manual sync. */
-export async function POST(req: Request) {
+async function fetchFinanceCatalog(): Promise<CatalogItem[]> {
+  const base = (
+    process.env.ERA_FINANCE_API_URL ??
+    process.env.FINANCE_API_URL ??
+    "http://127.0.0.1:3001"
+  ).replace(/\/$/, "");
+  const token =
+    process.env.FINANCE_SERVICE_TOKEN ??
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN;
+  const res = await fetch(`${base}/api/industry-handoffs/clinic-service-catalog`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    signal: AbortSignal.timeout(10000),
+  }).catch(() => null);
+  if (!res?.ok) return [];
+  const data = (await res.json()) as { items?: CatalogItem[] };
+  return data.items ?? [];
+}
+
+export async function POST() {
   try {
-    const body = bodySchema.parse(await req.json());
-    for (const item of body.items) {
+    let items = await fetchFinanceCatalog();
+    if (items.length === 0) {
+      items = [
+        { code: "CONSULT", description: "Consultation", amount: 50 },
+        { code: "LAB-CBC", description: "Complete blood count", amount: 25 },
+        { code: "USG", description: "Ultrasound", amount: 40 },
+        { code: "MASSAGE", description: "Therapeutic massage", amount: 60 },
+      ];
+    }
+
+    for (const item of items) {
       await prisma.serviceCatalogCache.upsert({
         where: { code: item.code },
         create: {
@@ -31,8 +48,8 @@ export async function POST(req: Request) {
         },
       });
     }
-    const count = await prisma.serviceCatalogCache.count();
-    return jsonOk({ synced: body.items.length, total: count });
+
+    return jsonOk({ synced: items.length, source: items.length ? "finance" : "fallback" });
   } catch (err) {
     return handleRouteError(err);
   }

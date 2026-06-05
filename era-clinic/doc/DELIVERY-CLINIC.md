@@ -85,3 +85,48 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M11: LIS analyzer import
 - [x] M12: Insurance / DMS eligibility
 - [x] M13: Inpatient / bed management
+
+## vNext — Clinic + shared fiscal (2026-06)
+
+ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `20260603120000_clinic_vnext`.
+
+### Foundation
+
+- [x] `@era/contracts` — `globalPersonId` envelope; `SATELLITE_CLINIC_PROCEDURE_COMPLETED`, `PRESCRIPTION_ISSUED`; hotel `GUEST_CHECKED_IN/OUT`, `ROOM_CHANGED`
+- [x] Orchestrator guest QR issue/verify + `satellite-kit` helpers; clinic `PatientRef.globalPersonId`
+- [x] Finance `AccountingAdapter` + dispatch handlers for new clinic/hotel events
+- [x] `patientOrigin` / `billingTarget` on Visit/Episode; enums for appointment/visit status
+
+### `@era/fiscal`
+
+- [x] Package `packages/era-fiscal` (`mock|nbc|cybernet` stubs); `ERA_FISCAL_PROVIDER` + `KKM_DRIVER` fallback
+- [x] Migrated retail, F&B, hotel folio pay, clinic cashier; removed local KKM providers
+
+### Clinic UX
+
+- [x] Resource-aware `GET /api/scheduling/slots`; drag reschedule UI
+- [x] Visit card + CPOE on `/appointments`; ICD catalog `GET /api/icd`
+- [x] `/doctor`, `/nurse`, `/cashier` + nav; clinic role guards
+- [x] Catalog sync — Finance URL with local fallback
+- [x] Portal token scope; public `/portal`, `/booking`
+- [x] Web booking widget → orchestrator `createBookingAppointment` + local appointment
+
+### Sanatorium cross-satellite
+
+- [x] Billing router: `WALK_IN` → finance event; `IN_HOUSE` → hotel `room-charge` MEDICAL
+- [x] Hotel lifecycle emit on bus only (no direct hotel→clinic HTTP); orchestrator fan-out → clinic `POST /api/integration/hotel-lifecycle` (entitlement `industry_clinic` + `SatelliteEndpoint` registry); program templates + scheduler service
+- [x] Plan 2.9: `notifyClinicCheckIn` removed; `ProcessedEvent` idempotency on lifecycle ingress
+- [x] `PRESCRIPTION_ISSUED` / `PROCEDURE_COMPLETED` + retail reserve/write-off endpoints
+
+### Hotel / retail enablers
+
+- [x] Lifecycle dispatch on check-in/out/relocate; orchestrator-gateway mappers for lifecycle events
+- [x] `programCode` from `ratePlan.code` when `medicalFlag`
+- [x] `SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED` — early program FIFO on medical reservation (not only check-in)
+- [x] `ProcedureType` / `ProcedureRule` / `PatientContraindication`; FIFO `treatment-planner.service`; `useProcedureQuota` on procedure complete
+- [x] Capacity risk: `GET /api/capacity/summary`, `/executive` band 120–125 guest-equiv/week
+- [x] Patient card `/patients/[id]` — body-map contraindications UI
+
+### Env (prod example)
+
+- `ERA_FISCAL_PROVIDER`, `CLINIC_API_URL`, `CLINIC_BRIDGE_SECRET`, `POS_BRIDGE_SECRET`, `HOTEL_PMS_URL`, `RETAIL_POS_URL`, `ORCHESTRATOR_EVENT_URL`, `ERA_GUEST_QR_SECRET`

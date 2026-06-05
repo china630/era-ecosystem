@@ -29,18 +29,28 @@ export class CreatePrepaidExpenseDto {
   @IsDateString()
   endDate!: string;
 
+  @ApiPropertyOptional({ maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()
   counterpartyId?: string;
 
-  @ApiPropertyOptional({ default: "731" })
+  @ApiPropertyOptional({
+    description: "Expense NAS code; if omitted, MISC_OPERATING_EXPENSE posting role",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(32)
   expenseAccountCode?: string;
 
-  @ApiPropertyOptional({ default: "133" })
+  @ApiPropertyOptional({
+    description: "Prepaid asset NAS code; if omitted, PREPAID_ASSET posting role",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(32)

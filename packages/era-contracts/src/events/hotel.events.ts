@@ -199,3 +199,106 @@ export function isSatelliteHotelCityLedgerSnapshot(
 ): data is SatelliteHotelCityLedgerSnapshotEvent {
   return satelliteHotelCityLedgerSnapshotSchema.safeParse(data).success;
 }
+
+const guestLifecycleBasePayload = z.object({
+  reservationId: z.string().min(1),
+  roomNumber: z.string().optional(),
+  programCode: z.string().optional(),
+  globalPersonId: z.string().min(1).optional(),
+  guestName: z.string().optional(),
+  checkInDate: z.string().optional(),
+  checkOutDate: z.string().optional(),
+});
+
+export const SATELLITE_HOTEL_GUEST_CHECKED_IN =
+  "SATELLITE_HOTEL_GUEST_CHECKED_IN" as const;
+
+export const satelliteHotelGuestCheckedInSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_GUEST_CHECKED_IN),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload,
+});
+
+export type SatelliteHotelGuestCheckedInEvent = z.infer<
+  typeof satelliteHotelGuestCheckedInSchema
+>;
+
+export function isSatelliteHotelGuestCheckedIn(
+  data: unknown,
+): data is SatelliteHotelGuestCheckedInEvent {
+  return satelliteHotelGuestCheckedInSchema.safeParse(data).success;
+}
+
+export const SATELLITE_HOTEL_GUEST_CHECKED_OUT =
+  "SATELLITE_HOTEL_GUEST_CHECKED_OUT" as const;
+
+export const satelliteHotelGuestCheckedOutSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_GUEST_CHECKED_OUT),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload.extend({
+    earlyCheckout: z.boolean().optional(),
+  }),
+});
+
+export type SatelliteHotelGuestCheckedOutEvent = z.infer<
+  typeof satelliteHotelGuestCheckedOutSchema
+>;
+
+export function isSatelliteHotelGuestCheckedOut(
+  data: unknown,
+): data is SatelliteHotelGuestCheckedOutEvent {
+  return satelliteHotelGuestCheckedOutSchema.safeParse(data).success;
+}
+
+export const SATELLITE_HOTEL_ROOM_CHANGED =
+  "SATELLITE_HOTEL_ROOM_CHANGED" as const;
+
+export const satelliteHotelRoomChangedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_ROOM_CHANGED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload.extend({
+    previousRoomNumber: z.string().optional(),
+    newRoomNumber: z.string().min(1),
+  }),
+});
+
+export type SatelliteHotelRoomChangedEvent = z.infer<
+  typeof satelliteHotelRoomChangedSchema
+>;
+
+export function isSatelliteHotelRoomChanged(
+  data: unknown,
+): data is SatelliteHotelRoomChangedEvent {
+  return satelliteHotelRoomChangedSchema.safeParse(data).success;
+}
+
+export const SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED =
+  "SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED" as const;
+
+export const satelliteHotelSanatoriumBookingCreatedSchema = z.object({
+  type: z.literal(SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED),
+  organizationId: z.string().min(1),
+  correlationId: z.string().min(1),
+  occurredAt: z.string().min(1),
+  globalPersonId: z.string().min(1).optional(),
+  payload: guestLifecycleBasePayload,
+});
+
+export type SatelliteHotelSanatoriumBookingCreatedEvent = z.infer<
+  typeof satelliteHotelSanatoriumBookingCreatedSchema
+>;
+
+export function isSatelliteHotelSanatoriumBookingCreated(
+  data: unknown,
+): data is SatelliteHotelSanatoriumBookingCreatedEvent {
+  return satelliteHotelSanatoriumBookingCreatedSchema.safeParse(data).success;
+}

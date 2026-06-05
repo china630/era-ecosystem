@@ -11,4 +11,13 @@ export class TaxService {
   async lookupTaxpayerByVoen(rawVoen: string): Promise<TaxpayerLookupResult> {
     return this.taxpayerIntegration.lookupTaxpayerByVoen(rawVoen);
   }
+
+  async lookupVatPayerInfo(rawVoen: string) {
+    const base = await this.taxpayerIntegration.lookupTaxpayerByVoen(rawVoen);
+    return {
+      ...base,
+      source: "taxpayer-info",
+      individualFallbackAvailable: false,
+    };
+  }
 }

@@ -22,24 +22,19 @@ import {
   monthKeyUtc,
 } from "../reporting/reporting-period.util";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
+import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
 
-/** NAS codes used in code (e.g. 241) but missing from some chart JSON seeds — create under known parent. */
-const NAS_ACCOUNT_FALLBACK: Record<
-  string,
-  { type: AccountType; parentCode: string; nameAz: string; nameRu: string; nameEn: string }
-> = {
-  "241": {
-    type: AccountType.ASSET,
-    parentCode: "290",
-    nameAz: "Alınmış dəyərlər üzrə ƏDV (241)",
-    nameRu: "НДС к зачёту (входящий), счёт 241",
-    nameEn: "Input VAT (241)",
-  },
-};
+const VAT_INPUT_FALLBACK = {
+  type: AccountType.ASSET,
+  parentCode: "290",
+  nameAz: "Alınmış dəyərlər üzrə ƏDV",
+  nameRu: "НДС к зачёту (входящий)",
+  nameEn: "Input VAT",
+} as const;
 
 function asCount(v: unknown): number {
   if (typeof v === "number") return v;
@@ -59,6 +54,7 @@ export class AccountingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ifrsAutoMapping: IfrsAutoMappingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   validateBalance(lines: PostTransactionLine[]): void {
@@ -422,7 +418,7 @@ export class AccountingService {
 
   /**
    * Ensures all NAS account codes referenced in posting exist (e.g. 241 on empty / partial CoA).
-   * Uses `chart_of_accounts_entries` when possible; otherwise {@link NAS_ACCOUNT_FALLBACK}.
+   * Uses `chart_of_accounts_entries` when possible; otherwise role-based fallback (e.g. VAT_INPUT).
    */
   private async ensureNasAccountsForPosting(
     tx: Prisma.TransactionClient,
@@ -512,7 +508,12 @@ export class AccountingService {
       return;
     }
 
-    const fb = NAS_ACCOUNT_FALLBACK[code];
+    const vatInputCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "VAT_INPUT",
+      tx,
+    );
+    const fb = code === vatInputCode ? VAT_INPUT_FALLBACK : null;
     if (!fb) {
       stack.delete(code);
       throw new NotFoundException(`Account code ${code} not found for organization`);

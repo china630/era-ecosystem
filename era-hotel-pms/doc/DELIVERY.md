@@ -350,3 +350,13 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] CRM satellite boundaries: clinic + finance deep links (not in-hotel EMR)
 - [ ] CRM omnichannel live (Twilio/SendGrid): STUB only (B9 Partial)
 - [x] CRM P2/P3 buttons: visible-disabled in config
+
+## Hotel + clinic cycle (2026-06-04)
+
+- [x] Service module (`hotel_service`): `MaintenanceWorkOrder` extensions, `RecurringServiceSchedule`, `/app/service`
+- [x] Souvenir retail outlet link + room-charge bridge (era-retail-pos)
+- [x] Sanatorium booking event → orchestrator → clinic early planning
+- [x] `MigrationRegistration` + `GET/POST /api/migration/registrations`, prefill skeleton
+- [x] CP module `hotel_migration_pro` (all hotel types; alias `migration_pro`) — catalog seed, all hotel bundles, nav `/migration`, API gate
+- [x] Executive dashboard pulls clinic capacity when `CLINIC_URL` + `CLINIC_BRIDGE_SECRET` set
+- [ ] Apply migration `20260604180000_hotel_service_migration` on `era_hotel_pms` (use `scripts/docker-migrate-deploy.mjs`, not `db push` — avoids `User_phone_key` drift)

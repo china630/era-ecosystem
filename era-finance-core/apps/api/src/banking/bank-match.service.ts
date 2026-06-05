@@ -180,7 +180,7 @@ export class BankMatchService {
 
       const payDate = line.valueDate ?? new Date();
 
-      const { newStatus, paymentReceived, transactionId } =
+      const { newStatus, paymentReceived, transactionId, firstRevenueRecognition } =
         await this.invoices.applyBankPaymentInTransaction(
           tx,
           organizationId,
@@ -200,7 +200,13 @@ export class BankMatchService {
         paymentReceived,
         ledgerPosted: true,
         transactionId,
+        firstRevenueRecognition: firstRevenueRecognition === true,
       };
+    }).then((result) => {
+      if (result.firstRevenueRecognition) {
+        this.invoices.notifyRevenueRecognizedForNetwork(organizationId, invoiceId);
+      }
+      return result;
     });
   }
 

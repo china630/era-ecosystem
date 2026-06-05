@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import Redis from "ioredis";
 import { AuditService } from "../audit/audit.service";
 import { IntegrationReliabilityService } from "../integrations/integration-reliability.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { validateAzIban } from "./iban.util";
 
 @Injectable()
@@ -19,6 +20,7 @@ export class IbanValidationService implements OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly reliability: IntegrationReliabilityService,
     private readonly audit: AuditService,
+    private readonly dataHub: DataHubClientService,
   ) {
     this.redis = new Redis(
       this.config.get<string>("REDIS_URL", "redis://127.0.0.1:6379"),
@@ -30,6 +32,15 @@ export class IbanValidationService implements OnModuleDestroy {
   }
 
   async validateViaProvider(organizationId: string, ibanRaw: string) {
+    if (this.dataHub.isEnabled()) {
+      const hub = await this.dataHub.validateIban(ibanRaw);
+      if (hub && hub.valid === false) {
+        throw new BadRequestException({
+          code: "IBAN_HUB_INVALID",
+          message: hub.message ?? "Invalid IBAN (data hub)",
+        });
+      }
+    }
     const local = validateAzIban(ibanRaw);
     if (!local.isValid) {
       throw new BadRequestException({

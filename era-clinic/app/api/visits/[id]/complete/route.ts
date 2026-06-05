@@ -1,6 +1,5 @@
-import { SATELLITE_CLINIC_VISIT_COMPLETED } from "@era/contracts";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
-import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
+import { completeVisitBilling } from "@/lib/billing-router";
 import {
   createPortalLink,
   createPaymentLink,
@@ -23,23 +22,21 @@ export async function POST(
     const completed = await prisma.visit.update({
       where: { id },
       data: { status: "COMPLETED", completedAt: new Date() },
-      include: { patientRef: true, serviceLines: true },
+      include: { patientRef: true, serviceLines: true, appointment: true },
     });
 
-    await dispatchSatelliteEvent({
-      type: SATELLITE_CLINIC_VISIT_COMPLETED,
-      payload: {
-        visitId: completed.id,
-        patientRef: completed.patientRef.refCode,
-        serviceCodes: completed.serviceLines.map((l) => l.serviceCode),
-        amountNet: Number(completed.amountNet),
-        currency: "AZN",
-      },
-    });
+    if (completed.appointment) {
+      await prisma.appointment.update({
+        where: { id: completed.appointment.id },
+        data: { status: "COMPLETED" },
+      });
+    }
+
+    const billing = await completeVisitBilling(completed.id);
 
     const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
     const amountNet = Number(completed.amountNet);
-    if (organizationId && amountNet > 0) {
+    if (organizationId && amountNet > 0 && billing.channel === "finance") {
       try {
         await createPaymentLink(
           {
@@ -51,7 +48,7 @@ export async function POST(
           { organizationId },
         );
       } catch {
-        // optional payment link
+        // optional
       }
       try {
         await createPortalLink(
@@ -59,11 +56,11 @@ export async function POST(
           { organizationId },
         );
       } catch {
-        // optional portal
+        // optional
       }
     }
 
-    return jsonOk(completed);
+    return jsonOk({ ...completed, billing });
   } catch (err) {
     return handleRouteError(err);
   }

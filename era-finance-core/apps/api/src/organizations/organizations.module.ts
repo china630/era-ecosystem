@@ -1,4 +1,5 @@
 import { forwardRef, Module } from "@nestjs/common";
+import { AccountingModule } from "../accounting/accounting.module";
 import { AccountsModule } from "../accounts/accounts.module";
 import { AccessControlModule } from "../access/access-control.module";
 import { BankingModule } from "../banking/banking.module";
@@ -19,6 +20,7 @@ import { OrganizationSettingsService } from "./organization-settings.service";
 @Module({
   imports: [
     PrismaModule,
+    AccountingModule,
     AccountsModule,
     AccessControlModule,
     BankingModule,

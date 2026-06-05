@@ -37,6 +37,7 @@ import {
   Package,
   PackageSearch,
   PieChart,
+  Scale,
   ScrollText,
   Settings,
   Shield,
@@ -586,13 +587,22 @@ export function MainSidebar({
                 onNavClick={onNavClick}
               />
               {user && user.role != null && user.role !== "USER" ? (
-                <SideNavSubItem
-                  href="/finance/prepaid-expenses"
-                  label={t("nav.prepaidExpenses")}
-                  isActive={pathname.startsWith("/finance/prepaid-expenses")}
-                  icon={ScrollText}
-                  onNavClick={onNavClick}
-                />
+                <>
+                  <SideNavSubItem
+                    href="/finance/prepaid-expenses"
+                    label={t("nav.prepaidExpenses")}
+                    isActive={pathname.startsWith("/finance/prepaid-expenses")}
+                    icon={ScrollText}
+                    onNavClick={onNavClick}
+                  />
+                  <SideNavSubItem
+                    href="/finance/network-inbox"
+                    label={t("nav.networkInbox", { defaultValue: "Şəbəkə sənədləri" })}
+                    isActive={pathname.startsWith("/finance/network-inbox")}
+                    icon={Inbox}
+                    onNavClick={onNavClick}
+                  />
+                </>
               ) : null}
             </>
           ) : null}
@@ -658,6 +668,15 @@ export function MainSidebar({
             nested
             onNavClick={onNavClick}
           />
+          {canPostAccounting ? (
+            <SideNavSubItem
+              href="/finance/payables/suppliers"
+              label={t("nav.supplierPayables", { defaultValue: "Kreditorlar (531)" })}
+              isActive={pathname.startsWith("/finance/payables")}
+              icon={Scale}
+              onNavClick={onNavClick}
+            />
+          ) : null}
         </CollapsibleNavSection>
 
         <CollapsibleNavSection

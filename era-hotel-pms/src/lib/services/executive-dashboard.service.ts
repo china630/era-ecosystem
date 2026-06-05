@@ -2,6 +2,7 @@ import type { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
+import type { ClinicCapacitySummary } from '@/lib/integration/clinic-capacity-client';
 import {
   addDays,
   computeHotelStatus,
@@ -54,6 +55,7 @@ export type ExecutiveCockpit = ExecutiveDashboardKpis & {
     total: number;
     overdue: number;
   };
+  clinicCapacity: ClinicCapacitySummary | null;
 };
 
 export function computeAdr(roomRevenue: number, roomsSold: number): number {
@@ -64,6 +66,15 @@ export function computeAdr(roomRevenue: number, roomsSold: number): number {
 export function computeRevpar(roomRevenue: number, roomsTotal: number): number {
   if (roomsTotal <= 0) return 0;
   return roomRevenue / roomsTotal;
+}
+
+async function fetchClinicCapacitySummary(
+  refDate: Date,
+): Promise<ClinicCapacitySummary | null> {
+  const { fetchClinicCapacitySummary: fetchCap } = await import(
+    '@/lib/integration/clinic-capacity-client'
+  );
+  return fetchCap(refDate);
 }
 
 type ChargeRow = {
@@ -247,9 +258,12 @@ export async function getExecutiveDashboard(dateInput?: Date): Promise<Executive
     lastWeek: lastWeek.revpar,
   };
 
+  const clinicCapacity = await fetchClinicCapacitySummary(day);
+
   return {
     date: day.toISOString().slice(0, 10),
     hotelStatus,
+    clinicCapacity,
     occupancy: {
       factPct: today.factPct,
       planPct: today.planPct,

@@ -1,31 +1,39 @@
-import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { NextResponse } from "next/server";
+import { verifyGuestQrToken } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(req: Request) {
-  try {
-    const token = new URL(req.url).searchParams.get("token");
-    if (!token) return jsonError("token required", 400);
-
-    const visits = await prisma.visit.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      include: {
-        patientRef: { select: { refCode: true, fullName: true } },
-        labOrders: { take: 5 },
-      },
-    });
-
-    return jsonOk({
-      mode: "portal_live",
-      token,
-      visits: visits.map((v) => ({
-        id: v.id,
-        status: v.status,
-        patient: v.patientRef,
-        labOrders: v.labOrders.length,
-      })),
-    });
-  } catch (err) {
-    return handleRouteError(err);
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const token = url.searchParams.get("token")?.trim();
+  if (!token) {
+    return NextResponse.json({ error: "token required" }, { status: 400 });
   }
+
+  const identity = await verifyGuestQrToken(token);
+  if (!identity?.globalPersonId) {
+    return NextResponse.json({ error: "invalid or expired token" }, { status: 401 });
+  }
+
+  const patients = await prisma.patientRef.findMany({
+    where: { globalPersonId: identity.globalPersonId },
+    select: { id: true },
+  });
+  const patientIds = patients.map((p) => p.id);
+  if (patientIds.length === 0) {
+    return NextResponse.json({ token, globalPersonId: identity.globalPersonId, visits: [] });
+  }
+
+  const visits = await prisma.visit.findMany({
+    where: { patientRefId: { in: patientIds } },
+    include: { patientRef: true, serviceLines: true },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  return NextResponse.json({
+    token,
+    globalPersonId: identity.globalPersonId,
+    expiresAt: identity.expiresAt,
+    visits,
+  });
 }

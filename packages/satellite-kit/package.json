@@ -37,6 +37,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@era/fiscal": "file:../era-fiscal",
     "@era/i18n-common": "file:../i18n-common",
     "@era/contracts": "file:../era-contracts",
     "@era/storage": "file:../era-storage",

@@ -15,6 +15,12 @@ export {
   type SatelliteSsoLaunchParams,
 } from "./auth/sso-launch";
 export {
+  signGuestIdentityToken,
+  verifyGuestIdentityToken,
+  defaultGuestIdentityExpiresAt,
+  type GuestIdentityTokenPayload,
+} from "./auth/guest-identity-token";
+export {
   executeSatelliteSsoExchange,
   type SsoExchangePrisma,
   type SsoExchangeResult,
@@ -95,11 +101,34 @@ export {
   type PlatformCommerceHooksInput,
 } from "./integration/platform-commerce-hooks";
 export {
+  resolveOperatingMode,
+  parseOperatingMode,
+  shouldRouteRevenueToParent,
+  shouldFiscalizeOnParent,
+  DEFAULT_OPERATING_MODE,
+  type OperatingModeSnapshot,
+  type OrgOperatingMode,
+  type OrgRouting,
+} from "./integration/operating-mode";
+export {
+  fiscalizeForSatellite,
+  isFiscalPaymentMethod,
+  isFiscalSkipped,
+  type SatelliteFiscalizeOutcome,
+  type SatelliteFiscalizeSkipped,
+} from "./integration/satellite-fiscal";
+export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,
   lookupLegalEntityByVoen,
   type MdmLookupOptions,
 } from "./integration/mdm-lookup.client";
+export {
+  resolveGlobalPerson,
+  issueGuestQrToken,
+  verifyGuestQrToken,
+  type GuestIdentityClientOptions,
+} from "./integration/guest-identity.client";
 export {
   buildFinanceBillingUrl,
   buildFinanceTeamUrl,

@@ -117,6 +117,8 @@ export class PostingAccountResolver {
       FOUNDER_FUNDS: "545",
       ACCOUNTABLE_PERSONS: "244",
       TRANSIT_TRANSFER: "231",
+      PREPAID_ASSET: "133",
+      CHARTER_CAPITAL: "821",
     };
     const code = fallbacks[role];
     if (!code) throw new NotFoundException(`Commercial preset missing for role ${role}`);

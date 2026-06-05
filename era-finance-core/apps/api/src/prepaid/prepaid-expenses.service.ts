@@ -10,6 +10,7 @@ import {
 } from "@erafinance/database";
 import { Decimal } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import type { CreatePrepaidExpenseDto } from "./dto/create-prepaid-expense.dto";
 
@@ -45,6 +46,7 @@ export class PrepaidExpensesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   list(organizationId: string) {
@@ -77,14 +79,24 @@ export class PrepaidExpensesService {
     const remainder = total.sub(base.mul(n));
 
     const currency = dto.currency?.trim() || "AZN";
-    const expenseCode = dto.expenseAccountCode?.trim() || "731";
-    const prepaidCode = dto.prepaidAccountCode?.trim() || "133";
 
     return this.prisma.$transaction(async (tx) => {
+      const expenseCode =
+        dto.expenseAccountCode?.trim() ||
+        (await this.posting.resolveAccountCode(
+          organizationId,
+          "MISC_OPERATING_EXPENSE",
+          tx,
+        ));
+      const prepaidCode =
+        dto.prepaidAccountCode?.trim() ||
+        (await this.posting.resolveAccountCode(organizationId, "PREPAID_ASSET", tx));
+
       const row = await tx.prepaidExpense.create({
         data: {
           organizationId,
           counterpartyId: dto.counterpartyId ?? undefined,
+          description: dto.description?.trim() || null,
           totalAmount: total,
           currency,
           startDate: start,

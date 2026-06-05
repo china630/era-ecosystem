@@ -1,6 +1,8 @@
 import { Body, Controller, Headers, Post } from "@nestjs/common";
+import { Public } from "../auth/decorators/public.decorator";
 import { SatelliteEventsService } from "./satellite-events.service";
 
+@Public()
 @Controller("api/v1/satellite-events")
 export class SatelliteEventsController {
   constructor(private readonly events: SatelliteEventsService) {}

@@ -41,6 +41,10 @@ export class SubscriptionController {
         select: {
           billingStatus: true,
           whatsappAlertsUsed: true,
+          operatingMode: true,
+          parentOrgId: true,
+          fiscalRouting: true,
+          revenueRouting: true,
         },
       }),
     ]);
@@ -64,6 +68,12 @@ export class SubscriptionController {
       customConfig: snapshot.customConfig,
       modules: snapshot.modules,
       hotelModules: buildHotelModuleEntitlements(snapshot.activeModules),
+      operatingMode: {
+        mode: org?.operatingMode ?? "STANDALONE",
+        parentOrgId: org?.parentOrgId ?? null,
+        fiscalRouting: org?.fiscalRouting ?? "OWN",
+        revenueRouting: org?.revenueRouting ?? "OWN",
+      },
       expiresAt: expiresAt?.toISOString() ?? null,
       isTrial: snapshot.isTrial,
       billingStatus: org?.billingStatus ?? BillingStatus.ACTIVE,

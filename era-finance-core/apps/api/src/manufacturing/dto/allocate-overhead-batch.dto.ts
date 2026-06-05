@@ -37,17 +37,23 @@ export class AllocateOverheadBatchDto {
   @IsUUID("4", { each: true })
   releaseIds!: string[];
 
-  @ApiPropertyOptional({ default: "741" })
+  @ApiPropertyOptional({
+    description: "Credit NAS code; default from MANUFACTURING_OVERHEAD_CREDIT posting role",
+  })
   @IsOptional()
   @IsString()
   creditAccountCode?: string;
 
-  @ApiPropertyOptional({ default: "204" })
+  @ApiPropertyOptional({
+    description: "Debit NAS code; default from FINISHED_GOODS posting role",
+  })
   @IsOptional()
   @IsString()
   debitAccountCode?: string;
 
-  @ApiPropertyOptional({ default: "741" })
+  @ApiPropertyOptional({
+    description: "Source NAS code; defaults to credit account",
+  })
   @IsOptional()
   @IsString()
   sourceAccountCode?: string;

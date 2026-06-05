@@ -13,6 +13,7 @@ import {
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { prisma } from "@/lib/prisma";
+import { getCapacitySummary } from "@/lib/capacity.service";
 
 function startOfToday(): Date {
   const d = new Date();
@@ -41,6 +42,7 @@ export default async function ExecutivePage() {
     visitsToday: number;
     labRevenueToday: number;
     openLabOrders: number;
+    capacity: Awaited<ReturnType<typeof getCapacitySummary>>;
   } | null = null;
 
   if (canView) {
@@ -72,6 +74,7 @@ export default async function ExecutivePage() {
         0,
       ),
       openLabOrders,
+      capacity: await getCapacitySummary(today),
     };
   }
 
@@ -92,7 +95,7 @@ export default async function ExecutivePage() {
         ) : !summary ? (
           <p className="text-[13px] text-[#7F8C8D]">{t("loadFailed")}</p>
         ) : (
-          <dl className="grid gap-4 sm:grid-cols-3 text-[13px]">
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-[13px]">
             <div className="rounded border p-4">
               <dt className="text-[#7F8C8D]">{t("visitsToday")}</dt>
               <dd className="text-2xl font-semibold">{summary.visitsToday}</dd>
@@ -106,6 +109,23 @@ export default async function ExecutivePage() {
             <div className="rounded border p-4">
               <dt className="text-[#7F8C8D]">{t("openLabOrders")}</dt>
               <dd className="text-2xl font-semibold">{summary.openLabOrders}</dd>
+            </div>
+            <div
+              className={`rounded border p-4 ${
+                summary.capacity.riskLevel === "critical"
+                  ? "border-red-400 bg-red-50"
+                  : summary.capacity.riskLevel === "warning"
+                    ? "border-amber-400 bg-amber-50"
+                    : ""
+              }`}
+            >
+              <dt className="text-[#7F8C8D]">Sanatorium load (week)</dt>
+              <dd className="text-2xl font-semibold">
+                ~{summary.capacity.guestEquivalent} guests
+              </dd>
+              <dd className="text-xs text-[#7F8C8D]">
+                {summary.capacity.scheduledSlots} slots · risk {summary.capacity.riskLevel}
+              </dd>
             </div>
           </dl>
         )}

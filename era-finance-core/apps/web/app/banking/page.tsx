@@ -933,7 +933,7 @@ export default function BankingPage() {
   if (!token) return null;
   return (
     <SubscriptionPaywall module="bankingPro">
-      <div className="space-y-10 max-w-6xl mx-auto">
+      <div className="w-full max-w-none space-y-10">
         <PageHeader
           title={t("banking.title")}
           leading={

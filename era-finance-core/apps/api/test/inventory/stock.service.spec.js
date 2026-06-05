@@ -1,7 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("@erafinance/database");
-const ledger_constants_1 = require("../../src/ledger.constants");
+const INVENTORY_GOODS_ACCOUNT_CODE = "201";
+const MISC_OPERATING_EXPENSE_ACCOUNT_CODE = "731";
 const inventory_service_1 = require("../../src/inventory/inventory.service");
 describe("InventoryService (stock / adjust)", () => {
     const orgId = "00000000-0000-0000-0000-000000000001";
@@ -50,8 +51,8 @@ describe("InventoryService (stock / adjust)", () => {
         expect(tx.stockItem.upsert).toHaveBeenCalled();
         expect(accounting.postJournalInTransaction).toHaveBeenCalledTimes(1);
         const lines = journalCalls[0].lines;
-        const dr731 = lines.find((l) => l.accountCode === ledger_constants_1.MISC_OPERATING_EXPENSE_ACCOUNT_CODE);
-        const cr201 = lines.find((l) => l.accountCode === ledger_constants_1.INVENTORY_GOODS_ACCOUNT_CODE);
+        const dr731 = lines.find((l) => l.accountCode === MISC_OPERATING_EXPENSE_ACCOUNT_CODE);
+        const cr201 = lines.find((l) => l.accountCode === INVENTORY_GOODS_ACCOUNT_CODE);
         expect(dr731).toBeDefined();
         expect(cr201).toBeDefined();
         expect(String(dr731?.debit)).toBe("10");

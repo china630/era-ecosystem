@@ -14,6 +14,7 @@ import { EmptyState } from "../../components/empty-state";
 import { ListPaginationFooter } from "../../components/list-pagination-footer";
 import { CreateReceiptModal } from "../../components/inventory/create-receipt-modal";
 import { PurchaseModal } from "../../components/inventory/modals";
+import { PayPurchaseModal } from "../../components/purchases/PayPurchaseModal";
 import { Badge } from "../../components/ui/badge";
 import {
   DATA_TABLE_CLASS,
@@ -78,6 +79,9 @@ export default function PurchasesPage() {
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [receiptBasisTransactionId, setReceiptBasisTransactionId] = useState<string | undefined>();
   const [purchaseActionsMenuId, setPurchaseActionsMenuId] = useState<string | null>(null);
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const [payInvoiceId, setPayInvoiceId] = useState<string | undefined>();
+  const [payDefaultAmount, setPayDefaultAmount] = useState<string | undefined>();
   const [ocrPrefill, setOcrPrefill] = useState<Record<string, unknown> | null>(null);
   const ocrInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -234,25 +238,38 @@ export default function PurchasesPage() {
                   <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(m.totalGross)}</td>
                   <td className={DATA_TABLE_TD_CLASS}>{m.description?.trim() || "—"}</td>
                   <td className={`${DATA_TABLE_TD_CLASS} relative`}>
-                    {purchaseHasGoodsLines(m) ? (
-                      <div className="relative inline-block" id={`purchase-row-actions-${m.id}`}>
-                        <button
-                          type="button"
-                          className="rounded-lg border border-[#D5DADF] bg-white px-2 py-1.5 text-[#34495E] hover:bg-[#F8F9FA]"
-                          aria-expanded={purchaseActionsMenuId === m.id}
-                          aria-haspopup="menu"
-                          aria-label={t("inventory.purchaseActionsMenuAria")}
-                          onClick={() =>
-                            setPurchaseActionsMenuId((cur) => (cur === m.id ? null : m.id))
-                          }
+                    <div className="relative inline-block" id={`purchase-row-actions-${m.id}`}>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-[#D5DADF] bg-white px-2 py-1.5 text-[#34495E] hover:bg-[#F8F9FA]"
+                        aria-expanded={purchaseActionsMenuId === m.id}
+                        aria-haspopup="menu"
+                        aria-label={t("inventory.purchaseActionsMenuAria")}
+                        onClick={() =>
+                          setPurchaseActionsMenuId((cur) => (cur === m.id ? null : m.id))
+                        }
+                      >
+                        <MoreHorizontal className="h-4 w-4" aria-hidden />
+                      </button>
+                      {purchaseActionsMenuId === m.id ? (
+                        <div
+                          className="absolute right-0 z-50 mt-1 min-w-[12rem] rounded-lg border border-[#D5DADF] bg-white py-1 text-[13px] text-[#34495E] shadow-md"
+                          role="menu"
                         >
-                          <MoreHorizontal className="h-4 w-4" aria-hidden />
-                        </button>
-                        {purchaseActionsMenuId === m.id ? (
-                          <div
-                            className="absolute right-0 z-50 mt-1 min-w-[12rem] rounded-lg border border-[#D5DADF] bg-white py-1 text-[13px] text-[#34495E] shadow-md"
-                            role="menu"
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="block w-full px-3 py-2 text-left hover:bg-[#F1F5F9]"
+                            onClick={() => {
+                              setPurchaseActionsMenuId(null);
+                              setPayInvoiceId(m.id);
+                              setPayDefaultAmount(m.totalGross);
+                              setPayModalOpen(true);
+                            }}
                           >
+                            {t("inventory.purchasePayAction", { defaultValue: "Ödəniş et" })}
+                          </button>
+                          {purchaseHasGoodsLines(m) ? (
                             <button
                               type="button"
                               role="menuitem"
@@ -265,12 +282,10 @@ export default function PurchasesPage() {
                             >
                               {t("inventory.purchaseCreateReceipt")}
                             </button>
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      "—"
-                    )}
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -313,6 +328,23 @@ export default function PurchasesPage() {
           setReceiptBasisTransactionId(undefined);
         }}
         onSaved={() => void load()}
+      />
+
+      <PayPurchaseModal
+        open={payModalOpen}
+        purchaseInvoiceId={payInvoiceId}
+        defaultAmount={payDefaultAmount}
+        payUrl={
+          payInvoiceId
+            ? `/api/purchases/invoices/${encodeURIComponent(payInvoiceId)}/pay`
+            : ""
+        }
+        onPaid={() => void load()}
+        onClose={() => {
+          setPayModalOpen(false);
+          setPayInvoiceId(undefined);
+          setPayDefaultAmount(undefined);
+        }}
       />
     </div>
   );

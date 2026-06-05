@@ -10,6 +10,11 @@ describe('hotel module taxonomy (hotel-pms)', () => {
     expect(resolveHotelModuleForPathname('/in-house')).toBe('hotel_core');
   });
 
+  it('maps migration routes to hotel_migration_pro', () => {
+    expect(resolveHotelModuleForPathname('/migration')).toBe('hotel_migration_pro');
+    expect(resolveHotelModuleKey('migration_pro')).toBe('hotel_migration_pro');
+  });
+
   it('maps distribution routes to hotel_distribution', () => {
     expect(resolveHotelModuleForPathname('/channel')).toBe('hotel_distribution');
     expect(resolveHotelModuleForPathname('/admin/promotion-codes')).toBe('hotel_distribution');

@@ -98,10 +98,11 @@ export async function postPayment(input: {
   let fiscalQrPayload: string | null = null;
 
   if (['CASH', 'CARD'].includes(input.paymentMethod)) {
-    const { getFiscalProvider } = await import('@/lib/compliance/fiscal-provider');
+    const { fiscalize } = await import('@era/fiscal');
     const { dispatchPaymentFiscalized } = await import('@/lib/integration/event-dispatcher');
     try {
-      const receipt = await getFiscalProvider().fiscalizePayment({
+      const receipt = await fiscalize({
+        documentRef: input.folioId,
         amount: input.amount,
         paymentMethod: input.paymentMethod,
         registerRef: input.registerRef,

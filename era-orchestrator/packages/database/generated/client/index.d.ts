@@ -64,6 +64,11 @@ export type PricingModule = $Result.DefaultSelection<Prisma.$PricingModulePayloa
  */
 export type Satellite = $Result.DefaultSelection<Prisma.$SatellitePayload>
 /**
+ * Model SatelliteEndpoint
+ * * Per-organization satellite instance URL + bridge secret for event fan-out.
+ */
+export type SatelliteEndpoint = $Result.DefaultSelection<Prisma.$SatelliteEndpointPayload>
+/**
  * Model PricingBundle
  * 
  */
@@ -100,7 +105,7 @@ export type Permission = $Result.DefaultSelection<Prisma.$PermissionPayload>
 export type RolePermission = $Result.DefaultSelection<Prisma.$RolePermissionPayload>
 /**
  * Model Organization
- * Shared organizations table (ownerId for BUSINESS_OWNER / billing).
+ * 
  */
 export type Organization = $Result.DefaultSelection<Prisma.$OrganizationPayload>
 /**
@@ -490,6 +495,22 @@ export const PermissionCategory: {
 export type PermissionCategory = (typeof PermissionCategory)[keyof typeof PermissionCategory]
 
 
+export const OrgOperatingMode: {
+  STANDALONE: 'STANDALONE',
+  DEPARTMENT: 'DEPARTMENT'
+};
+
+export type OrgOperatingMode = (typeof OrgOperatingMode)[keyof typeof OrgOperatingMode]
+
+
+export const OrgRouting: {
+  OWN: 'OWN',
+  PARENT: 'PARENT'
+};
+
+export type OrgRouting = (typeof OrgRouting)[keyof typeof OrgRouting]
+
+
 export const EarlyAccessModuleKey: {
   RETAIL_ECOM: 'RETAIL_ECOM',
   LOGISTICS_CUSTOMS: 'LOGISTICS_CUSTOMS',
@@ -612,6 +633,14 @@ export const PlatformShipmentStatus: typeof $Enums.PlatformShipmentStatus
 export type PermissionCategory = $Enums.PermissionCategory
 
 export const PermissionCategory: typeof $Enums.PermissionCategory
+
+export type OrgOperatingMode = $Enums.OrgOperatingMode
+
+export const OrgOperatingMode: typeof $Enums.OrgOperatingMode
+
+export type OrgRouting = $Enums.OrgRouting
+
+export const OrgRouting: typeof $Enums.OrgRouting
 
 export type EarlyAccessModuleKey = $Enums.EarlyAccessModuleKey
 
@@ -841,6 +870,16 @@ export class PrismaClient<
     * ```
     */
   get satellite(): Prisma.SatelliteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.satelliteEndpoint`: Exposes CRUD operations for the **SatelliteEndpoint** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SatelliteEndpoints
+    * const satelliteEndpoints = await prisma.satelliteEndpoint.findMany()
+    * ```
+    */
+  get satelliteEndpoint(): Prisma.SatelliteEndpointDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.pricingBundle`: Exposes CRUD operations for the **PricingBundle** model.
@@ -1635,6 +1674,7 @@ export namespace Prisma {
     Pricing: 'Pricing',
     PricingModule: 'PricingModule',
     Satellite: 'Satellite',
+    SatelliteEndpoint: 'SatelliteEndpoint',
     PricingBundle: 'PricingBundle',
     LandingModuleMarketing: 'LandingModuleMarketing',
     PaymentOrder: 'PaymentOrder',
@@ -1685,7 +1725,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "satelliteEndpoint" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2426,6 +2466,80 @@ export namespace Prisma {
           count: {
             args: Prisma.SatelliteCountArgs<ExtArgs>
             result: $Utils.Optional<SatelliteCountAggregateOutputType> | number
+          }
+        }
+      }
+      SatelliteEndpoint: {
+        payload: Prisma.$SatelliteEndpointPayload<ExtArgs>
+        fields: Prisma.SatelliteEndpointFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SatelliteEndpointFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SatelliteEndpointFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          findFirst: {
+            args: Prisma.SatelliteEndpointFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SatelliteEndpointFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          findMany: {
+            args: Prisma.SatelliteEndpointFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>[]
+          }
+          create: {
+            args: Prisma.SatelliteEndpointCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          createMany: {
+            args: Prisma.SatelliteEndpointCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SatelliteEndpointCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>[]
+          }
+          delete: {
+            args: Prisma.SatelliteEndpointDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          update: {
+            args: Prisma.SatelliteEndpointUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          deleteMany: {
+            args: Prisma.SatelliteEndpointDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SatelliteEndpointUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SatelliteEndpointUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>[]
+          }
+          upsert: {
+            args: Prisma.SatelliteEndpointUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SatelliteEndpointPayload>
+          }
+          aggregate: {
+            args: Prisma.SatelliteEndpointAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSatelliteEndpoint>
+          }
+          groupBy: {
+            args: Prisma.SatelliteEndpointGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SatelliteEndpointGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SatelliteEndpointCountArgs<ExtArgs>
+            result: $Utils.Optional<SatelliteEndpointCountAggregateOutputType> | number
           }
         }
       }
@@ -5137,6 +5251,7 @@ export namespace Prisma {
     pricing?: PricingOmit
     pricingModule?: PricingModuleOmit
     satellite?: SatelliteOmit
+    satelliteEndpoint?: SatelliteEndpointOmit
     pricingBundle?: PricingBundleOmit
     landingModuleMarketing?: LandingModuleMarketingOmit
     paymentOrder?: PaymentOrderOmit
@@ -5293,10 +5408,12 @@ export namespace Prisma {
 
   export type SatelliteCountOutputType = {
     modules: number
+    endpoints: number
   }
 
   export type SatelliteCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     modules?: boolean | SatelliteCountOutputTypeCountModulesArgs
+    endpoints?: boolean | SatelliteCountOutputTypeCountEndpointsArgs
   }
 
   // Custom InputTypes
@@ -5315,6 +5432,13 @@ export namespace Prisma {
    */
   export type SatelliteCountOutputTypeCountModulesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PricingModuleWhereInput
+  }
+
+  /**
+   * SatelliteCountOutputType without action
+   */
+  export type SatelliteCountOutputTypeCountEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SatelliteEndpointWhereInput
   }
 
 
@@ -5468,6 +5592,8 @@ export namespace Prisma {
     platformAuditLogs: number
     platformIdempotencyRecords: number
     platformLoyaltyLedger: number
+    satelliteEndpoints: number
+    departments: number
   }
 
   export type OrganizationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5492,6 +5618,8 @@ export namespace Prisma {
     platformAuditLogs?: boolean | OrganizationCountOutputTypeCountPlatformAuditLogsArgs
     platformIdempotencyRecords?: boolean | OrganizationCountOutputTypeCountPlatformIdempotencyRecordsArgs
     platformLoyaltyLedger?: boolean | OrganizationCountOutputTypeCountPlatformLoyaltyLedgerArgs
+    satelliteEndpoints?: boolean | OrganizationCountOutputTypeCountSatelliteEndpointsArgs
+    departments?: boolean | OrganizationCountOutputTypeCountDepartmentsArgs
   }
 
   // Custom InputTypes
@@ -5650,6 +5778,20 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountPlatformLoyaltyLedgerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PlatformLoyaltyLedgerWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountSatelliteEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SatelliteEndpointWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountDepartmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationWhereInput
   }
 
 
@@ -16347,6 +16489,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
+    endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["satellite"]>
 
@@ -16380,6 +16523,7 @@ export namespace Prisma {
   export type SatelliteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"key" | "name" | "verticalSlug" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["satellite"]>
   export type SatelliteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
+    endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SatelliteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -16389,6 +16533,7 @@ export namespace Prisma {
     name: "Satellite"
     objects: {
       modules: Prisma.$PricingModulePayload<ExtArgs>[]
+      endpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       key: string
@@ -16792,6 +16937,7 @@ export namespace Prisma {
   export interface Prisma__SatelliteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     modules<T extends Satellite$modulesArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$modulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    endpoints<T extends Satellite$endpointsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$endpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -17244,6 +17390,30 @@ export namespace Prisma {
   }
 
   /**
+   * Satellite.endpoints
+   */
+  export type Satellite$endpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    where?: SatelliteEndpointWhereInput
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    cursor?: SatelliteEndpointWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
    * Satellite without action
    */
   export type SatelliteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -17259,6 +17429,1135 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SatelliteEndpoint
+   */
+
+  export type AggregateSatelliteEndpoint = {
+    _count: SatelliteEndpointCountAggregateOutputType | null
+    _min: SatelliteEndpointMinAggregateOutputType | null
+    _max: SatelliteEndpointMaxAggregateOutputType | null
+  }
+
+  export type SatelliteEndpointMinAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    baseUrl: string | null
+    secretCipher: string | null
+    enabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatelliteEndpointMaxAggregateOutputType = {
+    id: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    baseUrl: string | null
+    secretCipher: string | null
+    enabled: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SatelliteEndpointCountAggregateOutputType = {
+    id: number
+    organizationId: number
+    satelliteKey: number
+    baseUrl: number
+    secretCipher: number
+    enabled: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SatelliteEndpointMinAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    baseUrl?: true
+    secretCipher?: true
+    enabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatelliteEndpointMaxAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    baseUrl?: true
+    secretCipher?: true
+    enabled?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SatelliteEndpointCountAggregateInputType = {
+    id?: true
+    organizationId?: true
+    satelliteKey?: true
+    baseUrl?: true
+    secretCipher?: true
+    enabled?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SatelliteEndpointAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatelliteEndpoint to aggregate.
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteEndpoints to fetch.
+     */
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SatelliteEndpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteEndpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteEndpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SatelliteEndpoints
+    **/
+    _count?: true | SatelliteEndpointCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SatelliteEndpointMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SatelliteEndpointMaxAggregateInputType
+  }
+
+  export type GetSatelliteEndpointAggregateType<T extends SatelliteEndpointAggregateArgs> = {
+        [P in keyof T & keyof AggregateSatelliteEndpoint]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSatelliteEndpoint[P]>
+      : GetScalarType<T[P], AggregateSatelliteEndpoint[P]>
+  }
+
+
+
+
+  export type SatelliteEndpointGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SatelliteEndpointWhereInput
+    orderBy?: SatelliteEndpointOrderByWithAggregationInput | SatelliteEndpointOrderByWithAggregationInput[]
+    by: SatelliteEndpointScalarFieldEnum[] | SatelliteEndpointScalarFieldEnum
+    having?: SatelliteEndpointScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SatelliteEndpointCountAggregateInputType | true
+    _min?: SatelliteEndpointMinAggregateInputType
+    _max?: SatelliteEndpointMaxAggregateInputType
+  }
+
+  export type SatelliteEndpointGroupByOutputType = {
+    id: string
+    organizationId: string
+    satelliteKey: string
+    baseUrl: string
+    secretCipher: string | null
+    enabled: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: SatelliteEndpointCountAggregateOutputType | null
+    _min: SatelliteEndpointMinAggregateOutputType | null
+    _max: SatelliteEndpointMaxAggregateOutputType | null
+  }
+
+  type GetSatelliteEndpointGroupByPayload<T extends SatelliteEndpointGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SatelliteEndpointGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SatelliteEndpointGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SatelliteEndpointGroupByOutputType[P]>
+            : GetScalarType<T[P], SatelliteEndpointGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SatelliteEndpointSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    baseUrl?: boolean
+    secretCipher?: boolean
+    enabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }, ExtArgs["result"]["satelliteEndpoint"]>
+
+  export type SatelliteEndpointSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    baseUrl?: boolean
+    secretCipher?: boolean
+    enabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }, ExtArgs["result"]["satelliteEndpoint"]>
+
+  export type SatelliteEndpointSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    baseUrl?: boolean
+    secretCipher?: boolean
+    enabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }, ExtArgs["result"]["satelliteEndpoint"]>
+
+  export type SatelliteEndpointSelectScalar = {
+    id?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    baseUrl?: boolean
+    secretCipher?: boolean
+    enabled?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SatelliteEndpointOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "satelliteKey" | "baseUrl" | "secretCipher" | "enabled" | "createdAt" | "updatedAt", ExtArgs["result"]["satelliteEndpoint"]>
+  export type SatelliteEndpointInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }
+  export type SatelliteEndpointIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }
+  export type SatelliteEndpointIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteEndpoint$satelliteArgs<ExtArgs>
+  }
+
+  export type $SatelliteEndpointPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SatelliteEndpoint"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      satellite: Prisma.$SatellitePayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organizationId: string
+      satelliteKey: string
+      baseUrl: string
+      secretCipher: string | null
+      enabled: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["satelliteEndpoint"]>
+    composites: {}
+  }
+
+  type SatelliteEndpointGetPayload<S extends boolean | null | undefined | SatelliteEndpointDefaultArgs> = $Result.GetResult<Prisma.$SatelliteEndpointPayload, S>
+
+  type SatelliteEndpointCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SatelliteEndpointFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SatelliteEndpointCountAggregateInputType | true
+    }
+
+  export interface SatelliteEndpointDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SatelliteEndpoint'], meta: { name: 'SatelliteEndpoint' } }
+    /**
+     * Find zero or one SatelliteEndpoint that matches the filter.
+     * @param {SatelliteEndpointFindUniqueArgs} args - Arguments to find a SatelliteEndpoint
+     * @example
+     * // Get one SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SatelliteEndpointFindUniqueArgs>(args: SelectSubset<T, SatelliteEndpointFindUniqueArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SatelliteEndpoint that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SatelliteEndpointFindUniqueOrThrowArgs} args - Arguments to find a SatelliteEndpoint
+     * @example
+     * // Get one SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SatelliteEndpointFindUniqueOrThrowArgs>(args: SelectSubset<T, SatelliteEndpointFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatelliteEndpoint that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointFindFirstArgs} args - Arguments to find a SatelliteEndpoint
+     * @example
+     * // Get one SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SatelliteEndpointFindFirstArgs>(args?: SelectSubset<T, SatelliteEndpointFindFirstArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SatelliteEndpoint that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointFindFirstOrThrowArgs} args - Arguments to find a SatelliteEndpoint
+     * @example
+     * // Get one SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SatelliteEndpointFindFirstOrThrowArgs>(args?: SelectSubset<T, SatelliteEndpointFindFirstOrThrowArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SatelliteEndpoints that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SatelliteEndpoints
+     * const satelliteEndpoints = await prisma.satelliteEndpoint.findMany()
+     * 
+     * // Get first 10 SatelliteEndpoints
+     * const satelliteEndpoints = await prisma.satelliteEndpoint.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const satelliteEndpointWithIdOnly = await prisma.satelliteEndpoint.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SatelliteEndpointFindManyArgs>(args?: SelectSubset<T, SatelliteEndpointFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SatelliteEndpoint.
+     * @param {SatelliteEndpointCreateArgs} args - Arguments to create a SatelliteEndpoint.
+     * @example
+     * // Create one SatelliteEndpoint
+     * const SatelliteEndpoint = await prisma.satelliteEndpoint.create({
+     *   data: {
+     *     // ... data to create a SatelliteEndpoint
+     *   }
+     * })
+     * 
+     */
+    create<T extends SatelliteEndpointCreateArgs>(args: SelectSubset<T, SatelliteEndpointCreateArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SatelliteEndpoints.
+     * @param {SatelliteEndpointCreateManyArgs} args - Arguments to create many SatelliteEndpoints.
+     * @example
+     * // Create many SatelliteEndpoints
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SatelliteEndpointCreateManyArgs>(args?: SelectSubset<T, SatelliteEndpointCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SatelliteEndpoints and returns the data saved in the database.
+     * @param {SatelliteEndpointCreateManyAndReturnArgs} args - Arguments to create many SatelliteEndpoints.
+     * @example
+     * // Create many SatelliteEndpoints
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SatelliteEndpoints and only return the `id`
+     * const satelliteEndpointWithIdOnly = await prisma.satelliteEndpoint.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SatelliteEndpointCreateManyAndReturnArgs>(args?: SelectSubset<T, SatelliteEndpointCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SatelliteEndpoint.
+     * @param {SatelliteEndpointDeleteArgs} args - Arguments to delete one SatelliteEndpoint.
+     * @example
+     * // Delete one SatelliteEndpoint
+     * const SatelliteEndpoint = await prisma.satelliteEndpoint.delete({
+     *   where: {
+     *     // ... filter to delete one SatelliteEndpoint
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SatelliteEndpointDeleteArgs>(args: SelectSubset<T, SatelliteEndpointDeleteArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SatelliteEndpoint.
+     * @param {SatelliteEndpointUpdateArgs} args - Arguments to update one SatelliteEndpoint.
+     * @example
+     * // Update one SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SatelliteEndpointUpdateArgs>(args: SelectSubset<T, SatelliteEndpointUpdateArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SatelliteEndpoints.
+     * @param {SatelliteEndpointDeleteManyArgs} args - Arguments to filter SatelliteEndpoints to delete.
+     * @example
+     * // Delete a few SatelliteEndpoints
+     * const { count } = await prisma.satelliteEndpoint.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SatelliteEndpointDeleteManyArgs>(args?: SelectSubset<T, SatelliteEndpointDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatelliteEndpoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SatelliteEndpoints
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SatelliteEndpointUpdateManyArgs>(args: SelectSubset<T, SatelliteEndpointUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SatelliteEndpoints and returns the data updated in the database.
+     * @param {SatelliteEndpointUpdateManyAndReturnArgs} args - Arguments to update many SatelliteEndpoints.
+     * @example
+     * // Update many SatelliteEndpoints
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SatelliteEndpoints and only return the `id`
+     * const satelliteEndpointWithIdOnly = await prisma.satelliteEndpoint.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SatelliteEndpointUpdateManyAndReturnArgs>(args: SelectSubset<T, SatelliteEndpointUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SatelliteEndpoint.
+     * @param {SatelliteEndpointUpsertArgs} args - Arguments to update or create a SatelliteEndpoint.
+     * @example
+     * // Update or create a SatelliteEndpoint
+     * const satelliteEndpoint = await prisma.satelliteEndpoint.upsert({
+     *   create: {
+     *     // ... data to create a SatelliteEndpoint
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SatelliteEndpoint we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SatelliteEndpointUpsertArgs>(args: SelectSubset<T, SatelliteEndpointUpsertArgs<ExtArgs>>): Prisma__SatelliteEndpointClient<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SatelliteEndpoints.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointCountArgs} args - Arguments to filter SatelliteEndpoints to count.
+     * @example
+     * // Count the number of SatelliteEndpoints
+     * const count = await prisma.satelliteEndpoint.count({
+     *   where: {
+     *     // ... the filter for the SatelliteEndpoints we want to count
+     *   }
+     * })
+    **/
+    count<T extends SatelliteEndpointCountArgs>(
+      args?: Subset<T, SatelliteEndpointCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SatelliteEndpointCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SatelliteEndpoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SatelliteEndpointAggregateArgs>(args: Subset<T, SatelliteEndpointAggregateArgs>): Prisma.PrismaPromise<GetSatelliteEndpointAggregateType<T>>
+
+    /**
+     * Group by SatelliteEndpoint.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SatelliteEndpointGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SatelliteEndpointGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SatelliteEndpointGroupByArgs['orderBy'] }
+        : { orderBy?: SatelliteEndpointGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SatelliteEndpointGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSatelliteEndpointGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SatelliteEndpoint model
+   */
+  readonly fields: SatelliteEndpointFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SatelliteEndpoint.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SatelliteEndpointClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    satellite<T extends SatelliteEndpoint$satelliteArgs<ExtArgs> = {}>(args?: Subset<T, SatelliteEndpoint$satelliteArgs<ExtArgs>>): Prisma__SatelliteClient<$Result.GetResult<Prisma.$SatellitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SatelliteEndpoint model
+   */
+  interface SatelliteEndpointFieldRefs {
+    readonly id: FieldRef<"SatelliteEndpoint", 'String'>
+    readonly organizationId: FieldRef<"SatelliteEndpoint", 'String'>
+    readonly satelliteKey: FieldRef<"SatelliteEndpoint", 'String'>
+    readonly baseUrl: FieldRef<"SatelliteEndpoint", 'String'>
+    readonly secretCipher: FieldRef<"SatelliteEndpoint", 'String'>
+    readonly enabled: FieldRef<"SatelliteEndpoint", 'Boolean'>
+    readonly createdAt: FieldRef<"SatelliteEndpoint", 'DateTime'>
+    readonly updatedAt: FieldRef<"SatelliteEndpoint", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SatelliteEndpoint findUnique
+   */
+  export type SatelliteEndpointFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter, which SatelliteEndpoint to fetch.
+     */
+    where: SatelliteEndpointWhereUniqueInput
+  }
+
+  /**
+   * SatelliteEndpoint findUniqueOrThrow
+   */
+  export type SatelliteEndpointFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter, which SatelliteEndpoint to fetch.
+     */
+    where: SatelliteEndpointWhereUniqueInput
+  }
+
+  /**
+   * SatelliteEndpoint findFirst
+   */
+  export type SatelliteEndpointFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter, which SatelliteEndpoint to fetch.
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteEndpoints to fetch.
+     */
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatelliteEndpoints.
+     */
+    cursor?: SatelliteEndpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteEndpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteEndpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteEndpoints.
+     */
+    distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteEndpoint findFirstOrThrow
+   */
+  export type SatelliteEndpointFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter, which SatelliteEndpoint to fetch.
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteEndpoints to fetch.
+     */
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SatelliteEndpoints.
+     */
+    cursor?: SatelliteEndpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteEndpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteEndpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteEndpoints.
+     */
+    distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteEndpoint findMany
+   */
+  export type SatelliteEndpointFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter, which SatelliteEndpoints to fetch.
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SatelliteEndpoints to fetch.
+     */
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SatelliteEndpoints.
+     */
+    cursor?: SatelliteEndpointWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SatelliteEndpoints from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SatelliteEndpoints.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SatelliteEndpoints.
+     */
+    distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
+   * SatelliteEndpoint create
+   */
+  export type SatelliteEndpointCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SatelliteEndpoint.
+     */
+    data: XOR<SatelliteEndpointCreateInput, SatelliteEndpointUncheckedCreateInput>
+  }
+
+  /**
+   * SatelliteEndpoint createMany
+   */
+  export type SatelliteEndpointCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SatelliteEndpoints.
+     */
+    data: SatelliteEndpointCreateManyInput | SatelliteEndpointCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SatelliteEndpoint createManyAndReturn
+   */
+  export type SatelliteEndpointCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * The data used to create many SatelliteEndpoints.
+     */
+    data: SatelliteEndpointCreateManyInput | SatelliteEndpointCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SatelliteEndpoint update
+   */
+  export type SatelliteEndpointUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SatelliteEndpoint.
+     */
+    data: XOR<SatelliteEndpointUpdateInput, SatelliteEndpointUncheckedUpdateInput>
+    /**
+     * Choose, which SatelliteEndpoint to update.
+     */
+    where: SatelliteEndpointWhereUniqueInput
+  }
+
+  /**
+   * SatelliteEndpoint updateMany
+   */
+  export type SatelliteEndpointUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SatelliteEndpoints.
+     */
+    data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyInput>
+    /**
+     * Filter which SatelliteEndpoints to update
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * Limit how many SatelliteEndpoints to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatelliteEndpoint updateManyAndReturn
+   */
+  export type SatelliteEndpointUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * The data used to update SatelliteEndpoints.
+     */
+    data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyInput>
+    /**
+     * Filter which SatelliteEndpoints to update
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * Limit how many SatelliteEndpoints to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SatelliteEndpoint upsert
+   */
+  export type SatelliteEndpointUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SatelliteEndpoint to update in case it exists.
+     */
+    where: SatelliteEndpointWhereUniqueInput
+    /**
+     * In case the SatelliteEndpoint found by the `where` argument doesn't exist, create a new SatelliteEndpoint with this data.
+     */
+    create: XOR<SatelliteEndpointCreateInput, SatelliteEndpointUncheckedCreateInput>
+    /**
+     * In case the SatelliteEndpoint was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SatelliteEndpointUpdateInput, SatelliteEndpointUncheckedUpdateInput>
+  }
+
+  /**
+   * SatelliteEndpoint delete
+   */
+  export type SatelliteEndpointDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    /**
+     * Filter which SatelliteEndpoint to delete.
+     */
+    where: SatelliteEndpointWhereUniqueInput
+  }
+
+  /**
+   * SatelliteEndpoint deleteMany
+   */
+  export type SatelliteEndpointDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SatelliteEndpoints to delete
+     */
+    where?: SatelliteEndpointWhereInput
+    /**
+     * Limit how many SatelliteEndpoints to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SatelliteEndpoint.satellite
+   */
+  export type SatelliteEndpoint$satelliteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Satellite
+     */
+    select?: SatelliteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Satellite
+     */
+    omit?: SatelliteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteInclude<ExtArgs> | null
+    where?: SatelliteWhereInput
+  }
+
+  /**
+   * SatelliteEndpoint without action
+   */
+  export type SatelliteEndpointDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
   }
 
 
@@ -25024,6 +26323,10 @@ export namespace Prisma {
     taxIdCipher: string | null
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus | null
+    operatingMode: $Enums.OrgOperatingMode | null
+    parentOrgId: string | null
+    fiscalRouting: $Enums.OrgRouting | null
+    revenueRouting: $Enums.OrgRouting | null
     storageUsedBytes: bigint | null
     currentCreditTier: $Enums.TariffTier | null
     accumulatedBalance: Decimal | null
@@ -25045,6 +26348,10 @@ export namespace Prisma {
     taxIdCipher: string | null
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus | null
+    operatingMode: $Enums.OrgOperatingMode | null
+    parentOrgId: string | null
+    fiscalRouting: $Enums.OrgRouting | null
+    revenueRouting: $Enums.OrgRouting | null
     storageUsedBytes: bigint | null
     currentCreditTier: $Enums.TariffTier | null
     accumulatedBalance: Decimal | null
@@ -25066,6 +26373,10 @@ export namespace Prisma {
     taxIdCipher: number
     subscriptionPlan: number
     billingStatus: number
+    operatingMode: number
+    parentOrgId: number
+    fiscalRouting: number
+    revenueRouting: number
     activeModules: number
     storageUsedBytes: number
     currentCreditTier: number
@@ -25105,6 +26416,10 @@ export namespace Prisma {
     taxIdCipher?: true
     subscriptionPlan?: true
     billingStatus?: true
+    operatingMode?: true
+    parentOrgId?: true
+    fiscalRouting?: true
+    revenueRouting?: true
     storageUsedBytes?: true
     currentCreditTier?: true
     accumulatedBalance?: true
@@ -25126,6 +26441,10 @@ export namespace Prisma {
     taxIdCipher?: true
     subscriptionPlan?: true
     billingStatus?: true
+    operatingMode?: true
+    parentOrgId?: true
+    fiscalRouting?: true
+    revenueRouting?: true
     storageUsedBytes?: true
     currentCreditTier?: true
     accumulatedBalance?: true
@@ -25147,6 +26466,10 @@ export namespace Prisma {
     taxIdCipher?: true
     subscriptionPlan?: true
     billingStatus?: true
+    operatingMode?: true
+    parentOrgId?: true
+    fiscalRouting?: true
+    revenueRouting?: true
     activeModules?: true
     storageUsedBytes?: true
     currentCreditTier?: true
@@ -25257,6 +26580,10 @@ export namespace Prisma {
     taxIdCipher: string | null
     subscriptionPlan: string | null
     billingStatus: $Enums.BillingStatus
+    operatingMode: $Enums.OrgOperatingMode
+    parentOrgId: string | null
+    fiscalRouting: $Enums.OrgRouting
+    revenueRouting: $Enums.OrgRouting
     activeModules: string[]
     storageUsedBytes: bigint
     currentCreditTier: $Enums.TariffTier | null
@@ -25299,6 +26626,10 @@ export namespace Prisma {
     taxIdCipher?: boolean
     subscriptionPlan?: boolean
     billingStatus?: boolean
+    operatingMode?: boolean
+    parentOrgId?: boolean
+    fiscalRouting?: boolean
+    revenueRouting?: boolean
     activeModules?: boolean
     storageUsedBytes?: boolean
     currentCreditTier?: boolean
@@ -25334,7 +26665,10 @@ export namespace Prisma {
     platformAuditLogs?: boolean | Organization$platformAuditLogsArgs<ExtArgs>
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
+    satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    departments?: boolean | Organization$departmentsArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -25346,6 +26680,10 @@ export namespace Prisma {
     taxIdCipher?: boolean
     subscriptionPlan?: boolean
     billingStatus?: boolean
+    operatingMode?: boolean
+    parentOrgId?: boolean
+    fiscalRouting?: boolean
+    revenueRouting?: boolean
     activeModules?: boolean
     storageUsedBytes?: boolean
     currentCreditTier?: boolean
@@ -25360,6 +26698,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -25370,6 +26709,10 @@ export namespace Prisma {
     taxIdCipher?: boolean
     subscriptionPlan?: boolean
     billingStatus?: boolean
+    operatingMode?: boolean
+    parentOrgId?: boolean
+    fiscalRouting?: boolean
+    revenueRouting?: boolean
     activeModules?: boolean
     storageUsedBytes?: boolean
     currentCreditTier?: boolean
@@ -25384,6 +26727,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectScalar = {
@@ -25394,6 +26738,10 @@ export namespace Prisma {
     taxIdCipher?: boolean
     subscriptionPlan?: boolean
     billingStatus?: boolean
+    operatingMode?: boolean
+    parentOrgId?: boolean
+    fiscalRouting?: boolean
+    revenueRouting?: boolean
     activeModules?: boolean
     storageUsedBytes?: boolean
     currentCreditTier?: boolean
@@ -25409,7 +26757,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "operatingMode" | "parentOrgId" | "fiscalRouting" | "revenueRouting" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
   export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     usageMeterEvents?: boolean | Organization$usageMeterEventsArgs<ExtArgs>
     earlyAccessEvents?: boolean | Organization$earlyAccessEventsArgs<ExtArgs>
@@ -25433,14 +26781,19 @@ export namespace Prisma {
     platformAuditLogs?: boolean | Organization$platformAuditLogsArgs<ExtArgs>
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
+    satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    departments?: boolean | Organization$departmentsArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
   }
   export type OrganizationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
+    parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
   }
 
   export type $OrganizationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -25468,7 +26821,10 @@ export namespace Prisma {
       platformAuditLogs: Prisma.$PlatformAuditLogPayload<ExtArgs>[]
       platformIdempotencyRecords: Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>[]
       platformLoyaltyLedger: Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>[]
+      satelliteEndpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
+      parentOrg: Prisma.$OrganizationPayload<ExtArgs> | null
+      departments: Prisma.$OrganizationPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -25478,6 +26834,10 @@ export namespace Prisma {
       taxIdCipher: string | null
       subscriptionPlan: string | null
       billingStatus: $Enums.BillingStatus
+      operatingMode: $Enums.OrgOperatingMode
+      parentOrgId: string | null
+      fiscalRouting: $Enums.OrgRouting
+      revenueRouting: $Enums.OrgRouting
       activeModules: string[]
       storageUsedBytes: bigint
       currentCreditTier: $Enums.TariffTier | null
@@ -25907,7 +27267,10 @@ export namespace Prisma {
     platformAuditLogs<T extends Organization$platformAuditLogsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformAuditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformAuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     platformIdempotencyRecords<T extends Organization$platformIdempotencyRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformIdempotencyRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     platformLoyaltyLedger<T extends Organization$platformLoyaltyLedgerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformLoyaltyLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    satelliteEndpoints<T extends Organization$satelliteEndpointsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEndpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    parentOrg<T extends Organization$parentOrgArgs<ExtArgs> = {}>(args?: Subset<T, Organization$parentOrgArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    departments<T extends Organization$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -25944,6 +27307,10 @@ export namespace Prisma {
     readonly taxIdCipher: FieldRef<"Organization", 'String'>
     readonly subscriptionPlan: FieldRef<"Organization", 'String'>
     readonly billingStatus: FieldRef<"Organization", 'BillingStatus'>
+    readonly operatingMode: FieldRef<"Organization", 'OrgOperatingMode'>
+    readonly parentOrgId: FieldRef<"Organization", 'String'>
+    readonly fiscalRouting: FieldRef<"Organization", 'OrgRouting'>
+    readonly revenueRouting: FieldRef<"Organization", 'OrgRouting'>
     readonly activeModules: FieldRef<"Organization", 'String[]'>
     readonly storageUsedBytes: FieldRef<"Organization", 'BigInt'>
     readonly currentCreditTier: FieldRef<"Organization", 'TariffTier'>
@@ -26881,6 +28248,30 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.satelliteEndpoints
+   */
+  export type Organization$satelliteEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SatelliteEndpoint
+     */
+    select?: SatelliteEndpointSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SatelliteEndpoint
+     */
+    omit?: SatelliteEndpointOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SatelliteEndpointInclude<ExtArgs> | null
+    where?: SatelliteEndpointWhereInput
+    orderBy?: SatelliteEndpointOrderByWithRelationInput | SatelliteEndpointOrderByWithRelationInput[]
+    cursor?: SatelliteEndpointWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
    * Organization.owner
    */
   export type Organization$ownerArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -26897,6 +28288,49 @@ export namespace Prisma {
      */
     include?: UserInclude<ExtArgs> | null
     where?: UserWhereInput
+  }
+
+  /**
+   * Organization.parentOrg
+   */
+  export type Organization$parentOrgArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * Organization.departments
+   */
+  export type Organization$departmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    cursor?: OrganizationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
   }
 
   /**
@@ -57792,6 +59226,20 @@ export namespace Prisma {
   export type SatelliteScalarFieldEnum = (typeof SatelliteScalarFieldEnum)[keyof typeof SatelliteScalarFieldEnum]
 
 
+  export const SatelliteEndpointScalarFieldEnum: {
+    id: 'id',
+    organizationId: 'organizationId',
+    satelliteKey: 'satelliteKey',
+    baseUrl: 'baseUrl',
+    secretCipher: 'secretCipher',
+    enabled: 'enabled',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SatelliteEndpointScalarFieldEnum = (typeof SatelliteEndpointScalarFieldEnum)[keyof typeof SatelliteEndpointScalarFieldEnum]
+
+
   export const PricingBundleScalarFieldEnum: {
     id: 'id',
     slug: 'slug',
@@ -57895,6 +59343,10 @@ export namespace Prisma {
     taxIdCipher: 'taxIdCipher',
     subscriptionPlan: 'subscriptionPlan',
     billingStatus: 'billingStatus',
+    operatingMode: 'operatingMode',
+    parentOrgId: 'parentOrgId',
+    fiscalRouting: 'fiscalRouting',
+    revenueRouting: 'revenueRouting',
     activeModules: 'activeModules',
     storageUsedBytes: 'storageUsedBytes',
     currentCreditTier: 'currentCreditTier',
@@ -58565,6 +60017,34 @@ export namespace Prisma {
    * Reference to a field of type 'PermissionCategory[]'
    */
   export type ListEnumPermissionCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PermissionCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgOperatingMode'
+   */
+  export type EnumOrgOperatingModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgOperatingMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgOperatingMode[]'
+   */
+  export type ListEnumOrgOperatingModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgOperatingMode[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgRouting'
+   */
+  export type EnumOrgRoutingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgRouting'>
+    
+
+
+  /**
+   * Reference to a field of type 'OrgRouting[]'
+   */
+  export type ListEnumOrgRoutingFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'OrgRouting[]'>
     
 
 
@@ -59550,6 +61030,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Satellite"> | Date | string
     updatedAt?: DateTimeFilter<"Satellite"> | Date | string
     modules?: PricingModuleListRelationFilter
+    endpoints?: SatelliteEndpointListRelationFilter
   }
 
   export type SatelliteOrderByWithRelationInput = {
@@ -59560,6 +61041,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     updatedAt?: SortOrder
     modules?: PricingModuleOrderByRelationAggregateInput
+    endpoints?: SatelliteEndpointOrderByRelationAggregateInput
   }
 
   export type SatelliteWhereUniqueInput = Prisma.AtLeast<{
@@ -59573,6 +61055,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Satellite"> | Date | string
     updatedAt?: DateTimeFilter<"Satellite"> | Date | string
     modules?: PricingModuleListRelationFilter
+    endpoints?: SatelliteEndpointListRelationFilter
   }, "key">
 
   export type SatelliteOrderByWithAggregationInput = {
@@ -59599,6 +61082,80 @@ export namespace Prisma {
     sortOrder?: IntWithAggregatesFilter<"Satellite"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
+  }
+
+  export type SatelliteEndpointWhereInput = {
+    AND?: SatelliteEndpointWhereInput | SatelliteEndpointWhereInput[]
+    OR?: SatelliteEndpointWhereInput[]
+    NOT?: SatelliteEndpointWhereInput | SatelliteEndpointWhereInput[]
+    id?: UuidFilter<"SatelliteEndpoint"> | string
+    organizationId?: UuidFilter<"SatelliteEndpoint"> | string
+    satelliteKey?: StringFilter<"SatelliteEndpoint"> | string
+    baseUrl?: StringFilter<"SatelliteEndpoint"> | string
+    secretCipher?: StringNullableFilter<"SatelliteEndpoint"> | string | null
+    enabled?: BoolFilter<"SatelliteEndpoint"> | boolean
+    createdAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+    updatedAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
+  }
+
+  export type SatelliteEndpointOrderByWithRelationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    baseUrl?: SortOrder
+    secretCipher?: SortOrderInput | SortOrder
+    enabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    satellite?: SatelliteOrderByWithRelationInput
+  }
+
+  export type SatelliteEndpointWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_satelliteKey?: SatelliteEndpointOrganizationIdSatelliteKeyCompoundUniqueInput
+    AND?: SatelliteEndpointWhereInput | SatelliteEndpointWhereInput[]
+    OR?: SatelliteEndpointWhereInput[]
+    NOT?: SatelliteEndpointWhereInput | SatelliteEndpointWhereInput[]
+    organizationId?: UuidFilter<"SatelliteEndpoint"> | string
+    satelliteKey?: StringFilter<"SatelliteEndpoint"> | string
+    baseUrl?: StringFilter<"SatelliteEndpoint"> | string
+    secretCipher?: StringNullableFilter<"SatelliteEndpoint"> | string | null
+    enabled?: BoolFilter<"SatelliteEndpoint"> | boolean
+    createdAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+    updatedAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
+  }, "id" | "organizationId_satelliteKey">
+
+  export type SatelliteEndpointOrderByWithAggregationInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    baseUrl?: SortOrder
+    secretCipher?: SortOrderInput | SortOrder
+    enabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SatelliteEndpointCountOrderByAggregateInput
+    _max?: SatelliteEndpointMaxOrderByAggregateInput
+    _min?: SatelliteEndpointMinOrderByAggregateInput
+  }
+
+  export type SatelliteEndpointScalarWhereWithAggregatesInput = {
+    AND?: SatelliteEndpointScalarWhereWithAggregatesInput | SatelliteEndpointScalarWhereWithAggregatesInput[]
+    OR?: SatelliteEndpointScalarWhereWithAggregatesInput[]
+    NOT?: SatelliteEndpointScalarWhereWithAggregatesInput | SatelliteEndpointScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"SatelliteEndpoint"> | string
+    organizationId?: UuidWithAggregatesFilter<"SatelliteEndpoint"> | string
+    satelliteKey?: StringWithAggregatesFilter<"SatelliteEndpoint"> | string
+    baseUrl?: StringWithAggregatesFilter<"SatelliteEndpoint"> | string
+    secretCipher?: StringNullableWithAggregatesFilter<"SatelliteEndpoint"> | string | null
+    enabled?: BoolWithAggregatesFilter<"SatelliteEndpoint"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
   }
 
   export type PricingBundleWhereInput = {
@@ -60097,6 +61654,10 @@ export namespace Prisma {
     taxIdCipher?: StringNullableFilter<"Organization"> | string | null
     subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
     storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
     currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
@@ -60132,7 +61693,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogListRelationFilter
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
+    satelliteEndpoints?: SatelliteEndpointListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    departments?: OrganizationListRelationFilter
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -60143,6 +61707,10 @@ export namespace Prisma {
     taxIdCipher?: SortOrderInput | SortOrder
     subscriptionPlan?: SortOrderInput | SortOrder
     billingStatus?: SortOrder
+    operatingMode?: SortOrder
+    parentOrgId?: SortOrderInput | SortOrder
+    fiscalRouting?: SortOrder
+    revenueRouting?: SortOrder
     activeModules?: SortOrder
     storageUsedBytes?: SortOrder
     currentCreditTier?: SortOrderInput | SortOrder
@@ -60178,7 +61746,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogOrderByRelationAggregateInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordOrderByRelationAggregateInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerOrderByRelationAggregateInput
+    satelliteEndpoints?: SatelliteEndpointOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
+    parentOrg?: OrganizationOrderByWithRelationInput
+    departments?: OrganizationOrderByRelationAggregateInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -60193,6 +61764,10 @@ export namespace Prisma {
     taxIdCipher?: StringNullableFilter<"Organization"> | string | null
     subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
     storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
     currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
@@ -60227,7 +61802,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogListRelationFilter
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
+    satelliteEndpoints?: SatelliteEndpointListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
+    departments?: OrganizationListRelationFilter
   }, "id" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -60238,6 +61816,10 @@ export namespace Prisma {
     taxIdCipher?: SortOrderInput | SortOrder
     subscriptionPlan?: SortOrderInput | SortOrder
     billingStatus?: SortOrder
+    operatingMode?: SortOrder
+    parentOrgId?: SortOrderInput | SortOrder
+    fiscalRouting?: SortOrder
+    revenueRouting?: SortOrder
     activeModules?: SortOrder
     storageUsedBytes?: SortOrder
     currentCreditTier?: SortOrderInput | SortOrder
@@ -60269,6 +61851,10 @@ export namespace Prisma {
     taxIdCipher?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     subscriptionPlan?: StringNullableWithAggregatesFilter<"Organization"> | string | null
     billingStatus?: EnumBillingStatusWithAggregatesFilter<"Organization"> | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeWithAggregatesFilter<"Organization"> | $Enums.OrgOperatingMode
+    parentOrgId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
+    fiscalRouting?: EnumOrgRoutingWithAggregatesFilter<"Organization"> | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingWithAggregatesFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
     storageUsedBytes?: BigIntWithAggregatesFilter<"Organization"> | bigint | number
     currentCreditTier?: EnumTariffTierNullableWithAggregatesFilter<"Organization"> | $Enums.TariffTier | null
@@ -63181,6 +64767,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateInput = {
@@ -63191,6 +64778,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUpdateInput = {
@@ -63201,6 +64789,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateInput = {
@@ -63211,6 +64800,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteCreateManyInput = {
@@ -63236,6 +64826,81 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     verticalSlug?: StringFieldUpdateOperationsInput | string
     sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointCreateInput = {
+    id?: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSatelliteEndpointsInput
+    satellite?: SatelliteCreateNestedOneWithoutEndpointsInput
+  }
+
+  export type SatelliteEndpointUncheckedCreateInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteEndpointUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSatelliteEndpointsNestedInput
+    satellite?: SatelliteUpdateOneWithoutEndpointsNestedInput
+  }
+
+  export type SatelliteEndpointUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointCreateManyInput = {
+    id?: string
+    organizationId: string
+    satelliteKey: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteEndpointUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -63782,6 +65447,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -63817,7 +65485,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -63828,6 +65499,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -63863,6 +65538,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUpdateInput = {
@@ -63872,6 +65549,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -63907,7 +65587,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -63918,6 +65601,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -63953,6 +65640,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateManyInput = {
@@ -63963,6 +65652,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -63985,6 +65678,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -64008,6 +65704,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -67244,7 +68944,17 @@ export namespace Prisma {
     none?: PricingModuleWhereInput
   }
 
+  export type SatelliteEndpointListRelationFilter = {
+    every?: SatelliteEndpointWhereInput
+    some?: SatelliteEndpointWhereInput
+    none?: SatelliteEndpointWhereInput
+  }
+
   export type PricingModuleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SatelliteEndpointOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -67281,6 +68991,44 @@ export namespace Prisma {
 
   export type SatelliteSumOrderByAggregateInput = {
     sortOrder?: SortOrder
+  }
+
+  export type SatelliteEndpointOrganizationIdSatelliteKeyCompoundUniqueInput = {
+    organizationId: string
+    satelliteKey: string
+  }
+
+  export type SatelliteEndpointCountOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    baseUrl?: SortOrder
+    secretCipher?: SortOrder
+    enabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteEndpointMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    baseUrl?: SortOrder
+    secretCipher?: SortOrder
+    enabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SatelliteEndpointMinOrderByAggregateInput = {
+    id?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    baseUrl?: SortOrder
+    secretCipher?: SortOrder
+    enabled?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -67669,6 +69417,20 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type EnumOrgOperatingModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgOperatingMode | EnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgOperatingModeFilter<$PrismaModel> | $Enums.OrgOperatingMode
+  }
+
+  export type EnumOrgRoutingFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgRouting | EnumOrgRoutingFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgRoutingFilter<$PrismaModel> | $Enums.OrgRouting
+  }
+
   export type BigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -67804,6 +69566,17 @@ export namespace Prisma {
     isNot?: UserWhereInput | null
   }
 
+  export type OrganizationNullableScalarRelationFilter = {
+    is?: OrganizationWhereInput | null
+    isNot?: OrganizationWhereInput | null
+  }
+
+  export type OrganizationListRelationFilter = {
+    every?: OrganizationWhereInput
+    some?: OrganizationWhereInput
+    none?: OrganizationWhereInput
+  }
+
   export type UsageMeterEventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -67880,6 +69653,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type OrganizationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type OrganizationCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -67888,6 +69665,10 @@ export namespace Prisma {
     taxIdCipher?: SortOrder
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
+    operatingMode?: SortOrder
+    parentOrgId?: SortOrder
+    fiscalRouting?: SortOrder
+    revenueRouting?: SortOrder
     activeModules?: SortOrder
     storageUsedBytes?: SortOrder
     currentCreditTier?: SortOrder
@@ -67918,6 +69699,10 @@ export namespace Prisma {
     taxIdCipher?: SortOrder
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
+    operatingMode?: SortOrder
+    parentOrgId?: SortOrder
+    fiscalRouting?: SortOrder
+    revenueRouting?: SortOrder
     storageUsedBytes?: SortOrder
     currentCreditTier?: SortOrder
     accumulatedBalance?: SortOrder
@@ -67939,6 +69724,10 @@ export namespace Prisma {
     taxIdCipher?: SortOrder
     subscriptionPlan?: SortOrder
     billingStatus?: SortOrder
+    operatingMode?: SortOrder
+    parentOrgId?: SortOrder
+    fiscalRouting?: SortOrder
+    revenueRouting?: SortOrder
     storageUsedBytes?: SortOrder
     currentCreditTier?: SortOrder
     accumulatedBalance?: SortOrder
@@ -67959,6 +69748,26 @@ export namespace Prisma {
     ocrPagesUsed?: SortOrder
   }
 
+  export type EnumOrgOperatingModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgOperatingMode | EnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgOperatingModeWithAggregatesFilter<$PrismaModel> | $Enums.OrgOperatingMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgOperatingModeFilter<$PrismaModel>
+    _max?: NestedEnumOrgOperatingModeFilter<$PrismaModel>
+  }
+
+  export type EnumOrgRoutingWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgRouting | EnumOrgRoutingFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgRoutingWithAggregatesFilter<$PrismaModel> | $Enums.OrgRouting
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgRoutingFilter<$PrismaModel>
+    _max?: NestedEnumOrgRoutingFilter<$PrismaModel>
+  }
+
   export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -67973,16 +69782,6 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
-  }
-
-  export type OrganizationListRelationFilter = {
-    every?: OrganizationWhereInput
-    some?: OrganizationWhereInput
-    none?: OrganizationWhereInput
-  }
-
-  export type OrganizationOrderByRelationAggregateInput = {
-    _count?: SortOrder
   }
 
   export type UserCountOrderByAggregateInput = {
@@ -68517,11 +70316,6 @@ export namespace Prisma {
     in?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.EarlyAccessEventType[] | ListEnumEarlyAccessEventTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumEarlyAccessEventTypeFilter<$PrismaModel> | $Enums.EarlyAccessEventType
-  }
-
-  export type OrganizationNullableScalarRelationFilter = {
-    is?: OrganizationWhereInput | null
-    isNot?: OrganizationWhereInput | null
   }
 
   export type EarlyAccessEventCountOrderByAggregateInput = {
@@ -69771,11 +71565,25 @@ export namespace Prisma {
     connect?: PricingModuleWhereUniqueInput | PricingModuleWhereUniqueInput[]
   }
 
+  export type SatelliteEndpointCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput> | SatelliteEndpointCreateWithoutSatelliteInput[] | SatelliteEndpointUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutSatelliteInput | SatelliteEndpointCreateOrConnectWithoutSatelliteInput[]
+    createMany?: SatelliteEndpointCreateManySatelliteInputEnvelope
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
   export type PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
     createMany?: PricingModuleCreateManySatelliteInputEnvelope
     connect?: PricingModuleWhereUniqueInput | PricingModuleWhereUniqueInput[]
+  }
+
+  export type SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput> | SatelliteEndpointCreateWithoutSatelliteInput[] | SatelliteEndpointUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutSatelliteInput | SatelliteEndpointCreateOrConnectWithoutSatelliteInput[]
+    createMany?: SatelliteEndpointCreateManySatelliteInputEnvelope
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
   }
 
   export type PricingModuleUpdateManyWithoutSatelliteNestedInput = {
@@ -69792,6 +71600,20 @@ export namespace Prisma {
     deleteMany?: PricingModuleScalarWhereInput | PricingModuleScalarWhereInput[]
   }
 
+  export type SatelliteEndpointUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput> | SatelliteEndpointCreateWithoutSatelliteInput[] | SatelliteEndpointUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutSatelliteInput | SatelliteEndpointCreateOrConnectWithoutSatelliteInput[]
+    upsert?: SatelliteEndpointUpsertWithWhereUniqueWithoutSatelliteInput | SatelliteEndpointUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: SatelliteEndpointCreateManySatelliteInputEnvelope
+    set?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    disconnect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    delete?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    update?: SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput | SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput | SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
   export type PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
@@ -69804,6 +71626,50 @@ export namespace Prisma {
     update?: PricingModuleUpdateWithWhereUniqueWithoutSatelliteInput | PricingModuleUpdateWithWhereUniqueWithoutSatelliteInput[]
     updateMany?: PricingModuleUpdateManyWithWhereWithoutSatelliteInput | PricingModuleUpdateManyWithWhereWithoutSatelliteInput[]
     deleteMany?: PricingModuleScalarWhereInput | PricingModuleScalarWhereInput[]
+  }
+
+  export type SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput> | SatelliteEndpointCreateWithoutSatelliteInput[] | SatelliteEndpointUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutSatelliteInput | SatelliteEndpointCreateOrConnectWithoutSatelliteInput[]
+    upsert?: SatelliteEndpointUpsertWithWhereUniqueWithoutSatelliteInput | SatelliteEndpointUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: SatelliteEndpointCreateManySatelliteInputEnvelope
+    set?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    disconnect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    delete?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    update?: SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput | SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput | SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutSatelliteEndpointsInput = {
+    create?: XOR<OrganizationCreateWithoutSatelliteEndpointsInput, OrganizationUncheckedCreateWithoutSatelliteEndpointsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSatelliteEndpointsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type SatelliteCreateNestedOneWithoutEndpointsInput = {
+    create?: XOR<SatelliteCreateWithoutEndpointsInput, SatelliteUncheckedCreateWithoutEndpointsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutEndpointsInput
+    connect?: SatelliteWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutSatelliteEndpointsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutSatelliteEndpointsInput, OrganizationUncheckedCreateWithoutSatelliteEndpointsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSatelliteEndpointsInput
+    upsert?: OrganizationUpsertWithoutSatelliteEndpointsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutSatelliteEndpointsInput, OrganizationUpdateWithoutSatelliteEndpointsInput>, OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput>
+  }
+
+  export type SatelliteUpdateOneWithoutEndpointsNestedInput = {
+    create?: XOR<SatelliteCreateWithoutEndpointsInput, SatelliteUncheckedCreateWithoutEndpointsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutEndpointsInput
+    upsert?: SatelliteUpsertWithoutEndpointsInput
+    disconnect?: SatelliteWhereInput | boolean
+    delete?: SatelliteWhereInput | boolean
+    connect?: SatelliteWhereUniqueInput
+    update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutEndpointsInput, SatelliteUpdateWithoutEndpointsInput>, SatelliteUncheckedUpdateWithoutEndpointsInput>
   }
 
   export type OrganizationBundleCreateNestedManyWithoutBundleInput = {
@@ -70217,10 +72083,30 @@ export namespace Prisma {
     connect?: PlatformLoyaltyLedgerWhereUniqueInput | PlatformLoyaltyLedgerWhereUniqueInput[]
   }
 
+  export type SatelliteEndpointCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput> | SatelliteEndpointCreateWithoutOrganizationInput[] | SatelliteEndpointUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
+    createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
   export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
     connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedOneWithoutDepartmentsInput = {
+    create?: XOR<OrganizationCreateWithoutDepartmentsInput, OrganizationUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutDepartmentsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedManyWithoutParentOrgInput = {
+    create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
+    createMany?: OrganizationCreateManyParentOrgInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
   }
 
   export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
@@ -70374,6 +72260,28 @@ export namespace Prisma {
     connectOrCreate?: PlatformLoyaltyLedgerCreateOrConnectWithoutOrganizationInput | PlatformLoyaltyLedgerCreateOrConnectWithoutOrganizationInput[]
     createMany?: PlatformLoyaltyLedgerCreateManyOrganizationInputEnvelope
     connect?: PlatformLoyaltyLedgerWhereUniqueInput | PlatformLoyaltyLedgerWhereUniqueInput[]
+  }
+
+  export type SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput> | SatelliteEndpointCreateWithoutOrganizationInput[] | SatelliteEndpointUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
+    createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
+  export type OrganizationUncheckedCreateNestedManyWithoutParentOrgInput = {
+    create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
+    createMany?: OrganizationCreateManyParentOrgInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
+  export type EnumOrgOperatingModeFieldUpdateOperationsInput = {
+    set?: $Enums.OrgOperatingMode
+  }
+
+  export type EnumOrgRoutingFieldUpdateOperationsInput = {
+    set?: $Enums.OrgRouting
   }
 
   export type OrganizationUpdateactiveModulesInput = {
@@ -70693,6 +72601,20 @@ export namespace Prisma {
     deleteMany?: PlatformLoyaltyLedgerScalarWhereInput | PlatformLoyaltyLedgerScalarWhereInput[]
   }
 
+  export type SatelliteEndpointUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput> | SatelliteEndpointCreateWithoutOrganizationInput[] | SatelliteEndpointUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
+    upsert?: SatelliteEndpointUpsertWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
+    set?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    disconnect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    delete?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
   export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -70701,6 +72623,30 @@ export namespace Prisma {
     delete?: UserWhereInput | boolean
     connect?: UserWhereUniqueInput
     update?: XOR<XOR<UserUpdateToOneWithWhereWithoutOwnedOrganizationsInput, UserUpdateWithoutOwnedOrganizationsInput>, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
+  }
+
+  export type OrganizationUpdateOneWithoutDepartmentsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutDepartmentsInput, OrganizationUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutDepartmentsInput
+    upsert?: OrganizationUpsertWithoutDepartmentsInput
+    disconnect?: OrganizationWhereInput | boolean
+    delete?: OrganizationWhereInput | boolean
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutDepartmentsInput, OrganizationUpdateWithoutDepartmentsInput>, OrganizationUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type OrganizationUpdateManyWithoutParentOrgNestedInput = {
+    create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutParentOrgInput | OrganizationUpsertWithWhereUniqueWithoutParentOrgInput[]
+    createMany?: OrganizationCreateManyParentOrgInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutParentOrgInput | OrganizationUpdateWithWhereUniqueWithoutParentOrgInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutParentOrgInput | OrganizationUpdateManyWithWhereWithoutParentOrgInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
   }
 
   export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
@@ -71005,6 +72951,34 @@ export namespace Prisma {
     update?: PlatformLoyaltyLedgerUpdateWithWhereUniqueWithoutOrganizationInput | PlatformLoyaltyLedgerUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: PlatformLoyaltyLedgerUpdateManyWithWhereWithoutOrganizationInput | PlatformLoyaltyLedgerUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: PlatformLoyaltyLedgerScalarWhereInput | PlatformLoyaltyLedgerScalarWhereInput[]
+  }
+
+  export type SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput> | SatelliteEndpointCreateWithoutOrganizationInput[] | SatelliteEndpointUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
+    upsert?: SatelliteEndpointUpsertWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
+    set?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    disconnect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    delete?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+    update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput = {
+    create?: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput> | OrganizationCreateWithoutParentOrgInput[] | OrganizationUncheckedCreateWithoutParentOrgInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutParentOrgInput | OrganizationCreateOrConnectWithoutParentOrgInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutParentOrgInput | OrganizationUpsertWithWhereUniqueWithoutParentOrgInput[]
+    createMany?: OrganizationCreateManyParentOrgInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutParentOrgInput | OrganizationUpdateWithWhereUniqueWithoutParentOrgInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutParentOrgInput | OrganizationUpdateManyWithWhereWithoutParentOrgInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
   }
 
   export type OrganizationMembershipCreateNestedManyWithoutUserInput = {
@@ -72535,6 +74509,20 @@ export namespace Prisma {
     _max?: NestedEnumPermissionCategoryFilter<$PrismaModel>
   }
 
+  export type NestedEnumOrgOperatingModeFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgOperatingMode | EnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgOperatingModeFilter<$PrismaModel> | $Enums.OrgOperatingMode
+  }
+
+  export type NestedEnumOrgRoutingFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgRouting | EnumOrgRoutingFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgRoutingFilter<$PrismaModel> | $Enums.OrgRouting
+  }
+
   export type NestedBigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[] | ListBigIntFieldRefInput<$PrismaModel>
@@ -72544,6 +74532,26 @@ export namespace Prisma {
     gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
+  }
+
+  export type NestedEnumOrgOperatingModeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgOperatingMode | EnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgOperatingMode[] | ListEnumOrgOperatingModeFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgOperatingModeWithAggregatesFilter<$PrismaModel> | $Enums.OrgOperatingMode
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgOperatingModeFilter<$PrismaModel>
+    _max?: NestedEnumOrgOperatingModeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumOrgRoutingWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.OrgRouting | EnumOrgRoutingFieldRefInput<$PrismaModel>
+    in?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    notIn?: $Enums.OrgRouting[] | ListEnumOrgRoutingFieldRefInput<$PrismaModel>
+    not?: NestedEnumOrgRoutingWithAggregatesFilter<$PrismaModel> | $Enums.OrgRouting
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumOrgRoutingFilter<$PrismaModel>
+    _max?: NestedEnumOrgRoutingFilter<$PrismaModel>
   }
 
   export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -72919,6 +74927,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -72953,7 +74964,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
@@ -72964,6 +74978,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -72998,6 +75016,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutSubscriptionInput = {
@@ -73023,6 +75043,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73057,7 +75080,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
@@ -73068,6 +75094,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73102,6 +75132,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type BillingInvoiceItemCreateWithoutSubscriptionInvoiceInput = {
@@ -73349,6 +75381,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -73383,7 +75418,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
@@ -73394,6 +75432,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -73428,6 +75470,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutBillingInvoiceItemsInput = {
@@ -73496,6 +75540,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73530,7 +75577,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
@@ -73541,6 +75591,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73575,6 +75629,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutUsageMeterEventsInput = {
@@ -73584,6 +75640,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -73618,7 +75677,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
@@ -73629,6 +75691,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -73663,6 +75729,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutUsageMeterEventsInput = {
@@ -73688,6 +75756,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73722,7 +75793,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
@@ -73733,6 +75807,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -73767,6 +75845,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type PricingBundleCreateWithoutOrganizationBundlesInput = {
@@ -73844,6 +75924,7 @@ export namespace Prisma {
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutModulesInput = {
@@ -73853,6 +75934,7 @@ export namespace Prisma {
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutModulesInput = {
@@ -73878,6 +75960,7 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutModulesInput = {
@@ -73887,6 +75970,7 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type PricingModuleCreateWithoutSatelliteInput = {
@@ -73923,6 +76007,36 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SatelliteEndpointCreateWithoutSatelliteInput = {
+    id?: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutSatelliteEndpointsInput
+  }
+
+  export type SatelliteEndpointUncheckedCreateWithoutSatelliteInput = {
+    id?: string
+    organizationId: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteEndpointCreateOrConnectWithoutSatelliteInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    create: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type SatelliteEndpointCreateManySatelliteInputEnvelope = {
+    data: SatelliteEndpointCreateManySatelliteInput | SatelliteEndpointCreateManySatelliteInput[]
+    skipDuplicates?: boolean
+  }
+
   export type PricingModuleUpsertWithWhereUniqueWithoutSatelliteInput = {
     where: PricingModuleWhereUniqueInput
     update: XOR<PricingModuleUpdateWithoutSatelliteInput, PricingModuleUncheckedUpdateWithoutSatelliteInput>
@@ -73953,6 +76067,308 @@ export namespace Prisma {
     satelliteKey?: StringNullableFilter<"PricingModule"> | string | null
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
+  }
+
+  export type SatelliteEndpointUpsertWithWhereUniqueWithoutSatelliteInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    update: XOR<SatelliteEndpointUpdateWithoutSatelliteInput, SatelliteEndpointUncheckedUpdateWithoutSatelliteInput>
+    create: XOR<SatelliteEndpointCreateWithoutSatelliteInput, SatelliteEndpointUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    data: XOR<SatelliteEndpointUpdateWithoutSatelliteInput, SatelliteEndpointUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput = {
+    where: SatelliteEndpointScalarWhereInput
+    data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyWithoutSatelliteInput>
+  }
+
+  export type SatelliteEndpointScalarWhereInput = {
+    AND?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+    OR?: SatelliteEndpointScalarWhereInput[]
+    NOT?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+    id?: UuidFilter<"SatelliteEndpoint"> | string
+    organizationId?: UuidFilter<"SatelliteEndpoint"> | string
+    satelliteKey?: StringFilter<"SatelliteEndpoint"> | string
+    baseUrl?: StringFilter<"SatelliteEndpoint"> | string
+    secretCipher?: StringNullableFilter<"SatelliteEndpoint"> | string | null
+    enabled?: BoolFilter<"SatelliteEndpoint"> | boolean
+    createdAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+    updatedAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+  }
+
+  export type OrganizationCreateWithoutSatelliteEndpointsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutSatelliteEndpointsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutSatelliteEndpointsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutSatelliteEndpointsInput, OrganizationUncheckedCreateWithoutSatelliteEndpointsInput>
+  }
+
+  export type SatelliteCreateWithoutEndpointsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteUncheckedCreateWithoutEndpointsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteCreateOrConnectWithoutEndpointsInput = {
+    where: SatelliteWhereUniqueInput
+    create: XOR<SatelliteCreateWithoutEndpointsInput, SatelliteUncheckedCreateWithoutEndpointsInput>
+  }
+
+  export type OrganizationUpsertWithoutSatelliteEndpointsInput = {
+    update: XOR<OrganizationUpdateWithoutSatelliteEndpointsInput, OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput>
+    create: XOR<OrganizationCreateWithoutSatelliteEndpointsInput, OrganizationUncheckedCreateWithoutSatelliteEndpointsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutSatelliteEndpointsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutSatelliteEndpointsInput, OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput>
+  }
+
+  export type OrganizationUpdateWithoutSatelliteEndpointsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type SatelliteUpsertWithoutEndpointsInput = {
+    update: XOR<SatelliteUpdateWithoutEndpointsInput, SatelliteUncheckedUpdateWithoutEndpointsInput>
+    create: XOR<SatelliteCreateWithoutEndpointsInput, SatelliteUncheckedCreateWithoutEndpointsInput>
+    where?: SatelliteWhereInput
+  }
+
+  export type SatelliteUpdateToOneWithWhereWithoutEndpointsInput = {
+    where?: SatelliteWhereInput
+    data: XOR<SatelliteUpdateWithoutEndpointsInput, SatelliteUncheckedUpdateWithoutEndpointsInput>
+  }
+
+  export type SatelliteUpdateWithoutEndpointsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type SatelliteUncheckedUpdateWithoutEndpointsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type OrganizationBundleCreateWithoutBundleInput = {
@@ -74019,6 +76435,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -74053,7 +76472,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
@@ -74064,6 +76486,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -74098,6 +76524,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPaymentOrdersInput = {
@@ -74204,6 +76632,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -74238,7 +76669,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
@@ -74249,6 +76683,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -74283,6 +76721,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type SubscriptionInvoiceUpsertWithoutPaymentOrderInput = {
@@ -75305,6 +77745,36 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SatelliteEndpointCreateWithoutOrganizationInput = {
+    id?: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    satellite?: SatelliteCreateNestedOneWithoutEndpointsInput
+  }
+
+  export type SatelliteEndpointUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    satelliteKey: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SatelliteEndpointCreateOrConnectWithoutOrganizationInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    create: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type SatelliteEndpointCreateManyOrganizationInputEnvelope = {
+    data: SatelliteEndpointCreateManyOrganizationInput | SatelliteEndpointCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserCreateWithoutOwnedOrganizationsInput = {
     id?: string
     email: string
@@ -75338,6 +77808,221 @@ export namespace Prisma {
   export type UserCreateOrConnectWithoutOwnedOrganizationsInput = {
     where: UserWhereUniqueInput
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
+  }
+
+  export type OrganizationCreateWithoutDepartmentsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutDepartmentsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutDepartmentsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutDepartmentsInput, OrganizationUncheckedCreateWithoutDepartmentsInput>
+  }
+
+  export type OrganizationCreateWithoutParentOrgInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutParentOrgInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutParentOrgInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput>
+  }
+
+  export type OrganizationCreateManyParentOrgInputEnvelope = {
+    data: OrganizationCreateManyParentOrgInput | OrganizationCreateManyParentOrgInput[]
+    skipDuplicates?: boolean
   }
 
   export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -76011,6 +78696,22 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PlatformLoyaltyLedger"> | Date | string
   }
 
+  export type SatelliteEndpointUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    update: XOR<SatelliteEndpointUpdateWithoutOrganizationInput, SatelliteEndpointUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<SatelliteEndpointCreateWithoutOrganizationInput, SatelliteEndpointUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: SatelliteEndpointWhereUniqueInput
+    data: XOR<SatelliteEndpointUpdateWithoutOrganizationInput, SatelliteEndpointUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput = {
+    where: SatelliteEndpointScalarWhereInput
+    data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
   export type UserUpsertWithoutOwnedOrganizationsInput = {
     update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
@@ -76050,6 +78751,163 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type OrganizationUpsertWithoutDepartmentsInput = {
+    update: XOR<OrganizationUpdateWithoutDepartmentsInput, OrganizationUncheckedUpdateWithoutDepartmentsInput>
+    create: XOR<OrganizationCreateWithoutDepartmentsInput, OrganizationUncheckedCreateWithoutDepartmentsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutDepartmentsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutDepartmentsInput, OrganizationUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type OrganizationUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+  }
+
+  export type OrganizationUpsertWithWhereUniqueWithoutParentOrgInput = {
+    where: OrganizationWhereUniqueInput
+    update: XOR<OrganizationUpdateWithoutParentOrgInput, OrganizationUncheckedUpdateWithoutParentOrgInput>
+    create: XOR<OrganizationCreateWithoutParentOrgInput, OrganizationUncheckedCreateWithoutParentOrgInput>
+  }
+
+  export type OrganizationUpdateWithWhereUniqueWithoutParentOrgInput = {
+    where: OrganizationWhereUniqueInput
+    data: XOR<OrganizationUpdateWithoutParentOrgInput, OrganizationUncheckedUpdateWithoutParentOrgInput>
+  }
+
+  export type OrganizationUpdateManyWithWhereWithoutParentOrgInput = {
+    where: OrganizationScalarWhereInput
+    data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyWithoutParentOrgInput>
+  }
+
+  export type OrganizationScalarWhereInput = {
+    AND?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+    OR?: OrganizationScalarWhereInput[]
+    NOT?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+    id?: UuidFilter<"Organization"> | string
+    name?: StringFilter<"Organization"> | string
+    ownerId?: UuidNullableFilter<"Organization"> | string | null
+    taxIdBlindIndex?: StringNullableFilter<"Organization"> | string | null
+    taxIdCipher?: StringNullableFilter<"Organization"> | string | null
+    subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
+    billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
+    parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
+    activeModules?: StringNullableListFilter<"Organization">
+    storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
+    currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFilter<"Organization"> | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: StringNullableFilter<"Organization"> | string | null
+    whatsappAlertsUsed?: IntFilter<"Organization"> | number
+    ocrPagesUsed?: IntFilter<"Organization"> | number
+    currency?: StringFilter<"Organization"> | string
+    settings?: JsonFilter<"Organization">
+    drakarisClientId?: StringNullableFilter<"Organization"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
+    createdAt?: DateTimeFilter<"Organization"> | Date | string
+    updatedAt?: DateTimeFilter<"Organization"> | Date | string
   }
 
   export type OrganizationMembershipCreateWithoutUserInput = {
@@ -76199,6 +79057,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -76234,6 +79095,9 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -76243,6 +79107,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -76278,6 +79146,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutOwnerInput = {
@@ -76370,32 +79240,6 @@ export namespace Prisma {
     data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyWithoutOwnerInput>
   }
 
-  export type OrganizationScalarWhereInput = {
-    AND?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
-    OR?: OrganizationScalarWhereInput[]
-    NOT?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
-    id?: UuidFilter<"Organization"> | string
-    name?: StringFilter<"Organization"> | string
-    ownerId?: UuidNullableFilter<"Organization"> | string | null
-    taxIdBlindIndex?: StringNullableFilter<"Organization"> | string | null
-    taxIdCipher?: StringNullableFilter<"Organization"> | string | null
-    subscriptionPlan?: StringNullableFilter<"Organization"> | string | null
-    billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
-    activeModules?: StringNullableListFilter<"Organization">
-    storageUsedBytes?: BigIntFilter<"Organization"> | bigint | number
-    currentCreditTier?: EnumTariffTierNullableFilter<"Organization"> | $Enums.TariffTier | null
-    accumulatedBalance?: DecimalFilter<"Organization"> | Decimal | DecimalJsLike | number | string
-    billingPeriodKey?: StringNullableFilter<"Organization"> | string | null
-    whatsappAlertsUsed?: IntFilter<"Organization"> | number
-    ocrPagesUsed?: IntFilter<"Organization"> | number
-    currency?: StringFilter<"Organization"> | string
-    settings?: JsonFilter<"Organization">
-    drakarisClientId?: StringNullableFilter<"Organization"> | string | null
-    deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
-    createdAt?: DateTimeFilter<"Organization"> | Date | string
-    updatedAt?: DateTimeFilter<"Organization"> | Date | string
-  }
-
   export type UserCreateWithoutMembershipsInput = {
     id?: string
     email: string
@@ -76438,6 +79282,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -76472,7 +79319,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -76483,6 +79333,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -76517,6 +79371,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutMembershipsInput = {
@@ -76583,6 +79439,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -76617,7 +79476,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -76628,6 +79490,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -76662,6 +79528,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type ReferralCreateWithoutPartnerInput = {
@@ -76984,6 +79852,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77018,7 +79889,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -77029,6 +79903,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77063,6 +79941,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -77123,6 +80003,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77157,7 +80040,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -77168,6 +80054,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77202,6 +80092,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessEventsInput = {
@@ -77252,6 +80144,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77286,7 +80181,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -77297,6 +80195,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77331,6 +80233,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -77391,6 +80295,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77425,7 +80332,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -77436,6 +80346,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77470,6 +80384,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type UserUpsertWithoutEarlyAccessSignupsInput = {
@@ -77520,6 +80436,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77554,7 +80473,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -77565,6 +80487,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77599,6 +80525,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutAuditLogsInput = {
@@ -77659,6 +80587,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77693,7 +80624,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -77704,6 +80638,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77738,6 +80676,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type UserUpsertWithoutAuditLogsInput = {
@@ -77788,6 +80728,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77822,7 +80765,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
@@ -77833,6 +80779,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -77867,6 +80817,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationTemplatesInput = {
@@ -77938,6 +80890,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -77972,7 +80927,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
@@ -77983,6 +80941,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78017,6 +80979,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type NotificationOutboxUpsertWithWhereUniqueWithoutTemplateInput = {
@@ -78042,6 +81006,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78076,7 +81043,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
@@ -78087,6 +81057,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78121,6 +81095,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationOutboxEntriesInput = {
@@ -78207,6 +81183,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78241,7 +81220,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
@@ -78252,6 +81234,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78286,6 +81272,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type NotificationTemplateUpsertWithoutOutboxEntriesInput = {
@@ -78389,6 +81377,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78423,7 +81414,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
@@ -78434,6 +81428,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78468,6 +81466,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutNotificationDeliveryLogsInput = {
@@ -78540,6 +81540,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78574,7 +81577,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
@@ -78585,6 +81591,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78619,6 +81629,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformPaymentLinksInput = {
@@ -78628,6 +81640,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78662,7 +81677,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
@@ -78673,6 +81691,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78707,6 +81729,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPaymentLinksInput = {
@@ -78771,6 +81795,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78805,7 +81832,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
@@ -78816,6 +81846,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -78850,6 +81884,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type PaymentOrderUpsertWithoutPlatformPaymentLinksInput = {
@@ -78904,6 +81940,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78938,7 +81977,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
@@ -78949,6 +81991,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -78983,6 +82029,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPortalLinksInput = {
@@ -79008,6 +82056,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79042,7 +82093,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
@@ -79053,6 +82107,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79087,6 +82145,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutBookableResourcesInput = {
@@ -79096,6 +82156,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79130,7 +82193,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
@@ -79141,6 +82207,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79175,6 +82245,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookableResourcesInput = {
@@ -79268,6 +82340,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79302,7 +82377,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
@@ -79313,6 +82391,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79347,6 +82429,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type BookingSlotUpsertWithWhereUniqueWithoutResourceInput = {
@@ -79388,6 +82472,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79422,7 +82509,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
@@ -79433,6 +82523,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79467,6 +82561,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingSlotsInput = {
@@ -79553,6 +82649,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79587,7 +82686,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
@@ -79598,6 +82700,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79632,6 +82738,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type BookableResourceUpsertWithoutSlotsInput = {
@@ -79688,6 +82796,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79722,7 +82833,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
@@ -79733,6 +82847,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -79767,6 +82885,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutBookingAppointmentsInput = {
@@ -79844,6 +82964,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79878,7 +83001,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
@@ -79889,6 +83015,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -79923,6 +83053,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type BookableResourceUpsertWithoutAppointmentsInput = {
@@ -79996,6 +83128,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80030,7 +83165,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
@@ -80041,6 +83179,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80075,6 +83217,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformPromotionsInput = {
@@ -80100,6 +83244,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80134,7 +83281,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
@@ -80145,6 +83295,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80179,6 +83333,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformCustomDomainsInput = {
@@ -80188,6 +83344,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80222,7 +83381,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
@@ -80233,6 +83395,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80267,6 +83433,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformCustomDomainsInput = {
@@ -80292,6 +83460,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80326,7 +83497,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
@@ -80337,6 +83511,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80371,6 +83549,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformShipmentsInput = {
@@ -80380,6 +83560,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80414,7 +83597,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
@@ -80425,6 +83611,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80459,6 +83649,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformShipmentsInput = {
@@ -80484,6 +83676,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80518,7 +83713,10 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
@@ -80529,6 +83727,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80563,6 +83765,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformAuditLogsInput = {
@@ -80572,6 +83776,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80606,7 +83813,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformAuditLogsInput = {
@@ -80617,6 +83827,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80651,6 +83865,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformAuditLogsInput = {
@@ -80676,6 +83892,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80710,7 +83929,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformAuditLogsInput = {
@@ -80721,6 +83943,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80755,6 +83981,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -80764,6 +83992,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80798,7 +84029,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -80809,6 +84043,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80843,6 +84081,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformIdempotencyRecordsInput = {
@@ -80868,6 +84108,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80902,7 +84145,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformIdempotencyRecordsInput = {
@@ -80913,6 +84159,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -80947,6 +84197,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -80956,6 +84208,9 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -80990,7 +84245,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -81001,6 +84259,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -81035,6 +84297,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
   export type OrganizationCreateOrConnectWithoutPlatformLoyaltyLedgerInput = {
@@ -81060,6 +84324,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -81094,7 +84361,10 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput = {
@@ -81105,6 +84375,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -81139,6 +84413,8 @@ export namespace Prisma {
     platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type BillingInvoiceItemCreateManySubscriptionInvoiceInput = {
@@ -81229,6 +84505,16 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type SatelliteEndpointCreateManySatelliteInput = {
+    id?: string
+    organizationId: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type PricingModuleUpdateWithoutSatelliteInput = {
     id?: StringFieldUpdateOperationsInput | string
     key?: StringFieldUpdateOperationsInput | string
@@ -81261,6 +84547,36 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointUpdateWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutSatelliteEndpointsNestedInput
+  }
+
+  export type SatelliteEndpointUncheckedUpdateWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointUncheckedUpdateManyWithoutSatelliteInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -81649,6 +84965,42 @@ export namespace Prisma {
     reason: string
     promotionCode?: string | null
     createdAt?: Date | string
+  }
+
+  export type SatelliteEndpointCreateManyOrganizationInput = {
+    id?: string
+    satelliteKey: string
+    baseUrl: string
+    secretCipher?: string | null
+    enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationCreateManyParentOrgInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type UsageMeterEventUpdateWithoutOrganizationInput = {
@@ -82391,6 +85743,162 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SatelliteEndpointUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    satellite?: SatelliteUpdateOneWithoutEndpointsNestedInput
+  }
+
+  export type SatelliteEndpointUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SatelliteEndpointUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    baseUrl?: StringFieldUpdateOperationsInput | string
+    secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpdateWithoutParentOrgInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutParentOrgInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutParentOrgInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationMembershipCreateManyUserInput = {
     organizationId: string
     role: $Enums.UserRole
@@ -82448,6 +85956,10 @@ export namespace Prisma {
     taxIdCipher?: string | null
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
     storageUsedBytes?: bigint | number
     currentCreditTier?: $Enums.TariffTier | null
@@ -82620,6 +86132,9 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -82655,6 +86170,9 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
@@ -82664,6 +86182,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
@@ -82699,6 +86221,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
@@ -82708,6 +86232,10 @@ export namespace Prisma {
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
     storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
     currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null

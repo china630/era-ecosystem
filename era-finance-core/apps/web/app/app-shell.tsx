@@ -16,6 +16,7 @@ import { ComplianceRiskIndicator } from "../components/compliance/compliance-ris
 import { InAppNotificationBell } from "../components/notifications/in-app-notification-bell";
 import { ExternalAuditEngagementBanner } from "../components/audit-hub/ExternalAuditEngagementBanner";
 import { AuditEngagementSessionProvider } from "../lib/audit-engagement-session";
+import { CompanySelectBlockingModal } from "../components/companies/company-select-blocking-modal";
 
 const quickActionItemClass =
   "block px-3 py-2 text-sm text-gray-700 hover:bg-action/10 hover:text-primary rounded-md mx-1";
@@ -251,7 +252,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();
-  const { token, user, ready, logout } = useAuth();
+  const { token, user, ready, logout, organizations } = useAuth();
   const { canPostAccounting, canViewHoldingReports } = useOrgPermissions();
   const { ready: subReady, effectiveSnapshot: snapshot } = useSubscription();
 
@@ -264,6 +265,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (user.isSuperAdmin && pathname.startsWith("/admin/data")) return;
     router.replace("/companies");
   }, [ready, token, user, pathname, router]);
+
+  const mustBlockCompanySelect =
+    ready &&
+    !!token &&
+    !!user &&
+    !user.organizationId &&
+    organizations.length >= 2;
 
   /**
    * Замки только после загрузки снимка подписки. Пока snapshot === null,
@@ -331,11 +339,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       pathname.startsWith("/banking") ||
       pathname.startsWith("/expenses") ||
       pathname.startsWith("/treasury/cash-flow") ||
-      pathname.startsWith("/finance/prepaid-expenses");
+      pathname.startsWith("/finance/prepaid-expenses") ||
+      pathname.startsWith("/finance/network-inbox");
     const salesActive =
       pathname.startsWith("/sales/invoices") ||
       pathname.startsWith("/sales/reconciliation");
-    const purchasesActive = pathname.startsWith("/purchases");
+    const purchasesActive =
+      pathname.startsWith("/purchases") || pathname.startsWith("/finance/payables");
     const manufacturingNavActive = pathname.startsWith("/manufacturing");
     const warehouseActive = pathname.startsWith("/inventory");
     const catalogCrmActive =
@@ -350,7 +360,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     const chartOfAccountsActive =
       pathname.startsWith("/accounting") ||
       (pathname.startsWith("/finance") &&
-        !pathname.startsWith("/finance/prepaid-expenses"));
+        !pathname.startsWith("/finance/prepaid-expenses") &&
+        !pathname.startsWith("/finance/network-inbox"));
     const auditSectionActive =
       pathname.startsWith("/audit-hub") ||
       pathname.startsWith("/audit-invitations") ||
@@ -554,7 +565,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             ) : null
           }
           notificationsBell={
-            ready && token ? <InAppNotificationBell /> : undefined
+            ready && token ? (
+              // Finance-specific notification adapter (era-data-hub / in-app feed).
+              <InAppNotificationBell />
+            ) : undefined
           }
           onLogout={() => void logout()}
           riskIndicator={<ComplianceRiskIndicator />}
@@ -578,6 +592,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      <CompanySelectBlockingModal open={mustBlockCompanySelect} />
 
       {ready && token ? (
         <QuickActionsMobileFab

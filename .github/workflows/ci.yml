@@ -54,9 +54,9 @@ jobs:
           node-version: "22"
       - name: "Prepare erafinance database (file dependency)"
         run: chmod +x scripts/ci-prepare-finance-database.sh && ./scripts/ci-prepare-finance-database.sh
-      - name: Build data-hub
+      - name: Test and build data-hub
         working-directory: era-data-hub
-        run: npm ci && npm run build
+        run: npm ci && npm run test -w @era/data-hub-api && npm run build
 
   finance:
     runs-on: ubuntu-latest
@@ -109,6 +109,9 @@ jobs:
       - name: Validate posting role presets
         working-directory: era-finance-core/packages/database
         run: npx tsx prisma/scripts/validate-posting-roles.ts
+      - name: Validate no NAS literals in API
+        working-directory: era-finance-core
+        run: npm run validate:no-nas-literals
       - name: ESLint API
         working-directory: era-finance-core
         run: npm run lint -w @erafinance/api

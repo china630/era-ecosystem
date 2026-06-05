@@ -3,6 +3,17 @@
     "title": "ERA Clinic",
     "description": "Klinika və tibbi əməliyyatlar peyk modulu"
   },
+  "nav": {
+    "home": "Əsas",
+    "appointments": "Qəbullar",
+    "scheduling": "Cədvəl",
+    "labOrders": "Laboratoriya",
+    "sanatorium": "Sanatoriya",
+    "doctor": "Həkim növbəsi",
+    "nurse": "Prosedurlar",
+    "cashier": "Kassa",
+    "settings": "Parametrlər"
+  },
   "login": {
     "title": "ERA Clinic",
     "subtitle": "Hesabınızla daxil olun",
@@ -83,14 +94,49 @@
   },
   "scheduling": {
     "title": "Gün cədvəli",
-    "subtitle": "K-05 — praktikant gün şəbəkəsi (slots API stub)",
+    "subtitle": "Resurslara görə slotlar və drag ilə köçürmə",
     "date": "Tarix",
     "practitionerCode": "Praktikant kodu",
     "optional": "istəyə bağlı",
     "loadingSlots": "Slotlar yüklənir…",
     "loadFailed": "Cədvəl yüklənmədi.",
     "allPractitioners": "bütün praktikantlar",
-    "rescheduleStub": "Yenidən planlaşdırma stub — blokları köçürmək üçün appointments API (K3 MVP)."
+    "available": "Boş",
+    "unavailable": "Dolu",
+    "dragHint": "Qəbulu köçürmək üçün slotu sürüşdürün (eyni gün).",
+    "rescheduled": "Qəbul köçürüldü.",
+    "rescheduleFailed": "Köçürmə uğursuz oldu.",
+    "noAppointment": "Mənbə vaxtında qəbul yoxdur."
+  },
+  "doctor": {
+    "title": "Həkim növbəsi",
+    "subtitle": "Check-in və davam edən vizitlər",
+    "empty": "Növbə boşdur."
+  },
+  "nurse": {
+    "title": "Prosedur növbəsi",
+    "subtitle": "Tibb bacısı üçün planlaşdırılmış prosedurlar",
+    "done": "Tamamla"
+  },
+  "cashier": {
+    "title": "Klinika kassası",
+    "subtitle": "Növbə, ödəniş, fiskal (@era/fiscal)",
+    "openShift": "Növbəni aç",
+    "pay": "Ödəniş qəbul et"
+  },
+  "booking": {
+    "title": "Qəbul üçün yazılma",
+    "subtitle": "İctimai yazılma (platform/booking konfiqurasiya olunanda)",
+    "name": "Ad soyad",
+    "phone": "Telefon",
+    "submit": "Yazıl",
+    "success": "Qəbul yaradıldı.",
+    "error": "Yazılma uğursuz oldu."
+  },
+  "portal": {
+    "title": "Pasiyent portalı",
+    "token": "Portal və ya QR token",
+    "load": "Vizitləri yüklə"
   },
   "executive": {
     "title": "İcraçı xülasə",

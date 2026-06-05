@@ -69,8 +69,7 @@ UPDATE "organizations" SET "active_modules" = (
 ) || CASE WHEN 'hotel_front_office' = ANY("active_modules") OR 'hotel_front_cash' = ANY("active_modules") OR 'hotel_night_audit' = ANY("active_modules")
   THEN ARRAY['hotel_core'] ELSE ARRAY[]::text[] END
   || CASE WHEN 'hotel_channel_ota' = ANY("active_modules") OR 'hotel_contracts_yield' = ANY("active_modules")
-  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END
-);
+  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END;
 
 UPDATE "organization_subscriptions" SET "active_modules" = (
   SELECT COALESCE(array_agg(DISTINCT m), ARRAY[]::text[])
@@ -79,8 +78,7 @@ UPDATE "organization_subscriptions" SET "active_modules" = (
 ) || CASE WHEN 'hotel_front_office' = ANY("active_modules") OR 'hotel_front_cash' = ANY("active_modules") OR 'hotel_night_audit' = ANY("active_modules")
   THEN ARRAY['hotel_core'] ELSE ARRAY[]::text[] END
   || CASE WHEN 'hotel_channel_ota' = ANY("active_modules") OR 'hotel_contracts_yield' = ANY("active_modules")
-  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END
-);
+  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END;
 
 UPDATE "tenant_billing" SET "active_modules" = (
   SELECT COALESCE(array_agg(DISTINCT m), ARRAY[]::text[])
@@ -89,8 +87,7 @@ UPDATE "tenant_billing" SET "active_modules" = (
 ) || CASE WHEN 'hotel_front_office' = ANY("active_modules") OR 'hotel_front_cash' = ANY("active_modules") OR 'hotel_night_audit' = ANY("active_modules")
   THEN ARRAY['hotel_core'] ELSE ARRAY[]::text[] END
   || CASE WHEN 'hotel_channel_ota' = ANY("active_modules") OR 'hotel_contracts_yield' = ANY("active_modules")
-  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END
-);
+  THEN ARRAY['hotel_distribution'] ELSE ARRAY[]::text[] END;
 
 -- organization_modules key remap
 UPDATE "organization_modules" SET "module_key" = 'hotel_core'

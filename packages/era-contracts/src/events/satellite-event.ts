@@ -1,6 +1,8 @@
 import { isSatelliteAutoWorkOrderCompleted } from "./auto-sto.events";
 import {
   isSatelliteClinicLabOrderCompleted,
+  isSatelliteClinicPrescriptionIssued,
+  isSatelliteClinicProcedureCompleted,
   isSatelliteClinicVisitCompleted,
 } from "./clinic.events";
 import { isSatelliteConstructionProgressActApproved } from "./construction.events";
@@ -8,7 +10,16 @@ import {
   isSatelliteCrmLeadConverted,
   isSatelliteCrmVisitLogged,
 } from "./crm-field.events";
-import { isSatelliteHotelNightAuditClosed, isSatelliteHotelReservationCompleted, isSatelliteHotelInvoiceIssued, isSatelliteHotelCityLedgerSnapshot } from "./hotel.events";
+import {
+  isSatelliteHotelCityLedgerSnapshot,
+  isSatelliteHotelGuestCheckedIn,
+  isSatelliteHotelGuestCheckedOut,
+  isSatelliteHotelInvoiceIssued,
+  isSatelliteHotelNightAuditClosed,
+  isSatelliteHotelReservationCompleted,
+  isSatelliteHotelRoomChanged,
+  isSatelliteHotelSanatoriumBookingCreated,
+} from "./hotel.events";
 import { isSatelliteLogisticsTripCompleted } from "./logistics.events";
 import {
   isSatelliteRetailSaleCompleted,
@@ -28,6 +39,10 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteHotelNightAuditClosed(data) ||
     isSatelliteHotelInvoiceIssued(data) ||
     isSatelliteHotelCityLedgerSnapshot(data) ||
+    isSatelliteHotelGuestCheckedIn(data) ||
+    isSatelliteHotelGuestCheckedOut(data) ||
+    isSatelliteHotelRoomChanged(data) ||
+    isSatelliteHotelSanatoriumBookingCreated(data) ||
     isSatelliteRetailSaleCompleted(data) ||
     isSatelliteRetailShiftClosed(data) ||
     isSatelliteLogisticsTripCompleted(data) ||
@@ -37,6 +52,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteAutoWorkOrderCompleted(data) ||
     isSatelliteClinicVisitCompleted(data) ||
     isSatelliteClinicLabOrderCompleted(data) ||
+    isSatelliteClinicProcedureCompleted(data) ||
+    isSatelliteClinicPrescriptionIssued(data) ||
     isSatelliteWholesaleOrderConfirmed(data) ||
     isSatelliteFbStockConsumptionCompleted(data)
   );
