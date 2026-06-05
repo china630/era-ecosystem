@@ -3,7 +3,8 @@
 **Волна:** `intercompany-network-wave-1`  
 **Документы:** [PRD §4.19](../PRD.md) · [TZ §29](../TZ.md)  
 **Зависимости:** **`1_core.md`** (все проводки через `PostingRole`, без литералов).  
-**Ждёт:** **`4_orchestrator.md`** (e-Qaimə ref, кросс-деплой доставка).
+**Ждёт:** **`4_orchestrator.md`** (e-Qaimə ref, кросс-деплой доставка).  
+**Статус:** ✅ выполнено — чек-лист §12 отмечен 2026-06-05; e-Qaimə/cross-deploy → `4_orchestrator.md`.
 
 ---
 
@@ -292,15 +293,15 @@ npm test -w @erafinance/api -- network-document
 
 ## 12. Чек-лист приёмки
 
-- [ ] Prisma `NetworkDocument` + migration
-- [ ] Match service + opt-in settings
-- [ ] Emit hook on invoice create (async)
-- [ ] Inbox API accept/reject with mirror posting via roles
-- [ ] UI inbox page + modals
-- [ ] Period lock / HARD_BLOCK respected on accept
-- [ ] Idempotent correlationId
-- [ ] Нет литералов NAS в posting path
-- [ ] e-Qaimə / cross-deploy **не** реализованы здесь → `4_orchestrator.md`
+- [x] Prisma `NetworkDocument` + migration
+- [x] Match service + opt-in settings
+- [x] Emit hook on invoice create (async)
+- [x] Inbox API accept/reject with mirror posting via roles
+- [x] UI inbox page + modals
+- [x] Period lock / HARD_BLOCK respected on accept
+- [x] Idempotent correlationId
+- [x] Нет литералов NAS в posting path
+- [x] e-Qaimə / cross-deploy **не** реализованы здесь → `4_orchestrator.md` *(вынесено и выполнено в `4_orchestrator.md`)*
 
 ---
 

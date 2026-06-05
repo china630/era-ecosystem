@@ -3,7 +3,8 @@
 **Волна:** `data-hub-consumer-wave-1` + `FEAT-FC-COA-001`  
 **Документы:** [PRD §4.18](../PRD.md) · [TZ §28](../TZ.md) · [ADR era-data-hub](../../docs/adr/era-data-hub.md)  
 **Зависимости:** нет (запускать **первым**).  
-**Блокирует:** `2_core.md` (prepaid/инвойс), `3_core.md` (зеркальные проводки по ролям).
+**Блокирует:** `2_core.md` (prepaid/инвойс), `3_core.md` (зеркальные проводки по ролям).  
+**Статус:** ✅ выполнено — чек-лист §8 отмечен 2026-06-05.
 
 ---
 
@@ -430,15 +431,15 @@ npm test -w @erafinance/api -- --testPathPattern="posting|prepaid|customs"
 
 ## 8. Чек-лист приёмки
 
-- [ ] `PREPAID_ASSET`, `CHARTER_CAPITAL` в `POSTING_ROLES` и во всех 3 JSON пресетах
-- [ ] Счёт `133` в commercial (+ ngo) chart JSON; `validate:posting-roles` OK
-- [ ] P1 файлы (prepaid, invoices, psa, satellite) без литералов 101/221/731/133
-- [ ] P2 файлы (manufacturing, inventory, migration, org settings, accounts, banking, kassa) на resolver
-- [ ] `ledger.constants.ts` удалён, нет импортов
-- [ ] `validate:no-nas-literals` в package.json и CI
-- [ ] `DataHubClientService` — 8 новых методов
-- [ ] `HrCalendarService`, `BankDirectoryService`, hub в directory/counterparty/chart/iban/system-catalog
-- [ ] PRD/TZ статусы не менять автоматически — только по решению PO после QA
+- [x] `PREPAID_ASSET`, `CHARTER_CAPITAL` в `POSTING_ROLES` и во всех 3 JSON пресетах
+- [x] Счёт `133` в commercial (+ ngo) chart JSON; `validate:posting-roles` OK
+- [x] P1 файлы (prepaid, invoices, psa, satellite) без литералов 101/221/731/133
+- [x] P2 файлы (manufacturing, inventory, migration, org settings, accounts, banking, kassa) на resolver
+- [x] `ledger.constants.ts` удалён, нет импортов
+- [x] `validate:no-nas-literals` в package.json и CI
+- [x] `DataHubClientService` — 8 новых методов
+- [x] `HrCalendarService`, `BankDirectoryService`, hub в directory/counterparty/chart/iban/system-catalog
+- [x] PRD/TZ статусы не менять автоматически — только по решению PO после QA *(соблюдено при исполнении)*
 
 ---
 

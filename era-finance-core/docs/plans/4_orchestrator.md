@@ -3,7 +3,8 @@
 **Волна:** `orchestrator-integration-wave-1`  
 **Документы:** PRD §4.18 (`FEAT-FC-CIT-001`), §4.19 (`FEAT-FC-NET-005/006`, §29.6–29.8)  
 **Зависимости:** запускать **после** `1_core.md`, `2_core.md` (FIN UI), `3_core.md` (модель `NetworkDocument` + transport interface).  
-**Репозитории:** `era-orchestrator` + доработки в `era-finance-core`.
+**Репозитории:** `era-orchestrator` + доработки в `era-finance-core`.  
+**Статус:** ✅ выполнено — чек-лист приёмки отмечен 2026-06-05; **отложено:** E2E `multi-finance` (§C.6).
 
 ---
 
@@ -243,7 +244,7 @@ compareWithEQaime(docId): { status: 'MATCH' | 'MISMATCH' | 'MISSING', diff?: ...
 - [x] Prefill endpoint для network doc
 - [x] Extension может использовать тот же autofill pipeline
 - [x] `eQaimeRef` сохраняется после sync
-- [ ] Документация: ERA network ≠ legal substitute
+- [x] Документация: ERA network ≠ legal substitute *(PRD §4.19 D-NET-2, TZ §29 D-NET-2)*
 
 ---
 

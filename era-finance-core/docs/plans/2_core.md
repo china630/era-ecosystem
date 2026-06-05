@@ -3,7 +3,8 @@
 **Волна:** `finance-core-ux-wave-1`  
 **Документы:** [PRD §4.17](../PRD.md) · [TZ §27](../TZ.md)  
 **Зависимости:** **`1_core.md` обязателен** (posting-роли `PREPAID_ASSET`, де-хардкод счетов, Data Hub VÖEN chain).  
-**Ждёт:** `4_orchestrator.md` для полноценного FIN-кода (UX-007 можно сделать UI-заглушку).
+**Ждёт:** `4_orchestrator.md` для полноценного FIN-кода (UX-007 можно сделать UI-заглушку).  
+**Статус:** ✅ выполнено — чек-лист приёмки отмечен 2026-06-05.
 
 ---
 
@@ -365,15 +366,15 @@ npm run build -w @erafinance/api
 
 ## Чек-лист приёмки 2_core
 
-- [ ] UX-001 header verified
-- [ ] UX-002 blocking modal + F5
-- [ ] UX-003/004 banking full width
-- [ ] UX-005 cash-flow filter row
-- [ ] UX-006 prepaid table + modal + description migration
-- [ ] UX-007 counterparty modal UX + backend fields + vat-payer API
-- [ ] UX-008 money-accounts API + invoice modal
-- [ ] UX-009 pay purchase from two entry points
-- [ ] Зависимость 1_core: нет литералов 101/221/133/731 в затронутых API paths
+- [x] UX-001 header verified
+- [x] UX-002 blocking modal + F5
+- [x] UX-003/004 banking full width
+- [x] UX-005 cash-flow filter row
+- [x] UX-006 prepaid table + modal + description migration
+- [x] UX-007 counterparty modal UX + backend fields + vat-payer API
+- [x] UX-008 money-accounts API + invoice modal
+- [x] UX-009 pay purchase from two entry points
+- [x] Зависимость 1_core: нет литералов 101/221/133/731 в затронутых API paths
 
 ---
 
