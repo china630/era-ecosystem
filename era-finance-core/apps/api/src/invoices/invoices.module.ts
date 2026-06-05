@@ -11,6 +11,7 @@ import { InvoiceSignatureController } from "./invoice-signature.controller";
 import { InvoicesController } from "./invoices.controller";
 import { InvoicesService } from "./invoices.service";
 import { PublicInvoiceController } from "./public-invoice.controller";
+import { NetworkModule } from "../network/network.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PublicInvoiceController } from "./public-invoice.controller";
     KassaModule,
     SignatureModule,
     forwardRef(() => ComplianceModule),
+    NetworkModule,
   ],
   controllers: [
     InvoicesController,

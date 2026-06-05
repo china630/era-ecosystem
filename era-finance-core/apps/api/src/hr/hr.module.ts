@@ -22,6 +22,7 @@ import { DepartmentHeadScopeService } from "./department-head-scope.service";
 import { NotificationModule } from "../notifications/notification.module";
 import { VacationBalanceService } from "./vacation-balance.service";
 import { IntegrationsModule } from "../integrations/integrations.module";
+import { HrCalendarService } from "./hr-calendar.service";
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { IntegrationsModule } from "../integrations/integrations.module";
     TimesheetService,
     DepartmentHeadScopeService,
     VacationBalanceService,
+    HrCalendarService,
     RolesGuard,
   ],
   exports: [OrgStructureService],

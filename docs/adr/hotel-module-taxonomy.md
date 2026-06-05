@@ -24,6 +24,8 @@ ERA CP commercial layers: satellite gate → modules → tiers → platform add-
 |-----|------------|------------------------|
 | `hotel_core` | PMS Core (Front Office, Front Cash, Night Audit) | `hotel_front_office`, `hotel_front_cash`, `hotel_night_audit` |
 | `hotel_housekeeping` | Housekeeping & Room Rack | — |
+| `hotel_service` | Service & maintenance | — |
+| `hotel_migration_pro` | Migration PRO (migration authority submissions) | alias `migration_pro` |
 | `hotel_transfers` | Transfers | — |
 | `hotel_spa_scheduling` | SPA & Scheduling | — |
 | `hotel_distribution` | Distribution (Channel Manager & Contracts) | `hotel_channel_ota`, `hotel_contracts_yield` |

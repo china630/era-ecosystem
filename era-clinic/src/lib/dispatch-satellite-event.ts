@@ -4,6 +4,7 @@ import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/sate
 export async function dispatchSatelliteEvent(event: {
   type: string;
   payload: Record<string, unknown>;
+  globalPersonId?: string;
 }) {
   return publishToOrchestratorGateway({
     ...event,

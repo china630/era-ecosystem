@@ -22,4 +22,15 @@ export class TaxController {
   ) {
     return this.tax.lookupTaxpayerByVoen(voen ?? "");
   }
+
+  @Get("vat-payer-info")
+  @ApiOperation({
+    summary: "VÖEN lookup via search-vat-payer (legal entity + individual fallback stub)",
+  })
+  vatPayerInfo(
+    @OrganizationId() _organizationId: string,
+    @Query("voen") voen: string,
+  ) {
+    return this.tax.lookupVatPayerInfo(voen ?? "");
+  }
 }

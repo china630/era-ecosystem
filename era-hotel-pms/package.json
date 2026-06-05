@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@era/contracts": "file:../packages/era-contracts",
+    "@era/fiscal": "file:../packages/era-fiscal",
     "@era/i18n-common": "file:../packages/i18n-common",
     "@era/satellite-kit": "file:../packages/satellite-kit",
     "lucide-react": "^0.511.0",

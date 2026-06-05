@@ -20,15 +20,39 @@ import { PrismaService } from "../prisma/prisma.service";
 import { counterpartyKindFromLegalForm } from "./counterparty-kind.util";
 import { CreateCounterpartyBankAccountDto } from "./dto/create-counterparty-bank-account.dto";
 import { CreateCounterpartyDto } from "./dto/create-counterparty.dto";
+import { LookupFinDto } from "./dto/lookup-fin.dto";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { MergeCounterpartiesDto } from "./dto/merge-counterparties.dto";
 import { UpdateCounterpartyDto } from "./dto/update-counterparty.dto";
 import { CounterpartiesService } from "./counterparties.service";
 import {
   blindIndex,
   encryptText,
+  normalizeFin,
   normalizeName,
   normalizeVoen,
 } from "../security/pii-crypto.util";
+
+function counterpartyExtraFields(dto: CreateCounterpartyDto) {
+  const extra: {
+    directorNameCipher?: string;
+    phonesJson?: string[];
+    finCodeCipher?: string;
+    finCodeBlindIndex?: string;
+  } = {};
+  if (dto.directorName?.trim()) {
+    extra.directorNameCipher = encryptText(dto.directorName.trim()) ?? undefined;
+  }
+  if (dto.phones?.length) {
+    extra.phonesJson = dto.phones.map((p) => p.trim()).filter(Boolean);
+  }
+  if (dto.finCode?.trim()) {
+    const fin = normalizeFin(dto.finCode.trim());
+    extra.finCodeCipher = encryptText(fin) ?? undefined;
+    extra.finCodeBlindIndex = blindIndex("fin", fin);
+  }
+  return extra;
+}
 
 @ApiTags("counterparties")
 @ApiBearerAuth("bearer")
@@ -39,7 +63,21 @@ export class CounterpartiesController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly svc: CounterpartiesService,
+    private readonly orchestratorMdm: OrchestratorMdmClientService,
   ) {}
+
+  @Post("lookup-fin")
+  @ApiOperation({ summary: "Lookup natural person by FIN (orchestrator MDM)" })
+  async lookupFin(
+    @OrganizationId() organizationId: string,
+    @Body() dto: LookupFinDto,
+  ) {
+    const remote = await this.orchestratorMdm.lookupPersonByFin(dto.fin, organizationId);
+    if (!remote) {
+      return { found: false, message: "Orchestrator unavailable" };
+    }
+    return remote;
+  }
 
   @Get()
   @ApiOperation({ summary: "Список контрагентов (опционально search + limit для автодополнения)" })
@@ -188,6 +226,7 @@ export class CounterpartiesController {
           ...(dto.portalLocale !== undefined && {
             portalLocale: dto.portalLocale,
           }),
+          ...counterpartyExtraFields(dto),
         },
         include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
       });
@@ -224,6 +263,7 @@ export class CounterpartiesController {
         ...(dto.portalLocale !== undefined && {
           portalLocale: dto.portalLocale,
         }),
+        ...counterpartyExtraFields(dto),
       },
       include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
     });

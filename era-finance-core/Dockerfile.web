@@ -12,15 +12,18 @@ WORKDIR /workspace
 COPY packages/i18n-common/package.json packages/i18n-common/package-lock.json* ./packages/i18n-common/
 COPY packages/era-contracts/package.json packages/era-contracts/package-lock.json* ./packages/era-contracts/
 COPY packages/satellite-kit/package.json packages/satellite-kit/package-lock.json* ./packages/satellite-kit/
+COPY packages/era-fiscal/package.json packages/era-fiscal/package-lock.json* ./packages/era-fiscal/
 COPY packages/era-storage/package.json packages/era-storage/package-lock.json* ./packages/era-storage/
 COPY packages/i18n-common ./packages/i18n-common
 COPY packages/era-contracts ./packages/era-contracts
 COPY packages/era-storage ./packages/era-storage
+COPY packages/era-fiscal ./packages/era-fiscal
 COPY packages/satellite-kit ./packages/satellite-kit
 
 RUN cd packages/i18n-common && npm install && npm run build \
   && cd ../era-contracts && npm install && npm run build \
   && cd ../era-storage && npm install && npm run build \
+  && cd ../era-fiscal && npm install && npm run build \
   && cd ../satellite-kit && npm install && npm run build
 
 COPY era-finance-core/package.json era-finance-core/package-lock.json ./era-finance-core/

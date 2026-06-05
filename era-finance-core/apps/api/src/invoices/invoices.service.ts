@@ -41,6 +41,7 @@ import { IntegrationSyncRunService } from "../integrations/integration-sync-run.
 import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
+import { NetworkDocumentService } from "../network/network-document.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -75,7 +76,73 @@ export class InvoicesService {
     private readonly cashOrders: CashOrderService,
     private readonly syncRuns: IntegrationSyncRunService,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
+    @Optional() private readonly networkDocs?: NetworkDocumentService,
   ) {}
+
+  /** Fire-and-forget network document emit after revenue recognition (3_core). */
+  notifyRevenueRecognizedForNetwork(organizationId: string, invoiceId: string): void {
+    this.networkDocs?.scheduleEmitFromInvoice(organizationId, invoiceId);
+  }
+
+  private scheduleNetworkEmitFromInvoice(organizationId: string, invoiceId: string): void {
+    this.notifyRevenueRecognizedForNetwork(organizationId, invoiceId);
+  }
+
+  private accountMatchesRoot(code: string, root: string): boolean {
+    const c = code.trim();
+    return c === root || c.startsWith(`${root}.`);
+  }
+
+  /** Validates incoming payment debit (cash/bank) and resolves document currency. */
+  private async resolveInvoicePayment(
+    organizationId: string,
+    dto: CreateInvoiceDto,
+  ): Promise<{ debitAccountCode: string; currency: string }> {
+    const [cashAzn, mainBank] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "CASH_AZN"),
+      this.posting.resolveAccountCode(organizationId, "MAIN_BANK"),
+    ]);
+    let debitAccountCode =
+      dto.debitAccountCode?.trim() ||
+      (await this.posting.resolveAccountCode(organizationId, "CASH_AZN"));
+    const isCash = this.accountMatchesRoot(debitAccountCode, cashAzn);
+    const isBank = this.accountMatchesRoot(debitAccountCode, mainBank);
+    if (!isCash && !isBank) {
+      throw new BadRequestException(
+        "debitAccountCode must be an organization cash or bank NAS account",
+      );
+    }
+    let currency = (dto.currency ?? "AZN").trim().toUpperCase();
+    if (isCash) {
+      return { debitAccountCode, currency: "AZN" };
+    }
+    if (!dto.bankAccountId?.trim()) {
+      throw new BadRequestException(
+        "bankAccountId is required when payment account is bank (221*)",
+      );
+    }
+    const bank = await this.prisma.organizationBankAccount.findFirst({
+      where: {
+        id: dto.bankAccountId.trim(),
+        organizationId,
+        isArchived: false,
+      },
+    });
+    if (!bank) {
+      throw new BadRequestException("bankAccountId not found");
+    }
+    const ledger = bank.ledgerAccountCode?.trim();
+    if (ledger) {
+      debitAccountCode = ledger;
+      if (!this.accountMatchesRoot(debitAccountCode, mainBank)) {
+        throw new BadRequestException(
+          "bankAccountId ledger code is not under MAIN_BANK",
+        );
+      }
+    }
+    currency = (bank.currency ?? "AZN").trim().toUpperCase();
+    return { debitAccountCode, currency };
+  }
 
   async list(
     organizationId: string,
@@ -352,8 +419,10 @@ export class InvoicesService {
       if (!wh) throw new NotFoundException("Warehouse not found");
     }
 
-    const debitAccountCode = dto.debitAccountCode ?? "101";
-    const currency = dto.currency ?? "AZN";
+    const { debitAccountCode, currency } = await this.resolveInvoicePayment(
+      organizationId,
+      dto,
+    );
     const vatInclusive = !!dto.vatInclusive;
 
     const { items: builtItems, total } = await this.buildItems(
@@ -552,6 +621,17 @@ export class InvoicesService {
       );
     });
 
+    const recognized = await this.prisma.invoice.findFirst({
+      where: { id, organizationId },
+      select: { revenueRecognized: true },
+    });
+    if (
+      recognized?.revenueRecognized &&
+      (status === InvoiceStatus.SENT || status === InvoiceStatus.PAID)
+    ) {
+      this.scheduleNetworkEmitFromInvoice(organizationId, id);
+    }
+
     return this.getOne(organizationId, id);
   }
 
@@ -727,7 +807,9 @@ export class InvoicesService {
     } catch {
       throw new BadRequestException("Invalid paymentDate (expected YYYY-MM-DD)");
     }
-    const debitCode = dto.debitAccountCode?.trim() || "221";
+    const debitCode =
+      dto.debitAccountCode?.trim() ||
+      (await this.posting.resolveAccountCode(organizationId, "MAIN_BANK"));
 
     return this.prisma.$transaction(async (tx) => {
       const candidateInvoices = await tx.invoice.findMany({
@@ -884,6 +966,7 @@ export class InvoicesService {
     transactionId: string | null;
     newStatus: InvoiceStatus;
     paymentReceived: boolean;
+    firstRevenueRecognition?: boolean;
   }> {
     const existing = await tx.invoice.findFirst({
       where: { id: invoiceId, organizationId },
@@ -899,6 +982,7 @@ export class InvoicesService {
       );
     }
 
+    let firstRevenueRecognition = false;
     if (!existing.revenueRecognized) {
       const { transactionId } = await this.postRevenueRecognition(
         tx,
@@ -914,6 +998,7 @@ export class InvoicesService {
           revenuePostedTransactionId: transactionId,
         },
       });
+      firstRevenueRecognition = true;
     }
 
     const inv = await tx.invoice.findFirstOrThrow({
@@ -989,6 +1074,7 @@ export class InvoicesService {
       transactionId,
       newStatus: nextStatus,
       paymentReceived,
+      ...(firstRevenueRecognition ? { firstRevenueRecognition: true } : {}),
     };
   }
 

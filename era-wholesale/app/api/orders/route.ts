@@ -7,6 +7,8 @@ const createSchema = z.object({
   buyerCounterpartyId: z.string(),
   amountNet: z.number().nonnegative(),
   lineCount: z.number().int().nonnegative().default(1),
+  /** B2B = invoice/credit; COUNTER = walk-in cash sale (use POST .../pay). */
+  channel: z.enum(["B2B", "COUNTER"]).optional(),
 });
 
 export async function GET() {
@@ -30,6 +32,7 @@ export async function POST(req: Request) {
         buyerCounterpartyId: body.buyerCounterpartyId,
         amountNet: body.amountNet,
         lineCount: body.lineCount,
+        channel: body.channel ?? "B2B",
       },
     });
     return jsonOk(order, 201);

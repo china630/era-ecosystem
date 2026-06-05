@@ -18,6 +18,7 @@ export {
   syncChartForOrganization,
   upsertGlobalNasTemplateAccounts,
   type ChartAccountSeed,
+  type ChartJsonRemoteLoader,
   type ChartOfAccountsFile,
 } from "./dist/lib/chart/chart-seed";
 export {

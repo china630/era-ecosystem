@@ -1,8 +1,6 @@
 import { Prisma } from "@erafinance/database";
-import {
-  INVENTORY_GOODS_ACCOUNT_CODE,
-  MISC_OPERATING_EXPENSE_ACCOUNT_CODE,
-} from "../../src/ledger.constants";
+const INVENTORY_GOODS_ACCOUNT_CODE = "201";
+const MISC_OPERATING_EXPENSE_ACCOUNT_CODE = "731";
 import { createTestInventoryService } from "../helpers/mock-posting-resolver";
 import type { AccountingService } from "../../src/accounting/accounting.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";

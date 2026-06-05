@@ -4,10 +4,16 @@ import {
   SATELLITE_HOTEL_RESERVATION_COMPLETED,
   SATELLITE_HOTEL_INVOICE_ISSUED,
   SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT,
+  SATELLITE_HOTEL_GUEST_CHECKED_IN,
+  SATELLITE_HOTEL_GUEST_CHECKED_OUT,
+  SATELLITE_HOTEL_ROOM_CHANGED,
   type SatelliteHotelNightAuditClosedEvent,
   type SatelliteHotelReservationCompletedEvent,
   type SatelliteHotelInvoiceIssuedEvent,
   type SatelliteHotelCityLedgerSnapshotEvent,
+  type SatelliteHotelGuestCheckedInEvent,
+  type SatelliteHotelGuestCheckedOutEvent,
+  type SatelliteHotelRoomChangedEvent,
 } from "@era/contracts";
 import type { IntegrationEnvelope } from "./event-types";
 
@@ -119,6 +125,54 @@ export function envelopeToCityLedgerSnapshotEvent(
   };
 }
 
+export function envelopeToGuestCheckedInEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelGuestCheckedInEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_GUEST_CHECKED_IN) return null;
+  const payload = envelope.payload as unknown as SatelliteHotelGuestCheckedInEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_GUEST_CHECKED_IN,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    globalPersonId: payload.globalPersonId,
+    payload,
+  };
+}
+
+export function envelopeToGuestCheckedOutEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelGuestCheckedOutEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_GUEST_CHECKED_OUT) return null;
+  const payload = envelope.payload as unknown as SatelliteHotelGuestCheckedOutEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_GUEST_CHECKED_OUT,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    globalPersonId: payload.globalPersonId,
+    payload,
+  };
+}
+
+export function envelopeToRoomChangedEvent(
+  envelope: IntegrationEnvelope,
+  organizationId: string,
+): SatelliteHotelRoomChangedEvent | null {
+  if (envelope.eventType !== SATELLITE_HOTEL_ROOM_CHANGED) return null;
+  const payload = envelope.payload as unknown as SatelliteHotelRoomChangedEvent["payload"];
+  return {
+    type: SATELLITE_HOTEL_ROOM_CHANGED,
+    organizationId,
+    correlationId: envelope.correlationId,
+    occurredAt: envelope.timestamp,
+    globalPersonId: payload.globalPersonId,
+    payload,
+  };
+}
+
 export type OrchestratorGatewayResult = {
   ok: boolean;
   status?: number;
@@ -134,7 +188,10 @@ export async function publishToOrchestratorGateway(
     | SatelliteHotelReservationCompletedEvent
     | SatelliteHotelNightAuditClosedEvent
     | SatelliteHotelInvoiceIssuedEvent
-    | SatelliteHotelCityLedgerSnapshotEvent,
+    | SatelliteHotelCityLedgerSnapshotEvent
+    | SatelliteHotelGuestCheckedInEvent
+    | SatelliteHotelGuestCheckedOutEvent
+    | SatelliteHotelRoomChangedEvent,
 ): Promise<OrchestratorGatewayResult> {
   const baseUrl =
     process.env.ORCHESTRATOR_EVENT_URL ??

@@ -9,6 +9,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   IsUUID,
   Min,
   ValidateNested,
@@ -58,10 +59,12 @@ export class CreateInvoiceDto {
   @IsDateString()
   dueDate!: string;
 
-  @ApiPropertyOptional({ enum: ["101", "221"], default: "101" })
+  @ApiPropertyOptional({
+    description: "Payment debit NAS code; default from CASH_AZN posting role",
+  })
   @IsOptional()
   @IsString()
-  @IsIn(["101", "221"])
+  @MaxLength(32)
   debitAccountCode?: string;
 
   @ApiPropertyOptional({ description: "Склад отгрузки (остатки / списание при оплате)" })
@@ -113,4 +116,11 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsUUID()
   projectId?: string;
+
+  @ApiPropertyOptional({
+    description: "Organization bank account when debitAccountCode is a bank ledger",
+  })
+  @IsOptional()
+  @IsUUID()
+  bankAccountId?: string;
 }

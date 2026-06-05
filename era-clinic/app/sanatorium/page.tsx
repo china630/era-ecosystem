@@ -22,9 +22,13 @@ type Episode = {
   organizationId: string;
   status: string;
   openedAt: string;
-  patientRef: { fullName: string; refCode: string } | null;
+  patientRef: { id: string; fullName: string; refCode: string } | null;
   complaints: { text: string; recordedAt: string }[];
-  diagnoses: { icdCode: string | null; description: string }[];
+  diagnoses: {
+    icdCodeText: string | null;
+    icdCode?: { code: string } | null;
+    description: string;
+  }[];
   labOrders: { id: string; testCode: string; status: string }[];
 };
 
@@ -125,6 +129,14 @@ export default function SanatoriumPage() {
             <div className="space-y-4 text-[13px]">
               <div>
                 <strong>{selected.patientRef?.fullName}</strong> ({selected.patientRef?.refCode})
+                {selected.patientRef?.id ? (
+                  <Link
+                    href={`/patients/${selected.patientRef.id}`}
+                    className="ml-2 text-blue-600 hover:underline"
+                  >
+                    Body map
+                  </Link>
+                ) : null}
               </div>
               <div>
                 <h3 className="font-semibold">{t("complaints")}</h3>
@@ -146,7 +158,9 @@ export default function SanatoriumPage() {
                 <ul className="list-disc pl-5">
                   {selected.diagnoses.map((d, i) => (
                     <li key={i}>
-                      {d.icdCode ? `${d.icdCode}: ` : ""}
+                      {(d.icdCode?.code ?? d.icdCodeText)
+                        ? `${d.icdCode?.code ?? d.icdCodeText}: `
+                        : ""}
                       {d.description}
                     </li>
                   ))}

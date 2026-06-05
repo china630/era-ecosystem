@@ -1,5 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { CounterpartyLegalForm } from "@erafinance/database";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
+import { mapHubCompanyToDirectory } from "../data-hub/hub-company-map";
 import { PrismaService } from "../prisma/prisma.service";
 
 export type DirectoryUpsertInput = {
@@ -15,7 +17,10 @@ export type DirectoryUpsertInput = {
 export class GlobalCompanyDirectoryService {
   private readonly logger = new Logger(GlobalCompanyDirectoryService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly dataHub: DataHubClientService,
+  ) {}
 
   /**
    * Fire-and-forget: does not block HTTP response.
@@ -79,6 +84,24 @@ export class GlobalCompanyDirectoryService {
     const id = taxId.trim();
     if (!/^\d{10}$/.test(id)) {
       return null;
+    }
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getCompanyByVoen(id);
+      if (remote) {
+        const mapped = mapHubCompanyToDirectory(remote);
+        if (mapped.taxId) {
+          return {
+            taxId: mapped.taxId,
+            name: mapped.name,
+            legalAddress: mapped.legalAddress,
+            phone: mapped.phone,
+            directorName: mapped.directorName,
+            legalForm: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+      }
     }
     return this.prisma.globalCompanyDirectory.findUnique({
       where: { taxId: id },

@@ -1,35 +1,33 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.mockGovBudgetService = exports.mockContractsService = void 0;
-exports.createMockPostingResolver = createMockPostingResolver;
-exports.createMockPostingJournalBuilder = createMockPostingJournalBuilder;
-exports.createTestInventoryService = createTestInventoryService;
+exports.createTestInventoryService = exports.mockGovBudgetService = exports.mockContractsService = exports.createMockPostingJournalBuilder = exports.createMockPostingResolver = void 0;
 const database_1 = require("@erafinance/database");
 const posting_schema_registry_1 = require("../../src/accounting/posting/posting-schema-registry");
 const inventory_service_1 = require("../../src/inventory/inventory.service");
-const ledger_constants_1 = require("../../src/ledger.constants");
 const COMMERCIAL_BY_ROLE = {
-    TRADE_RECEIVABLE: ledger_constants_1.RECEIVABLE_ACCOUNT_CODE,
-    SALES_REVENUE: ledger_constants_1.REVENUE_ACCOUNT_CODE,
-    SUPPLIER_PAYABLE: ledger_constants_1.PAYABLE_SUPPLIERS_ACCOUNT_CODE,
-    INVENTORY_GOODS: ledger_constants_1.INVENTORY_GOODS_ACCOUNT_CODE,
-    COGS: ledger_constants_1.COGS_ACCOUNT_CODE,
-    PAYROLL_EXPENSE: ledger_constants_1.PAYROLL_EXPENSE_ACCOUNT_CODE,
-    PAYROLL_PAYABLE: ledger_constants_1.PAYROLL_PAYABLE_ACCOUNT_CODE,
-    PAYROLL_TAX_PAYABLE: ledger_constants_1.PAYROLL_TAX_PAYABLE_ACCOUNT_CODE,
+    TRADE_RECEIVABLE: "211",
+    SALES_REVENUE: "601",
+    SUPPLIER_PAYABLE: "531",
+    INVENTORY_GOODS: "201",
+    COGS: "701",
+    PAYROLL_EXPENSE: "721",
+    PAYROLL_PAYABLE: "533",
+    PAYROLL_TAX_PAYABLE: "521",
     CASH_AZN: "101.01",
     CASH_FOREIGN: "102.01",
     MISC_OPERATING_EXPENSE: "731",
     INVENTORY_SURPLUS_INCOME: "631",
     FINISHED_GOODS: "204",
+    PREPAID_ASSET: "133",
+    CHARTER_CAPITAL: "821",
     VAT_INPUT: "241",
     VAT_OUTPUT: "541",
     ACCOUNTABLE_PERSONS: "244",
-    FX_GAIN: ledger_constants_1.FX_GAIN_ACCOUNT_CODE,
-    FX_LOSS: ledger_constants_1.FX_LOSS_ACCOUNT_CODE,
-    TRANSIT_TRANSFER: ledger_constants_1.TRANSIT_TRANSFER_ACCOUNT_CODE,
-    CASH_IN_TRANSIT: ledger_constants_1.CASH_IN_TRANSIT_ACCOUNT_CODE,
-    FOUNDER_FUNDS: ledger_constants_1.FOUNDER_FUNDS_ACCOUNT_CODE,
+    FX_GAIN: "662",
+    FX_LOSS: "762",
+    TRANSIT_TRANSFER: "231",
+    CASH_IN_TRANSIT: "251",
+    FOUNDER_FUNDS: "545",
     MAIN_BANK: "221",
     BANK_SETTLEMENT: "221",
     DEPRECIATION_EXPENSE: "713",
@@ -56,6 +54,7 @@ function createMockPostingResolver() {
         warmCommercialTemplateCache: jest.fn(),
     };
 }
+exports.createMockPostingResolver = createMockPostingResolver;
 function createMockPostingJournalBuilder(accounting, posting = createMockPostingResolver()) {
     return {
         postInTransaction: jest.fn(async (tx, params) => {
@@ -97,10 +96,11 @@ function createMockPostingJournalBuilder(accounting, posting = createMockPosting
         buildLines: jest.fn(),
     };
 }
+exports.createMockPostingJournalBuilder = createMockPostingJournalBuilder;
 exports.mockContractsService = {};
 exports.mockGovBudgetService = { checkLimit: jest.fn() };
 function createTestInventoryService(prisma, accounting, stock, access) {
     const posting = createMockPostingResolver();
     return new inventory_service_1.InventoryService(prisma, accounting, stock, access, exports.mockContractsService, exports.mockGovBudgetService, posting, createMockPostingJournalBuilder(accounting, posting));
 }
-//# sourceMappingURL=mock-posting-resolver.js.map
+exports.createTestInventoryService = createTestInventoryService;

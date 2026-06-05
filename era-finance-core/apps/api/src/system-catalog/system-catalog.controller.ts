@@ -1,5 +1,7 @@
-import { Controller, Get, UseGuards } from "@nestjs/common";
+import { Controller, Get, Param, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { BankDirectoryService } from "../banking/bank-directory.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import {
   StockMovementReason,
   StockMovementType,
@@ -24,11 +26,21 @@ const TEAM_INVITE_ROLES: UserRole[] = [
 @Controller("system")
 @UseGuards(RolesGuard)
 export class SystemCatalogController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly dataHub: DataHubClientService,
+    private readonly bankDirectory: BankDirectoryService,
+  ) {}
 
   @Get("units-of-measure")
   @ApiOperation({ summary: "Active units of measure (global catalog)" })
-  listUnitsOfMeasure() {
+  async listUnitsOfMeasure() {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getUom();
+      if (remote?.units?.length) {
+        return remote.units;
+      }
+    }
     return this.prisma.unitOfMeasure.findMany({
       where: { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
@@ -63,7 +75,29 @@ export class SystemCatalogController {
     summary:
       "Allowed ƏDV/НДС line percents for invoices (from tax_rates; fallback to product default list)",
   })
-  async listInvoiceVatRates(): Promise<{ rates: number[] }> {
+  async listInvoiceVatRates(
+    @Query("date") date?: string,
+  ): Promise<{ rates: number[] }> {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getTaxRates("VAT", date);
+      if (remote?.rates?.length) {
+        const rates = new Set<number>();
+        for (const r of remote.rates) {
+          const code = r.code.toUpperCase();
+          if (code.includes("EXEMPT")) {
+            rates.add(-1);
+            continue;
+          }
+          const p = Number(r.percent);
+          if (Number.isFinite(p)) {
+            rates.add(Math.round(p * 10000) / 10000);
+          }
+        }
+        if (rates.size > 0) {
+          return { rates: [...rates].sort((a, b) => a - b) };
+        }
+      }
+    }
     const rows = await this.prisma.taxRate.findMany({
       where: { kind: TaxRateKind.VAT, isActive: true },
       select: { code: true, percent: true },
@@ -100,6 +134,33 @@ export class SystemCatalogController {
     summary:
       "Stock movement type/reason enum values (matches Prisma; use for filters and UI consistency)",
   })
+  @Get("banks")
+  @ApiOperation({ summary: "Active banks (era-data-hub or local glossary)" })
+  listBanks() {
+    return this.bankDirectory.listBanks();
+  }
+
+  @Get("banks/:bankCode/branches/:branchCode")
+  @ApiOperation({ summary: "Bank branch by MFO code" })
+  getBankBranch(@Param("branchCode") branchCode: string) {
+    return this.bankDirectory.getBranch(branchCode);
+  }
+
+  @Get("geo/countries")
+  @ApiOperation({ summary: "Countries (era-data-hub or local geo seed)" })
+  async listGeoCountries() {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getGeoCountries();
+      if (remote?.countries?.length) {
+        return remote.countries;
+      }
+    }
+    return this.prisma.country.findMany({
+      orderBy: [{ sortOrder: "asc" }, { iso2: "asc" }],
+      select: { iso2: true, nameAz: true, nameRu: true, nameEn: true },
+    });
+  }
+
   inventoryMovementEnums(): {
     types: StockMovementType[];
     reasons: StockMovementReason[];

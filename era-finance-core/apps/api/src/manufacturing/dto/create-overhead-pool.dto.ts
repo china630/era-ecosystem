@@ -27,13 +27,17 @@ export class CreateOverheadPoolDto {
   @MinLength(1)
   sourceAccountCode!: string;
 
-  @ApiPropertyOptional({ default: "741" })
+  @ApiPropertyOptional({
+    description: "Credit NAS code; default from MANUFACTURING_OVERHEAD_CREDIT posting role",
+  })
   @IsOptional()
   @IsString()
   @MinLength(1)
   creditAccountCode?: string;
 
-  @ApiPropertyOptional({ default: "204" })
+  @ApiPropertyOptional({
+    description: "Debit NAS code; default from FINISHED_GOODS posting role",
+  })
   @IsOptional()
   @IsString()
   @MinLength(1)

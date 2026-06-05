@@ -5,9 +5,7 @@ import {
 } from "@nestjs/common";
 import { AccountType, LedgerType, Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
-
-/** Mask root for bank subaccounts in the NAS chart of accounts (PRD §4.6). */
-export const BANK_SUBACCOUNT_PARENT_CODE = "221";
+import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 export const BANK_SUBACCOUNT_BANK_CODE_RE = /^[0-9]{2}$/;
 const SEQUENCE_MAX = 99;
 
@@ -42,7 +40,17 @@ export interface BankSubaccountResult {
  */
 @Injectable()
 export class BankSubaccountService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly posting: PostingAccountResolver,
+  ) {}
+
+  private async bankParentCode(
+    organizationId: string,
+    db: AccountingDb = this.prisma,
+  ): Promise<string> {
+    return this.posting.resolveAccountCode(organizationId, "MAIN_BANK", db);
+  }
 
   /**
    * Compute the next subaccount code for an organization × bank code. Scans
@@ -58,7 +66,8 @@ export class BankSubaccountService {
         `Bank code must be 2 digits (got "${bankCode}")`,
       );
     }
-    const prefix = `${BANK_SUBACCOUNT_PARENT_CODE}.${bankCode}.`;
+    const parentCode = await this.bankParentCode(organizationId, db);
+    const prefix = `${parentCode}.${bankCode}.`;
     const rows = await db.account.findMany({
       where: {
         organizationId,
@@ -148,17 +157,18 @@ export class BankSubaccountService {
       }
     }
 
+    const parentCode = await this.bankParentCode(organizationId, db);
     const parent = await db.account.findFirst({
       where: {
         organizationId,
         ledgerType: LedgerType.NAS,
-        code: BANK_SUBACCOUNT_PARENT_CODE,
+        code: parentCode,
       },
       select: { id: true },
     });
     if (!parent) {
       throw new NotFoundException(
-        `Parent NAS account ${BANK_SUBACCOUNT_PARENT_CODE} not found in organization`,
+        `Parent NAS account ${parentCode} not found in organization`,
       );
     }
 

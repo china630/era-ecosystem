@@ -14,6 +14,7 @@ build_pkg() {
 build_pkg era-contracts
 build_pkg i18n-common
 build_pkg era-storage
+build_pkg era-fiscal
 build_pkg satellite-kit
 
 echo "==> ci-build-packages: done"

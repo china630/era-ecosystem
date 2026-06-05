@@ -89,6 +89,9 @@ model Receipt {
   paymentMethod     String?
   fiscalNumber      String?
   paidAt            DateTime?
+  reservationId     String?
+  roomNumber        String?
+  settlementChannel String?
   originalReceiptId String?
   outlet            Outlet        @relation(fields: [outletId], references: [id])
   register          Register      @relation(fields: [registerId], references: [id])

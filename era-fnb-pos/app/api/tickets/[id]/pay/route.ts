@@ -4,7 +4,7 @@ import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
-import { fiscalizeTicketPayment } from "@/lib/kkm";
+import { fiscalize } from "@era/fiscal";
 import { dispatchStockConsumptionIfEnabled } from "@/lib/stock-consumption";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -43,10 +43,10 @@ export async function POST(
   const amount = body.amount ?? Number(ticket.totalAzn);
   const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
 
-  const fiscal = await fiscalizeTicketPayment({
-    ticketId: ticket.id,
-    amountAzn: amount,
-    method: body.method,
+  const fiscal = await fiscalize({
+    documentRef: ticket.id,
+    amount,
+    paymentMethod: body.method,
     outletCode: ticket.outlet.code,
   });
 

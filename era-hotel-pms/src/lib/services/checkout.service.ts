@@ -56,6 +56,14 @@ export async function checkoutReservation(id: string): Promise<CheckoutResult> {
   });
 
   const dispatch = await dispatchReservationCompleted(completed);
+  const { dispatchGuestCheckedOut } = await import(
+    '@/lib/integration/guest-lifecycle-events'
+  );
+  void dispatchGuestCheckedOut({
+    reservationId: id,
+    roomNumber: completed.room?.roomNumber ?? undefined,
+    programCode: completed.ratePlan.medicalFlag ? completed.ratePlan.code : undefined,
+  }).catch((e) => console.error('Guest lifecycle check-out failed', e));
   const { notifyFbPosReservationLifecycle } = await import(
     '@/lib/integration/fnb-pos-webhook'
   );

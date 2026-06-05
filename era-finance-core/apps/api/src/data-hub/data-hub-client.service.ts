@@ -15,6 +15,52 @@ export type DataHubTariff = {
   excisePercent: number;
 };
 
+export type DataHubBank = {
+  id?: string;
+  nameAz: string;
+  voen: string;
+  code: string;
+  swift?: string | null;
+  correspondentIban?: string | null;
+  headAddress?: string | null;
+  headPhones?: string | null;
+};
+
+export type DataHubTaxRate = {
+  code: string;
+  percent: number;
+  kind?: string;
+};
+
+export type DataHubUom = {
+  code: string;
+  nameAz: string;
+  nameRu?: string;
+  nameEn?: string;
+};
+
+export type DataHubGeoCountry = {
+  code: string;
+  nameAz: string;
+  nameRu?: string;
+  nameEn?: string;
+};
+
+export type DataHubGeoCity = {
+  code: string;
+  countryCode: string;
+  nameAz: string;
+  nameRu?: string;
+  nameEn?: string;
+};
+
+export type DataHubIbanValidation = {
+  valid: boolean;
+  iban?: string;
+  bankCode?: string;
+  message?: string;
+};
+
 /**
  * HTTP client for era-data-hub (internal era-network).
  * When ERA_DATA_HUB_ENABLED=false, callers fall back to local finance services.
@@ -99,5 +145,67 @@ export class DataHubClientService {
       `/calendar/${country}/is-working-day?date=${encodeURIComponent(date)}`,
     );
     return body?.isWorkingDay ?? null;
+  }
+
+  async getBanks(): Promise<{ banks: DataHubBank[] } | null> {
+    return this.getJson<{ banks: DataHubBank[] }>("/banks");
+  }
+
+  async getBankBranches(code: string): Promise<{ branch: Record<string, unknown> } | null> {
+    const trimmed = code.trim();
+    return this.getJson<{ branch: Record<string, unknown> }>(
+      `/banks/branches/${encodeURIComponent(trimmed)}`,
+    );
+  }
+
+  async validateIban(iban: string): Promise<DataHubIbanValidation | null> {
+    const q = new URLSearchParams({ iban: iban.trim() });
+    return this.getJson<DataHubIbanValidation>(`/iban/validate?${q}`);
+  }
+
+  async getChartOfAccounts(
+    profile: string,
+  ): Promise<{ accounts: unknown; profile?: string } | null> {
+    const q = new URLSearchParams({ profile: profile.trim().toLowerCase() });
+    return this.getJson<{ accounts: unknown; profile?: string }>(
+      `/chart-of-accounts?${q}`,
+    );
+  }
+
+  async getTaxRates(type: string, date?: string): Promise<{ rates: DataHubTaxRate[] } | null> {
+    const q = new URLSearchParams({ type: type.trim().toUpperCase() });
+    if (date?.trim()) q.set("date", date.trim());
+    return this.getJson<{ rates: DataHubTaxRate[] }>(`/tax-rates?${q}`);
+  }
+
+  async getGeoCountries(): Promise<{ countries: DataHubGeoCountry[] } | null> {
+    return this.getJson<{ countries: DataHubGeoCountry[] }>("/geo/countries");
+  }
+
+  async getGeoCities(country?: string): Promise<{ cities: DataHubGeoCity[] } | null> {
+    const q = country?.trim() ? new URLSearchParams({ country: country.trim() }) : "";
+    const path = q ? `/geo/cities?${q}` : "/geo/cities";
+    return this.getJson<{ cities: DataHubGeoCity[] }>(path);
+  }
+
+  async getUom(): Promise<{ units: DataHubUom[] } | null> {
+    const body = await this.getJson<{ units?: DataHubUom[]; uom?: DataHubUom[] }>("/uom");
+    if (!body) return null;
+    return { units: body.units ?? body.uom ?? [] };
+  }
+
+  async addBusinessDays(
+    date: string,
+    n: number,
+    country = "az",
+  ): Promise<string | null> {
+    const q = new URLSearchParams({
+      date: date.trim(),
+      n: String(n),
+    });
+    const body = await this.getJson<{ date: string }>(
+      `/calendar/${country}/add-business-days?${q}`,
+    );
+    return body?.date ?? null;
   }
 }

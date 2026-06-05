@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { defineConfig, env } from "prisma/config";
 
 loadEnv({ path: resolve(__dirname, "../../.env") });
+loadEnv({ path: resolve(__dirname, "../../../.env") });
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

@@ -4,6 +4,7 @@ import { OpeningBalancesService } from "../../src/migration/opening-balances.ser
 import type { AccountingService, PostTransactionLine } from "../../src/accounting/accounting.service";
 import type { PrismaService } from "../../src/prisma/prisma.service";
 import { mockTxInventoryReconciliationClear } from "../helpers/mock-prisma-tx-reconciliation";
+import { createMockPostingResolver } from "../helpers/mock-posting-resolver";
 
 describe("OpeningBalancesService (inventory import)", () => {
   const organizationId = "00000000-0000-0000-0000-000000000001";
@@ -71,7 +72,7 @@ describe("OpeningBalancesService (inventory import)", () => {
         }),
     } as unknown as AccountingService;
 
-    const service = new OpeningBalancesService(prisma, accounting);
+    const service = new OpeningBalancesService(prisma, accounting, createMockPostingResolver());
     const out = await service.importInventory(organizationId, [
       {
         productId,
@@ -146,7 +147,7 @@ describe("OpeningBalancesService (inventory import)", () => {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
 
-    const service = new OpeningBalancesService(prisma, accounting);
+    const service = new OpeningBalancesService(prisma, accounting, createMockPostingResolver());
     await expect(
       service.importInventory(organizationId, [
         {
@@ -211,7 +212,7 @@ describe("OpeningBalancesService (inventory import)", () => {
       postJournalInTransaction: jest.fn(),
     } as unknown as AccountingService;
 
-    const service = new OpeningBalancesService(prisma, accounting);
+    const service = new OpeningBalancesService(prisma, accounting, createMockPostingResolver());
     await expect(
       service.importInventory(organizationId, [
         {

@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 
 const createSchema = z.object({
   patientRefCode: z.string(),
   patientFullName: z.string(),
   patientPhone: z.string().optional(),
+  patientFin: z.string().optional(),
   practitionerCode: z.string(),
   practitionerFullName: z.string(),
   scheduledAt: z.string().datetime().optional(),
@@ -47,6 +49,17 @@ export async function POST(req: Request) {
           fullName: body.patientFullName,
           phone: body.patientPhone,
         },
+      });
+    }
+    if (!patient.globalPersonId) {
+      await linkPatientGlobalPerson({
+        patientRefId: patient.id,
+        fin: body.patientFin,
+        fullName: body.patientFullName,
+        phone: body.patientPhone,
+      });
+      patient = await prisma.patientRef.findUniqueOrThrow({
+        where: { id: patient.id },
       });
     }
 

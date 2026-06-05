@@ -64,6 +64,9 @@ model WorkOrder {
   shopFloorStartedAt DateTime?
   shopFloorEndedAt   DateTime?
   completedAt        DateTime?
+  paymentMethod      String?
+  fiscalNumber       String?
+  paidAt             DateTime?
   appointment        Appointment?
   laborLines         WorkOrderLaborLine[]
   partLines          WorkOrderPartLine[]

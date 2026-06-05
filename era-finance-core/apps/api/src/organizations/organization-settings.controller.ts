@@ -25,6 +25,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { PatchOrganizationSettingsDto } from "./dto/patch-organization-settings.dto";
 import { OrganizationSettingsService } from "./organization-settings.service";
+import { PatchNetworkDocumentsSettingsDto } from "../network/dto/patch-network-documents-settings.dto";
 
 @ApiTags("organization")
 @ApiBearerAuth("bearer")
@@ -51,6 +52,16 @@ export class OrganizationSettingsController {
     @Body() dto: PatchOrganizationSettingsDto,
   ) {
     return this.settings.patchSettings(organizationId, dto);
+  }
+
+  @Patch("settings/network-documents")
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({ summary: "Enable/disable inbound ERA network documents" })
+  patchNetworkDocuments(
+    @OrganizationId() organizationId: string,
+    @Body() dto: PatchNetworkDocumentsSettingsDto,
+  ) {
+    return this.settings.patchNetworkDocumentsSettings(organizationId, dto);
   }
 
   @Patch("settings/period-lock")

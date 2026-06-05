@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@era/contracts": "file:../packages/era-contracts",
+    "@era/fiscal": "file:../packages/era-fiscal",
     "@era/i18n-common": "file:../packages/i18n-common",
     "@era/satellite-kit": "file:../packages/satellite-kit",
     "@era/storage": "file:../packages/era-storage",

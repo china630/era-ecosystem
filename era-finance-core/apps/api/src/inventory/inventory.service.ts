@@ -2555,7 +2555,9 @@ export class InventoryService {
       this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
     ]);
     const invAccountCode =
-      dto.inventoryAccountCode === "204" ? finishedGoodsCode : inventoryGoodsCode;
+      dto.inventoryAccountCode === finishedGoodsCode
+        ? finishedGoodsCode
+        : inventoryGoodsCode;
 
     const existing = await tx.stockItem.findUnique({
       where: {
@@ -2966,7 +2968,9 @@ export class InventoryService {
         this.nas(organizationId, "MISC_OPERATING_EXPENSE", tx),
       ]);
     const invAcc =
-      draft.warehouse.inventoryAccountCode === "204" ? finishedGoodsCode : inventoryGoodsCode;
+      draft.warehouse.inventoryAccountCode === finishedGoodsCode
+        ? finishedGoodsCode
+        : inventoryGoodsCode;
 
     const eps = new Decimal("0.0001");
     let surplusTotal = new Decimal(0);

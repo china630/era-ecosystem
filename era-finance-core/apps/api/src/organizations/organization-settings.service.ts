@@ -17,7 +17,13 @@ import {
 import { mergeLockedPeriodUntil } from "../reporting/reporting-period.util";
 import type { PatchOrganizationSettingsDto } from "./dto/patch-organization-settings.dto";
 import { InventoryValuationMethod } from "@erafinance/database";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import {
+  mergeNetworkDocumentsSettings,
+  parseNetworkDocumentsSettings,
+} from "../network/network-settings.util";
+import type { PatchNetworkDocumentsSettingsDto } from "../network/dto/patch-network-documents-settings.dto";
 
 const LOGO_MAX_BYTES = 2 * 1024 * 1024;
 
@@ -27,6 +33,7 @@ export class OrganizationSettingsService {
     private readonly prisma: PrismaService,
     private readonly directory: GlobalCompanyDirectoryService,
     private readonly quota: QuotaService,
+    private readonly posting: PostingAccountResolver,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
   ) {}
 
@@ -77,6 +84,11 @@ export class OrganizationSettingsService {
           } as Prisma.InputJsonValue)
         : undefined;
 
+    const defaultBankLedger =
+      dto.bankAccounts !== undefined && dto.bankAccounts.length > 0
+        ? await this.posting.resolveAccountCode(organizationId, "MAIN_BANK")
+        : null;
+
     await this.prisma.$transaction(async (tx) => {
       await tx.organization.update({
         where: { id: organizationId },
@@ -118,7 +130,8 @@ export class OrganizationSettingsService {
               currency: (b.currency?.trim().toUpperCase() || "AZN"),
               iban: b.iban?.trim() || b.accountNumber?.trim() || "",
               swift: b.swift?.trim() || null,
-              ledgerAccountCode: (b.ledgerAccountCode?.trim() || "221"),
+              ledgerAccountCode:
+                b.ledgerAccountCode?.trim() || defaultBankLedger!,
               accountType: (b.accountType as any) || "MAIN",
               isPrimary: b.isPrimary === true,
               isFrozen: b.isFrozen === true,
@@ -138,6 +151,30 @@ export class OrganizationSettingsService {
       directorName: fresh.directorName,
     });
     return serializeForAudit(fresh);
+  }
+
+  async patchNetworkDocumentsSettings(
+    organizationId: string,
+    dto: PatchNetworkDocumentsSettingsDto,
+  ) {
+    const org = await this.prisma.organization.findFirst({
+      where: { id: organizationId, isDeleted: false },
+      select: { id: true, settings: true },
+    });
+    if (!org) {
+      throw new NotFoundException("Organization not found");
+    }
+    const merged = mergeNetworkDocumentsSettings(org.settings, {
+      acceptInbound: dto.acceptInbound,
+      autoPostSafeRoles: dto.autoPostSafeRoles,
+    });
+    await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { settings: merged as Prisma.InputJsonValue },
+    });
+    return {
+      networkDocuments: parseNetworkDocumentsSettings(merged),
+    };
   }
 
   async patchPeriodLock(organizationId: string, lockedPeriodUntil: string | null) {

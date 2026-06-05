@@ -250,6 +250,7 @@ model Room {
   status       RoomStatus         @default(AVAILABLE)
   reservations Reservation[]
   hkTasks      HousekeepingTask[]
+  serviceOrders MaintenanceWorkOrder[]
   closures     RoomClosure[]
   minibarPosts MinibarPosting[]
   roomChangesFrom RoomChangePlan[] @relation("RoomChangeFrom")
@@ -479,6 +480,30 @@ model Guest {
   familyMembers      GuestFamily[]       @relation("GuestFamilyOwner")
   familyOf           GuestFamily[]       @relation("GuestFamilyRelated")
   bookerReservations Reservation[]       @relation("ReservationBooker")
+  migrationRegistrations MigrationRegistration[]
+}
+
+enum MigrationRegistrationStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+}
+
+model MigrationRegistration {
+  id            String                      @id @default(uuid())
+  guestId       String
+  guest         Guest                       @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  reservationId String?
+  status        MigrationRegistrationStatus @default(PENDING)
+  payloadJson   String?
+  submittedAt   DateTime?
+  responseNote  String?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+
+  @@index([guestId])
+  @@index([status])
 }
 
 model GuestTag {
@@ -1500,12 +1525,71 @@ model YieldRule {
   createdAt       DateTime @default(now())
 }
 
+enum ServiceWorkOrderStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum ServiceRequestSource {
+  GUEST
+  STAFF
+  RECURRING
+}
+
+enum ServicePriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+enum ServiceCadence {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  DATE
+  EVENT
+}
+
 model MaintenanceWorkOrder {
-  id          String   @id @default(uuid())
+  id          String                 @id @default(uuid())
   roomId      String?
+  room        Room?                  @relation(fields: [roomId], references: [id])
   title       String
-  status      String   @default("OPEN")
+  description String?
+  category    String?
+  priority    ServicePriority        @default(NORMAL)
+  source      ServiceRequestSource   @default(STAFF)
+  location    String?
+  status      ServiceWorkOrderStatus @default(OPEN)
   reportedBy  String?
+  assigneeId  String?
   completedAt DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  @@index([roomId])
+  @@index([status])
+}
+
+model RecurringServiceSchedule {
+  id          String         @id @default(uuid())
+  title       String
+  category    String?
+  cadence     ServiceCadence
+  anchorDate  DateTime?
+  eventKey    String?
+  roomId      String?
+  location    String?
+  enabled     Boolean        @default(true)
+  nextDueAt   DateTime
+  lastRunAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([nextDueAt])
+  @@index([enabled])
 }

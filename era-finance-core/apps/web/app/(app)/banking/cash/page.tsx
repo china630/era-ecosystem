@@ -630,7 +630,7 @@ export default function BankingCashPage() {
           {ko1PrintOrder ? <KO1PrintForm order={ko1PrintOrder} lang="az" /> : null}
         </div>
 
-        <section className="space-y-6 max-w-7xl mx-auto">
+        <section className="w-full max-w-none space-y-6">
         <PageHeader
           title={t("banking.cash.pageTitle")}
           leading={

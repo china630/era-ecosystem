@@ -1,0 +1,98 @@
+import {
+  defaultGuestIdentityExpiresAt,
+  signGuestIdentityToken,
+  verifyGuestIdentityToken,
+  type GuestIdentityTokenPayload,
+} from "../auth/guest-identity-token";
+
+export type GuestIdentityClientOptions = {
+  orchestratorUrl?: string;
+  serviceToken?: string;
+};
+
+function baseUrl(opts?: GuestIdentityClientOptions): string {
+  return (
+    opts?.orchestratorUrl ??
+    process.env.ORCHESTRATOR_URL ??
+    process.env.CONTROL_PLANE_URL ??
+    "http://127.0.0.1:4100"
+  ).replace(/\/$/, "");
+}
+
+function serviceToken(opts?: GuestIdentityClientOptions): string | undefined {
+  return (
+    opts?.serviceToken ??
+    process.env.MDM_INTERNAL_SERVICE_TOKEN ??
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN
+  );
+}
+
+export async function resolveGlobalPerson(
+  input: { fin?: string; fullName: string; phone?: string },
+  opts?: GuestIdentityClientOptions,
+): Promise<{ globalPersonId: string | null }> {
+  const token = serviceToken(opts);
+  if (!token) return { globalPersonId: null };
+  const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-service-token": token,
+    },
+    body: JSON.stringify(input),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return { globalPersonId: null };
+  const data = (await res.json()) as { id?: string };
+  return { globalPersonId: data.id ?? null };
+}
+
+export async function issueGuestQrToken(
+  globalPersonId: string,
+  opts?: GuestIdentityClientOptions & { ttlSeconds?: number },
+): Promise<{ token: string; expiresAt: number } | null> {
+  const token = serviceToken(opts);
+  if (!token) {
+    const expiresAt = defaultGuestIdentityExpiresAt(opts?.ttlSeconds);
+    return {
+      token: signGuestIdentityToken(globalPersonId, expiresAt),
+      expiresAt,
+    };
+  }
+  const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/guest-qr/issue`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-service-token": token,
+    },
+    body: JSON.stringify({ globalPersonId, ttlSeconds: opts?.ttlSeconds }),
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return null;
+  return (await res.json()) as { token: string; expiresAt: number };
+}
+
+export async function verifyGuestQrToken(
+  guestToken: string,
+  opts?: GuestIdentityClientOptions,
+): Promise<GuestIdentityTokenPayload | null> {
+  const svc = serviceToken(opts);
+  if (svc) {
+    const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/guest-qr/verify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-service-token": svc,
+      },
+      body: JSON.stringify({ token: guestToken }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as GuestIdentityTokenPayload;
+      if (data.globalPersonId) return data;
+    }
+  }
+  return verifyGuestIdentityToken(guestToken);
+}
+
+export { verifyGuestIdentityToken, signGuestIdentityToken };

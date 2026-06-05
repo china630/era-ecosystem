@@ -117,6 +117,8 @@ Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | clinic | `handleClinicVisit` | Live |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | clinic | `handleClinicLabOrder` | Live |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | wholesale | `handleWholesaleOrder` | Live |
+| `SATELLITE_HOTEL_GUEST_CHECKED_IN` / `_OUT` / `ROOM_CHANGED` | hotel | orchestrator fan-out → clinic lifecycle | Live |
+| `SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED` | hotel | orchestrator fan-out → clinic early FIFO program | Live |
 
 Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOLIO_PAYMENT_RECEIVED`, `FOLIO_CHARGE_VOIDED`, `MASTER_DATA_SYNC`, `PAYMENT_FISCALIZED` — [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md).
 
@@ -125,9 +127,24 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | API | Provider | Consumer | Level |
 |-----|----------|----------|-------|
 | Hotel `/api/pms/*`, room-charge | hotel | fb-pos | Live |
-| Clinic sanatorium episode bridge | clinic | hotel | Live |
+| Clinic sanatorium / hotel lifecycle | clinic | hotel via orchestrator bus | Live |
+| Orchestrator satellite endpoint registry | orch | per-org clinic/hotel URLs | Live |
+| Org operating mode (`STANDALONE` / `DEPARTMENT`, fiscal/revenue routing) | orch | all B2C satellites via subscription snapshot | Live · [ADR org-operating-mode](./adr/org-operating-mode.md) |
+| Clinic capacity risk (`/api/capacity/summary`) | clinic | hotel executive + sanatorium booking gate | Live |
 | Wholesale credit limit | wholesale | Finance AR | Live |
 | Finance deep links | finance | hotel UI | MVP |
+
+### 2.6 Fiscalization (KKM)
+
+Фискалка привязана к точке B2C-расчёта (не к каждому сателлиту). Сейчас — три независимых mock/stub-реализации; реального НБК-драйвера нет. План унификации в `@era/fiscal` + правило «без двойной фискализации»: [ADR sanatorium-vnext](./adr/sanatorium-vnext.md) SV7/SV14.
+
+| Capability | Fin | Orch | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
+|------------|-----|------|-----|-----|-----|-----|-----|-----|------|-----|-----|
+| KKM provider (mock/stub) | N/A | N/A | Stub | Stub | Stub | N/A | N/A | N/A | Stub | Stub | `@era/fiscal` |
+| Real НБК/КИЗ driver | N/A | N/A | — | — | — | N/A | N/A | N/A | — | — | Future |
+| Shared `@era/fiscal` | N/A | N/A | Live | Live | Live | N/A | N/A | N/A | Live | Live | `packages/era-fiscal` |
+
+**Stub** = `ERA_FISCAL_PROVIDER`/`KKM_DRIVER=mock|nbc|cybernet` (nbc/cybernet stubs). Clinic cashier uses same package; revenue GL remains on visit-complete (settlement-only at pay).
 
 ---
 

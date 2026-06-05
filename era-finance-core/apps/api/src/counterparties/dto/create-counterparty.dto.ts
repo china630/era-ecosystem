@@ -2,6 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { CounterpartyLegalForm, CounterpartyRole } from "@erafinance/database";
 import { Type } from "class-transformer";
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsEmail,
   IsEnum,
@@ -67,4 +69,23 @@ export class CreateCounterpartyDto {
   @IsString()
   @IsIn(["az", "ru", "en"])
   portalLocale?: "az" | "ru" | "en";
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  directorName?: string;
+
+  @ApiPropertyOptional({ type: [String], description: "E.164 phone numbers" })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  phones?: string[];
+
+  @ApiPropertyOptional({ description: "FIN for individual counterparties (7 chars)" })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9]{7}$/)
+  finCode?: string;
 }

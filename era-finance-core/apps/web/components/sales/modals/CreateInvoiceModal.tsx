@@ -71,10 +71,26 @@ type InvoiceServiceLineForm = {
   vatRate: VatRateFormChoice;
 };
 
+type MoneyOption = {
+  code: string;
+  label: string;
+  kind: "CASH" | "BANK";
+  currency: string;
+  requiresBankAccountId?: boolean;
+};
+
+type OrgBankAccount = {
+  id: string;
+  bankName: string;
+  ledgerAccountCode: string | null;
+  currency: string;
+};
+
 type InvoiceFormValues = {
   counterpartyId: string;
   dueDate: string;
-  debitAccountCode: "101" | "221";
+  debitAccountCode: string;
+  bankAccountId: string;
   currency: SupportedCurrency;
   fxRateToAzn: string;
   vatInclusive: boolean;
@@ -172,6 +188,8 @@ export function CreateInvoiceModal({
   const [netting, setNetting] = useState<NettingPreview | null>(null);
   const [counterpartyLabel, setCounterpartyLabel] = useState("");
   const [lineProductLabels, setLineProductLabels] = useState<Record<string, string>>({});
+  const [moneyOptions, setMoneyOptions] = useState<MoneyOption[]>([]);
+  const [orgBankAccounts, setOrgBankAccounts] = useState<OrgBankAccount[]>([]);
 
   const fieldClass = "mt-1 max-w-2xl";
 
@@ -186,7 +204,8 @@ export function CreateInvoiceModal({
     defaultValues: {
       counterpartyId: "",
       dueDate: new Date().toISOString().slice(0, 10),
-      debitAccountCode: "101",
+      debitAccountCode: "",
+      bankAccountId: "",
       currency: "AZN",
       fxRateToAzn: "1.0000",
       vatInclusive: false,
@@ -259,7 +278,8 @@ export function CreateInvoiceModal({
     reset({
       counterpartyId: "",
       dueDate: new Date().toISOString().slice(0, 10),
-      debitAccountCode: "101",
+      debitAccountCode: "",
+      bankAccountId: "",
       currency: "AZN",
       fxRateToAzn: "1.0000",
       vatInclusive: false,
@@ -268,6 +288,38 @@ export function CreateInvoiceModal({
       services: [blankServiceLine()],
     });
   }, [open, reset]);
+
+  useEffect(() => {
+    if (!open) return;
+    void (async () => {
+      const res = await apiFetch("/api/system/money-accounts?purpose=incoming");
+      if (res.ok) {
+        const data = (await res.json()) as { options?: MoneyOption[] };
+        const opts = data.options ?? [];
+        setMoneyOptions(opts);
+        if (opts[0]) {
+          setValue("debitAccountCode", opts[0].code);
+          if (opts[0].kind === "CASH") {
+            setValue("currency", coerceSupportedCurrency(opts[0].currency));
+          }
+        }
+      }
+      const banks = await apiFetch("/api/banking/bank-accounts");
+      if (banks.ok) {
+        setOrgBankAccounts((await banks.json()) as OrgBankAccount[]);
+      }
+    })();
+  }, [open, setValue]);
+
+  const watchedDebit = useWatch({ control, name: "debitAccountCode" });
+  const selectedMoney = moneyOptions.find((o) => o.code === watchedDebit);
+
+  useEffect(() => {
+    if (!selectedMoney) return;
+    if (selectedMoney.kind === "CASH") {
+      setValue("currency", coerceSupportedCurrency(selectedMoney.currency));
+    }
+  }, [selectedMoney, setValue]);
 
   useEffect(() => {
     if (!open) return;
@@ -502,6 +554,7 @@ export function CreateInvoiceModal({
         counterpartyId: data.counterpartyId,
         dueDate: data.dueDate,
         debitAccountCode: data.debitAccountCode,
+        bankAccountId: data.bankAccountId?.trim() || undefined,
         currency: data.currency,
         fxRateToAzn: data.currency === "AZN" ? 1 : fx,
         vatInclusive: data.vatInclusive,
@@ -983,13 +1036,53 @@ export function CreateInvoiceModal({
                 <Select value={field.value} onValueChange={field.onChange} className={fieldClass}>
                   <SelectTrigger className="" />
                   <SelectContent>
-                    <SelectItem value="101">{t("invoiceNew.cash101")}</SelectItem>
-                    <SelectItem value="221">{t("invoiceNew.bank221")}</SelectItem>
+                    {moneyOptions.map((o) => (
+                      <SelectItem key={o.code} value={o.code}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )}
             />
           </label>
+          {selectedMoney?.kind === "BANK" ? (
+            <label className="block">
+              <span className={MODAL_FIELD_LABEL_CLASS}>
+                {t("invoiceNew.bankAccount", { defaultValue: "Bank hesabı" })}
+              </span>
+              <Controller
+                control={control}
+                name="bankAccountId"
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={(id) => {
+                      field.onChange(id);
+                      const bank = orgBankAccounts.find((b) => b.id === id);
+                      if (bank?.currency) {
+                        setValue("currency", coerceSupportedCurrency(bank.currency));
+                      }
+                      if (bank?.ledgerAccountCode) {
+                        setValue("debitAccountCode", bank.ledgerAccountCode);
+                      }
+                    }}
+                    className={fieldClass}
+                  >
+                    <SelectTrigger className="" />
+                    <SelectContent>
+                      {orgBankAccounts.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.bankName} · {b.ledgerAccountCode ?? "—"} ({b.currency})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </label>
+          ) : null}
           <label className="block">
             <span className={MODAL_FIELD_LABEL_CLASS}>{t("invoiceNew.currency")}</span>
             <Controller
@@ -1000,6 +1093,7 @@ export function CreateInvoiceModal({
                   value={field.value}
                   onValueChange={field.onChange}
                   className={fieldClass}
+                  disabled={selectedMoney?.kind === "BANK" || selectedMoney?.kind === "CASH"}
                 />
               )}
             />

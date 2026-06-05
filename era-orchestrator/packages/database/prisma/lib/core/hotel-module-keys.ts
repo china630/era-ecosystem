@@ -1,7 +1,9 @@
-/** Canonical hotel PMS submodule keys (`pricing_modules`) — 9-key taxonomy (2026-05). */
+/** Canonical hotel PMS submodule keys (`pricing_modules`) — hotel submodule taxonomy. */
 export const HOTEL_PRICING_MODULE_KEYS = [
   "hotel_core",
   "hotel_housekeeping",
+  "hotel_service",
+  "hotel_migration_pro",
   "hotel_transfers",
   "hotel_spa_scheduling",
   "hotel_distribution",
@@ -20,6 +22,7 @@ export const HOTEL_MODULE_KEY_ALIASES: Record<string, HotelPricingModuleKey> = {
   hotel_night_audit: "hotel_core",
   hotel_channel_ota: "hotel_distribution",
   hotel_contracts_yield: "hotel_distribution",
+  migration_pro: "hotel_migration_pro",
 };
 
 /** @deprecated Use HOTEL_MODULE_KEY_ALIASES */

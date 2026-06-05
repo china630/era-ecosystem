@@ -5,7 +5,17 @@
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 
-import { LayoutDashboard, Stethoscope, Calendar, FlaskConical, HeartPulse, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Stethoscope,
+  Calendar,
+  FlaskConical,
+  HeartPulse,
+  Settings,
+  UserRound,
+  Syringe,
+  Wallet,
+} from "lucide-react";
 
 import {
 
@@ -53,6 +63,9 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
     { href: "/lab-orders", label: t("labOrders"), icon: FlaskConical },
 
     { href: "/sanatorium", label: t("sanatorium"), icon: HeartPulse },
+    { href: "/doctor", label: t("doctor"), icon: UserRound },
+    { href: "/nurse", label: t("nurse"), icon: Syringe },
+    { href: "/cashier", label: t("cashier"), icon: Wallet },
 
     { href: "/admin/settings", label: t("settings"), icon: Settings },
 
