@@ -28,9 +28,13 @@ jobs:
         run: |
           cp .env.ci.example .env.ci
           owner="${{ steps.lowercase.outputs.owner }}"
+          tag="${{ github.ref_name }}"
+          if [ "$tag" != "dev" ] && [ "$tag" != "master" ]; then
+            tag="dev"
+          fi
           {
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
-            echo "IMAGE_TAG=dev"
+            echo "IMAGE_TAG=${tag}"
           } >> .env.ci
 
       - name: Pull and start stack
