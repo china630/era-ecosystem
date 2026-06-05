@@ -36,7 +36,7 @@ jobs:
       - name: Pull and start stack
         run: |
           docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci pull
-          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d --wait
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.ci up -d
 
       - name: Migrate databases
         run: |
