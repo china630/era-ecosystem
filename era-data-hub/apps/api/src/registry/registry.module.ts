@@ -19,10 +19,11 @@ import { CalendarController } from "./calendar/calendar.controller";
 import { CalendarService } from "./calendar/calendar.service";
 import { IbanController } from "./iban/iban.controller";
 import { IbanService } from "./iban/iban.service";
+import { AuthModule } from "../auth/auth.module";
 import { IngestModule } from "../ingest/ingest.module";
 
 @Module({
-  imports: [IngestModule],
+  imports: [AuthModule, IngestModule],
   controllers: [
     FxController,
     BanksController,
