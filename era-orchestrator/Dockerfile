@@ -11,11 +11,13 @@ WORKDIR /workspace
 COPY packages/i18n-common packages/i18n-common
 COPY packages/era-contracts packages/era-contracts
 COPY packages/era-storage packages/era-storage
+COPY packages/era-fiscal packages/era-fiscal
 COPY packages/satellite-kit packages/satellite-kit
 
 RUN cd packages/i18n-common && npm install && npm run build \
   && cd ../era-contracts && npm install && npm run build \
   && cd ../era-storage && npm install && npm run build \
+  && cd ../era-fiscal && npm install && npm run build \
   && cd ../satellite-kit && npm install && npm run build
 
 COPY era-orchestrator era-orchestrator
@@ -51,6 +53,7 @@ COPY --from=builder --chown=era:nodejs /workspace/era-orchestrator /app
 COPY --from=builder --chown=era:nodejs /workspace/packages/era-contracts /packages/era-contracts
 COPY --from=builder --chown=era:nodejs /workspace/packages/i18n-common /packages/i18n-common
 COPY --from=builder --chown=era:nodejs /workspace/packages/era-storage /packages/era-storage
+COPY --from=builder --chown=era:nodejs /workspace/packages/era-fiscal /packages/era-fiscal
 COPY --from=builder --chown=era:nodejs /workspace/packages/satellite-kit /packages/satellite-kit
 RUN printf '%s\n' \
     '"use strict";' \
