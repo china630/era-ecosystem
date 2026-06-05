@@ -7,10 +7,12 @@ on:
         description: GHCR tag (e.g. dev-abc1234 or dev)
         required: false
         default: dev
-  workflow_run:
-    workflows: ["Build and push images"]
-    branches: [dev]
-    types: [completed]
+  # Auto-deploy disabled: droplet SSH :22 must be reachable from GitHub Actions.
+  # Re-enable after UFW/DO firewall allows port 22 (see docs/DEPLOY_DIGITALOCEAN.md).
+  # workflow_run:
+  #   workflows: ["Build and push images"]
+  #   branches: [dev]
+  #   types: [completed]
 
 jobs:
   deploy:
