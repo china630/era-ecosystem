@@ -44,6 +44,8 @@ RUN apk add --no-cache openssl wget \
   && adduser --system --uid 1001 nestjs
 
 COPY --from=builder --chown=nestjs:nodejs /workspace/era-data-hub /app
+# file: dependency — symlink target is outside /app in builder; materialize for runtime
+COPY --from=builder --chown=nestjs:nodejs /workspace/era-finance-core/packages/database /app/node_modules/@erafinance/database
 ENV DATA_HUB_FINANCE_CATALOG_ROOT=/app/packages/database/catalog
 
 USER nestjs

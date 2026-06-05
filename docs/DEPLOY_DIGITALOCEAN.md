@@ -6,7 +6,7 @@ Production deploy uses **GHCR pre-built images** — no `docker compose build` o
 
 - Ubuntu 24.04, **8 GB RAM** / 4 vCPU recommended (13 app images + Postgres + Redis)
 - Reset/reinstall droplet if replacing legacy site
-- UFW: `22`, `80`, `443`
+- UFW: `22`, `80`, `443` — **port 22 must accept inbound SSH** from GitHub Actions (or your IP) for `Deploy staging` workflow
 
 ```bash
 apt update && apt install -y docker.io docker-compose-plugin git
@@ -47,10 +47,10 @@ echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u <github-user> --password-stdin
 
 ```bash
 export IMAGE_TAG=dev-<short-sha>   # from successful build-images workflow
-docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 chmod +x docker/scripts/migrate-all.sh
 COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 node scripts/ecosystem-smoke-all.mjs
 ```
 
@@ -61,7 +61,7 @@ Configure environment **staging** secrets, then:
 1. Run **Build and push images** on `dev`
 2. Run **Deploy staging** with `image_tag` = `dev-<sha>` or `dev`
 
-Auto-deploy after build on `dev` is enabled via `workflow_run` (optional; disable if you prefer manual only).
+Auto-deploy via `workflow_run` is **disabled** until droplet SSH (`:22`) is reachable from GitHub Actions. Use manual **Deploy staging** after opening the firewall.
 
 ## 7. Operations
 
@@ -79,5 +79,6 @@ Auto-deploy after build on `dev` is enabled via `workflow_run` (optional; disabl
 | Migrate fails | Container running? `DATABASE_URL` in `.env`, postgres healthy |
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |
+| Deploy SSH timeout | `dial tcp :22: i/o timeout` — open UFW/DO firewall port 22; verify `SSH_HOST` secret; optional `SSH_PORT` secret |
 
 See [CI_CD.md](./CI_CD.md) for workflow matrix and branch policy.
