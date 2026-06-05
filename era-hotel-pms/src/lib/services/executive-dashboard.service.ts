@@ -2,6 +2,7 @@ import type { Decimal } from '@prisma/client/runtime/library';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
+import type { ClinicCapacitySummary } from '@/lib/integration/clinic-capacity-client';
 import {
   addDays,
   computeHotelStatus,
@@ -54,6 +55,7 @@ export type ExecutiveCockpit = ExecutiveDashboardKpis & {
     total: number;
     overdue: number;
   };
+  clinicCapacity: ClinicCapacitySummary | null;
 };
 
 export function computeAdr(roomRevenue: number, roomsSold: number): number {
@@ -68,12 +70,11 @@ export function computeRevpar(roomRevenue: number, roomsTotal: number): number {
 
 async function fetchClinicCapacitySummary(
   refDate: Date,
-): Promise<Record<string, unknown> | null> {
+): Promise<ClinicCapacitySummary | null> {
   const { fetchClinicCapacitySummary: fetchCap } = await import(
     '@/lib/integration/clinic-capacity-client'
   );
-  const row = await fetchCap(refDate);
-  return row ? (row as Record<string, unknown>) : null;
+  return fetchCap(refDate);
 }
 
 type ChargeRow = {
