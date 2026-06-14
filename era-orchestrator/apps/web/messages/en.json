@@ -58,10 +58,34 @@
       "title": "MDM",
       "subtitlePrefix": "VÖEN and organization matching.",
       "browseCompanies": "Company list",
-      "openCompanyList": "Open companies"
+      "openCompanyList": "Open companies",
+      "openPersons": "Person identity (FIN lookup / merge)"
+    },
+    "mdmPersons": {
+      "title": "MDM — persons",
+      "hint": "Super-admin write: FIN lookup, resolve/create, merge duplicates. PII decrypted for platform operators only.",
+      "backHub": "MDM hub",
+      "lookupTitle": "Lookup by FIN",
+      "finPlaceholder": "FIN (7 chars)",
+      "lookupBtn": "Lookup",
+      "lookupFailed": "Lookup failed",
+      "identifiers": "Identifiers",
+      "resolveTitle": "Resolve / create person",
+      "fullNamePlaceholder": "Full name",
+      "phonePlaceholder": "Phone (+994…)",
+      "resolveBtn": "Resolve",
+      "resolveOk": "Person resolved: {id}",
+      "resolveFailed": "Resolve failed",
+      "mergeTitle": "Merge persons",
+      "sourceIdPlaceholder": "Source person UUID (duplicate)",
+      "targetIdPlaceholder": "Target person UUID (canonical)",
+      "mergeBtn": "Merge",
+      "mergeOk": "Merged into {id}",
+      "mergeFailed": "Merge failed"
     },
     "mdmCompanies": {
       "title": "MDM — companies",
+      "hint": "Legal names are encrypted at rest (PII). If decryption fails, the orchestrator organization name is shown; VÖEN is never shown in clear text here.",
       "prev": "Back",
       "next": "Next",
       "page": "Page {page}"
@@ -81,6 +105,8 @@
       "recentEvents": "Recent events"
     },
     "billing": {
+      "title": "Billing configuration",
+      "subtitle": "Pricing catalog, quotas, and commercial packages.",
       "loading": "Loading…",
       "foundationLabel": "Foundation (AZN/mo)",
       "saveFoundation": "Save foundation",
@@ -140,6 +166,7 @@
   "common": {
     "loading": "Loading…",
     "home": "Home",
+    "workspace": "Workspace",
     "save": "Save",
     "cancel": "Cancel",
     "edit": "Edit",
@@ -178,9 +205,227 @@
     "subtitle": "Register with VÖEN and company name",
     "orgName": "Organization name",
     "taxId": "VÖEN",
+    "voenHint": "Azerbaijan legal entity ID — 10 digits",
+    "invalidVoen": "VÖEN must be exactly 10 digits",
     "submit": "Complete registration",
-    "back": "← Back",
+    "busy": "…",
+    "back": "← Back to organizations",
     "registerFailed": "Registration failed"
+  },
+  "nav": {
+    "controlPlane": "Control plane",
+    "sectionLauncher": "Launcher",
+    "sectionOrganization": "Organization",
+    "sectionResources": "Resources",
+    "sectionPlatform": "Platform admin",
+    "workspace": "Workspace",
+    "organizations": "Organizations",
+    "settings": "Settings",
+    "orgSwitcher": "Active organization",
+    "addOrg": "Organization",
+    "team": "Team",
+    "subscription": "Subscription",
+    "pricing": "Pricing",
+    "help": "Help",
+    "superAdmin": "Super admin",
+    "platformHub": "Platform hub",
+    "platformBillingPricing": "Billing — pricing",
+    "platformBillingQuotas": "Billing — quotas",
+    "platformBillingPackages": "Billing — packages",
+    "platformTrialAllowlist": "Trial allowlist",
+    "platformMdm": "MDM",
+    "platformMdmCompanies": "MDM companies",
+    "platformMdmPersons": "MDM persons",
+    "platformEarlyAccess": "Early access",
+    "platformSecurity": "Security",
+    "profileMenuAria": "Account menu",
+    "sidebarExpandAria": "Expand sidebar",
+    "sidebarCollapseAria": "Collapse sidebar",
+    "logout": "Log out",
+    "notificationsBellAria": "Notifications",
+    "notificationsTitle": "Notifications",
+    "notificationsEmpty": "No notifications yet",
+    "notificationsSettings": "Settings"
+  },
+  "headerStrip": {
+    "trialUntil": "Trial until {date}",
+    "readOnly": "Read-only",
+    "invoices": "Invoices",
+    "employees": "Employees",
+    "manage": "Manage"
+  },
+  "organizations": {
+    "title": "Your organizations",
+    "subtitle": "Switch workspace or create a new legal entity",
+    "addOrg": "Organization",
+    "emptyTitle": "Create your first organization",
+    "emptyHint": "Register with company name and VÖEN to open the module workspace.",
+    "createTitle": "New organization",
+    "createHint": "Separate legal entity with its own VÖEN and subscription.",
+    "createSubmit": "Create organization",
+    "createFailed": "Could not create organization",
+    "orgName": "Organization name",
+    "taxId": "VÖEN",
+    "voenHint": "Azerbaijan legal entity ID — 10 digits",
+    "invalidVoen": "VÖEN must be exactly 10 digits",
+    "openWorkspace": "Click to open workspace",
+    "currentWorkspace": "Current workspace",
+    "fallbackPage": "Full-page registration",
+    "roles": {
+      "owner": "Owner",
+      "admin": "Admin",
+      "accountant": "Accountant",
+      "user": "User"
+    }
+  },
+  "workspace": {
+    "title": "Workspace",
+    "subtitle": "Systems included in your organization subscription",
+    "loadingEntitlements": "Loading entitlements…",
+    "sanatoriumSection": "Recommended for sanatorium",
+    "showAllModules": "All ERA modules → pricing",
+    "hideAllModules": "Hide other modules",
+    "selectOrgHint": "Select or create an organization to view modules.",
+    "goOrganizations": "Go to organizations",
+    "badgeActive": "Active",
+    "badgeTrial": "Trial · {days} days left",
+    "badgeNotSubscribed": "Not in subscription",
+    "badgeNotConnected": "Not connected",
+    "badgeReadOnly": "Read-only",
+    "open": "Open",
+    "connect": "Connect",
+    "connecting": "Connecting…",
+    "addModule": "Add module",
+    "renew": "Renew",
+    "priceFrom": "From {price} AZN/mo",
+    "modulesModal": {
+      "title": "{system} — modules",
+      "subtitle": "Enable or disable billable modules for this satellite.",
+      "loading": "Loading modules…",
+      "empty": "No modules in catalog for this satellite.",
+      "priceLine": "{price} AZN/mo",
+      "included": "Included in platform",
+      "pendingOff": "turns off at month end",
+      "disableBillingNotice": "Module stays billable for the current month; access ends at month end.",
+      "enabled": "Module enabled",
+      "connectFailed": "Could not connect satellite — try again or contact support.",
+      "billingFootnote": "Disabled modules remain on the current month's invoice (post-paid billing)."
+    },
+    "systems": {
+      "finance": {
+        "title": "Finance Core",
+        "tagline": "GL, documents, inventory, payroll",
+        "highlight1": "Chart of accounts & journals",
+        "highlight2": "AR/AP and fiscal",
+        "highlight3": "HR & payroll posting"
+      },
+      "hotel": {
+        "title": "Hotel PMS",
+        "tagline": "Folio, front office, night audit",
+        "highlight1": "Reservations & folio",
+        "highlight2": "Housekeeping & FO",
+        "highlight3": "Night audit"
+      },
+      "clinic": {
+        "title": "Clinic",
+        "tagline": "Appointments, procedures, sanatorium",
+        "highlight1": "Patient visits",
+        "highlight2": "Treatment plans",
+        "highlight3": "Hotel folio bridge"
+      },
+      "fnb": {
+        "title": "F&B POS",
+        "tagline": "Restaurant POS, KDS, room charge",
+        "highlight1": "Orders & KDS",
+        "highlight2": "In-house room charge",
+        "highlight3": "Walk-in cash & KKM"
+      },
+      "retail": {
+        "title": "Retail POS",
+        "tagline": "Shifts, stock, pharmacy preset",
+        "highlight1": "POS shifts",
+        "highlight2": "Stock events",
+        "highlight3": "Pharmacy mode"
+      },
+      "logistics": {
+        "title": "Logistics",
+        "tagline": "Fleet, POD, customs",
+        "highlight1": "Shipments",
+        "highlight2": "POD capture",
+        "highlight3": "Customs docs"
+      },
+      "construction": {
+        "title": "Construction",
+        "tagline": "Projects, plan vs actual",
+        "highlight1": "BOQ & projects",
+        "highlight2": "Progress",
+        "highlight3": "Cost control"
+      },
+      "crm": {
+        "title": "CRM",
+        "tagline": "Leads, visits, inbox",
+        "highlight1": "Pipeline",
+        "highlight2": "Field visits",
+        "highlight3": "Messaging"
+      },
+      "auto": {
+        "title": "Auto service",
+        "tagline": "Service bays, work orders",
+        "highlight1": "Work orders",
+        "highlight2": "Parts stock",
+        "highlight3": "Bay scheduling"
+      },
+      "wholesale": {
+        "title": "Wholesale",
+        "tagline": "B2B orders, pick lists",
+        "highlight1": "B2B catalog",
+        "highlight2": "Pick & pack",
+        "highlight3": "Delivery notes"
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Team access and subscription for the active organization",
+    "workspace": "← Workspace",
+    "teamLink": "Team",
+    "teamHint": "Approve access requests and roles",
+    "subscriptionLink": "Subscription",
+    "subscriptionHint": "Plan, modules, trial status",
+    "team": {
+      "title": "Team access requests",
+      "noPending": "No pending requests",
+      "approve": "Approve",
+      "decline": "Decline",
+      "loadFailed": "Failed to load requests",
+      "actionFailed": "Action failed"
+    },
+    "subscription": {
+      "title": "Subscription",
+      "loading": "Loading…",
+      "plan": "Plan",
+      "trialDays": "Trial · {days} days left",
+      "billingStatus": "Billing status",
+      "readOnlyBanner": "Trial expired — workspace is read-only until you renew.",
+      "financeModules": "Finance modules",
+      "industryModules": "Industry modules",
+      "hotelModules": "Hotel add-ons",
+      "managePricing": "Manage on pricing",
+      "contactSupport": "Contact support",
+      "trialHint": "Connect satellites on the workspace; ops extends trial in super-admin org subscription."
+    }
+  },
+  "industry": {
+    "workspace": "← Workspace",
+    "loading": "Loading…",
+    "unknownModule": "Unknown module: {vertical}",
+    "openModule": "Open module",
+    "notEntitled": "Module not in subscription",
+    "addModule": "Add module on pricing",
+    "backWorkspace": "Back to workspace",
+    "trialExpired": "Trial expired — renew subscription to open this module.",
+    "renew": "Renew subscription",
+    "envHint": "Set {env} for local satellite URL"
   },
   "terms": {
     "title": "User agreement",

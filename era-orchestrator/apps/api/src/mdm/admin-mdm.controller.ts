@@ -1,8 +1,9 @@
-import { Controller, Get, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { SuperAdminGuard } from "../common/guards/super-admin.guard";
 import { MdmService } from "./mdm.service";
+import type { ResolvePersonInput } from "./mdm-person-identity.types";
 
 @ApiTags("admin")
 @ApiBearerAuth("bearer")
@@ -28,5 +29,38 @@ export class AdminMdmController {
   @Get("health")
   health() {
     return this.mdm.healthCheck();
+  }
+
+  @Post("persons/lookup-by-fin")
+  @ApiOperation({ summary: "Lookup natural person by FIN (super-admin)" })
+  lookupByFin(
+    @Body() body: { fin: string; requesterOrgId?: string; purpose?: string },
+  ) {
+    return this.mdm.lookupNaturalPersonByFin(body);
+  }
+
+  @Post("persons/resolve")
+  @ApiOperation({ summary: "Resolve or create person identity (super-admin)" })
+  resolvePerson(@Body() body: ResolvePersonInput) {
+    return this.mdm.resolvePersonIdentity(body);
+  }
+
+  @Post("persons/merge")
+  @ApiOperation({ summary: "Merge duplicate persons (super-admin)" })
+  mergePersons(
+    @Body()
+    body: {
+      sourcePersonId: string;
+      targetPersonId: string;
+      actorOrgId?: string;
+    },
+  ) {
+    return this.mdm.mergePersons(body);
+  }
+
+  @Get("persons/:personId/identifiers")
+  @ApiOperation({ summary: "List person identifiers (super-admin)" })
+  listIdentifiers(@Param("personId") personId: string) {
+    return this.mdm.listPersonIdentifiers(personId);
   }
 }

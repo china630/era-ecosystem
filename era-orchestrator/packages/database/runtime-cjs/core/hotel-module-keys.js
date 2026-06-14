@@ -6,10 +6,12 @@ exports.consolidateHotelModuleKeys = consolidateHotelModuleKeys;
 exports.isHotelModuleActive = isHotelModuleActive;
 exports.isPassThroughCatalogModuleKey = isPassThroughCatalogModuleKey;
 exports.inferPricingCatalogKind = inferPricingCatalogKind;
-/** Canonical hotel PMS submodule keys (`pricing_modules`) — 9-key taxonomy (2026-05). */
+/** Canonical hotel PMS submodule keys (`pricing_modules`) — hotel submodule taxonomy. */
 exports.HOTEL_PRICING_MODULE_KEYS = [
     "hotel_core",
     "hotel_housekeeping",
+    "hotel_service",
+    "hotel_migration_pro",
     "hotel_transfers",
     "hotel_spa_scheduling",
     "hotel_distribution",
@@ -25,6 +27,7 @@ exports.HOTEL_MODULE_KEY_ALIASES = {
     hotel_night_audit: "hotel_core",
     hotel_channel_ota: "hotel_distribution",
     hotel_contracts_yield: "hotel_distribution",
+    migration_pro: "hotel_migration_pro",
 };
 /** @deprecated Use HOTEL_MODULE_KEY_ALIASES */
 exports.HOTEL_LEGACY_MODULE_KEYS = Object.keys(exports.HOTEL_MODULE_KEY_ALIASES);

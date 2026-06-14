@@ -53,6 +53,27 @@ export class LoyaltyController {
     return this.loyalty.burnPromotion(organizationId, body.customerRef, body.code);
   }
 
+  @Post("points/burn")
+  @ApiOperation({ summary: "Burn loyalty points (generic checkout debit)" })
+  burnPoints(
+    @OrganizationId() organizationId: string,
+    @Body()
+    body: {
+      customerRef: string;
+      points: number;
+      idempotencyKey?: string;
+      reason?: string;
+    },
+  ) {
+    return this.loyalty.burnPoints(
+      organizationId,
+      body.customerRef,
+      body.points,
+      body.idempotencyKey,
+      body.reason ?? "points_burn",
+    );
+  }
+
   @Get("points/balance")
   balance(
     @OrganizationId() organizationId: string,

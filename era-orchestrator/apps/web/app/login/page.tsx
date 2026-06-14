@@ -3,8 +3,9 @@
 import { Suspense, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { AuthLoginCard, buildAuthLoginLabels, showApiError } from "@era/satellite-kit/ui";
+import { AuthLoginCard, buildAuthLoginLabels, parseApiError } from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
+import { OrchLanguageSwitcher } from "../../components/locale/orch-language-switcher";
 import { useAuth } from "../../lib/auth-context";
 import { orchFetch } from "../../lib/orch-api";
 
@@ -12,20 +13,20 @@ function LoginForm() {
   const router = useRouter();
   const t = useTranslations("login");
   const tAuth = useTranslations("auth");
-  const tMeta = useTranslations("meta");
   const locale = useLocale() as Locale;
   const { login, token, ready, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!ready || !token) return;
     if (!user?.organizationId && !user?.isSuperAdmin) {
-      router.replace("/register-org");
+      router.replace("/organizations");
       return;
     }
-    router.replace("/");
+    router.replace("/workspace");
   }, [ready, token, user, router]);
 
   if (ready && token) return null;
@@ -33,13 +34,14 @@ function LoginForm() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError(null);
     try {
       const res = await orchFetch("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email: email.trim(), password }),
       });
       if (!res.ok) {
-        showApiError(await res.text().catch(() => null), tAuth("loginFailed"));
+        setError(parseApiError(await res.text().catch(() => null), tAuth("loginFailed")));
         return;
       }
       const data = (await res.json()) as {
@@ -67,7 +69,7 @@ function LoginForm() {
         isSuperAdmin: Boolean(claims.isSuperAdmin),
       });
       router.replace(
-        data.user.organizationId || claims.isSuperAdmin ? "/" : "/register-org",
+        data.user.organizationId || claims.isSuperAdmin ? "/workspace" : "/organizations",
       );
     } finally {
       setBusy(false);
@@ -84,9 +86,10 @@ function LoginForm() {
   return (
     <AuthLoginCard
       locale={locale}
+      localeControl={<OrchLanguageSwitcher />}
       labels={{
         ...buildAuthLoginLabels(tAuth, { emailMode: true }),
-        loginTitle: tMeta("title"),
+        loginTitle: t("title"),
       }}
       loginId={email}
       password={password}
@@ -94,6 +97,7 @@ function LoginForm() {
       onPasswordChange={setPassword}
       onSubmit={onSubmit}
       busy={busy}
+      error={error ?? undefined}
       subtitle={t("subtitle")}
       ssoHint={demoHint}
       emailMode

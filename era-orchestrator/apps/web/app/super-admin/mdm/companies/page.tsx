@@ -44,6 +44,7 @@ export default function MdmCompaniesPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">{t("title")}</h1>
+      <p className="text-sm text-[#7F8C8D]">{t("hint")}</p>
       <SuperAdminDataTable
         loading={loading}
         columns={["name", "taxId", "organizationId", "updatedAt"]}

@@ -11,6 +11,7 @@ import { UserRole } from "@era365/database";
 import { MdmService } from "../mdm/mdm.service";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
 import { ReferralsService } from "../referrals/referrals.service";
+import { TrialProvisionService } from "../subscription/trial-provision.service";
 import { encryptText } from "../common/utils/mdm-crypto.util";
 import type { LoginDto } from "./dto/login.dto";
 import type { RegisterUserDto } from "./dto/register-user.dto";
@@ -30,6 +31,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
     private readonly referrals: ReferralsService,
+    private readonly trialProvision: TrialProvisionService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -113,15 +115,22 @@ export class AuthService {
       taxId: body.taxId,
       ownerUserId: userId,
     });
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { createdAt: true },
+    });
+    if (org) {
+      await this.trialProvision.provisionOrgTrial(organizationId, org.createdAt);
+    }
     if (body.referralCode?.trim()) {
-      const org = await this.prisma.organization.findUnique({
+      const orgFull = await this.prisma.organization.findUnique({
         where: { id: organizationId },
       });
-      if (org) {
+      if (orgFull) {
         await this.prisma.$transaction(async (tx) => {
           await this.referrals.attachReferralOnSignupTx(tx, {
             organizationId,
-            organizationCreatedAt: org.createdAt,
+            organizationCreatedAt: orgFull.createdAt,
             referralCode: body.referralCode,
           });
         });

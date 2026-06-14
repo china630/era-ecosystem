@@ -432,13 +432,16 @@ export class SubscriptionAccessService {
       const trialActive = trialEnd != null && trialEnd.getTime() > Date.now();
       const activated = sub.activatedPremiumModules ?? [];
       if (trialActive && !activated.includes(moduleSlug)) {
-        throw new ForbiddenException({
-          statusCode: 403,
-          code: "PREMIUM_TRIAL_LOCKED",
-          message:
-            "Премиум-модули недоступны в триал-периоде. Для активации перейдите на коммерческий платный тариф.",
-          module: moduleSlug,
-        });
+        const inActive = normalizeActiveModules(sub.activeModules).includes(moduleSlug);
+        if (!inActive) {
+          throw new ForbiddenException({
+            statusCode: 403,
+            code: "MODULE_NOT_ENTITLED",
+            message:
+              "This premium module is not included in your trial. Connect the satellite or contact support.",
+            module: moduleSlug,
+          });
+        }
       }
     }
 

@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type GlobalNaturalPerson = $Result.DefaultSelection<Prisma.$GlobalNaturalPersonPayload>
 /**
+ * Model PersonIdentifier
+ * 
+ */
+export type PersonIdentifier = $Result.DefaultSelection<Prisma.$PersonIdentifierPayload>
+/**
  * Model GlobalLegalEntity
  * 
  */
@@ -51,11 +56,52 @@ export namespace $Enums {
 
 export type PersonAccessRequestStatus = (typeof PersonAccessRequestStatus)[keyof typeof PersonAccessRequestStatus]
 
+
+export const PersonIdentifierType: {
+  AZ_FIN: 'AZ_FIN',
+  PASSPORT: 'PASSPORT',
+  RESIDENCE_PERMIT: 'RESIDENCE_PERMIT',
+  NATIONAL_ID: 'NATIONAL_ID',
+  ERA_SURROGATE: 'ERA_SURROGATE'
+};
+
+export type PersonIdentifierType = (typeof PersonIdentifierType)[keyof typeof PersonIdentifierType]
+
+
+export const IdentifierTrust: {
+  SELF_DECLARED: 'SELF_DECLARED',
+  DOCUMENT_SCANNED: 'DOCUMENT_SCANNED',
+  GOVERNMENT_VERIFIED: 'GOVERNMENT_VERIFIED'
+};
+
+export type IdentifierTrust = (typeof IdentifierTrust)[keyof typeof IdentifierTrust]
+
+
+export const PersonSegment: {
+  CITIZEN: 'CITIZEN',
+  FOREIGNER: 'FOREIGNER',
+  UNVERIFIED: 'UNVERIFIED'
+};
+
+export type PersonSegment = (typeof PersonSegment)[keyof typeof PersonSegment]
+
 }
 
 export type PersonAccessRequestStatus = $Enums.PersonAccessRequestStatus
 
 export const PersonAccessRequestStatus: typeof $Enums.PersonAccessRequestStatus
+
+export type PersonIdentifierType = $Enums.PersonIdentifierType
+
+export const PersonIdentifierType: typeof $Enums.PersonIdentifierType
+
+export type IdentifierTrust = $Enums.IdentifierTrust
+
+export const IdentifierTrust: typeof $Enums.IdentifierTrust
+
+export type PersonSegment = $Enums.PersonSegment
+
+export const PersonSegment: typeof $Enums.PersonSegment
 
 /**
  * ##  Prisma Client ʲˢ
@@ -187,6 +233,16 @@ export class PrismaClient<
     * ```
     */
   get globalNaturalPerson(): Prisma.GlobalNaturalPersonDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.personIdentifier`: Exposes CRUD operations for the **PersonIdentifier** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PersonIdentifiers
+    * const personIdentifiers = await prisma.personIdentifier.findMany()
+    * ```
+    */
+  get personIdentifier(): Prisma.PersonIdentifierDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.globalLegalEntity`: Exposes CRUD operations for the **GlobalLegalEntity** model.
@@ -662,6 +718,7 @@ export namespace Prisma {
 
   export const ModelName: {
     GlobalNaturalPerson: 'GlobalNaturalPerson',
+    PersonIdentifier: 'PersonIdentifier',
     GlobalLegalEntity: 'GlobalLegalEntity',
     PersonAccessRequest: 'PersonAccessRequest',
     PersonAccessGrant: 'PersonAccessGrant',
@@ -681,7 +738,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "globalNaturalPerson" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
+      modelProps: "globalNaturalPerson" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -756,6 +813,80 @@ export namespace Prisma {
           count: {
             args: Prisma.GlobalNaturalPersonCountArgs<ExtArgs>
             result: $Utils.Optional<GlobalNaturalPersonCountAggregateOutputType> | number
+          }
+        }
+      }
+      PersonIdentifier: {
+        payload: Prisma.$PersonIdentifierPayload<ExtArgs>
+        fields: Prisma.PersonIdentifierFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PersonIdentifierFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PersonIdentifierFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          findFirst: {
+            args: Prisma.PersonIdentifierFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PersonIdentifierFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          findMany: {
+            args: Prisma.PersonIdentifierFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>[]
+          }
+          create: {
+            args: Prisma.PersonIdentifierCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          createMany: {
+            args: Prisma.PersonIdentifierCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PersonIdentifierCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>[]
+          }
+          delete: {
+            args: Prisma.PersonIdentifierDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          update: {
+            args: Prisma.PersonIdentifierUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          deleteMany: {
+            args: Prisma.PersonIdentifierDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PersonIdentifierUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PersonIdentifierUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>[]
+          }
+          upsert: {
+            args: Prisma.PersonIdentifierUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonIdentifierPayload>
+          }
+          aggregate: {
+            args: Prisma.PersonIdentifierAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePersonIdentifier>
+          }
+          groupBy: {
+            args: Prisma.PersonIdentifierGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PersonIdentifierGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PersonIdentifierCountArgs<ExtArgs>
+            result: $Utils.Optional<PersonIdentifierCountAggregateOutputType> | number
           }
         }
       }
@@ -1164,6 +1295,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     globalNaturalPerson?: GlobalNaturalPersonOmit
+    personIdentifier?: PersonIdentifierOmit
     globalLegalEntity?: GlobalLegalEntityOmit
     personAccessRequest?: PersonAccessRequestOmit
     personAccessGrant?: PersonAccessGrantOmit
@@ -1248,15 +1380,19 @@ export namespace Prisma {
    */
 
   export type GlobalNaturalPersonCountOutputType = {
+    identifiers: number
     accessRequests: number
     accessGrants: number
     accessLogs: number
+    mergedFrom: number
   }
 
   export type GlobalNaturalPersonCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    identifiers?: boolean | GlobalNaturalPersonCountOutputTypeCountIdentifiersArgs
     accessRequests?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessRequestsArgs
     accessGrants?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessGrantsArgs
     accessLogs?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessLogsArgs
+    mergedFrom?: boolean | GlobalNaturalPersonCountOutputTypeCountMergedFromArgs
   }
 
   // Custom InputTypes
@@ -1268,6 +1404,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the GlobalNaturalPersonCountOutputType
      */
     select?: GlobalNaturalPersonCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * GlobalNaturalPersonCountOutputType without action
+   */
+  export type GlobalNaturalPersonCountOutputTypeCountIdentifiersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonIdentifierWhereInput
   }
 
   /**
@@ -1291,6 +1434,13 @@ export namespace Prisma {
     where?: PersonAccessLogWhereInput
   }
 
+  /**
+   * GlobalNaturalPersonCountOutputType without action
+   */
+  export type GlobalNaturalPersonCountOutputTypeCountMergedFromArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GlobalNaturalPersonWhereInput
+  }
+
 
   /**
    * Models
@@ -1312,6 +1462,9 @@ export namespace Prisma {
     finCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    nationality: string | null
+    personSegment: $Enums.PersonSegment | null
+    mergedIntoPersonId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1322,6 +1475,9 @@ export namespace Prisma {
     finCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    nationality: string | null
+    personSegment: $Enums.PersonSegment | null
+    mergedIntoPersonId: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1332,6 +1488,9 @@ export namespace Prisma {
     finCipher: number
     fullNameCipher: number
     phoneCipher: number
+    nationality: number
+    personSegment: number
+    mergedIntoPersonId: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1344,6 +1503,9 @@ export namespace Prisma {
     finCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    nationality?: true
+    personSegment?: true
+    mergedIntoPersonId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1354,6 +1516,9 @@ export namespace Prisma {
     finCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    nationality?: true
+    personSegment?: true
+    mergedIntoPersonId?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1364,6 +1529,9 @@ export namespace Prisma {
     finCipher?: true
     fullNameCipher?: true
     phoneCipher?: true
+    nationality?: true
+    personSegment?: true
+    mergedIntoPersonId?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1447,6 +1615,9 @@ export namespace Prisma {
     finCipher: string | null
     fullNameCipher: string | null
     phoneCipher: string | null
+    nationality: string | null
+    personSegment: $Enums.PersonSegment
+    mergedIntoPersonId: string | null
     createdAt: Date
     updatedAt: Date
     _count: GlobalNaturalPersonCountAggregateOutputType | null
@@ -1474,11 +1645,17 @@ export namespace Prisma {
     finCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    nationality?: boolean
+    personSegment?: boolean
+    mergedIntoPersonId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    identifiers?: boolean | GlobalNaturalPerson$identifiersArgs<ExtArgs>
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
     accessGrants?: boolean | GlobalNaturalPerson$accessGrantsArgs<ExtArgs>
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
+    mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["globalNaturalPerson"]>
 
@@ -1488,8 +1665,12 @@ export namespace Prisma {
     finCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    nationality?: boolean
+    personSegment?: boolean
+    mergedIntoPersonId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
   }, ExtArgs["result"]["globalNaturalPerson"]>
 
   export type GlobalNaturalPersonSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -1498,8 +1679,12 @@ export namespace Prisma {
     finCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    nationality?: boolean
+    personSegment?: boolean
+    mergedIntoPersonId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
   }, ExtArgs["result"]["globalNaturalPerson"]>
 
   export type GlobalNaturalPersonSelectScalar = {
@@ -1508,33 +1693,52 @@ export namespace Prisma {
     finCipher?: boolean
     fullNameCipher?: boolean
     phoneCipher?: boolean
+    nationality?: boolean
+    personSegment?: boolean
+    mergedIntoPersonId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "fullNameCipher" | "phoneCipher" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
+  export type GlobalNaturalPersonOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "finBlindIndex" | "finCipher" | "fullNameCipher" | "phoneCipher" | "nationality" | "personSegment" | "mergedIntoPersonId" | "createdAt" | "updatedAt", ExtArgs["result"]["globalNaturalPerson"]>
   export type GlobalNaturalPersonInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    identifiers?: boolean | GlobalNaturalPerson$identifiersArgs<ExtArgs>
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
     accessGrants?: boolean | GlobalNaturalPerson$accessGrantsArgs<ExtArgs>
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
+    mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type GlobalNaturalPersonIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type GlobalNaturalPersonIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type GlobalNaturalPersonIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
+  }
+  export type GlobalNaturalPersonIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
+  }
 
   export type $GlobalNaturalPersonPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "GlobalNaturalPerson"
     objects: {
+      identifiers: Prisma.$PersonIdentifierPayload<ExtArgs>[]
       accessRequests: Prisma.$PersonAccessRequestPayload<ExtArgs>[]
       accessGrants: Prisma.$PersonAccessGrantPayload<ExtArgs>[]
       accessLogs: Prisma.$PersonAccessLogPayload<ExtArgs>[]
+      mergedInto: Prisma.$GlobalNaturalPersonPayload<ExtArgs> | null
+      mergedFrom: Prisma.$GlobalNaturalPersonPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      /**
+       * Legacy FIN blind index — kept for back-compat; canonical identifiers live in PersonIdentifier.
+       */
       finBlindIndex: string | null
       finCipher: string | null
       fullNameCipher: string | null
       phoneCipher: string | null
+      nationality: string | null
+      personSegment: $Enums.PersonSegment
+      mergedIntoPersonId: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["globalNaturalPerson"]>
@@ -1931,9 +2135,12 @@ export namespace Prisma {
    */
   export interface Prisma__GlobalNaturalPersonClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    identifiers<T extends GlobalNaturalPerson$identifiersArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$identifiersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     accessRequests<T extends GlobalNaturalPerson$accessRequestsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     accessGrants<T extends GlobalNaturalPerson$accessGrantsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     accessLogs<T extends GlobalNaturalPerson$accessLogsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    mergedInto<T extends GlobalNaturalPerson$mergedIntoArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedIntoArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    mergedFrom<T extends GlobalNaturalPerson$mergedFromArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedFromArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1968,6 +2175,9 @@ export namespace Prisma {
     readonly finCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly fullNameCipher: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly phoneCipher: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly nationality: FieldRef<"GlobalNaturalPerson", 'String'>
+    readonly personSegment: FieldRef<"GlobalNaturalPerson", 'PersonSegment'>
+    readonly mergedIntoPersonId: FieldRef<"GlobalNaturalPerson", 'String'>
     readonly createdAt: FieldRef<"GlobalNaturalPerson", 'DateTime'>
     readonly updatedAt: FieldRef<"GlobalNaturalPerson", 'DateTime'>
   }
@@ -2224,6 +2434,10 @@ export namespace Prisma {
      */
     data: GlobalNaturalPersonCreateManyInput | GlobalNaturalPersonCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GlobalNaturalPersonIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2294,6 +2508,10 @@ export namespace Prisma {
      * Limit how many GlobalNaturalPeople to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GlobalNaturalPersonIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2360,6 +2578,30 @@ export namespace Prisma {
      * Limit how many GlobalNaturalPeople to delete.
      */
     limit?: number
+  }
+
+  /**
+   * GlobalNaturalPerson.identifiers
+   */
+  export type GlobalNaturalPerson$identifiersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    where?: PersonIdentifierWhereInput
+    orderBy?: PersonIdentifierOrderByWithRelationInput | PersonIdentifierOrderByWithRelationInput[]
+    cursor?: PersonIdentifierWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PersonIdentifierScalarFieldEnum | PersonIdentifierScalarFieldEnum[]
   }
 
   /**
@@ -2435,6 +2677,49 @@ export namespace Prisma {
   }
 
   /**
+   * GlobalNaturalPerson.mergedInto
+   */
+  export type GlobalNaturalPerson$mergedIntoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GlobalNaturalPerson
+     */
+    select?: GlobalNaturalPersonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GlobalNaturalPerson
+     */
+    omit?: GlobalNaturalPersonOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GlobalNaturalPersonInclude<ExtArgs> | null
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  /**
+   * GlobalNaturalPerson.mergedFrom
+   */
+  export type GlobalNaturalPerson$mergedFromArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GlobalNaturalPerson
+     */
+    select?: GlobalNaturalPersonSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GlobalNaturalPerson
+     */
+    omit?: GlobalNaturalPersonOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GlobalNaturalPersonInclude<ExtArgs> | null
+    where?: GlobalNaturalPersonWhereInput
+    orderBy?: GlobalNaturalPersonOrderByWithRelationInput | GlobalNaturalPersonOrderByWithRelationInput[]
+    cursor?: GlobalNaturalPersonWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: GlobalNaturalPersonScalarFieldEnum | GlobalNaturalPersonScalarFieldEnum[]
+  }
+
+  /**
    * GlobalNaturalPerson without action
    */
   export type GlobalNaturalPersonDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2450,6 +2735,1121 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: GlobalNaturalPersonInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PersonIdentifier
+   */
+
+  export type AggregatePersonIdentifier = {
+    _count: PersonIdentifierCountAggregateOutputType | null
+    _min: PersonIdentifierMinAggregateOutputType | null
+    _max: PersonIdentifierMaxAggregateOutputType | null
+  }
+
+  export type PersonIdentifierMinAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    type: $Enums.PersonIdentifierType | null
+    issuingCountry: string | null
+    valueCipher: string | null
+    blindIndex: string | null
+    trust: $Enums.IdentifierTrust | null
+    isPrimary: boolean | null
+    createdAt: Date | null
+  }
+
+  export type PersonIdentifierMaxAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    type: $Enums.PersonIdentifierType | null
+    issuingCountry: string | null
+    valueCipher: string | null
+    blindIndex: string | null
+    trust: $Enums.IdentifierTrust | null
+    isPrimary: boolean | null
+    createdAt: Date | null
+  }
+
+  export type PersonIdentifierCountAggregateOutputType = {
+    id: number
+    personId: number
+    type: number
+    issuingCountry: number
+    valueCipher: number
+    blindIndex: number
+    trust: number
+    isPrimary: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type PersonIdentifierMinAggregateInputType = {
+    id?: true
+    personId?: true
+    type?: true
+    issuingCountry?: true
+    valueCipher?: true
+    blindIndex?: true
+    trust?: true
+    isPrimary?: true
+    createdAt?: true
+  }
+
+  export type PersonIdentifierMaxAggregateInputType = {
+    id?: true
+    personId?: true
+    type?: true
+    issuingCountry?: true
+    valueCipher?: true
+    blindIndex?: true
+    trust?: true
+    isPrimary?: true
+    createdAt?: true
+  }
+
+  export type PersonIdentifierCountAggregateInputType = {
+    id?: true
+    personId?: true
+    type?: true
+    issuingCountry?: true
+    valueCipher?: true
+    blindIndex?: true
+    trust?: true
+    isPrimary?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type PersonIdentifierAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonIdentifier to aggregate.
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentifiers to fetch.
+     */
+    orderBy?: PersonIdentifierOrderByWithRelationInput | PersonIdentifierOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PersonIdentifierWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentifiers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentifiers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PersonIdentifiers
+    **/
+    _count?: true | PersonIdentifierCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PersonIdentifierMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PersonIdentifierMaxAggregateInputType
+  }
+
+  export type GetPersonIdentifierAggregateType<T extends PersonIdentifierAggregateArgs> = {
+        [P in keyof T & keyof AggregatePersonIdentifier]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePersonIdentifier[P]>
+      : GetScalarType<T[P], AggregatePersonIdentifier[P]>
+  }
+
+
+
+
+  export type PersonIdentifierGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonIdentifierWhereInput
+    orderBy?: PersonIdentifierOrderByWithAggregationInput | PersonIdentifierOrderByWithAggregationInput[]
+    by: PersonIdentifierScalarFieldEnum[] | PersonIdentifierScalarFieldEnum
+    having?: PersonIdentifierScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PersonIdentifierCountAggregateInputType | true
+    _min?: PersonIdentifierMinAggregateInputType
+    _max?: PersonIdentifierMaxAggregateInputType
+  }
+
+  export type PersonIdentifierGroupByOutputType = {
+    id: string
+    personId: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry: string
+    valueCipher: string
+    blindIndex: string
+    trust: $Enums.IdentifierTrust
+    isPrimary: boolean
+    createdAt: Date
+    _count: PersonIdentifierCountAggregateOutputType | null
+    _min: PersonIdentifierMinAggregateOutputType | null
+    _max: PersonIdentifierMaxAggregateOutputType | null
+  }
+
+  type GetPersonIdentifierGroupByPayload<T extends PersonIdentifierGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PersonIdentifierGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PersonIdentifierGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PersonIdentifierGroupByOutputType[P]>
+            : GetScalarType<T[P], PersonIdentifierGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PersonIdentifierSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    type?: boolean
+    issuingCountry?: boolean
+    valueCipher?: boolean
+    blindIndex?: boolean
+    trust?: boolean
+    isPrimary?: boolean
+    createdAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentifier"]>
+
+  export type PersonIdentifierSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    type?: boolean
+    issuingCountry?: boolean
+    valueCipher?: boolean
+    blindIndex?: boolean
+    trust?: boolean
+    isPrimary?: boolean
+    createdAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentifier"]>
+
+  export type PersonIdentifierSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    type?: boolean
+    issuingCountry?: boolean
+    valueCipher?: boolean
+    blindIndex?: boolean
+    trust?: boolean
+    isPrimary?: boolean
+    createdAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personIdentifier"]>
+
+  export type PersonIdentifierSelectScalar = {
+    id?: boolean
+    personId?: boolean
+    type?: boolean
+    issuingCountry?: boolean
+    valueCipher?: boolean
+    blindIndex?: boolean
+    trust?: boolean
+    isPrimary?: boolean
+    createdAt?: boolean
+  }
+
+  export type PersonIdentifierOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "personId" | "type" | "issuingCountry" | "valueCipher" | "blindIndex" | "trust" | "isPrimary" | "createdAt", ExtArgs["result"]["personIdentifier"]>
+  export type PersonIdentifierInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonIdentifierIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonIdentifierIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+
+  export type $PersonIdentifierPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PersonIdentifier"
+    objects: {
+      person: Prisma.$GlobalNaturalPersonPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      personId: string
+      type: $Enums.PersonIdentifierType
+      issuingCountry: string
+      valueCipher: string
+      blindIndex: string
+      trust: $Enums.IdentifierTrust
+      isPrimary: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["personIdentifier"]>
+    composites: {}
+  }
+
+  type PersonIdentifierGetPayload<S extends boolean | null | undefined | PersonIdentifierDefaultArgs> = $Result.GetResult<Prisma.$PersonIdentifierPayload, S>
+
+  type PersonIdentifierCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PersonIdentifierFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PersonIdentifierCountAggregateInputType | true
+    }
+
+  export interface PersonIdentifierDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PersonIdentifier'], meta: { name: 'PersonIdentifier' } }
+    /**
+     * Find zero or one PersonIdentifier that matches the filter.
+     * @param {PersonIdentifierFindUniqueArgs} args - Arguments to find a PersonIdentifier
+     * @example
+     * // Get one PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PersonIdentifierFindUniqueArgs>(args: SelectSubset<T, PersonIdentifierFindUniqueArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PersonIdentifier that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PersonIdentifierFindUniqueOrThrowArgs} args - Arguments to find a PersonIdentifier
+     * @example
+     * // Get one PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PersonIdentifierFindUniqueOrThrowArgs>(args: SelectSubset<T, PersonIdentifierFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonIdentifier that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierFindFirstArgs} args - Arguments to find a PersonIdentifier
+     * @example
+     * // Get one PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PersonIdentifierFindFirstArgs>(args?: SelectSubset<T, PersonIdentifierFindFirstArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonIdentifier that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierFindFirstOrThrowArgs} args - Arguments to find a PersonIdentifier
+     * @example
+     * // Get one PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PersonIdentifierFindFirstOrThrowArgs>(args?: SelectSubset<T, PersonIdentifierFindFirstOrThrowArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PersonIdentifiers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PersonIdentifiers
+     * const personIdentifiers = await prisma.personIdentifier.findMany()
+     * 
+     * // Get first 10 PersonIdentifiers
+     * const personIdentifiers = await prisma.personIdentifier.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const personIdentifierWithIdOnly = await prisma.personIdentifier.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PersonIdentifierFindManyArgs>(args?: SelectSubset<T, PersonIdentifierFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PersonIdentifier.
+     * @param {PersonIdentifierCreateArgs} args - Arguments to create a PersonIdentifier.
+     * @example
+     * // Create one PersonIdentifier
+     * const PersonIdentifier = await prisma.personIdentifier.create({
+     *   data: {
+     *     // ... data to create a PersonIdentifier
+     *   }
+     * })
+     * 
+     */
+    create<T extends PersonIdentifierCreateArgs>(args: SelectSubset<T, PersonIdentifierCreateArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PersonIdentifiers.
+     * @param {PersonIdentifierCreateManyArgs} args - Arguments to create many PersonIdentifiers.
+     * @example
+     * // Create many PersonIdentifiers
+     * const personIdentifier = await prisma.personIdentifier.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PersonIdentifierCreateManyArgs>(args?: SelectSubset<T, PersonIdentifierCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PersonIdentifiers and returns the data saved in the database.
+     * @param {PersonIdentifierCreateManyAndReturnArgs} args - Arguments to create many PersonIdentifiers.
+     * @example
+     * // Create many PersonIdentifiers
+     * const personIdentifier = await prisma.personIdentifier.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PersonIdentifiers and only return the `id`
+     * const personIdentifierWithIdOnly = await prisma.personIdentifier.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PersonIdentifierCreateManyAndReturnArgs>(args?: SelectSubset<T, PersonIdentifierCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PersonIdentifier.
+     * @param {PersonIdentifierDeleteArgs} args - Arguments to delete one PersonIdentifier.
+     * @example
+     * // Delete one PersonIdentifier
+     * const PersonIdentifier = await prisma.personIdentifier.delete({
+     *   where: {
+     *     // ... filter to delete one PersonIdentifier
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PersonIdentifierDeleteArgs>(args: SelectSubset<T, PersonIdentifierDeleteArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PersonIdentifier.
+     * @param {PersonIdentifierUpdateArgs} args - Arguments to update one PersonIdentifier.
+     * @example
+     * // Update one PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PersonIdentifierUpdateArgs>(args: SelectSubset<T, PersonIdentifierUpdateArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PersonIdentifiers.
+     * @param {PersonIdentifierDeleteManyArgs} args - Arguments to filter PersonIdentifiers to delete.
+     * @example
+     * // Delete a few PersonIdentifiers
+     * const { count } = await prisma.personIdentifier.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PersonIdentifierDeleteManyArgs>(args?: SelectSubset<T, PersonIdentifierDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonIdentifiers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PersonIdentifiers
+     * const personIdentifier = await prisma.personIdentifier.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PersonIdentifierUpdateManyArgs>(args: SelectSubset<T, PersonIdentifierUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonIdentifiers and returns the data updated in the database.
+     * @param {PersonIdentifierUpdateManyAndReturnArgs} args - Arguments to update many PersonIdentifiers.
+     * @example
+     * // Update many PersonIdentifiers
+     * const personIdentifier = await prisma.personIdentifier.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PersonIdentifiers and only return the `id`
+     * const personIdentifierWithIdOnly = await prisma.personIdentifier.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PersonIdentifierUpdateManyAndReturnArgs>(args: SelectSubset<T, PersonIdentifierUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PersonIdentifier.
+     * @param {PersonIdentifierUpsertArgs} args - Arguments to update or create a PersonIdentifier.
+     * @example
+     * // Update or create a PersonIdentifier
+     * const personIdentifier = await prisma.personIdentifier.upsert({
+     *   create: {
+     *     // ... data to create a PersonIdentifier
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PersonIdentifier we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PersonIdentifierUpsertArgs>(args: SelectSubset<T, PersonIdentifierUpsertArgs<ExtArgs>>): Prisma__PersonIdentifierClient<$Result.GetResult<Prisma.$PersonIdentifierPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PersonIdentifiers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierCountArgs} args - Arguments to filter PersonIdentifiers to count.
+     * @example
+     * // Count the number of PersonIdentifiers
+     * const count = await prisma.personIdentifier.count({
+     *   where: {
+     *     // ... the filter for the PersonIdentifiers we want to count
+     *   }
+     * })
+    **/
+    count<T extends PersonIdentifierCountArgs>(
+      args?: Subset<T, PersonIdentifierCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PersonIdentifierCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PersonIdentifier.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PersonIdentifierAggregateArgs>(args: Subset<T, PersonIdentifierAggregateArgs>): Prisma.PrismaPromise<GetPersonIdentifierAggregateType<T>>
+
+    /**
+     * Group by PersonIdentifier.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonIdentifierGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PersonIdentifierGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PersonIdentifierGroupByArgs['orderBy'] }
+        : { orderBy?: PersonIdentifierGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PersonIdentifierGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPersonIdentifierGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PersonIdentifier model
+   */
+  readonly fields: PersonIdentifierFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PersonIdentifier.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PersonIdentifierClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    person<T extends GlobalNaturalPersonDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPersonDefaultArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PersonIdentifier model
+   */
+  interface PersonIdentifierFieldRefs {
+    readonly id: FieldRef<"PersonIdentifier", 'String'>
+    readonly personId: FieldRef<"PersonIdentifier", 'String'>
+    readonly type: FieldRef<"PersonIdentifier", 'PersonIdentifierType'>
+    readonly issuingCountry: FieldRef<"PersonIdentifier", 'String'>
+    readonly valueCipher: FieldRef<"PersonIdentifier", 'String'>
+    readonly blindIndex: FieldRef<"PersonIdentifier", 'String'>
+    readonly trust: FieldRef<"PersonIdentifier", 'IdentifierTrust'>
+    readonly isPrimary: FieldRef<"PersonIdentifier", 'Boolean'>
+    readonly createdAt: FieldRef<"PersonIdentifier", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PersonIdentifier findUnique
+   */
+  export type PersonIdentifierFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentifier to fetch.
+     */
+    where: PersonIdentifierWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentifier findUniqueOrThrow
+   */
+  export type PersonIdentifierFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentifier to fetch.
+     */
+    where: PersonIdentifierWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentifier findFirst
+   */
+  export type PersonIdentifierFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentifier to fetch.
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentifiers to fetch.
+     */
+    orderBy?: PersonIdentifierOrderByWithRelationInput | PersonIdentifierOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonIdentifiers.
+     */
+    cursor?: PersonIdentifierWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentifiers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentifiers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentifiers.
+     */
+    distinct?: PersonIdentifierScalarFieldEnum | PersonIdentifierScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentifier findFirstOrThrow
+   */
+  export type PersonIdentifierFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentifier to fetch.
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentifiers to fetch.
+     */
+    orderBy?: PersonIdentifierOrderByWithRelationInput | PersonIdentifierOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonIdentifiers.
+     */
+    cursor?: PersonIdentifierWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentifiers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentifiers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentifiers.
+     */
+    distinct?: PersonIdentifierScalarFieldEnum | PersonIdentifierScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentifier findMany
+   */
+  export type PersonIdentifierFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonIdentifiers to fetch.
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonIdentifiers to fetch.
+     */
+    orderBy?: PersonIdentifierOrderByWithRelationInput | PersonIdentifierOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PersonIdentifiers.
+     */
+    cursor?: PersonIdentifierWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonIdentifiers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonIdentifiers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonIdentifiers.
+     */
+    distinct?: PersonIdentifierScalarFieldEnum | PersonIdentifierScalarFieldEnum[]
+  }
+
+  /**
+   * PersonIdentifier create
+   */
+  export type PersonIdentifierCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PersonIdentifier.
+     */
+    data: XOR<PersonIdentifierCreateInput, PersonIdentifierUncheckedCreateInput>
+  }
+
+  /**
+   * PersonIdentifier createMany
+   */
+  export type PersonIdentifierCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PersonIdentifiers.
+     */
+    data: PersonIdentifierCreateManyInput | PersonIdentifierCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PersonIdentifier createManyAndReturn
+   */
+  export type PersonIdentifierCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * The data used to create many PersonIdentifiers.
+     */
+    data: PersonIdentifierCreateManyInput | PersonIdentifierCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonIdentifier update
+   */
+  export type PersonIdentifierUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PersonIdentifier.
+     */
+    data: XOR<PersonIdentifierUpdateInput, PersonIdentifierUncheckedUpdateInput>
+    /**
+     * Choose, which PersonIdentifier to update.
+     */
+    where: PersonIdentifierWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentifier updateMany
+   */
+  export type PersonIdentifierUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PersonIdentifiers.
+     */
+    data: XOR<PersonIdentifierUpdateManyMutationInput, PersonIdentifierUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonIdentifiers to update
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * Limit how many PersonIdentifiers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonIdentifier updateManyAndReturn
+   */
+  export type PersonIdentifierUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * The data used to update PersonIdentifiers.
+     */
+    data: XOR<PersonIdentifierUpdateManyMutationInput, PersonIdentifierUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonIdentifiers to update
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * Limit how many PersonIdentifiers to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonIdentifier upsert
+   */
+  export type PersonIdentifierUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PersonIdentifier to update in case it exists.
+     */
+    where: PersonIdentifierWhereUniqueInput
+    /**
+     * In case the PersonIdentifier found by the `where` argument doesn't exist, create a new PersonIdentifier with this data.
+     */
+    create: XOR<PersonIdentifierCreateInput, PersonIdentifierUncheckedCreateInput>
+    /**
+     * In case the PersonIdentifier was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PersonIdentifierUpdateInput, PersonIdentifierUncheckedUpdateInput>
+  }
+
+  /**
+   * PersonIdentifier delete
+   */
+  export type PersonIdentifierDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
+    /**
+     * Filter which PersonIdentifier to delete.
+     */
+    where: PersonIdentifierWhereUniqueInput
+  }
+
+  /**
+   * PersonIdentifier deleteMany
+   */
+  export type PersonIdentifierDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonIdentifiers to delete
+     */
+    where?: PersonIdentifierWhereInput
+    /**
+     * Limit how many PersonIdentifiers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonIdentifier without action
+   */
+  export type PersonIdentifierDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonIdentifier
+     */
+    select?: PersonIdentifierSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonIdentifier
+     */
+    omit?: PersonIdentifierOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonIdentifierInclude<ExtArgs> | null
   }
 
 
@@ -6727,11 +8127,29 @@ export namespace Prisma {
     finCipher: 'finCipher',
     fullNameCipher: 'fullNameCipher',
     phoneCipher: 'phoneCipher',
+    nationality: 'nationality',
+    personSegment: 'personSegment',
+    mergedIntoPersonId: 'mergedIntoPersonId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type GlobalNaturalPersonScalarFieldEnum = (typeof GlobalNaturalPersonScalarFieldEnum)[keyof typeof GlobalNaturalPersonScalarFieldEnum]
+
+
+  export const PersonIdentifierScalarFieldEnum: {
+    id: 'id',
+    personId: 'personId',
+    type: 'type',
+    issuingCountry: 'issuingCountry',
+    valueCipher: 'valueCipher',
+    blindIndex: 'blindIndex',
+    trust: 'trust',
+    isPrimary: 'isPrimary',
+    createdAt: 'createdAt'
+  };
+
+  export type PersonIdentifierScalarFieldEnum = (typeof PersonIdentifierScalarFieldEnum)[keyof typeof PersonIdentifierScalarFieldEnum]
 
 
   export const GlobalLegalEntityScalarFieldEnum: {
@@ -6827,6 +8245,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'PersonSegment'
+   */
+  export type EnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonSegment[]'
+   */
+  export type ListEnumPersonSegmentFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonSegment[]'>
+    
+
+
+  /**
    * Reference to a field of type 'DateTime'
    */
   export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -6837,6 +8269,41 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonIdentifierType'
+   */
+  export type EnumPersonIdentifierTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonIdentifierType'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonIdentifierType[]'
+   */
+  export type ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonIdentifierType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'IdentifierTrust'
+   */
+  export type EnumIdentifierTrustFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentifierTrust'>
+    
+
+
+  /**
+   * Reference to a field of type 'IdentifierTrust[]'
+   */
+  export type ListEnumIdentifierTrustFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'IdentifierTrust[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 
@@ -6880,11 +8347,17 @@ export namespace Prisma {
     finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
+    mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
     updatedAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
+    identifiers?: PersonIdentifierListRelationFilter
     accessRequests?: PersonAccessRequestListRelationFilter
     accessGrants?: PersonAccessGrantListRelationFilter
     accessLogs?: PersonAccessLogListRelationFilter
+    mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
+    mergedFrom?: GlobalNaturalPersonListRelationFilter
   }
 
   export type GlobalNaturalPersonOrderByWithRelationInput = {
@@ -6893,11 +8366,17 @@ export namespace Prisma {
     finCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
+    nationality?: SortOrderInput | SortOrder
+    personSegment?: SortOrder
+    mergedIntoPersonId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    identifiers?: PersonIdentifierOrderByRelationAggregateInput
     accessRequests?: PersonAccessRequestOrderByRelationAggregateInput
     accessGrants?: PersonAccessGrantOrderByRelationAggregateInput
     accessLogs?: PersonAccessLogOrderByRelationAggregateInput
+    mergedInto?: GlobalNaturalPersonOrderByWithRelationInput
+    mergedFrom?: GlobalNaturalPersonOrderByRelationAggregateInput
   }
 
   export type GlobalNaturalPersonWhereUniqueInput = Prisma.AtLeast<{
@@ -6909,11 +8388,17 @@ export namespace Prisma {
     finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
+    mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
     updatedAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
+    identifiers?: PersonIdentifierListRelationFilter
     accessRequests?: PersonAccessRequestListRelationFilter
     accessGrants?: PersonAccessGrantListRelationFilter
     accessLogs?: PersonAccessLogListRelationFilter
+    mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
+    mergedFrom?: GlobalNaturalPersonListRelationFilter
   }, "id" | "finBlindIndex">
 
   export type GlobalNaturalPersonOrderByWithAggregationInput = {
@@ -6922,6 +8407,9 @@ export namespace Prisma {
     finCipher?: SortOrderInput | SortOrder
     fullNameCipher?: SortOrderInput | SortOrder
     phoneCipher?: SortOrderInput | SortOrder
+    nationality?: SortOrderInput | SortOrder
+    personSegment?: SortOrder
+    mergedIntoPersonId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: GlobalNaturalPersonCountOrderByAggregateInput
@@ -6938,8 +8426,87 @@ export namespace Prisma {
     finCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     fullNameCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     phoneCipher?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    nationality?: StringNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
+    personSegment?: EnumPersonSegmentWithAggregatesFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
+    mergedIntoPersonId?: UuidNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string
+  }
+
+  export type PersonIdentifierWhereInput = {
+    AND?: PersonIdentifierWhereInput | PersonIdentifierWhereInput[]
+    OR?: PersonIdentifierWhereInput[]
+    NOT?: PersonIdentifierWhereInput | PersonIdentifierWhereInput[]
+    id?: UuidFilter<"PersonIdentifier"> | string
+    personId?: UuidFilter<"PersonIdentifier"> | string
+    type?: EnumPersonIdentifierTypeFilter<"PersonIdentifier"> | $Enums.PersonIdentifierType
+    issuingCountry?: StringFilter<"PersonIdentifier"> | string
+    valueCipher?: StringFilter<"PersonIdentifier"> | string
+    blindIndex?: StringFilter<"PersonIdentifier"> | string
+    trust?: EnumIdentifierTrustFilter<"PersonIdentifier"> | $Enums.IdentifierTrust
+    isPrimary?: BoolFilter<"PersonIdentifier"> | boolean
+    createdAt?: DateTimeFilter<"PersonIdentifier"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }
+
+  export type PersonIdentifierOrderByWithRelationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    type?: SortOrder
+    issuingCountry?: SortOrder
+    valueCipher?: SortOrder
+    blindIndex?: SortOrder
+    trust?: SortOrder
+    isPrimary?: SortOrder
+    createdAt?: SortOrder
+    person?: GlobalNaturalPersonOrderByWithRelationInput
+  }
+
+  export type PersonIdentifierWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    type_issuingCountry_blindIndex?: PersonIdentifierTypeIssuingCountryBlindIndexCompoundUniqueInput
+    AND?: PersonIdentifierWhereInput | PersonIdentifierWhereInput[]
+    OR?: PersonIdentifierWhereInput[]
+    NOT?: PersonIdentifierWhereInput | PersonIdentifierWhereInput[]
+    personId?: UuidFilter<"PersonIdentifier"> | string
+    type?: EnumPersonIdentifierTypeFilter<"PersonIdentifier"> | $Enums.PersonIdentifierType
+    issuingCountry?: StringFilter<"PersonIdentifier"> | string
+    valueCipher?: StringFilter<"PersonIdentifier"> | string
+    blindIndex?: StringFilter<"PersonIdentifier"> | string
+    trust?: EnumIdentifierTrustFilter<"PersonIdentifier"> | $Enums.IdentifierTrust
+    isPrimary?: BoolFilter<"PersonIdentifier"> | boolean
+    createdAt?: DateTimeFilter<"PersonIdentifier"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }, "id" | "type_issuingCountry_blindIndex">
+
+  export type PersonIdentifierOrderByWithAggregationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    type?: SortOrder
+    issuingCountry?: SortOrder
+    valueCipher?: SortOrder
+    blindIndex?: SortOrder
+    trust?: SortOrder
+    isPrimary?: SortOrder
+    createdAt?: SortOrder
+    _count?: PersonIdentifierCountOrderByAggregateInput
+    _max?: PersonIdentifierMaxOrderByAggregateInput
+    _min?: PersonIdentifierMinOrderByAggregateInput
+  }
+
+  export type PersonIdentifierScalarWhereWithAggregatesInput = {
+    AND?: PersonIdentifierScalarWhereWithAggregatesInput | PersonIdentifierScalarWhereWithAggregatesInput[]
+    OR?: PersonIdentifierScalarWhereWithAggregatesInput[]
+    NOT?: PersonIdentifierScalarWhereWithAggregatesInput | PersonIdentifierScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PersonIdentifier"> | string
+    personId?: UuidWithAggregatesFilter<"PersonIdentifier"> | string
+    type?: EnumPersonIdentifierTypeWithAggregatesFilter<"PersonIdentifier"> | $Enums.PersonIdentifierType
+    issuingCountry?: StringWithAggregatesFilter<"PersonIdentifier"> | string
+    valueCipher?: StringWithAggregatesFilter<"PersonIdentifier"> | string
+    blindIndex?: StringWithAggregatesFilter<"PersonIdentifier"> | string
+    trust?: EnumIdentifierTrustWithAggregatesFilter<"PersonIdentifier"> | $Enums.IdentifierTrust
+    isPrimary?: BoolWithAggregatesFilter<"PersonIdentifier"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"PersonIdentifier"> | Date | string
   }
 
   export type GlobalLegalEntityWhereInput = {
@@ -7191,11 +8758,16 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonUncheckedCreateInput = {
@@ -7204,11 +8776,16 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonUpdateInput = {
@@ -7217,11 +8794,16 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonUncheckedUpdateInput = {
@@ -7230,11 +8812,16 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonCreateManyInput = {
@@ -7243,6 +8830,9 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7253,6 +8843,8 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7263,8 +8855,94 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentifierCreateInput = {
+    id?: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
+    person: GlobalNaturalPersonCreateNestedOneWithoutIdentifiersInput
+  }
+
+  export type PersonIdentifierUncheckedCreateInput = {
+    id?: string
+    personId: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
+  }
+
+  export type PersonIdentifierUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    person?: GlobalNaturalPersonUpdateOneRequiredWithoutIdentifiersNestedInput
+  }
+
+  export type PersonIdentifierUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentifierCreateManyInput = {
+    id?: string
+    personId: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
+  }
+
+  export type PersonIdentifierUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentifierUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type GlobalLegalEntityCreateInput = {
@@ -7550,6 +9228,25 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
+  export type EnumPersonSegmentFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSegment | EnumPersonSegmentFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSegmentFilter<$PrismaModel> | $Enums.PersonSegment
+  }
+
+  export type UuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -7559,6 +9256,12 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type PersonIdentifierListRelationFilter = {
+    every?: PersonIdentifierWhereInput
+    some?: PersonIdentifierWhereInput
+    none?: PersonIdentifierWhereInput
   }
 
   export type PersonAccessRequestListRelationFilter = {
@@ -7579,9 +9282,24 @@ export namespace Prisma {
     none?: PersonAccessLogWhereInput
   }
 
+  export type GlobalNaturalPersonNullableScalarRelationFilter = {
+    is?: GlobalNaturalPersonWhereInput | null
+    isNot?: GlobalNaturalPersonWhereInput | null
+  }
+
+  export type GlobalNaturalPersonListRelationFilter = {
+    every?: GlobalNaturalPersonWhereInput
+    some?: GlobalNaturalPersonWhereInput
+    none?: GlobalNaturalPersonWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
+  }
+
+  export type PersonIdentifierOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type PersonAccessRequestOrderByRelationAggregateInput = {
@@ -7596,12 +9314,19 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type GlobalNaturalPersonOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type GlobalNaturalPersonCountOrderByAggregateInput = {
     id?: SortOrder
     finBlindIndex?: SortOrder
     finCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    nationality?: SortOrder
+    personSegment?: SortOrder
+    mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7612,6 +9337,9 @@ export namespace Prisma {
     finCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    nationality?: SortOrder
+    personSegment?: SortOrder
+    mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7622,6 +9350,9 @@ export namespace Prisma {
     finCipher?: SortOrder
     fullNameCipher?: SortOrder
     phoneCipher?: SortOrder
+    nationality?: SortOrder
+    personSegment?: SortOrder
+    mergedIntoPersonId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7659,6 +9390,31 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
+  export type EnumPersonSegmentWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSegment | EnumPersonSegmentFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSegmentWithAggregatesFilter<$PrismaModel> | $Enums.PersonSegment
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonSegmentFilter<$PrismaModel>
+    _max?: NestedEnumPersonSegmentFilter<$PrismaModel>
+  }
+
+  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -7671,6 +9427,13 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type EnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel> | $Enums.PersonIdentifierType
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -7688,16 +9451,109 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
-  export type UuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+  export type EnumIdentifierTrustFilter<$PrismaModel = never> = {
+    equals?: $Enums.IdentifierTrust | EnumIdentifierTrustFieldRefInput<$PrismaModel>
+    in?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    not?: NestedEnumIdentifierTrustFilter<$PrismaModel> | $Enums.IdentifierTrust
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type GlobalNaturalPersonScalarRelationFilter = {
+    is?: GlobalNaturalPersonWhereInput
+    isNot?: GlobalNaturalPersonWhereInput
+  }
+
+  export type PersonIdentifierTypeIssuingCountryBlindIndexCompoundUniqueInput = {
+    type: $Enums.PersonIdentifierType
+    issuingCountry: string
+    blindIndex: string
+  }
+
+  export type PersonIdentifierCountOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    type?: SortOrder
+    issuingCountry?: SortOrder
+    valueCipher?: SortOrder
+    blindIndex?: SortOrder
+    trust?: SortOrder
+    isPrimary?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PersonIdentifierMaxOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    type?: SortOrder
+    issuingCountry?: SortOrder
+    valueCipher?: SortOrder
+    blindIndex?: SortOrder
+    trust?: SortOrder
+    isPrimary?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type PersonIdentifierMinOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    type?: SortOrder
+    issuingCountry?: SortOrder
+    valueCipher?: SortOrder
+    blindIndex?: SortOrder
+    trust?: SortOrder
+    isPrimary?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumPersonIdentifierTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonIdentifierTypeWithAggregatesFilter<$PrismaModel> | $Enums.PersonIdentifierType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
+    _max?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
     lt?: string | StringFieldRefInput<$PrismaModel>
     lte?: string | StringFieldRefInput<$PrismaModel>
     gt?: string | StringFieldRefInput<$PrismaModel>
     gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
     mode?: QueryMode
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type EnumIdentifierTrustWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IdentifierTrust | EnumIdentifierTrustFieldRefInput<$PrismaModel>
+    in?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    not?: NestedEnumIdentifierTrustWithAggregatesFilter<$PrismaModel> | $Enums.IdentifierTrust
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIdentifierTrustFilter<$PrismaModel>
+    _max?: NestedEnumIdentifierTrustFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type GlobalLegalEntityCountOrderByAggregateInput = {
@@ -7730,39 +9586,6 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type StringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type UuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
   export type EnumPersonAccessRequestStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonAccessRequestStatus | EnumPersonAccessRequestStatusFieldRefInput<$PrismaModel>
     in?: $Enums.PersonAccessRequestStatus[] | ListEnumPersonAccessRequestStatusFieldRefInput<$PrismaModel>
@@ -7779,11 +9602,6 @@ export namespace Prisma {
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
-  }
-
-  export type GlobalNaturalPersonScalarRelationFilter = {
-    is?: GlobalNaturalPersonWhereInput
-    isNot?: GlobalNaturalPersonWhereInput
   }
 
   export type PersonAccessRequestCountOrderByAggregateInput = {
@@ -7896,6 +9714,13 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type PersonIdentifierCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput> | PersonIdentifierCreateWithoutPersonInput[] | PersonIdentifierUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentifierCreateOrConnectWithoutPersonInput | PersonIdentifierCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonIdentifierCreateManyPersonInputEnvelope
+    connect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+  }
+
   export type PersonAccessRequestCreateNestedManyWithoutPersonInput = {
     create?: XOR<PersonAccessRequestCreateWithoutPersonInput, PersonAccessRequestUncheckedCreateWithoutPersonInput> | PersonAccessRequestCreateWithoutPersonInput[] | PersonAccessRequestUncheckedCreateWithoutPersonInput[]
     connectOrCreate?: PersonAccessRequestCreateOrConnectWithoutPersonInput | PersonAccessRequestCreateOrConnectWithoutPersonInput[]
@@ -7915,6 +9740,26 @@ export namespace Prisma {
     connectOrCreate?: PersonAccessLogCreateOrConnectWithoutPersonInput | PersonAccessLogCreateOrConnectWithoutPersonInput[]
     createMany?: PersonAccessLogCreateManyPersonInputEnvelope
     connect?: PersonAccessLogWhereUniqueInput | PersonAccessLogWhereUniqueInput[]
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
+    createMany?: GlobalNaturalPersonCreateManyMergedIntoInputEnvelope
+    connect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+  }
+
+  export type PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput> | PersonIdentifierCreateWithoutPersonInput[] | PersonIdentifierUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentifierCreateOrConnectWithoutPersonInput | PersonIdentifierCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonIdentifierCreateManyPersonInputEnvelope
+    connect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
   }
 
   export type PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput = {
@@ -7938,6 +9783,13 @@ export namespace Prisma {
     connect?: PersonAccessLogWhereUniqueInput | PersonAccessLogWhereUniqueInput[]
   }
 
+  export type GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
+    createMany?: GlobalNaturalPersonCreateManyMergedIntoInputEnvelope
+    connect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -7946,8 +9798,26 @@ export namespace Prisma {
     set?: string | null
   }
 
+  export type EnumPersonSegmentFieldUpdateOperationsInput = {
+    set?: $Enums.PersonSegment
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type PersonIdentifierUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput> | PersonIdentifierCreateWithoutPersonInput[] | PersonIdentifierUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentifierCreateOrConnectWithoutPersonInput | PersonIdentifierCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonIdentifierUpsertWithWhereUniqueWithoutPersonInput | PersonIdentifierUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonIdentifierCreateManyPersonInputEnvelope
+    set?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    disconnect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    delete?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    connect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    update?: PersonIdentifierUpdateWithWhereUniqueWithoutPersonInput | PersonIdentifierUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonIdentifierUpdateManyWithWhereWithoutPersonInput | PersonIdentifierUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonIdentifierScalarWhereInput | PersonIdentifierScalarWhereInput[]
   }
 
   export type PersonAccessRequestUpdateManyWithoutPersonNestedInput = {
@@ -7992,6 +9862,44 @@ export namespace Prisma {
     deleteMany?: PersonAccessLogScalarWhereInput | PersonAccessLogScalarWhereInput[]
   }
 
+  export type GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
+    upsert?: GlobalNaturalPersonUpsertWithoutMergedFromInput
+    disconnect?: GlobalNaturalPersonWhereInput | boolean
+    delete?: GlobalNaturalPersonWhereInput | boolean
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutMergedFromInput, GlobalNaturalPersonUpdateWithoutMergedFromInput>, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
+  }
+
+  export type GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
+    upsert?: GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput | GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput[]
+    createMany?: GlobalNaturalPersonCreateManyMergedIntoInputEnvelope
+    set?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    disconnect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    delete?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    connect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    update?: GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput | GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput[]
+    updateMany?: GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput | GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput[]
+    deleteMany?: GlobalNaturalPersonScalarWhereInput | GlobalNaturalPersonScalarWhereInput[]
+  }
+
+  export type PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput> | PersonIdentifierCreateWithoutPersonInput[] | PersonIdentifierUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonIdentifierCreateOrConnectWithoutPersonInput | PersonIdentifierCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonIdentifierUpsertWithWhereUniqueWithoutPersonInput | PersonIdentifierUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonIdentifierCreateManyPersonInputEnvelope
+    set?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    disconnect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    delete?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    connect?: PersonIdentifierWhereUniqueInput | PersonIdentifierWhereUniqueInput[]
+    update?: PersonIdentifierUpdateWithWhereUniqueWithoutPersonInput | PersonIdentifierUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonIdentifierUpdateManyWithWhereWithoutPersonInput | PersonIdentifierUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonIdentifierScalarWhereInput | PersonIdentifierScalarWhereInput[]
+  }
+
   export type PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput = {
     create?: XOR<PersonAccessRequestCreateWithoutPersonInput, PersonAccessRequestUncheckedCreateWithoutPersonInput> | PersonAccessRequestCreateWithoutPersonInput[] | PersonAccessRequestUncheckedCreateWithoutPersonInput[]
     connectOrCreate?: PersonAccessRequestCreateOrConnectWithoutPersonInput | PersonAccessRequestCreateOrConnectWithoutPersonInput[]
@@ -8032,6 +9940,46 @@ export namespace Prisma {
     update?: PersonAccessLogUpdateWithWhereUniqueWithoutPersonInput | PersonAccessLogUpdateWithWhereUniqueWithoutPersonInput[]
     updateMany?: PersonAccessLogUpdateManyWithWhereWithoutPersonInput | PersonAccessLogUpdateManyWithWhereWithoutPersonInput[]
     deleteMany?: PersonAccessLogScalarWhereInput | PersonAccessLogScalarWhereInput[]
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
+    upsert?: GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput | GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput[]
+    createMany?: GlobalNaturalPersonCreateManyMergedIntoInputEnvelope
+    set?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    disconnect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    delete?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    connect?: GlobalNaturalPersonWhereUniqueInput | GlobalNaturalPersonWhereUniqueInput[]
+    update?: GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput | GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput[]
+    updateMany?: GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput | GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput[]
+    deleteMany?: GlobalNaturalPersonScalarWhereInput | GlobalNaturalPersonScalarWhereInput[]
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutIdentifiersInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedCreateWithoutIdentifiersInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutIdentifiersInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type EnumPersonIdentifierTypeFieldUpdateOperationsInput = {
+    set?: $Enums.PersonIdentifierType
+  }
+
+  export type EnumIdentifierTrustFieldUpdateOperationsInput = {
+    set?: $Enums.IdentifierTrust
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type GlobalNaturalPersonUpdateOneRequiredWithoutIdentifiersNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedCreateWithoutIdentifiersInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutIdentifiersInput
+    upsert?: GlobalNaturalPersonUpsertWithoutIdentifiersInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutIdentifiersInput, GlobalNaturalPersonUpdateWithoutIdentifiersInput>, GlobalNaturalPersonUncheckedUpdateWithoutIdentifiersInput>
   }
 
   export type GlobalNaturalPersonCreateNestedOneWithoutAccessRequestsInput = {
@@ -8107,6 +10055,24 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedEnumPersonSegmentFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSegment | EnumPersonSegmentFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSegmentFilter<$PrismaModel> | $Enums.PersonSegment
+  }
+
+  export type NestedUuidNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -8187,6 +10153,30 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumPersonSegmentWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonSegment | EnumPersonSegmentFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonSegment[] | ListEnumPersonSegmentFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonSegmentWithAggregatesFilter<$PrismaModel> | $Enums.PersonSegment
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonSegmentFilter<$PrismaModel>
+    _max?: NestedEnumPersonSegmentFilter<$PrismaModel>
+  }
+
+  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -8201,15 +10191,33 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedUuidNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableFilter<$PrismaModel> | string | null
+  export type NestedEnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel> | $Enums.PersonIdentifierType
+  }
+
+  export type NestedEnumIdentifierTrustFilter<$PrismaModel = never> = {
+    equals?: $Enums.IdentifierTrust | EnumIdentifierTrustFieldRefInput<$PrismaModel>
+    in?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    not?: NestedEnumIdentifierTrustFilter<$PrismaModel> | $Enums.IdentifierTrust
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedEnumPersonIdentifierTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonIdentifierTypeWithAggregatesFilter<$PrismaModel> | $Enums.PersonIdentifierType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
+    _max?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
   }
 
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
@@ -8229,18 +10237,22 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
-  export type NestedUuidNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedUuidNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
+  export type NestedEnumIdentifierTrustWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.IdentifierTrust | EnumIdentifierTrustFieldRefInput<$PrismaModel>
+    in?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    notIn?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
+    not?: NestedEnumIdentifierTrustWithAggregatesFilter<$PrismaModel> | $Enums.IdentifierTrust
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumIdentifierTrustFilter<$PrismaModel>
+    _max?: NestedEnumIdentifierTrustFilter<$PrismaModel>
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedEnumPersonAccessRequestStatusFilter<$PrismaModel = never> = {
@@ -8283,6 +10295,38 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedDateTimeNullableFilter<$PrismaModel>
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type PersonIdentifierCreateWithoutPersonInput = {
+    id?: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
+  }
+
+  export type PersonIdentifierUncheckedCreateWithoutPersonInput = {
+    id?: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
+  }
+
+  export type PersonIdentifierCreateOrConnectWithoutPersonInput = {
+    where: PersonIdentifierWhereUniqueInput
+    create: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonIdentifierCreateManyPersonInputEnvelope = {
+    data: PersonIdentifierCreateManyPersonInput | PersonIdentifierCreateManyPersonInput[]
+    skipDuplicates?: boolean
   }
 
   export type PersonAccessRequestCreateWithoutPersonInput = {
@@ -8361,6 +10405,120 @@ export namespace Prisma {
   export type PersonAccessLogCreateManyPersonInputEnvelope = {
     data: PersonAccessLogCreateManyPersonInput | PersonAccessLogCreateManyPersonInput[]
     skipDuplicates?: boolean
+  }
+
+  export type GlobalNaturalPersonCreateWithoutMergedFromInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
+  }
+
+  export type GlobalNaturalPersonCreateWithoutMergedIntoInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput>
+  }
+
+  export type GlobalNaturalPersonCreateManyMergedIntoInputEnvelope = {
+    data: GlobalNaturalPersonCreateManyMergedIntoInput | GlobalNaturalPersonCreateManyMergedIntoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PersonIdentifierUpsertWithWhereUniqueWithoutPersonInput = {
+    where: PersonIdentifierWhereUniqueInput
+    update: XOR<PersonIdentifierUpdateWithoutPersonInput, PersonIdentifierUncheckedUpdateWithoutPersonInput>
+    create: XOR<PersonIdentifierCreateWithoutPersonInput, PersonIdentifierUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonIdentifierUpdateWithWhereUniqueWithoutPersonInput = {
+    where: PersonIdentifierWhereUniqueInput
+    data: XOR<PersonIdentifierUpdateWithoutPersonInput, PersonIdentifierUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonIdentifierUpdateManyWithWhereWithoutPersonInput = {
+    where: PersonIdentifierScalarWhereInput
+    data: XOR<PersonIdentifierUpdateManyMutationInput, PersonIdentifierUncheckedUpdateManyWithoutPersonInput>
+  }
+
+  export type PersonIdentifierScalarWhereInput = {
+    AND?: PersonIdentifierScalarWhereInput | PersonIdentifierScalarWhereInput[]
+    OR?: PersonIdentifierScalarWhereInput[]
+    NOT?: PersonIdentifierScalarWhereInput | PersonIdentifierScalarWhereInput[]
+    id?: UuidFilter<"PersonIdentifier"> | string
+    personId?: UuidFilter<"PersonIdentifier"> | string
+    type?: EnumPersonIdentifierTypeFilter<"PersonIdentifier"> | $Enums.PersonIdentifierType
+    issuingCountry?: StringFilter<"PersonIdentifier"> | string
+    valueCipher?: StringFilter<"PersonIdentifier"> | string
+    blindIndex?: StringFilter<"PersonIdentifier"> | string
+    trust?: EnumIdentifierTrustFilter<"PersonIdentifier"> | $Enums.IdentifierTrust
+    isPrimary?: BoolFilter<"PersonIdentifier"> | boolean
+    createdAt?: DateTimeFilter<"PersonIdentifier"> | Date | string
   }
 
   export type PersonAccessRequestUpsertWithWhereUniqueWithoutPersonInput = {
@@ -8447,16 +10605,182 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PersonAccessLog"> | Date | string
   }
 
+  export type GlobalNaturalPersonUpsertWithoutMergedFromInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutMergedFromInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutMergedFromInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutMergedFromInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutMergedFromInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+  }
+
+  export type GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    update: XOR<GlobalNaturalPersonUpdateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedIntoInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedIntoInput>
+  }
+
+  export type GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput = {
+    where: GlobalNaturalPersonScalarWhereInput
+    data: XOR<GlobalNaturalPersonUpdateManyMutationInput, GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoInput>
+  }
+
+  export type GlobalNaturalPersonScalarWhereInput = {
+    AND?: GlobalNaturalPersonScalarWhereInput | GlobalNaturalPersonScalarWhereInput[]
+    OR?: GlobalNaturalPersonScalarWhereInput[]
+    NOT?: GlobalNaturalPersonScalarWhereInput | GlobalNaturalPersonScalarWhereInput[]
+    id?: UuidFilter<"GlobalNaturalPerson"> | string
+    finBlindIndex?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    finCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    fullNameCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    phoneCipher?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    nationality?: StringNullableFilter<"GlobalNaturalPerson"> | string | null
+    personSegment?: EnumPersonSegmentFilter<"GlobalNaturalPerson"> | $Enums.PersonSegment
+    mergedIntoPersonId?: UuidNullableFilter<"GlobalNaturalPerson"> | string | null
+    createdAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
+    updatedAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
+  }
+
+  export type GlobalNaturalPersonCreateWithoutIdentifiersInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutIdentifiersInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutIdentifiersInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedCreateWithoutIdentifiersInput>
+  }
+
+  export type GlobalNaturalPersonUpsertWithoutIdentifiersInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedUpdateWithoutIdentifiersInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedCreateWithoutIdentifiersInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutIdentifiersInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutIdentifiersInput, GlobalNaturalPersonUncheckedUpdateWithoutIdentifiersInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutIdentifiersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutIdentifiersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
   export type GlobalNaturalPersonCreateWithoutAccessRequestsInput = {
     id?: string
     finBlindIndex?: string | null
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonUncheckedCreateWithoutAccessRequestsInput = {
@@ -8465,10 +10789,15 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutAccessRequestsInput = {
@@ -8493,10 +10822,15 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonUncheckedUpdateWithoutAccessRequestsInput = {
@@ -8505,10 +10839,15 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonCreateWithoutAccessGrantsInput = {
@@ -8517,10 +10856,15 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonUncheckedCreateWithoutAccessGrantsInput = {
@@ -8529,10 +10873,15 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutAccessGrantsInput = {
@@ -8557,10 +10906,15 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonUncheckedUpdateWithoutAccessGrantsInput = {
@@ -8569,10 +10923,15 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonCreateWithoutAccessLogsInput = {
@@ -8581,10 +10940,15 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonUncheckedCreateWithoutAccessLogsInput = {
@@ -8593,10 +10957,15 @@ export namespace Prisma {
     finCipher?: string | null
     fullNameCipher?: string | null
     phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutAccessLogsInput = {
@@ -8621,10 +10990,15 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
   export type GlobalNaturalPersonUncheckedUpdateWithoutAccessLogsInput = {
@@ -8633,10 +11007,26 @@ export namespace Prisma {
     finCipher?: NullableStringFieldUpdateOperationsInput | string | null
     fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type PersonIdentifierCreateManyPersonInput = {
+    id?: string
+    type: $Enums.PersonIdentifierType
+    issuingCountry?: string
+    valueCipher: string
+    blindIndex: string
+    trust?: $Enums.IdentifierTrust
+    isPrimary?: boolean
+    createdAt?: Date | string
   }
 
   export type PersonAccessRequestCreateManyPersonInput = {
@@ -8661,6 +11051,51 @@ export namespace Prisma {
     action: string
     metaJson?: string | null
     createdAt?: Date | string
+  }
+
+  export type GlobalNaturalPersonCreateManyMergedIntoInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonIdentifierUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentifierUncheckedUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonIdentifierUncheckedUpdateManyWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    type?: EnumPersonIdentifierTypeFieldUpdateOperationsInput | $Enums.PersonIdentifierType
+    issuingCountry?: StringFieldUpdateOperationsInput | string
+    valueCipher?: StringFieldUpdateOperationsInput | string
+    blindIndex?: StringFieldUpdateOperationsInput | string
+    trust?: EnumIdentifierTrustFieldUpdateOperationsInput | $Enums.IdentifierTrust
+    isPrimary?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PersonAccessRequestUpdateWithoutPersonInput = {
@@ -8733,6 +11168,52 @@ export namespace Prisma {
     action?: StringFieldUpdateOperationsInput | string
     metaJson?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutMergedIntoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutMergedIntoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

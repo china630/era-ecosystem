@@ -138,4 +138,56 @@ export class PaymentsService {
     }
     return { ...link, expired: false };
   }
+
+  /** Mock card authorization hold (Nafta H-BL-02 until acquirer live). */
+  async createAuthorization(
+    organizationId: string,
+    body: { reservationId: string; amountAzn: number },
+  ) {
+    await this.entitlement.assertPlatformModule(organizationId, ENTITLEMENT);
+    const amount = Number(body.amountAzn);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      throw new BadRequestException("amountAzn must be positive");
+    }
+    const externalAuthId = `mock-auth-${Date.now()}`;
+    await this.audit.log({
+      organizationId,
+      addonSlug: ENTITLEMENT,
+      action: "authorization.created",
+      payload: { reservationId: body.reservationId, amount, externalAuthId },
+    });
+    return {
+      externalAuthId,
+      id: externalAuthId,
+      status: "HELD",
+      amountAzn: amount,
+      mode: "mock",
+    };
+  }
+
+  async captureAuthorization(
+    organizationId: string,
+    externalAuthId: string,
+    body: { amountAzn?: number },
+  ) {
+    await this.entitlement.assertPlatformModule(organizationId, ENTITLEMENT);
+    await this.audit.log({
+      organizationId,
+      addonSlug: ENTITLEMENT,
+      action: "authorization.captured",
+      payload: { externalAuthId, amountAzn: body.amountAzn },
+    });
+    return { externalAuthId, status: "CAPTURED", mode: "mock" };
+  }
+
+  async voidAuthorization(organizationId: string, externalAuthId: string) {
+    await this.entitlement.assertPlatformModule(organizationId, ENTITLEMENT);
+    await this.audit.log({
+      organizationId,
+      addonSlug: ENTITLEMENT,
+      action: "authorization.voided",
+      payload: { externalAuthId },
+    });
+    return { externalAuthId, status: "RELEASED", mode: "mock" };
+  }
 }

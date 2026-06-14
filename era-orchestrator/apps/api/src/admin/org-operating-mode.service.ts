@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { DepartmentProvisionService } from "../subscription/department-provision.service";
 import {
   OrgOperatingModeDto,
   OrgRoutingDto,
@@ -16,7 +17,10 @@ export type OperatingModeView = {
 
 @Injectable()
 export class OrgOperatingModeService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly departmentProvision: DepartmentProvisionService,
+  ) {}
 
   async get(organizationId: string): Promise<OperatingModeView> {
     const org = await this.prisma.organization.findUnique({
@@ -75,6 +79,11 @@ export class OrgOperatingModeService {
       // Keep the hierarchy flat: a department cannot be a parent.
       throw new BadRequestException("Parent organization is itself a department");
     }
+
+    await this.departmentProvision.snapshotFromParent(
+      organizationId,
+      dto.parentOrgId,
+    );
 
     return this.persist(organizationId, {
       mode: OrgOperatingModeDto.DEPARTMENT,

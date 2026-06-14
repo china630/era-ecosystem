@@ -2,12 +2,13 @@
   "name": "@era365/database",
   "version": "0.0.1",
   "private": true,
-  "main": "./index.ts",
+  "main": "./index.cjs",
   "types": "./index.ts",
   "exports": {
     ".": {
       "types": "./index.ts",
-      "default": "./index.ts"
+      "require": "./index.cjs",
+      "default": "./index.cjs"
     },
     "./generated/client": {
       "types": "./generated/client/index.d.ts",

@@ -9,11 +9,13 @@ import { AccessControlService } from "../access/access-control.service";
 import { OrganizationId } from "../common/org-id.decorator";
 import { QuotaService } from "../quota/quota.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { SatelliteConnectService } from "./satellite-connect.service";
 import { SubscriptionAccessService } from "./subscription-access.service";
+import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
 import { buildHotelModuleEntitlements } from "./hotel-module-entitlements.util";
+import { ConnectSatelliteDto } from "./dto/connect-satellite.dto";
 import { SelectPlanDto } from "./dto/select-plan.dto";
 import { UpdateSubscriptionModulesDto } from "./dto/update-subscription-modules.dto";
-
 @ApiTags("subscription")
 @ApiBearerAuth("bearer")
 @Controller("v1/subscription")
@@ -23,6 +25,8 @@ export class SubscriptionController {
     private readonly accessControl: AccessControlService,
     private readonly quota: QuotaService,
     private readonly prisma: PrismaService,
+    private readonly connect: SatelliteConnectService,
+    private readonly trialResolver: TrialEntitlementResolver,
   ) {}
 
   @Get("me")
@@ -62,12 +66,31 @@ export class SubscriptionController {
     }
 
     const waBalance = org?.whatsappAlertsUsed ?? 0;
+    const [satelliteEntitlements, moduleTrials, connectableSatellites] =
+      await Promise.all([
+        this.trialResolver.listSatelliteEntitlements(organizationId),
+        this.trialResolver.listModuleTrials(organizationId),
+        this.trialResolver.listConnectableSatelliteKeys(organizationId),
+      ]);
     return {
       tier: snapshot.tier,
       activeModules: snapshot.activeModules,
       customConfig: snapshot.customConfig,
       modules: snapshot.modules,
       hotelModules: buildHotelModuleEntitlements(snapshot.activeModules),
+      satelliteEntitlements: satelliteEntitlements.map((s) => ({
+        satelliteKey: s.satelliteKey,
+        trialExpiresAt: s.trialExpiresAt?.toISOString() ?? null,
+        trialOverridden: s.trialOverridden,
+        connectedAt: s.connectedAt.toISOString(),
+        isTrial: s.isTrial,
+      })),
+      moduleTrials: moduleTrials.map((m) => ({
+        moduleKey: m.moduleKey,
+        trialExpiresAt: m.trialExpiresAt?.toISOString() ?? null,
+        trialOverridden: m.trialOverridden,
+      })),
+      connectableSatellites,
       operatingMode: {
         mode: org?.operatingMode ?? "STANDALONE",
         parentOrgId: org?.parentOrgId ?? null,
@@ -89,6 +112,20 @@ export class SubscriptionController {
         },
       },
     };
+  }
+
+  @Post("connect-satellite")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: "Materialize trial satellite + allowlisted modules" })
+  async connectSatellite(
+    @CurrentUser() user: EraJwtPayload,
+    @OrganizationId() organizationId: string,
+    @Body() dto: ConnectSatelliteDto,
+  ) {
+    await this.accessControl.assertOwnerForBilling(user.sub, organizationId);
+    await this.connect.connectSatellite(organizationId, dto.satelliteKey);
+    return this.getMe(organizationId);
   }
 
   @Post("select-plan")

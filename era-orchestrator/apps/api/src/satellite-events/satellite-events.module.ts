@@ -5,19 +5,26 @@ import { PrismaModule } from "../prisma/prisma.module";
 import { SubscriptionModule } from "../subscription/subscription.module";
 import { SatelliteEndpointsController } from "../admin/satellite-endpoints.controller";
 import { SatelliteEndpointRegistryService } from "./satellite-endpoint-registry.service";
+import { SatelliteEventSubscriberRegistry } from "./satellite-event-subscriber.registry";
 import { SatelliteEventsController } from "./satellite-events.controller";
 import { SatelliteEventsService } from "./satellite-events.service";
 import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
+import { WorkforceModule } from "../workforce/workforce.module";
 
 @Module({
-  imports: [PrismaModule, SubscriptionModule, AuthModule],
+  imports: [PrismaModule, SubscriptionModule, AuthModule, WorkforceModule],
   controllers: [SatelliteEventsController, SatelliteEndpointsController],
   providers: [
     SatelliteEventsService,
     SatelliteEndpointRegistryService,
     SatelliteFanoutWorker,
+    SatelliteEventSubscriberRegistry,
     PermissionsGuard,
   ],
-  exports: [SatelliteEndpointRegistryService, SatelliteFanoutWorker],
+  exports: [
+    SatelliteEndpointRegistryService,
+    SatelliteFanoutWorker,
+    SatelliteEventSubscriberRegistry,
+  ],
 })
 export class SatelliteEventsModule {}

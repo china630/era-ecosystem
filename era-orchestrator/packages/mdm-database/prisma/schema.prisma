@@ -15,19 +15,64 @@ enum PersonAccessRequestStatus {
   DENIED
 }
 
-model GlobalNaturalPerson {
-  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  finBlindIndex  String?  @unique @map("fin_blind_index")
-  finCipher      String?  @map("fin_cipher")
-  fullNameCipher String?  @map("full_name_cipher")
-  phoneCipher    String?  @map("phone_cipher")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-  accessRequests PersonAccessRequest[]
-  accessGrants   PersonAccessGrant[]
-  accessLogs     PersonAccessLog[]
+enum PersonIdentifierType {
+  AZ_FIN
+  PASSPORT
+  RESIDENCE_PERMIT
+  NATIONAL_ID
+  ERA_SURROGATE
+}
 
+enum IdentifierTrust {
+  SELF_DECLARED
+  DOCUMENT_SCANNED
+  GOVERNMENT_VERIFIED
+}
+
+enum PersonSegment {
+  CITIZEN
+  FOREIGNER
+  UNVERIFIED
+}
+
+model GlobalNaturalPerson {
+  id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  /// Legacy FIN blind index — kept for back-compat; canonical identifiers live in PersonIdentifier.
+  finBlindIndex     String?             @unique @map("fin_blind_index")
+  finCipher         String?             @map("fin_cipher")
+  fullNameCipher    String?             @map("full_name_cipher")
+  phoneCipher       String?             @map("phone_cipher")
+  nationality       String?             @default("AZ")
+  personSegment     PersonSegment       @default(UNVERIFIED) @map("person_segment")
+  mergedIntoPersonId String?            @map("merged_into_person_id") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  identifiers       PersonIdentifier[]
+  accessRequests    PersonAccessRequest[]
+  accessGrants      PersonAccessGrant[]
+  accessLogs        PersonAccessLog[]
+  mergedInto        GlobalNaturalPerson?  @relation("PersonMerge", fields: [mergedIntoPersonId], references: [id], onDelete: SetNull)
+  mergedFrom        GlobalNaturalPerson[] @relation("PersonMerge")
+
+  @@index([mergedIntoPersonId])
   @@map("global_natural_persons")
+}
+
+model PersonIdentifier {
+  id              String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId        String               @map("person_id") @db.Uuid
+  type            PersonIdentifierType
+  issuingCountry  String               @default("AZ") @map("issuing_country")
+  valueCipher     String               @map("value_cipher")
+  blindIndex      String               @map("blind_index")
+  trust           IdentifierTrust      @default(SELF_DECLARED)
+  isPrimary       Boolean              @default(false) @map("is_primary")
+  createdAt       DateTime             @default(now()) @map("created_at")
+  person          GlobalNaturalPerson  @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([type, issuingCountry, blindIndex])
+  @@index([personId])
+  @@map("person_identifiers")
 }
 
 model GlobalLegalEntity {
@@ -69,13 +114,13 @@ model PersonAccessGrant {
 }
 
 model PersonAccessLog {
-  id        String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  personId  String              @map("person_id") @db.Uuid
-  actorOrgId String             @map("actor_org_id") @db.Uuid
-  action    String
-  metaJson  String?             @map("meta_json")
-  createdAt DateTime            @default(now()) @map("created_at")
-  person    GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+  id         String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId   String              @map("person_id") @db.Uuid
+  actorOrgId String              @map("actor_org_id") @db.Uuid
+  action     String
+  metaJson   String?             @map("meta_json")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  person     GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
 
   @@index([personId, createdAt])
   @@map("person_access_logs")

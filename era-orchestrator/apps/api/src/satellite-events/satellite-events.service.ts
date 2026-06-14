@@ -1,10 +1,15 @@
 import {
   isSatelliteEvent,
   getSatelliteEventType,
+  isFinanceOutboundStaffEvent,
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelRoomChanged,
   isSatelliteHotelSanatoriumBookingCreated,
+  isSatelliteStaffDeactivated,
+  isSatelliteStaffProvisioned,
+  satelliteStaffDeactivatedSchema,
+  satelliteStaffProvisionedSchema,
 } from "@era/contracts";
 import { Queue } from "bullmq";
 import {
@@ -16,10 +21,12 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { SubscriptionAccessService } from "../subscription/subscription-access.service";
+import { WorkforceRegistryService } from "../workforce/workforce-registry.service";
 import {
   SATELLITE_KEY_CLINIC,
   SatelliteEndpointRegistryService,
 } from "./satellite-endpoint-registry.service";
+import { SatelliteEventSubscriberRegistry } from "./satellite-event-subscriber.registry";
 import { SatelliteFanoutWorker } from "./satellite-fanout.worker";
 
 export const ERA_SATELLITE_EVENTS_QUEUE = "era-satellite-events";
@@ -43,6 +50,8 @@ export class SatelliteEventsService {
     private readonly subscriptionAccess: SubscriptionAccessService,
     private readonly registry: SatelliteEndpointRegistryService,
     private readonly fanoutWorker: SatelliteFanoutWorker,
+    private readonly subscriberRegistry: SatelliteEventSubscriberRegistry,
+    private readonly workforce: WorkforceRegistryService,
   ) {}
 
   private getQueue(): Queue {
@@ -77,6 +86,16 @@ export class SatelliteEventsService {
     const correlationId = (body as { correlationId: string }).correlationId;
     const organizationId = (body as { organizationId: string }).organizationId;
 
+    if (isFinanceOutboundStaffEvent(body)) {
+      await this.workforce.upsertFromEvent(body);
+      await this.maybeEnqueueStaffFanout(organizationId, body);
+      return {
+        jobId: correlationId,
+        queue: "staff-fanout",
+        type: eventType,
+      };
+    }
+
     const job = await this.getQueue().add(eventType, body, {
       jobId: correlationId,
       removeOnComplete: 1000,
@@ -86,13 +105,68 @@ export class SatelliteEventsService {
       `Enqueued ${eventType} correlation=${correlationId} job=${job.id}`,
     );
 
+    if (isSatelliteStaffProvisioned(body)) {
+      await this.workforce.upsertFromEvent(body);
+    }
+
     await this.maybeEnqueueClinicFanout(organizationId, body);
+
+    void this.subscriberRegistry
+      .dispatch(body as Record<string, unknown>)
+      .catch((e) =>
+        this.logger.warn(`In-process subscriber dispatch failed: ${e}`),
+      );
 
     return {
       jobId: String(job.id),
       queue: ERA_SATELLITE_EVENTS_QUEUE,
       type: eventType,
     };
+  }
+
+  private async maybeEnqueueStaffFanout(
+    organizationId: string,
+    body: unknown,
+  ): Promise<void> {
+    if (!isFinanceOutboundStaffEvent(body)) return;
+    const satelliteKey = isSatelliteStaffProvisioned(body)
+      ? satelliteStaffProvisionedSchema.parse(body).payload.satelliteKey
+      : isSatelliteStaffDeactivated(body)
+        ? satelliteStaffDeactivatedSchema.parse(body).payload.satelliteKey
+        : undefined;
+    if (!satelliteKey) return;
+
+    const entitled = await this.subscriptionAccess.hasModule(
+      organizationId,
+      satelliteKey,
+    );
+    if (!entitled) {
+      this.logger.debug(
+        `Skip staff fan-out: org=${organizationId} has no ${satelliteKey}`,
+      );
+      return;
+    }
+
+    const endpoint = await this.registry.resolveEndpoint(
+      organizationId,
+      satelliteKey,
+    );
+    if (!endpoint) {
+      this.logger.debug(
+        `Skip staff fan-out: no endpoint for org=${organizationId} satellite=${satelliteKey}`,
+      );
+      return;
+    }
+
+    await this.fanoutWorker.enqueueSatelliteFanout(
+      organizationId,
+      satelliteKey,
+      body as Record<string, unknown>,
+      "/api/integration/staff-provision",
+    );
+    this.logger.log(
+      `Enqueued staff fan-out for ${getSatelliteEventType(body)} org=${organizationId}`,
+    );
   }
 
   private async maybeEnqueueClinicFanout(
