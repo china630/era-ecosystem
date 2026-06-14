@@ -2,6 +2,7 @@ import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
+import { trySendPlatformNotification } from "@/lib/platform-notify";
 
 const createSchema = z.object({
   patientRefCode: z.string(),
@@ -104,6 +105,21 @@ export async function POST(req: Request) {
         visit: { include: { serviceLines: true } },
       },
     });
+
+    const phone = patient.phone?.trim();
+    if (phone) {
+      await trySendPlatformNotification({
+        templateKey: "clinic.appointment.confirmed",
+        channel: "SMS",
+        messageClass: "TRANSACTIONAL",
+        recipient: phone,
+        sourceEntityType: "appointment",
+        sourceEntityId: appointment.id,
+        body: `Appointment confirmed ${scheduledAt.toISOString().slice(0, 16)} with ${practitioner.fullName}`,
+        payload: { appointmentId: appointment.id, scheduledAt: scheduledAt.toISOString() },
+      });
+    }
+
     return jsonOk(appointment, 201);
   } catch (err) {
     return handleRouteError(err);

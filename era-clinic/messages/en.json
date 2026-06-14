@@ -28,8 +28,12 @@
   "nav": {
     "home": "Home",
     "appointments": "Appointments",
+    "queue": "Reception queue",
     "scheduling": "Scheduling",
     "labOrders": "Lab orders",
+    "inpatient": "Inpatient wards",
+    "lisProfiles": "LIS profiles",
+    "procedureRules": "Procedure rules",
     "sanatorium": "Sanatorium",
     "doctor": "Doctor queue",
     "nurse": "Nurse procedures",
@@ -103,7 +107,8 @@
     "subtitle": "K2 — list, status filter, completion",
     "criticalOnly": "Critical results only (M5)",
     "statusFilter": "Status filter",
-    "empty": "No lab orders yet."
+    "empty": "No lab orders yet.",
+    "importCsv": "Import CSV"
   },
   "labOrdersDetail": {
     "title": "Lab order workflow",
@@ -156,6 +161,13 @@
     "subtitle": "Scheduled procedures for nursing",
     "done": "Complete"
   },
+  "queue": {
+    "title": "Reception queue",
+    "subtitle": "Live board — call next and print ticket",
+    "callNext": "Call next",
+    "nowServing": "Now serving",
+    "empty": "No ticket called yet."
+  },
   "cashier": {
     "title": "Clinic cashier",
     "subtitle": "Shift, payment, and fiscal receipt (@era/fiscal)",
@@ -202,13 +214,80 @@
     "addDiagnosis": "Add diagnosis",
     "labOrders": "Lab orders",
     "workflow": "workflow",
-    "orderLab": "Order lab test"
+    "orderLab": "Order lab test",
+    "treatmentChart": "Treatment chart",
+    "chartDate": "Date",
+    "procedureTime": "Time",
+    "procedureName": "Procedure",
+    "procedureStatus": "Status",
+    "noProcedures": "No procedures scheduled for this day.",
+    "programSummary": "Program",
+    "programCode": "Program code",
+    "daysRemaining": "Days remaining",
+    "programQuota": "Procedure quota",
+    "quotaUsed": "{used} / {total}",
+    "startProgram": "Start program",
+    "startsOn": "Starts on",
+    "programStarted": "Program started",
+    "alreadyHasProgram": "Program already assigned",
+    "complete": "Done",
+    "statusScheduled": "Scheduled",
+    "statusInProgress": "In progress",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled"
   },
   "adminSettings": {
     "title": "Clinic settings",
     "subtitle": "Admin — UI playbook (list + ModalShell)",
     "clinicName": "Name clinic",
     "editClinic": "Edit clinic"
+  },
+  "lisProfiles": {
+    "title": "LIS file profiles",
+    "subtitle": "CSV column mapping for external lab imports (M11)",
+    "addProfile": "Add profile",
+    "editProfile": "Edit profile",
+    "format": "Format",
+    "delimiter": "Delimiter",
+    "columnMapping": "Column mapping",
+    "empty": "No LIS profiles yet.",
+    "created": "Profile created.",
+    "updated": "Profile updated.",
+    "deleted": "Profile deleted.",
+    "confirmDelete": "Delete this LIS profile?",
+    "delete": "Delete",
+    "importTitle": "Import lab results from CSV",
+    "importHint": "Upload a CSV file using a saved profile. Creates lab orders in RESULT_READY status.",
+    "selectProfile": "Profile",
+    "patientRefId": "Patient ref ID",
+    "visitIdOptional": "Visit ID (optional)",
+    "csvFile": "CSV file",
+    "runImport": "Import",
+    "importMissingFields": "Select profile, patient, and CSV file.",
+    "importSuccess": "Imported {count} lab order(s)."
+  },
+  "procedureRules": {
+    "title": "Procedure compatibility rules",
+    "subtitle": "Scheduling constraints between procedure codes",
+    "codeA": "Code A",
+    "codeB": "Code B",
+    "addRule": "Add rule",
+    "added": "Rule added.",
+    "empty": "No rules configured."
+  },
+  "inpatient": {
+    "title": "Inpatient wards",
+    "subtitle": "Ward and bed occupancy (M13)",
+    "assignBed": "Assign bed",
+    "assign": "Assign",
+    "discharge": "Discharge",
+    "addBed": "Add bed",
+    "wardCode": "Ward code",
+    "bedCode": "Bed code",
+    "patientRefId": "Patient ref ID",
+    "empty": "No wards yet — assign a bed to create ward and bed records.",
+    "assigned": "Patient assigned to bed.",
+    "discharged": "Patient discharged."
   },
   "admin": {
     "settings": {

@@ -67,6 +67,18 @@ enum ClinicReceiptStatus {
   VOID
 }
 
+enum QueueTicketStatus {
+  WAITING
+  CALLED
+  SERVED
+  SKIPPED
+}
+
+enum LisFileFormat {
+  CSV
+  HL7_FRAGMENT
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -84,6 +96,10 @@ model PatientRef {
   refCode          String            @unique
   fullName         String
   phone            String?
+  nationality      String?           @default("AZ")
+  finCode          String?
+  passportNumber   String?
+  issuingCountry   String?
   globalPersonId   String?
   appointments     Appointment[]
   visits           Visit[]
@@ -179,6 +195,7 @@ model Visit {
   cpoeEntries    CpoeEntry[]
   procedureOrders ProcedureOrder[]
   receipts       ClinicReceipt[]
+  queueTickets   QueueTicket[]
   createdAt      DateTime             @default(now())
 
   @@index([patientRefId, status])
@@ -286,6 +303,27 @@ enum BodyPart {
 enum ProcedureRuleKind {
   SEQUENCE_GAP
   MUTUAL_EXCLUSION
+}
+
+enum ProcedureCompatibilityRuleType {
+  FORBID_SAME_DAY
+  MIN_HOURS_GAP
+  FORBID_SEQUENCE
+}
+
+model ProcedureCompatibilityRule {
+  id              String                         @id @default(cuid())
+  procedureCodeA  String
+  procedureCodeB  String
+  ruleType        ProcedureCompatibilityRuleType
+  minHours        Int?
+  active          Boolean                        @default(true)
+  note            String?
+  createdAt       DateTime                       @default(now())
+
+  @@index([procedureCodeA])
+  @@index([procedureCodeB])
+  @@index([active])
 }
 
 model ProcedureType {
@@ -539,4 +577,44 @@ model User {
   isCrossSystem Boolean   @default(false) @map("is_cross_system")
   lastLoginAt   DateTime? @map("last_login_at")
   createdAt     DateTime  @default(now()) @map("created_at")
+}
+
+model SatelliteAuditLog {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  action        String
+  changesJson   String   @default("{}") @map("changes_json")
+  ipAddress     String?  @map("ip_address")
+  integrityHash String?  @map("integrity_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("satellite_audit_logs")
+}
+
+model QueueTicket {
+  id          String            @id @default(cuid())
+  visitId     String
+  queueNumber Int
+  status      QueueTicketStatus @default(WAITING)
+  desk        String?
+  calledAt    DateTime?
+  visit       Visit             @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  createdAt   DateTime          @default(now())
+
+  @@index([status, createdAt])
+  @@index([visitId])
+}
+
+model LisFileProfile {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  format        LisFileFormat @default(CSV)
+  delimiter     String        @default(",")
+  columnMapping String        @default("{}")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }

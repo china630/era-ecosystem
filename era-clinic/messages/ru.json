@@ -6,8 +6,12 @@
   "nav": {
     "home": "Главная",
     "appointments": "Приёмы",
+    "queue": "Очередь ресепшена",
     "scheduling": "Расписание",
     "labOrders": "Лаборатория",
+    "inpatient": "Стационар",
+    "lisProfiles": "LIS профили",
+    "procedureRules": "Правила процедур",
     "sanatorium": "Санаторий",
     "doctor": "Очередь врача",
     "nurse": "Процедуры",
@@ -65,7 +69,8 @@
     "subtitle": "K2 — список, фильтр статуса, завершение",
     "criticalOnly": "Только критические результаты (M5)",
     "statusFilter": "Фильтр статуса",
-    "empty": "Лабораторных заказов пока нет."
+    "empty": "Лабораторных заказов пока нет.",
+    "importCsv": "Импорт CSV"
   },
   "labOrdersDetail": {
     "title": "Workflow лабораторного заказа",
@@ -118,6 +123,13 @@
     "subtitle": "Запланированные процедуры для медсестёр",
     "done": "Выполнено"
   },
+  "queue": {
+    "title": "Очередь регистратуры",
+    "subtitle": "Live-доска — вызов и печать талона",
+    "callNext": "Вызвать следующего",
+    "nowServing": "Сейчас",
+    "empty": "Талон ещё не вызван."
+  },
   "cashier": {
     "title": "Касса клиники",
     "subtitle": "Смена, оплата, фискал (@era/fiscal)",
@@ -164,13 +176,80 @@
     "addDiagnosis": "Добавить диагноз",
     "labOrders": "Лаб. заказы",
     "workflow": "workflow",
-    "orderLab": "Заказать лаб."
+    "orderLab": "Заказать лаб.",
+    "treatmentChart": "Курортная карта",
+    "chartDate": "Дата",
+    "procedureTime": "Время",
+    "procedureName": "Процедура",
+    "procedureStatus": "Статус",
+    "noProcedures": "На этот день процедуры не запланированы.",
+    "programSummary": "Программа",
+    "programCode": "Код программы",
+    "daysRemaining": "Дней осталось",
+    "programQuota": "Квота процедур",
+    "quotaUsed": "{used} / {total}",
+    "startProgram": "Запустить программу",
+    "startsOn": "Начало",
+    "programStarted": "Программа запущена",
+    "alreadyHasProgram": "Программа уже назначена",
+    "complete": "Выполнено",
+    "statusScheduled": "Запланировано",
+    "statusInProgress": "В работе",
+    "statusCompleted": "Завершено",
+    "statusCancelled": "Отменено"
   },
   "adminSettings": {
     "title": "Параметры клиники",
     "subtitle": "Admin — UI playbook (список + ModalShell)",
     "clinicName": "Название клиники",
     "editClinic": "Изменить клинику"
+  },
+  "lisProfiles": {
+    "title": "LIS профили файлов",
+    "subtitle": "Маппинг колонок CSV для импорта из внешней лаборатории (M11)",
+    "addProfile": "Добавить профиль",
+    "editProfile": "Изменить профиль",
+    "format": "Формат",
+    "delimiter": "Разделитель",
+    "columnMapping": "Маппинг колонок",
+    "empty": "LIS профилей пока нет.",
+    "created": "Профиль создан.",
+    "updated": "Профиль обновлён.",
+    "deleted": "Профиль удалён.",
+    "confirmDelete": "Удалить этот LIS профиль?",
+    "delete": "Удалить",
+    "importTitle": "Импорт результатов из CSV",
+    "importHint": "Загрузите CSV по сохранённому профилю. Создаёт заказы со статусом RESULT_READY.",
+    "selectProfile": "Профиль",
+    "patientRefId": "ID пациента (ref)",
+    "visitIdOptional": "ID визита (необяз.)",
+    "csvFile": "CSV файл",
+    "runImport": "Импорт",
+    "importMissingFields": "Выберите профиль, пациента и CSV.",
+    "importSuccess": "Импортировано заказов: {count}."
+  },
+  "procedureRules": {
+    "title": "Правила совместимости процедур",
+    "subtitle": "Ограничения планирования между кодами процедур",
+    "codeA": "Код A",
+    "codeB": "Код B",
+    "addRule": "Добавить правило",
+    "added": "Правило добавлено.",
+    "empty": "Правила не настроены."
+  },
+  "inpatient": {
+    "title": "Стационарные палаты",
+    "subtitle": "Занятость коек (M13)",
+    "assignBed": "Назначить койку",
+    "assign": "Назначить",
+    "discharge": "Выписка",
+    "addBed": "Добавить койку",
+    "wardCode": "Код палаты",
+    "bedCode": "Код койки",
+    "patientRefId": "ID пациента (ref)",
+    "empty": "Палат пока нет — назначьте койку, чтобы создать записи.",
+    "assigned": "Пациент размещён.",
+    "discharged": "Пациент выписан."
   },
   "auth": {
     "loginFailed": "Ошибка входа",
