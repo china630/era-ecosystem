@@ -11,6 +11,8 @@ import {
 
   ChefHat,
 
+  ClipboardList,
+
   LayoutDashboard,
 
   LayoutGrid,
@@ -56,6 +58,8 @@ const linkKeys = [
   { href: "/kds", key: "kds", icon: ChefHat },
 
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
+
+  { href: "/admin/daily-menu", key: "dailyMenu", icon: ClipboardList },
 
   { href: "/admin/integration", key: "integration", icon: Receipt },
 

@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
+import { resolve } from "node:path";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { AppController } from "./app.controller";
@@ -12,11 +13,13 @@ import { OrganizationModule } from "./organization/organization.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { SatelliteEventsModule } from "./satellite-events/satellite-events.module";
 import { MdmModule } from "./mdm/mdm.module";
+import { WorkforceModule } from "./workforce/workforce.module";
 import { NetworkModule } from "./network/network.module";
 import { SystemConfigModule } from "./system-config/system-config.module";
 import { AdminModule } from "./admin/admin.module";
 import { BillingModule } from "./billing/billing.module";
 import { SubscriptionModule } from "./subscription/subscription.module";
+import { SubscriptionTrialModule } from "./subscription/subscription-trial.module";
 import { ReferralsModule } from "./referrals/referrals.module";
 import { EarlyAccessModule } from "./early-access/early-access.module";
 import { QuotaModule } from "./quota/quota.module";
@@ -25,13 +28,21 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [
+        resolve(__dirname, "../../.env"),
+        resolve(__dirname, "../../../.env"),
+        ".env",
+      ],
+    }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot({
       throttlers: [{ name: "default", ttl: 60_000, limit: 600 }],
     }),
     PrismaModule,
     SystemConfigModule,
+    SubscriptionTrialModule,
     AuthModule,
     MembershipModule,
     OrganizationModule,
@@ -39,6 +50,7 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
     EntitlementsModule,
     SatelliteEventsModule,
     MdmModule,
+    WorkforceModule,
     NetworkModule,
     AdminModule,
     BillingModule,

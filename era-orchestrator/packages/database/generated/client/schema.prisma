@@ -214,6 +214,7 @@ model OrganizationSubscription {
   billingPeriodKey        String?      @map("billing_period_key") @db.VarChar(7)
   expiresAt               DateTime?    @map("expires_at") @db.Timestamptz(6)
   activeModules           String[]     @default([]) @map("active_modules")
+  quotaOverrides          Json?        @map("quota_overrides")
   createdAt               DateTime     @default(now()) @map("created_at")
   updatedAt               DateTime     @updatedAt @map("updated_at")
   isBlocked               Boolean      @default(false) @map("is_blocked")
@@ -282,6 +283,8 @@ model OrganizationModule {
   pendingDeactivation Boolean   @default(false) @map("pending_deactivation")
   cancelledAt         DateTime? @map("cancelled_at")
   accessUntil         DateTime? @map("access_until") @db.Timestamptz(6)
+  trialExpiresAt      DateTime? @map("trial_expires_at") @db.Timestamptz(6)
+  trialOverridden     Boolean   @default(false) @map("trial_overridden")
 
   @@id([organizationId, moduleKey])
   @@map("organization_modules")
@@ -316,17 +319,18 @@ model Pricing {
 }
 
 model PricingModule {
-  id            String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  key           String             @unique
-  name          String
-  pricePerMonth Decimal            @map("price_per_month") @db.Decimal(12, 2)
-  isPremium     Boolean            @default(false) @map("is_premium")
-  sortOrder     Int                @default(0) @map("sort_order")
-  catalogKind   PricingCatalogKind @default(MODULE) @map("catalog_kind")
-  satelliteKey  String?            @map("satellite_key")
-  satellite     Satellite?         @relation(fields: [satelliteKey], references: [key], onDelete: SetNull)
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  id                   String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key                  String             @unique
+  name                 String
+  pricePerMonth        Decimal            @map("price_per_month") @db.Decimal(12, 2)
+  isPremium            Boolean            @default(false) @map("is_premium")
+  sortOrder            Int                @default(0) @map("sort_order")
+  catalogKind          PricingCatalogKind @default(MODULE) @map("catalog_kind")
+  satelliteKey         String?            @map("satellite_key")
+  trialEligibleInTrial Boolean            @default(false) @map("trial_eligible_in_trial")
+  satellite            Satellite?         @relation(fields: [satelliteKey], references: [key], onDelete: SetNull)
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
 
   @@index([catalogKind])
   @@index([satelliteKey])
@@ -337,16 +341,33 @@ model PricingModule {
  * Industry satellite metadata (app gate keys `industry_*`).
  */
 model Satellite {
-  key          String              @id
+  key          String                             @id
   name         String
-  verticalSlug String              @map("vertical_slug")
-  sortOrder    Int                 @default(0) @map("sort_order")
-  createdAt    DateTime            @default(now()) @map("created_at")
-  updatedAt    DateTime            @updatedAt @map("updated_at")
+  verticalSlug String                             @map("vertical_slug")
+  sortOrder    Int                                @default(0) @map("sort_order")
+  createdAt    DateTime                           @default(now()) @map("created_at")
+  updatedAt    DateTime                           @updatedAt @map("updated_at")
   modules      PricingModule[]
   endpoints    SatelliteEndpoint[]
+  entitlements OrganizationSatelliteEntitlement[]
 
   @@map("satellites")
+}
+
+/// Owner-connected satellite trial row (materialized on Connect).
+model OrganizationSatelliteEntitlement {
+  organizationId  String       @map("organization_id") @db.Uuid
+  satelliteKey    String       @map("satellite_key")
+  trialExpiresAt  DateTime?    @map("trial_expires_at") @db.Timestamptz(6)
+  trialOverridden Boolean      @default(false) @map("trial_overridden")
+  connectedAt     DateTime     @default(now()) @map("connected_at") @db.Timestamptz(6)
+  isTrial         Boolean      @default(true) @map("is_trial")
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  satellite       Satellite    @relation(fields: [satelliteKey], references: [key], onDelete: Restrict)
+
+  @@id([organizationId, satelliteKey])
+  @@index([organizationId])
+  @@map("organization_satellite_entitlements")
 }
 
 /**
@@ -367,6 +388,31 @@ model SatelliteEndpoint {
   @@unique([organizationId, satelliteKey])
   @@index([organizationId])
   @@map("satellite_endpoints")
+}
+
+enum WorkforceAssignmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+/// Cross-org workforce registry — no PII, only MDM person reference.
+model WorkforceAssignment {
+  id                String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  globalPersonId    String                    @map("global_person_id") @db.Uuid
+  organizationId    String                    @map("organization_id") @db.Uuid
+  satelliteKey      String                    @map("satellite_key")
+  satelliteUserId   String?                   @map("satellite_user_id")
+  financeEmployeeId String?                   @map("finance_employee_id") @db.Uuid
+  role              String
+  status            WorkforceAssignmentStatus @default(ACTIVE)
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+  organization      Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, satelliteKey, financeEmployeeId])
+  @@index([globalPersonId])
+  @@index([organizationId, status])
+  @@map("workforce_assignments")
 }
 
 model PricingBundle {
@@ -488,30 +534,30 @@ enum OrgRouting {
 }
 
 model Organization {
-  id                         String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  id                         String                             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                       String
-  ownerId                    String?                     @map("owner_id") @db.Uuid
-  taxIdBlindIndex            String?                     @unique @map("tax_id_blind_index")
-  taxIdCipher                String?                     @map("tax_id_cipher")
-  subscriptionPlan           String?                     @map("subscription_plan")
-  billingStatus              BillingStatus               @default(ACTIVE) @map("billing_status")
-  operatingMode              OrgOperatingMode            @default(STANDALONE) @map("operating_mode")
-  parentOrgId                String?                     @map("parent_org_id") @db.Uuid
-  fiscalRouting              OrgRouting                  @default(OWN) @map("fiscal_routing")
-  revenueRouting             OrgRouting                  @default(OWN) @map("revenue_routing")
-  activeModules              String[]                    @default([]) @map("active_modules")
-  storageUsedBytes           BigInt                      @default(0) @map("storage_used_bytes")
-  currentCreditTier          TariffTier?                 @map("current_credit_tier")
-  accumulatedBalance         Decimal                     @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
-  billingPeriodKey           String?                     @map("billing_period_key") @db.VarChar(7)
-  whatsappAlertsUsed         Int                         @default(0) @map("whatsapp_alerts_used")
-  ocrPagesUsed               Int                         @default(0) @map("ocr_pages_used")
-  currency                   String                      @default("AZN")
-  settings                   Json                        @default("{}")
-  drakarisClientId           String?                     @unique @map("drakaris_client_id")
-  deletedAt                  DateTime?                   @map("deleted_at") @db.Timestamptz(6)
-  createdAt                  DateTime                    @default(now()) @map("created_at")
-  updatedAt                  DateTime                    @updatedAt @map("updated_at")
+  ownerId                    String?                            @map("owner_id") @db.Uuid
+  taxIdBlindIndex            String?                            @unique @map("tax_id_blind_index")
+  taxIdCipher                String?                            @map("tax_id_cipher")
+  subscriptionPlan           String?                            @map("subscription_plan")
+  billingStatus              BillingStatus                      @default(ACTIVE) @map("billing_status")
+  operatingMode              OrgOperatingMode                   @default(STANDALONE) @map("operating_mode")
+  parentOrgId                String?                            @map("parent_org_id") @db.Uuid
+  fiscalRouting              OrgRouting                         @default(OWN) @map("fiscal_routing")
+  revenueRouting             OrgRouting                         @default(OWN) @map("revenue_routing")
+  activeModules              String[]                           @default([]) @map("active_modules")
+  storageUsedBytes           BigInt                             @default(0) @map("storage_used_bytes")
+  currentCreditTier          TariffTier?                        @map("current_credit_tier")
+  accumulatedBalance         Decimal                            @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
+  billingPeriodKey           String?                            @map("billing_period_key") @db.VarChar(7)
+  whatsappAlertsUsed         Int                                @default(0) @map("whatsapp_alerts_used")
+  ocrPagesUsed               Int                                @default(0) @map("ocr_pages_used")
+  currency                   String                             @default("AZN")
+  settings                   Json                               @default("{}")
+  drakarisClientId           String?                            @unique @map("drakaris_client_id")
+  deletedAt                  DateTime?                          @map("deleted_at") @db.Timestamptz(6)
+  createdAt                  DateTime                           @default(now()) @map("created_at")
+  updatedAt                  DateTime                           @updatedAt @map("updated_at")
   usageMeterEvents           UsageMeterEvent[]
   earlyAccessEvents          EarlyAccessEvent[]
   earlyAccessSignups         EarlyAccessSignup[]
@@ -535,9 +581,11 @@ model Organization {
   platformIdempotencyRecords PlatformIdempotencyRecord[]
   platformLoyaltyLedger      PlatformLoyaltyLedger[]
   satelliteEndpoints         SatelliteEndpoint[]
-  owner                      User?                       @relation("OrganizationOwner", fields: [ownerId], references: [id])
-  parentOrg                  Organization?               @relation("OrgParent", fields: [parentOrgId], references: [id])
-  departments                Organization[]              @relation("OrgParent")
+  satelliteEntitlements      OrganizationSatelliteEntitlement[]
+  workforceAssignments       WorkforceAssignment[]
+  owner                      User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  parentOrg                  Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
+  departments                Organization[]                     @relation("OrgParent")
 
   @@index([ownerId])
   @@index([parentOrgId])

@@ -9,6 +9,7 @@ import { Job, Queue, Worker } from "bullmq";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
 import { forwardToClinic } from "./clinic-bridge.client";
+import { forwardToSatellite } from "./satellite-bridge.client";
 import {
   SATELLITE_KEY_CLINIC,
   SatelliteEndpointRegistryService,
@@ -69,6 +70,36 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     await this.queue?.close();
   }
 
+  async enqueueSatelliteFanout(
+    organizationId: string,
+    satelliteKey: string,
+    event: Record<string, unknown>,
+    path: string,
+  ): Promise<void> {
+    const correlationId =
+      typeof event.correlationId === "string" ? event.correlationId : undefined;
+    const jobId = correlationId
+      ? `staff-${satelliteKey}-${correlationId}`
+      : `staff-${satelliteKey}-${Date.now()}`;
+
+    await this.getQueue().add(
+      "forward_satellite",
+      {
+        organizationId,
+        satelliteKey,
+        event,
+        path,
+      },
+      {
+        jobId,
+        attempts: 5,
+        backoff: { type: "exponential", delay: 3000 },
+        removeOnComplete: 1000,
+        removeOnFail: 5000,
+      },
+    );
+  }
+
   async enqueueClinicFanout(
     organizationId: string,
     event: Record<string, unknown>,
@@ -97,7 +128,7 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
   }
 
   private async handle(job: Job<SatelliteFanoutJobPayload>): Promise<void> {
-    const { organizationId, satelliteKey, event } = job.data;
+    const { organizationId, satelliteKey, event, path } = job.data;
     const endpoint = await this.registry.resolveEndpoint(
       organizationId,
       satelliteKey,
@@ -109,10 +140,18 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    if (satelliteKey === SATELLITE_KEY_CLINIC) {
+    if (satelliteKey === SATELLITE_KEY_CLINIC && !path) {
       await forwardToClinic(endpoint, event);
       this.logger.log(
         `Forwarded ${String(event.type)} to clinic org=${organizationId}`,
+      );
+      return;
+    }
+
+    if (path) {
+      await forwardToSatellite(endpoint, path, event);
+      this.logger.log(
+        `Forwarded ${String(event.type)} to ${satelliteKey} org=${organizationId}`,
       );
       return;
     }

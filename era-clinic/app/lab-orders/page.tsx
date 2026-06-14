@@ -51,9 +51,14 @@ export default function LabOrdersPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            {tNav("home")}
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/lis-profiles" className={PRIMARY_BUTTON_CLASS}>
+              {t("importCsv")}
+            </Link>
+            <Link href="/" className={PRIMARY_BUTTON_CLASS}>
+              {tNav("home")}
+            </Link>
+          </div>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>

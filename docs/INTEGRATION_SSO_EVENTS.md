@@ -129,8 +129,10 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 |------|-----------|----------------|--------|
 | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | era-hotel-pms | `handleHotelReservation` | GL + draft invoice |
 | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | era-hotel-pms | `handleHotelNightAudit` | Multi-line NAS journal from `revenueLines` + GL map |
+
+**Hotel revenue split (room vs add-on):** PMS folio charges carry a `RevenueCode` (`ROOM`, `FOOD`, `MEDICAL`, …). The dynamic pricing engine (`quoteStay` in `era-hotel-pms`) emits quotes with separate **Room Revenue** and **Add-on Revenue** lines so each posts to the correct code. Night audit aggregates charges by `revenueCodeId`, enriches each line with `glAccountCode` (e.g. ROOM→601, FOOD→602), and sends `revenueLines[]` on `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` — enabling Finance/Orchestrator to route food revenue to the F&B org/satellite without merging it into accommodation revenue. See ADR [hotel-dynamic-rate-plans.md](./adr/hotel-dynamic-rate-plans.md).
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | era-hotel-pms | `handleHotelInvoiceIssued` | Draft sales invoice in Finance |
-| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger reconciliation meta |
+| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger snapshot persisted (`AgencyCityLedgerSnapshot`); read on Finance counterparty |
 | `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | era-logistics | `handleLogisticsTrip` | GL posting |
@@ -147,5 +149,9 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 Idempotency: table `satellite_events_processed` — replay same `correlationId` → skip (no duplicate postings).
 
 Implementation: [`satellite-event-dispatch.service.ts`](../era-finance-core/apps/api/src/integration/satellite-event-dispatch.service.ts).
+
+### Bank Core events (planned — `industry_banking`)
+
+`era-bank-core` will add `packages/era-contracts/src/events/banking.events.ts` with `SATELLITE_BANK_*` types (e.g. `SATELLITE_BANK_GL_DAILY_SUMMARY`, `SATELLITE_BANK_ACCOUNT_OPENED`, `SATELLITE_BANK_LOAN_DISBURSED`, `SATELLITE_BANK_AML_ALERT_RAISED`). **These are non-money events only** — notifications, analytics, reconciliation, and summarized corporate-journal handoff to finance. **Money never flows over the event bus**; all bank postings are ACID inside `bank-core` (ADR [era-bank-core.md](./adr/era-bank-core.md) D6). Inbound `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` reuse the HR contract family. Spec: [era-bank-core/TZ.md](../era-bank-core/TZ.md) §9.
 
 Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).

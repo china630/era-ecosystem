@@ -16,7 +16,7 @@
 
 | Поток | Правило |
 |-------|---------|
-| **Trial** | 3 календарных месяца с signup (Asia/Baku) |
+| **Trial** | End of calendar month `(reg month + 3)` 23:59 Asia/Baku at org register; satellites/modules on owner **Connect** — see [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) |
 | **Модули / сателлиты / add-ons** | Post-paid: использование в месяце **M** → платформенный счёт **1-го числа M+1** |
 | **Metered квоты** | Tier задаёт included + spend ceiling; overlimit → unit price → `accumulatedBalance` **в текущем периоде** |
 | **Deactivation** | `pendingDeactivation` до конца календарного месяца |

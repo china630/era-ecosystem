@@ -3,9 +3,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
 const patchSchema = z.object({
-  roomChargeReservationId: z.string().optional(),
+  roomChargeReservationId: z.string().nullable().optional(),
   roomNumber: z.string().optional(),
-  guestName: z.string().optional(),
+  guestName: z.string().nullable().optional(),
 });
 
 export async function PATCH(
@@ -24,10 +24,13 @@ export async function PATCH(
     where: { id },
     data: {
       roomChargeReservationId:
-        body.roomChargeReservationId ??
-        body.roomNumber ??
-        ticket.roomChargeReservationId,
-      guestName: body.guestName ?? ticket.guestName,
+        body.roomChargeReservationId !== undefined
+          ? body.roomChargeReservationId || null
+          : body.roomNumber !== undefined
+            ? body.roomNumber || null
+            : ticket.roomChargeReservationId,
+      guestName:
+        body.guestName !== undefined ? body.guestName || null : ticket.guestName,
     },
     include: { lines: true, table: true, outlet: true },
   });

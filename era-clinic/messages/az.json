@@ -6,8 +6,12 @@
   "nav": {
     "home": "Əsas",
     "appointments": "Qəbullar",
+    "queue": "Resepsiya növbəsi",
     "scheduling": "Cədvəl",
     "labOrders": "Laboratoriya",
+    "inpatient": "Stasionar",
+    "lisProfiles": "LIS profillər",
+    "procedureRules": "Prosedur qaydaları",
     "sanatorium": "Sanatoriya",
     "doctor": "Həkim növbəsi",
     "nurse": "Prosedurlar",
@@ -65,7 +69,8 @@
     "subtitle": "K2 — siyahı, status filtri, tamamlama",
     "criticalOnly": "Yalnız kritik nəticələr (M5)",
     "statusFilter": "Status filtri",
-    "empty": "Hələ laboratoriya sifarişi yoxdur."
+    "empty": "Hələ laboratoriya sifarişi yoxdur.",
+    "importCsv": "CSV import"
   },
   "labOrdersDetail": {
     "title": "Laboratoriya sifarişi iş axını",
@@ -118,6 +123,13 @@
     "subtitle": "Tibb bacısı üçün planlaşdırılmış prosedurlar",
     "done": "Tamamla"
   },
+  "queue": {
+    "title": "Resepşn növbəsi",
+    "subtitle": "Canlı lövhə — növbəti çağır və çap et",
+    "callNext": "Növbətini çağır",
+    "nowServing": "İndi qəbul",
+    "empty": "Hələ bilet çağırılmayıb."
+  },
   "cashier": {
     "title": "Klinika kassası",
     "subtitle": "Növbə, ödəniş, fiskal (@era/fiscal)",
@@ -164,13 +176,80 @@
     "addDiagnosis": "Diaqnoz əlavə et",
     "labOrders": "Lab sifarişləri",
     "workflow": "iş axını",
-    "orderLab": "Lab sifariş et"
+    "orderLab": "Lab sifariş et",
+    "treatmentChart": "Müalicə kartı",
+    "chartDate": "Tarix",
+    "procedureTime": "Vaxt",
+    "procedureName": "Prosedur",
+    "procedureStatus": "Status",
+    "noProcedures": "Bu gün üçün prosedur planlaşdırılmayıb.",
+    "programSummary": "Proqram",
+    "programCode": "Proqram kodu",
+    "daysRemaining": "Qalan günlər",
+    "programQuota": "Prosedur kvotası",
+    "quotaUsed": "{used} / {total}",
+    "startProgram": "Proqramı başlat",
+    "startsOn": "Başlanğıc",
+    "programStarted": "Proqram başladı",
+    "alreadyHasProgram": "Proqram artıq təyin edilib",
+    "complete": "Hazır",
+    "statusScheduled": "Planlaşdırılıb",
+    "statusInProgress": "Davam edir",
+    "statusCompleted": "Tamamlandı",
+    "statusCancelled": "Ləğv edilib"
   },
   "adminSettings": {
     "title": "Klinika parametrləri",
     "subtitle": "Admin — UI playbook (siyahı + ModalShell)",
     "clinicName": "Klinika adı",
     "editClinic": "Klinikanı redaktə et"
+  },
+  "lisProfiles": {
+    "title": "LIS fayl profilləri",
+    "subtitle": "Xarici lab importu üçün CSV sütun xəritəsi (M11)",
+    "addProfile": "Profil əlavə et",
+    "editProfile": "Profili redaktə et",
+    "format": "Format",
+    "delimiter": "Ayırıcı",
+    "columnMapping": "Sütun xəritəsi",
+    "empty": "Hələ LIS profili yoxdur.",
+    "created": "Profil yaradıldı.",
+    "updated": "Profil yeniləndi.",
+    "deleted": "Profil silindi.",
+    "confirmDelete": "Bu LIS profilini silmək?",
+    "delete": "Sil",
+    "importTitle": "CSV-dən lab nəticələrini import et",
+    "importHint": "Saxlanmış profil ilə CSV yükləyin. RESULT_READY statuslu sifarişlər yaradır.",
+    "selectProfile": "Profil",
+    "patientRefId": "Xəstə ref ID",
+    "visitIdOptional": "Vizit ID (istəyə bağlı)",
+    "csvFile": "CSV fayl",
+    "runImport": "Import",
+    "importMissingFields": "Profil, xəstə və CSV seçin.",
+    "importSuccess": "{count} lab sifarişi import edildi."
+  },
+  "procedureRules": {
+    "title": "Prosedur uyğunluq qaydaları",
+    "subtitle": "Prosedur kodları arasında planlaşdırma məhdudiyyətləri",
+    "codeA": "Kod A",
+    "codeB": "Kod B",
+    "addRule": "Qayda əlavə et",
+    "added": "Qayda əlavə edildi.",
+    "empty": "Qayda konfiqurasiya edilməyib."
+  },
+  "inpatient": {
+    "title": "Stasionar palatalar",
+    "subtitle": "Palata və çarpayı tutumu (M13)",
+    "assignBed": "Çarpayı təyin et",
+    "assign": "Təyin et",
+    "discharge": "Buraxılış",
+    "addBed": "Çarpayı əlavə et",
+    "wardCode": "Palata kodu",
+    "bedCode": "Çarpayı kodu",
+    "patientRefId": "Xəstə ref ID",
+    "empty": "Hələ palata yoxdur — qeyd yaratmaq üçün çarpayı təyin edin.",
+    "assigned": "Xəstə çarpayına yerləşdirildi.",
+    "discharged": "Xəstə buraxıldı."
   },
   "auth": {
     "loginFailed": "Giriş uğursuz oldu",

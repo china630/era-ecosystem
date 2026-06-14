@@ -196,6 +196,45 @@ export class LoyaltyService {
     return { promotion, burned: true, mode: "live" };
   }
 
+  async burnPoints(
+    organizationId: string,
+    customerRef: string,
+    points: number,
+    idempotencyKey?: string,
+    reason = "points_burn",
+  ) {
+    this.idempotency.assertLiveMode();
+    await this.entitlement.assertPlatformModule(organizationId, ENTITLEMENT);
+    const debit = Math.ceil(Number(points));
+    if (!Number.isFinite(debit) || debit <= 0) {
+      throw new BadRequestException("points must be positive");
+    }
+    const balance = await this.getPointsBalance(organizationId, customerRef);
+    if (balance < debit) {
+      throw new BadRequestException("Insufficient loyalty points");
+    }
+    const row = await this.prisma.platformLoyaltyLedger.create({
+      data: {
+        organizationId,
+        customerRef,
+        pointsDelta: -debit,
+        reason: idempotencyKey ? `${reason}:${idempotencyKey}` : reason,
+      },
+    });
+    await this.audit.log({
+      organizationId,
+      addonSlug: ENTITLEMENT,
+      action: "points.burned",
+      payload: { customerRef, points: debit, idempotencyKey },
+    });
+    return {
+      entry: row,
+      burned: debit,
+      balance: balance - debit,
+      mode: "live" as const,
+    };
+  }
+
   async getPointsBalance(organizationId: string, customerRef: string) {
     const rows = await this.prisma.platformLoyaltyLedger.findMany({
       where: { organizationId, customerRef },

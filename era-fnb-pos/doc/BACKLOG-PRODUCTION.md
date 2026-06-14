@@ -26,7 +26,7 @@ Source: [DELIVERY-FB.md](./DELIVERY-FB.md), [PRD.md](../PRD.md), [07-phases-deli
 |----|------|--------------|
 | F-P1-1 | E8 consumption → Finance ERP event | FB-10 |
 | F-P1-2 | Real KKM NBC/Cybernet | FB-2 |
-| F-P1-3 | Card pay UI parity with cash | FB-03 |
+| F-P1-3 | Card pay UI parity with cash | FB-03 | Done |
 | F-P1-4 | PRD status sync — mark MVP Done where DELIVERY FB-1 is done | Doc drift |
 
 ## P2 — FB-3 backlog

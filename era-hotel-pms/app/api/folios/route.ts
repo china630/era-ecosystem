@@ -28,7 +28,7 @@ const chargeSchema = z.object({
 const paymentSchema = z.object({
   folioId: z.string().uuid(),
   amount: z.number().positive(),
-  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']),
+  paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT', 'LOYALTY_POINTS']),
   registerRef: z.string().optional(),
 });
 

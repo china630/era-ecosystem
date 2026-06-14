@@ -1,65 +1,31 @@
-# Guest CRM — ElectraWeb parity
+# Guest CRM — ElektraWeb parity audit (Nafta P3)
 
-> **Source:** legacy `Electraweb/crm.md` (matrix + waves) — implemented in [`guest-crm-config.ts`](../src/lib/guest-crm-config.ts) (2026-06-04). Index: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md).  
-> **UI:** `GuestCardModal` tabs **CRM** and **Reservation details**  
-> **Config:** [`src/lib/guest-crm-config.ts`](../src/lib/guest-crm-config.ts)
+Signed audit table for H-BL-26 enablement. P2/P3 buttons enabled in `guest-crm-config.ts` where hotel owns data.
 
-## Satellite boundary
+| button_id | Nafta class | ERA route / module | Status |
+|-----------|-------------|-------------------|--------|
+| interests_hobbies | P2 | `/guests/{id}/interests` | **Enabled** — `GuestCrmExtension.interestsJson` |
+| social_media | P2 | `/guests/{id}/social-media` | **Enabled** — `GuestCrmExtension.socialMediaJson` |
+| general_crm | P2 | `/guests/{id}/general-crm` | **Enabled** — `GuestCrmExtension.generalCrmNotes` |
+| send_emails | P2 | `/guests/{id}/emails` | **Enabled** — platform notify (H-BL-06); vendor STUB |
+| send_sms | P2 | `/guests/{id}/sms` | **Enabled** — platform notify (H-BL-06); vendor STUB |
+| contact_logs | P2 | `/guests/{id}/contact-logs` | **Enabled** |
+| membership_agreements | P2 | `/guests/{id}/membership-agreements` | **Enabled** — `GuestTimeShareAgreement` |
+| buying_habits | P2 | fb-pos deep link | **Enabled** when `ERA_FNB_POS_URL` set |
+| group_hotels_visiting | P2 | `/reports/group-reservations` | **Enabled** |
+| references | P3 | — | **Deferred** — external refs API |
+| external_reviews | P3 | — | **Deferred** — review aggregator |
+| mobile_chat | P3 | — | **Deferred** — chat vendor |
+| login_devices | P3 | — | **Deferred** — device registry |
+| other_hotels_visited | P3 | — | **Deferred** — chain PMS |
+| web_call_requests | P2 | — | **Deferred** — PBX integration |
+| calls | P2 | — | **Deferred** — PBX CDR |
+| auto_tasks | P2 | — | **Deferred** — rules engine |
 
-| Module | ElectraWeb path | ERA behavior |
-|--------|-----------------|--------------|
-| Medical (6 buttons) | `/medical/guests/{id}` | `clinicGuestDeepLink` → `era-clinic` (`NEXT_PUBLIC_CLINIC_WEB_URL` / `NEXT_PUBLIC_SATELLITE_CLINIC_URL`) |
-| Finance | `/finance/guests/{id}`, folios | `financeGuestDeepLink` → `era-finance-core` |
-| Logistics transfers | `/transfers?guestId=` | In-hotel `/transfers` + API filter; optional logistics satellite URL |
-| Hotel `/medical` page | — | Operational alerts only; **not** used from CRM grid |
+## Ops workflow
 
-## Waves delivered
+1. Nafta FO reviews this table in UAT and marks must-have overrides.
+2. Enabled buttons appear on Guest Card CRM tab without `disabledReasonKey`.
+3. P3 defer items stay documented until vendor API available.
 
-| Wave | Scope | Status |
-|------|--------|--------|
-| H1 | tasks, notes, tags, archive, deep links | Done |
-| H2 | preferences, allergens, special dates, favorites, special notes | Done |
-| H3 | clinic/finance satellite buttons | Done |
-| H4 | comments, surveys, reclaims, incidents | Done |
-| H5 | WhatsApp/email/SMS stubs (`GuestCommunication` status STUB) | Done (integrations Partial) |
-| H6 | P2/P3 buttons visible-disabled in config | Deferred |
-| Res-H1 | reservations/transfers/lost-found/folio deep links | Done |
-| Res-H2 | family, accompanying, booker | Done |
-| Res-H3 | trip reasons, reservation sources analytics | Done |
-| Res-H4 | web/call, auto tasks, other hotels | Deferred |
-
-## P0+P1 button map (CRM tab)
-
-| button_id | Route / target |
-|-----------|----------------|
-| tasks | `/guests/{id}/tasks` |
-| notes | `/guests/{id}/notes` |
-| document_archive | `/guests/{id}/archive` |
-| tags | `/guests/{id}/tags` |
-| preferences | `/guests/{id}/preferences` |
-| allergens | `/guests/{id}/allergens` |
-| health_info … lab_test_results | Clinic satellite query `guestId` |
-| expenses | Finance satellite expenses |
-| comments, surveys, reclaims, incidents | Under `/guests/{id}/…` |
-| whatsapp, emails, sms | `/guests/{id}/whatsapp` etc. |
-
-## Reservation details tab
-
-| button_id | Route |
-|-----------|--------|
-| reservations | `/reports/reservations?guestId={id}` |
-| transfers | `/transfers?guestId={id}` |
-| lost_and_found | `/housekeeping/lost-and-found?guestId={id}` |
-| guest_all_folio | Finance folios deep link |
-| accompanying, family, booker | `/guests/{id}/accompanying` … |
-| trip_reasons, reservation_sources | Analytics API `GET /api/guests/{id}/reservation-analytics` |
-
-## Schema
-
-Migration `20260604120000_guest_crm`: `GuestTag`, `GuestArchiveFile`, `GuestPreference`, `GuestAllergen`, `GuestSpecialDate`, `GuestFavoriteRoom`, `GuestComment`, `GuestSurvey`, `GuestIncident`, `GuestCommunication`, `GuestContactLog`, `GuestFamily`, `Reservation.bookerGuestId`.
-
-**Note:** Identity passports remain `GuestDocument`; archive files are `GuestArchiveFile`.
-
-## UAT
-
-See [UAT-SMOKE.md](./UAT-SMOKE.md) §16.
+See also: [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md), [BACKLOG-PRODUCTION.md](./BACKLOG-PRODUCTION.md) § P3.

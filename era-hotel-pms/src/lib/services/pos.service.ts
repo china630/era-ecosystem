@@ -106,6 +106,12 @@ export async function postRoomCharge(
     throw new Error('Room charge only for IN_HOUSE reservations');
   }
 
+  const { validateRoomCharge } = await import('@/lib/services/pms-bridge.service');
+  const creditCheck = await validateRoomCharge(reservationId, input.amount);
+  if (!creditCheck.allowed) {
+    throw new Error(creditCheck.denyReason ?? 'Room charge denied');
+  }
+
   const code = await prisma.revenueCode.findFirst({
     where: { code: input.revenueCode },
   });

@@ -96,4 +96,14 @@ export class OrganizationController {
       dto.newOwnerUserId,
     );
   }
+
+  @Get("organizations/departments")
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.DIRECTOR)
+  listDepartments(@CurrentUser() user: EraJwtPayload) {
+    if (!user.organizationId) {
+      throw new ForbiddenException("Organization context required");
+    }
+    return this.org.listDepartments(user.organizationId);
+  }
 }

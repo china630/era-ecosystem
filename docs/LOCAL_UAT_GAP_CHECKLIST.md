@@ -3,9 +3,9 @@
 Living checklist for **«потыкать систему на локалке»**: what exists today vs product target.  
 Not a delivery % score — use [`READINESS_MATRIX.md`](./READINESS_MATRIX.md) for API levels.
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-06-10
 
-**Last verified:** 2026-05-30 — unified **AuthLoginCard** login UI; Orchestrator **public hub** (`/pricing`, `/help`, `/terms`, `/register`, `/partner`); multi-credential satellite login; `@era/storage` add-on `platform_storage`.
+**Last verified:** 2026-06-10 — platform trial hierarchy (org-only register, owner Connect, super-admin trial UI); see [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md).
 
 **Related:** [SETUP_AND_RUN.md](./SETUP_AND_RUN.md) · [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · [SATELLITE_DOCUMENTATION.md](./SATELLITE_DOCUMENTATION.md) · [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) (SP8 hybrid RBAC)
 
@@ -26,32 +26,34 @@ Columns: **Fin** · **Orch** · **Hot** · **FB** · **Ret** · **Log** · **Con
 
 ## 1. Platform entry & modules (launcher)
 
-**Product model (SP9):** одна **главная точка входа** — **Orchestrator web** (`:3000` / `app.era-365.online`). Всё остальное — **модули подписки**, открываемые с домашней страницы Orch (не отдельные «лаунчеры» на сателлитах).
+**Product model (SP9 + workspace launcher ADR):** одна **главная точка входа** — **Orchestrator web** (`:3000`). После входа пользователь попадает в **рабочую область активной org** (`/workspace`), а не в маркетплейс с waitlist на недоступных модулях.
 
 | Layer | What it is | Launcher host? |
 |-------|------------|----------------|
-| **Platform entry** | Orch web — login, org, billing snapshot, module grid | **Yes** (only) |
-| **Finance module** | Data plane (GL, AR, holding, NAS) — tile on Orch home | Opened from Orch (URL tile) or deep link |
-| **Industry modules (×9)** | Hotel, FB, Retail, … — `industry_*` entitlements | Opened from Orch via **SSO** (`/sso/callback`); local `/login` only for ops |
-
-Сателлиты **Hot · FB · Ret · …** в этой секции **не колонки матрицы** — у них нет своего ecosystem launcher; см. §2.2 (SSO consumer + ops login).
+| **Platform entry** | Orch web — login, org hub, workspace, billing snapshot | **Yes** (only) |
+| **Finance module** | Data plane (GL, AR, holding, NAS) — tile on `/workspace` | Opened from workspace (handoff) or deep link |
+| **Industry modules (×9)** | Hotel, FB, Retail, … — `industry_*` entitlements | Opened from `/workspace` or `/industry/*` via **SSO**; local `/login` only for ops |
 
 | Capability | Orch (entry) | Finance module | Industry modules (×9) |
 |------------|--------------|----------------|------------------------|
 | Auth before module grid | **Done** | **N/A** (вход через Orch) | **N/A** |
-| Entitlement-gated tiles (`industry_*` + Finance tile) | **Done** | **N/A** | **N/A** (entitlement checked on Orch) |
+| Org hub + create org modal | **Done** (`/organizations`) | **N/A** | **N/A** |
+| Entitlement-gated workspace tiles | **Done** (`/workspace` — Open / Add module / Renew) | **N/A** | **N/A** (entitlement checked on Orch) |
+| Early-access waitlist on home tiles | **Removed** (pricing CTA instead) | **N/A** | **N/A** |
 | Open module (SSO or URL) | **Done** | **Done** (JWT handoff `/auth/cp-handoff`) | **Done** (SSO callback on each app) |
-| All modules in one UI | **Done** | — | — |
 
 **Code**
 
 | Piece | Path |
 |-------|------|
-| Orch home + industry | [`era-orchestrator/apps/web/app/page.tsx`](../era-orchestrator/apps/web/app/page.tsx), [`industry/[vertical]`](../era-orchestrator/apps/web/app/industry/[vertical]/page.tsx) |
-| Shared module config | [`packages/satellite-kit/src/platform/industry-modules.ts`](../packages/satellite-kit/src/platform/industry-modules.ts) |
-| Finance (no launcher) | `/industry/*` → redirect to Orch; sidebar Industry removed (SP9-2) |
+| Redirect `/` | [`era-orchestrator/apps/web/app/page.tsx`](../era-orchestrator/apps/web/app/page.tsx) |
+| Org hub | [`app/organizations/page.tsx`](../era-orchestrator/apps/web/app/organizations/page.tsx) |
+| Workspace | [`app/workspace/page.tsx`](../era-orchestrator/apps/web/app/workspace/page.tsx) |
+| Industry SSO deep link | [`app/industry/[vertical]/page.tsx`](../era-orchestrator/apps/web/app/industry/[vertical]/page.tsx) |
+| Workspace catalog | [`packages/satellite-kit/src/platform/workspace-system-catalog.ts`](../packages/satellite-kit/src/platform/workspace-system-catalog.ts) |
+| ADR | [`docs/adr/orchestrator-workspace-launcher.md`](./adr/orchestrator-workspace-launcher.md) |
 
-**Local UAT:** Orch `http://localhost:3000` → login → module tile → **Open** (SSO for verticals, new tab for Finance). Public pages: `/pricing`, `/help`, `/terms`, `/register`. [QUARTET_UAT.md](./QUARTET_UAT.md) · `node scripts/sso-launch-smoke.mjs`.
+**Local UAT:** Orch `http://localhost:3000` → login → `/organizations` (if no org) → `/workspace` → **Connect** satellites → **Open** (SSO). Ops: `/super-admin/orgs/{orgId}/subscription`. [QUARTET_UAT.md](./QUARTET_UAT.md) · `node scripts/sso-launch-smoke.mjs`.
 
 ---
 
@@ -119,7 +121,8 @@ Orch: `POST /auth/login`, public `/pricing`, `/help`, `/terms`, `/partner` — s
 
 | Capability | Fin | Orch | Satellites |
 |------------|-----|------|------------|
-| `Holding` entity + members | **Done** | **Missing** | **N/A** |
+| `Holding` entity + members | **Done** | **N/A (Finance-only)** | **N/A** |
+| Holding UI (`/companies`, `/holding`) | **Done** | **N/A** | **N/A** |
 | Attach org to holding | **Done** | **N/A (Finance-only)** | **N/A** |
 | Consolidated P&L / dashboard | **Done** (`/holding`, reporting) | **N/A (Finance-only)** | **N/A** |
 | Multi-org switcher (user memberships) | **Done** | **Done** (API) | **N/A** |
@@ -262,6 +265,8 @@ flowchart TD
 | ~~P7~~ | Register audit, executive FB/Hot | **Done (P7)** |
 | ~~SP7~~ | Seven industry modules depth | **Done (SP7)** — see DELIVERY SP7 sections |
 | P01–P08 | ERA Program Orchestrator (UAT sync, CP2, addons Live) | **Done** — see `.cursor/plans/era_program_orchestrator_1fe445ab.plan.md` |
+| H-BL-01 … H-BL-10 | Hospitality P2 product gaps (split pay, credit limit, meal gate, …) | **Open** — [BACKLOG-PRODUCTION.md § Product gaps](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14) |
+| H-BL-30 … H-BL-31 | B2B contract mgmt / full MICE | **Future** — confirm with Nafta |
 
 ---
 

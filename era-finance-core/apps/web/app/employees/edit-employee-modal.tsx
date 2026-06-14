@@ -18,6 +18,7 @@ import {
 import { isValidFinCode, normalizeFinInput } from "../../lib/fin-code";
 import { EntityAuditHistory } from "../../components/admin/entity-audit-history";
 import { Button } from "../../components/ui/button";
+import { HrSatelliteProvisioningFields } from "../../components/hr/HrSatelliteProvisioningFields";
 
 type JobPositionOpt = {
   id: string;
@@ -38,6 +39,8 @@ type EmployeeDetail = {
   salary: unknown;
   contractorMonthlySocialAzn?: unknown | null;
   vacationDaysBalance?: unknown | null;
+  provisionedSatelliteKey?: string | null;
+  provisionedSatelliteRole?: string | null;
 };
 
 function formatVacationDaysBalance(v: unknown): string {
@@ -85,6 +88,8 @@ export function EditEmployeeModal({
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
   const [vacationBalanceLabel, setVacationBalanceLabel] = useState("—");
+  const [provisionedSatelliteKey, setProvisionedSatelliteKey] = useState("");
+  const [provisionedSatelliteRole, setProvisionedSatelliteRole] = useState("");
 
   const title = useMemo(() => t("employees.editSection"), [t]);
 
@@ -145,6 +150,8 @@ export function EditEmployeeModal({
             : "",
       );
       setVacationBalanceLabel(formatVacationDaysBalance(r.vacationDaysBalance));
+      setProvisionedSatelliteKey(r.provisionedSatelliteKey?.trim() ?? "");
+      setProvisionedSatelliteRole(r.provisionedSatelliteRole?.trim() ?? "");
     } catch {
       setLoadErr(t("employees.loadErr"));
     } finally {
@@ -209,6 +216,8 @@ export function EditEmployeeModal({
       body.voen = null;
       body.contractorMonthlySocialAzn = null;
     }
+    body.provisionedSatelliteKey = provisionedSatelliteKey.trim() || null;
+    body.provisionedSatelliteRole = provisionedSatelliteRole.trim() || null;
 
     setBusy(true);
     const res = await apiFetch(`/api/hr/employees/${employeeId}`, {
@@ -395,6 +404,12 @@ export function EditEmployeeModal({
                     </p>
                   </div>
                 ) : null}
+                <HrSatelliteProvisioningFields
+                  satelliteKey={provisionedSatelliteKey}
+                  satelliteRole={provisionedSatelliteRole}
+                  onSatelliteKeyChange={setProvisionedSatelliteKey}
+                  onSatelliteRoleChange={setProvisionedSatelliteRole}
+                />
               </div>
             </div>
 

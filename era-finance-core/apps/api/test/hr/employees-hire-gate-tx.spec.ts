@@ -3,6 +3,14 @@ import { EmployeeKind, Prisma } from "@erafinance/database";
 import { EmployeesService } from "../../src/hr/employees.service";
 
 describe("EmployeesService hire-gate (M6 Serializable)", () => {
+  const mdm = {
+    resolvePersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
+  };
+  const syncRuns = {} as ConstructorParameters<typeof EmployeesService>[1];
+  const staffProvisioning = {
+    emitProvisioned: jest.fn().mockResolvedValue(undefined),
+  } as unknown as ConstructorParameters<typeof EmployeesService>[3];
+
   it("create uses Serializable $transaction with quota check inside callback", async () => {
     const captured: { opts?: unknown } = {};
     const txClient = {
@@ -28,7 +36,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       }),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, {} as any);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any, staffProvisioning);
     await svc.create("org-1", {
       finCode: "1".repeat(7),
       firstName: "A",
@@ -71,7 +79,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       ),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, {} as any);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any, staffProvisioning);
     await expect(
       svc.create("org-1", {
         finCode: "2".repeat(7),

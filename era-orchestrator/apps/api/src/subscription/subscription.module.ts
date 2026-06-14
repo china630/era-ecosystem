@@ -7,10 +7,17 @@ import { SubscriptionAccessService } from "./subscription-access.service";
 import { SubscriptionController } from "./subscription.controller";
 import { InternalSubscriptionController } from "./internal-subscription.controller";
 import { SubscriptionGuard } from "./subscription.guard";
+import { SubscriptionTrialModule } from "./subscription-trial.module";
 
 @Global()
 @Module({
-  imports: [PrismaModule, QuotaModule, AccessControlModule, AdminModule],
+  imports: [
+    PrismaModule,
+    QuotaModule,
+    AccessControlModule,
+    AdminModule,
+    SubscriptionTrialModule,
+  ],
   controllers: [SubscriptionController, InternalSubscriptionController],
   providers: [SubscriptionAccessService, SubscriptionGuard],
   exports: [SubscriptionAccessService, SubscriptionGuard],

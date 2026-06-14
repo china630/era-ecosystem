@@ -252,6 +252,39 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Migration:** `20260528170000_wave5_contract_pricing`
 
+> **Superseded by Stage 25** — see DYNAMIC-RATE-PLANS. `ContractPricingRule` retained for backward compatibility until data migration.
+
+### Stage 25 — DYNAMIC-RATE-PLANS
+- [x] Prisma: `RatePlanType`, `RateAdjustmentMode`, extended `RatePlan` (BASE/DERIVED, derivation formula, `roomRevenueCodeId`)
+- [x] Prisma: `RoomTypeRate` — BAR absolute price calendar per room type + date
+- [x] Prisma: `AddOn`, `RatePlanAddOn` — independent services (meal, SPA) with `AddOnPricingUnit` / `AddOnInclusion`
+- [x] `pricing-engine-core.ts` — pure `applyDerivation`, `computeAddOnAmount`, `assembleQuote` (room vs add-on revenue split)
+- [x] `pricing-engine.service.ts` — `quoteStay()` loads BAR calendar, derives on-the-fly, attaches add-ons
+- [x] Wire `quoteStay` into booking/reservation flows (replaces legacy `quoteBookingRate` incrementally)
+- [x] Admin UI: BAR calendar editor at `/admin/bar-calendar`; derived plan migration script
+- [x] Data migration scripts: `seed-bar-from-legacy.ts`, `migrate-contract-pricing-to-derived.ts`; legacy fallback flag `ERA_PRICING_LEGACY_FALLBACK`
+
+**Migration:** `20260612120000_dynamic_rate_plans`
+
+**ADR:** [docs/adr/hotel-dynamic-rate-plans.md](../../docs/adr/hotel-dynamic-rate-plans.md)
+
+### Stage 26 — ELEKTRAWEB-IMPORT
+- [x] Prisma: `RoomView`, `BedType`, `externalRef` on Guest/Reservation/FolioCharge, extended Room/Product fields
+- [x] Import engine: `src/lib/import/*` (xlsx parser, adapters, idempotent upsert by code/externalRef)
+- [x] API: `GET /api/import`, `POST /api/import/[entity]?dryRun=1` — platform super-admin only
+- [x] UI: phased checklist wizard at `/admin/import` (single entry point)
+- [x] Verify screens: PATCH APIs + edit modals + table filters on master-data, stock, travel-agencies, guests
+- [x] Retire policy: `active` flags, room inventory soft state, ops guards — [ADR](../../docs/adr/hotel-master-data-retire-policy.md)
+- [x] Reference seed: `npm run db:seed:reference` (RevenueCode, BedType, RoomView — no wipe)
+- [ ] Chart of Accounts — **not imported** (finance-core boundary)
+- [ ] Future: owner-facing import (entitlement + audit) — see ADR
+
+**Migration:** `20260612200000_elektraweb_import`
+
+**Guide:** [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md) · **UI audit:** [ELEKTRAWEB-IMPORT-UI-AUDIT.md](./ELEKTRAWEB-IMPORT-UI-AUDIT.md) · **ADR:** [docs/adr/hotel-elektraweb-import.md](../../docs/adr/hotel-elektraweb-import.md)
+
+**Templates:** Revenue Code Definitions, Bed Type, Room Views, Room Types, Rate Codes, Rooms, Travel Agencies, Product Cards, Stock Cards, Guests, Reservations, Folios (.xlsx from Elektraweb)
+
 
 ## Platform add-ons (v1.0)
 
@@ -348,7 +381,7 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] Tests: extended `e2e/reservation-card.spec.ts`, `e2e/guest-card.spec.ts`
 - [x] Guest CRM P0+P1 + Reservation Details ([GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md), migration `20260604120000_guest_crm`)
 - [x] CRM satellite boundaries: clinic + finance deep links (not in-hotel EMR)
-- [ ] CRM omnichannel live (Twilio/SendGrid): STUB only (B9 Partial)
+- [x] CRM omnichannel: **Done (platform notify)** + **Partial (vendor STUB — Twilio/SendGrid)** (B9)
 - [x] CRM P2/P3 buttons: visible-disabled in config
 
 ## Hotel + clinic cycle (2026-06-04)
@@ -360,3 +393,28 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] CP module `hotel_migration_pro` (all hotel types; alias `migration_pro`) — catalog seed, all hotel bundles, nav `/migration`, API gate
 - [x] Executive dashboard pulls clinic capacity when `CLINIC_URL` + `CLINIC_BRIDGE_SECRET` set
 - [ ] Apply migration `20260604180000_hotel_service_migration` on `era_hotel_pms` (use `scripts/docker-migrate-deploy.mjs`, not `db push` — avoids `User_phone_key` drift)
+
+## Nafta W0 gap closure (2026-06-13)
+
+- [x] Child pricing: `ChildPricingMatrix` → `computeChildNightlyAddon` in recalc ([ADR hotel-child-pricing-bands](../../docs/adr/hotel-child-pricing-bands.md))
+- [x] Analytics reports: `/reports/analytics`, APIs `booking-sources`, `cancellations`, `guest-demographics`
+- [x] OTA: `ChannelAdapter` + webhook ingest + `POST /api/channel/sync/push` ([ADR hotel-ota-adapter-strategy](../../docs/adr/hotel-ota-adapter-strategy.md))
+
+## Nafta W1–W2 gap closure (2026-06-13)
+
+- [x] Satellite mutation audit — ADR + `@era/satellite-kit` + `GET /api/audit` ([ADR satellite-mutation-audit](../../docs/adr/satellite-mutation-audit.md))
+- [x] Agency profitability — `/reports/agency-profitability`
+- [x] OTA pull — `POST /api/channel/sync/pull` + cancel/modify ingest tests
+- [x] glPosted read-only — `FiscalDocument.glPostedAt` + `POST /api/integration/gl-status`
+- [x] Door lock vendor adapter — `ERA_DOOR_LOCK_DRIVER=mock|vendor`
+- [x] Env: `ERA_CHANNEL_ADAPTER`, `EXELY_*` in `.env.example`
+
+## Nafta P4 — B2B / MICE (2026-06-14)
+
+- [x] H-BL-30: `SalesContract`, `ContractAllotment`, `/admin/contracts`, reservation `salesContractId`
+- [x] Allotment-aware availability in `contract-allotment.service.ts` + `channel.service.ts`
+- [x] H-BL-31: `EventOrderLine`, `EventResourceBooking`, `EventStaffAssignment`, master folio on BEO confirm
+- [x] `/banquets/{id}` detail tabs, `/banquets/calendar`, `/banquets/reports/profitability`
+- [x] Gate doc [doc/nafta/B2B-GATE.md](nafta/B2B-GATE.md); ADR [hotel-b2b-sales-contracts.md](../../docs/adr/hotel-b2b-sales-contracts.md)
+
+**Migration:** `20260614160000_nafta_p4_b2b`

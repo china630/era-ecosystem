@@ -10,11 +10,15 @@ import {
 
   CARD_CONTAINER_CLASS,
 
+  FORM_FIELD_GROUP_CLASS,
+
   FORM_INPUT_CLASS,
 
   FORM_STACK_CLASS,
 
   LINK_ACCENT_CLASS,
+
+  MODAL_FIELD_LABEL_CLASS,
 
   MODAL_FOOTER_PRIMARY_CLASS,
 
@@ -150,7 +154,7 @@ export function AuthLoginCard({
 
   busy = false,
 
-  error: _error,
+  error,
 
   subtitle,
 
@@ -228,13 +232,23 @@ export function AuthLoginCard({
 
         ) : null}
 
+        {error ? (
+          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
+          </p>
+        ) : null}
+
         <form onSubmit={onSubmit} className={FORM_STACK_CLASS} autoComplete="on">
 
           {formExtras}
 
-          <label className="block text-[13px] font-medium text-[#34495E]">
+          <label className={FORM_FIELD_GROUP_CLASS}>
 
-            {emailMode ? (labels.email ?? labels.loginId) : labels.loginId}
+            <span className={MODAL_FIELD_LABEL_CLASS}>
+
+              {emailMode ? (labels.email ?? labels.loginId) : labels.loginId}
+
+            </span>
 
             <input
 
@@ -250,15 +264,15 @@ export function AuthLoginCard({
 
               onChange={(e) => onLoginIdChange(e.target.value)}
 
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
 
             />
 
           </label>
 
-          <label className="block text-[13px] font-medium text-[#34495E]">
+          <label className={FORM_FIELD_GROUP_CLASS}>
 
-            {labels.password}
+            <span className={MODAL_FIELD_LABEL_CLASS}>{labels.password}</span>
 
             <input
 
@@ -274,7 +288,7 @@ export function AuthLoginCard({
 
               onChange={(e) => onPasswordChange(e.target.value)}
 
-              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              className={FORM_INPUT_CLASS}
 
             />
 

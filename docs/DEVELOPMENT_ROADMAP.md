@@ -118,6 +118,45 @@ Cross-product polish shipped without a version bump:
 
 ---
 
+## Nafta gap closure — W0 (2026-06-13)
+
+Cross-cutting quick wins from Nafta TZ mapping ([`.cursor/plans/nafta_tz_gap_backlog.plan.md`](../.cursor/plans/nafta_tz_gap_backlog.plan.md)).
+
+| Track | Scope | Status |
+|-------|-------|--------|
+| W0-1 | Child pricing bands → `pricing-engine-core` + reservation recalc | **Done** |
+| W0-2 | Reports: booking sources, cancellations, demographics (`/reports/analytics`) | **Done** |
+| W0-3 | Finance HR cron: contract T-7d + birthday → notifications | **Done** |
+| W0-4 | Clinic lab publish + appointment SMS notify | **Done** |
+| OTA-D1 | ADR [hotel-ota-adapter-strategy.md](./adr/hotel-ota-adapter-strategy.md) | **Done** |
+| OTA-D2/D3 | `ChannelAdapter` registry + webhook ingest + availability push | **Done** |
+
+## Nafta gap closure — W1–W3 (2026-06-13)
+
+| Wave | Scope | Status |
+|------|-------|--------|
+| W1 | Satellite mutation audit, agency profitability, FB daily menu, room-plan extend recalc | **Done** |
+| W2 | OTA pull/cancel/modify, NBC HTTP fiscal, glPosted callback, procurement RFQ, supplier scorecard, HR docs, door lock vendor | **Done** |
+| W3 | AccountingAdapter + fan-out, clinic EMR MVP, queue, LIS profiles, hotel clinic HTTP gate | **Done** |
+
+**Out of product (confirmed):** PD.FORMA.01–05, LDAP/AD.
+
+---
+
+## Hospitality product backlog (post-Nafta W3)
+
+Gaps **not** covered by sibling satellites (hotel + fb + clinic + finance + orchestrator). Full IDs and notes: [era-hotel-pms/doc/BACKLOG-PRODUCTION.md § Product gaps](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14).
+
+| Priority | IDs | Theme |
+|----------|-----|-------|
+| **P2** | H-BL-01 … H-BL-10 | Split settlement, pre-auth, credit limit, meal gate, business date, guest omnichannel, guest intelligence, Stage 25 pricing, early/late charges, deposit lifecycle |
+| **P3** | H-BL-20 … H-BL-28 | Excursions, smart minibar, dispatch, KBS, e-qaimə, extra OTA, guest CRM P2/P3, loyalty redeem, clinic procedure rules |
+| **P4** | H-BL-30 … H-BL-31 | B2B contract management / agency sales; full MICE (future — confirm Nafta) |
+
+Pick next wave from **P2** unless Nafta onsite UAT surfaces a blocker elsewhere.
+
+---
+
 ## Standards
 
 - [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — naming rules

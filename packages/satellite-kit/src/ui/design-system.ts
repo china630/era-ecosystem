@@ -88,6 +88,16 @@ export const FORM_STACK_CLASS = "space-y-4";
 export const LINK_ACCENT_CLASS =
   "text-[13px] font-medium text-[#2980B9] hover:text-[#2471A3] hover:underline";
 
+/** Segmented AZ / RU / EN control — auth header + app header (DESIGN.md public auth). */
+export const LOCALE_TOGGLE_GROUP_CLASS =
+  "inline-flex shrink-0 rounded-lg border border-[#D5DADF] bg-white p-0.5 shadow-sm";
+
+export const LOCALE_TOGGLE_ACTIVE_CLASS =
+  "inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-md px-2 text-[12px] font-semibold bg-[#2980B9] text-white transition";
+
+export const LOCALE_TOGGLE_INACTIVE_CLASS =
+  "inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-md px-2 text-[12px] font-semibold text-[#7F8C8D] transition hover:bg-[#F4F5F7] hover:text-[#34495E]";
+
 export const FORM_INPUT_CLASS =
   "box-border h-9 min-h-9 w-full rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px] text-[#34495E] placeholder:text-[#7F8C8D] focus:outline-none focus:ring-1 focus:ring-[#2980B9] disabled:bg-[#F4F5F7]";
 

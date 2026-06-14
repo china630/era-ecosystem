@@ -134,6 +134,24 @@ Index of removed root folder: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/E
 
 ---
 
+## Elektraweb Excel import (Stage 26)
+
+Phased migration wizard at **`/admin/import`** (platform super-admin). Idempotent `.xlsx` upsert. **Chart of Accounts is not imported** (finance-core).
+
+**Full guide:** [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md) · **ADR:** [docs/adr/hotel-elektraweb-import.md](../../docs/adr/hotel-elektraweb-import.md)
+
+| Phase | Templates | Upsert key |
+|-------|-----------|------------|
+| 1 Dictionaries | Revenue codes, Bed types, Room views | `code` |
+| 2 Master | Room types, Rate codes, Rooms, Agencies, Product/Stock cards | `code` / `roomNumber` |
+| 3 Transactional | Guests, Reservations, Folios | `externalRef` |
+
+Reference seed (all deployments): `npm run db:seed:reference`.
+
+**Future:** same tool for additional Elektraweb hotels; owner self-service import planned (entitlement gate, not yet built).
+
+---
+
 ## Finance boundary
 
 GL / sales invoices → **era-finance-core** via `FinanceBoundaryBanner` and deep links.
@@ -146,4 +164,5 @@ GL / sales invoices → **era-finance-core** via `FinanceBoundaryBanner` and dee
 - [FRONT-OFFICE-ELECTRAWEB.md](./FRONT-OFFICE-ELECTRAWEB.md)
 - [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md) — Guest Card CRM + Reservation details
 - [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md) — mapping after `Electraweb/` removal
+- [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md) — Elektraweb migration wizard (Stage 26)
 - [DELIVERY.md](./DELIVERY.md) · [UAT-SMOKE.md](./UAT-SMOKE.md)

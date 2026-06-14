@@ -7,9 +7,11 @@ import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
 import {
   AuthRegisterCard,
+  FORM_FIELD_GROUP_CLASS,
   FORM_INPUT_CLASS,
   LINK_ACCENT_CLASS,
-  showApiError,
+  MODAL_FIELD_LABEL_CLASS,
+  parseApiError,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "../../lib/auth-context";
 import { orchFetch } from "../../lib/orch-api";
@@ -27,6 +29,7 @@ function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const ref = searchParams.get("ref");
@@ -42,6 +45,7 @@ function RegisterForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError(null);
     try {
       const res = await orchFetch("/auth/register-user", {
         method: "POST",
@@ -53,7 +57,7 @@ function RegisterForm() {
         }),
       });
       if (!res.ok) {
-        showApiError(await res.text().catch(() => null), t("registerFailed"));
+        setError(parseApiError(await res.text().catch(() => null), t("registerFailed")));
         return;
       }
       const data = (await res.json()) as {
@@ -67,7 +71,7 @@ function RegisterForm() {
         organizationId: null,
         isSuperAdmin: data.claims?.isSuperAdmin,
       });
-      router.replace("/register-org");
+      router.replace("/organizations");
     } finally {
       setBusy(false);
     }
@@ -80,6 +84,7 @@ function RegisterForm() {
       subtitle={t("subtitle")}
       onSubmit={onSubmit}
       busy={busy}
+      error={error}
       submitLabel={t("submit")}
       submitBusyLabel={t("busy")}
       localeLabels={{
@@ -90,39 +95,49 @@ function RegisterForm() {
       }}
       fields={
         <>
-          <input
-            className={FORM_INPUT_CLASS}
-            placeholder={t("firstName")}
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            required
-          />
-          <input
-            className={FORM_INPUT_CLASS}
-            placeholder={t("lastName")}
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
-            required
-          />
-          <input
-            type="email"
-            className={FORM_INPUT_CLASS}
-            placeholder={t("email")}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="username"
-          />
-          <input
-            type="password"
-            className={FORM_INPUT_CLASS}
-            placeholder={t("password")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={8}
-            autoComplete="new-password"
-          />
+          <label className={FORM_FIELD_GROUP_CLASS}>
+            <span className={MODAL_FIELD_LABEL_CLASS}>{t("firstName")}</span>
+            <input
+              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              autoComplete="given-name"
+            />
+          </label>
+          <label className={FORM_FIELD_GROUP_CLASS}>
+            <span className={MODAL_FIELD_LABEL_CLASS}>{t("lastName")}</span>
+            <input
+              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              autoComplete="family-name"
+            />
+          </label>
+          <label className={FORM_FIELD_GROUP_CLASS}>
+            <span className={MODAL_FIELD_LABEL_CLASS}>{t("email")}</span>
+            <input
+              type="email"
+              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="username"
+            />
+          </label>
+          <label className={FORM_FIELD_GROUP_CLASS}>
+            <span className={MODAL_FIELD_LABEL_CLASS}>{t("password")}</span>
+            <input
+              type="password"
+              className={`${FORM_INPUT_CLASS} mt-1.5`}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
+          </label>
         </>
       }
       footer={

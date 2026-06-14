@@ -16,6 +16,29 @@ import { useAuth } from "./auth-context";
 export type SubscriptionSnapshot = SubscriptionModulesSnapshot & {
   tier?: string;
   readOnly?: boolean;
+  isTrial?: boolean;
+  trialDaysLeft?: number | null;
+  billingStatus?: string;
+  expiresAt?: string | null;
+  hotelModules?: Record<string, boolean>;
+  customConfig?: unknown;
+  satelliteEntitlements?: Array<{
+    satelliteKey: string;
+    trialExpiresAt: string | null;
+    trialOverridden?: boolean;
+    connectedAt?: string;
+    isTrial?: boolean;
+  }>;
+  moduleTrials?: Array<{
+    moduleKey: string;
+    trialExpiresAt: string | null;
+    trialOverridden?: boolean;
+  }>;
+  connectableSatellites?: string[];
+  quotas?: {
+    employees?: { current?: number; max?: number | null };
+    invoicesThisMonth?: { current?: number; max?: number | null };
+  };
 };
 
 type SubscriptionContextValue = {

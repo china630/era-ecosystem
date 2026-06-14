@@ -3,28 +3,31 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { postCharge } from '@/lib/services/folio.service';
 import { dispatchNightAuditClosed } from '@/lib/integration/event-dispatcher';
 import { assertNoOpenPosShifts, getPosShiftStatus } from '@/lib/services/pms-bridge.service';
-
-function todayDateOnly(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+import {
+  getCurrentBusinessDate,
+  advanceBusinessDate,
+  lockBusinessDateForAudit,
+} from '@/lib/services/business-date.service';
+import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
 
 export async function getNightAuditStatus() {
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   const posShiftStatus = await getPosShiftStatus();
-  const businessDay = await prisma.businessDay.findFirst({
-    where: { status: 'OPEN' },
-    orderBy: { date: 'desc' },
+  const currentBiz = await getCurrentBusinessDate();
+  const businessDay = await prisma.businessDay.findUnique({
+    where: { date: currentBiz },
     include: { nightRuns: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
   const inHouseCount = await prisma.reservation.count({ where: { status: 'IN_HOUSE' } });
+  const { getBusinessDateStatus } = await import('@/lib/services/business-date.service');
+  const bizStatus = await getBusinessDateStatus();
   return {
     openShift,
     posShiftStatus,
     businessDay,
     lastRun: businessDay?.nightRuns[0] ?? null,
     inHouseCount,
+    businessDate: bizStatus,
   };
 }
 
@@ -40,8 +43,9 @@ export async function runNightAudit() {
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
   if (openShift) throw new Error('Close all cash shifts before night audit');
   await assertNoOpenPosShifts();
+  await lockBusinessDateForAudit();
 
-  const date = todayDateOnly();
+  const date = await getCurrentBusinessDate();
   let businessDay = await prisma.businessDay.findUnique({ where: { date } });
   if (!businessDay) {
     businessDay = await prisma.businessDay.create({ data: { date, status: 'OPEN' } });
@@ -67,7 +71,7 @@ export async function runNightAudit() {
 
     const inHouse = await prisma.reservation.findMany({
       where: { status: 'IN_HOUSE' },
-      include: { ratePlan: true, room: true, folios: { include: { charges: true } } },
+      include: { ratePlan: true, room: true, folios: { include: { charges: true } }, dailyRates: true },
     });
 
     for (const res of inHouse) {
@@ -90,15 +94,22 @@ export async function runNightAudit() {
         ),
       );
       if (!alreadyPosted) {
+        const daily = res.dailyRates.find(
+          (d) => d.stayDate.toISOString().slice(0, 10) === date.toISOString().slice(0, 10),
+        );
+        const amount = daily
+          ? decimalToNumber(daily.amount)
+          : await getNightlyRoomChargeForDate(res.id, date);
+
         await postCharge({
           reservationId: res.id,
           revenueCodeId: revenueRoom.id,
-          amount: decimalToNumber(res.ratePlan.pricePerNight),
+          amount,
           qty: 1,
           description: `Night audit room charge ${date.toISOString().slice(0, 10)}`,
           businessDate: date,
         });
-        steps.push(`Step 3: Room charge posted — reservation ${res.id}`);
+        steps.push(`Step 3: Room charge posted (${amount} AZN) — reservation ${res.id}`);
       }
     }
     steps.push(`Step 3 complete: room charges for ${date.toISOString().slice(0, 10)}`);
@@ -107,6 +118,9 @@ export async function runNightAudit() {
       where: { id: businessDay.id },
       data: { status: 'CLOSED' },
     });
+
+    const nextDate = await advanceBusinessDate();
+    steps.push(`Step 4: Roll business date — next open day ${nextDate.toISOString().slice(0, 10)}`);
 
     const aggregates = await prisma.folioCharge.groupBy({
       by: ['revenueCodeId'],
@@ -146,7 +160,6 @@ export async function runNightAudit() {
       paymentLines,
     });
 
-    steps.push(`Step 4: Roll business date — ${date.toISOString().slice(0, 10)} closed`);
     steps.push(`Step 5: E1 dispatch — ${dispatch.dispatched ? 'sent' : dispatch.skipped ? 'skipped' : 'failed'}`);
 
     const completed = await prisma.nightAuditRun.update({
@@ -171,6 +184,13 @@ export async function runNightAudit() {
         stepsJson: JSON.stringify(steps),
       },
     });
+    const profile = await prisma.hotelProfile.findFirst({ orderBy: { createdAt: 'asc' } });
+    if (profile) {
+      await prisma.hotelProfile.update({
+        where: { id: profile.id },
+        data: { businessDateLocked: false },
+      });
+    }
     throw e;
   }
 }

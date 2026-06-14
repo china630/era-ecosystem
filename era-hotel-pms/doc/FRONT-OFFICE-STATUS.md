@@ -14,13 +14,13 @@
 |------|------|---------|---------|
 | Global header (satellites) | 1 | 0 | 0 |
 | Left FO menu | 8 | 0 | 0 |
-| Chessboard `/` | 8 | 1 | 0 |
+| Chessboard `/` | 9 | 0 | 0 |
 | Reservation card | 10 | 0 | 0 |
 | Room plan | 6 | 0 | 0 |
 | In-house + guest card | 11 | 1 | 0 |
-| **Total line items** | **44** | **2** | **0** |
+| **Total line items** | **45** | **1** | **0** |
 
-**Product verdict:** FO **CSV parity** including Guest CRM P0+P1 and Reservation Details. **G6/G7 Done**; omnichannel STUB Partial. **R7** Partial. Medical/finance via satellite deep links only.
+**Product verdict:** FO **CSV parity** including Guest CRM P0+P1 and Reservation Details. **G6/G7 Done**; omnichannel STUB Partial. **R7 Done** (Wave D). Medical/finance via satellite deep links only.
 
 ---
 
@@ -47,7 +47,7 @@
 |---|-----------|--------|-------|
 | R1–R4, R6, R8–R9 | Rack UX | **Done** | D1–D3 |
 | R5 | Цвет номера по HK | **Done** | `rackNumberTextClass` + `RACK_NUMBER_BY_HK` (Wave G) |
-| R7 | Расширить фильтры | **Partial** | Agency, source, pay, floor, multi room type, date/res/HK; optional JPEG-only fields |
+| R7 | Расширить фильтры | **Done** | Agency, source, pay, floor, multi room type, date/res/HK, inspected/OOO toggles (Wave D) |
 
 ---
 
@@ -97,7 +97,7 @@
 |----|------|------------------|
 | B1 | Passport hardware scanner | **Done (mock)** | JSON ID reader modal |
 | B2 | CRM 50+ buttons | **Done (P0–P1)** | P2/P3 visible-disabled per [GUEST-CRM-ELECTRAWEB.md](./GUEST-CRM-ELECTRAWEB.md) |
-| B9 | CRM omnichannel live APIs | **Partial** | WhatsApp/email/SMS STUB rows only |
+| B9 | CRM omnichannel | **Done (platform notify)** + **Partial (vendor STUB)** | WhatsApp/email/SMS via `trySendPlatformNotification`; Twilio/SendGrid not wired |
 | B3–B8 | Reservation/guest/rack tails | **Done** | Waves E–G |
 
 ---

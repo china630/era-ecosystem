@@ -35,7 +35,14 @@ export class PricingService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.refreshPremiumModuleKeys();
+    try {
+      await this.refreshPremiumModuleKeys();
+    } catch (e) {
+      // Dev DB may already have partial catalog rows; do not block API startup.
+      console.warn(
+        `Pricing catalog bootstrap skipped: ${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
 
   /** Reload premium slugs from DB (after Super-Admin catalog save). */

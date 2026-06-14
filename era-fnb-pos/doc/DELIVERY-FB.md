@@ -45,6 +45,7 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 - [x] Multi-outlet — `GET /api/outlets`, `POST /api/outlets/select`, cookie `era_fb_outlet_id`, ticket filter
 - [x] Standalone walk-in — `serviceChannel: WALK_IN`, `walkInLabel` on `POST /api/tickets`
+- [x] Mixed settlement — in-house → room charge only; walk-in → local pay + KKM ([ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing.md))
 - [x] Room service — `POST /api/tickets/room-service`, `serviceChannel: ROOM_SERVICE`
 - [x] Offline queue — `src/lib/offline-queue.ts` + `POST /api/offline/replay`
 

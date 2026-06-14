@@ -29,6 +29,9 @@ export default function SuperAdminMdmPage() {
       <Link href="/super-admin/mdm/companies" className={`${GHOST_BUTTON_CLASS} mt-4 inline-flex`}>
         {t("openCompanyList")}
       </Link>
+      <Link href="/super-admin/mdm/persons" className={`${GHOST_BUTTON_CLASS} mt-2 inline-flex`}>
+        {t("openPersons")}
+      </Link>
       <pre className={`${CARD_CONTAINER_CLASS} mt-4 overflow-auto p-4 text-xs`}>
         {JSON.stringify(health, null, 2)}
       </pre>

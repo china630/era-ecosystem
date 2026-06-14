@@ -38,6 +38,13 @@ interface NightAuditStatus {
   openShift: CashShift | null;
   inHouseCount?: number;
   businessDay: { date: string; status: string } | null;
+  businessDate?: {
+    currentBusinessDate: string;
+    wallClockDate: string;
+    lagDays: number;
+    locked: boolean;
+    strictGate: boolean;
+  };
   lastRun: {
     status: string;
     stepsJson: string;
@@ -206,6 +213,24 @@ export default function OperationsPage() {
     <AppShell maxWidthClass="max-w-2xl">
       <PageHeader title={t('title')} />
       <StatusMessage>{msg}</StatusMessage>
+
+      {status?.businessDate && (
+        <PageSection
+          className={`mb-6 text-[13px] ${
+            status.businessDate.lagDays > 0
+              ? 'border-amber-200 bg-amber-50 text-amber-900'
+              : 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
+          }`}
+        >
+          Business date: <strong>{status.businessDate.currentBusinessDate}</strong>
+          {' · '}
+          Wall clock: {status.businessDate.wallClockDate}
+          {status.businessDate.lagDays > 0 && (
+            <> · Lag: {status.businessDate.lagDays} day(s) — run night audit</>
+          )}
+          {status.businessDate.locked && <> · Locked (NA running)</>}
+        </PageSection>
+      )}
 
       {can(PERMISSIONS.CASH_SHIFT) && (
         <PageSection className="mb-6">

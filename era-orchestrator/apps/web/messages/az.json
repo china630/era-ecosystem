@@ -58,10 +58,34 @@
       "title": "MDM",
       "subtitlePrefix": "VÖEN və təşkilat uyğunlaşdırması.",
       "browseCompanies": "Şirkətlər siyahısı",
-      "openCompanyList": "Şirkətləri aç"
+      "openCompanyList": "Şirkətləri aç",
+      "openPersons": "Şəxslər (FIN / merge)"
+    },
+    "mdmPersons": {
+      "title": "MDM — şəxslər",
+      "hint": "Super-admin: FIN axtarışı, resolve/create, dublikat merge.",
+      "backHub": "MDM hub",
+      "lookupTitle": "FIN ilə axtarış",
+      "finPlaceholder": "FIN (7 simvol)",
+      "lookupBtn": "Axtar",
+      "lookupFailed": "Axtarış uğursuz",
+      "identifiers": "İdentifikatorlar",
+      "resolveTitle": "Resolve / şəxs yarat",
+      "fullNamePlaceholder": "Ad soyad",
+      "phonePlaceholder": "Telefon (+994…)",
+      "resolveBtn": "Resolve",
+      "resolveOk": "Şəxs: {id}",
+      "resolveFailed": "Resolve uğursuz",
+      "mergeTitle": "Şəxsləri birləşdir",
+      "sourceIdPlaceholder": "Mənbə UUID (dublikat)",
+      "targetIdPlaceholder": "Hədəf UUID (kanonik)",
+      "mergeBtn": "Merge",
+      "mergeOk": "Birləşdirildi: {id}",
+      "mergeFailed": "Merge uğursuz"
     },
     "mdmCompanies": {
       "title": "MDM — şirkətlər",
+      "hint": "Hüquqi adlar PII kimi şifrələnir. Deşifrə alınmazsa, orchestrator təşkilat adı göstərilir; VÖEN açıq mətn kimi göstərilmir.",
       "prev": "Əvvəl",
       "next": "Növbəti",
       "page": "Səhifə {page}"
@@ -81,6 +105,8 @@
       "recentEvents": "Son hadisələr"
     },
     "billing": {
+      "title": "Billing konfiqurasiyası",
+      "subtitle": "Tarif kataloqu, kvotalar və kommersiya paketləri.",
       "loading": "Yüklənir…",
       "foundationLabel": "Foundation (AZN/ay)",
       "saveFoundation": "Foundation saxla",
@@ -178,9 +204,227 @@
     "subtitle": "VÖEN və şirkət adı ilə qeydiyyat",
     "orgName": "Təşkilat adı",
     "taxId": "VÖEN",
+    "voenHint": "Azərbaycan hüquqi şəxs identifikatoru — 10 rəqəm",
+    "invalidVoen": "VÖEN tam 10 rəqəmdən ibarət olmalıdır",
     "submit": "Qeydiyyatı tamamla",
-    "back": "← Geri",
+    "busy": "…",
+    "back": "← Təşkilatlara",
     "registerFailed": "Qeydiyyat uğursuz oldu"
+  },
+  "nav": {
+    "controlPlane": "Control plane",
+    "sectionLauncher": "Başlatma",
+    "sectionOrganization": "Təşkilat",
+    "sectionResources": "Resurslar",
+    "sectionPlatform": "Platforma idarəetməsi",
+    "workspace": "İş sahəsi",
+    "organizations": "Təşkilatlar",
+    "settings": "Parametrlər",
+    "orgSwitcher": "Aktiv təşkilat",
+    "addOrg": "Təşkilat",
+    "team": "Komanda",
+    "subscription": "Abunəlik",
+    "pricing": "Tariflər",
+    "help": "Kömək",
+    "superAdmin": "Super admin",
+    "platformHub": "Platforma",
+    "platformBillingPricing": "Billing — tariflər",
+    "platformBillingQuotas": "Billing — kvotalar",
+    "platformBillingPackages": "Billing — paketlər",
+    "platformTrialAllowlist": "Trial allowlist",
+    "platformMdm": "MDM",
+    "platformMdmCompanies": "MDM — şirkətlər",
+    "platformMdmPersons": "MDM — şəxslər",
+    "platformEarlyAccess": "Early access",
+    "platformSecurity": "Təhlükəsizlik",
+    "profileMenuAria": "Hesab menyusu",
+    "sidebarExpandAria": "Menyunu genişlət",
+    "sidebarCollapseAria": "Menyunu yığ",
+    "logout": "Çıxış",
+    "notificationsBellAria": "Bildirişlər",
+    "notificationsTitle": "Bildirişlər",
+    "notificationsEmpty": "Hələ bildiriş yoxdur",
+    "notificationsSettings": "Parametrlər"
+  },
+  "headerStrip": {
+    "trialUntil": "Trial {date}-dək",
+    "readOnly": "Yalnız oxuma",
+    "invoices": "Fakturalar",
+    "employees": "İşçilər",
+    "manage": "İdarə et"
+  },
+  "organizations": {
+    "title": "Təşkilatlarınız",
+    "subtitle": "İş sahəsini dəyişin və ya yeni hüquqi şəxs yaradın",
+    "addOrg": "Təşkilat",
+    "emptyTitle": "İlk təşkilatınızı yaradın",
+    "emptyHint": "Modul iş sahəsini açmaq üçün şirkət adı və VÖEN daxil edin.",
+    "createTitle": "Yeni təşkilat",
+    "createHint": "Öz VÖEN və abunəliyi olan ayrı hüquqi şəxs.",
+    "createSubmit": "Təşkilat yarat",
+    "createFailed": "Təşkilat yaradıla bilmədi",
+    "orgName": "Təşkilat adı",
+    "taxId": "VÖEN",
+    "voenHint": "Azərbaycan hüquqi şəxs identifikatoru — 10 rəqəm",
+    "invalidVoen": "VÖEN tam 10 rəqəmdən ibarət olmalıdır",
+    "openWorkspace": "İş sahəsini açmaq üçün klikləyin",
+    "currentWorkspace": "Cari iş sahəsi",
+    "fallbackPage": "Tam səhifə qeydiyyatı",
+    "roles": {
+      "owner": "Sahib",
+      "admin": "Admin",
+      "accountant": "Mühasib",
+      "user": "İstifadəçi"
+    }
+  },
+  "workspace": {
+    "title": "İş sahəsi",
+    "subtitle": "Təşkilat abunəliyinə daxil olan sistemlər",
+    "loadingEntitlements": "Entitlements yüklənir…",
+    "sanatoriumSection": "Sanatoriya üçün tövsiyə olunur",
+    "showAllModules": "Bütün ERA modulları → tariflər",
+    "hideAllModules": "Digər modulları gizlət",
+    "selectOrgHint": "Modulları görmək üçün təşkilat seçin və ya yaradın.",
+    "goOrganizations": "Təşkilatlara keç",
+    "badgeActive": "Aktiv",
+    "badgeTrial": "Trial · {days} gün",
+    "badgeNotSubscribed": "Abunədə yoxdur",
+    "badgeNotConnected": "Qoşulmayıb",
+    "badgeReadOnly": "Yalnız oxuma",
+    "open": "Aç",
+    "connect": "Qoş",
+    "connecting": "Qoşulur…",
+    "addModule": "Modul əlavə et",
+    "renew": "Yenilə",
+    "priceFrom": "{price} AZN/ay-dan",
+    "modulesModal": {
+      "title": "{system} — modullar",
+      "subtitle": "Bu satellit üçün modulları aktiv və ya passiv edin.",
+      "loading": "Modullar yüklənir…",
+      "empty": "Bu satellit üçün kataloqda modul yoxdur.",
+      "priceLine": "{price} AZN/ay",
+      "included": "Platformaya daxildir",
+      "pendingOff": "ay sonunda söndürüləcək",
+      "disableBillingNotice": "Modul cari ayın hesab-fakturasında qalır; giriş ay sonunadək.",
+      "enabled": "Modul aktiv edildi",
+      "connectFailed": "Satellit qoşulmadı — yenidən cəhd edin və ya dəstəyə yazın.",
+      "billingFootnote": "Söndürülən modullar cari ayın post-paid hesabına daxil olur."
+    },
+    "systems": {
+      "finance": {
+        "title": "Finance Core",
+        "tagline": "GL, sənədlər, anbar, payroll",
+        "highlight1": "Hesab planı və jurnallar",
+        "highlight2": "AR/AP və fiskal",
+        "highlight3": "HR və payroll"
+      },
+      "hotel": {
+        "title": "Hotel PMS",
+        "tagline": "Folio, FO, night audit",
+        "highlight1": "Rezervasiyalar və folio",
+        "highlight2": "Housekeeping və FO",
+        "highlight3": "Night audit"
+      },
+      "clinic": {
+        "title": "Clinic",
+        "tagline": "Qəbul, prosedurlar, sanatoriya",
+        "highlight1": "Xəstə vizitləri",
+        "highlight2": "Müalicə planları",
+        "highlight3": "Otel folio körpüsü"
+      },
+      "fnb": {
+        "title": "F&B POS",
+        "tagline": "Restoran, KDS, room charge",
+        "highlight1": "Sifarişlər və KDS",
+        "highlight2": "In-house room charge",
+        "highlight3": "Walk-in və KKM"
+      },
+      "retail": {
+        "title": "Retail POS",
+        "tagline": "Növbələr, anbar, aptek",
+        "highlight1": "POS növbələri",
+        "highlight2": "Anbar hadisələri",
+        "highlight3": "Aptek rejimi"
+      },
+      "logistics": {
+        "title": "Logistics",
+        "tagline": "Fleet, POD, gömrük",
+        "highlight1": "Göndərişlər",
+        "highlight2": "POD",
+        "highlight3": "Gömrük"
+      },
+      "construction": {
+        "title": "Construction",
+        "tagline": "Layihələr, plan/fakt",
+        "highlight1": "BOQ və layihələr",
+        "highlight2": "Tərəqqi",
+        "highlight3": "Xərc nəzarəti"
+      },
+      "crm": {
+        "title": "CRM",
+        "tagline": "Lidlər, vizitlər, inbox",
+        "highlight1": "Pipeline",
+        "highlight2": "Sahə vizitləri",
+        "highlight3": "Mesajlaşma"
+      },
+      "auto": {
+        "title": "Auto service",
+        "tagline": "STO, iş sifarişləri",
+        "highlight1": "İş sifarişləri",
+        "highlight2": "Ehtiyat hissələri",
+        "highlight3": "Post planlaması"
+      },
+      "wholesale": {
+        "title": "Wholesale",
+        "tagline": "B2B, yığma siyahıları",
+        "highlight1": "B2B kataloq",
+        "highlight2": "Pick & pack",
+        "highlight3": "Çatdırılma qaimələri"
+      }
+    }
+  },
+  "settings": {
+    "title": "Parametrlər",
+    "subtitle": "Aktiv təşkilat üçün komanda və abunəlik",
+    "workspace": "← İş sahəsi",
+    "teamLink": "Komanda",
+    "teamHint": "Giriş sorğuları və rollar",
+    "subscriptionLink": "Abunəlik",
+    "subscriptionHint": "Plan, modullar, trial",
+    "team": {
+      "title": "Giriş sorğuları",
+      "noPending": "Gözləyən sorğu yoxdur",
+      "approve": "Təsdiq et",
+      "decline": "Rədd et",
+      "loadFailed": "Yükləmə uğursuz",
+      "actionFailed": "Əməliyyat uğursuz"
+    },
+    "subscription": {
+      "title": "Abunəlik",
+      "loading": "Yüklənir…",
+      "plan": "Plan",
+      "trialDays": "Trial · {days} gün",
+      "billingStatus": "Billing statusu",
+      "readOnlyBanner": "Trial bitib — yeniləyənə qədər yalnız oxuma.",
+      "financeModules": "Finance modulları",
+      "industryModules": "Industry modulları",
+      "hotelModules": "Hotel add-ons",
+      "managePricing": "Pricing-də idarə et",
+      "contactSupport": "Dəstək",
+      "trialHint": "Workspace-də satellitləri qoşun; trial uzatma — super-admin org subscription."
+    }
+  },
+  "industry": {
+    "workspace": "← İş sahəsi",
+    "loading": "Yüklənir…",
+    "unknownModule": "Naməlum modul: {vertical}",
+    "openModule": "Modulu aç",
+    "notEntitled": "Modul abunədə deyil",
+    "addModule": "Pricing-də əlavə et",
+    "backWorkspace": "İş sahəsinə qayıt",
+    "trialExpired": "Trial bitib — modulu açmaq üçün abunəni yeniləyin.",
+    "renew": "Abunəni yenilə",
+    "envHint": "Lokal satellite URL üçün {env} təyin edin"
   },
   "terms": {
     "title": "İstifadəçi razılaşması",

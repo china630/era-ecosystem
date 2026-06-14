@@ -6,6 +6,8 @@ function dateOnly(d: Date): Date {
   return x;
 }
 
+import { getContractAllotmentQuota } from '@/lib/services/contract-allotment.service';
+
 function eachNight(from: Date, to: Date): Date[] {
   const nights: Date[] = [];
   const cur = dateOnly(from);
@@ -109,13 +111,27 @@ export async function getChannelAvailability(from: Date, to: Date) {
           checkOutDate: { gt: night },
         },
       });
+      const contractQuota = await getContractAllotmentQuota(rt.id, night);
+      const contractBooked = await prisma.reservation.count({
+        where: {
+          roomTypeId: rt.id,
+          salesContractId: { not: null },
+          status: { in: ['CONFIRMED', 'IN_HOUSE', 'OPTION'] },
+          checkInDate: { lt: new Date(night.getTime() + 86400000) },
+          checkOutDate: { gt: night },
+        },
+      });
+      const contractHeld = Math.max(contractQuota - contractBooked, 0);
       const effectiveQuota = stopSell ? 0 : rt.baseQuota;
+      const barAvailable = Math.max(0, effectiveQuota - contractHeld - (overlapping - contractBooked));
       rows.push({
         date: night.toISOString().slice(0, 10),
         baseQuota: rt.baseQuota,
         booked: overlapping,
+        contractAllotment: contractQuota,
+        contractBooked,
         stopSell,
-        available: Math.max(0, effectiveQuota - overlapping),
+        available: barAvailable,
       });
     }
     result.push({ roomTypeId: rt.id, roomTypeCode: rt.code, days: rows });

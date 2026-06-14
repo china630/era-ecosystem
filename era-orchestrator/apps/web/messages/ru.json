@@ -58,10 +58,34 @@
       "title": "MDM",
       "subtitlePrefix": "Сопоставление VÖEN и организаций.",
       "browseCompanies": "Список компаний",
-      "openCompanyList": "Открыть компании"
+      "openCompanyList": "Открыть компании",
+      "openPersons": "Персоны (FIN / merge)"
+    },
+    "mdmPersons": {
+      "title": "MDM — персоны",
+      "hint": "Super-admin: поиск по FIN, resolve/create, merge дубликатов.",
+      "backHub": "MDM hub",
+      "lookupTitle": "Поиск по FIN",
+      "finPlaceholder": "FIN (7 символов)",
+      "lookupBtn": "Найти",
+      "lookupFailed": "Ошибка поиска",
+      "identifiers": "Идентификаторы",
+      "resolveTitle": "Resolve / создать персону",
+      "fullNamePlaceholder": "ФИО",
+      "phonePlaceholder": "Телефон (+994…)",
+      "resolveBtn": "Resolve",
+      "resolveOk": "Персона: {id}",
+      "resolveFailed": "Ошибка resolve",
+      "mergeTitle": "Merge персон",
+      "sourceIdPlaceholder": "UUID источника (дубликат)",
+      "targetIdPlaceholder": "UUID цели (канонический)",
+      "mergeBtn": "Merge",
+      "mergeOk": "Объединено в {id}",
+      "mergeFailed": "Ошибка merge"
     },
     "mdmCompanies": {
       "title": "MDM — компании",
+      "hint": "Юридические названия хранятся зашифрованными (PII). При ошибке расшифровки показывается имя организации из orchestrator; VÖEN в открытом виде здесь не выводится.",
       "prev": "Назад",
       "next": "Далее",
       "page": "Страница {page}"
@@ -81,6 +105,8 @@
       "recentEvents": "Последние события"
     },
     "billing": {
+      "title": "Настройка биллинга",
+      "subtitle": "Каталог тарифов, квоты и коммерческие пакеты.",
       "loading": "Загрузка…",
       "foundationLabel": "Foundation (AZN/мес)",
       "saveFoundation": "Сохранить foundation",
@@ -178,9 +204,227 @@
     "subtitle": "Регистрация с VÖEN и названием компании",
     "orgName": "Название организации",
     "taxId": "VÖEN",
+    "voenHint": "Идентификатор юрлица Азербайджана — 10 цифр",
+    "invalidVoen": "VÖEN должен содержать ровно 10 цифр",
     "submit": "Завершить регистрацию",
-    "back": "← Назад",
+    "busy": "…",
+    "back": "← К организациям",
     "registerFailed": "Ошибка регистрации"
+  },
+  "nav": {
+    "controlPlane": "Control plane",
+    "sectionLauncher": "Запуск",
+    "sectionOrganization": "Организация",
+    "sectionResources": "Ресурсы",
+    "sectionPlatform": "Администрирование платформы",
+    "workspace": "Рабочая область",
+    "organizations": "Организации",
+    "settings": "Настройки",
+    "orgSwitcher": "Активная организация",
+    "addOrg": "Организация",
+    "team": "Команда",
+    "subscription": "Подписка",
+    "pricing": "Тарифы",
+    "help": "Справка",
+    "superAdmin": "Super admin",
+    "platformHub": "Платформа",
+    "platformBillingPricing": "Биллинг — тарифы",
+    "platformBillingQuotas": "Биллинг — квоты",
+    "platformBillingPackages": "Биллинг — пакеты",
+    "platformTrialAllowlist": "Trial allowlist",
+    "platformMdm": "MDM",
+    "platformMdmCompanies": "MDM — компании",
+    "platformMdmPersons": "MDM — персоны",
+    "platformEarlyAccess": "Early access",
+    "platformSecurity": "Безопасность",
+    "profileMenuAria": "Меню аккаунта",
+    "sidebarExpandAria": "Развернуть меню",
+    "sidebarCollapseAria": "Свернуть меню",
+    "logout": "Выйти",
+    "notificationsBellAria": "Уведомления",
+    "notificationsTitle": "Уведомления",
+    "notificationsEmpty": "Пока нет уведомлений",
+    "notificationsSettings": "Настройки"
+  },
+  "headerStrip": {
+    "trialUntil": "Trial до {date}",
+    "readOnly": "Только чтение",
+    "invoices": "Счета",
+    "employees": "Сотрудники",
+    "manage": "Управление"
+  },
+  "organizations": {
+    "title": "Ваши организации",
+    "subtitle": "Переключите рабочую область или создайте новое юрлицо",
+    "addOrg": "Организация",
+    "emptyTitle": "Создайте первую организацию",
+    "emptyHint": "Укажите название компании и VÖEN, чтобы открыть рабочую область модулей.",
+    "createTitle": "Новая организация",
+    "createHint": "Отдельное юрлицо со своим VÖEN и подпиской.",
+    "createSubmit": "Создать организацию",
+    "createFailed": "Не удалось создать организацию",
+    "orgName": "Название организации",
+    "taxId": "VÖEN",
+    "voenHint": "Идентификатор юрлица Азербайджана — 10 цифр",
+    "invalidVoen": "VÖEN должен содержать ровно 10 цифр",
+    "openWorkspace": "Нажмите, чтобы открыть",
+    "currentWorkspace": "Текущая рабочая область",
+    "fallbackPage": "Полная страница регистрации",
+    "roles": {
+      "owner": "Владелец",
+      "admin": "Админ",
+      "accountant": "Бухгалтер",
+      "user": "Пользователь"
+    }
+  },
+  "workspace": {
+    "title": "Рабочая область",
+    "subtitle": "Системы, доступные организации по подписке",
+    "loadingEntitlements": "Загрузка entitlements…",
+    "sanatoriumSection": "Рекомендуется для санатория",
+    "showAllModules": "Все модули ERA → тарифы",
+    "hideAllModules": "Скрыть прочие модули",
+    "selectOrgHint": "Выберите или создайте организацию для просмотра модулей.",
+    "goOrganizations": "К организациям",
+    "badgeActive": "Активен",
+    "badgeTrial": "Триал · {days} дн.",
+    "badgeNotSubscribed": "Не в подписке",
+    "badgeNotConnected": "Не подключено",
+    "badgeReadOnly": "Только чтение",
+    "open": "Открыть",
+    "connect": "Подключить",
+    "connecting": "Подключение…",
+    "addModule": "Добавить модуль",
+    "renew": "Продлить",
+    "priceFrom": "От {price} AZN/мес",
+    "modulesModal": {
+      "title": "{system} — модули",
+      "subtitle": "Включение и отключение модулей этого сателлита.",
+      "loading": "Загрузка модулей…",
+      "empty": "В каталоге нет модулей для этого сателлита.",
+      "priceLine": "{price} AZN/мес",
+      "included": "Включено в платформу",
+      "pendingOff": "отключится в конце месяца",
+      "disableBillingNotice": "Модуль остаётся в биллинге текущего месяца; доступ до конца месяца.",
+      "enabled": "Модуль включён",
+      "connectFailed": "Не удалось подключить сателлит — повторите или обратитесь в поддержку.",
+      "billingFootnote": "Отключённые модули всё равно попадают в счёт текущего месяца (post-paid)."
+    },
+    "systems": {
+      "finance": {
+        "title": "Finance Core",
+        "tagline": "GL, документы, склад, payroll",
+        "highlight1": "План счетов и проводки",
+        "highlight2": "AR/AP и фискализация",
+        "highlight3": "HR и payroll"
+      },
+      "hotel": {
+        "title": "Hotel PMS",
+        "tagline": "Folio, FO, night audit",
+        "highlight1": "Бронирования и folio",
+        "highlight2": "Housekeeping и FO",
+        "highlight3": "Night audit"
+      },
+      "clinic": {
+        "title": "Clinic",
+        "tagline": "Приёмы, процедуры, санаторий",
+        "highlight1": "Визиты пациентов",
+        "highlight2": "Планы лечения",
+        "highlight3": "Мост с folio отеля"
+      },
+      "fnb": {
+        "title": "F&B POS",
+        "tagline": "Ресторан, KDS, room charge",
+        "highlight1": "Заказы и KDS",
+        "highlight2": "Room charge in-house",
+        "highlight3": "Walk-in и KKM"
+      },
+      "retail": {
+        "title": "Retail POS",
+        "tagline": "Смены, склад, аптека",
+        "highlight1": "POS-смены",
+        "highlight2": "Складские события",
+        "highlight3": "Режим аптеки"
+      },
+      "logistics": {
+        "title": "Logistics",
+        "tagline": "Fleet, POD, таможня",
+        "highlight1": "Отгрузки",
+        "highlight2": "POD",
+        "highlight3": "Таможня"
+      },
+      "construction": {
+        "title": "Construction",
+        "tagline": "Проекты, план/факт",
+        "highlight1": "BOQ и проекты",
+        "highlight2": "Прогресс",
+        "highlight3": "Контроль затрат"
+      },
+      "crm": {
+        "title": "CRM",
+        "tagline": "Лиды, визиты, inbox",
+        "highlight1": "Воронка",
+        "highlight2": "Полевые визиты",
+        "highlight3": "Сообщения"
+      },
+      "auto": {
+        "title": "Auto service",
+        "tagline": "СТО, заказ-наряды",
+        "highlight1": "Заказ-наряды",
+        "highlight2": "Запчасти",
+        "highlight3": "Планирование постов"
+      },
+      "wholesale": {
+        "title": "Wholesale",
+        "tagline": "B2B, комплектация",
+        "highlight1": "B2B-каталог",
+        "highlight2": "Pick & pack",
+        "highlight3": "Накладные"
+      }
+    }
+  },
+  "settings": {
+    "title": "Настройки",
+    "subtitle": "Команда и подписка активной организации",
+    "workspace": "← Рабочая область",
+    "teamLink": "Команда",
+    "teamHint": "Заявки на доступ и роли",
+    "subscriptionLink": "Подписка",
+    "subscriptionHint": "План, модули, триал",
+    "team": {
+      "title": "Заявки на доступ",
+      "noPending": "Нет ожидающих заявок",
+      "approve": "Одобрить",
+      "decline": "Отклонить",
+      "loadFailed": "Ошибка загрузки",
+      "actionFailed": "Ошибка действия"
+    },
+    "subscription": {
+      "title": "Подписка",
+      "loading": "Загрузка…",
+      "plan": "План",
+      "trialDays": "Триал · {days} дн.",
+      "billingStatus": "Статус биллинга",
+      "readOnlyBanner": "Триал истёк — рабочая область только для чтения до продления.",
+      "financeModules": "Finance-модули",
+      "industryModules": "Industry-модули",
+      "hotelModules": "Hotel add-ons",
+      "managePricing": "Управление на pricing",
+      "contactSupport": "Связаться с поддержкой",
+      "trialHint": "Подключайте спутники на workspace; продление триала — в super-admin org subscription."
+    }
+  },
+  "industry": {
+    "workspace": "← Рабочая область",
+    "loading": "Загрузка…",
+    "unknownModule": "Неизвестный модуль: {vertical}",
+    "openModule": "Открыть модуль",
+    "notEntitled": "Модуль не входит в подписку",
+    "addModule": "Добавить на pricing",
+    "backWorkspace": "К рабочей области",
+    "trialExpired": "Триал истёк — продлите подписку для доступа.",
+    "renew": "Продлить подписку",
+    "envHint": "Укажите {env} для локального URL сателлита"
   },
   "terms": {
     "title": "Пользовательское соглашение",

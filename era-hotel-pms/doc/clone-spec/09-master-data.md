@@ -57,7 +57,19 @@
 
 ## 9.3 Тарифы и питание
 
-### Тип питания (meal plan)
+### Dynamic Rate Plans (BAR + derived + add-ons)
+
+Ценообразование декомпозировано на три независимых слоя (Mews/Cloudbeds-style):
+
+| Слой | Модели | Правило |
+|------|--------|---------|
+| **BASE (BAR)** | `RatePlan` (`type=BASE`) + `RoomTypeRate` | Абсолютные цены **только** в календаре `RoomTypeRate(ratePlanId, roomTypeId, date)`. Одна строка = одна ночь × тип номера. |
+| **Derived** | `RatePlan` (`type=DERIVED`, `derivedFromId`, `adjustmentMode`, `adjustmentValue`) | Цены **не хранятся** — вычисляются on-the-fly от BAR: `PERCENT` (−10 ⇒ BAR−10%) или `FIXED` (+5 ⇒ BAR+5 AZN). Деривация только от BASE (без цепочек). |
+| **Add-ons** | `AddOn` + `RatePlanAddOn` | Питание/SPA — независимые услуги с `pricingUnit` (`PER_GUEST_NIGHT`, …). Привязка к тарифу: `INCLUDED` или `OPTIONAL`. |
+
+**PricingEngine:** `quoteStay()` в `src/lib/services/pricing-engine.service.ts` — BAR → derivation → add-ons. Выход `RateQuote` **строго разделяет** `room.total` (Room Revenue, код `ROOM`) и `addOns[]` (Add-on Revenue, коды `FOOD`, `SPA`, …) для маршрутизации выручки Оркестратором.
+
+### Тип питания (meal plan) — legacy
 
 | Код | Смысл |
 |-----|-------|
@@ -66,19 +78,49 @@
 | FB | Полный пансион |
 | OB | Только номер |
 
-Цена доп. питания при апгрейде — справочник WA0063.
+`MealPlan` сохранён для обратной совместимости; целевая модальность — `AddOn` с `revenueCode=FOOD`. Цена доп. питания при апгрейде — справочник WA0063.
 
-### Тариф (rate plan)
+### Тариф (rate plan) — атрибуты
 
 | Атрибут | Примеры |
 |---------|---------|
-| Код | Medical, Refundable, Daily |
-| Отмена | До N дней, penalty % |
+| Код | BAR, OOTA-NR, CORP, Medical |
+| Тип | BASE / DERIVED |
+| Формула (derived) | −10% от BAR, +5 AZN fixed |
+| Отмена | До N дней, penalty % (`isRefundable`) |
 | Гарантия | Карта / депозит / agency |
-| Привязка к типу номера | Матрица цен |
-| Medical flag | Санаторий: лечебный пакет |
+| Medical flag | Санаторий: лечебный пакет (legacy + `RatePlanPackageLine`) |
+| Included add-ons | BB included на HB-плане |
 
 **Экраны:** WA0064, настройки бронирования WA0083–0084.
+
+> **Deprecated:** `ContractPricingRule` (Stage 24) — agency % discount/supplement заменяется derived rate plans. CRUD остаётся до миграции данных.
+
+### Bed Type / Room View (справочники)
+
+| Модель | Ключ | Файл Elektraweb |
+|--------|------|-----------------|
+| `BedType` | `code` | Bed Type.xlsx |
+| `RoomView` | `code` | Room Views.xlsx |
+
+Универсальный seed: `npm run db:seed:reference`.
+
+### Импорт Elektraweb (.xlsx)
+
+Идемпотентный upsert (`code`, `roomNumber`, `externalRef`). **Единая точка загрузки:** `/admin/import` (phased wizard, platform super-admin). Подробно: [ELEKTRAWEB-IMPORT.md](../ELEKTRAWEB-IMPORT.md).
+
+| Файл | Сущность | Ключ |
+|------|----------|------|
+| Revenue Code Definitions | `RevenueCode` | `code` |
+| Room Types / Rate Codes / Rooms | master | `code` / `roomNumber` |
+| Travel Agencies | `Agency` | `code` |
+| Product / Stock Cards | `Product` | `code` |
+| Guests / Reservations / Folios | transactional | `externalRef` |
+| Chart of Accounts | — | не импортируется (finance-core) |
+
+Порядок: справочники → room types → **BAR + bar-rates** → rate plans (DERIVED) → sales contracts → rooms → agencies/products → guests → reservations → folios.
+
+Nafta greenfield (empty DB): полный маппинг и чеклист адаптеров — [nafta/IMPORT-PRICING-MAP.md](../nafta/IMPORT-PRICING-MAP.md).
 
 ---
 

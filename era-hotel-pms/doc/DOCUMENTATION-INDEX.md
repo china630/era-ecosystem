@@ -23,6 +23,8 @@
 | [DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md) | `doc/DOCUMENTATION-INDEX.md` | umbrella | stable |
 | [UAT-SMOKE.md](UAT-SMOKE.md) | `doc/UAT-SMOKE.md` | hotel-pms | stable |
 | [ELEKTRAWEB-PARITY.md](ELEKTRAWEB-PARITY.md) | `doc/ELEKTRAWEB-PARITY.md` | hotel-pms | stable |
+| [ELEKTRAWEB-IMPORT.md](ELEKTRAWEB-IMPORT.md) | `doc/ELEKTRAWEB-IMPORT.md` | hotel-pms | stable |
+| [ELEKTRAWEB-IMPORT-UI-AUDIT.md](ELEKTRAWEB-IMPORT-UI-AUDIT.md) | `doc/ELEKTRAWEB-IMPORT-UI-AUDIT.md` | hotel-pms | stable |
 | [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) | `doc/FRONT-OFFICE-ELECTRAWEB.md` | hotel-pms | stable |
 | [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) | `doc/FRONT-OFFICE-STATUS.md` | hotel-pms | stable |
 | [GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md) | `doc/GUEST-CRM-ELECTRAWEB.md` | hotel-pms | stable |
@@ -124,6 +126,8 @@
 | `app/api/integration/*` | 18, 22, openapi erp-* |
 | `src/lib/integration/*` | 19, 22 |
 | `app/admin/stock` | 16-stock (**dev**, Nafta → ERP) |
+| `app/admin/import` | [ELEKTRAWEB-IMPORT.md](ELEKTRAWEB-IMPORT.md) Stage 26 |
+| `src/lib/import/*` | [ELEKTRAWEB-IMPORT.md](ELEKTRAWEB-IMPORT.md), [hotel-import-module.mdc](../.cursor/rules/hotel-import-module.mdc) |
 | `messages/*.json` | i18n.md |
 
 **apps/hotel-pms/README.md** (создать при M1):

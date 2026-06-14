@@ -35,6 +35,20 @@ export const QuotaSnapshotSchema = z.object({
   remaining: z.number().nullable().optional(),
 });
 
+export const SatelliteEntitlementSchema = z.object({
+  satelliteKey: z.string(),
+  trialExpiresAt: z.string().nullable(),
+  trialOverridden: z.boolean().optional(),
+  connectedAt: z.string().optional(),
+  isTrial: z.boolean().optional(),
+});
+
+export const ModuleTrialSchema = z.object({
+  moduleKey: z.string(),
+  trialExpiresAt: z.string().nullable(),
+  trialOverridden: z.boolean().optional(),
+});
+
 export const SubscriptionSnapshotSchema = z.object({
   tier: TariffTierSchema,
   activeModules: z.array(z.string()),
@@ -47,6 +61,9 @@ export const SubscriptionSnapshotSchema = z.object({
   billingStatus: z.string().optional(),
   readOnly: z.boolean().optional(),
   trialDaysLeft: z.number().nullable().optional(),
+  satelliteEntitlements: z.array(SatelliteEntitlementSchema).optional(),
+  moduleTrials: z.array(ModuleTrialSchema).optional(),
+  connectableSatellites: z.array(z.string()).optional(),
   quotas: z
     .object({
       employees: QuotaSnapshotSchema.optional(),

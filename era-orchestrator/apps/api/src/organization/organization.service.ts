@@ -218,4 +218,42 @@ export class OrganizationService {
 
     return { organizationId, ownerId: newOwnerUserId };
   }
+
+  async listDepartments(organizationId: string) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, operatingMode: true },
+    });
+    if (!org) throw new NotFoundException("Organization not found");
+    if (org.operatingMode === "DEPARTMENT") {
+      throw new BadRequestException("Department orgs have no child departments");
+    }
+
+    const [departments, endpoints] = await Promise.all([
+      this.prisma.organization.findMany({
+        where: { parentOrgId: organizationId },
+        select: {
+          id: true,
+          name: true,
+          operatingMode: true,
+          parentOrgId: true,
+          revenueRouting: true,
+          fiscalRouting: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      }),
+      this.prisma.satelliteEndpoint.findMany({
+        where: { organizationId },
+        select: {
+          satelliteKey: true,
+          baseUrl: true,
+          enabled: true,
+          updatedAt: true,
+        },
+      }),
+    ]);
+
+    return { departments, satelliteEndpoints: endpoints };
+  }
 }

@@ -1,14 +1,26 @@
 import { UnauthorizedException } from "@nestjs/common";
 
+export function extractServiceToken(
+  authorization?: string,
+  xServiceToken?: string,
+): string | undefined {
+  if (xServiceToken?.trim()) return xServiceToken.trim();
+  if (authorization?.startsWith("Bearer ")) {
+    return authorization.slice(7).trim();
+  }
+  return authorization?.trim();
+}
+
 export function assertInternalServiceToken(
   authorization: string | undefined,
   envKey = "ORCHESTRATOR_INTERNAL_SERVICE_TOKEN",
+  xServiceToken?: string,
 ): void {
-  const expected = process.env[envKey]?.trim();
+  const expected =
+    process.env[envKey]?.trim() ??
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim();
   if (!expected) return;
-  const token = authorization?.startsWith("Bearer ")
-    ? authorization.slice(7).trim()
-    : authorization?.trim();
+  const token = extractServiceToken(authorization, xServiceToken);
   if (!token || token !== expected) {
     throw new UnauthorizedException("Invalid internal service token");
   }

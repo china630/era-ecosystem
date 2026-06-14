@@ -23,6 +23,11 @@ import { NotificationModule } from "../notifications/notification.module";
 import { VacationBalanceService } from "./vacation-balance.service";
 import { IntegrationsModule } from "../integrations/integrations.module";
 import { HrCalendarService } from "./hr-calendar.service";
+import { OrchestratorModule } from "../orchestrator/orchestrator.module";
+import { HrStaffProvisioningService } from "../integration/hr-staff-provisioning.service";
+import { HrRemindersService } from "./hr-reminders.service";
+import { EmployeeDocumentsController } from "./employee-documents.controller";
+import { EmployeeDocumentsService } from "./employee-documents.service";
 
 @Module({
   imports: [
@@ -31,6 +36,7 @@ import { HrCalendarService } from "./hr-calendar.service";
     BankingModule,
     NotificationModule,
     IntegrationsModule,
+    OrchestratorModule,
   ],
   controllers: [
     EmployeesController,
@@ -39,6 +45,7 @@ import { HrCalendarService } from "./hr-calendar.service";
     AbsenceTypesController,
     OrgStructureController,
     TimesheetController,
+    EmployeeDocumentsController,
   ],
   providers: [
     EmployeesService,
@@ -53,8 +60,11 @@ import { HrCalendarService } from "./hr-calendar.service";
     DepartmentHeadScopeService,
     VacationBalanceService,
     HrCalendarService,
+    HrStaffProvisioningService,
+    HrRemindersService,
+    EmployeeDocumentsService,
     RolesGuard,
   ],
-  exports: [OrgStructureService],
+  exports: [OrgStructureService, TimesheetService],
 })
 export class HrModule {}

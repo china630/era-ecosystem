@@ -8,7 +8,6 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { ShellHeader } from "../../../components/shell-header";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { orchFetch } from "../../../lib/orch-api";
 import { useAuth } from "../../../lib/auth-context";
@@ -63,9 +62,8 @@ export default function TeamSettingsPage() {
 
   return (
     <>
-      <ShellHeader />
-      <Link href="/" className={SECONDARY_BUTTON_CLASS}>
-        {t("home")}
+      <Link href="/workspace" className={SECONDARY_BUTTON_CLASS}>
+        {t("workspace")}
       </Link>
       <h1 className="mt-4 text-xl font-semibold">{tTeam("title")}</h1>
       {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}

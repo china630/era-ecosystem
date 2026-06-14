@@ -126,8 +126,23 @@ exports.Prisma.GlobalNaturalPersonScalarFieldEnum = {
   finCipher: 'finCipher',
   fullNameCipher: 'fullNameCipher',
   phoneCipher: 'phoneCipher',
+  nationality: 'nationality',
+  personSegment: 'personSegment',
+  mergedIntoPersonId: 'mergedIntoPersonId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PersonIdentifierScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  type: 'type',
+  issuingCountry: 'issuingCountry',
+  valueCipher: 'valueCipher',
+  blindIndex: 'blindIndex',
+  trust: 'trust',
+  isPrimary: 'isPrimary',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.GlobalLegalEntityScalarFieldEnum = {
@@ -181,6 +196,26 @@ exports.Prisma.NullsOrder = {
   first: 'first',
   last: 'last'
 };
+exports.PersonSegment = exports.$Enums.PersonSegment = {
+  CITIZEN: 'CITIZEN',
+  FOREIGNER: 'FOREIGNER',
+  UNVERIFIED: 'UNVERIFIED'
+};
+
+exports.PersonIdentifierType = exports.$Enums.PersonIdentifierType = {
+  AZ_FIN: 'AZ_FIN',
+  PASSPORT: 'PASSPORT',
+  RESIDENCE_PERMIT: 'RESIDENCE_PERMIT',
+  NATIONAL_ID: 'NATIONAL_ID',
+  ERA_SURROGATE: 'ERA_SURROGATE'
+};
+
+exports.IdentifierTrust = exports.$Enums.IdentifierTrust = {
+  SELF_DECLARED: 'SELF_DECLARED',
+  DOCUMENT_SCANNED: 'DOCUMENT_SCANNED',
+  GOVERNMENT_VERIFIED: 'GOVERNMENT_VERIFIED'
+};
+
 exports.PersonAccessRequestStatus = exports.$Enums.PersonAccessRequestStatus = {
   PENDING: 'PENDING',
   GRANTED: 'GRANTED',
@@ -189,6 +224,7 @@ exports.PersonAccessRequestStatus = exports.$Enums.PersonAccessRequestStatus = {
 
 exports.Prisma.ModelName = {
   GlobalNaturalPerson: 'GlobalNaturalPerson',
+  PersonIdentifier: 'PersonIdentifier',
   GlobalLegalEntity: 'GlobalLegalEntity',
   PersonAccessRequest: 'PersonAccessRequest',
   PersonAccessGrant: 'PersonAccessGrant',

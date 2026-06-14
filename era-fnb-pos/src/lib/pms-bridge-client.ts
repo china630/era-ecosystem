@@ -69,6 +69,32 @@ export async function postRoomCharge(
   return { ok: res.ok, status: res.status, body };
 }
 
+export type GuestEntitlements = {
+  found: boolean;
+  breakfastIncluded?: boolean;
+  mealPlanCode?: string | null;
+  allInclusive?: boolean;
+};
+
+export async function fetchGuestEntitlements(input: {
+  roomNumber?: string;
+  reservationId?: string;
+}): Promise<GuestEntitlements | null> {
+  if (isPmsStubMode()) {
+    return { found: true, breakfastIncluded: true, mealPlanCode: 'BB', allInclusive: false };
+  }
+  const base = pmsBaseUrl();
+  if (!base) return null;
+  const q = new URLSearchParams();
+  if (input.roomNumber) q.set('roomNumber', input.roomNumber);
+  if (input.reservationId) q.set('reservationId', input.reservationId);
+  const res = await fetch(`${base}/api/pms/guest-entitlements?${q}`, {
+    headers: bridgeHeaders(),
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<GuestEntitlements>;
+}
+
 export async function listInHouseGuests(query?: string): Promise<InHouseGuest[]> {
   if (isPmsStubMode()) {
     if (!query) return [];
@@ -103,4 +129,50 @@ export async function reportPosShiftStatus(payload: {
     headers: bridgeHeaders(),
     body: JSON.stringify(payload),
   });
+}
+
+export type ActiveBanquetEvent = {
+  id: string;
+  eventName: string;
+  eventDate: string;
+  pax: number;
+  status: string;
+  referenceNo?: string | null;
+};
+
+export async function listActiveBanquets(): Promise<ActiveBanquetEvent[]> {
+  if (isPmsStubMode()) {
+    const today = new Date().toISOString().slice(0, 10);
+    return [
+      {
+        id: "00000000-0000-4000-8000-beo000001",
+        eventName: "Wedding reception",
+        eventDate: today,
+        pax: 120,
+        status: "CONFIRMED",
+        referenceNo: "BQ-2026-001",
+      },
+      {
+        id: "00000000-0000-4000-8000-beo000002",
+        eventName: "Corporate lunch",
+        eventDate: today,
+        pax: 45,
+        status: "CONFIRMED",
+        referenceNo: "BQ-2026-002",
+      },
+    ];
+  }
+
+  const base = pmsBaseUrl();
+  if (!base) return [];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const res = await fetch(
+    `${base}/api/banquets?status=CONFIRMED&from=${today}&to=${today}`,
+    { headers: bridgeHeaders(), cache: "no-store" },
+  );
+  if (!res.ok) return [];
+
+  const data = (await res.json()) as { events?: ActiveBanquetEvent[] };
+  return Array.isArray(data.events) ? data.events : [];
 }

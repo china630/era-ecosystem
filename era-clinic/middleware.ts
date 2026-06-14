@@ -8,11 +8,19 @@ import {
   redirectNoStore,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
+import { sessionHasClinicRole, CLINIC_ROLE } from "@/lib/clinic-roles";
 
 const COOKIE = authCookieName();
 
 function withPath(request: NextRequest) {
   return eraPathnameRequestHeaders(request.headers, request.nextUrl.pathname);
+}
+
+function roleGuardResponse(request: NextRequest, reqHeaders: Headers) {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.searchParams.set("error", "forbidden");
+  return redirectNoStore(url);
 }
 
 export async function middleware(request: NextRequest) {
@@ -61,7 +69,33 @@ export async function middleware(request: NextRequest) {
     return redirectNoStore(url);
   }
   try {
-    await verifySatelliteSession(token);
+    const session = await verifySatelliteSession(token);
+    if (
+      pathname === "/doctor" ||
+      pathname.startsWith("/doctor/")
+    ) {
+      if (
+        !sessionHasClinicRole(session.role, [
+          CLINIC_ROLE.DOCTOR,
+          CLINIC_ROLE.CLINIC_ADMIN,
+        ])
+      ) {
+        return roleGuardResponse(request, reqHeaders);
+      }
+    }
+    if (
+      pathname === "/nurse" ||
+      pathname.startsWith("/nurse/")
+    ) {
+      if (
+        !sessionHasClinicRole(session.role, [
+          CLINIC_ROLE.NURSE,
+          CLINIC_ROLE.CLINIC_ADMIN,
+        ])
+      ) {
+        return roleGuardResponse(request, reqHeaders);
+      }
+    }
     return NextResponse.next({ request: { headers: reqHeaders } });
   } catch {
     const url = request.nextUrl.clone();

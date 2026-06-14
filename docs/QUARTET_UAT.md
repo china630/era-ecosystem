@@ -2,6 +2,8 @@
 
 Product core for Nafta hospitality + F&B. Run after `docker compose up` or local dev ports.
 
+> **Nafta sanatorium (clinic + pharmacy + per-org docker):** see [NAFTA_SANATORIUM_UAT.md](./NAFTA_SANATORIUM_UAT.md).
+
 ## Prerequisites
 
 | Service | Default URL | Env |
@@ -13,7 +15,17 @@ Product core for Nafta hospitality + F&B. Run after `docker compose up` or local
 | era-hotel-pms | http://127.0.0.1:3201 | `PMS_URL` |
 | era-fnb-pos | http://127.0.0.1:3202 | `FB_URL` |
 
-Shared: `ERA_SATELLITE_ORGANIZATION_ID`, `CONTROL_PLANE_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `POS_BRIDGE_SECRET`.
+Shared: `SATELLITE_EVENT_SERVICE_TOKEN`, `POS_BRIDGE_SECRET`, `ERA_SSO_SHARED_SECRET`.
+
+**Org binding (Nafta):**
+
+| Variable | Service |
+|----------|---------|
+| `ERA_HOTEL_ORGANIZATION_ID` | hotel-pms (parent STANDALONE) |
+| `ERA_FB_ORGANIZATION_ID` | fnb-pos (DEPARTMENT) |
+| `ERA_CLINIC_ORGANIZATION_ID` | clinic (DEPARTMENT) |
+| `ERA_RETAIL_ORGANIZATION_ID` | retail-pos (optional) |
+| `ERA_SATELLITE_ORGANIZATION_ID` | legacy fallback for all |
 
 ## Quick health
 
@@ -27,7 +39,6 @@ node era-hotel-pms/scripts/test-pos-bridge.mjs
 Orchestrator / Industry launcher opens `{satellite}/sso/callback?...` (HMAC `ERA_SSO_SHARED_SECRET`).
 
 ```bash
-# Same secret on Orch API, Orch web, and each satellite
 export ERA_SSO_SHARED_SECRET=dev-sso-shared-secret
 export SSO_EMAIL=owner@demo.local
 export SSO_ORG_ID=<your-org-uuid>
@@ -35,7 +46,7 @@ export SSO_ORG_ID=<your-org-uuid>
 node scripts/sso-launch-smoke.mjs
 ```
 
-Manual: Orch web → Industry → **Open** (Hotel/FB) → lands logged in; ops staff still use `/login` locally.
+Manual: Orch web → **`/workspace`** → **Open** (Hotel/FB/Clinic) → lands logged in; ops staff still use `/login` locally.
 
 ## Track checklist
 
@@ -45,10 +56,12 @@ Manual: Orch web → Industry → **Open** (Hotel/FB) → lands logged in; ops s
 | 2 | Orch platform smoke | [UAT-SMOKE-PLATFORM.md](../era-orchestrator/doc/UAT-SMOKE-PLATFORM.md) |
 | 3 | Hotel PMS + POS bridge | [era-hotel-pms/doc/UAT-SMOKE.md](../era-hotel-pms/doc/UAT-SMOKE.md) |
 | 4 | FB pay + room charge | [era-fnb-pos/doc/UAT-SMOKE.md](../era-fnb-pos/doc/UAT-SMOKE.md) |
+| 4b | FB mixed settlement (walk-in pay / in-house room charge) | [ADR fb-mixed-settlement](./adr/fb-mixed-settlement-routing.md) |
 | 5 | FB E8 consumption event → Finance worker | FB pay with `STOCK_CONSUMPTION_ENABLED=true` |
 | 6 | Entitlement-gated platform hooks | Pay without loyalty module → no promotion row |
+| 7 | Orch `/workspace` module modal | Owner: **Modul əlavə et** → toggle satellite modules; disable shows end-of-month billing toast |
 
-**Pass:** items 1–4 green on staging; 5–6 after Track B/C deploy.
+**Pass:** items 1–4 green on staging; 5–7 after Track B/C deploy.
 
 ## CI
 

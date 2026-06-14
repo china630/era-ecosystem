@@ -7,6 +7,7 @@ import {
   handleRouteError,
 } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
+import { recordClinicAudit } from "@/lib/satellite-audit";
 
 const bodySchema = z.object({
   percent: z.number().min(0).max(100),
@@ -50,6 +51,20 @@ export async function POST(
         },
       }),
     ]);
+
+    await recordClinicAudit(
+      { userId: session.sub, request: req },
+      "Visit",
+      id,
+      "DISCOUNT",
+      {
+        percent: body.percent,
+        reason: body.reason,
+        amountBefore: currentAmount,
+        amountAfter: discountedAmount,
+        domainAuditId: audit.id,
+      },
+    );
 
     return jsonOk({ visit: updatedVisit, audit });
   } catch (err) {

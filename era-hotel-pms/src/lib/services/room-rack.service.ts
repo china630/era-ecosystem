@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
+import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 
 export type RackReservationSummary = {
   id: string;
@@ -35,6 +36,7 @@ function resolvePayStatus(balance: number, hasFolio: boolean): RackReservationSu
 
 export async function listRoomsForRack(): Promise<RackRoomDto[]> {
   const rooms = await prisma.room.findMany({
+    where: roomInventoryWhere,
     orderBy: { roomNumber: 'asc' },
     include: {
       roomType: true,

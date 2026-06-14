@@ -132,8 +132,8 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.CHANNEL_MANAGE),
     },
     {
-      href: '/admin/contract-pricing',
-      labelKey: 'contractPricing',
+      href: '/admin/contracts',
+      labelKey: 'salesContracts',
       icon: Settings,
       show: can(PERMISSIONS.MASTER_DATA_MANAGE),
     },

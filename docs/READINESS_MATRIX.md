@@ -6,7 +6,9 @@ Living snapshot of **code + DELIVERY** readiness.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
-Last updated: 2026-06-04 (era-hotel-pms Guest CRM ElectraWeb · [GUEST-CRM-ELECTRAWEB.md](../era-hotel-pms/doc/GUEST-CRM-ELECTRAWEB.md) · [FRONT-OFFICE-STATUS.md](../era-hotel-pms/doc/FRONT-OFFICE-STATUS.md))
+Last updated: 2026-06-14 (Nafta code-closure waves A–F — see [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md))
+
+> **Not yet in the matrix:** `era-bank-core` (`industry_banking`, CBS) — **PROPOSED / pre-development**, tracked in [era-bank-core/PRD.md](../era-bank-core/PRD.md) §7 (phases P0–P7) and ADR [era-bank-core.md](./adr/era-bank-core.md). Add columns/rows once P0 lands.
 
 ---
 
@@ -106,7 +108,9 @@ Commercial API lives on **era-orchestrator**; Finance web proxies via `/cp/*` ([
 | `SATELLITE_HOTEL_RESERVATION_COMPLETED` | hotel | `handleHotelReservation` | Live |
 | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | hotel | `handleHotelNightAudit` | Live |
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | hotel | `handleHotelInvoiceIssued` | Live |
-| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | hotel | `handleHotelCityLedgerSnapshot` | Live |
+| `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | hotel | `handleHotelCityLedgerSnapshot` | Live (snapshot persisted) |
+
+**Hotel backlog labels (Nafta P2):** H-BL-06 **Done (platform notify)** + **Partial (vendor STUB)**; H-BL-24 **Stub** (e-qaimə prod adapter pending).
 | `SATELLITE_RETAIL_SALE_COMPLETED` | retail | `handleRetailSale` | Live |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | retail | `handleRetailShiftClosed` | Live |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | logistics | `handleLogisticsTrip` | Live |

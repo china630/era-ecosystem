@@ -17,6 +17,7 @@ import {
 } from "../../lib/design-system";
 import { isValidFinCode, normalizeFinInput } from "../../lib/fin-code";
 import { Button } from "../../components/ui/button";
+import { HrSatelliteProvisioningFields } from "../../components/hr/HrSatelliteProvisioningFields";
 
 type JobPositionOpt = {
   id: string;
@@ -51,6 +52,8 @@ export function CreateEmployeeModal({
   const [positionId, setPositionId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
+  const [provisionedSatelliteKey, setProvisionedSatelliteKey] = useState("");
+  const [provisionedSatelliteRole, setProvisionedSatelliteRole] = useState("");
 
   const title = useMemo(() => t("employees.newTitle"), [t]);
 
@@ -98,6 +101,8 @@ export function CreateEmployeeModal({
     setPatronymic("");
     setStartDate("");
     setSalary("");
+    setProvisionedSatelliteKey("");
+    setProvisionedSatelliteRole("");
   }, [open]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -151,6 +156,10 @@ export function CreateEmployeeModal({
         const s = Number(String(contractorSocial).replace(",", "."));
         if (Number.isFinite(s) && s >= 0) body.contractorMonthlySocialAzn = s;
       }
+    }
+    if (provisionedSatelliteKey) {
+      body.provisionedSatelliteKey = provisionedSatelliteKey;
+      if (provisionedSatelliteRole) body.provisionedSatelliteRole = provisionedSatelliteRole;
     }
 
     setBusy(true);
@@ -316,6 +325,13 @@ export function CreateEmployeeModal({
                   onChange={(e) => setSalary(e.target.value)}
                 />
               </label>
+
+              <HrSatelliteProvisioningFields
+                satelliteKey={provisionedSatelliteKey}
+                satelliteRole={provisionedSatelliteRole}
+                onSatelliteKeyChange={setProvisionedSatelliteKey}
+                onSatelliteRoleChange={setProvisionedSatelliteRole}
+              />
             </div>
           </div>
 

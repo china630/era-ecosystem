@@ -93,11 +93,14 @@ services:
       WEB_PORT: "3000"
       FINANCE_CORE_URL: http://finance-core:4100
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
+      ORCHESTRATOR_INTERNAL_SERVICE_TOKEN: ${ORCHESTRATOR_INTERNAL_SERVICE_TOKEN:-dev-control-plane-token}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
       ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
+      PII_BLIND_INDEX_KEY: ${PII_BLIND_INDEX_KEY:-dev-era-pii-blind-index-key-32chars!}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
       ERA_APP_ORIGIN: ${ERA_APP_ORIGIN:-http://127.0.0.1:3000}
       ERA_API_ORIGIN: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
@@ -235,7 +238,7 @@ services:
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-legacy}
-      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_HOTEL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
     ports:
       - "3201:3201"
     depends_on:
@@ -268,7 +271,7 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
-      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_FB_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
     ports:
       - "3202:3202"
@@ -300,7 +303,7 @@ services:
       HOSTNAME: 0.0.0.0
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
-      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_RETAIL_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
     ports:
@@ -472,9 +475,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${CLINIC_DB:-era_clinic}?schema=public
       PORT: "3203"
       HOSTNAME: 0.0.0.0
+      HOTEL_PMS_URL: http://hotel-pms:3201
+      POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
-      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_SATELLITE_ORGANIZATION_ID:-}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_CLINIC_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
     ports:

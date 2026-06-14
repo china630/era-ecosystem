@@ -41,6 +41,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { SubscriptionModule } from "./subscription/subscription.module";
 import { QuotaModule } from "./quota/quota.module";
 import { PrepaidModule } from "./prepaid/prepaid.module";
+import { ProcurementModule } from "./procurement/procurement.module";
 import { ProductsModule } from "./products/products.module";
 import { StorageModule } from "./storage/storage.module";
 import { TaxModule } from "./tax/tax.module";
@@ -93,6 +94,7 @@ const useControlPlaneAuth =
     CounterpartiesModule,
     ProductsModule,
     PrepaidModule,
+    ProcurementModule,
     InventoryModule,
     FixedAssetsModule,
     MigrationModule,

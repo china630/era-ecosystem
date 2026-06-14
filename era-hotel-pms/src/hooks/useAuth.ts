@@ -10,6 +10,7 @@ export interface AuthUser {
   permissions: string[];
   organizationName?: string | null;
   organizationId?: string | null;
+  isPlatformSuperAdmin?: boolean;
 }
 
 export function useAuth() {
@@ -40,5 +41,7 @@ export function useAuth() {
     [user],
   );
 
-  return { user, loading, can, refresh };
+  const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
+
+  return { user, loading, can, isPlatformSuperAdmin, refresh };
 }

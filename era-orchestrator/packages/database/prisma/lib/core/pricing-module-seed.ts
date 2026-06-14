@@ -10,7 +10,21 @@ export type PricingModuleSeedRow = {
   sortOrder: number;
   isPremium?: boolean;
   satelliteKey?: string | null;
+  trialEligibleInTrial?: boolean;
 };
+
+const FINANCE_TRIAL_ELIGIBLE = new Set([
+  "nas",
+  "ifrs_mapping",
+  "manufacturing",
+  "fixed_assets",
+  "inventory",
+  "hr_full",
+  "audit_hub",
+  PRICING_MODULE_CASH_BANK_PRO,
+]);
+
+const INDUSTRY_TRIAL_ELIGIBLE = new Set(INDUSTRY_SATELLITE_MODULE_KEYS);
 
 const INDUSTRY_SATELLITE_SEED: ReadonlyArray<{
   key: (typeof INDUSTRY_SATELLITE_MODULE_KEYS)[number];
@@ -39,11 +53,49 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     pricePerMonth: 38,
     sortOrder: 0,
     isPremium: false,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
   },
-  { key: "inventory", name: "Warehouse", pricePerMonth: 19, sortOrder: 1 },
-  { key: "manufacturing", name: "Manufacturing", pricePerMonth: 19, sortOrder: 2 },
-  { key: "hr_full", name: "HR", pricePerMonth: 19, sortOrder: 3 },
-  { key: "ifrs_mapping", name: "IFRS", pricePerMonth: 19, sortOrder: 4 },
+  {
+    key: "nas",
+    name: "General Ledger (NAS)",
+    pricePerMonth: 0,
+    sortOrder: 0,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "inventory",
+    name: "Warehouse",
+    pricePerMonth: 19,
+    sortOrder: 1,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "manufacturing",
+    name: "Manufacturing",
+    pricePerMonth: 19,
+    sortOrder: 2,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "hr_full",
+    name: "HR",
+    pricePerMonth: 19,
+    sortOrder: 3,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "ifrs_mapping",
+    name: "IFRS",
+    pricePerMonth: 19,
+    sortOrder: 4,
+    satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
   { key: "tax_pro", name: "Tax Pro", pricePerMonth: 19, sortOrder: 10, isPremium: true },
   { key: "trade_pro", name: "Trade Pro", pricePerMonth: 19, sortOrder: 11, isPremium: true },
   { key: "audit_hub", name: "Audit Hub", pricePerMonth: 99, sortOrder: 12, isPremium: true },
@@ -103,6 +155,7 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     sortOrder: s.sortOrder,
     isPremium: false,
     satelliteKey: null as string | null,
+    trialEligibleInTrial: true,
   })),
   // Hotel PMS submodules (9-key taxonomy)
   {
@@ -196,6 +249,17 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
 ];
 
 async function ensureSatellites(prisma: PrismaClient): Promise<void> {
+  await prisma.satellite.upsert({
+    where: { key: "finance_core" },
+    create: {
+      key: "finance_core",
+      name: "Finance Core",
+      verticalSlug: "finance",
+      sortOrder: 50,
+    },
+    update: { name: "Finance Core" },
+  });
+
   const verticalByKey: Record<string, string> = {
     industry_hotel_pms: "hotel",
     industry_fnb_pos: "fnb",
@@ -223,6 +287,19 @@ async function ensureSatellites(prisma: PrismaClient): Promise<void> {
 
 function moduleSeedData(m: PricingModuleSeedRow) {
   const catalogKind = inferPricingCatalogKind(m.key);
+  let satelliteKey =
+    m.satelliteKey ?? (m.key.startsWith("hotel_") ? "industry_hotel_pms" : null);
+  if (!satelliteKey && FINANCE_TRIAL_ELIGIBLE.has(m.key)) {
+    satelliteKey = "finance_core";
+  }
+  let trialEligibleInTrial = m.trialEligibleInTrial ?? false;
+  if (!trialEligibleInTrial) {
+    if (FINANCE_TRIAL_ELIGIBLE.has(m.key)) trialEligibleInTrial = true;
+    if (INDUSTRY_TRIAL_ELIGIBLE.has(m.key as (typeof INDUSTRY_SATELLITE_MODULE_KEYS)[number])) {
+      trialEligibleInTrial = true;
+    }
+    if (m.key === "hotel_core") trialEligibleInTrial = true;
+  }
   return {
     key: m.key,
     name: m.name,
@@ -230,7 +307,8 @@ function moduleSeedData(m: PricingModuleSeedRow) {
     sortOrder: m.sortOrder,
     isPremium: m.isPremium ?? false,
     catalogKind,
-    satelliteKey: m.satelliteKey ?? (m.key.startsWith("hotel_") ? "industry_hotel_pms" : null),
+    satelliteKey,
+    trialEligibleInTrial,
   };
 }
 
@@ -249,10 +327,21 @@ export async function seedPricingModuleIfEmpty(prisma: PrismaClient): Promise<vo
 export async function ensureMissingPricingModules(prisma: PrismaClient): Promise<void> {
   await ensureSatellites(prisma);
   for (const m of PRICING_MODULE_SEED_DEFAULTS) {
-    await prisma.pricingModule.upsert({
+    const existing = await prisma.pricingModule.findUnique({
       where: { key: m.key },
-      create: moduleSeedData(m),
-      update: {},
+      select: { id: true },
     });
+    if (existing) continue;
+    try {
+      await prisma.pricingModule.create({ data: moduleSeedData(m) });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === "P2002"
+      ) {
+        continue;
+      }
+      throw e;
+    }
   }
 }

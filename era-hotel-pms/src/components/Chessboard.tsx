@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   MODAL_INPUT_CLASS,
@@ -64,6 +65,7 @@ interface Arrival {
 }
 
 export default function Chessboard() {
+  const router = useRouter();
   const { can } = useAuth();
   const t = useTranslations('chessboard');
   const tCommon = useTranslations('common');
@@ -184,7 +186,11 @@ export default function Chessboard() {
   }
 
   function openReservationCard(reservationId?: string | null) {
-    setEditReservationId(reservationId ?? null);
+    if (reservationId) {
+      router.push(`/reservations/${reservationId}`);
+      return;
+    }
+    setEditReservationId(null);
     setBookingModalOpen(true);
   }
 
