@@ -255,12 +255,25 @@ export class AdminBillingService {
    */
   async getPublicPricingSnapshot() {
     const config = await this.getBillingConfig();
-    const pricingModules = config.pricingModules.map((m) => ({
+    await this.pricing.ensurePricingModulesFromDatabase();
+    const catalogRows = await this.prisma.pricingModule.findMany({
+      orderBy: { sortOrder: "asc" },
+      select: {
+        key: true,
+        name: true,
+        pricePerMonth: true,
+        sortOrder: true,
+        isPremium: true,
+        satelliteKey: true,
+      },
+    });
+    const pricingModules = catalogRows.map((m) => ({
       key: m.key,
       name: m.name,
-      pricePerMonth: m.pricePerMonth,
+      pricePerMonth: Number(m.pricePerMonth),
       sortOrder: m.sortOrder,
       isPremium: m.isPremium,
+      satelliteKey: m.satelliteKey ?? null,
     }));
     const pricingBundles = config.pricingBundles.map((b) => ({
       name: b.name,

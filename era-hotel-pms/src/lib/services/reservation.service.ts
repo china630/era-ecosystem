@@ -2,12 +2,16 @@ import { prisma } from '@/lib/prisma';
 import { assertSanatoriumBookingAllowed } from '@/lib/integration/clinic-capacity-client';
 import { dispatchSanatoriumBookingCreated } from '@/lib/integration/guest-lifecycle-events';
 import { countNights, decimalToNumber, toDecimal } from '@/lib/decimal';
+import { assertActiveForNewUse, assertRoomInventoryAvailable } from '@/lib/master-data/retire-policy';
 import { openFoliosForReservation, postCharge } from '@/lib/services/folio.service';
 import { hasStopSellInRange } from '@/lib/services/channel.service';
 import {
   applyContractRuleToNightly,
   findApplicableContractRule,
 } from '@/lib/services/contract-pricing.service';
+import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment } from '@/lib/services/contract-allotment.service';
+import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
+import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
 
 export async function listReservations(status?: ReservationStatus, guestId?: string) {
@@ -78,48 +82,99 @@ export async function createReservation(input: {
   roomId?: string;
   sourceId?: string;
   agencyId?: string;
+  salesContractId?: string;
   checkInDate: Date;
   checkOutDate: Date;
   paymentMethod: PaymentMethod;
 }) {
-  const availability = await getAvailability(input.roomTypeId, input.checkInDate, input.checkOutDate);
-  if (availability.available < 1) throw new Error('No availability for room type');
+  let ratePlanId = input.ratePlanId;
+  let agencyId = input.agencyId;
+  let salesContractId = input.salesContractId;
+
+  if (salesContractId) {
+    const contract = await findActiveSalesContract(salesContractId, input.checkInDate);
+    if (!contract) throw new Error('Sales contract is not active for check-in date');
+    ratePlanId = contract.ratePlanId;
+    agencyId = contract.agencyId ?? agencyId;
+    await assertContractAllotmentAvailable(
+      salesContractId,
+      input.roomTypeId,
+      input.checkInDate,
+      input.checkOutDate,
+    );
+  }
+
+  const availability = salesContractId
+    ? (
+        await getAvailabilityWithContractAllotment(
+          input.roomTypeId,
+          input.checkInDate,
+          input.checkOutDate,
+          salesContractId,
+        )
+      ).available
+    : (await getAvailability(input.roomTypeId, input.checkInDate, input.checkOutDate)).available;
+  if (availability < 1) throw new Error('No availability for room type');
+
+  const roomType = await prisma.roomType.findUnique({ where: { id: input.roomTypeId } });
+  if (!roomType) throw new Error('Room type not found');
+  assertActiveForNewUse(`Room type ${roomType.code}`, roomType.active);
 
   if (input.roomId) {
     const room = await prisma.room.findUnique({ where: { id: input.roomId } });
     if (!room) throw new Error('Room not found');
+    assertRoomInventoryAvailable(room);
     if (room.roomTypeId !== input.roomTypeId) throw new Error('Room does not match room type');
     if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
       throw new Error('Room is not available for booking');
     }
   }
 
-  const ratePlan = await prisma.ratePlan.findUnique({ where: { id: input.ratePlanId } });
+  const ratePlan = await prisma.ratePlan.findUnique({ where: { id: ratePlanId } });
   if (!ratePlan) throw new Error('Rate plan not found');
+  assertActiveForNewUse(`Rate plan ${ratePlan.code}`, ratePlan.active);
 
-  const nights = countNights(input.checkInDate, input.checkOutDate);
-  const baseNightly = decimalToNumber(ratePlan.pricePerNight);
-  const rule = await findApplicableContractRule(
-    input.ratePlanId,
-    input.checkInDate,
-    input.agencyId,
-  );
-  const { nightly } = applyContractRuleToNightly(baseNightly, rule);
-  const totalAmount = toDecimal(nightly * nights);
+  if (agencyId) {
+    const agency = await prisma.agency.findUnique({ where: { id: agencyId } });
+    if (!agency) throw new Error('Agency not found');
+    assertActiveForNewUse(`Agency ${agency.code}`, agency.active);
+  }
+
+  let totalAmount = toDecimal(0);
+  try {
+    const quote = await quoteReservationStay({
+      ratePlanId,
+      roomTypeId: input.roomTypeId,
+      checkInDate: input.checkInDate,
+      checkOutDate: input.checkOutDate,
+      agencyId,
+    });
+    totalAmount = toDecimal(quote.totalAmount);
+  } catch {
+    const nights = countNights(input.checkInDate, input.checkOutDate);
+    const baseNightly = decimalToNumber(ratePlan.pricePerNight);
+    const rule = await findApplicableContractRule(ratePlanId, input.checkInDate, agencyId);
+    const { nightly } = applyContractRuleToNightly(baseNightly, rule);
+    totalAmount = toDecimal(nightly * nights);
+  }
 
   const reservation = await prisma.reservation.create({
     data: {
       roomTypeId: input.roomTypeId,
       guestId: input.guestId,
-      ratePlanId: input.ratePlanId,
+      ratePlanId,
       mealPlanId: input.mealPlanId,
       roomId: input.roomId,
       sourceId: input.sourceId,
-      agencyId: input.agencyId,
+      agencyId,
+      salesContractId,
       checkInDate: input.checkInDate,
       checkOutDate: input.checkOutDate,
       paymentMethod: input.paymentMethod,
       totalAmount,
+      contractRef: salesContractId
+        ? (await prisma.salesContract.findUnique({ where: { id: salesContractId }, select: { code: true } }))?.code
+        : undefined,
       status: 'CONFIRMED',
     },
     include: { room: true, roomType: true, guest: true, ratePlan: true, agency: true },
@@ -177,6 +232,9 @@ export async function listArrivals(date: Date) {
 }
 
 export async function checkInReservation(id: string) {
+  const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+  await assertBusinessDayOpenForPosting();
+
   const reservation = await getReservation(id);
   if (!['CONFIRMED', 'OPTION'].includes(reservation.status)) {
     throw new Error('Check-in is only allowed for CONFIRMED or OPTION reservations');
@@ -208,6 +266,12 @@ export async function checkInReservation(id: string) {
 
     return updated;
   }).then(async (updated) => {
+    const { applyHeldDepositsOnCheckIn } = await import('@/lib/services/folio-deposit.service');
+    await applyHeldDepositsOnCheckIn(id);
+
+    const { postEarlyCheckInFee } = await import('@/lib/services/early-late-fees.service');
+    void postEarlyCheckInFee(id).catch((e) => console.error('Early check-in fee failed', e));
+
     if (!reservation.ratePlan.medicalFlag && revenueRoom) {
       const nights = countNights(reservation.checkInDate, reservation.checkOutDate);
       await postCharge({
@@ -228,10 +292,25 @@ export async function checkInReservation(id: string) {
       reservationId: id,
       roomNumber: updated.room?.roomNumber ?? undefined,
       programCode: updated.ratePlan.medicalFlag ? updated.ratePlan.code : undefined,
+      globalPersonId: updated.guest.globalPersonId ?? undefined,
       guestName: updated.guest.fullName,
       checkInDate: reservation.checkInDate.toISOString(),
       checkOutDate: reservation.checkOutDate.toISOString(),
     }).catch((e) => console.error('Guest lifecycle check-in failed', e));
+    if (updated.ratePlan.medicalFlag) {
+      const { isClinicHttpBridgeEnabled, notifyClinicCheckIn } = await import(
+        '@/lib/integration/clinic-check-in-bridge'
+      );
+      if (isClinicHttpBridgeEnabled()) {
+        void notifyClinicCheckIn({
+          reservationId: id,
+          guestName: updated.guest.fullName,
+          passportNumber: updated.guest.passportNumber ?? undefined,
+          phone: updated.guest.phone ?? undefined,
+          globalPersonId: updated.guest.globalPersonId,
+        }).catch((e) => console.error('Clinic HTTP check-in bridge failed', e));
+      }
+    }
     if (
       process.env.ERA_DOOR_LOCK_ENABLED === '1' &&
       updated.room?.roomNumber
@@ -352,7 +431,7 @@ export async function updateReservationSchedule(
   const nights = countNights(newCheckIn, newCheckOut);
   const totalAmount = toDecimal(decimalToNumber(reservation.ratePlan.pricePerNight) * nights);
 
-  return prisma.reservation.update({
+  const updated = await prisma.reservation.update({
     where: { id },
     data: {
       checkInDate: newCheckIn,
@@ -362,6 +441,16 @@ export async function updateReservationSchedule(
     },
     include: { room: true, guest: true, ratePlan: true, roomType: true },
   });
+
+  if (
+    input.checkOutDate &&
+    input.checkOutDate.getTime() !== reservation.checkOutDate.getTime()
+  ) {
+    const { recalcReservationDailyRates } = await import('./reservation-pricing.service');
+    await recalcReservationDailyRates(id).catch(() => undefined);
+  }
+
+  return updated;
 }
 
 export async function addQuickCharge(

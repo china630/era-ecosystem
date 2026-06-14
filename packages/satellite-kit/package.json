@@ -18,6 +18,10 @@
       "types": "./dist/platform/industry-modules.d.ts",
       "default": "./dist/platform/industry-modules.js"
     },
+    "./platform/workspace-system-catalog": {
+      "types": "./dist/platform/workspace-system-catalog.d.ts",
+      "default": "./dist/platform/workspace-system-catalog.js"
+    },
     "./auth/sso-launch": {
       "types": "./dist/auth/sso-launch.d.ts",
       "default": "./dist/auth/sso-launch.js"

@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber } from '@/lib/decimal';
 import { folioBalance } from '@/lib/services/folio.service';
+import { resolveCreditLimitAzn } from '@/lib/services/guest-dedup.service';
 
 export type RoomChargeIdempotencyInput = {
   reservationId?: string;
@@ -144,6 +145,7 @@ export async function getFolioSummaryForPos(reservationId: string) {
 
   const balance = folioBalance(guestFolio.charges, guestFolio.payments);
   const naRunning = await isNightAuditRunning();
+  const creditLimit = await resolveCreditLimitAzn(res.id);
 
   let allowRoomCharge = res.status === 'IN_HOUSE' && guestFolio.status === 'OPEN';
   let denyReason: string | null = null;
@@ -157,6 +159,9 @@ export async function getFolioSummaryForPos(reservationId: string) {
   } else if (naRunning) {
     allowRoomCharge = false;
     denyReason = 'NIGHT_AUDIT_RUNNING';
+  } else if (creditLimit != null && balance >= creditLimit) {
+    allowRoomCharge = false;
+    denyReason = 'CREDIT_LIMIT';
   }
 
   return {
@@ -166,8 +171,22 @@ export async function getFolioSummaryForPos(reservationId: string) {
     balance,
     allowRoomCharge,
     denyReason,
-    creditLimit: null,
+    creditLimit,
   };
+}
+
+export async function validateRoomCharge(
+  reservationId: string,
+  chargeAmount: number,
+): Promise<{ allowed: boolean; denyReason?: string }> {
+  const summary = await getFolioSummaryForPos(reservationId);
+  if (!summary.allowRoomCharge) {
+    return { allowed: false, denyReason: summary.denyReason ?? 'DENIED' };
+  }
+  if (summary.creditLimit != null && summary.balance + chargeAmount > summary.creditLimit) {
+    return { allowed: false, denyReason: 'CREDIT_LIMIT' };
+  }
+  return { allowed: true };
 }
 
 export async function getPosShiftStatus() {

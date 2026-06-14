@@ -5,4 +5,5 @@ export type SatelliteFanoutJobPayload = {
   organizationId: string;
   satelliteKey: string;
   event: Record<string, unknown>;
+  path?: string;
 };

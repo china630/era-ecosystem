@@ -96,6 +96,23 @@ async function main() {
     skipDuplicates: true,
   });
 
+  await prisma.lisFileProfile.upsert({
+    where: { name: "default-csv" },
+    update: {},
+    create: {
+      name: "default-csv",
+      format: "CSV",
+      delimiter: ",",
+      columnMapping: JSON.stringify({
+        testCode: "testCode",
+        analyte: "analyte",
+        value: "value",
+        refMin: "refMin",
+        refMax: "refMax",
+      }),
+    },
+  });
+
   console.log("Clinic vNext seed OK", { usg: usg.code });
 }
 

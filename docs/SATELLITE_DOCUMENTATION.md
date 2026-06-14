@@ -31,6 +31,9 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | ERA Data Hub (DaaS) ADR | [era-data-hub.md](./adr/era-data-hub.md) |
 | ERA Data Hub delivery | [era-data-hub/doc/DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) |
 | CP ↔ Finance handoff (ADR) | [cp-finance-handoff.md](./adr/cp-finance-handoff.md) |
+| Bank Core (CBS) ADR | [era-bank-core.md](./adr/era-bank-core.md) — headless engine + `era-bank` satellite (D9) |
+| Bank engine spec | [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) |
+| Bank satellite spec | [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) (`industry_banking`) |
 
 ## Per-satellite layout
 
@@ -176,3 +179,5 @@ UI: [`@era/satellite-kit/ui`](../packages/satellite-kit/ui) (DESIGN.md tokens, P
 | era-auto-service | [PRD](../era-auto-service/PRD.md) | [DELIVERY-AUTO](../era-auto-service/doc/DELIVERY-AUTO.md) | 3208 | auto-service.era-365.online |
 | era-wholesale | [PRD](../era-wholesale/PRD.md) | [DELIVERY-WHOLESALE](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 3209 | wholesale.era-365.online |
 | era-clinic | [PRD](../era-clinic/PRD.md) | [DELIVERY-CLINIC](../era-clinic/doc/DELIVERY-CLINIC.md) | 3203 | clinic.era-365.online |
+
+**Hotel Elektraweb migration (Stage 26):** [ELEKTRAWEB-IMPORT.md](../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md) · ADR [hotel-elektraweb-import.md](./adr/hotel-elektraweb-import.md)

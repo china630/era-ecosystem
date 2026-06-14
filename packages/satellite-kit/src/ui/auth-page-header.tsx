@@ -11,13 +11,11 @@ export function AuthPageHeader({
   localeControl: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-center justify-between gap-4">
-      <h1 className="min-w-0 flex-1 text-2xl font-semibold leading-snug text-[#34495E]">
+    <div className="mb-6 flex items-center justify-between gap-3">
+      <h1 className="min-w-0 flex-1 text-2xl font-semibold leading-tight text-[#34495E]">
         {title}
       </h1>
-      <div className="flex shrink-0 items-center self-start pt-0.5">
-        {localeControl}
-      </div>
+      <div className="flex shrink-0 items-center">{localeControl}</div>
     </div>
   );
 }

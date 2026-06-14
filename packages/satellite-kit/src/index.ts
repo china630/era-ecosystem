@@ -121,7 +121,10 @@ export {
   mdmHealthCheck,
   lookupGlobalPersonByFin,
   lookupLegalEntityByVoen,
+  resolvePersonIdentity,
+  mergePersonRecords,
   type MdmLookupOptions,
+  type PersonIdentityInput,
 } from "./integration/mdm-lookup.client";
 export {
   resolveGlobalPerson,
@@ -175,3 +178,19 @@ export {
   type IndustryModuleSlug,
   type SubscriptionModulesSnapshot,
 } from "./platform/industry-modules";
+export {
+  SANATORIUM_SYSTEM_KEYS,
+  WORKSPACE_SYSTEMS,
+  type WorkspaceSystemKey,
+  type WorkspaceSystemMeta,
+} from "./platform/workspace-system-catalog";
+export {
+  auditMutation,
+  auditIntegrityHash,
+  buildAuditChangesJson,
+  recordSatelliteAudit,
+  redactAuditChanges,
+  type MutationAuditContext,
+  type SatelliteAuditInput,
+  type SatelliteAuditWriter,
+} from "./audit/satellite-audit";

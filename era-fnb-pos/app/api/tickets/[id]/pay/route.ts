@@ -4,8 +4,12 @@ import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
-import { fiscalize } from "@era/fiscal";
 import { dispatchStockConsumptionIfEnabled } from "@/lib/stock-consumption";
+import {
+  payBlockedReason,
+  resolveTicketSettlement,
+  shouldFiscalizeAtPos,
+} from "@/lib/billing-router";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 const paySchema = z.object({
@@ -43,12 +47,39 @@ export async function POST(
   const amount = body.amount ?? Number(ticket.totalAzn);
   const organizationId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? "";
 
-  const fiscal = await fiscalize({
-    documentRef: ticket.id,
-    amount,
-    paymentMethod: body.method,
-    outletCode: ticket.outlet.code,
-  });
+  const settlement = await resolveTicketSettlement(ticket);
+  const payBlock = payBlockedReason(settlement);
+  if (payBlock) {
+    return NextResponse.json({ error: payBlock }, { status: 400 });
+  }
+
+  const { fiscalizeForSatellite, isFiscalPaymentMethod, isFiscalSkipped } =
+    await import("@era/satellite-kit");
+
+  let fiscal: {
+    receiptId?: string | null;
+    qrPayload?: string | null;
+    driver?: string | null;
+    skipped?: boolean;
+  } = { skipped: true };
+  if (isFiscalPaymentMethod(body.method) && shouldFiscalizeAtPos(settlement)) {
+    const outcome = await fiscalizeForSatellite(
+      {
+        documentRef: ticket.id,
+        amount,
+        paymentMethod: body.method,
+        outletCode: ticket.outlet.code,
+      },
+      organizationId,
+    );
+    fiscal = isFiscalSkipped(outcome)
+      ? { skipped: true }
+      : {
+          receiptId: outcome.receiptId ?? null,
+          qrPayload: outcome.qrPayload ?? null,
+          driver: outcome.driver ?? null,
+        };
+  }
 
   await prisma.ticket.update({
     where: { id },

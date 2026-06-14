@@ -13,6 +13,8 @@ export type PublicPricingModule = {
   name: string;
   pricePerMonth: number;
   sortOrder: number;
+  satelliteKey?: string | null;
+  isPremium?: boolean;
 };
 
 export type PublicPricingBundle = {

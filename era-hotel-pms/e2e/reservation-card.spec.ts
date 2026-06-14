@@ -11,6 +11,8 @@ test.describe('Reservation card FO parity', () => {
     await expect(page.getByText('101').first()).toBeVisible({ timeout: 20000 });
     await expect(page.getByLabel(/agency|agentlik|агентство/i).first()).toBeVisible();
     await expect(page.getByLabel(/payment status|ödəniş|оплат/i).first()).toBeVisible();
+    await expect(page.getByText(/inspected only|yalnız yoxlan|только проверен/i).first()).toBeVisible();
+    await expect(page.getByText(/out of order|yalnız ooo|только ooo/i).first()).toBeVisible();
   });
 
   test('open reservation card from list and see tabs', async ({ page }) => {

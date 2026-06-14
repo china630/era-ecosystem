@@ -1,7 +1,24 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { quoteBookingRate } from '@/lib/services/contract-pricing.service';
+import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { postCharge } from '@/lib/services/folio.service';
+import {
+  computeChildNightlyAddon,
+  reservationChildGroups,
+  type ChildPricingRow,
+} from '@/lib/services/pricing-engine-core';
+
+async function loadChildPricingMatrix(): Promise<ChildPricingRow[]> {
+  const rows = await prisma.childPricingMatrix.findMany({
+    where: { active: true },
+    orderBy: { ageFrom: 'asc' },
+  });
+  return rows.map((row) => ({
+    ageFrom: row.ageFrom,
+    ageTo: row.ageTo,
+    discountPercent: decimalToNumber(row.discountPercent),
+  }));
+}
 
 function dateOnly(d: Date): Date {
   const x = new Date(d);
@@ -23,23 +40,41 @@ function eachNight(from: Date, to: Date): Date[] {
 export async function recalcReservationDailyRates(reservationId: string) {
   const res = await prisma.reservation.findUnique({
     where: { id: reservationId },
-    include: { ratePlan: true, dailyRates: true },
+    include: { ratePlan: true, dailyRates: true, room: true },
   });
   if (!res) throw new Error('Reservation not found');
   if (res.isLocked) throw new Error('Reservation is locked');
 
-  const quote = await quoteBookingRate({
+  const roomTypeId = res.room?.roomTypeId ?? res.ratePlan.roomTypeId;
+  if (!roomTypeId) throw new Error('Room type required for pricing recalc');
+
+  const quoteResult = await quoteReservationStay({
     ratePlanId: res.ratePlanId,
+    roomTypeId,
     checkInDate: res.checkInDate,
     checkOutDate: res.checkOutDate,
     agencyId: res.agencyId ?? undefined,
+    guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
+  });
+
+  const childMatrix = await loadChildPricingMatrix();
+  const childGroups = reservationChildGroups({
+    children1_0: res.children1_0,
+    children5_2: res.children5_2,
+    children11_6: res.children11_6,
   });
 
   const nights = eachNight(res.checkInDate, res.checkOutDate);
-  const nightly =
+  const nightlyByDate = new Map(quoteResult.nightlyRates.map((n) => [n.date, n.amount]));
+  const adultNightly =
     res.useManualRate && res.manualDailyRate != null
       ? decimalToNumber(res.manualDailyRate)
-      : quote.adjustedNightly;
+      : quoteResult.adultNightly;
+
+  const childAddonNightly = decimalToNumber(
+    computeChildNightlyAddon(adultNightly, childGroups, childMatrix),
+  );
+  const nightly = adultNightly + childAddonNightly;
 
   const discountPct = res.discountActive ? 0 : null;
   const rows: Array<{
@@ -64,11 +99,14 @@ export async function recalcReservationDailyRates(reservationId: string) {
         discountPct: existing.discountPct ? decimalToNumber(existing.discountPct) : null,
       });
     } else {
+      const dateKey = night.toISOString().slice(0, 10);
+      const barNight = nightlyByDate.get(dateKey);
+      const baseAmount = (barNight ?? adultNightly) + childAddonNightly;
       rows.push({
         stayDate: night,
-        amount: nightly,
+        amount: baseAmount,
         manualFlag: false,
-        currencyCode: 'AZN',
+        currencyCode: quoteResult.currency,
         fixPrice: res.useManualRate,
         discountPct,
       });
@@ -99,7 +137,9 @@ export async function recalcReservationDailyRates(reservationId: string) {
   return {
     dailyRates: rows,
     totalAmount: rows.reduce((s, r) => s + r.amount, 0),
-    quote,
+    quote: quoteResult,
+    childAddonNightly,
+    adultNightly,
   };
 }
 

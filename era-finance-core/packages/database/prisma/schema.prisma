@@ -91,6 +91,7 @@ model Organization {
   cashFlowItems                CashFlowItem[]
   cashOrders                   CashOrder[]
   counterparties               Counterparty[]
+  agencyCityLedgerSnapshots    AgencyCityLedgerSnapshot[]
   departments                  Department[]
   bankAccountsOrg              OrganizationBankAccount[]
   digitalSignatureLogs         DigitalSignatureLog[]
@@ -145,6 +146,10 @@ model Organization {
   approvalPolicies             ApprovalPolicy[]
   approvalRequests             ApprovalRequest[]
   prepaidExpenses              PrepaidExpense[]
+  purchaseRequests             PurchaseRequest[]
+  supplierScorecards           SupplierScorecard[]
+  supplierRatings              SupplierRating[]
+  employeeDocuments            EmployeeDocument[]
   psaProjects                  PsaProject[]
   contracts                    Contract[]
   budgetYears                  BudgetYear[]
@@ -548,6 +553,7 @@ model Department {
   transactions    Transaction[]
   psaProjects     PsaProject[]
   budgetLines     BudgetLine[]
+  purchaseRequests PurchaseRequest[]
   deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?       @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?       @map("deleted_reason")
@@ -1190,8 +1196,21 @@ model Employee {
   id                         String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId             String                   @map("organization_id") @db.Uuid
   /// *
-  ///    * ФИН, ровно 7 символов (валидация в API)
-  finCode                    String                   @map("fin_code")
+  ///    * ФИН, ровно 7 символов (валидация в API); optional for foreign employees pending FIN.
+  finCode                    String?                  @map("fin_code")
+  /// MDM canonical person id (orchestrator GlobalNaturalPerson).
+  globalPersonId             String?                  @map("global_person_id") @db.Uuid
+  taxResidencyStatus         TaxResidencyStatus       @default(RESIDENT) @map("tax_residency_status")
+  nationality                String?                  @default("AZ")
+  passportNumberCipher       String?                  @map("passport_number_cipher")
+  passportBlindIndex         String?                  @map("passport_blind_index")
+  issuingCountry             String?                  @map("issuing_country")
+  workPermitNumber           String?                  @map("work_permit_number")
+  /// False when employee has no FIN — ƏMAS sync blocked until convert-to-FIN.
+  emasEligible               Boolean                  @default(true) @map("emas_eligible")
+  /// Satellite operational access provisioning (finance → satellite bus).
+  provisionedSatelliteKey    String?                  @map("provisioned_satellite_key")
+  provisionedSatelliteRole   String?                  @map("provisioned_satellite_role")
   finCodeCipher              String?                  @map("fin_code_cipher")
   finCodeBlindIndex          String?                  @map("fin_code_blind_index")
   firstName                  String                   @map("first_name")
@@ -1202,6 +1221,8 @@ model Employee {
   /// *
   ///    * Дата выхода на работу (миграционная/кадровая точка отсчёта).
   hireDate                   DateTime                 @map("hire_date") @db.Date
+  dateOfBirth                DateTime?                @map("date_of_birth") @db.Date
+  contractEndDate            DateTime?                @map("contract_end_date") @db.Date
   /// *
   ///    * Оклад gross (AZN), частный ненефтяной сектор
   salary                     Decimal                  @map("salary") @db.Decimal(19, 4)
@@ -1261,6 +1282,7 @@ model Employee {
   inventoryAuditsResponsible InventoryAudit[]       @relation("InventoryAuditResponsible")
   inventoryAuditLinesAccountable InventoryAuditLine[] @relation("InventoryAuditLineAccountable")
   psaTimeEntries                 PsaTimeEntry[]
+  employeeDocuments              EmployeeDocument[]
 
   @@unique([organizationId, finCodeBlindIndex], map: "employees_org_fin_blind_uidx")
   @@index([positionId])
@@ -1512,6 +1534,10 @@ model User {
   auditEngagementInvitesSent      AuditEngagementInvite[]    @relation("AuditEngagementInviteInviter")
   auditEngagementInvitesAccepted  AuditEngagementInvite[]    @relation("AuditEngagementInviteAcceptor")
   ownedPartners                   Partner[]                  @relation("PartnerOwnerUser")
+  purchaseRequestsRequested       PurchaseRequest[]          @relation("PurchaseRequestRequester")
+  purchaseRequestApprovals        PurchaseRequestApproval[]  @relation("PurchaseRequestApprover")
+  employeeDocumentsUploaded       EmployeeDocument[]         @relation("EmployeeDocumentUploader")
+  supplierRatingsGiven            SupplierRating[]           @relation("SupplierRatingAuthor")
 
   @@index([defaultWarehouseId])
   @@map("users")
@@ -1896,6 +1922,164 @@ model PrepaidExpenseSchedule {
   @@unique([prepaidExpenseId, period])
   @@index([prepaidExpenseId, period])
   @@map("prepaid_expense_schedules")
+}
+
+enum PurchaseRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  RFQ
+  ORDERED
+  CLOSED
+}
+
+enum PurchaseRequestApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
+model PurchaseRequest {
+  id                      String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId          String                  @map("organization_id") @db.Uuid
+  departmentId            String?                 @map("department_id") @db.Uuid
+  requesterUserId         String                  @map("requester_user_id") @db.Uuid
+  number                  String
+  title                   String
+  description             String?
+  status                  PurchaseRequestStatus   @default(DRAFT)
+  neededByDate            DateTime?               @map("needed_by_date") @db.Date
+  preferredCounterpartyId String?                 @map("preferred_counterparty_id") @db.Uuid
+  purchaseTransactionId   String?                 @unique @map("purchase_transaction_id") @db.Uuid
+  submittedAt             DateTime?               @map("submitted_at") @db.Timestamptz(6)
+  approvedAt              DateTime?               @map("approved_at") @db.Timestamptz(6)
+  closedAt                DateTime?               @map("closed_at") @db.Timestamptz(6)
+  createdAt               DateTime                @default(now()) @map("created_at")
+  updatedAt               DateTime                @updatedAt @map("updated_at")
+  organization            Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department              Department?             @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  requesterUser           User                    @relation("PurchaseRequestRequester", fields: [requesterUserId], references: [id], onDelete: Cascade)
+  preferredCounterparty   Counterparty?           @relation("PurchaseRequestPreferredSupplier", fields: [preferredCounterpartyId], references: [id], onDelete: SetNull)
+  purchaseTransaction     Transaction?            @relation("PurchaseRequestTransaction", fields: [purchaseTransactionId], references: [id], onDelete: SetNull)
+  lines                   PurchaseRequestLine[]
+  approvals               PurchaseRequestApproval[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status, createdAt(sort: Desc)])
+  @@index([organizationId, departmentId])
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestLine {
+  id                String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  purchaseRequestId String          @map("purchase_request_id") @db.Uuid
+  lineNo            Int             @map("line_no")
+  description       String
+  quantity          Decimal?        @db.Decimal(19, 4)
+  unit              String?
+  unitPrice         Decimal?        @map("unit_price") @db.Decimal(19, 4)
+  amount            Decimal?        @db.Decimal(19, 4)
+  productId         String?         @map("product_id") @db.Uuid
+  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  product           Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@unique([purchaseRequestId, lineNo])
+  @@index([purchaseRequestId, lineNo])
+  @@map("purchase_request_lines")
+}
+
+model PurchaseRequestApproval {
+  id                String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  purchaseRequestId String                          @map("purchase_request_id") @db.Uuid
+  approverUserId    String                          @map("approver_user_id") @db.Uuid
+  decision          PurchaseRequestApprovalDecision
+  comment           String?
+  decidedAt         DateTime                        @default(now()) @map("decided_at") @db.Timestamptz(6)
+  purchaseRequest   PurchaseRequest                 @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  approverUser      User                            @relation("PurchaseRequestApprover", fields: [approverUserId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseRequestId, decidedAt(sort: Desc)])
+  @@map("purchase_request_approvals")
+}
+
+model SupplierScorecard {
+  id             String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                      @map("organization_id") @db.Uuid
+  counterpartyId String                      @map("counterparty_id") @db.Uuid
+  name           String
+  periodLabel    String?                     @map("period_label")
+  notes          String?
+  createdAt      DateTime                    @default(now()) @map("created_at")
+  updatedAt      DateTime                    @updatedAt @map("updated_at")
+  organization   Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty                @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+  criteria       SupplierScorecardCriterion[]
+  ratings        SupplierRating[]
+
+  @@index([organizationId, counterpartyId, createdAt(sort: Desc)])
+  @@map("supplier_scorecards")
+}
+
+model SupplierScorecardCriterion {
+  id          String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  scorecardId String            @map("scorecard_id") @db.Uuid
+  label       String
+  weight      Decimal           @default(1) @db.Decimal(8, 2)
+  sortOrder   Int               @default(0) @map("sort_order")
+  scorecard   SupplierScorecard @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  ratings     SupplierRating[]
+
+  @@index([scorecardId, sortOrder])
+  @@map("supplier_scorecard_criteria")
+}
+
+model SupplierRating {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  counterpartyId String                     @map("counterparty_id") @db.Uuid
+  scorecardId    String                     @map("scorecard_id") @db.Uuid
+  criterionId    String                     @map("criterion_id") @db.Uuid
+  score          Int
+  periodLabel    String?                    @map("period_label")
+  notes          String?
+  ratedByUserId  String                     @map("rated_by_user_id") @db.Uuid
+  ratedAt        DateTime                   @default(now()) @map("rated_at") @db.Timestamptz(6)
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty               @relation(fields: [counterpartyId], references: [id], onDelete: Cascade)
+  scorecard      SupplierScorecard          @relation(fields: [scorecardId], references: [id], onDelete: Cascade)
+  criterion      SupplierScorecardCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  ratedByUser    User                       @relation("SupplierRatingAuthor", fields: [ratedByUserId], references: [id], onDelete: Cascade)
+
+  @@unique([scorecardId, criterionId, periodLabel])
+  @@index([organizationId, counterpartyId, ratedAt(sort: Desc)])
+  @@map("supplier_ratings")
+}
+
+enum EmployeeDocumentKind {
+  CONTRACT
+  ID_DOCUMENT
+  MEDICAL
+  EDUCATION
+  TAX
+  OTHER
+}
+
+model EmployeeDocument {
+  id                String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String               @map("organization_id") @db.Uuid
+  employeeId        String               @map("employee_id") @db.Uuid
+  kind              EmployeeDocumentKind
+  storageKey        String               @map("storage_key")
+  fileName          String               @map("file_name")
+  contentType       String?              @map("content_type")
+  fileSizeBytes     BigInt?              @map("file_size_bytes")
+  uploadedByUserId  String               @map("uploaded_by_user_id") @db.Uuid
+  createdAt         DateTime             @default(now()) @map("created_at")
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee          Employee             @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  uploadedByUser    User                 @relation("EmployeeDocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, employeeId, createdAt(sort: Desc)])
+  @@map("employee_documents")
 }
 
 enum ProjectStatus {
@@ -2363,6 +2547,7 @@ model Transaction {
   customsDeclarations          CustomsDeclaration[]
   inventoryAuditsPosted        InventoryAudit[]         @relation("InventoryAuditPosting")
   prepaidSchedulesPosted       PrepaidExpenseSchedule[]
+  purchaseRequestOrdered       PurchaseRequest?         @relation("PurchaseRequestTransaction")
   manufacturingReleasesFg      ManufacturingRelease[]   @relation("MfgReleaseFgTransaction")
   manufacturingOrdersWip       ManufacturingOrder[]     @relation("MfgOrderWipTransaction")
   overheadAllocationsRelease   OverheadAllocation[]     @relation("OverheadAllocReleaseTransaction")
@@ -2432,8 +2617,12 @@ model Counterparty {
   prepaidExpenses PrepaidExpense[]
   psaProjects                     PsaProject[]
   contracts                       Contract[]
+  purchaseRequestsPreferred       PurchaseRequest[]    @relation("PurchaseRequestPreferredSupplier")
+  supplierScorecards              SupplierScorecard[]
+  supplierRatings                 SupplierRating[]
   customsDeclarationsAsSender     CustomsDeclaration[] @relation("CustomsDeclarationSender")
   customsDeclarationsAsReceiver CustomsDeclaration[] @relation("CustomsDeclarationReceiver")
+  agencyCityLedgerSnapshots     AgencyCityLedgerSnapshot[]
   deletedAt                       DateTime?            @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId                 String?              @map("deleted_by_user_id") @db.Uuid
   deletedReason                   String?              @map("deleted_reason")
@@ -2443,6 +2632,28 @@ model Counterparty {
   @@index([globalId])
   @@index([organizationId, deletedAt], map: "counterparties_org_deleted_at_idx")
   @@map("counterparties")
+}
+
+/// Hotel agency city-ledger snapshot ingested from `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT`.
+model AgencyCityLedgerSnapshot {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  hotelAgencyId  String       @map("hotel_agency_id")
+  agencyCode     String       @map("agency_code")
+  asOfDate       String       @map("as_of_date")
+  balance        Decimal      @db.Decimal(18, 2)
+  periodCharges  Decimal      @map("period_charges") @db.Decimal(18, 2)
+  periodPayments Decimal      @map("period_payments") @db.Decimal(18, 2)
+  currency       String       @default("AZN")
+  correlationId  String       @map("correlation_id")
+  counterpartyId String?      @map("counterparty_id") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty? @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, hotelAgencyId, asOfDate], map: "agency_cl_snapshots_org_agency_date_idx")
+  @@index([organizationId, counterpartyId], map: "agency_cl_snapshots_org_cp_idx")
+  @@map("agency_city_ledger_snapshots")
 }
 
 model CounterpartyBankAccount {
@@ -2515,6 +2726,7 @@ model Product {
   recipeFinished           ProductRecipe?            @relation("RecipeFinishedProduct")
   manufacturingReleases    ManufacturingRelease[]
   manufacturingOrderLines    ManufacturingOrderLine[]
+  purchaseRequestLines       PurchaseRequestLine[]
   organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   unitOfMeasure            UnitOfMeasure?            @relation(fields: [unitOfMeasureCode], references: [code], onDelete: SetNull)
   stockItems               StockItem[]
@@ -3813,6 +4025,11 @@ enum SalaryPayoutFormat {
 enum EmployeeKind {
   EMPLOYEE
   CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
 }
 
 enum EmployeeEmploymentStatus {

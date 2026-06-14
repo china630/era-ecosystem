@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
-import { APP_SHELL_CLASS, SatelliteRootChrome } from "@era/satellite-kit/ui";
+import { APP_SHELL_CLASS } from "@era/satellite-kit/ui";
 import { AppProviders } from "../components/app-providers";
 import "./globals.css";
 
@@ -22,13 +22,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
   return (
     <html lang={locale}>
-      <body className={APP_SHELL_CLASS}>
+      <body className={APP_SHELL_CLASS} style={{ margin: 0 }}>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AppProviders>
-            <SatelliteRootChrome shellClassName="mx-auto min-h-screen max-w-5xl px-4 py-6">
-              {children}
-            </SatelliteRootChrome>
-          </AppProviders>
+          <AppProviders>{children}</AppProviders>
         </NextIntlClientProvider>
       </body>
     </html>

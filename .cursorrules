@@ -1,0 +1,13 @@
+# ERA Ecosystem — Cursor
+
+**Global rules (always apply):** `.cursor/rules/`
+
+| File | Role |
+|------|------|
+| `era-common-laws.mdc` | Language, tenancy, security, compliance, integrity |
+| `era-architecture-boundaries.mdc` | Control plane vs satellites, SSO, MDM, events |
+| `documentation-upkeep.mdc` | Docs as part of definition of done |
+
+**Per-app rules:** each project under `era-*/.cursor/rules/` (local-dev, module-map, ui). Finance: `era-finance-core/.cursor/rules/`. Shared libs: `packages/.cursor/rules/shared-packages.mdc`.
+
+Ports and URLs: `docs/ECOSYSTEM_URLS.md`.

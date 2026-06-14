@@ -32,12 +32,25 @@ import { PatchMeterUnitPricingDto } from "./dto/patch-meter-unit-pricing.dto";
 import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
 import { SetBillingQuotasMatrixDto } from "./dto/set-billing-quotas-matrix.dto";
 import { SetTierQuotasDto } from "./dto/set-tier-quotas.dto";
+import {
+  PatchModuleTrialDto,
+  PatchOrgQuotasDto,
+  PatchOrgTrialDto,
+  PatchSatelliteTrialDto,
+  PatchTrialAllowlistDto,
+} from "./dto/admin-trial.dto";
+import { TrialCatalogService } from "../subscription/trial-catalog.service";
+import { TrialSyncService } from "../subscription/trial-sync.service";
 
 @UseGuards(JwtAuthGuard, SuperAdminGuard, PermissionsGuard)
 @RequirePermissions("admin.system")
 @Controller("v1/admin")
 export class AdminBillingController {
-  constructor(private readonly admin: AdminBillingService) {}
+  constructor(
+    private readonly admin: AdminBillingService,
+    private readonly trialCatalog: TrialCatalogService,
+    private readonly trialSync: TrialSyncService,
+  ) {}
 
   @Patch("organizations/:id/subscription")
   patchSubscription(
@@ -144,5 +157,76 @@ export class AdminBillingController {
   @Delete("pricing-bundles/:id")
   deletePricingBundle(@Param("id", ParseUUIDPipe) id: string) {
     return this.admin.deletePricingBundle(id);
+  }
+
+  @Get("organizations/:id/subscription-tree")
+  getSubscriptionTree(@Param("id", ParseUUIDPipe) id: string) {
+    return this.trialSync.getTrialTree(id);
+  }
+
+  @Patch("organizations/:id/subscription/trial")
+  patchOrgTrial(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: PatchOrgTrialDto,
+  ) {
+    const trialExpiresAt =
+      dto.trialExpiresAt === undefined
+        ? undefined
+        : dto.trialExpiresAt === null || dto.trialExpiresAt === ""
+          ? null
+          : new Date(dto.trialExpiresAt);
+    return this.trialSync.patchOrgTrial(id, {
+      trialExpiresAt,
+      isTrial: dto.isTrial,
+    });
+  }
+
+  @Patch("organizations/:id/satellites/:satelliteKey/trial")
+  patchSatelliteTrial(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("satelliteKey") satelliteKey: string,
+    @Body() dto: PatchSatelliteTrialDto,
+  ) {
+    return this.trialSync.patchSatelliteTrial(
+      id,
+      satelliteKey,
+      new Date(dto.trialExpiresAt),
+    );
+  }
+
+  @Patch("organizations/:id/modules/:moduleKey/trial")
+  patchModuleTrial(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("moduleKey") moduleKey: string,
+    @Body() dto: PatchModuleTrialDto,
+  ) {
+    return this.trialSync.patchModuleTrial(
+      id,
+      moduleKey,
+      new Date(dto.trialExpiresAt),
+    );
+  }
+
+  @Patch("organizations/:id/quotas")
+  patchOrgQuotas(
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: PatchOrgQuotasDto,
+  ) {
+    return this.trialSync.patchQuotaOverrides(id, dto.quotaOverrides ?? null);
+  }
+
+  @Get("config/trial-allowlist")
+  getTrialAllowlist() {
+    return this.trialCatalog.getPlatformTrialAllowlist();
+  }
+
+  @Patch("config/trial-allowlist")
+  patchTrialAllowlist(@Body() dto: PatchTrialAllowlistDto) {
+    return this.trialCatalog.patchPlatformTrialAllowlist(dto.moduleKeys);
+  }
+
+  @Post("organizations/:id/connect-preset/sanatorium")
+  connectSanatoriumPreset(@Param("id", ParseUUIDPipe) id: string) {
+    return this.trialSync.connectSanatoriumPreset(id);
   }
 }

@@ -24,7 +24,7 @@ exports.PRICING_BUNDLE_SEED_DEFAULTS = [
     {
         name: "Hotel City",
         discountPercent: 10,
-        moduleKeys: ["hotel_core", "hotel_housekeeping"],
+        moduleKeys: ["hotel_core", "hotel_housekeeping", "hotel_migration_pro"],
     },
     {
         name: "Hotel Resort",
@@ -32,6 +32,7 @@ exports.PRICING_BUNDLE_SEED_DEFAULTS = [
         moduleKeys: [
             "hotel_core",
             "hotel_housekeeping",
+            "hotel_migration_pro",
             "hotel_distribution",
             "hotel_guest_experience",
             "hotel_transfers",
@@ -45,6 +46,7 @@ exports.PRICING_BUNDLE_SEED_DEFAULTS = [
         moduleKeys: [
             "hotel_core",
             "hotel_housekeeping",
+            "hotel_migration_pro",
             "hotel_distribution",
             "hotel_guest_experience",
             "hotel_transfers",

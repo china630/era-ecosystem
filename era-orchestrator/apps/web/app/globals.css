@@ -1,3 +1,105 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@source "../../../../packages/satellite-kit/src/**/*.{js,ts,jsx,tsx}";
+@source "../../node_modules/@era/satellite-kit/dist/**/*.{js,mjs}";
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../../components/**/*.{js,ts,jsx,tsx,mdx}";
+@source "../../lib/**/*.{js,ts,jsx,tsx,mdx}";
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background-color: #ebedf0;
+    color: #111827;
+    font-size: 0.8125rem;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+      Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="password"],
+  input[type="email"],
+  select,
+  textarea {
+    box-sizing: border-box;
+    background-color: #ffffff;
+    border: 1px solid #d5dadf;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    min-width: 0;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  input[type="date"]:focus,
+  input[type="password"]:focus,
+  input[type="email"]:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: transparent;
+    box-shadow: 0 0 0 2px #2980b9;
+  }
+}
+
+.app-shell-main {
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+.app-shell-main :where(table) {
+  display: table;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+}
+
+@layer utilities {
+  .text-primary {
+    color: #2980b9;
+  }
+}
+
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-auto,
+.erafinance-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #c5ccd4 transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.erafinance-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track,
+.overflow-x-auto::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.erafinance-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb,
+.overflow-x-auto::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.erafinance-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #c5ccd4;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover,
+.overflow-x-auto::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover,
+.erafinance-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8b0b8;
+}

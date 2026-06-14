@@ -16,7 +16,7 @@ export function useRequireAuth() {
     }
     // Super-admin launcher works without an active organization context.
     if (!user?.organizationId && !user?.isSuperAdmin) {
-      router.replace("/register-org");
+      router.replace("/organizations");
     }
   }, [ready, token, user?.organizationId, user?.isSuperAdmin, router]);
 

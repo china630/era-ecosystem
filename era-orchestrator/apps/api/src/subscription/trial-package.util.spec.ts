@@ -1,24 +1,21 @@
 import {
-  computeTrialExpiresAtBaku,
+  computeTrialExpiresEndOfMonthBaku,
   DEFAULT_TRIAL_MODULE_SLUGS,
   TRIAL_3_MONTHS_SLUG,
 } from "./trial-package.util";
 
-describe("computeTrialExpiresAtBaku", () => {
-  it("adds three calendar months in Baku timezone", () => {
-    const signup = new Date("2026-01-15T10:00:00.000Z");
-    const end = computeTrialExpiresAtBaku(signup, 3);
+describe("computeTrialExpiresEndOfMonthBaku via trial-package", () => {
+  it("uses end-of-month formula for org trials", () => {
+    const signup = new Date("2026-06-10T10:00:00.000Z");
+    const end = computeTrialExpiresEndOfMonthBaku(signup, 3);
     const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: "Asia/Baku",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
     }).formatToParts(end);
-    expect(parts.find((p) => p.type === "year")?.value).toBe("2026");
-    expect(parts.find((p) => p.type === "month")?.value).toBe("04");
-    expect(parts.find((p) => p.type === "day")?.value).toBe("15");
+    expect(parts.find((p) => p.type === "month")?.value).toBe("09");
+    expect(parts.find((p) => p.type === "day")?.value).toBe("30");
   });
 });
 

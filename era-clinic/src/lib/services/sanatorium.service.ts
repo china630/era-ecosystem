@@ -115,6 +115,27 @@ export async function getEpisode(id: string) {
       complaints: { orderBy: { recordedAt: 'desc' } },
       diagnoses: { orderBy: { recordedAt: 'desc' }, include: { icdCode: true } },
       labOrders: { orderBy: { createdAt: 'desc' } },
+      programInstance: {
+        include: {
+          procedureLines: { orderBy: { procedureCode: 'asc' } },
+        },
+      },
     },
+  });
+}
+
+export async function getEpisodeSchedule(episodeId: string, from: Date, to: Date) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: episodeId },
+    select: { patientRefId: true },
+  });
+  if (!episode?.patientRefId) return [];
+
+  return prisma.procedureOrder.findMany({
+    where: {
+      patientRefId: episode.patientRefId,
+      scheduledAt: { gte: from, lt: to },
+    },
+    orderBy: { scheduledAt: 'asc' },
   });
 }

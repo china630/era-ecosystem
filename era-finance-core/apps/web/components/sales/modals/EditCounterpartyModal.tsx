@@ -71,6 +71,18 @@ export function EditCounterpartyModal({
   const [busy, setBusy] = useState(false);
   const [loadBusy, setLoadBusy] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [agencySnapshots, setAgencySnapshots] = useState<
+    Array<{
+      id: string;
+      agencyCode: string;
+      asOfDate: string;
+      balance: string | number;
+      periodCharges: string | number;
+      periodPayments: string | number;
+      currency: string;
+    }>
+  >([]);
+  const [agencySnapshotsBusy, setAgencySnapshotsBusy] = useState(false);
 
   const lastAutoLookup = useRef<string>("");
 
@@ -126,10 +138,39 @@ export function EditCounterpartyModal({
     lastAutoLookup.current = d.length === 10 ? d : "";
   }, [counterpartyId, t]);
 
+  const loadAgencySnapshots = useCallback(async () => {
+    if (!counterpartyId) return;
+    setAgencySnapshotsBusy(true);
+    try {
+      const res = await apiFetch(`/api/counterparties/${counterpartyId}/agency-ledger-snapshots`);
+      if (!res.ok) {
+        setAgencySnapshots([]);
+        return;
+      }
+      const data = (await res.json()) as {
+        items: Array<{
+          id: string;
+          agencyCode: string;
+          asOfDate: string;
+          balance: string | number;
+          periodCharges: string | number;
+          periodPayments: string | number;
+          currency: string;
+        }>;
+      };
+      setAgencySnapshots(data.items ?? []);
+    } catch {
+      setAgencySnapshots([]);
+    } finally {
+      setAgencySnapshotsBusy(false);
+    }
+  }, [counterpartyId]);
+
   useEffect(() => {
     if (!open || !counterpartyId) return;
     void load();
-  }, [open, counterpartyId, load]);
+    void loadAgencySnapshots();
+  }, [open, counterpartyId, load, loadAgencySnapshots]);
 
   async function checkVoen({ allowFallback }: { allowFallback: boolean }) {
     const d = digits;
@@ -427,6 +468,53 @@ export function EditCounterpartyModal({
           />
         </div>
         </form>
+        {!loadBusy && counterpartyId ? (
+          <div className="border-t border-[#E5E7EB] pt-4">
+            <h4 className="mb-2 text-[13px] font-semibold text-[#34495E]">
+              {t("counterparties.agencyLedgerSnapshotsTitle")}
+            </h4>
+            {agencySnapshotsBusy ? (
+              <p className="mb-0 text-[13px] text-[#7F8C8D]">{t("common.loading")}</p>
+            ) : agencySnapshots.length === 0 ? (
+              <p className="mb-0 text-[13px] text-[#7F8C8D]">
+                {t("counterparties.agencyLedgerSnapshotsEmpty")}
+              </p>
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-[#D5DADF]">
+                <table className="w-full min-w-[28rem] text-left text-[12px]">
+                  <thead className="bg-[#F4F5F7] text-[#7F8C8D]">
+                    <tr>
+                      <th className="px-2 py-1.5 font-medium">{t("counterparties.agencyLedgerSnapshotsAsOf")}</th>
+                      <th className="px-2 py-1.5 font-medium">Code</th>
+                      <th className="px-2 py-1.5 text-right font-medium">
+                        {t("counterparties.agencyLedgerSnapshotsBalance")}
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-medium">
+                        {t("counterparties.agencyLedgerSnapshotsCharges")}
+                      </th>
+                      <th className="px-2 py-1.5 text-right font-medium">
+                        {t("counterparties.agencyLedgerSnapshotsPayments")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agencySnapshots.map((row) => (
+                      <tr key={row.id} className="border-t border-[#E5E7EB]">
+                        <td className="px-2 py-1.5 tabular-nums">{row.asOfDate}</td>
+                        <td className="px-2 py-1.5 font-mono text-[11px]">{row.agencyCode}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">
+                          {String(row.balance)} {row.currency}
+                        </td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{String(row.periodCharges)}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{String(row.periodPayments)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : null}
         {!loadBusy && counterpartyId ? (
           <div className="border-t border-[#E5E7EB] pt-4">
             <ActivityPanel

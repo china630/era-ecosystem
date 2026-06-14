@@ -183,14 +183,64 @@ export async function createGuestCommunication(
   guestId: string,
   input: { channel: string; subject?: string; body: string; recipient?: string },
 ) {
+  const guest = await prisma.guest.findUnique({ where: { id: guestId } });
+  if (!guest) throw new Error('Guest not found');
+
+  const recipient =
+    input.recipient ??
+    (input.channel === 'EMAIL' ? guest.email : guest.phone) ??
+    null;
+
+  const { trySendPlatformNotification, platformNotificationsEnabled } = await import(
+    '@/lib/platform-notify'
+  );
+
+  let status: 'STUB' | 'SENT' | 'FAILED' = 'STUB';
+  let sentAt: Date | null = null;
+  let errorNote: string | null = null;
+
+  if (platformNotificationsEnabled() && recipient) {
+    try {
+      const channel =
+        input.channel === 'EMAIL' || input.channel === 'SMS' || input.channel === 'WHATSAPP'
+          ? input.channel
+          : 'SMS';
+      await trySendPlatformNotification({
+        templateKey: `guest_${channel.toLowerCase()}`,
+        channel,
+        messageClass: 'TRANSACTIONAL',
+        recipient,
+        sourceEntityType: 'guest_communication',
+        sourceEntityId: guestId,
+        subject: input.subject,
+        body: input.body,
+        payload: { guestId, guestName: guest.fullName },
+      });
+      status = 'SENT';
+      sentAt = new Date();
+      await prisma.guestContactLog.create({
+        data: {
+          guestId,
+          channel: input.channel,
+          result: 'SENT',
+          contactDate: new Date(),
+        },
+      });
+    } catch (e) {
+      status = 'FAILED';
+      errorNote = e instanceof Error ? e.message : 'Send failed';
+    }
+  }
+
   return prisma.guestCommunication.create({
     data: {
       guestId,
       channel: input.channel,
       subject: input.subject ?? null,
-      body: input.body,
-      recipient: input.recipient ?? null,
-      status: 'STUB',
+      body: errorNote ? `${input.body}\n\n[error: ${errorNote}]` : input.body,
+      recipient,
+      status,
+      sentAt,
     },
   });
 }

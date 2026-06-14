@@ -17,7 +17,6 @@ export function SuperAdminDataTable({
   if (rows.length === 0) {
     return <p className="text-sm text-[#7F8C8D]">No rows</p>;
   }
-  const keys = Object.keys(rows[0] ?? {});
   return (
     <div className={`${CARD_CONTAINER_CLASS} overflow-x-auto`}>
       <table className="w-full text-left text-sm">
@@ -33,7 +32,7 @@ export function SuperAdminDataTable({
         <tbody>
           {rows.map((row, i) => (
             <tr key={i} className="border-b border-[#D5DADF]/60">
-              {keys.map((k) => (
+              {columns.map((k) => (
                 <td key={k} className="p-3 text-[#34495E]">
                   {String(row[k] ?? "")}
                 </td>

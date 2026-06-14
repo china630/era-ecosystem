@@ -28,23 +28,18 @@ function serviceToken(opts?: GuestIdentityClientOptions): string | undefined {
 }
 
 export async function resolveGlobalPerson(
-  input: { fin?: string; fullName: string; phone?: string },
+  input: {
+    fin?: string;
+    fullName: string;
+    phone?: string;
+    passport?: string;
+    issuingCountry?: string;
+    nationality?: string;
+  },
   opts?: GuestIdentityClientOptions,
 ): Promise<{ globalPersonId: string | null }> {
-  const token = serviceToken(opts);
-  if (!token) return { globalPersonId: null };
-  const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-service-token": token,
-    },
-    body: JSON.stringify(input),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) return { globalPersonId: null };
-  const data = (await res.json()) as { id?: string };
-  return { globalPersonId: data.id ?? null };
+  const { resolvePersonIdentity } = await import("./person-identity.client");
+  return resolvePersonIdentity(input, opts);
 }
 
 export async function issueGuestQrToken(

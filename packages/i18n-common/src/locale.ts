@@ -74,6 +74,7 @@ export function eraLocaleCookieOptions(): {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    /** Only Secure on explicit HTTPS deployments (local Docker uses HTTP). */
+    secure: process.env.ERA_I18N_COOKIE_SECURE === "true",
   };
 }

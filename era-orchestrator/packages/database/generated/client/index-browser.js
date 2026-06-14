@@ -143,6 +143,7 @@ exports.Prisma.OrganizationSubscriptionScalarFieldEnum = {
   billingPeriodKey: 'billingPeriodKey',
   expiresAt: 'expiresAt',
   activeModules: 'activeModules',
+  quotaOverrides: 'quotaOverrides',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   isBlocked: 'isBlocked',
@@ -189,7 +190,9 @@ exports.Prisma.OrganizationModuleScalarFieldEnum = {
   activatedAt: 'activatedAt',
   pendingDeactivation: 'pendingDeactivation',
   cancelledAt: 'cancelledAt',
-  accessUntil: 'accessUntil'
+  accessUntil: 'accessUntil',
+  trialExpiresAt: 'trialExpiresAt',
+  trialOverridden: 'trialOverridden'
 };
 
 exports.Prisma.OrganizationBundleScalarFieldEnum = {
@@ -223,6 +226,7 @@ exports.Prisma.PricingModuleScalarFieldEnum = {
   sortOrder: 'sortOrder',
   catalogKind: 'catalogKind',
   satelliteKey: 'satelliteKey',
+  trialEligibleInTrial: 'trialEligibleInTrial',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -236,6 +240,15 @@ exports.Prisma.SatelliteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrganizationSatelliteEntitlementScalarFieldEnum = {
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  trialExpiresAt: 'trialExpiresAt',
+  trialOverridden: 'trialOverridden',
+  connectedAt: 'connectedAt',
+  isTrial: 'isTrial'
+};
+
 exports.Prisma.SatelliteEndpointScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -243,6 +256,19 @@ exports.Prisma.SatelliteEndpointScalarFieldEnum = {
   baseUrl: 'baseUrl',
   secretCipher: 'secretCipher',
   enabled: 'enabled',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAssignmentScalarFieldEnum = {
+  id: 'id',
+  globalPersonId: 'globalPersonId',
+  organizationId: 'organizationId',
+  satelliteKey: 'satelliteKey',
+  satelliteUserId: 'satelliteUserId',
+  financeEmployeeId: 'financeEmployeeId',
+  role: 'role',
+  status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -742,6 +768,11 @@ exports.PricingCatalogKind = exports.$Enums.PricingCatalogKind = {
   ADDON: 'ADDON'
 };
 
+exports.WorkforceAssignmentStatus = exports.$Enums.WorkforceAssignmentStatus = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
+
 exports.PaymentOrderStatus = exports.$Enums.PaymentOrderStatus = {
   PENDING: 'PENDING',
   PAID: 'PAID',
@@ -925,7 +956,9 @@ exports.Prisma.ModelName = {
   Pricing: 'Pricing',
   PricingModule: 'PricingModule',
   Satellite: 'Satellite',
+  OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
+  WorkforceAssignment: 'WorkforceAssignment',
   PricingBundle: 'PricingBundle',
   LandingModuleMarketing: 'LandingModuleMarketing',
   PaymentOrder: 'PaymentOrder',

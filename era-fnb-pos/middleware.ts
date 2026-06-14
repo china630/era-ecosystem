@@ -19,8 +19,9 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const reqHeaders = withPath(request);
 
+  const fnbPublicApi = ["/api/integration/staff-provision"];
   if (pathname.startsWith("/api")) {
-    if (isPublicApiPath(pathname)) {
+    if (isPublicApiPath(pathname, fnbPublicApi)) {
       return NextResponse.next({ request: { headers: reqHeaders } });
     }
     const token = getBearerOrCookieToken(request.cookies, request.headers, COOKIE);

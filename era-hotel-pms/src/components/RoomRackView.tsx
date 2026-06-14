@@ -134,6 +134,8 @@ export default function RoomRackView({
   const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set());
   const [cleanOnly, setCleanOnly] = useState(false);
   const [dirtyOnly, setDirtyOnly] = useState(false);
+  const [inspectedOnly, setInspectedOnly] = useState(false);
+  const [oooOnly, setOooOnly] = useState(false);
   const [occupiedOnly, setOccupiedOnly] = useState(false);
   const [vacantOnly, setVacantOnly] = useState(false);
   const [resFilter, setResFilter] = useState<ResFilter>('all');
@@ -178,6 +180,8 @@ export default function RoomRackView({
       if (typeFilters.size > 0 && !typeFilters.has(room.roomType.code)) return false;
       if (cleanOnly && !['CLEAN', 'INSPECTED'].includes(room.status)) return false;
       if (dirtyOnly && room.status !== 'DIRTY') return false;
+      if (inspectedOnly && room.status !== 'INSPECTED') return false;
+      if (oooOnly && room.status !== 'OOO') return false;
       const isOccupied = room.status === 'OCCUPIED' || room.reservations.some((r) => r.status === 'IN_HOUSE');
       if (occupiedOnly && !isOccupied) return false;
       if (vacantOnly && isOccupied) return false;
@@ -230,6 +234,8 @@ export default function RoomRackView({
     typeFilters,
     cleanOnly,
     dirtyOnly,
+    inspectedOnly,
+    oooOnly,
     occupiedOnly,
     vacantOnly,
     resFilter,
@@ -259,6 +265,8 @@ export default function RoomRackView({
     setTypeFilters(new Set());
     setCleanOnly(false);
     setDirtyOnly(false);
+    setInspectedOnly(false);
+    setOooOnly(false);
     setOccupiedOnly(false);
     setVacantOnly(false);
     setResFilter('all');
@@ -346,9 +354,17 @@ export default function RoomRackView({
             <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={cleanOnly} onChange={(e) => setCleanOnly(e.target.checked)} />
             {t('cleanOnly')}
           </label>
-          <label className="flex items-center gap-2">
+          <label className="mb-1 flex items-center gap-2">
             <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={dirtyOnly} onChange={(e) => setDirtyOnly(e.target.checked)} />
             {t('dirtyOnly')}
+          </label>
+          <label className="mb-1 flex items-center gap-2">
+            <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={inspectedOnly} onChange={(e) => setInspectedOnly(e.target.checked)} />
+            {t('inspectedOnly')}
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" className={MODAL_CHECKBOX_CLASS} checked={oooOnly} onChange={(e) => setOooOnly(e.target.checked)} />
+            {t('oooOnly')}
           </label>
         </div>
         <div>

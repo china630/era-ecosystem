@@ -64,10 +64,20 @@ export type PricingModule = $Result.DefaultSelection<Prisma.$PricingModulePayloa
  */
 export type Satellite = $Result.DefaultSelection<Prisma.$SatellitePayload>
 /**
+ * Model OrganizationSatelliteEntitlement
+ * Owner-connected satellite trial row (materialized on Connect).
+ */
+export type OrganizationSatelliteEntitlement = $Result.DefaultSelection<Prisma.$OrganizationSatelliteEntitlementPayload>
+/**
  * Model SatelliteEndpoint
  * * Per-organization satellite instance URL + bridge secret for event fan-out.
  */
 export type SatelliteEndpoint = $Result.DefaultSelection<Prisma.$SatelliteEndpointPayload>
+/**
+ * Model WorkforceAssignment
+ * Cross-org workforce registry — no PII, only MDM person reference.
+ */
+export type WorkforceAssignment = $Result.DefaultSelection<Prisma.$WorkforceAssignmentPayload>
 /**
  * Model PricingBundle
  * 
@@ -495,6 +505,14 @@ export const PermissionCategory: {
 export type PermissionCategory = (typeof PermissionCategory)[keyof typeof PermissionCategory]
 
 
+export const WorkforceAssignmentStatus: {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE'
+};
+
+export type WorkforceAssignmentStatus = (typeof WorkforceAssignmentStatus)[keyof typeof WorkforceAssignmentStatus]
+
+
 export const OrgOperatingMode: {
   STANDALONE: 'STANDALONE',
   DEPARTMENT: 'DEPARTMENT'
@@ -633,6 +651,10 @@ export const PlatformShipmentStatus: typeof $Enums.PlatformShipmentStatus
 export type PermissionCategory = $Enums.PermissionCategory
 
 export const PermissionCategory: typeof $Enums.PermissionCategory
+
+export type WorkforceAssignmentStatus = $Enums.WorkforceAssignmentStatus
+
+export const WorkforceAssignmentStatus: typeof $Enums.WorkforceAssignmentStatus
 
 export type OrgOperatingMode = $Enums.OrgOperatingMode
 
@@ -872,6 +894,16 @@ export class PrismaClient<
   get satellite(): Prisma.SatelliteDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.organizationSatelliteEntitlement`: Exposes CRUD operations for the **OrganizationSatelliteEntitlement** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrganizationSatelliteEntitlements
+    * const organizationSatelliteEntitlements = await prisma.organizationSatelliteEntitlement.findMany()
+    * ```
+    */
+  get organizationSatelliteEntitlement(): Prisma.OrganizationSatelliteEntitlementDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.satelliteEndpoint`: Exposes CRUD operations for the **SatelliteEndpoint** model.
     * Example usage:
     * ```ts
@@ -880,6 +912,16 @@ export class PrismaClient<
     * ```
     */
   get satelliteEndpoint(): Prisma.SatelliteEndpointDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceAssignment`: Exposes CRUD operations for the **WorkforceAssignment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceAssignments
+    * const workforceAssignments = await prisma.workforceAssignment.findMany()
+    * ```
+    */
+  get workforceAssignment(): Prisma.WorkforceAssignmentDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.pricingBundle`: Exposes CRUD operations for the **PricingBundle** model.
@@ -1674,7 +1716,9 @@ export namespace Prisma {
     Pricing: 'Pricing',
     PricingModule: 'PricingModule',
     Satellite: 'Satellite',
+    OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
     SatelliteEndpoint: 'SatelliteEndpoint',
+    WorkforceAssignment: 'WorkforceAssignment',
     PricingBundle: 'PricingBundle',
     LandingModuleMarketing: 'LandingModuleMarketing',
     PaymentOrder: 'PaymentOrder',
@@ -1725,7 +1769,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "satelliteEndpoint" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2469,6 +2513,80 @@ export namespace Prisma {
           }
         }
       }
+      OrganizationSatelliteEntitlement: {
+        payload: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>
+        fields: Prisma.OrganizationSatelliteEntitlementFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrganizationSatelliteEntitlementFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrganizationSatelliteEntitlementFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          findFirst: {
+            args: Prisma.OrganizationSatelliteEntitlementFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrganizationSatelliteEntitlementFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          findMany: {
+            args: Prisma.OrganizationSatelliteEntitlementFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>[]
+          }
+          create: {
+            args: Prisma.OrganizationSatelliteEntitlementCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          createMany: {
+            args: Prisma.OrganizationSatelliteEntitlementCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrganizationSatelliteEntitlementCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>[]
+          }
+          delete: {
+            args: Prisma.OrganizationSatelliteEntitlementDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          update: {
+            args: Prisma.OrganizationSatelliteEntitlementUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrganizationSatelliteEntitlementDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrganizationSatelliteEntitlementUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrganizationSatelliteEntitlementUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrganizationSatelliteEntitlementUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrganizationSatelliteEntitlementPayload>
+          }
+          aggregate: {
+            args: Prisma.OrganizationSatelliteEntitlementAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrganizationSatelliteEntitlement>
+          }
+          groupBy: {
+            args: Prisma.OrganizationSatelliteEntitlementGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationSatelliteEntitlementGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrganizationSatelliteEntitlementCountArgs<ExtArgs>
+            result: $Utils.Optional<OrganizationSatelliteEntitlementCountAggregateOutputType> | number
+          }
+        }
+      }
       SatelliteEndpoint: {
         payload: Prisma.$SatelliteEndpointPayload<ExtArgs>
         fields: Prisma.SatelliteEndpointFieldRefs
@@ -2540,6 +2658,80 @@ export namespace Prisma {
           count: {
             args: Prisma.SatelliteEndpointCountArgs<ExtArgs>
             result: $Utils.Optional<SatelliteEndpointCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceAssignment: {
+        payload: Prisma.$WorkforceAssignmentPayload<ExtArgs>
+        fields: Prisma.WorkforceAssignmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceAssignmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceAssignmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceAssignmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceAssignmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceAssignmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceAssignmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceAssignmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceAssignmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceAssignmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          update: {
+            args: Prisma.WorkforceAssignmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceAssignmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceAssignmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceAssignmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceAssignmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceAssignmentPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceAssignmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceAssignment>
+          }
+          groupBy: {
+            args: Prisma.WorkforceAssignmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceAssignmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceAssignmentCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceAssignmentCountAggregateOutputType> | number
           }
         }
       }
@@ -5251,7 +5443,9 @@ export namespace Prisma {
     pricing?: PricingOmit
     pricingModule?: PricingModuleOmit
     satellite?: SatelliteOmit
+    organizationSatelliteEntitlement?: OrganizationSatelliteEntitlementOmit
     satelliteEndpoint?: SatelliteEndpointOmit
+    workforceAssignment?: WorkforceAssignmentOmit
     pricingBundle?: PricingBundleOmit
     landingModuleMarketing?: LandingModuleMarketingOmit
     paymentOrder?: PaymentOrderOmit
@@ -5409,11 +5603,13 @@ export namespace Prisma {
   export type SatelliteCountOutputType = {
     modules: number
     endpoints: number
+    entitlements: number
   }
 
   export type SatelliteCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     modules?: boolean | SatelliteCountOutputTypeCountModulesArgs
     endpoints?: boolean | SatelliteCountOutputTypeCountEndpointsArgs
+    entitlements?: boolean | SatelliteCountOutputTypeCountEntitlementsArgs
   }
 
   // Custom InputTypes
@@ -5439,6 +5635,13 @@ export namespace Prisma {
    */
   export type SatelliteCountOutputTypeCountEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SatelliteEndpointWhereInput
+  }
+
+  /**
+   * SatelliteCountOutputType without action
+   */
+  export type SatelliteCountOutputTypeCountEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationSatelliteEntitlementWhereInput
   }
 
 
@@ -5593,6 +5796,8 @@ export namespace Prisma {
     platformIdempotencyRecords: number
     platformLoyaltyLedger: number
     satelliteEndpoints: number
+    satelliteEntitlements: number
+    workforceAssignments: number
     departments: number
   }
 
@@ -5619,6 +5824,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | OrganizationCountOutputTypeCountPlatformIdempotencyRecordsArgs
     platformLoyaltyLedger?: boolean | OrganizationCountOutputTypeCountPlatformLoyaltyLedgerArgs
     satelliteEndpoints?: boolean | OrganizationCountOutputTypeCountSatelliteEndpointsArgs
+    satelliteEntitlements?: boolean | OrganizationCountOutputTypeCountSatelliteEntitlementsArgs
+    workforceAssignments?: boolean | OrganizationCountOutputTypeCountWorkforceAssignmentsArgs
     departments?: boolean | OrganizationCountOutputTypeCountDepartmentsArgs
   }
 
@@ -5785,6 +5992,20 @@ export namespace Prisma {
    */
   export type OrganizationCountOutputTypeCountSatelliteEndpointsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SatelliteEndpointWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountSatelliteEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationSatelliteEntitlementWhereInput
+  }
+
+  /**
+   * OrganizationCountOutputType without action
+   */
+  export type OrganizationCountOutputTypeCountWorkforceAssignmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceAssignmentWhereInput
   }
 
   /**
@@ -7210,6 +7431,7 @@ export namespace Prisma {
     billingPeriodKey: number
     expiresAt: number
     activeModules: number
+    quotaOverrides: number
     createdAt: number
     updatedAt: number
     isBlocked: number
@@ -7254,6 +7476,7 @@ export namespace Prisma {
     billingPeriodKey?: true
     expiresAt?: true
     activeModules?: true
+    quotaOverrides?: true
     createdAt?: true
     updatedAt?: true
     isBlocked?: true
@@ -7343,6 +7566,7 @@ export namespace Prisma {
     billingPeriodKey: string | null
     expiresAt: Date | null
     activeModules: string[]
+    quotaOverrides: JsonValue | null
     createdAt: Date
     updatedAt: Date
     isBlocked: boolean
@@ -7376,6 +7600,7 @@ export namespace Prisma {
     billingPeriodKey?: boolean
     expiresAt?: boolean
     activeModules?: boolean
+    quotaOverrides?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
@@ -7393,6 +7618,7 @@ export namespace Prisma {
     billingPeriodKey?: boolean
     expiresAt?: boolean
     activeModules?: boolean
+    quotaOverrides?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
@@ -7410,6 +7636,7 @@ export namespace Prisma {
     billingPeriodKey?: boolean
     expiresAt?: boolean
     activeModules?: boolean
+    quotaOverrides?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
@@ -7427,13 +7654,14 @@ export namespace Prisma {
     billingPeriodKey?: boolean
     expiresAt?: boolean
     activeModules?: boolean
+    quotaOverrides?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     isBlocked?: boolean
     customConfig?: boolean
   }
 
-  export type OrganizationSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "currentTier" | "isTrial" | "trialExpiresAt" | "activatedPremiumModules" | "billingPeriodKey" | "expiresAt" | "activeModules" | "createdAt" | "updatedAt" | "isBlocked" | "customConfig", ExtArgs["result"]["organizationSubscription"]>
+  export type OrganizationSubscriptionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organizationId" | "currentTier" | "isTrial" | "trialExpiresAt" | "activatedPremiumModules" | "billingPeriodKey" | "expiresAt" | "activeModules" | "quotaOverrides" | "createdAt" | "updatedAt" | "isBlocked" | "customConfig", ExtArgs["result"]["organizationSubscription"]>
   export type OrganizationSubscriptionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     organization?: boolean | OrganizationDefaultArgs<ExtArgs>
   }
@@ -7459,6 +7687,7 @@ export namespace Prisma {
       billingPeriodKey: string | null
       expiresAt: Date | null
       activeModules: string[]
+      quotaOverrides: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
       isBlocked: boolean
@@ -7896,6 +8125,7 @@ export namespace Prisma {
     readonly billingPeriodKey: FieldRef<"OrganizationSubscription", 'String'>
     readonly expiresAt: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly activeModules: FieldRef<"OrganizationSubscription", 'String[]'>
+    readonly quotaOverrides: FieldRef<"OrganizationSubscription", 'Json'>
     readonly createdAt: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly updatedAt: FieldRef<"OrganizationSubscription", 'DateTime'>
     readonly isBlocked: FieldRef<"OrganizationSubscription", 'Boolean'>
@@ -11848,6 +12078,8 @@ export namespace Prisma {
     pendingDeactivation: boolean | null
     cancelledAt: Date | null
     accessUntil: Date | null
+    trialExpiresAt: Date | null
+    trialOverridden: boolean | null
   }
 
   export type OrganizationModuleMaxAggregateOutputType = {
@@ -11858,6 +12090,8 @@ export namespace Prisma {
     pendingDeactivation: boolean | null
     cancelledAt: Date | null
     accessUntil: Date | null
+    trialExpiresAt: Date | null
+    trialOverridden: boolean | null
   }
 
   export type OrganizationModuleCountAggregateOutputType = {
@@ -11868,6 +12102,8 @@ export namespace Prisma {
     pendingDeactivation: number
     cancelledAt: number
     accessUntil: number
+    trialExpiresAt: number
+    trialOverridden: number
     _all: number
   }
 
@@ -11888,6 +12124,8 @@ export namespace Prisma {
     pendingDeactivation?: true
     cancelledAt?: true
     accessUntil?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
   }
 
   export type OrganizationModuleMaxAggregateInputType = {
@@ -11898,6 +12136,8 @@ export namespace Prisma {
     pendingDeactivation?: true
     cancelledAt?: true
     accessUntil?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
   }
 
   export type OrganizationModuleCountAggregateInputType = {
@@ -11908,6 +12148,8 @@ export namespace Prisma {
     pendingDeactivation?: true
     cancelledAt?: true
     accessUntil?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
     _all?: true
   }
 
@@ -12005,6 +12247,8 @@ export namespace Prisma {
     pendingDeactivation: boolean
     cancelledAt: Date | null
     accessUntil: Date | null
+    trialExpiresAt: Date | null
+    trialOverridden: boolean
     _count: OrganizationModuleCountAggregateOutputType | null
     _avg: OrganizationModuleAvgAggregateOutputType | null
     _sum: OrganizationModuleSumAggregateOutputType | null
@@ -12034,6 +12278,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: boolean
     accessUntil?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
   }, ExtArgs["result"]["organizationModule"]>
 
   export type OrganizationModuleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -12044,6 +12290,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: boolean
     accessUntil?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
   }, ExtArgs["result"]["organizationModule"]>
 
   export type OrganizationModuleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -12054,6 +12302,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: boolean
     accessUntil?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
   }, ExtArgs["result"]["organizationModule"]>
 
   export type OrganizationModuleSelectScalar = {
@@ -12064,9 +12314,11 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: boolean
     accessUntil?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
   }
 
-  export type OrganizationModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "moduleKey" | "priceSnapshot" | "activatedAt" | "pendingDeactivation" | "cancelledAt" | "accessUntil", ExtArgs["result"]["organizationModule"]>
+  export type OrganizationModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "moduleKey" | "priceSnapshot" | "activatedAt" | "pendingDeactivation" | "cancelledAt" | "accessUntil" | "trialExpiresAt" | "trialOverridden", ExtArgs["result"]["organizationModule"]>
 
   export type $OrganizationModulePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "OrganizationModule"
@@ -12079,6 +12331,8 @@ export namespace Prisma {
       pendingDeactivation: boolean
       cancelledAt: Date | null
       accessUntil: Date | null
+      trialExpiresAt: Date | null
+      trialOverridden: boolean
     }, ExtArgs["result"]["organizationModule"]>
     composites: {}
   }
@@ -12509,6 +12763,8 @@ export namespace Prisma {
     readonly pendingDeactivation: FieldRef<"OrganizationModule", 'Boolean'>
     readonly cancelledAt: FieldRef<"OrganizationModule", 'DateTime'>
     readonly accessUntil: FieldRef<"OrganizationModule", 'DateTime'>
+    readonly trialExpiresAt: FieldRef<"OrganizationModule", 'DateTime'>
+    readonly trialOverridden: FieldRef<"OrganizationModule", 'Boolean'>
   }
     
 
@@ -15128,6 +15384,7 @@ export namespace Prisma {
     sortOrder: number | null
     catalogKind: $Enums.PricingCatalogKind | null
     satelliteKey: string | null
+    trialEligibleInTrial: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -15141,6 +15398,7 @@ export namespace Prisma {
     sortOrder: number | null
     catalogKind: $Enums.PricingCatalogKind | null
     satelliteKey: string | null
+    trialEligibleInTrial: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -15154,6 +15412,7 @@ export namespace Prisma {
     sortOrder: number
     catalogKind: number
     satelliteKey: number
+    trialEligibleInTrial: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -15179,6 +15438,7 @@ export namespace Prisma {
     sortOrder?: true
     catalogKind?: true
     satelliteKey?: true
+    trialEligibleInTrial?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -15192,6 +15452,7 @@ export namespace Prisma {
     sortOrder?: true
     catalogKind?: true
     satelliteKey?: true
+    trialEligibleInTrial?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -15205,6 +15466,7 @@ export namespace Prisma {
     sortOrder?: true
     catalogKind?: true
     satelliteKey?: true
+    trialEligibleInTrial?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -15305,6 +15567,7 @@ export namespace Prisma {
     sortOrder: number
     catalogKind: $Enums.PricingCatalogKind
     satelliteKey: string | null
+    trialEligibleInTrial: boolean
     createdAt: Date
     updatedAt: Date
     _count: PricingModuleCountAggregateOutputType | null
@@ -15337,6 +15600,7 @@ export namespace Prisma {
     sortOrder?: boolean
     catalogKind?: boolean
     satelliteKey?: boolean
+    trialEligibleInTrial?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
@@ -15351,6 +15615,7 @@ export namespace Prisma {
     sortOrder?: boolean
     catalogKind?: boolean
     satelliteKey?: boolean
+    trialEligibleInTrial?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
@@ -15365,6 +15630,7 @@ export namespace Prisma {
     sortOrder?: boolean
     catalogKind?: boolean
     satelliteKey?: boolean
+    trialEligibleInTrial?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
@@ -15379,11 +15645,12 @@ export namespace Prisma {
     sortOrder?: boolean
     catalogKind?: boolean
     satelliteKey?: boolean
+    trialEligibleInTrial?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PricingModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "name" | "pricePerMonth" | "isPremium" | "sortOrder" | "catalogKind" | "satelliteKey" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingModule"]>
+  export type PricingModuleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "key" | "name" | "pricePerMonth" | "isPremium" | "sortOrder" | "catalogKind" | "satelliteKey" | "trialEligibleInTrial" | "createdAt" | "updatedAt", ExtArgs["result"]["pricingModule"]>
   export type PricingModuleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     satellite?: boolean | PricingModule$satelliteArgs<ExtArgs>
   }
@@ -15408,6 +15675,7 @@ export namespace Prisma {
       sortOrder: number
       catalogKind: $Enums.PricingCatalogKind
       satelliteKey: string | null
+      trialEligibleInTrial: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["pricingModule"]>
@@ -15842,6 +16110,7 @@ export namespace Prisma {
     readonly sortOrder: FieldRef<"PricingModule", 'Int'>
     readonly catalogKind: FieldRef<"PricingModule", 'PricingCatalogKind'>
     readonly satelliteKey: FieldRef<"PricingModule", 'String'>
+    readonly trialEligibleInTrial: FieldRef<"PricingModule", 'Boolean'>
     readonly createdAt: FieldRef<"PricingModule", 'DateTime'>
     readonly updatedAt: FieldRef<"PricingModule", 'DateTime'>
   }
@@ -16490,6 +16759,7 @@ export namespace Prisma {
     updatedAt?: boolean
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
     endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
+    entitlements?: boolean | Satellite$entitlementsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["satellite"]>
 
@@ -16524,6 +16794,7 @@ export namespace Prisma {
   export type SatelliteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     modules?: boolean | Satellite$modulesArgs<ExtArgs>
     endpoints?: boolean | Satellite$endpointsArgs<ExtArgs>
+    entitlements?: boolean | Satellite$entitlementsArgs<ExtArgs>
     _count?: boolean | SatelliteCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SatelliteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -16534,6 +16805,7 @@ export namespace Prisma {
     objects: {
       modules: Prisma.$PricingModulePayload<ExtArgs>[]
       endpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
+      entitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       key: string
@@ -16938,6 +17210,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     modules<T extends Satellite$modulesArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$modulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PricingModulePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     endpoints<T extends Satellite$endpointsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$endpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    entitlements<T extends Satellite$entitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Satellite$entitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -17414,6 +17687,30 @@ export namespace Prisma {
   }
 
   /**
+   * Satellite.entitlements
+   */
+  export type Satellite$entitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    where?: OrganizationSatelliteEntitlementWhereInput
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationSatelliteEntitlementScalarFieldEnum | OrganizationSatelliteEntitlementScalarFieldEnum[]
+  }
+
+  /**
    * Satellite without action
    */
   export type SatelliteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -17429,6 +17726,1090 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrganizationSatelliteEntitlement
+   */
+
+  export type AggregateOrganizationSatelliteEntitlement = {
+    _count: OrganizationSatelliteEntitlementCountAggregateOutputType | null
+    _min: OrganizationSatelliteEntitlementMinAggregateOutputType | null
+    _max: OrganizationSatelliteEntitlementMaxAggregateOutputType | null
+  }
+
+  export type OrganizationSatelliteEntitlementMinAggregateOutputType = {
+    organizationId: string | null
+    satelliteKey: string | null
+    trialExpiresAt: Date | null
+    trialOverridden: boolean | null
+    connectedAt: Date | null
+    isTrial: boolean | null
+  }
+
+  export type OrganizationSatelliteEntitlementMaxAggregateOutputType = {
+    organizationId: string | null
+    satelliteKey: string | null
+    trialExpiresAt: Date | null
+    trialOverridden: boolean | null
+    connectedAt: Date | null
+    isTrial: boolean | null
+  }
+
+  export type OrganizationSatelliteEntitlementCountAggregateOutputType = {
+    organizationId: number
+    satelliteKey: number
+    trialExpiresAt: number
+    trialOverridden: number
+    connectedAt: number
+    isTrial: number
+    _all: number
+  }
+
+
+  export type OrganizationSatelliteEntitlementMinAggregateInputType = {
+    organizationId?: true
+    satelliteKey?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
+    connectedAt?: true
+    isTrial?: true
+  }
+
+  export type OrganizationSatelliteEntitlementMaxAggregateInputType = {
+    organizationId?: true
+    satelliteKey?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
+    connectedAt?: true
+    isTrial?: true
+  }
+
+  export type OrganizationSatelliteEntitlementCountAggregateInputType = {
+    organizationId?: true
+    satelliteKey?: true
+    trialExpiresAt?: true
+    trialOverridden?: true
+    connectedAt?: true
+    isTrial?: true
+    _all?: true
+  }
+
+  export type OrganizationSatelliteEntitlementAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationSatelliteEntitlement to aggregate.
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSatelliteEntitlements to fetch.
+     */
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSatelliteEntitlements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSatelliteEntitlements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrganizationSatelliteEntitlements
+    **/
+    _count?: true | OrganizationSatelliteEntitlementCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrganizationSatelliteEntitlementMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrganizationSatelliteEntitlementMaxAggregateInputType
+  }
+
+  export type GetOrganizationSatelliteEntitlementAggregateType<T extends OrganizationSatelliteEntitlementAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrganizationSatelliteEntitlement]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrganizationSatelliteEntitlement[P]>
+      : GetScalarType<T[P], AggregateOrganizationSatelliteEntitlement[P]>
+  }
+
+
+
+
+  export type OrganizationSatelliteEntitlementGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationSatelliteEntitlementWhereInput
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithAggregationInput | OrganizationSatelliteEntitlementOrderByWithAggregationInput[]
+    by: OrganizationSatelliteEntitlementScalarFieldEnum[] | OrganizationSatelliteEntitlementScalarFieldEnum
+    having?: OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrganizationSatelliteEntitlementCountAggregateInputType | true
+    _min?: OrganizationSatelliteEntitlementMinAggregateInputType
+    _max?: OrganizationSatelliteEntitlementMaxAggregateInputType
+  }
+
+  export type OrganizationSatelliteEntitlementGroupByOutputType = {
+    organizationId: string
+    satelliteKey: string
+    trialExpiresAt: Date | null
+    trialOverridden: boolean
+    connectedAt: Date
+    isTrial: boolean
+    _count: OrganizationSatelliteEntitlementCountAggregateOutputType | null
+    _min: OrganizationSatelliteEntitlementMinAggregateOutputType | null
+    _max: OrganizationSatelliteEntitlementMaxAggregateOutputType | null
+  }
+
+  type GetOrganizationSatelliteEntitlementGroupByPayload<T extends OrganizationSatelliteEntitlementGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrganizationSatelliteEntitlementGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrganizationSatelliteEntitlementGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrganizationSatelliteEntitlementGroupByOutputType[P]>
+            : GetScalarType<T[P], OrganizationSatelliteEntitlementGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrganizationSatelliteEntitlementSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    satelliteKey?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
+    connectedAt?: boolean
+    isTrial?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationSatelliteEntitlement"]>
+
+  export type OrganizationSatelliteEntitlementSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    satelliteKey?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
+    connectedAt?: boolean
+    isTrial?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationSatelliteEntitlement"]>
+
+  export type OrganizationSatelliteEntitlementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    organizationId?: boolean
+    satelliteKey?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
+    connectedAt?: boolean
+    isTrial?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["organizationSatelliteEntitlement"]>
+
+  export type OrganizationSatelliteEntitlementSelectScalar = {
+    organizationId?: boolean
+    satelliteKey?: boolean
+    trialExpiresAt?: boolean
+    trialOverridden?: boolean
+    connectedAt?: boolean
+    isTrial?: boolean
+  }
+
+  export type OrganizationSatelliteEntitlementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"organizationId" | "satelliteKey" | "trialExpiresAt" | "trialOverridden" | "connectedAt" | "isTrial", ExtArgs["result"]["organizationSatelliteEntitlement"]>
+  export type OrganizationSatelliteEntitlementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type OrganizationSatelliteEntitlementIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+  export type OrganizationSatelliteEntitlementIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+    satellite?: boolean | SatelliteDefaultArgs<ExtArgs>
+  }
+
+  export type $OrganizationSatelliteEntitlementPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrganizationSatelliteEntitlement"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+      satellite: Prisma.$SatellitePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      organizationId: string
+      satelliteKey: string
+      trialExpiresAt: Date | null
+      trialOverridden: boolean
+      connectedAt: Date
+      isTrial: boolean
+    }, ExtArgs["result"]["organizationSatelliteEntitlement"]>
+    composites: {}
+  }
+
+  type OrganizationSatelliteEntitlementGetPayload<S extends boolean | null | undefined | OrganizationSatelliteEntitlementDefaultArgs> = $Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload, S>
+
+  type OrganizationSatelliteEntitlementCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrganizationSatelliteEntitlementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrganizationSatelliteEntitlementCountAggregateInputType | true
+    }
+
+  export interface OrganizationSatelliteEntitlementDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrganizationSatelliteEntitlement'], meta: { name: 'OrganizationSatelliteEntitlement' } }
+    /**
+     * Find zero or one OrganizationSatelliteEntitlement that matches the filter.
+     * @param {OrganizationSatelliteEntitlementFindUniqueArgs} args - Arguments to find a OrganizationSatelliteEntitlement
+     * @example
+     * // Get one OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrganizationSatelliteEntitlementFindUniqueArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementFindUniqueArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrganizationSatelliteEntitlement that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrganizationSatelliteEntitlementFindUniqueOrThrowArgs} args - Arguments to find a OrganizationSatelliteEntitlement
+     * @example
+     * // Get one OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrganizationSatelliteEntitlementFindUniqueOrThrowArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationSatelliteEntitlement that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementFindFirstArgs} args - Arguments to find a OrganizationSatelliteEntitlement
+     * @example
+     * // Get one OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrganizationSatelliteEntitlementFindFirstArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementFindFirstArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrganizationSatelliteEntitlement that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementFindFirstOrThrowArgs} args - Arguments to find a OrganizationSatelliteEntitlement
+     * @example
+     * // Get one OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrganizationSatelliteEntitlementFindFirstOrThrowArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrganizationSatelliteEntitlements that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlements = await prisma.organizationSatelliteEntitlement.findMany()
+     * 
+     * // Get first 10 OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlements = await prisma.organizationSatelliteEntitlement.findMany({ take: 10 })
+     * 
+     * // Only select the `organizationId`
+     * const organizationSatelliteEntitlementWithOrganizationIdOnly = await prisma.organizationSatelliteEntitlement.findMany({ select: { organizationId: true } })
+     * 
+     */
+    findMany<T extends OrganizationSatelliteEntitlementFindManyArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrganizationSatelliteEntitlement.
+     * @param {OrganizationSatelliteEntitlementCreateArgs} args - Arguments to create a OrganizationSatelliteEntitlement.
+     * @example
+     * // Create one OrganizationSatelliteEntitlement
+     * const OrganizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.create({
+     *   data: {
+     *     // ... data to create a OrganizationSatelliteEntitlement
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrganizationSatelliteEntitlementCreateArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementCreateArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrganizationSatelliteEntitlements.
+     * @param {OrganizationSatelliteEntitlementCreateManyArgs} args - Arguments to create many OrganizationSatelliteEntitlements.
+     * @example
+     * // Create many OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrganizationSatelliteEntitlementCreateManyArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrganizationSatelliteEntitlements and returns the data saved in the database.
+     * @param {OrganizationSatelliteEntitlementCreateManyAndReturnArgs} args - Arguments to create many OrganizationSatelliteEntitlements.
+     * @example
+     * // Create many OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrganizationSatelliteEntitlements and only return the `organizationId`
+     * const organizationSatelliteEntitlementWithOrganizationIdOnly = await prisma.organizationSatelliteEntitlement.createManyAndReturn({
+     *   select: { organizationId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrganizationSatelliteEntitlementCreateManyAndReturnArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrganizationSatelliteEntitlement.
+     * @param {OrganizationSatelliteEntitlementDeleteArgs} args - Arguments to delete one OrganizationSatelliteEntitlement.
+     * @example
+     * // Delete one OrganizationSatelliteEntitlement
+     * const OrganizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.delete({
+     *   where: {
+     *     // ... filter to delete one OrganizationSatelliteEntitlement
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrganizationSatelliteEntitlementDeleteArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementDeleteArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrganizationSatelliteEntitlement.
+     * @param {OrganizationSatelliteEntitlementUpdateArgs} args - Arguments to update one OrganizationSatelliteEntitlement.
+     * @example
+     * // Update one OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrganizationSatelliteEntitlementUpdateArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementUpdateArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrganizationSatelliteEntitlements.
+     * @param {OrganizationSatelliteEntitlementDeleteManyArgs} args - Arguments to filter OrganizationSatelliteEntitlements to delete.
+     * @example
+     * // Delete a few OrganizationSatelliteEntitlements
+     * const { count } = await prisma.organizationSatelliteEntitlement.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrganizationSatelliteEntitlementDeleteManyArgs>(args?: SelectSubset<T, OrganizationSatelliteEntitlementDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationSatelliteEntitlements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrganizationSatelliteEntitlementUpdateManyArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrganizationSatelliteEntitlements and returns the data updated in the database.
+     * @param {OrganizationSatelliteEntitlementUpdateManyAndReturnArgs} args - Arguments to update many OrganizationSatelliteEntitlements.
+     * @example
+     * // Update many OrganizationSatelliteEntitlements
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrganizationSatelliteEntitlements and only return the `organizationId`
+     * const organizationSatelliteEntitlementWithOrganizationIdOnly = await prisma.organizationSatelliteEntitlement.updateManyAndReturn({
+     *   select: { organizationId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrganizationSatelliteEntitlementUpdateManyAndReturnArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrganizationSatelliteEntitlement.
+     * @param {OrganizationSatelliteEntitlementUpsertArgs} args - Arguments to update or create a OrganizationSatelliteEntitlement.
+     * @example
+     * // Update or create a OrganizationSatelliteEntitlement
+     * const organizationSatelliteEntitlement = await prisma.organizationSatelliteEntitlement.upsert({
+     *   create: {
+     *     // ... data to create a OrganizationSatelliteEntitlement
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrganizationSatelliteEntitlement we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrganizationSatelliteEntitlementUpsertArgs>(args: SelectSubset<T, OrganizationSatelliteEntitlementUpsertArgs<ExtArgs>>): Prisma__OrganizationSatelliteEntitlementClient<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrganizationSatelliteEntitlements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementCountArgs} args - Arguments to filter OrganizationSatelliteEntitlements to count.
+     * @example
+     * // Count the number of OrganizationSatelliteEntitlements
+     * const count = await prisma.organizationSatelliteEntitlement.count({
+     *   where: {
+     *     // ... the filter for the OrganizationSatelliteEntitlements we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrganizationSatelliteEntitlementCountArgs>(
+      args?: Subset<T, OrganizationSatelliteEntitlementCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrganizationSatelliteEntitlementCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrganizationSatelliteEntitlement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrganizationSatelliteEntitlementAggregateArgs>(args: Subset<T, OrganizationSatelliteEntitlementAggregateArgs>): Prisma.PrismaPromise<GetOrganizationSatelliteEntitlementAggregateType<T>>
+
+    /**
+     * Group by OrganizationSatelliteEntitlement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrganizationSatelliteEntitlementGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrganizationSatelliteEntitlementGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrganizationSatelliteEntitlementGroupByArgs['orderBy'] }
+        : { orderBy?: OrganizationSatelliteEntitlementGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrganizationSatelliteEntitlementGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrganizationSatelliteEntitlementGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrganizationSatelliteEntitlement model
+   */
+  readonly fields: OrganizationSatelliteEntitlementFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrganizationSatelliteEntitlement.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrganizationSatelliteEntitlementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    satellite<T extends SatelliteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SatelliteDefaultArgs<ExtArgs>>): Prisma__SatelliteClient<$Result.GetResult<Prisma.$SatellitePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrganizationSatelliteEntitlement model
+   */
+  interface OrganizationSatelliteEntitlementFieldRefs {
+    readonly organizationId: FieldRef<"OrganizationSatelliteEntitlement", 'String'>
+    readonly satelliteKey: FieldRef<"OrganizationSatelliteEntitlement", 'String'>
+    readonly trialExpiresAt: FieldRef<"OrganizationSatelliteEntitlement", 'DateTime'>
+    readonly trialOverridden: FieldRef<"OrganizationSatelliteEntitlement", 'Boolean'>
+    readonly connectedAt: FieldRef<"OrganizationSatelliteEntitlement", 'DateTime'>
+    readonly isTrial: FieldRef<"OrganizationSatelliteEntitlement", 'Boolean'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrganizationSatelliteEntitlement findUnique
+   */
+  export type OrganizationSatelliteEntitlementFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSatelliteEntitlement to fetch.
+     */
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement findUniqueOrThrow
+   */
+  export type OrganizationSatelliteEntitlementFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSatelliteEntitlement to fetch.
+     */
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement findFirst
+   */
+  export type OrganizationSatelliteEntitlementFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSatelliteEntitlement to fetch.
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSatelliteEntitlements to fetch.
+     */
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationSatelliteEntitlements.
+     */
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSatelliteEntitlements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSatelliteEntitlements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSatelliteEntitlements.
+     */
+    distinct?: OrganizationSatelliteEntitlementScalarFieldEnum | OrganizationSatelliteEntitlementScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement findFirstOrThrow
+   */
+  export type OrganizationSatelliteEntitlementFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSatelliteEntitlement to fetch.
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSatelliteEntitlements to fetch.
+     */
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrganizationSatelliteEntitlements.
+     */
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSatelliteEntitlements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSatelliteEntitlements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSatelliteEntitlements.
+     */
+    distinct?: OrganizationSatelliteEntitlementScalarFieldEnum | OrganizationSatelliteEntitlementScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement findMany
+   */
+  export type OrganizationSatelliteEntitlementFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter, which OrganizationSatelliteEntitlements to fetch.
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrganizationSatelliteEntitlements to fetch.
+     */
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrganizationSatelliteEntitlements.
+     */
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrganizationSatelliteEntitlements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrganizationSatelliteEntitlements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrganizationSatelliteEntitlements.
+     */
+    distinct?: OrganizationSatelliteEntitlementScalarFieldEnum | OrganizationSatelliteEntitlementScalarFieldEnum[]
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement create
+   */
+  export type OrganizationSatelliteEntitlementCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrganizationSatelliteEntitlement.
+     */
+    data: XOR<OrganizationSatelliteEntitlementCreateInput, OrganizationSatelliteEntitlementUncheckedCreateInput>
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement createMany
+   */
+  export type OrganizationSatelliteEntitlementCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrganizationSatelliteEntitlements.
+     */
+    data: OrganizationSatelliteEntitlementCreateManyInput | OrganizationSatelliteEntitlementCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement createManyAndReturn
+   */
+  export type OrganizationSatelliteEntitlementCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrganizationSatelliteEntitlements.
+     */
+    data: OrganizationSatelliteEntitlementCreateManyInput | OrganizationSatelliteEntitlementCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement update
+   */
+  export type OrganizationSatelliteEntitlementUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrganizationSatelliteEntitlement.
+     */
+    data: XOR<OrganizationSatelliteEntitlementUpdateInput, OrganizationSatelliteEntitlementUncheckedUpdateInput>
+    /**
+     * Choose, which OrganizationSatelliteEntitlement to update.
+     */
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement updateMany
+   */
+  export type OrganizationSatelliteEntitlementUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrganizationSatelliteEntitlements.
+     */
+    data: XOR<OrganizationSatelliteEntitlementUpdateManyMutationInput, OrganizationSatelliteEntitlementUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationSatelliteEntitlements to update
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * Limit how many OrganizationSatelliteEntitlements to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement updateManyAndReturn
+   */
+  export type OrganizationSatelliteEntitlementUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * The data used to update OrganizationSatelliteEntitlements.
+     */
+    data: XOR<OrganizationSatelliteEntitlementUpdateManyMutationInput, OrganizationSatelliteEntitlementUncheckedUpdateManyInput>
+    /**
+     * Filter which OrganizationSatelliteEntitlements to update
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * Limit how many OrganizationSatelliteEntitlements to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement upsert
+   */
+  export type OrganizationSatelliteEntitlementUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrganizationSatelliteEntitlement to update in case it exists.
+     */
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    /**
+     * In case the OrganizationSatelliteEntitlement found by the `where` argument doesn't exist, create a new OrganizationSatelliteEntitlement with this data.
+     */
+    create: XOR<OrganizationSatelliteEntitlementCreateInput, OrganizationSatelliteEntitlementUncheckedCreateInput>
+    /**
+     * In case the OrganizationSatelliteEntitlement was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrganizationSatelliteEntitlementUpdateInput, OrganizationSatelliteEntitlementUncheckedUpdateInput>
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement delete
+   */
+  export type OrganizationSatelliteEntitlementDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    /**
+     * Filter which OrganizationSatelliteEntitlement to delete.
+     */
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement deleteMany
+   */
+  export type OrganizationSatelliteEntitlementDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrganizationSatelliteEntitlements to delete
+     */
+    where?: OrganizationSatelliteEntitlementWhereInput
+    /**
+     * Limit how many OrganizationSatelliteEntitlements to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrganizationSatelliteEntitlement without action
+   */
+  export type OrganizationSatelliteEntitlementDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
   }
 
 
@@ -18558,6 +19939,1134 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SatelliteEndpointInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceAssignment
+   */
+
+  export type AggregateWorkforceAssignment = {
+    _count: WorkforceAssignmentCountAggregateOutputType | null
+    _min: WorkforceAssignmentMinAggregateOutputType | null
+    _max: WorkforceAssignmentMaxAggregateOutputType | null
+  }
+
+  export type WorkforceAssignmentMinAggregateOutputType = {
+    id: string | null
+    globalPersonId: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    satelliteUserId: string | null
+    financeEmployeeId: string | null
+    role: string | null
+    status: $Enums.WorkforceAssignmentStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceAssignmentMaxAggregateOutputType = {
+    id: string | null
+    globalPersonId: string | null
+    organizationId: string | null
+    satelliteKey: string | null
+    satelliteUserId: string | null
+    financeEmployeeId: string | null
+    role: string | null
+    status: $Enums.WorkforceAssignmentStatus | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceAssignmentCountAggregateOutputType = {
+    id: number
+    globalPersonId: number
+    organizationId: number
+    satelliteKey: number
+    satelliteUserId: number
+    financeEmployeeId: number
+    role: number
+    status: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceAssignmentMinAggregateInputType = {
+    id?: true
+    globalPersonId?: true
+    organizationId?: true
+    satelliteKey?: true
+    satelliteUserId?: true
+    financeEmployeeId?: true
+    role?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceAssignmentMaxAggregateInputType = {
+    id?: true
+    globalPersonId?: true
+    organizationId?: true
+    satelliteKey?: true
+    satelliteUserId?: true
+    financeEmployeeId?: true
+    role?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceAssignmentCountAggregateInputType = {
+    id?: true
+    globalPersonId?: true
+    organizationId?: true
+    satelliteKey?: true
+    satelliteUserId?: true
+    financeEmployeeId?: true
+    role?: true
+    status?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceAssignmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceAssignment to aggregate.
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceAssignments to fetch.
+     */
+    orderBy?: WorkforceAssignmentOrderByWithRelationInput | WorkforceAssignmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceAssignmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceAssignments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceAssignments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceAssignments
+    **/
+    _count?: true | WorkforceAssignmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceAssignmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceAssignmentMaxAggregateInputType
+  }
+
+  export type GetWorkforceAssignmentAggregateType<T extends WorkforceAssignmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceAssignment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceAssignment[P]>
+      : GetScalarType<T[P], AggregateWorkforceAssignment[P]>
+  }
+
+
+
+
+  export type WorkforceAssignmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceAssignmentWhereInput
+    orderBy?: WorkforceAssignmentOrderByWithAggregationInput | WorkforceAssignmentOrderByWithAggregationInput[]
+    by: WorkforceAssignmentScalarFieldEnum[] | WorkforceAssignmentScalarFieldEnum
+    having?: WorkforceAssignmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceAssignmentCountAggregateInputType | true
+    _min?: WorkforceAssignmentMinAggregateInputType
+    _max?: WorkforceAssignmentMaxAggregateInputType
+  }
+
+  export type WorkforceAssignmentGroupByOutputType = {
+    id: string
+    globalPersonId: string
+    organizationId: string
+    satelliteKey: string
+    satelliteUserId: string | null
+    financeEmployeeId: string | null
+    role: string
+    status: $Enums.WorkforceAssignmentStatus
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceAssignmentCountAggregateOutputType | null
+    _min: WorkforceAssignmentMinAggregateOutputType | null
+    _max: WorkforceAssignmentMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceAssignmentGroupByPayload<T extends WorkforceAssignmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceAssignmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceAssignmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceAssignmentGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceAssignmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceAssignmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    globalPersonId?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    satelliteUserId?: boolean
+    financeEmployeeId?: boolean
+    role?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceAssignment"]>
+
+  export type WorkforceAssignmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    globalPersonId?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    satelliteUserId?: boolean
+    financeEmployeeId?: boolean
+    role?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceAssignment"]>
+
+  export type WorkforceAssignmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    globalPersonId?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    satelliteUserId?: boolean
+    financeEmployeeId?: boolean
+    role?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceAssignment"]>
+
+  export type WorkforceAssignmentSelectScalar = {
+    id?: boolean
+    globalPersonId?: boolean
+    organizationId?: boolean
+    satelliteKey?: boolean
+    satelliteUserId?: boolean
+    financeEmployeeId?: boolean
+    role?: boolean
+    status?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceAssignmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "globalPersonId" | "organizationId" | "satelliteKey" | "satelliteUserId" | "financeEmployeeId" | "role" | "status" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceAssignment"]>
+  export type WorkforceAssignmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceAssignmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+  export type WorkforceAssignmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    organization?: boolean | OrganizationDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceAssignmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceAssignment"
+    objects: {
+      organization: Prisma.$OrganizationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      globalPersonId: string
+      organizationId: string
+      satelliteKey: string
+      satelliteUserId: string | null
+      financeEmployeeId: string | null
+      role: string
+      status: $Enums.WorkforceAssignmentStatus
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceAssignment"]>
+    composites: {}
+  }
+
+  type WorkforceAssignmentGetPayload<S extends boolean | null | undefined | WorkforceAssignmentDefaultArgs> = $Result.GetResult<Prisma.$WorkforceAssignmentPayload, S>
+
+  type WorkforceAssignmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceAssignmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceAssignmentCountAggregateInputType | true
+    }
+
+  export interface WorkforceAssignmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceAssignment'], meta: { name: 'WorkforceAssignment' } }
+    /**
+     * Find zero or one WorkforceAssignment that matches the filter.
+     * @param {WorkforceAssignmentFindUniqueArgs} args - Arguments to find a WorkforceAssignment
+     * @example
+     * // Get one WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceAssignmentFindUniqueArgs>(args: SelectSubset<T, WorkforceAssignmentFindUniqueArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceAssignment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceAssignmentFindUniqueOrThrowArgs} args - Arguments to find a WorkforceAssignment
+     * @example
+     * // Get one WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceAssignmentFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceAssignmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceAssignment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentFindFirstArgs} args - Arguments to find a WorkforceAssignment
+     * @example
+     * // Get one WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceAssignmentFindFirstArgs>(args?: SelectSubset<T, WorkforceAssignmentFindFirstArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceAssignment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentFindFirstOrThrowArgs} args - Arguments to find a WorkforceAssignment
+     * @example
+     * // Get one WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceAssignmentFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceAssignmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceAssignments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceAssignments
+     * const workforceAssignments = await prisma.workforceAssignment.findMany()
+     * 
+     * // Get first 10 WorkforceAssignments
+     * const workforceAssignments = await prisma.workforceAssignment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceAssignmentWithIdOnly = await prisma.workforceAssignment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceAssignmentFindManyArgs>(args?: SelectSubset<T, WorkforceAssignmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceAssignment.
+     * @param {WorkforceAssignmentCreateArgs} args - Arguments to create a WorkforceAssignment.
+     * @example
+     * // Create one WorkforceAssignment
+     * const WorkforceAssignment = await prisma.workforceAssignment.create({
+     *   data: {
+     *     // ... data to create a WorkforceAssignment
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceAssignmentCreateArgs>(args: SelectSubset<T, WorkforceAssignmentCreateArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceAssignments.
+     * @param {WorkforceAssignmentCreateManyArgs} args - Arguments to create many WorkforceAssignments.
+     * @example
+     * // Create many WorkforceAssignments
+     * const workforceAssignment = await prisma.workforceAssignment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceAssignmentCreateManyArgs>(args?: SelectSubset<T, WorkforceAssignmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceAssignments and returns the data saved in the database.
+     * @param {WorkforceAssignmentCreateManyAndReturnArgs} args - Arguments to create many WorkforceAssignments.
+     * @example
+     * // Create many WorkforceAssignments
+     * const workforceAssignment = await prisma.workforceAssignment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceAssignments and only return the `id`
+     * const workforceAssignmentWithIdOnly = await prisma.workforceAssignment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceAssignmentCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceAssignmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceAssignment.
+     * @param {WorkforceAssignmentDeleteArgs} args - Arguments to delete one WorkforceAssignment.
+     * @example
+     * // Delete one WorkforceAssignment
+     * const WorkforceAssignment = await prisma.workforceAssignment.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceAssignment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceAssignmentDeleteArgs>(args: SelectSubset<T, WorkforceAssignmentDeleteArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceAssignment.
+     * @param {WorkforceAssignmentUpdateArgs} args - Arguments to update one WorkforceAssignment.
+     * @example
+     * // Update one WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceAssignmentUpdateArgs>(args: SelectSubset<T, WorkforceAssignmentUpdateArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceAssignments.
+     * @param {WorkforceAssignmentDeleteManyArgs} args - Arguments to filter WorkforceAssignments to delete.
+     * @example
+     * // Delete a few WorkforceAssignments
+     * const { count } = await prisma.workforceAssignment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceAssignmentDeleteManyArgs>(args?: SelectSubset<T, WorkforceAssignmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceAssignments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceAssignments
+     * const workforceAssignment = await prisma.workforceAssignment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceAssignmentUpdateManyArgs>(args: SelectSubset<T, WorkforceAssignmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceAssignments and returns the data updated in the database.
+     * @param {WorkforceAssignmentUpdateManyAndReturnArgs} args - Arguments to update many WorkforceAssignments.
+     * @example
+     * // Update many WorkforceAssignments
+     * const workforceAssignment = await prisma.workforceAssignment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceAssignments and only return the `id`
+     * const workforceAssignmentWithIdOnly = await prisma.workforceAssignment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceAssignmentUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceAssignmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceAssignment.
+     * @param {WorkforceAssignmentUpsertArgs} args - Arguments to update or create a WorkforceAssignment.
+     * @example
+     * // Update or create a WorkforceAssignment
+     * const workforceAssignment = await prisma.workforceAssignment.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceAssignment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceAssignment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceAssignmentUpsertArgs>(args: SelectSubset<T, WorkforceAssignmentUpsertArgs<ExtArgs>>): Prisma__WorkforceAssignmentClient<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceAssignments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentCountArgs} args - Arguments to filter WorkforceAssignments to count.
+     * @example
+     * // Count the number of WorkforceAssignments
+     * const count = await prisma.workforceAssignment.count({
+     *   where: {
+     *     // ... the filter for the WorkforceAssignments we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceAssignmentCountArgs>(
+      args?: Subset<T, WorkforceAssignmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceAssignmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceAssignment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceAssignmentAggregateArgs>(args: Subset<T, WorkforceAssignmentAggregateArgs>): Prisma.PrismaPromise<GetWorkforceAssignmentAggregateType<T>>
+
+    /**
+     * Group by WorkforceAssignment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceAssignmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceAssignmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceAssignmentGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceAssignmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceAssignmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceAssignmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceAssignment model
+   */
+  readonly fields: WorkforceAssignmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceAssignment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceAssignmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    organization<T extends OrganizationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganizationDefaultArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceAssignment model
+   */
+  interface WorkforceAssignmentFieldRefs {
+    readonly id: FieldRef<"WorkforceAssignment", 'String'>
+    readonly globalPersonId: FieldRef<"WorkforceAssignment", 'String'>
+    readonly organizationId: FieldRef<"WorkforceAssignment", 'String'>
+    readonly satelliteKey: FieldRef<"WorkforceAssignment", 'String'>
+    readonly satelliteUserId: FieldRef<"WorkforceAssignment", 'String'>
+    readonly financeEmployeeId: FieldRef<"WorkforceAssignment", 'String'>
+    readonly role: FieldRef<"WorkforceAssignment", 'String'>
+    readonly status: FieldRef<"WorkforceAssignment", 'WorkforceAssignmentStatus'>
+    readonly createdAt: FieldRef<"WorkforceAssignment", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceAssignment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceAssignment findUnique
+   */
+  export type WorkforceAssignmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceAssignment to fetch.
+     */
+    where: WorkforceAssignmentWhereUniqueInput
+  }
+
+  /**
+   * WorkforceAssignment findUniqueOrThrow
+   */
+  export type WorkforceAssignmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceAssignment to fetch.
+     */
+    where: WorkforceAssignmentWhereUniqueInput
+  }
+
+  /**
+   * WorkforceAssignment findFirst
+   */
+  export type WorkforceAssignmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceAssignment to fetch.
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceAssignments to fetch.
+     */
+    orderBy?: WorkforceAssignmentOrderByWithRelationInput | WorkforceAssignmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceAssignments.
+     */
+    cursor?: WorkforceAssignmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceAssignments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceAssignments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceAssignments.
+     */
+    distinct?: WorkforceAssignmentScalarFieldEnum | WorkforceAssignmentScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceAssignment findFirstOrThrow
+   */
+  export type WorkforceAssignmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceAssignment to fetch.
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceAssignments to fetch.
+     */
+    orderBy?: WorkforceAssignmentOrderByWithRelationInput | WorkforceAssignmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceAssignments.
+     */
+    cursor?: WorkforceAssignmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceAssignments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceAssignments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceAssignments.
+     */
+    distinct?: WorkforceAssignmentScalarFieldEnum | WorkforceAssignmentScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceAssignment findMany
+   */
+  export type WorkforceAssignmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceAssignments to fetch.
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceAssignments to fetch.
+     */
+    orderBy?: WorkforceAssignmentOrderByWithRelationInput | WorkforceAssignmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceAssignments.
+     */
+    cursor?: WorkforceAssignmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceAssignments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceAssignments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceAssignments.
+     */
+    distinct?: WorkforceAssignmentScalarFieldEnum | WorkforceAssignmentScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceAssignment create
+   */
+  export type WorkforceAssignmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceAssignment.
+     */
+    data: XOR<WorkforceAssignmentCreateInput, WorkforceAssignmentUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceAssignment createMany
+   */
+  export type WorkforceAssignmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceAssignments.
+     */
+    data: WorkforceAssignmentCreateManyInput | WorkforceAssignmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceAssignment createManyAndReturn
+   */
+  export type WorkforceAssignmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceAssignments.
+     */
+    data: WorkforceAssignmentCreateManyInput | WorkforceAssignmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceAssignment update
+   */
+  export type WorkforceAssignmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceAssignment.
+     */
+    data: XOR<WorkforceAssignmentUpdateInput, WorkforceAssignmentUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceAssignment to update.
+     */
+    where: WorkforceAssignmentWhereUniqueInput
+  }
+
+  /**
+   * WorkforceAssignment updateMany
+   */
+  export type WorkforceAssignmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceAssignments.
+     */
+    data: XOR<WorkforceAssignmentUpdateManyMutationInput, WorkforceAssignmentUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceAssignments to update
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * Limit how many WorkforceAssignments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceAssignment updateManyAndReturn
+   */
+  export type WorkforceAssignmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceAssignments.
+     */
+    data: XOR<WorkforceAssignmentUpdateManyMutationInput, WorkforceAssignmentUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceAssignments to update
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * Limit how many WorkforceAssignments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceAssignment upsert
+   */
+  export type WorkforceAssignmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceAssignment to update in case it exists.
+     */
+    where: WorkforceAssignmentWhereUniqueInput
+    /**
+     * In case the WorkforceAssignment found by the `where` argument doesn't exist, create a new WorkforceAssignment with this data.
+     */
+    create: XOR<WorkforceAssignmentCreateInput, WorkforceAssignmentUncheckedCreateInput>
+    /**
+     * In case the WorkforceAssignment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceAssignmentUpdateInput, WorkforceAssignmentUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceAssignment delete
+   */
+  export type WorkforceAssignmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceAssignment to delete.
+     */
+    where: WorkforceAssignmentWhereUniqueInput
+  }
+
+  /**
+   * WorkforceAssignment deleteMany
+   */
+  export type WorkforceAssignmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceAssignments to delete
+     */
+    where?: WorkforceAssignmentWhereInput
+    /**
+     * Limit how many WorkforceAssignments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceAssignment without action
+   */
+  export type WorkforceAssignmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
   }
 
 
@@ -26666,6 +29175,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
+    satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
+    workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
@@ -26782,6 +29293,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: boolean | Organization$platformIdempotencyRecordsArgs<ExtArgs>
     platformLoyaltyLedger?: boolean | Organization$platformLoyaltyLedgerArgs<ExtArgs>
     satelliteEndpoints?: boolean | Organization$satelliteEndpointsArgs<ExtArgs>
+    satelliteEntitlements?: boolean | Organization$satelliteEntitlementsArgs<ExtArgs>
+    workforceAssignments?: boolean | Organization$workforceAssignmentsArgs<ExtArgs>
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
@@ -26822,6 +29335,8 @@ export namespace Prisma {
       platformIdempotencyRecords: Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>[]
       platformLoyaltyLedger: Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>[]
       satelliteEndpoints: Prisma.$SatelliteEndpointPayload<ExtArgs>[]
+      satelliteEntitlements: Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>[]
+      workforceAssignments: Prisma.$WorkforceAssignmentPayload<ExtArgs>[]
       owner: Prisma.$UserPayload<ExtArgs> | null
       parentOrg: Prisma.$OrganizationPayload<ExtArgs> | null
       departments: Prisma.$OrganizationPayload<ExtArgs>[]
@@ -27268,6 +29783,8 @@ export namespace Prisma {
     platformIdempotencyRecords<T extends Organization$platformIdempotencyRecordsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformIdempotencyRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformIdempotencyRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     platformLoyaltyLedger<T extends Organization$platformLoyaltyLedgerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$platformLoyaltyLedgerArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PlatformLoyaltyLedgerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     satelliteEndpoints<T extends Organization$satelliteEndpointsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEndpointsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SatelliteEndpointPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    satelliteEntitlements<T extends Organization$satelliteEntitlementsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$satelliteEntitlementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationSatelliteEntitlementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    workforceAssignments<T extends Organization$workforceAssignmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$workforceAssignmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceAssignmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     parentOrg<T extends Organization$parentOrgArgs<ExtArgs> = {}>(args?: Subset<T, Organization$parentOrgArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     departments<T extends Organization$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -28269,6 +30786,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SatelliteEndpointScalarFieldEnum | SatelliteEndpointScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.satelliteEntitlements
+   */
+  export type Organization$satelliteEntitlementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrganizationSatelliteEntitlement
+     */
+    select?: OrganizationSatelliteEntitlementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrganizationSatelliteEntitlement
+     */
+    omit?: OrganizationSatelliteEntitlementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationSatelliteEntitlementInclude<ExtArgs> | null
+    where?: OrganizationSatelliteEntitlementWhereInput
+    orderBy?: OrganizationSatelliteEntitlementOrderByWithRelationInput | OrganizationSatelliteEntitlementOrderByWithRelationInput[]
+    cursor?: OrganizationSatelliteEntitlementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationSatelliteEntitlementScalarFieldEnum | OrganizationSatelliteEntitlementScalarFieldEnum[]
+  }
+
+  /**
+   * Organization.workforceAssignments
+   */
+  export type Organization$workforceAssignmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceAssignment
+     */
+    select?: WorkforceAssignmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceAssignment
+     */
+    omit?: WorkforceAssignmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceAssignmentInclude<ExtArgs> | null
+    where?: WorkforceAssignmentWhereInput
+    orderBy?: WorkforceAssignmentOrderByWithRelationInput | WorkforceAssignmentOrderByWithRelationInput[]
+    cursor?: WorkforceAssignmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceAssignmentScalarFieldEnum | WorkforceAssignmentScalarFieldEnum[]
   }
 
   /**
@@ -59106,6 +61671,7 @@ export namespace Prisma {
     billingPeriodKey: 'billingPeriodKey',
     expiresAt: 'expiresAt',
     activeModules: 'activeModules',
+    quotaOverrides: 'quotaOverrides',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     isBlocked: 'isBlocked',
@@ -59164,7 +61730,9 @@ export namespace Prisma {
     activatedAt: 'activatedAt',
     pendingDeactivation: 'pendingDeactivation',
     cancelledAt: 'cancelledAt',
-    accessUntil: 'accessUntil'
+    accessUntil: 'accessUntil',
+    trialExpiresAt: 'trialExpiresAt',
+    trialOverridden: 'trialOverridden'
   };
 
   export type OrganizationModuleScalarFieldEnum = (typeof OrganizationModuleScalarFieldEnum)[keyof typeof OrganizationModuleScalarFieldEnum]
@@ -59207,6 +61775,7 @@ export namespace Prisma {
     sortOrder: 'sortOrder',
     catalogKind: 'catalogKind',
     satelliteKey: 'satelliteKey',
+    trialEligibleInTrial: 'trialEligibleInTrial',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -59226,6 +61795,18 @@ export namespace Prisma {
   export type SatelliteScalarFieldEnum = (typeof SatelliteScalarFieldEnum)[keyof typeof SatelliteScalarFieldEnum]
 
 
+  export const OrganizationSatelliteEntitlementScalarFieldEnum: {
+    organizationId: 'organizationId',
+    satelliteKey: 'satelliteKey',
+    trialExpiresAt: 'trialExpiresAt',
+    trialOverridden: 'trialOverridden',
+    connectedAt: 'connectedAt',
+    isTrial: 'isTrial'
+  };
+
+  export type OrganizationSatelliteEntitlementScalarFieldEnum = (typeof OrganizationSatelliteEntitlementScalarFieldEnum)[keyof typeof OrganizationSatelliteEntitlementScalarFieldEnum]
+
+
   export const SatelliteEndpointScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
@@ -59238,6 +61819,22 @@ export namespace Prisma {
   };
 
   export type SatelliteEndpointScalarFieldEnum = (typeof SatelliteEndpointScalarFieldEnum)[keyof typeof SatelliteEndpointScalarFieldEnum]
+
+
+  export const WorkforceAssignmentScalarFieldEnum: {
+    id: 'id',
+    globalPersonId: 'globalPersonId',
+    organizationId: 'organizationId',
+    satelliteKey: 'satelliteKey',
+    satelliteUserId: 'satelliteUserId',
+    financeEmployeeId: 'financeEmployeeId',
+    role: 'role',
+    status: 'status',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceAssignmentScalarFieldEnum = (typeof WorkforceAssignmentScalarFieldEnum)[keyof typeof WorkforceAssignmentScalarFieldEnum]
 
 
   export const PricingBundleScalarFieldEnum: {
@@ -59979,6 +62576,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'WorkforceAssignmentStatus'
+   */
+  export type EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceAssignmentStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceAssignmentStatus[]'
+   */
+  export type ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceAssignmentStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'PaymentOrderStatus'
    */
   export type EnumPaymentOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PaymentOrderStatus'>
@@ -60423,6 +63034,7 @@ export namespace Prisma {
     billingPeriodKey?: StringNullableFilter<"OrganizationSubscription"> | string | null
     expiresAt?: DateTimeNullableFilter<"OrganizationSubscription"> | Date | string | null
     activeModules?: StringNullableListFilter<"OrganizationSubscription">
+    quotaOverrides?: JsonNullableFilter<"OrganizationSubscription">
     createdAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
@@ -60440,6 +63052,7 @@ export namespace Prisma {
     billingPeriodKey?: SortOrderInput | SortOrder
     expiresAt?: SortOrderInput | SortOrder
     activeModules?: SortOrder
+    quotaOverrides?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
@@ -60460,6 +63073,7 @@ export namespace Prisma {
     billingPeriodKey?: StringNullableFilter<"OrganizationSubscription"> | string | null
     expiresAt?: DateTimeNullableFilter<"OrganizationSubscription"> | Date | string | null
     activeModules?: StringNullableListFilter<"OrganizationSubscription">
+    quotaOverrides?: JsonNullableFilter<"OrganizationSubscription">
     createdAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolFilter<"OrganizationSubscription"> | boolean
@@ -60477,6 +63091,7 @@ export namespace Prisma {
     billingPeriodKey?: SortOrderInput | SortOrder
     expiresAt?: SortOrderInput | SortOrder
     activeModules?: SortOrder
+    quotaOverrides?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
@@ -60499,6 +63114,7 @@ export namespace Prisma {
     billingPeriodKey?: StringNullableWithAggregatesFilter<"OrganizationSubscription"> | string | null
     expiresAt?: DateTimeNullableWithAggregatesFilter<"OrganizationSubscription"> | Date | string | null
     activeModules?: StringNullableListFilter<"OrganizationSubscription">
+    quotaOverrides?: JsonNullableWithAggregatesFilter<"OrganizationSubscription">
     createdAt?: DateTimeWithAggregatesFilter<"OrganizationSubscription"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"OrganizationSubscription"> | Date | string
     isBlocked?: BoolWithAggregatesFilter<"OrganizationSubscription"> | boolean
@@ -60741,6 +63357,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFilter<"OrganizationModule"> | boolean
     cancelledAt?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
     accessUntil?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
+    trialExpiresAt?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
+    trialOverridden?: BoolFilter<"OrganizationModule"> | boolean
   }
 
   export type OrganizationModuleOrderByWithRelationInput = {
@@ -60751,6 +63369,8 @@ export namespace Prisma {
     pendingDeactivation?: SortOrder
     cancelledAt?: SortOrderInput | SortOrder
     accessUntil?: SortOrderInput | SortOrder
+    trialExpiresAt?: SortOrderInput | SortOrder
+    trialOverridden?: SortOrder
   }
 
   export type OrganizationModuleWhereUniqueInput = Prisma.AtLeast<{
@@ -60765,6 +63385,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFilter<"OrganizationModule"> | boolean
     cancelledAt?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
     accessUntil?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
+    trialExpiresAt?: DateTimeNullableFilter<"OrganizationModule"> | Date | string | null
+    trialOverridden?: BoolFilter<"OrganizationModule"> | boolean
   }, "organizationId_moduleKey">
 
   export type OrganizationModuleOrderByWithAggregationInput = {
@@ -60775,6 +63397,8 @@ export namespace Prisma {
     pendingDeactivation?: SortOrder
     cancelledAt?: SortOrderInput | SortOrder
     accessUntil?: SortOrderInput | SortOrder
+    trialExpiresAt?: SortOrderInput | SortOrder
+    trialOverridden?: SortOrder
     _count?: OrganizationModuleCountOrderByAggregateInput
     _avg?: OrganizationModuleAvgOrderByAggregateInput
     _max?: OrganizationModuleMaxOrderByAggregateInput
@@ -60793,6 +63417,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolWithAggregatesFilter<"OrganizationModule"> | boolean
     cancelledAt?: DateTimeNullableWithAggregatesFilter<"OrganizationModule"> | Date | string | null
     accessUntil?: DateTimeNullableWithAggregatesFilter<"OrganizationModule"> | Date | string | null
+    trialExpiresAt?: DateTimeNullableWithAggregatesFilter<"OrganizationModule"> | Date | string | null
+    trialOverridden?: BoolWithAggregatesFilter<"OrganizationModule"> | boolean
   }
 
   export type OrganizationBundleWhereInput = {
@@ -60949,6 +63575,7 @@ export namespace Prisma {
     sortOrder?: IntFilter<"PricingModule"> | number
     catalogKind?: EnumPricingCatalogKindFilter<"PricingModule"> | $Enums.PricingCatalogKind
     satelliteKey?: StringNullableFilter<"PricingModule"> | string | null
+    trialEligibleInTrial?: BoolFilter<"PricingModule"> | boolean
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
     satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
@@ -60963,6 +63590,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     catalogKind?: SortOrder
     satelliteKey?: SortOrderInput | SortOrder
+    trialEligibleInTrial?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     satellite?: SatelliteOrderByWithRelationInput
@@ -60980,6 +63608,7 @@ export namespace Prisma {
     sortOrder?: IntFilter<"PricingModule"> | number
     catalogKind?: EnumPricingCatalogKindFilter<"PricingModule"> | $Enums.PricingCatalogKind
     satelliteKey?: StringNullableFilter<"PricingModule"> | string | null
+    trialEligibleInTrial?: BoolFilter<"PricingModule"> | boolean
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
     satellite?: XOR<SatelliteNullableScalarRelationFilter, SatelliteWhereInput> | null
@@ -60994,6 +63623,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     catalogKind?: SortOrder
     satelliteKey?: SortOrderInput | SortOrder
+    trialEligibleInTrial?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PricingModuleCountOrderByAggregateInput
@@ -61015,6 +63645,7 @@ export namespace Prisma {
     sortOrder?: IntWithAggregatesFilter<"PricingModule"> | number
     catalogKind?: EnumPricingCatalogKindWithAggregatesFilter<"PricingModule"> | $Enums.PricingCatalogKind
     satelliteKey?: StringNullableWithAggregatesFilter<"PricingModule"> | string | null
+    trialEligibleInTrial?: BoolWithAggregatesFilter<"PricingModule"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PricingModule"> | Date | string
   }
@@ -61031,6 +63662,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Satellite"> | Date | string
     modules?: PricingModuleListRelationFilter
     endpoints?: SatelliteEndpointListRelationFilter
+    entitlements?: OrganizationSatelliteEntitlementListRelationFilter
   }
 
   export type SatelliteOrderByWithRelationInput = {
@@ -61042,6 +63674,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     modules?: PricingModuleOrderByRelationAggregateInput
     endpoints?: SatelliteEndpointOrderByRelationAggregateInput
+    entitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
   }
 
   export type SatelliteWhereUniqueInput = Prisma.AtLeast<{
@@ -61056,6 +63689,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Satellite"> | Date | string
     modules?: PricingModuleListRelationFilter
     endpoints?: SatelliteEndpointListRelationFilter
+    entitlements?: OrganizationSatelliteEntitlementListRelationFilter
   }, "key">
 
   export type SatelliteOrderByWithAggregationInput = {
@@ -61082,6 +63716,70 @@ export namespace Prisma {
     sortOrder?: IntWithAggregatesFilter<"Satellite"> | number
     createdAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Satellite"> | Date | string
+  }
+
+  export type OrganizationSatelliteEntitlementWhereInput = {
+    AND?: OrganizationSatelliteEntitlementWhereInput | OrganizationSatelliteEntitlementWhereInput[]
+    OR?: OrganizationSatelliteEntitlementWhereInput[]
+    NOT?: OrganizationSatelliteEntitlementWhereInput | OrganizationSatelliteEntitlementWhereInput[]
+    organizationId?: UuidFilter<"OrganizationSatelliteEntitlement"> | string
+    satelliteKey?: StringFilter<"OrganizationSatelliteEntitlement"> | string
+    trialExpiresAt?: DateTimeNullableFilter<"OrganizationSatelliteEntitlement"> | Date | string | null
+    trialOverridden?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+    connectedAt?: DateTimeFilter<"OrganizationSatelliteEntitlement"> | Date | string
+    isTrial?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }
+
+  export type OrganizationSatelliteEntitlementOrderByWithRelationInput = {
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    trialExpiresAt?: SortOrderInput | SortOrder
+    trialOverridden?: SortOrder
+    connectedAt?: SortOrder
+    isTrial?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+    satellite?: SatelliteOrderByWithRelationInput
+  }
+
+  export type OrganizationSatelliteEntitlementWhereUniqueInput = Prisma.AtLeast<{
+    organizationId_satelliteKey?: OrganizationSatelliteEntitlementOrganizationIdSatelliteKeyCompoundUniqueInput
+    AND?: OrganizationSatelliteEntitlementWhereInput | OrganizationSatelliteEntitlementWhereInput[]
+    OR?: OrganizationSatelliteEntitlementWhereInput[]
+    NOT?: OrganizationSatelliteEntitlementWhereInput | OrganizationSatelliteEntitlementWhereInput[]
+    organizationId?: UuidFilter<"OrganizationSatelliteEntitlement"> | string
+    satelliteKey?: StringFilter<"OrganizationSatelliteEntitlement"> | string
+    trialExpiresAt?: DateTimeNullableFilter<"OrganizationSatelliteEntitlement"> | Date | string | null
+    trialOverridden?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+    connectedAt?: DateTimeFilter<"OrganizationSatelliteEntitlement"> | Date | string
+    isTrial?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+    satellite?: XOR<SatelliteScalarRelationFilter, SatelliteWhereInput>
+  }, "organizationId_satelliteKey">
+
+  export type OrganizationSatelliteEntitlementOrderByWithAggregationInput = {
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    trialExpiresAt?: SortOrderInput | SortOrder
+    trialOverridden?: SortOrder
+    connectedAt?: SortOrder
+    isTrial?: SortOrder
+    _count?: OrganizationSatelliteEntitlementCountOrderByAggregateInput
+    _max?: OrganizationSatelliteEntitlementMaxOrderByAggregateInput
+    _min?: OrganizationSatelliteEntitlementMinOrderByAggregateInput
+  }
+
+  export type OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput = {
+    AND?: OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput | OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput[]
+    OR?: OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput[]
+    NOT?: OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput | OrganizationSatelliteEntitlementScalarWhereWithAggregatesInput[]
+    organizationId?: UuidWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | string
+    satelliteKey?: StringWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | string
+    trialExpiresAt?: DateTimeNullableWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | Date | string | null
+    trialOverridden?: BoolWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | boolean
+    connectedAt?: DateTimeWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | Date | string
+    isTrial?: BoolWithAggregatesFilter<"OrganizationSatelliteEntitlement"> | boolean
   }
 
   export type SatelliteEndpointWhereInput = {
@@ -61156,6 +63854,87 @@ export namespace Prisma {
     enabled?: BoolWithAggregatesFilter<"SatelliteEndpoint"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"SatelliteEndpoint"> | Date | string
+  }
+
+  export type WorkforceAssignmentWhereInput = {
+    AND?: WorkforceAssignmentWhereInput | WorkforceAssignmentWhereInput[]
+    OR?: WorkforceAssignmentWhereInput[]
+    NOT?: WorkforceAssignmentWhereInput | WorkforceAssignmentWhereInput[]
+    id?: UuidFilter<"WorkforceAssignment"> | string
+    globalPersonId?: UuidFilter<"WorkforceAssignment"> | string
+    organizationId?: UuidFilter<"WorkforceAssignment"> | string
+    satelliteKey?: StringFilter<"WorkforceAssignment"> | string
+    satelliteUserId?: StringNullableFilter<"WorkforceAssignment"> | string | null
+    financeEmployeeId?: UuidNullableFilter<"WorkforceAssignment"> | string | null
+    role?: StringFilter<"WorkforceAssignment"> | string
+    status?: EnumWorkforceAssignmentStatusFilter<"WorkforceAssignment"> | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }
+
+  export type WorkforceAssignmentOrderByWithRelationInput = {
+    id?: SortOrder
+    globalPersonId?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    satelliteUserId?: SortOrderInput | SortOrder
+    financeEmployeeId?: SortOrderInput | SortOrder
+    role?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    organization?: OrganizationOrderByWithRelationInput
+  }
+
+  export type WorkforceAssignmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    organizationId_satelliteKey_financeEmployeeId?: WorkforceAssignmentOrganizationIdSatelliteKeyFinanceEmployeeIdCompoundUniqueInput
+    AND?: WorkforceAssignmentWhereInput | WorkforceAssignmentWhereInput[]
+    OR?: WorkforceAssignmentWhereInput[]
+    NOT?: WorkforceAssignmentWhereInput | WorkforceAssignmentWhereInput[]
+    globalPersonId?: UuidFilter<"WorkforceAssignment"> | string
+    organizationId?: UuidFilter<"WorkforceAssignment"> | string
+    satelliteKey?: StringFilter<"WorkforceAssignment"> | string
+    satelliteUserId?: StringNullableFilter<"WorkforceAssignment"> | string | null
+    financeEmployeeId?: UuidNullableFilter<"WorkforceAssignment"> | string | null
+    role?: StringFilter<"WorkforceAssignment"> | string
+    status?: EnumWorkforceAssignmentStatusFilter<"WorkforceAssignment"> | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+    organization?: XOR<OrganizationScalarRelationFilter, OrganizationWhereInput>
+  }, "id" | "organizationId_satelliteKey_financeEmployeeId">
+
+  export type WorkforceAssignmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    globalPersonId?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    satelliteUserId?: SortOrderInput | SortOrder
+    financeEmployeeId?: SortOrderInput | SortOrder
+    role?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceAssignmentCountOrderByAggregateInput
+    _max?: WorkforceAssignmentMaxOrderByAggregateInput
+    _min?: WorkforceAssignmentMinOrderByAggregateInput
+  }
+
+  export type WorkforceAssignmentScalarWhereWithAggregatesInput = {
+    AND?: WorkforceAssignmentScalarWhereWithAggregatesInput | WorkforceAssignmentScalarWhereWithAggregatesInput[]
+    OR?: WorkforceAssignmentScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceAssignmentScalarWhereWithAggregatesInput | WorkforceAssignmentScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceAssignment"> | string
+    globalPersonId?: UuidWithAggregatesFilter<"WorkforceAssignment"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforceAssignment"> | string
+    satelliteKey?: StringWithAggregatesFilter<"WorkforceAssignment"> | string
+    satelliteUserId?: StringNullableWithAggregatesFilter<"WorkforceAssignment"> | string | null
+    financeEmployeeId?: UuidNullableWithAggregatesFilter<"WorkforceAssignment"> | string | null
+    role?: StringWithAggregatesFilter<"WorkforceAssignment"> | string
+    status?: EnumWorkforceAssignmentStatusWithAggregatesFilter<"WorkforceAssignment"> | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceAssignment"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceAssignment"> | Date | string
   }
 
   export type PricingBundleWhereInput = {
@@ -61694,6 +64473,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
+    satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
+    workforceAssignments?: WorkforceAssignmentListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
@@ -61747,6 +64528,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordOrderByRelationAggregateInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerOrderByRelationAggregateInput
     satelliteEndpoints?: SatelliteEndpointOrderByRelationAggregateInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementOrderByRelationAggregateInput
+    workforceAssignments?: WorkforceAssignmentOrderByRelationAggregateInput
     owner?: UserOrderByWithRelationInput
     parentOrg?: OrganizationOrderByWithRelationInput
     departments?: OrganizationOrderByRelationAggregateInput
@@ -61803,6 +64586,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordListRelationFilter
     platformLoyaltyLedger?: PlatformLoyaltyLedgerListRelationFilter
     satelliteEndpoints?: SatelliteEndpointListRelationFilter
+    satelliteEntitlements?: OrganizationSatelliteEntitlementListRelationFilter
+    workforceAssignments?: WorkforceAssignmentListRelationFilter
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
@@ -64109,6 +66894,7 @@ export namespace Prisma {
     billingPeriodKey?: string | null
     expiresAt?: Date | string | null
     activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
@@ -64126,6 +66912,7 @@ export namespace Prisma {
     billingPeriodKey?: string | null
     expiresAt?: Date | string | null
     activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
@@ -64141,6 +66928,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -64158,6 +66946,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -64174,6 +66963,7 @@ export namespace Prisma {
     billingPeriodKey?: string | null
     expiresAt?: Date | string | null
     activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
@@ -64189,6 +66979,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -64205,6 +66996,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -64454,6 +67246,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: Date | string | null
     accessUntil?: Date | string | null
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
   }
 
   export type OrganizationModuleUncheckedCreateInput = {
@@ -64464,6 +67258,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: Date | string | null
     accessUntil?: Date | string | null
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
   }
 
   export type OrganizationModuleUpdateInput = {
@@ -64474,6 +67270,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFieldUpdateOperationsInput | boolean
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationModuleUncheckedUpdateInput = {
@@ -64484,6 +67282,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFieldUpdateOperationsInput | boolean
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationModuleCreateManyInput = {
@@ -64494,6 +67294,8 @@ export namespace Prisma {
     pendingDeactivation?: boolean
     cancelledAt?: Date | string | null
     accessUntil?: Date | string | null
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
   }
 
   export type OrganizationModuleUpdateManyMutationInput = {
@@ -64504,6 +67306,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFieldUpdateOperationsInput | boolean
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationModuleUncheckedUpdateManyInput = {
@@ -64514,6 +67318,8 @@ export namespace Prisma {
     pendingDeactivation?: BoolFieldUpdateOperationsInput | boolean
     cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     accessUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationBundleCreateInput = {
@@ -64677,6 +67483,7 @@ export namespace Prisma {
     isPremium?: boolean
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     satellite?: SatelliteCreateNestedOneWithoutModulesInput
@@ -64691,6 +67498,7 @@ export namespace Prisma {
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
     satelliteKey?: string | null
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -64703,6 +67511,7 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     satellite?: SatelliteUpdateOneWithoutModulesNestedInput
@@ -64717,6 +67526,7 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
     satelliteKey?: NullableStringFieldUpdateOperationsInput | string | null
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -64730,6 +67540,7 @@ export namespace Prisma {
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
     satelliteKey?: string | null
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -64742,6 +67553,7 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -64755,6 +67567,7 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
     satelliteKey?: NullableStringFieldUpdateOperationsInput | string | null
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -64768,6 +67581,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateInput = {
@@ -64779,6 +67593,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
     endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUpdateInput = {
@@ -64790,6 +67605,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateInput = {
@@ -64801,6 +67617,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
     endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteCreateManyInput = {
@@ -64828,6 +67645,67 @@ export namespace Prisma {
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationSatelliteEntitlementCreateInput = {
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+    organization: OrganizationCreateNestedOneWithoutSatelliteEntitlementsInput
+    satellite: SatelliteCreateNestedOneWithoutEntitlementsInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedCreateInput = {
+    organizationId: string
+    satelliteKey: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateInput = {
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+    organization?: OrganizationUpdateOneRequiredWithoutSatelliteEntitlementsNestedInput
+    satellite?: SatelliteUpdateOneRequiredWithoutEntitlementsNestedInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type OrganizationSatelliteEntitlementCreateManyInput = {
+    organizationId: string
+    satelliteKey: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateManyMutationInput = {
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateManyInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type SatelliteEndpointCreateInput = {
@@ -64901,6 +67779,96 @@ export namespace Prisma {
     baseUrl?: StringFieldUpdateOperationsInput | string
     secretCipher?: NullableStringFieldUpdateOperationsInput | string | null
     enabled?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceAssignmentCreateInput = {
+    id?: string
+    globalPersonId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceAssignmentsInput
+  }
+
+  export type WorkforceAssignmentUncheckedCreateInput = {
+    id?: string
+    globalPersonId: string
+    organizationId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceAssignmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceAssignmentsNestedInput
+  }
+
+  export type WorkforceAssignmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceAssignmentCreateManyInput = {
+    id?: string
+    globalPersonId: string
+    organizationId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceAssignmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceAssignmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -65486,6 +68454,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -65539,6 +68509,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -65588,6 +68560,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -65641,6 +68615,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -68360,6 +71336,7 @@ export namespace Prisma {
     billingPeriodKey?: SortOrder
     expiresAt?: SortOrder
     activeModules?: SortOrder
+    quotaOverrides?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     isBlocked?: SortOrder
@@ -68697,6 +71674,8 @@ export namespace Prisma {
     pendingDeactivation?: SortOrder
     cancelledAt?: SortOrder
     accessUntil?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
   }
 
   export type OrganizationModuleAvgOrderByAggregateInput = {
@@ -68711,6 +71690,8 @@ export namespace Prisma {
     pendingDeactivation?: SortOrder
     cancelledAt?: SortOrder
     accessUntil?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
   }
 
   export type OrganizationModuleMinOrderByAggregateInput = {
@@ -68721,6 +71702,8 @@ export namespace Prisma {
     pendingDeactivation?: SortOrder
     cancelledAt?: SortOrder
     accessUntil?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
   }
 
   export type OrganizationModuleSumOrderByAggregateInput = {
@@ -68888,6 +71871,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     catalogKind?: SortOrder
     satelliteKey?: SortOrder
+    trialEligibleInTrial?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -68906,6 +71890,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     catalogKind?: SortOrder
     satelliteKey?: SortOrder
+    trialEligibleInTrial?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -68919,6 +71904,7 @@ export namespace Prisma {
     sortOrder?: SortOrder
     catalogKind?: SortOrder
     satelliteKey?: SortOrder
+    trialEligibleInTrial?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -68950,11 +71936,21 @@ export namespace Prisma {
     none?: SatelliteEndpointWhereInput
   }
 
+  export type OrganizationSatelliteEntitlementListRelationFilter = {
+    every?: OrganizationSatelliteEntitlementWhereInput
+    some?: OrganizationSatelliteEntitlementWhereInput
+    none?: OrganizationSatelliteEntitlementWhereInput
+  }
+
   export type PricingModuleOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type SatelliteEndpointOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrganizationSatelliteEntitlementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -68993,6 +71989,43 @@ export namespace Prisma {
     sortOrder?: SortOrder
   }
 
+  export type SatelliteScalarRelationFilter = {
+    is?: SatelliteWhereInput
+    isNot?: SatelliteWhereInput
+  }
+
+  export type OrganizationSatelliteEntitlementOrganizationIdSatelliteKeyCompoundUniqueInput = {
+    organizationId: string
+    satelliteKey: string
+  }
+
+  export type OrganizationSatelliteEntitlementCountOrderByAggregateInput = {
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
+    connectedAt?: SortOrder
+    isTrial?: SortOrder
+  }
+
+  export type OrganizationSatelliteEntitlementMaxOrderByAggregateInput = {
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
+    connectedAt?: SortOrder
+    isTrial?: SortOrder
+  }
+
+  export type OrganizationSatelliteEntitlementMinOrderByAggregateInput = {
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    trialExpiresAt?: SortOrder
+    trialOverridden?: SortOrder
+    connectedAt?: SortOrder
+    isTrial?: SortOrder
+  }
+
   export type SatelliteEndpointOrganizationIdSatelliteKeyCompoundUniqueInput = {
     organizationId: string
     satelliteKey: string
@@ -69029,6 +72062,68 @@ export namespace Prisma {
     enabled?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type EnumWorkforceAssignmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel> | $Enums.WorkforceAssignmentStatus
+  }
+
+  export type WorkforceAssignmentOrganizationIdSatelliteKeyFinanceEmployeeIdCompoundUniqueInput = {
+    organizationId: string
+    satelliteKey: string
+    financeEmployeeId: string
+  }
+
+  export type WorkforceAssignmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    globalPersonId?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    satelliteUserId?: SortOrder
+    financeEmployeeId?: SortOrder
+    role?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceAssignmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    globalPersonId?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    satelliteUserId?: SortOrder
+    financeEmployeeId?: SortOrder
+    role?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceAssignmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    globalPersonId?: SortOrder
+    organizationId?: SortOrder
+    satelliteKey?: SortOrder
+    satelliteUserId?: SortOrder
+    financeEmployeeId?: SortOrder
+    role?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumWorkforceAssignmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceAssignmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceAssignmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel>
   }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -69561,6 +72656,12 @@ export namespace Prisma {
     none?: PlatformLoyaltyLedgerWhereInput
   }
 
+  export type WorkforceAssignmentListRelationFilter = {
+    every?: WorkforceAssignmentWhereInput
+    some?: WorkforceAssignmentWhereInput
+    none?: WorkforceAssignmentWhereInput
+  }
+
   export type UserNullableScalarRelationFilter = {
     is?: UserWhereInput | null
     isNot?: UserWhereInput | null
@@ -69650,6 +72751,10 @@ export namespace Prisma {
   }
 
   export type PlatformLoyaltyLedgerOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceAssignmentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -71572,6 +74677,13 @@ export namespace Prisma {
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
   }
 
+  export type OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput> | OrganizationSatelliteEntitlementCreateWithoutSatelliteInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+  }
+
   export type PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
@@ -71584,6 +74696,13 @@ export namespace Prisma {
     connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutSatelliteInput | SatelliteEndpointCreateOrConnectWithoutSatelliteInput[]
     createMany?: SatelliteEndpointCreateManySatelliteInputEnvelope
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput> | OrganizationSatelliteEntitlementCreateWithoutSatelliteInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
   }
 
   export type PricingModuleUpdateManyWithoutSatelliteNestedInput = {
@@ -71614,6 +74733,20 @@ export namespace Prisma {
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
   }
 
+  export type OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput> | OrganizationSatelliteEntitlementCreateWithoutSatelliteInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput[]
+    upsert?: OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutSatelliteInput | OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope
+    set?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    disconnect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    delete?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    update?: OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+  }
+
   export type PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput = {
     create?: XOR<PricingModuleCreateWithoutSatelliteInput, PricingModuleUncheckedCreateWithoutSatelliteInput> | PricingModuleCreateWithoutSatelliteInput[] | PricingModuleUncheckedCreateWithoutSatelliteInput[]
     connectOrCreate?: PricingModuleCreateOrConnectWithoutSatelliteInput | PricingModuleCreateOrConnectWithoutSatelliteInput[]
@@ -71640,6 +74773,48 @@ export namespace Prisma {
     update?: SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput | SatelliteEndpointUpdateWithWhereUniqueWithoutSatelliteInput[]
     updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput | SatelliteEndpointUpdateManyWithWhereWithoutSatelliteInput[]
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput> | OrganizationSatelliteEntitlementCreateWithoutSatelliteInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput[]
+    upsert?: OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutSatelliteInput | OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutSatelliteInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope
+    set?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    disconnect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    delete?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    update?: OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput[]
+    updateMany?: OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput | OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput[]
+    deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+  }
+
+  export type OrganizationCreateNestedOneWithoutSatelliteEntitlementsInput = {
+    create?: XOR<OrganizationCreateWithoutSatelliteEntitlementsInput, OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type SatelliteCreateNestedOneWithoutEntitlementsInput = {
+    create?: XOR<SatelliteCreateWithoutEntitlementsInput, SatelliteUncheckedCreateWithoutEntitlementsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutEntitlementsInput
+    connect?: SatelliteWhereUniqueInput
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutSatelliteEntitlementsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutSatelliteEntitlementsInput, OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput
+    upsert?: OrganizationUpsertWithoutSatelliteEntitlementsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutSatelliteEntitlementsInput, OrganizationUpdateWithoutSatelliteEntitlementsInput>, OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput>
+  }
+
+  export type SatelliteUpdateOneRequiredWithoutEntitlementsNestedInput = {
+    create?: XOR<SatelliteCreateWithoutEntitlementsInput, SatelliteUncheckedCreateWithoutEntitlementsInput>
+    connectOrCreate?: SatelliteCreateOrConnectWithoutEntitlementsInput
+    upsert?: SatelliteUpsertWithoutEntitlementsInput
+    connect?: SatelliteWhereUniqueInput
+    update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutEntitlementsInput, SatelliteUpdateWithoutEntitlementsInput>, SatelliteUncheckedUpdateWithoutEntitlementsInput>
   }
 
   export type OrganizationCreateNestedOneWithoutSatelliteEndpointsInput = {
@@ -71670,6 +74845,24 @@ export namespace Prisma {
     delete?: SatelliteWhereInput | boolean
     connect?: SatelliteWhereUniqueInput
     update?: XOR<XOR<SatelliteUpdateToOneWithWhereWithoutEndpointsInput, SatelliteUpdateWithoutEndpointsInput>, SatelliteUncheckedUpdateWithoutEndpointsInput>
+  }
+
+  export type OrganizationCreateNestedOneWithoutWorkforceAssignmentsInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput
+    connect?: OrganizationWhereUniqueInput
+  }
+
+  export type EnumWorkforceAssignmentStatusFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceAssignmentStatus
+  }
+
+  export type OrganizationUpdateOneRequiredWithoutWorkforceAssignmentsNestedInput = {
+    create?: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+    connectOrCreate?: OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput
+    upsert?: OrganizationUpsertWithoutWorkforceAssignmentsInput
+    connect?: OrganizationWhereUniqueInput
+    update?: XOR<XOR<OrganizationUpdateToOneWithWhereWithoutWorkforceAssignmentsInput, OrganizationUpdateWithoutWorkforceAssignmentsInput>, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
   }
 
   export type OrganizationBundleCreateNestedManyWithoutBundleInput = {
@@ -72090,6 +75283,20 @@ export namespace Prisma {
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
   }
 
+  export type OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManyOrganizationInputEnvelope
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+  }
+
+  export type WorkforceAssignmentCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceAssignmentCreateManyOrganizationInputEnvelope
+    connect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+  }
+
   export type UserCreateNestedOneWithoutOwnedOrganizationsInput = {
     create?: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
     connectOrCreate?: UserCreateOrConnectWithoutOwnedOrganizationsInput
@@ -72267,6 +75474,20 @@ export namespace Prisma {
     connectOrCreate?: SatelliteEndpointCreateOrConnectWithoutOrganizationInput | SatelliteEndpointCreateOrConnectWithoutOrganizationInput[]
     createMany?: SatelliteEndpointCreateManyOrganizationInputEnvelope
     connect?: SatelliteEndpointWhereUniqueInput | SatelliteEndpointWhereUniqueInput[]
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManyOrganizationInputEnvelope
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+  }
+
+  export type WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput = {
+    create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
+    createMany?: WorkforceAssignmentCreateManyOrganizationInputEnvelope
+    connect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
   }
 
   export type OrganizationUncheckedCreateNestedManyWithoutParentOrgInput = {
@@ -72613,6 +75834,34 @@ export namespace Prisma {
     update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput | OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManyOrganizationInputEnvelope
+    set?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    disconnect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    delete?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    update?: OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutOrganizationInput | OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutOrganizationInput | OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+  }
+
+  export type WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceAssignmentCreateManyOrganizationInputEnvelope
+    set?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    disconnect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    delete?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    connect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    update?: WorkforceAssignmentUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceAssignmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceAssignmentUpdateManyWithWhereWithoutOrganizationInput | WorkforceAssignmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceAssignmentScalarWhereInput | WorkforceAssignmentScalarWhereInput[]
   }
 
   export type UserUpdateOneWithoutOwnedOrganizationsNestedInput = {
@@ -72965,6 +76214,34 @@ export namespace Prisma {
     update?: SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput | SatelliteEndpointUpdateWithWhereUniqueWithoutOrganizationInput[]
     updateMany?: SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput | SatelliteEndpointUpdateManyWithWhereWithoutOrganizationInput[]
     deleteMany?: SatelliteEndpointScalarWhereInput | SatelliteEndpointScalarWhereInput[]
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput> | OrganizationSatelliteEntitlementCreateWithoutOrganizationInput[] | OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput | OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput[]
+    upsert?: OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput | OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: OrganizationSatelliteEntitlementCreateManyOrganizationInputEnvelope
+    set?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    disconnect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    delete?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    connect?: OrganizationSatelliteEntitlementWhereUniqueInput | OrganizationSatelliteEntitlementWhereUniqueInput[]
+    update?: OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutOrganizationInput | OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutOrganizationInput | OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+  }
+
+  export type WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput = {
+    create?: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput> | WorkforceAssignmentCreateWithoutOrganizationInput[] | WorkforceAssignmentUncheckedCreateWithoutOrganizationInput[]
+    connectOrCreate?: WorkforceAssignmentCreateOrConnectWithoutOrganizationInput | WorkforceAssignmentCreateOrConnectWithoutOrganizationInput[]
+    upsert?: WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput | WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput[]
+    createMany?: WorkforceAssignmentCreateManyOrganizationInputEnvelope
+    set?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    disconnect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    delete?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    connect?: WorkforceAssignmentWhereUniqueInput | WorkforceAssignmentWhereUniqueInput[]
+    update?: WorkforceAssignmentUpdateWithWhereUniqueWithoutOrganizationInput | WorkforceAssignmentUpdateWithWhereUniqueWithoutOrganizationInput[]
+    updateMany?: WorkforceAssignmentUpdateManyWithWhereWithoutOrganizationInput | WorkforceAssignmentUpdateManyWithWhereWithoutOrganizationInput[]
+    deleteMany?: WorkforceAssignmentScalarWhereInput | WorkforceAssignmentScalarWhereInput[]
   }
 
   export type OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput = {
@@ -74434,6 +77711,23 @@ export namespace Prisma {
     _min?: NestedEnumPricingCatalogKindFilter<$PrismaModel>
     _max?: NestedEnumPricingCatalogKindFilter<$PrismaModel>
   }
+
+  export type NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel> | $Enums.WorkforceAssignmentStatus
+  }
+
+  export type NestedEnumWorkforceAssignmentStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceAssignmentStatus | EnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceAssignmentStatus[] | ListEnumWorkforceAssignmentStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceAssignmentStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceAssignmentStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceAssignmentStatusFilter<$PrismaModel>
+  }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -74965,6 +78259,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -75017,6 +78313,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -75081,6 +78379,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -75133,6 +78433,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -75419,6 +78721,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -75471,6 +78775,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -75578,6 +78884,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -75630,6 +78938,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -75678,6 +78988,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -75730,6 +79042,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -75794,6 +79108,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -75846,6 +79162,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -75925,6 +79243,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutModulesInput = {
@@ -75935,6 +79254,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutModulesInput = {
@@ -75961,6 +79281,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutModulesInput = {
@@ -75971,6 +79292,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type PricingModuleCreateWithoutSatelliteInput = {
@@ -75981,6 +79303,7 @@ export namespace Prisma {
     isPremium?: boolean
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -75993,6 +79316,7 @@ export namespace Prisma {
     isPremium?: boolean
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -76037,6 +79361,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type OrganizationSatelliteEntitlementCreateWithoutSatelliteInput = {
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+    organization: OrganizationCreateNestedOneWithoutSatelliteEntitlementsInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput = {
+    organizationId: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
+  export type OrganizationSatelliteEntitlementCreateOrConnectWithoutSatelliteInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    create: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type OrganizationSatelliteEntitlementCreateManySatelliteInputEnvelope = {
+    data: OrganizationSatelliteEntitlementCreateManySatelliteInput | OrganizationSatelliteEntitlementCreateManySatelliteInput[]
+    skipDuplicates?: boolean
+  }
+
   export type PricingModuleUpsertWithWhereUniqueWithoutSatelliteInput = {
     where: PricingModuleWhereUniqueInput
     update: XOR<PricingModuleUpdateWithoutSatelliteInput, PricingModuleUncheckedUpdateWithoutSatelliteInput>
@@ -76065,6 +79415,7 @@ export namespace Prisma {
     sortOrder?: IntFilter<"PricingModule"> | number
     catalogKind?: EnumPricingCatalogKindFilter<"PricingModule"> | $Enums.PricingCatalogKind
     satelliteKey?: StringNullableFilter<"PricingModule"> | string | null
+    trialEligibleInTrial?: BoolFilter<"PricingModule"> | boolean
     createdAt?: DateTimeFilter<"PricingModule"> | Date | string
     updatedAt?: DateTimeFilter<"PricingModule"> | Date | string
   }
@@ -76097,6 +79448,318 @@ export namespace Prisma {
     enabled?: BoolFilter<"SatelliteEndpoint"> | boolean
     createdAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
     updatedAt?: DateTimeFilter<"SatelliteEndpoint"> | Date | string
+  }
+
+  export type OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutSatelliteInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    update: XOR<OrganizationSatelliteEntitlementUpdateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedUpdateWithoutSatelliteInput>
+    create: XOR<OrganizationSatelliteEntitlementCreateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutSatelliteInput>
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutSatelliteInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    data: XOR<OrganizationSatelliteEntitlementUpdateWithoutSatelliteInput, OrganizationSatelliteEntitlementUncheckedUpdateWithoutSatelliteInput>
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutSatelliteInput = {
+    where: OrganizationSatelliteEntitlementScalarWhereInput
+    data: XOR<OrganizationSatelliteEntitlementUpdateManyMutationInput, OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteInput>
+  }
+
+  export type OrganizationSatelliteEntitlementScalarWhereInput = {
+    AND?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+    OR?: OrganizationSatelliteEntitlementScalarWhereInput[]
+    NOT?: OrganizationSatelliteEntitlementScalarWhereInput | OrganizationSatelliteEntitlementScalarWhereInput[]
+    organizationId?: UuidFilter<"OrganizationSatelliteEntitlement"> | string
+    satelliteKey?: StringFilter<"OrganizationSatelliteEntitlement"> | string
+    trialExpiresAt?: DateTimeNullableFilter<"OrganizationSatelliteEntitlement"> | Date | string | null
+    trialOverridden?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+    connectedAt?: DateTimeFilter<"OrganizationSatelliteEntitlement"> | Date | string
+    isTrial?: BoolFilter<"OrganizationSatelliteEntitlement"> | boolean
+  }
+
+  export type OrganizationCreateWithoutSatelliteEntitlementsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutSatelliteEntitlementsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutSatelliteEntitlementsInput, OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput>
+  }
+
+  export type SatelliteCreateWithoutEntitlementsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteUncheckedCreateWithoutEntitlementsInput = {
+    key: string
+    name: string
+    verticalSlug: string
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+    endpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutSatelliteInput
+  }
+
+  export type SatelliteCreateOrConnectWithoutEntitlementsInput = {
+    where: SatelliteWhereUniqueInput
+    create: XOR<SatelliteCreateWithoutEntitlementsInput, SatelliteUncheckedCreateWithoutEntitlementsInput>
+  }
+
+  export type OrganizationUpsertWithoutSatelliteEntitlementsInput = {
+    update: XOR<OrganizationUpdateWithoutSatelliteEntitlementsInput, OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput>
+    create: XOR<OrganizationCreateWithoutSatelliteEntitlementsInput, OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutSatelliteEntitlementsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutSatelliteEntitlementsInput, OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput>
+  }
+
+  export type OrganizationUpdateWithoutSatelliteEntitlementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type SatelliteUpsertWithoutEntitlementsInput = {
+    update: XOR<SatelliteUpdateWithoutEntitlementsInput, SatelliteUncheckedUpdateWithoutEntitlementsInput>
+    create: XOR<SatelliteCreateWithoutEntitlementsInput, SatelliteUncheckedCreateWithoutEntitlementsInput>
+    where?: SatelliteWhereInput
+  }
+
+  export type SatelliteUpdateToOneWithWhereWithoutEntitlementsInput = {
+    where?: SatelliteWhereInput
+    data: XOR<SatelliteUpdateWithoutEntitlementsInput, SatelliteUncheckedUpdateWithoutEntitlementsInput>
+  }
+
+  export type SatelliteUpdateWithoutEntitlementsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type SatelliteUncheckedUpdateWithoutEntitlementsInput = {
+    key?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    verticalSlug?: StringFieldUpdateOperationsInput | string
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
+    endpoints?: SatelliteEndpointUncheckedUpdateManyWithoutSatelliteNestedInput
   }
 
   export type OrganizationCreateWithoutSatelliteEndpointsInput = {
@@ -76144,6 +79807,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -76196,6 +79861,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -76212,6 +79879,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     modules?: PricingModuleCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteUncheckedCreateWithoutEndpointsInput = {
@@ -76222,6 +79890,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     modules?: PricingModuleUncheckedCreateNestedManyWithoutSatelliteInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutSatelliteInput
   }
 
   export type SatelliteCreateOrConnectWithoutEndpointsInput = {
@@ -76285,6 +79954,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -76337,6 +80008,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -76359,6 +80032,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutSatelliteNestedInput
   }
 
   export type SatelliteUncheckedUpdateWithoutEndpointsInput = {
@@ -76369,6 +80043,231 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     modules?: PricingModuleUncheckedUpdateManyWithoutSatelliteNestedInput
+    entitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteNestedInput
+  }
+
+  export type OrganizationCreateWithoutWorkforceAssignmentsInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutWorkforceAssignmentsInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+  }
+
+  export type OrganizationUpsertWithoutWorkforceAssignmentsInput = {
+    update: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
+    create: XOR<OrganizationCreateWithoutWorkforceAssignmentsInput, OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput>
+    where?: OrganizationWhereInput
+  }
+
+  export type OrganizationUpdateToOneWithWhereWithoutWorkforceAssignmentsInput = {
+    where?: OrganizationWhereInput
+    data: XOR<OrganizationUpdateWithoutWorkforceAssignmentsInput, OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput>
+  }
+
+  export type OrganizationUpdateWithoutWorkforceAssignmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
   export type OrganizationBundleCreateWithoutBundleInput = {
@@ -76473,6 +80372,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -76525,6 +80426,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -76670,6 +80573,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -76722,6 +80627,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -77151,6 +81058,7 @@ export namespace Prisma {
     billingPeriodKey?: string | null
     expiresAt?: Date | string | null
     activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
@@ -77166,6 +81074,7 @@ export namespace Prisma {
     billingPeriodKey?: string | null
     expiresAt?: Date | string | null
     activeModules?: OrganizationSubscriptionCreateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     isBlocked?: boolean
@@ -77775,6 +81684,66 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type OrganizationSatelliteEntitlementCreateWithoutOrganizationInput = {
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+    satellite: SatelliteCreateNestedOneWithoutEntitlementsInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput = {
+    satelliteKey: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
+  export type OrganizationSatelliteEntitlementCreateOrConnectWithoutOrganizationInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    create: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrganizationSatelliteEntitlementCreateManyOrganizationInputEnvelope = {
+    data: OrganizationSatelliteEntitlementCreateManyOrganizationInput | OrganizationSatelliteEntitlementCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceAssignmentCreateWithoutOrganizationInput = {
+    id?: string
+    globalPersonId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceAssignmentUncheckedCreateWithoutOrganizationInput = {
+    id?: string
+    globalPersonId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceAssignmentCreateOrConnectWithoutOrganizationInput = {
+    where: WorkforceAssignmentWhereUniqueInput
+    create: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceAssignmentCreateManyOrganizationInputEnvelope = {
+    data: WorkforceAssignmentCreateManyOrganizationInput | WorkforceAssignmentCreateManyOrganizationInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserCreateWithoutOwnedOrganizationsInput = {
     id?: string
     email: string
@@ -77856,6 +81825,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
   }
@@ -77908,6 +81879,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
   }
 
   export type OrganizationCreateOrConnectWithoutDepartmentsInput = {
@@ -77961,6 +81934,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
@@ -78012,6 +81987,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -78175,6 +82152,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -78190,6 +82168,7 @@ export namespace Prisma {
     billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     activeModules?: OrganizationSubscriptionUpdateactiveModulesInput | string[]
+    quotaOverrides?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isBlocked?: BoolFieldUpdateOperationsInput | boolean
@@ -78712,6 +82691,54 @@ export namespace Prisma {
     data: XOR<SatelliteEndpointUpdateManyMutationInput, SatelliteEndpointUncheckedUpdateManyWithoutOrganizationInput>
   }
 
+  export type OrganizationSatelliteEntitlementUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    update: XOR<OrganizationSatelliteEntitlementUpdateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<OrganizationSatelliteEntitlementCreateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: OrganizationSatelliteEntitlementWhereUniqueInput
+    data: XOR<OrganizationSatelliteEntitlementUpdateWithoutOrganizationInput, OrganizationSatelliteEntitlementUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateManyWithWhereWithoutOrganizationInput = {
+    where: OrganizationSatelliteEntitlementScalarWhereInput
+    data: XOR<OrganizationSatelliteEntitlementUpdateManyMutationInput, OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceAssignmentUpsertWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceAssignmentWhereUniqueInput
+    update: XOR<WorkforceAssignmentUpdateWithoutOrganizationInput, WorkforceAssignmentUncheckedUpdateWithoutOrganizationInput>
+    create: XOR<WorkforceAssignmentCreateWithoutOrganizationInput, WorkforceAssignmentUncheckedCreateWithoutOrganizationInput>
+  }
+
+  export type WorkforceAssignmentUpdateWithWhereUniqueWithoutOrganizationInput = {
+    where: WorkforceAssignmentWhereUniqueInput
+    data: XOR<WorkforceAssignmentUpdateWithoutOrganizationInput, WorkforceAssignmentUncheckedUpdateWithoutOrganizationInput>
+  }
+
+  export type WorkforceAssignmentUpdateManyWithWhereWithoutOrganizationInput = {
+    where: WorkforceAssignmentScalarWhereInput
+    data: XOR<WorkforceAssignmentUpdateManyMutationInput, WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationInput>
+  }
+
+  export type WorkforceAssignmentScalarWhereInput = {
+    AND?: WorkforceAssignmentScalarWhereInput | WorkforceAssignmentScalarWhereInput[]
+    OR?: WorkforceAssignmentScalarWhereInput[]
+    NOT?: WorkforceAssignmentScalarWhereInput | WorkforceAssignmentScalarWhereInput[]
+    id?: UuidFilter<"WorkforceAssignment"> | string
+    globalPersonId?: UuidFilter<"WorkforceAssignment"> | string
+    organizationId?: UuidFilter<"WorkforceAssignment"> | string
+    satelliteKey?: StringFilter<"WorkforceAssignment"> | string
+    satelliteUserId?: StringNullableFilter<"WorkforceAssignment"> | string | null
+    financeEmployeeId?: UuidNullableFilter<"WorkforceAssignment"> | string | null
+    role?: StringFilter<"WorkforceAssignment"> | string
+    status?: EnumWorkforceAssignmentStatusFilter<"WorkforceAssignment"> | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceAssignment"> | Date | string
+  }
+
   export type UserUpsertWithoutOwnedOrganizationsInput = {
     update: XOR<UserUpdateWithoutOwnedOrganizationsInput, UserUncheckedUpdateWithoutOwnedOrganizationsInput>
     create: XOR<UserCreateWithoutOwnedOrganizationsInput, UserUncheckedCreateWithoutOwnedOrganizationsInput>
@@ -78810,6 +82837,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
   }
@@ -78862,6 +82891,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
   }
 
   export type OrganizationUpsertWithWhereUniqueWithoutParentOrgInput = {
@@ -79096,6 +83127,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
   }
@@ -79147,6 +83180,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -79320,6 +83355,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -79372,6 +83409,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -79477,6 +83516,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -79529,6 +83570,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -79890,6 +83933,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -79942,6 +83987,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -80041,6 +84088,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -80093,6 +84142,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -80182,6 +84233,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -80234,6 +84287,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -80333,6 +84388,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -80385,6 +84442,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -80474,6 +84533,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -80526,6 +84587,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -80625,6 +84688,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -80677,6 +84742,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -80766,6 +84833,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -80818,6 +84887,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -80928,6 +84999,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -80980,6 +85053,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -81044,6 +85119,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -81096,6 +85173,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -81221,6 +85300,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -81273,6 +85354,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -81415,6 +85498,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -81467,6 +85552,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -81578,6 +85665,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -81630,6 +85719,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -81678,6 +85769,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -81730,6 +85823,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -81833,6 +85928,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -81885,6 +85982,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -81978,6 +86077,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -82030,6 +86131,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -82094,6 +86197,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -82146,6 +86251,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -82194,6 +86301,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -82246,6 +86355,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -82378,6 +86489,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -82430,6 +86543,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -82510,6 +86625,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -82562,6 +86679,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -82687,6 +86806,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -82739,6 +86860,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -82834,6 +86957,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -82886,6 +87011,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -83002,6 +87129,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -83054,6 +87183,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -83166,6 +87297,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -83218,6 +87351,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -83282,6 +87417,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -83334,6 +87471,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -83382,6 +87521,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -83434,6 +87575,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -83498,6 +87641,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -83550,6 +87695,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -83598,6 +87745,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -83650,6 +87799,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -83714,6 +87865,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -83766,6 +87919,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -83814,6 +87969,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -83866,6 +88023,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -83930,6 +88089,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -83982,6 +88143,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -84030,6 +88193,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -84082,6 +88247,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -84146,6 +88313,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -84198,6 +88367,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -84246,6 +88417,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
@@ -84298,6 +88471,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
     satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
     departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
   }
 
@@ -84362,6 +88537,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
@@ -84414,6 +88591,8 @@ export namespace Prisma {
     platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -84501,6 +88680,7 @@ export namespace Prisma {
     isPremium?: boolean
     sortOrder?: number
     catalogKind?: $Enums.PricingCatalogKind
+    trialEligibleInTrial?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -84515,6 +88695,14 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type OrganizationSatelliteEntitlementCreateManySatelliteInput = {
+    organizationId: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
   export type PricingModuleUpdateWithoutSatelliteInput = {
     id?: StringFieldUpdateOperationsInput | string
     key?: StringFieldUpdateOperationsInput | string
@@ -84523,6 +88711,7 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -84535,6 +88724,7 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -84547,6 +88737,7 @@ export namespace Prisma {
     isPremium?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     catalogKind?: EnumPricingCatalogKindFieldUpdateOperationsInput | $Enums.PricingCatalogKind
+    trialEligibleInTrial?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -84579,6 +88770,30 @@ export namespace Prisma {
     enabled?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationSatelliteEntitlementUpdateWithoutSatelliteInput = {
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+    organization?: OrganizationUpdateOneRequiredWithoutSatelliteEntitlementsNestedInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateWithoutSatelliteInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutSatelliteInput = {
+    organizationId?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
   }
 
   export type OrganizationBundleCreateManyBundleInput = {
@@ -84973,6 +89188,26 @@ export namespace Prisma {
     baseUrl: string
     secretCipher?: string | null
     enabled?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrganizationSatelliteEntitlementCreateManyOrganizationInput = {
+    satelliteKey: string
+    trialExpiresAt?: Date | string | null
+    trialOverridden?: boolean
+    connectedAt?: Date | string
+    isTrial?: boolean
+  }
+
+  export type WorkforceAssignmentCreateManyOrganizationInput = {
+    id?: string
+    globalPersonId: string
+    satelliteKey: string
+    satelliteUserId?: string | null
+    financeEmployeeId?: string | null
+    role: string
+    status?: $Enums.WorkforceAssignmentStatus
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -85773,6 +90008,66 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type OrganizationSatelliteEntitlementUpdateWithoutOrganizationInput = {
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+    satellite?: SatelliteUpdateOneRequiredWithoutEntitlementsNestedInput
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateWithoutOrganizationInput = {
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationInput = {
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    trialExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    trialOverridden?: BoolFieldUpdateOperationsInput | boolean
+    connectedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    isTrial?: BoolFieldUpdateOperationsInput | boolean
+  }
+
+  export type WorkforceAssignmentUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceAssignmentUncheckedUpdateWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    satelliteKey?: StringFieldUpdateOperationsInput | string
+    satelliteUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceAssignmentStatusFieldUpdateOperationsInput | $Enums.WorkforceAssignmentStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrganizationUpdateWithoutParentOrgInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -85819,6 +90114,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
@@ -85870,6 +90167,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
@@ -86171,6 +90470,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
   }
@@ -86222,6 +90523,8 @@ export namespace Prisma {
     platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
     platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
     satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 

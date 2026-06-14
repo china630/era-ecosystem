@@ -25,5 +25,6 @@ The control plane stored satellites (`industry_*`), ERP modules, hotel submodule
 - Super-admin and storefront can filter by `catalog_kind`.
 - Hospitality catalog registry uses `isSatelliteGate` aligned with DB `SATELLITE` rows.
 - Future satellites follow the same pattern: one `industry_*` gate + N submodule keys with `satellite_key` FK.
+- Trial hierarchy: [platform-trial-hierarchy.md](./platform-trial-hierarchy.md) — org clock at register; owner Connect materializes satellite; module allowlist via `trialEligibleInTrial`.
 
 Migration: `20260531120000_satellite_catalog_and_hotel_module_consolidation`.

@@ -9,8 +9,12 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 const schema = z.object({
   code: z.string().min(1),
   name: z.string().min(1),
+  productType: z.enum(['SELLABLE', 'STOCK']).optional(),
   groupId: z.string().uuid().optional(),
   unit: z.string().optional(),
+  price: z.number().optional(),
+  currency: z.string().optional(),
+  vatRate: z.number().optional(),
 });
 
 export async function GET() {

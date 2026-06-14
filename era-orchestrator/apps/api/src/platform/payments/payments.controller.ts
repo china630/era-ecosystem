@@ -26,6 +26,34 @@ export class PaymentsController {
     return this.payments.getPaymentLinkByToken(token);
   }
 
+  @Post("authorizations")
+  @ApiOperation({ summary: "Create card authorization hold (mock MVP)" })
+  createAuthorization(
+    @OrganizationId() organizationId: string,
+    @Body() body: { reservationId: string; amountAzn: number },
+  ) {
+    return this.payments.createAuthorization(organizationId, body);
+  }
+
+  @Post("authorizations/:id/capture")
+  @ApiOperation({ summary: "Capture authorization (mock MVP)" })
+  captureAuthorization(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @Body() body: { amountAzn?: number },
+  ) {
+    return this.payments.captureAuthorization(organizationId, id, body);
+  }
+
+  @Post("authorizations/:id/void")
+  @ApiOperation({ summary: "Void/release authorization (mock MVP)" })
+  voidAuthorization(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    return this.payments.voidAuthorization(organizationId, id);
+  }
+
   @Post("payment-links/:token/reconcile")
   @ApiOperation({ summary: "Reconcile payment link as PAID (Live)" })
   reconcile(

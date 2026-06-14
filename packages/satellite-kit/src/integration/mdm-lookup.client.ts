@@ -35,26 +35,12 @@ export async function mdmHealthCheck(
   return { ok: res.ok, status: res.status };
 }
 
-/** Resolve global person id for hotel/clinic guest linkage (Phase 1 stub). */
-export async function lookupGlobalPersonByFin(
-  fin: string,
-  opts?: MdmLookupOptions,
-): Promise<{ globalPersonId: string | null }> {
-  const token = serviceToken(opts);
-  if (!token) return { globalPersonId: null };
-  const res = await fetch(`${baseUrl(opts)}/internal/v1/mdm/persons`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-service-token": token,
-    },
-    body: JSON.stringify({ fin, fullName: "lookup" }),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) return { globalPersonId: null };
-  const data = (await res.json()) as { id?: string; globalPersonId?: string };
-  return { globalPersonId: data.globalPersonId ?? data.id ?? null };
-}
+export {
+  lookupGlobalPersonByFin,
+  resolvePersonIdentity,
+  mergePersonRecords,
+  type PersonIdentityInput,
+} from "./person-identity.client";
 
 /** Resolve legal entity by VÖEN (B2B invoicing party). */
 export async function lookupLegalEntityByVoen(

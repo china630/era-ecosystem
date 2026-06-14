@@ -1,0 +1,128 @@
+﻿
+> i18n:audit
+> npx tsx scripts/i18n-audit.ts
+
+node.exe : 
+строка:1 знак:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+--- Missing or empty RU ---
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeCopied
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeReady
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeLinked
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.rejectDone
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.title
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.subtitle
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.optInOn
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.optInOff
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.issuer
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.invoiceNo
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.amount
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.date
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.empty
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeMismatch
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeMissing
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.sendEqaime
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.linkEqaime
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.accept
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.reject
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.linkEqaimeTitle
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.rejectTitle
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.suppliersTitle
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.suppliersHint
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.balance531
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.empty
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ inventory.purchasePayAction
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.periodRequired
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.createBtn
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.description
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.periodCol
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.statusCol
+apps\web\app\purchases\page.tsx тЖТ inventory.purchasePayAction
+apps\web\components\companies\company-select-blocking-modal.tsx тЖТ companiesPage.selectCompanyTitle
+apps\web\components\companies\company-select-blocking-modal.tsx тЖТ companiesPage.selectCompanyHint
+apps\web\components\finance\modals\CreatePrepaidExpenseModal.tsx тЖТ prepaid.newTitle
+apps\web\components\finance\modals\CreatePrepaidExpenseModal.tsx тЖТ prepaid.description
+apps\web\components\layout\Sidebar.tsx тЖТ nav.supplierPayables
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.acceptDone
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.acceptTitle
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.debitRole
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.claimsVat
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.postingDate
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayDone
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayTitle
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayAmount
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayDate
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ invoiceNew.paymentAccount
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ invoiceNew.bankAccount
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finInvalid
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finNotFound
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finFound
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finLookupErr
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.yoxlaFirst
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.director
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.phones
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.yoxlaFin
+apps\web\components\sales\modals\CreateInvoiceModal.tsx тЖТ invoiceNew.bankAccount
+
+--- Missing or empty AZ ---
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeCopied
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeReady
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeLinked
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.rejectDone
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.title
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.subtitle
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.optInOn
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.optInOff
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.issuer
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.invoiceNo
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.amount
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.date
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.empty
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeMismatch
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.eqaimeMissing
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.sendEqaime
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.linkEqaime
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.accept
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.reject
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.linkEqaimeTitle
+apps\web\app\finance\network-inbox\page.tsx тЖТ networkInbox.rejectTitle
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.suppliersTitle
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.suppliersHint
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.balance531
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ payables.empty
+apps\web\app\finance\payables\suppliers\page.tsx тЖТ inventory.purchasePayAction
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.periodRequired
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.createBtn
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.description
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.periodCol
+apps\web\app\finance\prepaid-expenses\page.tsx тЖТ prepaid.statusCol
+apps\web\app\purchases\page.tsx тЖТ inventory.purchasePayAction
+apps\web\components\companies\company-select-blocking-modal.tsx тЖТ companiesPage.selectCompanyTitle
+apps\web\components\companies\company-select-blocking-modal.tsx тЖТ companiesPage.selectCompanyHint
+apps\web\components\finance\modals\CreatePrepaidExpenseModal.tsx тЖТ prepaid.newTitle
+apps\web\components\finance\modals\CreatePrepaidExpenseModal.tsx тЖТ prepaid.description
+apps\web\components\layout\Sidebar.tsx тЖТ nav.supplierPayables
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.acceptDone
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.acceptTitle
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.debitRole
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.claimsVat
+apps\web\components\network\AcceptNetworkDocumentModal.tsx тЖТ networkInbox.postingDate
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayDone
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayTitle
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayAmount
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ inventory.purchasePayDate
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ invoiceNew.paymentAccount
+apps\web\components\purchases\PayPurchaseModal.tsx тЖТ invoiceNew.bankAccount
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finInvalid
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finNotFound
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finFound
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.finLookupErr
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.yoxlaFirst
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.director
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.phones
+apps\web\components\sales\modals\CreateCounterpartyModal.tsx тЖТ counterparties.yoxlaFin
+apps\web\components\sales\modals\CreateInvoiceModal.tsx тЖТ invoiceNew.bankAccount

@@ -17,6 +17,8 @@ Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full s
 
 Stock / purchasing, full CRM surveys, loyalty, LIS/HL7, SPA recipes → stock, citizen portal UI.
 
+**Post-W3 product backlog (gaps not in sibling satellites):** [BACKLOG-PRODUCTION.md § Product gaps](../BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14) — P2 items H-BL-01…10 (split settlement, meal gate, guest intelligence, …); P4 H-BL-30 B2B contract mgmt (future).
+
 **Wave 4 (done):** transfers (HN-7), banquets (HN-8).
 
 **Wave 5 (done):** finance GL bridge (NW-1), invoice/agency (NW-2), contract pricing (NW-3) — manifest [screens-manifest-v2-wave5-must.json](./screens-manifest-v2-wave5-must.json).
@@ -29,7 +31,7 @@ Stock / purchasing, full CRM surveys, loyalty, LIS/HL7, SPA recipes → stock, c
 | WA_INV_01 | `/reports/invoices` | 23 |
 | WA_CASH_02 | Agency CL summary | 23 |
 | WA_CHAN_01 | Stop-sell `/channel` | existing (NW-4 verify) |
-| WA_CHAN_02 | `/admin/contract-pricing` | 24 |
+| WA_CHAN_02 | `/admin/contracts` | 24 |
 
 Clone-spec: [17-az-compliance.md](../clone-spec/17-az-compliance.md) (invoices), [18-erp-integration.md](../clone-spec/18-erp-integration.md) (GL + agency CL).
 
@@ -68,6 +70,8 @@ Legacy v1: [screens-manifest.csv](./screens-manifest.csv) (292 rows).
 
 | Source | Path |
 |--------|------|
+| **Import pricing map (Nafta greenfield)** | [IMPORT-PRICING-MAP.md](./IMPORT-PRICING-MAP.md) |
+| **Doc / API / UI gap audit (all Nafta satellites)** | [../../docs/NAFTA_DOC_API_UI_AUDIT.md](../../docs/NAFTA_DOC_API_UI_AUDIT.md) |
 | DOC-B per-step checklist | [DOC-B-CHECKLIST.md](./DOC-B-CHECKLIST.md) |
 | NotebookLM prompt | [NOTEBOOKLM-PROMPT.md](./NOTEBOOKLM-PROMPT.md) |
 | Clone-spec sanatorium | [../clone-spec/06-channel-crm-med.md](../clone-spec/06-channel-crm-med.md) Part C |

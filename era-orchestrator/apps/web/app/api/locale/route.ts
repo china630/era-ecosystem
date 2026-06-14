@@ -12,7 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported locale" }, { status: 400 });
   }
   const res = NextResponse.json({ ok: true, locale: body.locale });
-  const opts = eraLocaleCookieOptions();
+  const url = new URL(request.url);
+  const forwarded = request.headers.get("x-forwarded-proto");
+  const secure = forwarded === "https" || url.protocol === "https:";
+  const opts = { ...eraLocaleCookieOptions(), secure };
   res.cookies.set(ERA_I18N_COOKIE, body.locale, opts);
   return res;
 }

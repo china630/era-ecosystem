@@ -187,6 +187,9 @@ export default function BanquetsPage() {
                         {t('confirm')}
                       </button>
                     )}
+                    <a href={`/banquets/${ev.id}`} className={`${SECONDARY_BUTTON_CLASS} ml-2 inline-block`}>
+                      {t('detail')}
+                    </a>
                   </td>
                 </tr>
               ))}

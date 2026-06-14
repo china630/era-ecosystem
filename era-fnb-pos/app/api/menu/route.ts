@@ -4,13 +4,45 @@ import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const dailyOnly = url.searchParams.get("dailyOnly") === "true";
+    const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
+
     const categories = await prisma.menuCategory.findMany({
-      include: { items: { orderBy: { name: "asc" } } },
+      include: { items: { where: { active: true }, orderBy: { name: "asc" } } },
       orderBy: { sortOrder: "asc" },
     });
-    return jsonOk(categories);
+
+    if (!dailyOnly) {
+      return jsonOk(categories);
+    }
+
+    const outlet = await prisma.outlet.findUnique({ where: { code: outletCode } });
+    if (!outlet) return jsonOk(categories);
+
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    const boardIds = new Set(
+      (
+        await prisma.dailyMenuEntry.findMany({
+          where: { outletId: outlet.id, boardDate: date },
+          select: { menuItemId: true },
+        })
+      ).map((e) => e.menuItemId),
+    );
+
+    if (boardIds.size === 0) return jsonOk(categories);
+
+    const filtered = categories
+      .map((cat) => ({
+        ...cat,
+        items: cat.items.filter((i) => boardIds.has(i.id)),
+      }))
+      .filter((cat) => cat.items.length > 0);
+
+    return jsonOk(filtered);
   } catch (err) {
     return handleRouteError(err);
   }

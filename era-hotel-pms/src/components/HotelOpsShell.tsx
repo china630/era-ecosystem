@@ -73,7 +73,7 @@ function souvenirRetailHref(): string {
 }
 
 export default function HotelOpsShell({ children }: { children: React.ReactNode }) {
-  const { user, can } = useAuth();
+  const { user, can, isPlatformSuperAdmin } = useAuth();
   const pathname = usePathname() ?? '';
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -318,8 +318,8 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
             },
             {
               id: 'dist-contracts',
-              href: '/admin/contract-pricing',
-              labelKey: 'contractPricing',
+              href: '/admin/contracts',
+              labelKey: 'salesContracts',
               icon: TrendingUp,
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
@@ -342,6 +342,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/admin/child-matrix',
               labelKey: 'childMatrix',
               icon: Settings,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'dist-yield-rules',
+              href: '/admin/yield-rules',
+              labelKey: 'yieldRules',
+              icon: TrendingUp,
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
           ]),
@@ -450,11 +457,25 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           icon: Building2,
           items: sectionItems([
             {
+              id: 'su-bar',
+              href: '/admin/bar-calendar',
+              labelKey: 'barCalendar',
+              icon: Building2,
+              show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
               id: 'su-master',
               href: '/admin/master-data',
               labelKey: 'masterData',
               icon: Building2,
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
+            },
+            {
+              id: 'su-import',
+              href: '/admin/import',
+              labelKey: 'elektrawebImport',
+              icon: FileText,
+              show: isPlatformSuperAdmin,
             },
           ]),
         },
@@ -463,6 +484,27 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
           title: t('sectionGeneral'),
           icon: FileBarChart,
           items: sectionItems([
+            {
+              id: 'gn-agency-profit',
+              href: '/reports/agency-profitability',
+              labelKey: 'agencyProfit',
+              icon: FileBarChart,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'gn-guest-dedup',
+              href: '/reports/guest-dedup',
+              labelKey: 'guestDedup',
+              icon: FileBarChart,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
+              id: 'gn-analytics',
+              href: '/reports/analytics',
+              labelKey: 'analytics',
+              icon: FileBarChart,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
             {
               id: 'gn-occ',
               href: '/reports/occupancy',
@@ -506,6 +548,13 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               show: can(PERMISSIONS.MASTER_DATA_MANAGE),
             },
             {
+              id: 'gn-audit',
+              href: '/admin/audit',
+              labelKey: 'auditViewer',
+              icon: ClipboardList,
+              show: can(PERMISSIONS.REPORTS_READ),
+            },
+            {
               id: 'gn-users',
               href: '/admin/users',
               labelKey: 'users',
@@ -532,7 +581,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         },
       ].filter((section) => section.items.length > 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- can() identity stable enough per render
-    [t, can, user?.role],
+    [t, can, user?.role, isPlatformSuperAdmin],
   );
 
   const headerQuickLinkClass = (active: boolean) =>

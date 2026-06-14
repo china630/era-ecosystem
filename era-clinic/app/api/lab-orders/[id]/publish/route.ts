@@ -105,6 +105,21 @@ export async function POST(
           : "Lab results are ready in the patient portal.",
         payload: { portalUrl },
       });
+      if (phone.includes("@")) {
+        await trySendPlatformNotification({
+          templateKey: "clinic.lab.results.ready",
+          channel: "EMAIL",
+          messageClass: "TRANSACTIONAL",
+          recipient: phone,
+          sourceEntityType: "lab_order",
+          sourceEntityId: order.id,
+          subject: "Lab results ready",
+          body: portalUrl
+            ? `Your lab results are ready: ${portalUrl}`
+            : "Your lab results are ready in the patient portal.",
+          payload: { portalUrl },
+        });
+      }
     }
 
     const published = await prisma.labOrder.update({

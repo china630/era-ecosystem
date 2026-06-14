@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
+import { ReservationCardAuthorizationsPanel } from '@/components/reservation-card/ReservationCardAuthorizationsPanel';
 import { PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
 import type { FolioSubTab } from './types';
 
@@ -43,6 +44,7 @@ export function ReservationCardFolioTab({
 
   return (
     <div className="space-y-3">
+      <ReservationCardAuthorizationsPanel reservationId={reservationId} />
       <div className="flex gap-2">
         {(['all', 'first', 'second', 'agency', 'guest'] as FolioSubTab[]).map((st) => (
           <button

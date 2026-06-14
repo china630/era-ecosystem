@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS } from "@era/satellite-kit/ui";
+import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
 export default function DoctorPage() {
@@ -42,8 +43,13 @@ export default function DoctorPage() {
       <div className={`${CARD_CONTAINER_CLASS} p-4`}>
         <ul className="space-y-2 text-sm">
           {visits.map((v) => (
-            <li key={v.id} className="rounded border p-2">
-              {v.patientRef.fullName} — {v.status}
+            <li key={v.id} className="flex items-center justify-between rounded border p-2">
+              <span>
+                {v.patientRef.fullName} — {v.status}
+              </span>
+              <Link href={`/visits/${v.id}`} className={PRIMARY_BUTTON_CLASS}>
+                Open
+              </Link>
             </li>
           ))}
           {visits.length === 0 && <li className="text-slate-500">{t("empty")}</li>}

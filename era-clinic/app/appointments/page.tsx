@@ -12,7 +12,7 @@ type AppointmentRow = {
   scheduledAt: string;
   patientRef: { refCode: string; fullName: string };
   practitioner: { code: string; fullName: string };
-  visit?: { id: string; status: string; amountNet: string } | null;
+  visit?: { id: string; status: string; amountNet: string; patientOrigin?: string } | null;
 };
 
 export default function AppointmentsPage() {
@@ -67,9 +67,10 @@ export default function AppointmentsPage() {
             <>
               <h3 className="font-semibold">{selected.patientRef.fullName}</h3>
               <p className="text-xs text-slate-500">
-                Visit {selected.visit.id} · {selected.visit.status}
+                Visit {selected.visit.id.slice(0, 8)} · {selected.visit.status}
+                {selected.visit.patientOrigin ? ` · ${selected.visit.patientOrigin}` : ""}
               </p>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {selected.status === "SCHEDULED" && (
                   <button
                     type="button"
@@ -79,6 +80,9 @@ export default function AppointmentsPage() {
                     Check-in
                   </button>
                 )}
+                <Link href={`/visits/${selected.visit.id}`} className={PRIMARY_BUTTON_CLASS}>
+                  Visit card
+                </Link>
                 <Link href={`/cashier?visitId=${selected.visit.id}`} className={PRIMARY_BUTTON_CLASS}>
                   Cashier
                 </Link>

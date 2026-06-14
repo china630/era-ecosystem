@@ -68,9 +68,11 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 ## 7. Channel (CH-01, CH-02)
 
-1. `/channel` � stop sell tomorrow (all types).
-2. Try booking overlapping date � no availability.
-3. Remove stop sell; log/resolve sync error.
+1. `/channel` — **Channel mappings**: add channel (code + name); map room type → OTA room code; map rate plan → OTA rate code.
+2. `/channel` — stop sell tomorrow (all types).
+3. Try booking overlapping date — no availability.
+4. Remove stop sell; log/resolve sync error.
+5. Open reservation from room rack → `/reservations/{id}` full-page card with back link to `/`.
 
 ## 8. Master data (MD-01�04)
 
@@ -113,13 +115,15 @@ Room plan UI (Wave C+):
 3. Assign vehicle � status CONFIRMED.
 4. **Complete** � `TRANSFER` charge on guest folio; order status DONE.
 
-## 15. BANQUET BEO (Stage 21 / HN-8)
+## 15. BANQUET BEO / MICE (Stage 21 / HN-8 / H-BL-31)
 
-1. `/banquets` as `manager` � seed shows DRAFT BEO for **NAFTANI-HALL**.
-2. **Confirm** � hall blocked on POS calendar; deposit 500 AZN posted to company guest folio (room 101).
-3. `cd era-fnb-pos && npm run dev` � open shift on outlet `BANQUET`.
-4. `POST http://localhost:3200/api/tickets` with `{ "outletCode": "BANQUET", "beoId": "<event-id>", "guestName": "Corporate dinner" }`.
-5. Add extras line; optional room charge to in-house guest folio.
+1. `/banquets` as `manager` — seed shows DRAFT BEO for **NAFTANI-HALL**.
+2. Open event detail `/banquets/{id}` — add **AV equipment** order line; tab **Staff** — add waiter assignment.
+3. **Confirm** — hall blocked on POS calendar; package total on master/company folio; deposit posted if configured.
+4. `/banquets/calendar` — resource booking visible for event date.
+5. `cd era-fnb-pos && npm run dev` — open shift on outlet `BANQUET`.
+6. `POST http://localhost:3200/api/tickets` with `{ "outletCode": "BANQUET", "beoId": "<event-id>", "guestName": "Corporate dinner" }`.
+7. Add **extras** line only (base package already on PMS folio); `/banquets/reports/profitability` shows planned vs actual.
 
 ## 16. GL-BRIDGE (Stage 22 / NW-1 FIN-01)
 
@@ -134,11 +138,13 @@ Room plan UI (Wave C+):
 2. Issue invoice from folio � row appears with status SENT.
 3. `/reports/agency-ledger` � summary table: city ledger, cash paid, net amount per agency (PROC-21).
 
-## 18. CONTRACT-PRICING (Stage 24 / NW-3 PROC-24)
+## 18. B2B SALES CONTRACTS (Stage 24 / NW-3 PROC-24 / H-BL-30)
 
-1. `/admin/contract-pricing` � seed rule: TRAVEL-AZ ?10% on STANDARD rate.
-2. `GET /api/bookings/quote?ratePlanId=�&checkInDate=�&checkOutDate=�&agencyId=�` � adjusted nightly.
-3. New booking with agency � `totalAmount` reflects contract discount.
+1. `/admin/contracts` — create ACTIVE contract for TRAVEL-AZ with DERIVED −10% plan + 20 room-night allotment on STANDARD.
+2. `GET /api/admin/contracts/{id}?utilization=1` — utilization metrics after bookings.
+3. New reservation with `salesContractId` — contract rate plan applied; BAR allotment not offered when contract quota exhausted.
+4. `/reports/agency-profitability` — contract-sourced revenue visible.
+5. Legacy `/admin/contract-pricing` redirects to `/admin/contracts`; run `npx tsx prisma/scripts/migrate-contract-pricing-to-derived.ts` for CPR migration.
 
 ## 19. CHANNEL stop-sell regression (NW-4 / PROC-23)
 
@@ -250,6 +256,64 @@ Prerequisite: `npx prisma migrate deploy` (includes `20260604120000_guest_crm`);
 5. **Transfers** opens `/transfers?guestId=…`; **Lost & found** opens HK list with guest filter.
 6. Medical buttons: if `NEXT_PUBLIC_CLINIC_WEB_URL` set → external link; else disabled with tooltip.
 7. **Comments** → add comment → listed on guest comments page.
+
+## 22. Nafta W0 — analytics, child pricing, OTA (2026-06-13)
+
+1. `/admin/child-matrix` — ensure row 0–6 = 100% discount; create reservation with `children5_2=1` → **Pricing recalc** → nightly total unchanged vs adult-only baseline.
+2. `/reports/analytics` — set date range → booking sources, cancellations, nationality tables load.
+3. OTA webhook (with `ERA_OTA_WEBHOOK_SECRET` if set):
+   ```bash
+   curl -X POST http://127.0.0.1:3201/api/integrations/ota/booking \
+     -H "Content-Type: application/json" \
+     -H "x-era-ota-secret: $ERA_OTA_WEBHOOK_SECRET" \
+     -d '{"event":"create","externalReservationId":"ota-test-001","payload":{"guest":{"fullName":"OTA Test"},"checkInDate":"2026-07-01","checkOutDate":"2026-07-03","otaRoomCode":"STD","totalAmount":200}}'
+   ```
+4. Channel manager: `POST /api/channel/sync/push` with session → `{ ok: true, adapter: "webhook" }`.
+5. Finance: set employee `contractEndDate` = today+7, `ERA_NOTIFICATIONS_PACK=true` → HR cron fires at 08:00 Baku (or invoke service in dev).
+
+## 21. ELEKTRAWEB-IMPORT (Stage 26 / platform super-admin)
+
+**Guide:** [ELEKTRAWEB-IMPORT.md](./ELEKTRAWEB-IMPORT.md)
+
+1. Log in with email from `PLATFORM_SUPER_ADMIN_EMAILS` (not local `admin` unless listed).
+2. Open **Setup → Elektraweb import** (`/admin/import`).
+3. Phase 1: preview then import one dictionary file (e.g. Bed Type.xlsx) — expect created/updated counts, zero blocking errors.
+4. Phase 2: import Room Types before Rooms; preview Rooms — no "room type not found" if step 20 done.
+5. Confirm progress checkmarks persist after page reload (localStorage).
+6. Local hotel user (`admin` / `reception`) must **not** see import nav or API (403 on `POST /api/import/room-types`).
+7. Verify imported rows on `/admin/master-data` (no Import buttons on that screen).
+
+## 23. Nafta P2 — H-BL backlog (2026-06-14)
+
+1. **BAR pricing:** run `npx tsx prisma/scripts/seed-bar-from-legacy.ts` → `/admin/bar-calendar` shows rates → booking recalc matches BAR cell total.
+2. **Night audit:** NA posts room charge from daily rate / BAR (not flat `pricePerNight`); `/operations` shows business date vs wall clock.
+3. **Credit limit:** set `HotelProfile.defaultCreditLimitAzn=500` → fb-pos room-charge over limit returns `CREDIT_LIMIT`.
+4. **Meal gate:** BB guest zero-post ticket → 201; RO guest zero-post → 403 `MEAL_NOT_INCLUDED`.
+5. **Deposits:** `POST /api/reservations/{id}/deposits` HELD → check-in applies payment to folio.
+6. **Split settlement:** `/folio/{id}` → add CASH + CARD lines → Complete settlement → balance 0.
+7. **Guest dedup:** `/reports/guest-dedup` summary loads; see `doc/NAFTA-GUEST-INTELLIGENCE.md`.
+8. **Omnichannel:** guest card send SMS/WA with CP env → `GuestCommunication.status=SENT`.
+
+## 24. Nafta P3 — H-BL-20…28 (2026-06-14)
+
+1. **H-BL-28:** clinic `/admin/procedure-rules` — add FORBID_SAME_DAY rule → hotel `/procedures` book rejects conflict.
+2. **H-BL-26:** Guest card CRM — interests/social/general CRM pages; see `doc/GUEST-CRM-ELECTRAWEB.md`.
+3. **H-BL-27:** Folio split settlement shows loyalty balance; `LOYALTY_POINTS` line burns CP ledger.
+4. **H-BL-25:** `ERA_CHANNEL_ADAPTER=booking_com` + env → channel push includes BAR price.
+5. **H-BL-23:** `POST /api/migration/{id}/submit` → mock `externalRef` on registration.
+6. **H-BL-24:** Fiscal doc shows `eqaimeId` / status when set.
+7. **H-BL-20:** `/concierge` catalog + order complete posts folio charge.
+8. **H-BL-21:** `POST /api/integrations/minibar-sensor` with `x-minibar-secret` → auto minibar post.
+9. **H-BL-22:** `/dispatch` queue + assign vehicle.
+
+## 25. Nafta P0/P1 — ops UI smoke (2026-06-14)
+
+UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDIT.md) closure:
+
+1. **Migration:** `/migration` → Prefill + Submit to registry on a registration row.
+2. **Folio card:** open reservation → Folio tab → Place card hold / Release; Billing → credit limit; early/late preview under check-in/out times.
+3. **Channel:** `/channel` → **Push OTA** / **Pull OTA**; confirm last sync message.
+4. **Admin:** `/admin/yield-rules` CRUD; `/admin/audit` filter by entity type + date range.
 
 ## Pass criteria
 

@@ -42,6 +42,8 @@ PRD: [../PRD.md](../PRD.md)
 - [x] `ClinicalComplaint`, `ClinicalDiagnosis`; `LabOrder.clinicalEpisodeId`
 - [x] `POST /api/sanatorium/episodes/from-stay` — hotel check-in bridge (public path + `X-Clinic-Bridge-Secret`)
 - [x] `/sanatorium` — in-house guest list + episode detail (US-06, US-07)
+- [x] Treatment chart — `GET /api/sanatorium/episodes/[id]/schedule`, program quota on episode detail, `POST ?action=instantiate-program`
+- [x] `/sanatorium` treatment chart UI — date picker, procedure slots, quota summary (Wave C Nafta)
 - [x] Lab results API — `refMin`, `refMax`, `flag` on result lines
 - [x] UAT: see [UAT-SMOKE.md](UAT-SMOKE.md) § K5 (if present) or README smoke below
 

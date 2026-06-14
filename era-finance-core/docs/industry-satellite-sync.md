@@ -23,7 +23,7 @@ Hotel and F&B POS are **Industry Solutions** tiles like the other verticals. Ope
 | Domain | Finance (source of truth) | Hotel / fb-pos (read / sync) |
 |--------|---------------------------|------------------------------|
 | Sales invoices | `/sales/invoices` | `/reports/invoices` — operational list + `integrateToAccounting` flag + deep link |
-| Agency receivables | `/crm/counterparties/[id]/reconciliation` | `/reports/agency-ledger` — city ledger snapshot |
+| Agency receivables | `/crm/counterparties/[id]/reconciliation` + `AgencyCityLedgerSnapshot` history | `/reports/agency-ledger` — city ledger snapshot; event `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` persisted in Finance |
 | Purchases | `/purchases` | — (hotel does not duplicate PO) |
 | Inventory / stock | `/inventory/*` | `/admin/stock` — local MVP movements only; link to Finance warehouse |
 | GL / NAS | Night audit worker, journal entries | Revenue GL mapping on `/admin/integration` |
@@ -38,7 +38,7 @@ Satellites emit typed events → orchestrator → finance `SatelliteEventWorker`
 
 Hotel night audit (`SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED`): mapped `revenueLines` post multi-line NAS journal (cash + receivable debits, revenue credits per GL account).
 
-**Live** in Finance dispatch: `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` — [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md).
+**Live** in Finance dispatch: `SATELLITE_HOTEL_INVOICE_ISSUED`, `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` (persisted to `agency_city_ledger_snapshots`) — [INTEGRATION_SSO_EVENTS.md](../../docs/INTEGRATION_SSO_EVENTS.md).
 
 ## CRM boundary
 

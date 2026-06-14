@@ -16,6 +16,12 @@ export async function checkoutReservation(id: string): Promise<CheckoutResult> {
     throw new Error('Check-out is only allowed for IN_HOUSE reservations');
   }
 
+  const { postLateCheckOutFee } = await import('@/lib/services/early-late-fees.service');
+  await postLateCheckOutFee(id).catch((e) => console.error('Late check-out fee failed', e));
+
+  const { refundRemainingDeposits } = await import('@/lib/services/folio-deposit.service');
+  await refundRemainingDeposits(id);
+
   await assertZeroBalance(id);
 
   const completed = await prisma.$transaction(async (tx) => {

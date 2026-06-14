@@ -27,6 +27,20 @@ export async function POST(
         where: { id: updated.visit.id },
         data: { status: "IN_PROGRESS" },
       });
+
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const lastTicket = await prisma.queueTicket.findFirst({
+        where: { createdAt: { gte: startOfDay } },
+        orderBy: { queueNumber: "desc" },
+        select: { queueNumber: true },
+      });
+      await prisma.queueTicket.create({
+        data: {
+          visitId: updated.visit.id,
+          queueNumber: (lastTicket?.queueNumber ?? 0) + 1,
+        },
+      });
     }
 
     return jsonOk(updated);

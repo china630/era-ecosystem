@@ -50,6 +50,7 @@ model Outlet {
   tickets            Ticket[]
   shifts             PosShift[]
   menuCategories     MenuCategory[]
+  dailyMenuEntries   DailyMenuEntry[]
 
   @@map("outlets")
 }
@@ -120,9 +121,26 @@ model MenuItem {
   recipeSku  String?      @map("recipe_sku")
   category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lines      TicketLine[]
+  dailyEntries DailyMenuEntry[]
 
   @@unique([categoryId, plu])
   @@map("menu_items")
+}
+
+model DailyMenuEntry {
+  id         String   @id @default(cuid())
+  outletId   String   @map("outlet_id")
+  menuItemId String   @map("menu_item_id")
+  boardDate  DateTime @map("board_date") @db.Date
+  sortOrder  Int      @default(0) @map("sort_order")
+  isFeatured Boolean  @default(false) @map("is_featured")
+  outlet     Outlet   @relation(fields: [outletId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([outletId, menuItemId, boardDate])
+  @@index([outletId, boardDate])
+  @@map("daily_menu_entries")
 }
 
 model Ticket {
@@ -183,12 +201,14 @@ model PosShift {
 }
 
 model StaffRoster {
-  id        String   @id @default(cuid())
-  staffCode String   @unique @map("staff_code")
-  fullName  String   @map("full_name")
-  pinHash   String   @map("pin_hash")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  staffCode      String   @unique @map("staff_code")
+  fullName       String   @map("full_name")
+  pinHash        String   @map("pin_hash")
+  globalPersonId String?  @map("global_person_id")
+  financeEmployeeId String? @map("finance_employee_id")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("staff_rosters")
 }
@@ -214,18 +234,36 @@ model Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  login         String    @unique
-  email           String?
-  phone           String?   @unique
-  fullName      String    @map("full_name")
-  passwordHash  String    @map("password_hash")
-  roleId        String    @map("role_id")
-  role          Role      @relation(fields: [roleId], references: [id])
-  status        String    @default("ACTIVE")
-  isCrossSystem Boolean   @default(false) @map("is_cross_system")
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id                String    @id @default(cuid())
+  login             String    @unique
+  email             String?
+  phone             String?   @unique
+  fullName          String    @map("full_name")
+  passwordHash      String    @map("password_hash")
+  roleId            String    @map("role_id")
+  role              Role      @relation(fields: [roleId], references: [id])
+  globalPersonId    String?   @map("global_person_id")
+  financeEmployeeId String?   @map("finance_employee_id")
+  status            String    @default("ACTIVE")
+  isCrossSystem     Boolean   @default(false) @map("is_cross_system")
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
 
   @@map("users")
+}
+
+model SatelliteAuditLog {
+  id            String   @id @default(cuid())
+  userId        String?  @map("user_id")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  action        String
+  changesJson   String   @default("{}") @map("changes_json")
+  ipAddress     String?  @map("ip_address")
+  integrityHash String?  @map("integrity_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("satellite_audit_logs")
 }

@@ -5,6 +5,7 @@ import { JwtAuthGuard } from "../common/guards/jwt-auth.guard";
 import { MdmModule } from "../mdm/mdm.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ReferralsModule } from "../referrals/referrals.module";
+import { SubscriptionTrialModule } from "../subscription/subscription-trial.module";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { WellKnownController } from "./well-known.controller";
@@ -15,6 +16,7 @@ import { WellKnownController } from "./well-known.controller";
     PrismaModule,
     forwardRef(() => MdmModule),
     ReferralsModule,
+    SubscriptionTrialModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({

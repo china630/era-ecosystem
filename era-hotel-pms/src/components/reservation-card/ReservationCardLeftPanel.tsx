@@ -9,6 +9,7 @@ import {
   MODAL_INPUT_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
+import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
 import type { SelectOption } from './types';
 
 function nightsBetween(checkIn: string, checkOut: string): number {
@@ -53,6 +54,9 @@ export type ReservationCardLeftPanelProps = {
   preferredBed: string;
   givenRoomTypeId: string;
   contractRef: string;
+  creditLimitAzn: string;
+  folioBalance: number;
+  reservationId?: string | null;
   agencies: SelectOption[];
   sources: SelectOption[];
   roomTypes: SelectOption[];
@@ -120,6 +124,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               <label className={MODAL_FIELD_LABEL_CLASS}>{t('checkOutTime')}</label>
               <input type="time" className={MODAL_INPUT_CLASS} value={props.checkOutTime} onChange={set('checkOutTime')} />
             </div>
+            {props.reservationId ? (
+              <ReservationCardEarlyLatePanel
+                reservationId={props.reservationId}
+                checkInTime={props.checkInTime}
+                checkOutTime={props.checkOutTime}
+              />
+            ) : null}
           </>
         ) : null}
         <div className={FORM_FIELD_GROUP_CLASS}>
@@ -328,6 +339,43 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
           <input className={MODAL_INPUT_CLASS} value={props.colorCode} onChange={set('colorCode')} />
         </div>
       </fieldset>
+      {!isCreate ? (
+        <fieldset className="space-y-2" disabled={isLocked}>
+          <legend className="font-semibold text-[#34495E]">{t('billing')}</legend>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('creditLimitAzn')}</label>
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              className={MODAL_INPUT_CLASS}
+              value={props.creditLimitAzn}
+              onChange={set('creditLimitAzn')}
+              placeholder={t('creditLimitPlaceholder')}
+            />
+          </div>
+          <div className="rounded bg-[#F8FAFC] p-2 text-[12px]">
+            <div className="flex justify-between">
+              <span className="text-[#7F8C8D]">{t('folioBalance')}</span>
+              <span className="font-mono">{props.folioBalance.toFixed(2)} AZN</span>
+            </div>
+            {props.creditLimitAzn !== '' && !Number.isNaN(Number(props.creditLimitAzn)) ? (
+              <div className="mt-1 flex justify-between">
+                <span className="text-[#7F8C8D]">{t('creditRemaining')}</span>
+                <span
+                  className={`font-mono ${
+                    Number(props.creditLimitAzn) - props.folioBalance <= 0 ? 'text-[#E74C3C]' : 'text-[#27AE60]'
+                  }`}
+                >
+                  {Math.max(0, Number(props.creditLimitAzn) - props.folioBalance).toFixed(2)} AZN
+                </span>
+              </div>
+            ) : (
+              <p className="mt-1 text-[#7F8C8D]">{t('creditLimitUnset')}</p>
+            )}
+          </div>
+        </fieldset>
+      ) : null}
     </aside>
   );
 }

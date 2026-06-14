@@ -1,5 +1,6 @@
 import type { BodyPart } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 
 const WORK_START_HOUR = 9;
 const WORK_END_HOUR = 17;
@@ -154,7 +155,19 @@ export async function planProgramFifo(
         return true;
       });
 
-      if (!busy && ruleOk) {
+      const compatViolations = await validateProcedureCompatibility({
+        candidateCode: item.procedureCode,
+        startAt: slotStart,
+        endAt: slotEnd,
+        existing: scheduledPatient.map((s) => ({
+          procedureCode: s.code,
+          startAt: s.start,
+          endAt: s.end,
+        })),
+      });
+      const compatOk = compatViolations.length === 0;
+
+      if (!busy && ruleOk && compatOk) {
         const order = await prisma.procedureOrder.create({
           data: {
             patientRefId,

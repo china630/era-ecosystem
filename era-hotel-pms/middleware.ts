@@ -19,6 +19,7 @@ const PUBLIC_API_EXTRA = [
   '/api/integration/mock-receiver',
   '/api/integration/mock-licensing',
   '/api/integration/erp/inbound',
+  '/api/integration/staff-provision',
 ];
 
 export async function middleware(request: NextRequest) {

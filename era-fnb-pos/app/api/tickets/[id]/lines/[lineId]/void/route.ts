@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { recalculateTicketTotals } from "@/lib/ticket-helpers";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
+import { recordFbAudit } from "@/lib/satellite-audit";
 
 const voidSchema = z.object({
   reason: z.string().min(1),
@@ -36,6 +37,14 @@ export async function POST(
       notes: body.reason,
     },
   });
+
+  await recordFbAudit(
+    { userId: session?.sub, request },
+    "TicketLine",
+    lineId,
+    "VOID",
+    { ticketId: id, reason: body.reason, lineName: line.description },
+  );
 
   const updated = await recalculateTicketTotals(id);
   const lines = await prisma.ticketLine.findMany({ where: { ticketId: id } });

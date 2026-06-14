@@ -2455,6 +2455,17 @@ export const resources = {
         vacationDaysAvailable: "Доступно дней отпуска",
         vacationDaysAvailableHint:
           "Остаток пересчитывается ежедневно по накоплению от даты приёма (ТК АР, норма не менее 21 дня в год) за вычетом использованных дней трудового отпуска.",
+        provisionedSatelliteKey: "Спутник для доступа",
+        provisionedSatelliteKeyHint:
+          "При сохранении Finance отправит событие провижининга в выбранный спутник (hotel, F&B, clinic).",
+        provisionedSatelliteNone: "— не провижинить —",
+        provisionedSatelliteHotel: "Hotel PMS",
+        provisionedSatelliteFnb: "F&B POS",
+        provisionedSatelliteClinic: "Clinic",
+        provisionedSatelliteRole: "Роль в спутнике",
+        provisionedSatelliteRoleAuto: "Авто (из должности)",
+        provisionedSatelliteRoleHint:
+          "Пусто — роль выводится из названия штатной должности (waiter → WAITER и т.д.).",
       },
       hrAnalytics: {
         title: "Календарь отсутствий",
@@ -2636,6 +2647,12 @@ export const resources = {
         legalForm_BRANCH: "Филиал / Представительство",
         legalForm_HOA: "Товарищество собственников жилья (MMMC)",
         vatPayerCheckbox: "Плательщик НДС",
+        agencyLedgerSnapshotsTitle: "Снимки city ledger (hotel)",
+        agencyLedgerSnapshotsEmpty: "Нет снимков от hotel PMS для этого контрагента.",
+        agencyLedgerSnapshotsAsOf: "На дату",
+        agencyLedgerSnapshotsBalance: "Баланс",
+        agencyLedgerSnapshotsCharges: "Начисления",
+        agencyLedgerSnapshotsPayments: "Оплаты",
         vatStatus: "Статус НДС",
         vatPayerYes: "Плательщик НДС",
         vatPayerNo: "Не плательщик НДС (по данным проверки)",
@@ -6060,6 +6077,17 @@ export const resources = {
         vacationDaysAvailable: "Mövcud məzuniyyət günləri",
         vacationDaysAvailableHint:
           "Qalıq işə qəbul tarixindən gündəlik yenidən hesablanır (ƏM K, ildə ən azı 21 gün norması), əmək məzuniyyəti günləri çıxılmaqla.",
+        provisionedSatelliteKey: "Giriş üçün peyk",
+        provisionedSatelliteKeyHint:
+          "Saxlananda Finance seçilmiş peykə (hotel, F&B, clinic) provizion hadisəsi göndərir.",
+        provisionedSatelliteNone: "— provizion yox —",
+        provisionedSatelliteHotel: "Hotel PMS",
+        provisionedSatelliteFnb: "F&B POS",
+        provisionedSatelliteClinic: "Clinic",
+        provisionedSatelliteRole: "Peykdə rol",
+        provisionedSatelliteRoleAuto: "Avto (vəzifədən)",
+        provisionedSatelliteRoleHint:
+          "Boş — rol ştat vəzifəsinin adından çıxarılır (waiter → WAITER və s.).",
       },
       hrAnalytics: {
         title: "İstirahət təqvimi",
@@ -6249,6 +6277,12 @@ export const resources = {
         legalForm_BRANCH: "Filial / Nümayəndəlik",
         legalForm_HOA: "Mənzil Mülkiyyətçilərinin Müştərək Cəmiyyəti (MMMC)",
         vatPayerCheckbox: "ƏDV ödəyicisidir",
+        agencyLedgerSnapshotsTitle: "City ledger snapshot-ları (hotel)",
+        agencyLedgerSnapshotsEmpty: "Bu kontragent üçün hotel PMS-dən snapshot yoxdur.",
+        agencyLedgerSnapshotsAsOf: "Tarix",
+        agencyLedgerSnapshotsBalance: "Balans",
+        agencyLedgerSnapshotsCharges: "Yükləmələr",
+        agencyLedgerSnapshotsPayments: "Ödənişlər",
         vatStatus: "ƏDV statusu",
         vatPayerYes: "ƏDV ödəyicisi",
         vatPayerNo: "ƏDV ödəyicisi deyil (yoxlamaya görə)",

@@ -27,6 +27,11 @@ import {
 } from "./retail.events";
 import { isSatelliteWholesaleOrderConfirmed } from "./wholesale.events";
 import { isSatelliteFbStockConsumptionCompleted } from "./fb.events";
+import {
+  isSatelliteStaffClockBatch,
+  isSatelliteStaffDeactivated,
+  isSatelliteStaffProvisioned,
+} from "./hr.events";
 
 export type KnownSatelliteEvent = { type: string };
 
@@ -55,7 +60,10 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteClinicProcedureCompleted(data) ||
     isSatelliteClinicPrescriptionIssued(data) ||
     isSatelliteWholesaleOrderConfirmed(data) ||
-    isSatelliteFbStockConsumptionCompleted(data)
+    isSatelliteFbStockConsumptionCompleted(data) ||
+    isSatelliteStaffProvisioned(data) ||
+    isSatelliteStaffDeactivated(data) ||
+    isSatelliteStaffClockBatch(data)
   );
 }
 

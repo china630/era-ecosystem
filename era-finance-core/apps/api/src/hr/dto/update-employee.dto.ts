@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
-import { EmployeeKind } from "@erafinance/database";
+import { EmployeeKind, TaxResidencyStatus } from "@erafinance/database";
 import { Type } from "class-transformer";
 import {
   IsDateString,
@@ -33,6 +33,51 @@ export class UpdateEmployeeDto {
     message: "finCode must be 7 chars (A–Z/0–9, excluding I and O)",
   })
   finCode?: string;
+
+  @ApiPropertyOptional({ enum: TaxResidencyStatus })
+  @IsOptional()
+  @IsEnum(TaxResidencyStatus)
+  taxResidencyStatus?: TaxResidencyStatus;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nationality?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  passportNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  issuingCountry?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  workPermitNumber?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  userId?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  provisionedSatelliteKey?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  provisionedSatelliteRole?: string | null;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  staffPin?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -91,8 +136,17 @@ export class UpdateEmployeeDto {
   @Min(0)
   initialSalaryBalance?: number | null;
 
+  @ApiPropertyOptional({ description: "Date of birth (HR birthday reminders)" })
+  @IsOptional()
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @ApiPropertyOptional({ description: "Employment contract end date (T-7 reminder)" })
+  @IsOptional()
+  @IsDateString()
+  contractEndDate?: string;
+
   @ApiPropertyOptional({
-    description: "Initial vacation days at migration date.",
     example: 0,
   })
   @IsOptional()
