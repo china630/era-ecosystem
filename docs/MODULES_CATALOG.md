@@ -338,6 +338,30 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 
 ---
 
+## Banking (Core Banking System — `industry_banking`)
+
+Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS, second core — owns the banking ledger, ACID posting, EOD, product engines; API only, no UI); **`era-bank`** = operational satellite carrying the `industry_banking` gate (UI/workflow client of the engine, holds no money). Licensed per bank (one deployment = one bank, on-prem capable). Bank's corporate back-office (opex/payroll/FA/procurement/VAT) stays in **finance-core**. Status: **PROPOSED / pre-development**.
+
+**Docs:** engine [era-bank-core/PRD.md](../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) · satellite [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) · ADR [era-bank-core.md](./adr/era-bank-core.md) · rule [era-bank-core-module-map.mdc](../.cursor/rules/era-bank-core-module-map.mdc).
+
+| Module key | Module | Layer | Status |
+|------------|--------|-------|--------|
+| `banking_core` | Kernel: ledger (CBAR COA), ACID posting engine, CIF, balances/holds, EOD/EOM, Product Factory, `Branch`/МФР, audit | L1 mandatory | **PLANNED** |
+| `banking_deposits` | Deposits/savings (+ADİF) | L2 | **PLANNED** |
+| `banking_loans` | Loans (scoring, AKB/credit registry, ƏMDK, IFRS 9 ECL) | L2 | **PLANNED** |
+| `banking_cards` | Cards (AzeriCard/MilliKart) | L2 | **PLANNED** |
+| `banking_payments` | Payments hub (AZIPS/XÖHKS/AÖS/SWIFT, ISO 20022) | L2 | **PLANNED** |
+| `banking_aml` | AML/CFT/KYC + FMN reporting | L2 | **PLANNED** |
+| `banking_treasury` | Treasury / ALM / liquidity | L2 | **PLANNED** |
+| `banking_dbo` | Digital banking + ASAN İmza/SİMA | L2 | **PLANNED** |
+| `banking_regreporting` | CBAR prudential + FATCA/CRS | L2 | **PLANNED** |
+
+A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels go to a future `era-bank-dbo` app.
+
+**Architecture laws:** money is ACID (no money over event bus); engine headless / satellite holds no money; thin kernel (no bank/product logic in L1); branches = internal dimension (not orgs); MDM shared (store `globalPersonId` only). Phases P0–P7 in PRD §7 / TZ §12.
+
+---
+
 ## MVP backlog (priority)
 
 Tracked closure: [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) § MVP backlog closure. **Closed 2026-05-26** except tier-gated rows below.

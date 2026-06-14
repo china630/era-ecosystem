@@ -17,6 +17,9 @@ Canonical reference for domains, ports, repo folders, billing slugs, and environ
 | 3 | Finance API | `era-finance-core` | `finance-core` | `finance-api` ‡ | 4100 | `https://finance-api.era-365.online/` |
 | — | Orchestrator API | `era-orchestrator` | `orchestrator` | `api` | 4000 | `https://api.era-365.online/` |
 | 4 | ERA Data Hub | `era-data-hub` | `data-hub` | `data` | 4200 | `https://data.era-365.online/` |
+| 5 | Bank Core (API) | `era-bank-core` | `bank-core` | `bank-api` | 4300 | `https://bank-api.era-365.online/` |
+
+Bank Core is a regulated **headless engine** (CBS, second core), **not** an industry satellite and has **no UI** — typically deployed **one per bank** (on-prem capable). Its operational UI is the `era-bank` satellite (see Industry satellites table). ADR [era-bank-core.md](./adr/era-bank-core.md) D9.
 
 ‡ Finance API public route: enable with `ERA_FINANCE_API_PUBLIC=true` (open architecture). Internal always: `http://finance-core:4100`.
 
@@ -32,12 +35,17 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 |-------|---------|--------------|
 | `/login` | Platform login (email + password) | `POST /auth/login` on Orch API |
 | `/register` | User signup; captures `?ref=` referral code | Orch auth API |
-| `/register-org` | Organization registration (VÖEN) | Orch auth + MDM |
+| `/register-org` | Organization registration (VÖEN) — fallback/deep link; primary path is modal on `/organizations` | Orch auth + MDM |
+| `/organizations` | Org hub — list memberships, switch org, **+ Organization** modal | `GET /memberships`, `POST /auth/register-organization` |
+| `/workspace` | Active org systems (Finance + industry); entitled → **Open**, else → pricing (no waitlist) | `GET /v1/subscription/me` |
+| `/settings` | Settings hub (team, subscription) | — |
+| `/settings/subscription` | Plan, trial, module chips | `GET /v1/subscription/me` |
 | `/pricing` | Public pricing storefront | `GET /v1/public/pricing` |
 | `/help` | Canonical FAQ (az \| ru \| en) | — |
 | `/terms` | User agreement (az \| ru \| en) | — |
 | `/partner` | Referral / partner dashboard | `GET /v1/partner/dashboard` |
-| `/` | Industry module launcher (authenticated) | entitlements snapshot |
+| `/` | Redirect: guest → `/login`; authed without org → `/organizations`; authed with org → `/workspace` | — |
+| `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated) | SSO launch |
 
 **Redirects to Orchestrator:** Finance `/register`, `/register-org`, `/pricing`, `/super-admin/*`, `/industry/*`; unauthenticated Finance `/login` → `{ORCH_WEB}/login?next=finance` when CP handoff is enabled.
 
@@ -58,8 +66,11 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | 11 | CRM & Communications | `era-crm` | `crm` | `crm` | 3207 | `https://crm.era-365.online/` |
 | 12 | Auto Service | `era-auto-service` | `auto-service` | `auto-service` | 3208 | `https://auto-service.era-365.online/` |
 | 13 | Wholesale & Distribution | `era-wholesale` | `wholesale` | `wholesale` | 3209 | `https://wholesale.era-365.online/` |
+| 14 | Bank (operational satellite) | `era-bank` | `bank` | `bank` | 3210 | `https://bank.era-365.online/` |
 
 API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
+
+**`era-bank`** carries the `industry_banking` gate and is a UI/workflow client of the headless **`era-bank-core`** engine (`:4300`); it holds **no ledger/money state** (ADR D9). Its `/api` is a BFF proxy to the engine.
 
 ---
 
@@ -69,10 +80,11 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 |------|---------|
 | 3000 | Orchestrator Web |
 | 3100 | Finance Web |
-| 3201–3209 | Industry satellites (see table above) |
+| 3201–3210 | Industry satellites (3210 = era-bank; see table above) |
 | 4000 | Orchestrator API |
 | 4100 | Finance API |
 | 4200 | ERA Data Hub API |
+| 4300 | Bank Core API (headless engine) |
 | 5432 | PostgreSQL |
 | 6379 | Redis |
 | 8080 | Traefik dashboard (dev) |
@@ -92,6 +104,9 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | CRM | `industry_crm` | `/industry/crm` | `crm` |
 | Auto Service | `industry_auto_service` | `/industry/auto-service` | `auto-service` |
 | Wholesale | `industry_wholesale` | `/industry/wholesale` | `wholesale` |
+| Bank (satellite) | `industry_banking` | `/industry/banking` | `banking` |
+
+**Banking modules** (`catalog_kind = MODULE`, `satellite_key = industry_banking`): `banking_core` (mandatory), `banking_deposits`, `banking_loans`, `banking_cards`, `banking_payments`, `banking_aml`, `banking_treasury`, `banking_dbo`, `banking_regreporting`. Bundles `banking_bundle_retail|universal`. Branch metering quota: `active_branches`. The `industry_banking` gate is carried by the **`era-bank`** satellite; the regulated logic runs in the headless **`era-bank-core`** engine (`banking_dbo` channels in future `era-bank-dbo`).
 
 **Legacy slugs** (read for one release): `industry_fnb_pos`, `industry_retail`, `industry_logistics`, `industry_crm`, `industry_auto_service`. Migrate: `node scripts/migrate-industry-module-slugs.mjs`.
 
@@ -132,6 +147,12 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `false` / `true` on finance-core |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
+| Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |
+| Bank Core ref-data mode | `ERA_DATA_HUB_ONPREM` | `true` for isolated on-prem bank deployments |
+| Bank satellite → engine | `ERA_BANK_CORE_URL`, `BANK_CORE_SERVICE_TOKEN` | `era-bank` BFF calls to `era-bank-core` |
+| Bank satellite origin | `ERA_BANK_ORIGIN` | `https://bank.era-365.online` |
+| Sanatorium per-satellite org (docker) | `ERA_HOTEL_ORGANIZATION_ID`, `ERA_FB_ORGANIZATION_ID`, `ERA_CLINIC_ORGANIZATION_ID`, `ERA_RETAIL_ORGANIZATION_ID` | See [NAFTA_SANATORIUM_UAT.md](./NAFTA_SANATORIUM_UAT.md); fallback `ERA_SATELLITE_ORGANIZATION_ID` |
+| Dev module unlock (deprecated) | `ERA_DEV_UNLOCK_ALL_MODULES` | Superseded by [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) — use owner Connect + super-admin trial UI |
 
 **JWT issuer (current):** `era-orchestrator`
 
@@ -166,6 +187,8 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | `WHOLESALE_DB` | `era_wholesale` |
 | `CLINIC_DB` | `era_clinic` |
 | `DATA_HUB_DB` | `era_data_hub` |
+| `BANK_CORE_DB` | `era_bank_core` |
+| `BANK_SATELLITE_DB` | `era_bank` (operational/UI state only) |
 
 After DB name changes: reset dev volume (`docker compose down` + remove `docker-data/postgres`) or run rename migration.
 
