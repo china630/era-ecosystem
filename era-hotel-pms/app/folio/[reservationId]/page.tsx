@@ -63,6 +63,11 @@ export default function FolioPage() {
   const [selectedFolio, setSelectedFolio] = useState('');
   const [chargeAmount, setChargeAmount] = useState('25');
   const [payAmount, setPayAmount] = useState('');
+  const [payMethod, setPayMethod] = useState('CASH');
+  const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null);
+  const [settleLines, setSettleLines] = useState<{ method: string; amount: string }[]>([
+    { method: 'CASH', amount: '' },
+  ]);
   const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -75,6 +80,14 @@ export default function FolioPage() {
     if (fRes.ok) {
       setFolios(fData);
       if (fData[0]) setSelectedFolio(fData[0].id);
+      const guestPhone = fData[0]?.reservation?.guest?.phone as string | undefined;
+      if (guestPhone) {
+        const lb = await fetch(`/api/loyalty/balance?customerRef=${encodeURIComponent(guestPhone)}`);
+        if (lb.ok) {
+          const b = await lb.json();
+          setLoyaltyBalance(b.maxRedeemableAzn ?? 0);
+        }
+      }
     }
     if (rRes.ok) setRevenueCodes(rData);
   }, [reservationId]);
@@ -126,11 +139,40 @@ export default function FolioPage() {
       body: JSON.stringify({
         folioId: selectedFolio,
         amount: parseFloat(payAmount),
-        paymentMethod: 'CASH',
+        paymentMethod: payMethod,
       }),
     });
     const data = await res.json();
     setMsg(res.ok ? t('paymentRecorded') : data.error);
+    await load();
+  }
+
+  async function completeSettlement() {
+    if (!selectedFolio) return;
+    const lines = settleLines
+      .map((l) => ({ method: l.method, amount: parseFloat(l.amount) }))
+      .filter((l) => l.amount > 0);
+    if (lines.length === 0) return;
+    const res = await fetch('/api/folios/settle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ folioId: selectedFolio, lines }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? 'Settlement completed' : data.error);
+    await load();
+  }
+
+  async function recordDeposit() {
+    const amount = parseFloat(payAmount);
+    if (!amount || amount <= 0) return;
+    const res = await fetch(`/api/reservations/${reservationId}/deposits`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount, paymentMethod: payMethod }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? 'Deposit recorded (HELD)' : data.error);
     await load();
   }
 
@@ -203,6 +245,9 @@ export default function FolioPage() {
                 <p key={d.id} className={FISCAL_COLORS[d.fiscalStatus] ?? 'text-[#34495E]'}>
                   {d.invoiceNumber ?? d.id.slice(0, 8)} —{' '}
                   {tFiscal(d.fiscalStatus as 'PENDING' | 'SENT' | 'ACCEPTED' | 'REJECTED')}
+                  {(d as { eqaimeId?: string; eqaimeStatus?: string }).eqaimeId
+                    ? ` · e-qaimə ${(d as { eqaimeStatus?: string }).eqaimeStatus ?? 'PENDING'}`
+                    : ''}
                   {d.fiscalExternalId ? ` (${d.fiscalExternalId})` : ''}
                   {d.rejectionReason ? ` — ${d.rejectionReason}` : ''}
                 </p>
@@ -246,9 +291,71 @@ export default function FolioPage() {
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
           />
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={payMethod}
+            onChange={(e) => setPayMethod(e.target.value)}
+          >
+            <option value="CASH">CASH</option>
+            <option value="CARD">CARD</option>
+            <option value="LOYALTY_POINTS">LOYALTY_POINTS</option>
+            <option value="COMPANY_ACCOUNT">COMPANY_ACCOUNT</option>
+          </select>
           <button type="button" onClick={addPayment} className={PRIMARY_BUTTON_CLASS}>
             {t('recordPayment')}
           </button>
+          <button type="button" onClick={recordDeposit} className={SECONDARY_BUTTON_CLASS}>
+            Record deposit (HELD)
+          </button>
+        </PageSection>
+      )}
+
+      {can(PERMISSIONS.FOLIO_PAYMENT) && totalBalance > 0.01 && (
+        <PageSection className="mt-4 space-y-2">
+          <h3 className="font-semibold text-[#34495E]">Split settlement</h3>
+          {loyaltyBalance != null && loyaltyBalance > 0 && (
+            <p className="text-[13px] text-[#7F8C8D]">Loyalty redeemable: up to {loyaltyBalance.toFixed(2)} AZN</p>
+          )}
+          {settleLines.map((line, idx) => (
+            <div key={idx} className="flex flex-wrap gap-2">
+              <select
+                className={MODAL_INPUT_CLASS}
+                value={line.method}
+                onChange={(e) => {
+                  const next = [...settleLines];
+                  next[idx] = { ...next[idx], method: e.target.value };
+                  setSettleLines(next);
+                }}
+              >
+                <option value="CASH">CASH</option>
+                <option value="CARD">CARD</option>
+                <option value="LOYALTY_POINTS">LOYALTY_POINTS</option>
+              </select>
+              <input
+                type="number"
+                className={`w-28 ${MODAL_INPUT_CLASS}`}
+                placeholder="Amount"
+                value={line.amount}
+                onChange={(e) => {
+                  const next = [...settleLines];
+                  next[idx] = { ...next[idx], amount: e.target.value };
+                  setSettleLines(next);
+                }}
+              />
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setSettleLines([...settleLines, { method: 'CASH', amount: '' }])}
+            >
+              Add tender line
+            </button>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={completeSettlement}>
+              Complete settlement
+            </button>
+          </div>
         </PageSection>
       )}
     </AppShell>

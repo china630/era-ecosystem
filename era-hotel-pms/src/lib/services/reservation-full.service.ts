@@ -47,6 +47,9 @@ export async function getReservationFull(id: string) {
     manualDailyRate: reservation.manualDailyRate
       ? decimalToNumber(reservation.manualDailyRate)
       : null,
+    creditLimitAzn: reservation.creditLimitAzn
+      ? decimalToNumber(reservation.creditLimitAzn)
+      : null,
     isLocked: reservation.isLocked,
     dailyRates: reservation.dailyRates.map((d) => ({
       id: d.id,
@@ -69,6 +72,7 @@ export async function patchReservationFull(
     ratePlanId?: string;
     mealPlanId?: string | null;
     agencyId?: string | null;
+    salesContractId?: string | null;
     sourceId?: string | null;
     roomId?: string | null;
     guestId?: string;
@@ -101,6 +105,7 @@ export async function patchReservationFull(
     useManualRate?: boolean;
     manualDailyRate?: number | null;
     discountActive?: boolean;
+    creditLimitAzn?: number | null;
     isLocked?: boolean;
     preferredLocation?: string | null;
     preferredBed?: string | null;
@@ -137,7 +142,7 @@ export async function patchReservationFull(
   const existing = await prisma.reservation.findUnique({ where: { id } });
   if (!existing) throw new Error('Reservation not found');
 
-  const { notes, paxGuests, manualDailyRate, dailyRates, ...data } = input;
+  const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, ...data } = input;
 
   await prisma.reservation.update({
     where: { id },
@@ -149,6 +154,12 @@ export async function patchReservationFull(
           : manualDailyRate === null
             ? null
             : toDecimal(manualDailyRate),
+      creditLimitAzn:
+        creditLimitAzn === undefined
+          ? undefined
+          : creditLimitAzn === null
+            ? null
+            : toDecimal(creditLimitAzn),
     },
   });
 

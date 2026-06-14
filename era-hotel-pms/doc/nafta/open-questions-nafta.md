@@ -27,4 +27,5 @@ Recorded 2026-05-25 from NotebookLM export. Confirm with Nafta on site — updat
 | Package-included transfer | No — always extra unless rate plan flag added later |
 | BEO POS | Extras only on event day; base BEO total on PMS folio |
 | BEO advance | Guest/company folio deposit line on BEO confirm |
+| B2B contracts | Allotment + DERIVED rate; hotel-only pipeline ([B2B-GATE.md](./B2B-GATE.md)) |
 | Outsourced vendor | Out of scope P0 — internal fleet only (Vehicle List) |

@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { assertActiveForNewUse } from '@/lib/master-data/retire-policy';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { FolioType, PaymentMethod } from '@prisma/client';
 import {
@@ -43,6 +44,9 @@ export async function postCharge(input: {
   businessDate?: Date;
   departmentId?: string;
 }) {
+  const { assertBusinessDayOpenForPosting } = await import('@/lib/services/business-date.service');
+  await assertBusinessDayOpenForPosting();
+
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
     include: { folios: true, guest: true },
@@ -51,6 +55,10 @@ export async function postCharge(input: {
   if (!['CONFIRMED', 'IN_HOUSE'].includes(reservation.status)) {
     throw new Error('Charges can only be posted to CONFIRMED or IN_HOUSE reservations');
   }
+
+  const revenueCode = await prisma.revenueCode.findUnique({ where: { id: input.revenueCodeId } });
+  if (!revenueCode) throw new Error('Revenue code not found');
+  assertActiveForNewUse(`Revenue code ${revenueCode.code}`, revenueCode.active);
 
   const targetType = await resolveTargetFolioType(
     input.revenueCodeId,

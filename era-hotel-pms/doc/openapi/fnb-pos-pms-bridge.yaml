@@ -171,6 +171,39 @@ paths:
         '404':
           $ref: '#/components/responses/BusinessError'
 
+  /api/pms/guest-entitlements:
+    get:
+      tags: [room-charge]
+      summary: Meal plan / add-on entitlements for in-house guest
+      operationId: getGuestEntitlements
+      x-era-status: implemented
+      parameters:
+        - name: roomNumber
+          in: query
+          schema:
+            type: string
+        - name: reservationId
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  found:
+                    type: boolean
+                  mealPlanCode:
+                    type: string
+                    nullable: true
+                  breakfastIncluded:
+                    type: boolean
+                  allInclusive:
+                    type: boolean
+
   /api/pms/room-charges:
     get:
       tags: [room-charge]

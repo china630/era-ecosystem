@@ -15,10 +15,55 @@ export async function listProducts() {
 export async function createProduct(input: {
   code: string;
   name: string;
+  productType?: 'SELLABLE' | 'STOCK';
   groupId?: string;
   unit?: string;
+  price?: number;
+  currency?: string;
+  vatRate?: number;
 }) {
-  return prisma.product.create({ data: input });
+  return prisma.product.create({
+    data: {
+      code: input.code,
+      name: input.name,
+      productType: input.productType ?? 'STOCK',
+      groupId: input.groupId,
+      unit: input.unit ?? 'pcs',
+      price: input.price != null ? toDecimal(input.price) : undefined,
+      currency: input.currency,
+      vatRate: input.vatRate != null ? toDecimal(input.vatRate) : undefined,
+    },
+    include: { group: true },
+  });
+}
+
+export async function updateProduct(
+  id: string,
+  input: {
+    name?: string;
+    productType?: 'SELLABLE' | 'STOCK';
+    groupId?: string | null;
+    unit?: string;
+    price?: number | null;
+    currency?: string | null;
+    vatRate?: number | null;
+    active?: boolean;
+  },
+) {
+  return prisma.product.update({
+    where: { id },
+    data: {
+      name: input.name,
+      productType: input.productType,
+      groupId: input.groupId === null ? null : input.groupId,
+      unit: input.unit,
+      price: input.price != null ? toDecimal(input.price) : input.price === null ? null : undefined,
+      currency: input.currency === null ? null : input.currency,
+      vatRate: input.vatRate != null ? toDecimal(input.vatRate) : input.vatRate === null ? null : undefined,
+      active: input.active,
+    },
+    include: { group: true },
+  });
 }
 
 export async function createWarehouse(input: { code: string; name: string }) {

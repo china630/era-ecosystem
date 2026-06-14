@@ -3,6 +3,7 @@ import { getSessionFromHeaders } from '@/lib/auth/session';
 import { prisma } from '@/lib/prisma';
 import { userPermissions } from '@/lib/services/user.service';
 import { permissionsForRole } from '@/lib/auth/permissions';
+import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 
 export async function GET() {
   try {
@@ -31,6 +32,7 @@ export async function GET() {
       rolePermissions: permissionsForRole(user.role.code),
       organizationName: profile?.name ?? null,
       organizationId: profile?.organizationId ?? null,
+      isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
     });
   } catch (err) {
     return handleRouteError(err);

@@ -92,6 +92,39 @@ export async function createAppointment(input: {
 
   await assertNoConflict(input);
 
+  const service = await prisma.procedureService.findUnique({
+    where: { id: input.serviceId },
+    select: { code: true },
+  });
+  const sameDay = await prisma.procedureAppointment.findMany({
+    where: {
+      reservationId: input.reservationId,
+      status: 'BOOKED',
+      startAt: {
+        gte: new Date(input.startAt.toISOString().slice(0, 10)),
+        lt: new Date(new Date(input.startAt).setUTCDate(input.startAt.getUTCDate() + 1)),
+      },
+    },
+    include: { service: true },
+  });
+
+  const { validateProcedureWithClinic } = await import(
+    '@/lib/integration/clinic-procedure-validate'
+  );
+  const clinicCheck = await validateProcedureWithClinic({
+    procedureCode: service?.code ?? input.serviceId,
+    startAt: input.startAt,
+    endAt: input.endAt,
+    existing: sameDay.map((a) => ({
+      procedureCode: a.service.code,
+      startAt: a.startAt,
+      endAt: a.endAt,
+    })),
+  });
+  if (!clinicCheck.ok && clinicCheck.violations[0]) {
+    throw new Error(clinicCheck.violations[0].message);
+  }
+
   return prisma.procedureAppointment.create({
     data: input,
     include: {

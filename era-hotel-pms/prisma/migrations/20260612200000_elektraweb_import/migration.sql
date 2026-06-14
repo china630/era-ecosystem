@@ -1,0 +1,49 @@
+-- Elektraweb import: reference dictionaries, external refs, extended master fields
+CREATE TYPE "ProductType" AS ENUM ('SELLABLE', 'STOCK');
+
+CREATE TABLE "RoomView" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "RoomView_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "RoomView_code_key" ON "RoomView"("code");
+
+CREATE TABLE "BedType" (
+    "id" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "systemType" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "BedType_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX "BedType_code_key" ON "BedType"("code");
+
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "viewCode" TEXT;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "bedTypeCode" TEXT;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "location" TEXT;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "maxBed" INTEGER;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "disabled" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "deleted" BOOLEAN NOT NULL DEFAULT false;
+
+ALTER TABLE "Guest" ADD COLUMN IF NOT EXISTS "externalRef" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "Guest_externalRef_key" ON "Guest"("externalRef");
+
+ALTER TABLE "Reservation" ADD COLUMN IF NOT EXISTS "externalRef" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "Reservation_externalRef_key" ON "Reservation"("externalRef");
+
+ALTER TABLE "FolioCharge" ADD COLUMN IF NOT EXISTS "externalRef" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "FolioCharge_externalRef_key" ON "FolioCharge"("externalRef");
+
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "productType" "ProductType" NOT NULL DEFAULT 'STOCK';
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "price" DECIMAL(12,2);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "currency" TEXT;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "revenueGroup" TEXT;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "vatRate" DECIMAL(5,2);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "lastCost" DECIMAL(12,4);
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "lastVendor" TEXT;
+ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

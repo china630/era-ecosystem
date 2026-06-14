@@ -31,6 +31,28 @@ enum PaymentMethod {
   CASH
   CARD
   COMPANY_ACCOUNT
+  LOYALTY_POINTS
+}
+
+enum FolioDepositStatus {
+  HELD
+  APPLIED
+  REFUNDED
+  FORFEITED
+}
+
+enum CardAuthorizationStatus {
+  HELD
+  CAPTURED
+  RELEASED
+  EXPIRED
+  VOIDED
+}
+
+enum FolioSettlementStatus {
+  OPEN
+  COMPLETED
+  VOID
 }
 
 enum ReservationNoteType {
@@ -171,16 +193,20 @@ enum StockMovementType {
 }
 
 model HotelProfile {
-  id                       String   @id @default(uuid())
+  id                       String    @id @default(uuid())
   name                     String
-  currency                 String   @default("AZN")
-  timezone                 String   @default("Asia/Baku")
-  propertyCode             String   @unique
-  organizationId           String   @default("nafta-sanatorium-org")
-  roomCapacity             Int      @default(78)
-  integrationSettingsJson  String?  @db.Text
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  currency                 String    @default("AZN")
+  timezone                 String    @default("Asia/Baku")
+  propertyCode             String    @unique
+  organizationId           String    @default("nafta-sanatorium-org")
+  roomCapacity             Int       @default(78)
+  integrationSettingsJson  String?   @db.Text
+  currentBusinessDate      DateTime? @db.Date
+  businessDateLocked       Boolean   @default(false)
+  defaultCreditLimitAzn    Decimal?  @db.Decimal(12, 2)
+  policyJson               String?   @db.Text
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
 }
 
 model Role {
@@ -213,6 +239,52 @@ model User {
   @@index([status])
 }
 
+enum RatePlanType {
+  BASE
+  DERIVED
+}
+
+enum RateAdjustmentMode {
+  PERCENT
+  FIXED
+}
+
+enum AddOnPricingUnit {
+  PER_STAY
+  PER_NIGHT
+  PER_GUEST
+  PER_GUEST_NIGHT
+}
+
+enum AddOnInclusion {
+  INCLUDED
+  OPTIONAL
+}
+
+enum ProductType {
+  SELLABLE
+  STOCK
+}
+
+model RoomView {
+  id        String   @id @default(uuid())
+  code      String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BedType {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  name       String
+  systemType String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 model RoomType {
   id            String              @id @default(uuid())
   code          String              @unique
@@ -220,12 +292,15 @@ model RoomType {
   adultCapacity Int                 @default(2)
   childCapacity Int                 @default(0)
   baseQuota     Int
+  active        Boolean             @default(true)
   rooms         Room[]
   reservations  Reservation[]
   givenRoomReservations Reservation[] @relation("GivenRoomType")
   ratePlans     RatePlan[]
+  roomTypeRates RoomTypeRate[]
   stopSells     ChannelStopSell[]
   channelRoomMappings ChannelRoomMapping[]
+  contractAllotments ContractAllotment[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 }
@@ -248,6 +323,13 @@ model Room {
   roomType     RoomType           @relation(fields: [roomTypeId], references: [id])
   floor        Int                @default(1)
   status       RoomStatus         @default(AVAILABLE)
+  description  String?
+  viewCode     String?
+  bedTypeCode  String?
+  location     String?
+  maxBed       Int?
+  disabled     Boolean            @default(false)
+  deleted      Boolean            @default(false)
   reservations Reservation[]
   hkTasks      HousekeepingTask[]
   serviceOrders MaintenanceWorkOrder[]
@@ -271,17 +353,86 @@ model RatePlan {
   id            String        @id @default(uuid())
   code          String        @unique
   name          String
+  type          RatePlanType  @default(DERIVED)
+
+  // Derivation config (NULL for BASE / BAR)
+  derivedFromId   String?
+  derivedFrom     RatePlan?           @relation("RateDerivation", fields: [derivedFromId], references: [id])
+  derivedPlans    RatePlan[]          @relation("RateDerivation")
+  adjustmentMode  RateAdjustmentMode?
+  adjustmentValue Decimal?            @db.Decimal(12, 4)
+
+  // Room revenue classification (defaults to ROOM revenue code at runtime)
+  roomRevenueCodeId String?
+  roomRevenueCode   RevenueCode?      @relation("RatePlanRoomRevenue", fields: [roomRevenueCodeId], references: [id])
+
+  isRefundable  Boolean       @default(true)
+  active        Boolean       @default(true)
+
+  // Legacy fields (kept for backward compatibility during migration)
   medicalFlag   Boolean       @default(false)
   pricePerNight Decimal       @db.Decimal(12, 2)
   roomTypeId    String?
   roomType      RoomType?     @relation(fields: [roomTypeId], references: [id])
   mealPlanId    String?
   mealPlan      MealPlan?     @relation(fields: [mealPlanId], references: [id])
+
   reservations  Reservation[]
   packageLines  RatePlanPackageLine[]
   procedureInclusions RatePlanProcedureInclusion[]
   contractPricingRules ContractPricingRule[]
   channelRateMappings  ChannelRateMapping[]
+  roomTypeRates RoomTypeRate[]
+  addOns        RatePlanAddOn[]
+  salesContracts SalesContract[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// Absolute price calendar — only for BASE (BAR) rate plans, per room type and date
+model RoomTypeRate {
+  id           String   @id @default(uuid())
+  ratePlanId   String
+  ratePlan     RatePlan @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  roomTypeId   String
+  roomType     RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  date         DateTime @db.Date
+  amount       Decimal  @db.Decimal(12, 2)
+  currencyCode String   @default("AZN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([ratePlanId, roomTypeId, date])
+  @@index([roomTypeId, date])
+}
+
+model AddOn {
+  id            String           @id @default(uuid())
+  code          String           @unique
+  name          String
+  price         Decimal          @db.Decimal(12, 2)
+  pricingUnit   AddOnPricingUnit @default(PER_GUEST_NIGHT)
+  revenueCodeId String
+  revenueCode   RevenueCode      @relation("AddOnRevenue", fields: [revenueCodeId], references: [id])
+  taxTag        String?
+  active        Boolean          @default(true)
+  ratePlanLinks RatePlanAddOn[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+}
+
+model RatePlanAddOn {
+  id            String         @id @default(uuid())
+  ratePlanId    String
+  ratePlan      RatePlan       @relation(fields: [ratePlanId], references: [id], onDelete: Cascade)
+  addOnId       String
+  addOn         AddOn          @relation(fields: [addOnId], references: [id], onDelete: Cascade)
+  inclusion     AddOnInclusion @default(OPTIONAL)
+  overridePrice Decimal?       @db.Decimal(12, 2)
+  sortOrder     Int            @default(0)
+
+  @@unique([ratePlanId, addOnId])
+  @@index([ratePlanId])
 }
 
 model RatePlanPackageLine {
@@ -351,12 +502,16 @@ model RevenueCode {
   code         String             @unique
   name         String
   taxTag       String?
+  active       Boolean            @default(true)
   departmentId String?
   department   Department?        @relation(fields: [departmentId], references: [id])
   charges      FolioCharge[]
   routingRule  FolioRoutingRule?
   packageLines RatePlanPackageLine[]
   glMapping    HotelRevenueGlMapping?
+  ratePlansRoom RatePlan[]        @relation("RatePlanRoomRevenue")
+  addOns        AddOn[]           @relation("AddOnRevenue")
+  eventOrderLines EventOrderLine[]
 }
 
 model HotelRevenueGlMapping {
@@ -385,11 +540,39 @@ model Agency {
   reservations         Reservation[]
   reservationGroups    ReservationGroup[]
   contractPricingRules ContractPricingRule[]
+  salesContracts       SalesContract[]
+  banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
 }
 
 enum ContractPricingRuleType {
   DISCOUNT
   SUPPLEMENT
+}
+
+enum SalesContractStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum SalesContractCounterpartyType {
+  AGENCY
+  CORPORATE
+}
+
+enum EventOrderLineKind {
+  MENU
+  EQUIPMENT
+  STAFF
+  ROOM_RENTAL
+  OTHER
+}
+
+enum EventStaffAssignmentStatus {
+  PLANNED
+  DONE
+  CANCELLED
 }
 
 model ContractPricingRule {
@@ -411,8 +594,59 @@ model ContractPricingRule {
   @@index([validFrom, validTo])
 }
 
+model SalesContract {
+  id                String                        @id @default(uuid())
+  code              String                        @unique
+  name              String
+  counterpartyType  SalesContractCounterpartyType @default(AGENCY)
+  agencyId          String?
+  agency            Agency?                       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  companyGuestId    String?
+  companyGuest      Guest?                        @relation("SalesContractCompany", fields: [companyGuestId], references: [id], onDelete: SetNull)
+  validFrom         DateTime                      @db.Date
+  validTo           DateTime?                     @db.Date
+  status            SalesContractStatus           @default(DRAFT)
+  ratePlanId        String
+  ratePlan          RatePlan                      @relation(fields: [ratePlanId], references: [id])
+  minStay           Int?
+  cta               Boolean                       @default(false)
+  ctd               Boolean                       @default(false)
+  commissionPercent Decimal?                      @db.Decimal(5, 2)
+  depositRequired   Boolean                       @default(false)
+  depositAmount     Decimal?                      @db.Decimal(12, 2)
+  notes             String?
+  externalRef       String?
+  legacyRuleId      String?                       @unique
+  allotments        ContractAllotment[]
+  reservations      Reservation[]
+  banquetEvents     BanquetEvent[]
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+
+  @@index([agencyId, status])
+  @@index([validFrom, validTo])
+}
+
+model ContractAllotment {
+  id              String        @id @default(uuid())
+  salesContractId String
+  salesContract   SalesContract @relation(fields: [salesContractId], references: [id], onDelete: Cascade)
+  roomTypeId      String
+  roomType        RoomType      @relation(fields: [roomTypeId], references: [id])
+  validFrom       DateTime      @db.Date
+  validTo         DateTime      @db.Date
+  nightlyQuota    Int
+  releaseDays     Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([salesContractId, roomTypeId])
+  @@index([validFrom, validTo])
+}
+
 model Guest {
   id                 String         @id @default(uuid())
+  externalRef        String?        @unique
   globalPersonId     String?
   fullName           String
   firstName          String?
@@ -463,6 +697,9 @@ model Guest {
   addresses          GuestAddress[]
   loyaltyCards       GuestLoyaltyCard[]
   timeShareAgreements GuestTimeShareAgreement[]
+  crmExtension        GuestCrmExtension?
+  conciergeOrders     ConciergeOrder[]
+  dispatchRequests    DispatchRequest[]
   notes              GuestNote[]
   tasks              GuestTask[]
   lostFoundItems     LostFoundItem[]
@@ -481,6 +718,8 @@ model Guest {
   familyOf           GuestFamily[]       @relation("GuestFamilyRelated")
   bookerReservations Reservation[]       @relation("ReservationBooker")
   migrationRegistrations MigrationRegistration[]
+  salesContracts       SalesContract[]     @relation("SalesContractCompany")
+  banquetEventsAsCompany BanquetEvent[]    @relation("BanquetCompanyGuest")
 }
 
 enum MigrationRegistrationStatus {
@@ -497,6 +736,8 @@ model MigrationRegistration {
   reservationId String?
   status        MigrationRegistrationStatus @default(PENDING)
   payloadJson   String?
+  externalRef   String?
+  registryResponseJson String? @db.Text
   submittedAt   DateTime?
   responseNote  String?
   createdAt     DateTime                    @default(now())
@@ -777,12 +1018,14 @@ model ReservationGroup {
   agencyId     String?
   agency       Agency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
   reservations Reservation[]
+  banquetEvents BanquetEvent[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
 
 model Reservation {
   id            String            @id @default(uuid())
+  externalRef   String?           @unique
   roomTypeId    String
   roomType      RoomType          @relation(fields: [roomTypeId], references: [id])
   roomId        String?
@@ -799,11 +1042,14 @@ model Reservation {
   agency        Agency?           @relation(fields: [agencyId], references: [id])
   groupId       String?
   group         ReservationGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  salesContractId String?
+  salesContract SalesContract?  @relation(fields: [salesContractId], references: [id], onDelete: SetNull)
   checkInDate   DateTime
   checkOutDate  DateTime
   status        ReservationStatus @default(CONFIRMED)
   paymentMethod PaymentMethod
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
+  creditLimitAzn Decimal?         @db.Decimal(12, 2)
   voucherNo     String?
   roomCount     Int               @default(1)
   adults        Int               @default(1)
@@ -846,6 +1092,9 @@ model Reservation {
   dailyRates    ReservationDailyRate[]
   roomChanges   RoomChangePlan[]
   folios        Folio[]
+  folioSettlements FolioSettlement[]
+  folioDeposits FolioDeposit[]
+  cardAuthorizations CardAuthorization[]
   channelErrors ChannelSyncError[]
   medicalOrders   MedicalOrder[]
   medicalAlerts   MedicalAlert[]
@@ -854,6 +1103,7 @@ model Reservation {
   posReservations   PosReservation[]
   procedureAppointments ProcedureAppointment[]
   transferOrders    TransferOrder[]
+  conciergeOrders   ConciergeOrder[]
   banquetEvents     BanquetEvent[]
   paymentCards      ReservationPaymentCard[]
   packageLines      ReservationPackageLine[]
@@ -868,6 +1118,7 @@ model Reservation {
   @@index([roomTypeId])
   @@index([agencyId])
   @@index([groupId])
+  @@index([salesContractId])
 }
 
 model ReservationPaymentCard {
@@ -1054,6 +1305,22 @@ model MinibarPosting {
   @@index([roomId])
 }
 
+model MinibarEvent {
+  id             String   @id @default(uuid())
+  roomId         String?
+  roomNumber     String?
+  sensorId       String?
+  itemCode       String?
+  deltaQty       Int      @default(-1)
+  rawPayloadJson String?  @db.Text
+  reconciled     Boolean  @default(false)
+  postingId      String?
+  createdAt      DateTime @default(now())
+
+  @@index([roomNumber])
+  @@index([reconciled])
+}
+
 model LostFoundItem {
   id          String            @id @default(uuid())
   foundDate   DateTime          @db.Date
@@ -1129,6 +1396,8 @@ model Folio {
   status        FolioStatus    @default(OPEN)
   charges         FolioCharge[]
   payments        FolioPayment[]
+  settlements     FolioSettlement[]
+  deposits        FolioDeposit[]
   fiscalDocuments FiscalDocument[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -1146,8 +1415,12 @@ model FiscalDocument {
   counterpartyVoen       String?
   fiscalStatus           FiscalDocumentStatus @default(PENDING)
   fiscalExternalId       String?
-  rejectionReason        String?
+  eqaimeId                 String?
+  eqaimeStatus             String?
+  rejectionReason          String?
   integrateToAccounting  Boolean              @default(false)
+  glPostedAt             DateTime?            @map("gl_posted_at")
+  glReference            String?              @map("gl_reference")
   lastEventAt            DateTime?
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
@@ -1168,6 +1441,7 @@ model FolioRoutingRule {
 
 model FolioCharge {
   id            String      @id @default(uuid())
+  externalRef   String?     @unique
   folioId       String
   folio         Folio       @relation(fields: [folioId], references: [id], onDelete: Cascade)
   revenueCodeId String
@@ -1187,12 +1461,69 @@ model FolioPayment {
   id              String        @id @default(uuid())
   folioId         String
   folio           Folio         @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  settlementId    String?
+  settlement      FolioSettlement? @relation(fields: [settlementId], references: [id], onDelete: SetNull)
   amount          Decimal       @db.Decimal(12, 2)
   paymentMethod   PaymentMethod
   registerRef     String?
   fiscalReceiptId String?
   fiscalQrPayload String?
   createdAt       DateTime      @default(now())
+
+  @@index([settlementId])
+}
+
+model FolioSettlement {
+  id            String                @id @default(uuid())
+  reservationId String
+  reservation   Reservation           @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  folioId       String
+  folio         Folio                 @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  status        FolioSettlementStatus @default(OPEN)
+  totalDue      Decimal               @db.Decimal(12, 2)
+  completedAt   DateTime?
+  payments      FolioPayment[]
+  createdAt     DateTime              @default(now())
+
+  @@index([reservationId])
+  @@index([folioId])
+}
+
+model FolioDeposit {
+  id            String             @id @default(uuid())
+  reservationId String
+  reservation   Reservation        @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  folioId       String?
+  folio         Folio?             @relation(fields: [folioId], references: [id], onDelete: SetNull)
+  amount        Decimal            @db.Decimal(12, 2)
+  paymentMethod PaymentMethod
+  status        FolioDepositStatus @default(HELD)
+  registerRef   String?
+  externalRef   String?
+  heldAt        DateTime           @default(now())
+  appliedAt     DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime           @default(now())
+
+  @@index([reservationId])
+  @@index([status])
+}
+
+model CardAuthorization {
+  id             String                  @id @default(uuid())
+  reservationId  String
+  reservation    Reservation             @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  folioId        String?
+  amount         Decimal                 @db.Decimal(12, 2)
+  status         CardAuthorizationStatus @default(HELD)
+  externalAuthId String?
+  expiresAt      DateTime?
+  capturedAt     DateTime?
+  releasedAt     DateTime?
+  createdAt      DateTime                @default(now())
+
+  @@index([reservationId])
+  @@index([status])
 }
 
 model CashShift {
@@ -1309,6 +1640,7 @@ model PosResource {
   active        Boolean            @default(true)
   reservations  PosReservation[]
   banquetSaloon BanquetSaloon?
+  eventResourceBookings EventResourceBooking[]
   createdAt     DateTime           @default(now())
 }
 
@@ -1321,6 +1653,7 @@ model BanquetSaloon {
   posResource   PosResource?   @relation(fields: [posResourceId], references: [id])
   active        Boolean        @default(true)
   events        BanquetEvent[]
+  resourceBookings EventResourceBooking[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -1337,28 +1670,96 @@ model BanquetMenuPackage {
 }
 
 model BanquetEvent {
-  id              String             @id @default(uuid())
-  referenceNo     String?
-  eventName       String
-  saloonId        String
-  saloon          BanquetSaloon      @relation(fields: [saloonId], references: [id])
-  menuPackageId   String?
-  menuPackage     BanquetMenuPackage? @relation(fields: [menuPackageId], references: [id])
-  reservationId   String?
-  reservation     Reservation?       @relation(fields: [reservationId], references: [id])
-  eventDate       DateTime           @db.Date
-  pax             Int
-  advanceAmount   Decimal            @default(0) @db.Decimal(12, 2)
-  status          BanquetEventStatus @default(DRAFT)
-  contactName     String?
-  notes           String?
+  id               String             @id @default(uuid())
+  referenceNo      String?
+  eventName        String
+  saloonId         String
+  saloon           BanquetSaloon      @relation(fields: [saloonId], references: [id])
+  menuPackageId    String?
+  menuPackage      BanquetMenuPackage? @relation(fields: [menuPackageId], references: [id])
+  reservationId    String?
+  reservation      Reservation?       @relation(fields: [reservationId], references: [id])
+  reservationGroupId String?
+  reservationGroup ReservationGroup?  @relation(fields: [reservationGroupId], references: [id], onDelete: SetNull)
+  salesContractId  String?
+  salesContract    SalesContract?     @relation(fields: [salesContractId], references: [id], onDelete: SetNull)
+  agencyId         String?
+  agency           Agency?            @relation("BanquetAgency", fields: [agencyId], references: [id], onDelete: SetNull)
+  companyGuestId   String?
+  companyGuest     Guest?             @relation("BanquetCompanyGuest", fields: [companyGuestId], references: [id], onDelete: SetNull)
+  masterFolioId    String?
+  eventDate        DateTime           @db.Date
+  pax              Int
+  advanceAmount    Decimal            @default(0) @db.Decimal(12, 2)
+  plannedRevenue   Decimal            @default(0) @db.Decimal(12, 2)
+  actualRevenue    Decimal            @default(0) @db.Decimal(12, 2)
+  status           BanquetEventStatus @default(DRAFT)
+  contactName      String?
+  notes            String?
   posReservationId String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  orderLines       EventOrderLine[]
+  resourceBookings EventResourceBooking[]
+  staffAssignments EventStaffAssignment[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
 
   @@index([saloonId, eventDate])
   @@index([status])
   @@index([reservationId])
+  @@index([salesContractId])
+  @@index([agencyId])
+}
+
+model EventOrderLine {
+  id             String             @id @default(uuid())
+  banquetEventId String
+  banquetEvent   BanquetEvent       @relation(fields: [banquetEventId], references: [id], onDelete: Cascade)
+  kind           EventOrderLineKind @default(OTHER)
+  description    String
+  quantity       Decimal            @db.Decimal(12, 2)
+  unitPrice      Decimal            @db.Decimal(12, 2)
+  revenueCodeId  String?
+  revenueCode    RevenueCode?       @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
+  notes          String?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([banquetEventId])
+}
+
+model EventResourceBooking {
+  id             String        @id @default(uuid())
+  banquetEventId String
+  banquetEvent   BanquetEvent  @relation(fields: [banquetEventId], references: [id], onDelete: Cascade)
+  saloonId       String?
+  saloon         BanquetSaloon? @relation(fields: [saloonId], references: [id], onDelete: SetNull)
+  posResourceId  String?
+  posResource    PosResource?  @relation(fields: [posResourceId], references: [id], onDelete: SetNull)
+  label          String?
+  startAt        DateTime
+  endAt          DateTime
+  notes          String?
+  createdAt      DateTime      @default(now())
+
+  @@index([banquetEventId])
+  @@index([saloonId, startAt])
+  @@index([posResourceId, startAt])
+}
+
+model EventStaffAssignment {
+  id             String                     @id @default(uuid())
+  banquetEventId String
+  banquetEvent   BanquetEvent               @relation(fields: [banquetEventId], references: [id], onDelete: Cascade)
+  role           String
+  staffName      String
+  shiftStart     DateTime?
+  shiftEnd       DateTime?
+  status         EventStaffAssignmentStatus @default(PLANNED)
+  notes          String?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  @@index([banquetEventId])
 }
 
 model PosReservation {
@@ -1430,15 +1831,23 @@ model Product {
   id           String          @id @default(uuid())
   code         String          @unique
   name         String
+  productType  ProductType     @default(STOCK)
   groupId      String?
   group        ProductGroup?   @relation(fields: [groupId], references: [id])
   unit         String          @default("pcs")
   barcode      String?
+  price        Decimal?        @db.Decimal(12, 2)
+  currency     String?
+  revenueGroup String?
+  vatRate      Decimal?        @db.Decimal(5, 2)
+  lastCost     Decimal?        @db.Decimal(12, 4)
+  lastVendor   String?
   active       Boolean         @default(true)
   movements    StockMovement[]
   recipe       Recipe?
   recipeLines  RecipeLine[]    @relation("Ingredient")
   createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
 model TransferVehicle {
@@ -1473,6 +1882,95 @@ model TransferOrder {
   @@index([reservationId])
   @@index([pickupAt])
   @@index([status])
+}
+
+enum ConciergeProductCategory {
+  EXCURSION
+  TICKET
+  RESTAURANT_EXT
+}
+
+enum ConciergeOrderStatus {
+  REQUESTED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model ConciergeProduct {
+  id            String                   @id @default(uuid())
+  code          String                   @unique
+  name          String
+  category      ConciergeProductCategory @default(EXCURSION)
+  supplierName  String?
+  commissionPct Decimal?                 @db.Decimal(5, 2)
+  price         Decimal                  @db.Decimal(12, 2)
+  active        Boolean                  @default(true)
+  orders        ConciergeOrder[]
+  createdAt     DateTime                 @default(now())
+}
+
+model ConciergeOrder {
+  id            String               @id @default(uuid())
+  guestId       String
+  guest         Guest                @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  reservationId String?
+  reservation   Reservation?         @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+  productId     String
+  product       ConciergeProduct     @relation(fields: [productId], references: [id])
+  scheduledAt   DateTime?
+  status        ConciergeOrderStatus @default(REQUESTED)
+  folioChargeId String?
+  notes         String?
+  createdAt     DateTime             @default(now())
+
+  @@index([guestId])
+  @@index([status])
+}
+
+enum DispatchRequestStatus {
+  QUEUED
+  ASSIGNED
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+model DispatchVehicle {
+  id        String            @id @default(uuid())
+  code      String            @unique
+  name      String
+  capacity  Int               @default(4)
+  active    Boolean           @default(true)
+  requests  DispatchRequest[]
+  createdAt DateTime          @default(now())
+}
+
+model DispatchRequest {
+  id          String                @id @default(uuid())
+  guestId     String?
+  guest       Guest?                @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  fromLabel   String
+  toLabel     String
+  vehicleId   String?
+  vehicle     DispatchVehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  status      DispatchRequestStatus @default(QUEUED)
+  notes       String?
+  completedAt DateTime?
+  createdAt   DateTime              @default(now())
+
+  @@index([status])
+  @@index([guestId])
+}
+
+model GuestCrmExtension {
+  id              String   @id @default(uuid())
+  guestId         String   @unique
+  guest           Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  interestsJson   String?  @db.Text
+  socialMediaJson String?  @db.Text
+  generalCrmNotes String?  @db.Text
+  updatedAt       DateTime @updatedAt
 }
 
 model StockMovement {
@@ -1592,4 +2090,20 @@ model RecurringServiceSchedule {
 
   @@index([nextDueAt])
   @@index([enabled])
+}
+
+model SatelliteAuditLog {
+  id            String   @id @default(uuid())
+  userId        String?  @map("user_id")
+  entityType    String   @map("entity_type")
+  entityId      String   @map("entity_id")
+  action        String
+  changesJson   String   @default("{}") @map("changes_json")
+  ipAddress     String?  @map("ip_address")
+  integrityHash String?  @map("integrity_hash")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("satellite_audit_logs")
 }

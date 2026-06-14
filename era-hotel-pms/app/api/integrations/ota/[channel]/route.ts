@@ -1,5 +1,12 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
+import { serialize } from '@/lib/serialize';
+import {
+  normalizeOtaWebhookBody,
+  upsertOtaReservation,
+} from '@/lib/channel/ota-ingest.service';
+import { resolveChannelAdapter } from '@/lib/channel/adapters/registry';
+import { logSyncError } from '@/lib/services/channel.service';
 
 const bodySchema = z.object({
   event: z.string().min(1),
@@ -7,7 +14,7 @@ const bodySchema = z.object({
   payload: z.record(z.unknown()).optional(),
 });
 
-/** OTA webhook ingest stub (pre-GA G2) — live connectors in BACKLOG-PRODUCTION. */
+/** OTA webhook ingest — normalized payload → idempotent reservation upsert. */
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ channel: string }> },
@@ -22,13 +29,35 @@ export async function POST(
       }
     }
 
-    const body = bodySchema.parse(await request.json());
+    const raw = bodySchema.parse(await request.json());
+    const normalized = normalizeOtaWebhookBody(channel, raw as Record<string, unknown>);
+
+    if (!normalized.externalReservationId) {
+      throw new Error('externalReservationId is required');
+    }
+
+    const adapter = resolveChannelAdapter();
+    let result;
+    try {
+      result = await upsertOtaReservation(normalized);
+      if (adapter.ackReservation) {
+        await adapter.ackReservation(normalized.externalReservationId);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'OTA ingest failed';
+      await logSyncError({
+        otaReference: normalized.externalReservationId,
+        errorMessage: message,
+      });
+      throw err;
+    }
+
     return jsonOk({
       accepted: true,
       channel,
-      event: body.event,
-      externalReservationId: body.externalReservationId ?? null,
-      mode: process.env.ERA_OTA_MODE ?? 'stub',
+      adapter: adapter.code,
+      mode: process.env.ERA_CHANNEL_ADAPTER ?? 'webhook',
+      ...serialize(result),
     });
   } catch (err) {
     return handleRouteError(err);

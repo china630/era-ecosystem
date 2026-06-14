@@ -17,11 +17,18 @@ export default function AppShell({
 export function PageSection({
   children,
   className = '',
+  title,
 }: {
   children: ReactNode;
   className?: string;
+  title?: string;
 }) {
-  return <section className={`${CARD_CONTAINER_CLASS} p-4 ${className}`}>{children}</section>;
+  return (
+    <section className={`${CARD_CONTAINER_CLASS} p-4 ${className}`}>
+      {title ? <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{title}</h2> : null}
+      {children}
+    </section>
+  );
 }
 
 export function StatusMessage({ children }: { children: ReactNode }) {
