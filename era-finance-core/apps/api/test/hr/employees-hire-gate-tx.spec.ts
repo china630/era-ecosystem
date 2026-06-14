@@ -7,7 +7,9 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
     resolvePersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
   };
   const syncRuns = {} as ConstructorParameters<typeof EmployeesService>[1];
-  const staffProvisioning = {} as ConstructorParameters<typeof EmployeesService>[3];
+  const staffProvisioning = {
+    emitProvisioned: jest.fn().mockResolvedValue(undefined),
+  } as unknown as ConstructorParameters<typeof EmployeesService>[3];
 
   it("create uses Serializable $transaction with quota check inside callback", async () => {
     const captured: { opts?: unknown } = {};
