@@ -33,18 +33,27 @@
 
 ## FB-1 â€” MVP Nafta
 
-1. `POST /api/shifts/open` `{ "outletCode": "RESTAURANT", "openingCash": 100 }`
+1. UI: `/orders` → **POS shift** panel → Open shift — or `POST /api/shifts/open`
 2. `GET /api/tables` â€” pick a table id
 3. `POST /api/tickets` `{ "tableId": "...", "lines": [{ "description": "Soup", "qty": 2, "unitPriceAzn": 8 }] }`
 4. `POST /api/tickets/{id}/fire` â€” lines â†’ FIRED
 5. `GET /api/kds/lines` â€” queue visible; `PATCH /api/kds/lines/{lineId}` `{ "kitchenStatus": "DONE" }`
-6. Cash pay: `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` â†’ ticket CLOSED, table FREE
+6. UI: `/orders` → **Pay cash** or **Pay card** (or API `{ "method": "CASH"|"CARD" }`)
 7. Room charge (with hotel-pms running, or `FB_POS_PMS_STUB=1`):
-   - `GET /api/in-house?query=201`
-   - `PATCH /api/tickets/{id}` `{ "roomChargeReservationId": "<uuid-or-room>" }`
-   - `POST /api/tickets/{id}/room-charge`
+   - UI: `/orders` → **In-house guest** search → link → **Room charge**
+   - API: `GET /api/in-house?query=201` · `PATCH /api/tickets/{id}` · `POST /api/tickets/{id}/room-charge`
 8. Void: open new ticket + line â†’ `POST /api/tickets/{id}/lines/{lineId}/void` `{ "reason": "wrong item" }`
-9. Z-close: `POST /api/shifts/close` (fails if open tickets remain)
+9. UI: manager **Z-close** on shift panel — or `POST /api/shifts/close`
+
+## FB-1b — Mixed settlement (Nafta)
+
+See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing.md).
+
+1. Walk-in ticket: `POST /api/tickets` `{ "serviceChannel": "WALK_IN", "walkInLabel": "Street", "lines": [...] }`
+2. `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` → **201**, local fiscal (even when org `DEPARTMENT` + `fiscalRouting=PARENT`)
+3. In-house: `PATCH /api/tickets/{id}` `{ "roomChargeReservationId": "<uuid-or-room>" }`
+4. `POST /api/tickets/{id}/pay` → **400** (settle via room charge)
+5. `POST /api/tickets/{id}/room-charge` → folio charge on hotel PMS
 
 ## Quartet (Track A)
 
@@ -52,6 +61,14 @@
 2. `node era-hotel-pms/scripts/test-pos-bridge.mjs` â€” bridge regression
 3. KKM: pay returns `fiscal.driver` = `mock` (not stub flag)
 4. Entitlement: pay without `platform_loyalty` in snapshot â†’ no promotion created in Orch (hooks gated)
+
+## FB-4 — Banquet service day (UI)
+
+1. `/floor` — outlet selector (`GET /api/outlets` + `POST /api/outlets/select`)
+2. Banquet: pick active BEO from dropdown → **Open banquet ticket** → `POST /api/tickets` with `beoId`, `outletCode: BANQUET`
+3. Walk-in: optional label → **Open walk-in ticket** → `serviceChannel: WALK_IN`
+4. `/orders` — ticket list shows WALK_IN / BEO labels
+5. Nav: **Daily menu** → `/admin/daily-menu`
 
 ## Quartet (Track C)
 

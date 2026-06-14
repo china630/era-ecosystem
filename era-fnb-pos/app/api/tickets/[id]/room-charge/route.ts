@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { runPlatformCommerceHooks } from "@era/satellite-kit";
-import { postRoomCharge } from "@/lib/pms-bridge-client";
+import { postRoomCharge, fetchGuestEntitlements } from "@/lib/pms-bridge-client";
 import { prisma } from "@/lib/prisma";
+import {
+  roomChargeBlockedReason,
+  resolveTicketSettlement,
+} from "@/lib/billing-router";
 import { isUuid, releaseTableForTicket } from "@/lib/ticket-helpers";
 
 const bodySchema = z
@@ -42,7 +46,42 @@ export async function POST(
     );
   }
 
+  const ticketForBilling = {
+    ...ticket,
+    roomChargeReservationId:
+      ticket.roomChargeReservationId ??
+      reservationId ??
+      roomNumber ??
+      null,
+  };
+  const roomBlock = roomChargeBlockedReason(ticketForBilling);
+  if (roomBlock) {
+    return NextResponse.json({ error: roomBlock }, { status: 400 });
+  }
+
+  const settlement = await resolveTicketSettlement(ticketForBilling);
+  if (settlement !== "HOTEL_FOLIO") {
+    return NextResponse.json(
+      { error: "Room charge only for in-house hotel guests" },
+      { status: 400 },
+    );
+  }
+
   const amount = Number(ticket.totalAzn);
+
+  if (amount <= 0) {
+    const entitlements = await fetchGuestEntitlements({ reservationId, roomNumber });
+    if (!entitlements?.found || !entitlements.breakfastIncluded) {
+      return NextResponse.json(
+        {
+          error: "Meal not included on rate plan — charge guest or use CASH/CARD",
+          denyReason: "MEAL_NOT_INCLUDED",
+        },
+        { status: 403 },
+      );
+    }
+  }
+
   const result = await postRoomCharge(
     {
       reservationId,
@@ -57,7 +96,15 @@ export async function POST(
   );
 
   if (!result.ok) {
-    return NextResponse.json(result.body, { status: result.status });
+    const body = result.body as { error?: string; code?: string };
+    const denyReason =
+      body?.error === 'CREDIT_LIMIT' || String(body?.error ?? '').includes('CREDIT_LIMIT')
+        ? 'CREDIT_LIMIT'
+        : body?.error;
+    return NextResponse.json(
+      { ...body, denyReason: denyReason ?? body?.error },
+      { status: result.status },
+    );
   }
 
   await prisma.ticket.update({
