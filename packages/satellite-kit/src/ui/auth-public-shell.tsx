@@ -2,7 +2,12 @@
 
 import type { FormEvent, ReactNode } from "react";
 import type { Locale } from "@era/i18n-common";
-import { CARD_CONTAINER_CLASS, LINK_ACCENT_CLASS } from "./design-system";
+import {
+  CARD_CONTAINER_CLASS,
+  FORM_STACK_CLASS,
+  LINK_ACCENT_CLASS,
+  MODAL_FOOTER_PRIMARY_CLASS,
+} from "./design-system";
 import { SatelliteLocaleToggle } from "./satellite-locale-toggle";
 import { AuthPageHeader } from "./auth-page-header";
 
@@ -87,7 +92,7 @@ export function AuthRegisterCard({
   fields,
   onSubmit,
   busy = false,
-  error: _error,
+  error,
   submitLabel,
   submitBusyLabel,
   footer,
@@ -103,12 +108,17 @@ export function AuthRegisterCard({
       showLocaleToggle={showLocaleToggle}
       localeLabels={localeLabels}
     >
-      <form onSubmit={onSubmit} className="space-y-4">
+      {error ? (
+        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+      <form onSubmit={onSubmit} className={FORM_STACK_CLASS}>
         {fields}
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex h-9 min-h-9 w-full shrink-0 items-center justify-center rounded-lg bg-[#2980B9] px-4 text-[13px] font-semibold text-white hover:bg-[#2471A3] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9] disabled:pointer-events-none disabled:opacity-50"
+          className={`${MODAL_FOOTER_PRIMARY_CLASS} w-full`}
         >
           {busy ? submitBusyLabel : submitLabel}
         </button>

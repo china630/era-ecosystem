@@ -30,7 +30,7 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { BulkPrefillEmployeesDto } from "./dto/bulk-prefill-employees.dto";
 import { BulkSyncResultEmployeesDto } from "./dto/bulk-sync-result-employees.dto";
-import { CreateEmployeeDto } from "./dto/create-employee.dto";
+import { ConvertEmployeeToFinDto, CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { DepartmentHeadScopeService } from "./department-head-scope.service";
 import { EmployeesService } from "./employees.service";
@@ -139,6 +139,18 @@ export class EmployeesController {
     @Body() dto: CreateEmployeeDto,
   ) {
     return this.employees.create(organizationId, dto);
+  }
+
+  @Post(":id/convert-to-fin")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @ApiOperation({ summary: "Convert foreign employee to citizen FIN (MDM merge)" })
+  convertToFin(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @Body() dto: ConvertEmployeeToFinDto,
+  ) {
+    return this.employees.convertToFin(organizationId, id, dto);
   }
 
   @Patch(":id")

@@ -20,6 +20,8 @@ import {
   isSatelliteRetailShiftClosed,
   isSatelliteWholesaleOrderConfirmed,
   isSatelliteFbStockConsumptionCompleted,
+  isSatelliteStaffClockBatch,
+  satelliteStaffClockBatchSchema,
   satelliteAutoWorkOrderCompletedSchema,
   satelliteClinicLabOrderCompletedSchema,
   satelliteClinicPrescriptionIssuedSchema,
@@ -49,6 +51,7 @@ import {
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { InvoicesService } from "../invoices/invoices.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { TimesheetService } from "../hr/timesheet.service";
 
 export type SatelliteDispatchResult = {
   transactionId?: string;
@@ -65,6 +68,7 @@ export class SatelliteEventDispatchService {
     private readonly accounting: AccountingService,
     private readonly invoices: InvoicesService,
     private readonly posting: PostingAccountResolver,
+    private readonly timesheet: TimesheetService,
   ) {}
 
   async dispatch(
@@ -150,6 +154,14 @@ export class SatelliteEventDispatchService {
     if (isSatelliteFbStockConsumptionCompleted(data)) {
       const event = satelliteFbStockConsumptionCompletedSchema.parse(data);
       return this.handleFbStockConsumption(organizationId, event);
+    }
+    if (isSatelliteStaffClockBatch(data)) {
+      const event = satelliteStaffClockBatchSchema.parse(data);
+      const result = await this.timesheet.ingestStaffClockBatch(
+        organizationId,
+        event.payload.events,
+      );
+      return { meta: result };
     }
     throw new Error("Unhandled satellite event type");
   }
@@ -314,17 +326,37 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteHotelCityLedgerSnapshotSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
+    const counterpartyId = await this.resolveCounterpartyId(
+      organizationId,
+      event.payload.agencyId,
+    );
+    const snapshot = await this.prisma.agencyCityLedgerSnapshot.create({
+      data: {
+        organizationId,
+        hotelAgencyId: event.payload.agencyId,
+        agencyCode: event.payload.agencyCode,
+        asOfDate: event.payload.asOfDate,
+        balance: event.payload.balance,
+        periodCharges: event.payload.periodCharges,
+        periodPayments: event.payload.periodPayments,
+        currency: event.payload.currency,
+        correlationId: event.correlationId,
+        counterpartyId,
+      },
+    });
     this.logger.log(
-      `City ledger snapshot agency=${event.payload.agencyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
+      `City ledger snapshot persisted id=${snapshot.id} agency=${event.payload.agencyCode} balance=${event.payload.balance} asOf=${event.payload.asOfDate} (${event.correlationId})`,
     );
     return {
       meta: {
+        snapshotId: snapshot.id,
         agencyId: event.payload.agencyId,
         agencyCode: event.payload.agencyCode,
         asOfDate: event.payload.asOfDate,
         balance: event.payload.balance,
         periodCharges: event.payload.periodCharges,
         periodPayments: event.payload.periodPayments,
+        counterpartyId,
         reconciliationNote: `Hotel agency ${event.payload.agencyCode} balance ${event.payload.balance} AZN on ${event.payload.asOfDate}`,
       },
     };

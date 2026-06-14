@@ -8,4 +8,11 @@ export * from "./auto-sto.events";
 export * from "./clinic.events";
 export * from "./wholesale.events";
 export * from "./fb.events";
+export * from "./hr.events";
 export * from "./satellite-event";
+export {
+  INVOICE_GL_POSTED,
+  invoiceGlPostedSchema,
+  isInvoiceGlPosted,
+  type InvoiceGlPostedEvent,
+} from "../accounting/events";

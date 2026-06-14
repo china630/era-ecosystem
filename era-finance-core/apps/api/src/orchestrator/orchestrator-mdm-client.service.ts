@@ -10,6 +10,16 @@ export type OrchestratorFinLookupResult = {
   masked?: boolean;
 };
 
+export type ResolvePersonInput = {
+  fin?: string;
+  passport?: string;
+  issuingCountry?: string;
+  residencePermit?: string;
+  fullName: string;
+  phone?: string;
+  nationality?: string;
+};
+
 @Injectable()
 export class OrchestratorMdmClientService {
   private readonly logger = new Logger(OrchestratorMdmClientService.name);
@@ -32,6 +42,15 @@ export class OrchestratorMdmClientService {
     );
   }
 
+  private authHeaders(): Record<string, string> {
+    const token = this.token();
+    return {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "x-service-token": token,
+    };
+  }
+
   async lookupPersonByFin(
     fin: string,
     requesterOrgId: string,
@@ -48,10 +67,7 @@ export class OrchestratorMdmClientService {
     try {
       const res = await fetch(`${this.baseUrl()}/internal/v1/mdm/persons/lookup-by-fin`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: this.authHeaders(),
         body: JSON.stringify({
           fin: normalized,
           requesterOrgId,
@@ -68,6 +84,62 @@ export class OrchestratorMdmClientService {
         `Orchestrator FIN lookup failed: ${e instanceof Error ? e.message : String(e)}`,
       );
       return null;
+    }
+  }
+
+  async resolvePersonIdentity(
+    input: ResolvePersonInput,
+  ): Promise<{ globalPersonId: string | null }> {
+    const token = this.token();
+    if (!token) return { globalPersonId: null };
+    try {
+      const res = await fetch(`${this.baseUrl()}/internal/v1/mdm/persons/resolve`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        this.logger.warn(`Orchestrator resolve HTTP ${res.status}`);
+        return { globalPersonId: null };
+      }
+      const data = (await res.json()) as { id?: string; globalPersonId?: string };
+      return { globalPersonId: data.globalPersonId ?? data.id ?? null };
+    } catch (e) {
+      this.logger.warn(
+        `Orchestrator resolve failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return { globalPersonId: null };
+    }
+  }
+
+  async mergePersons(
+    sourcePersonId: string,
+    targetPersonId: string,
+    actorOrgId: string,
+  ): Promise<{ globalPersonId: string | null }> {
+    const token = this.token();
+    if (!token) return { globalPersonId: null };
+    try {
+      const res = await fetch(`${this.baseUrl()}/internal/v1/mdm/persons/merge`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: JSON.stringify({
+          sourcePersonId,
+          targetPersonId,
+          actorOrgId,
+        }),
+      });
+      if (!res.ok) {
+        this.logger.warn(`Orchestrator merge HTTP ${res.status}`);
+        return { globalPersonId: null };
+      }
+      const data = (await res.json()) as { globalPersonId?: string };
+      return { globalPersonId: data.globalPersonId ?? null };
+    } catch (e) {
+      this.logger.warn(
+        `Orchestrator merge failed: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      return { globalPersonId: null };
     }
   }
 }

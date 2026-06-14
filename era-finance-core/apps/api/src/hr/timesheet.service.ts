@@ -530,4 +530,67 @@ export class TimesheetService {
       mixByEmployeeId,
     };
   }
+
+  /** Ingest satellite PinClockEvent batch into monthly timesheet entries. */
+  async ingestStaffClockBatch(
+    organizationId: string,
+    events: Array<{ staffCode: string; eventType: string; clockedAt: string }>,
+  ): Promise<{ processed: number; skipped: number }> {
+    let processed = 0;
+    let skipped = 0;
+    for (const ev of events) {
+      const staffPrefix = ev.staffCode.trim().toLowerCase();
+      const employee = await this.prisma.employee.findFirst({
+        where: {
+          organizationId,
+          id: { startsWith: staffPrefix, mode: "insensitive" },
+        },
+      });
+      if (!employee) {
+        skipped++;
+        continue;
+      }
+      await this.applyClockEvent(organizationId, employee.id, ev);
+      processed++;
+    }
+    return { processed, skipped };
+  }
+
+  private async applyClockEvent(
+    organizationId: string,
+    employeeId: string,
+    ev: { eventType: string; clockedAt: string },
+  ) {
+    const clocked = new Date(ev.clockedAt);
+    const year = clocked.getUTCFullYear();
+    const month = clocked.getUTCMonth() + 1;
+    const day = clocked.getUTCDate();
+    const { timesheet } = await this.getOrCreate(organizationId, year, month);
+    const dayDate = dayDateUtc(year, month, day);
+    const entryType =
+      ev.eventType === "CLOCK_OUT"
+        ? TimesheetEntryType.OFF
+        : TimesheetEntryType.WORK;
+    const hours = ev.eventType === "CLOCK_OUT" ? new Decimal(0) : new Decimal(8);
+    await this.prisma.timesheetEntry.upsert({
+      where: {
+        timesheetId_employeeId_dayDate: {
+          timesheetId: timesheet.id,
+          employeeId,
+          dayDate,
+        },
+      },
+      create: {
+        timesheetId: timesheet.id,
+        employeeId,
+        dayDate,
+        type: entryType,
+        hours,
+      },
+      update: {
+        type: entryType,
+        hours,
+      },
+    });
+  }
 }

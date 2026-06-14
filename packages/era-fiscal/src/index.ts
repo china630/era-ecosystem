@@ -1,13 +1,16 @@
 import { CybernetFiscalDriverStub } from "./drivers/cybernet-stub";
 import { MockFiscalDriver } from "./drivers/mock";
 import { NbcFiscalDriverStub } from "./drivers/nbc-stub";
+import { NbcFiscalDriverHttp } from "./drivers/nbc-http";
 import type { FiscalDriver, FiscalizeInput, FiscalizeResult } from "./types";
 
 export type { FiscalDriver, FiscalizeInput, FiscalizeResult };
 
 const drivers: Record<string, FiscalDriver> = {
   mock: new MockFiscalDriver(),
-  nbc: new NbcFiscalDriverStub(),
+  nbc: process.env.ERA_FISCAL_NBC_URL?.trim()
+    ? new NbcFiscalDriverHttp()
+    : new NbcFiscalDriverStub(),
   cybernet: new CybernetFiscalDriverStub(),
 };
 

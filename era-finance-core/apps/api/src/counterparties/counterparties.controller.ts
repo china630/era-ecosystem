@@ -162,6 +162,35 @@ export class CounterpartiesController {
     return { ok: true };
   }
 
+  @Get(":id/agency-ledger-snapshots")
+  @ApiOperation({ summary: "Hotel agency city-ledger snapshots linked to counterparty" })
+  async listAgencyLedgerSnapshots(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+  ) {
+    await this.svc.assertLocal(orgId, id);
+    const rows = await this.prisma.agencyCityLedgerSnapshot.findMany({
+      where: {
+        organizationId: orgId,
+        OR: [{ counterpartyId: id }, { hotelAgencyId: id }],
+      },
+      orderBy: [{ asOfDate: "desc" }, { createdAt: "desc" }],
+      take: 10,
+      select: {
+        id: true,
+        agencyCode: true,
+        asOfDate: true,
+        balance: true,
+        periodCharges: true,
+        periodPayments: true,
+        currency: true,
+        correlationId: true,
+        createdAt: true,
+      },
+    });
+    return { items: rows };
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Контрагент по id" })
   async getOne(@OrganizationId() orgId: string, @Param("id") id: string) {

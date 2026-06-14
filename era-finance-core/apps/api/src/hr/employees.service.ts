@@ -10,11 +10,14 @@ import {
   EmployeeEmploymentStatus,
   EmployeeKind,
   Prisma,
+  TaxResidencyStatus,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { IntegrationSyncRunService } from "../integrations/integration-sync-run.service";
+import { HrStaffProvisioningService } from "../integration/hr-staff-provisioning.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { BulkSyncResultEmployeesDto } from "./dto/bulk-sync-result-employees.dto";
-import { CreateEmployeeDto } from "./dto/create-employee.dto";
+import { ConvertEmployeeToFinDto, CreateEmployeeDto } from "./dto/create-employee.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import {
   blindIndex,
@@ -35,6 +38,8 @@ export class EmployeesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly syncRuns: IntegrationSyncRunService,
+    private readonly mdm: OrchestratorMdmClientService,
+    private readonly staffProvisioning: HrStaffProvisioningService,
   ) {}
 
   list(
@@ -103,20 +108,98 @@ export class EmployeesService {
     timeout: 15000,
   } as const;
 
+  private validateIdentityInput(dto: {
+    taxResidencyStatus?: TaxResidencyStatus;
+    finCode?: string;
+    passportNumber?: string;
+    issuingCountry?: string;
+  }) {
+    const residency = dto.taxResidencyStatus ?? TaxResidencyStatus.RESIDENT;
+    const fin = dto.finCode?.trim();
+    const passport = dto.passportNumber?.trim();
+    const country = dto.issuingCountry?.trim();
+    if (residency === TaxResidencyStatus.RESIDENT && !fin) {
+      throw new BadRequestException("Для резидента укажите ФИН");
+    }
+    if (residency === TaxResidencyStatus.NON_RESIDENT && !fin && (!passport || !country)) {
+      throw new BadRequestException(
+        "Для нерезидента без ФИН укажите passportNumber и issuingCountry",
+      );
+    }
+  }
+
+  private async resolveGlobalPersonId(
+    organizationId: string,
+    dto: {
+      finCode?: string;
+      passportNumber?: string;
+      issuingCountry?: string;
+      nationality?: string;
+      firstName: string;
+      lastName: string;
+    },
+  ): Promise<string | null> {
+    const fullName = `${dto.firstName.trim()} ${dto.lastName.trim()}`;
+    const resolved = await this.mdm.resolvePersonIdentity({
+      fin: dto.finCode?.trim(),
+      passport: dto.passportNumber?.trim(),
+      issuingCountry: dto.issuingCountry?.trim() ?? dto.nationality?.trim(),
+      fullName,
+      nationality: dto.nationality?.trim(),
+    });
+    return resolved.globalPersonId;
+  }
+
+  private buildIdentityFields(dto: {
+    taxResidencyStatus?: TaxResidencyStatus;
+    finCode?: string;
+    passportNumber?: string;
+    issuingCountry?: string;
+    nationality?: string;
+    workPermitNumber?: string;
+  }) {
+    const residency = dto.taxResidencyStatus ?? TaxResidencyStatus.RESIDENT;
+    const fin = dto.finCode?.trim();
+    const passport = dto.passportNumber?.trim();
+    const hasFin = Boolean(fin);
+    const fields: Record<string, unknown> = {
+      taxResidencyStatus: residency,
+      nationality: dto.nationality?.trim() ?? "AZ",
+      issuingCountry: dto.issuingCountry?.trim() ?? null,
+      workPermitNumber: dto.workPermitNumber?.trim() ?? null,
+      emasEligible: hasFin,
+    };
+    if (fin) {
+      fields.finCode = placeholderEmployeeFin(fin);
+      fields.finCodeBlindIndex = blindIndex("fin", normalizeFin(fin));
+      fields.finCodeCipher = encryptText(normalizeFin(fin));
+    } else {
+      fields.finCode = null;
+      fields.finCodeBlindIndex = null;
+      fields.finCodeCipher = null;
+    }
+    if (passport) {
+      fields.passportBlindIndex = blindIndex("passport", passport.toUpperCase());
+      fields.passportNumberCipher = encryptText(passport.toUpperCase());
+    }
+    return fields;
+  }
+
   async create(organizationId: string, dto: CreateEmployeeDto) {
     const kind = dto.kind ?? EmployeeKind.EMPLOYEE;
     if (kind === EmployeeKind.CONTRACTOR && !dto.voen?.trim()) {
       throw new BadRequestException("Для подрядчика (CONTRACTOR) укажите VÖEN (10 цифр)");
     }
+    this.validateIdentityInput(dto);
     try {
-      return await this.prisma.$transaction(
+      const globalPersonId = await this.resolveGlobalPersonId(organizationId, dto);
+      const created = await this.prisma.$transaction(
         async (tx) => {
           await this.assertPositionSlotAvailableTx(
             tx,
             organizationId,
             dto.positionId,
           );
-          const finCode = dto.finCode.trim();
           const voenRaw =
             kind === EmployeeKind.CONTRACTOR
               ? dto.voen!.trim()
@@ -126,9 +209,11 @@ export class EmployeesService {
           const createData: Record<string, unknown> = {
             organizationId,
             kind,
-            finCode: placeholderEmployeeFin(finCode),
-            finCodeBlindIndex: blindIndex("fin", normalizeFin(finCode)),
-            finCodeCipher: encryptText(normalizeFin(finCode)),
+            ...this.buildIdentityFields(dto),
+            globalPersonId,
+            userId: dto.userId ?? null,
+            provisionedSatelliteKey: dto.provisionedSatelliteKey?.trim() ?? null,
+            provisionedSatelliteRole: dto.provisionedSatelliteRole?.trim() ?? null,
             voenBlindIndex: voenRaw ? blindIndex("voen", normalizeVoen(voenRaw)) : null,
             voenCipher: voenRaw ? encryptText(normalizeVoen(voenRaw)) : null,
             firstName: placeholderEmployeeFirstName(firstName),
@@ -163,6 +248,10 @@ export class EmployeesService {
         },
         EmployeesService.hireGateTxOptions,
       );
+      await this.staffProvisioning.emitProvisioned(organizationId, created, {
+        pin: dto.staffPin,
+      });
+      return created;
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         const target = `${e.meta?.target ?? ""}`;
@@ -173,6 +262,52 @@ export class EmployeesService {
       }
       throw e;
     }
+  }
+
+  async convertToFin(
+    organizationId: string,
+    id: string,
+    dto: ConvertEmployeeToFinDto,
+  ) {
+    const current = await this.getOne(organizationId, id);
+    const fin = dto.finCode.trim();
+    let globalPersonId = current.globalPersonId;
+    if (globalPersonId) {
+      const finLookup = await this.mdm.lookupPersonByFin(fin, organizationId);
+      if (finLookup?.globalPersonId && finLookup.globalPersonId !== globalPersonId) {
+        const merged = await this.mdm.mergePersons(
+          globalPersonId,
+          finLookup.globalPersonId,
+          organizationId,
+        );
+        globalPersonId = merged.globalPersonId ?? finLookup.globalPersonId;
+      }
+    } else {
+      globalPersonId = (
+        await this.mdm.resolvePersonIdentity({
+          fin,
+          fullName: `${current.firstName} ${current.lastName}`,
+        })
+      ).globalPersonId;
+    }
+    const updated = await this.prisma.employee.update({
+      where: { id },
+      data: {
+        finCode: placeholderEmployeeFin(fin),
+        finCodeBlindIndex: blindIndex("fin", normalizeFin(fin)),
+        finCodeCipher: encryptText(normalizeFin(fin)),
+        globalPersonId,
+        emasEligible: true,
+        taxResidencyStatus: TaxResidencyStatus.RESIDENT,
+      },
+      include: {
+        jobPosition: {
+          include: { department: { select: { id: true, name: true } } },
+        },
+      },
+    });
+    await this.staffProvisioning.emitProvisioned(organizationId, updated);
+    return updated;
   }
 
   async getOne(organizationId: string, id: string) {
@@ -192,11 +327,32 @@ export class EmployeesService {
   async getExtensionPrefill(organizationId: string, id: string) {
     const row = await this.getOne(organizationId, id);
     const start = row.startDate.toISOString().slice(0, 10);
+    if (!row.emasEligible) {
+      return {
+        employeeId: row.id,
+        emasStatus: "PENDING_FIN" as const,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        finCode: null,
+        positionTitle: row.jobPosition.name,
+        departmentName: row.jobPosition.department?.name ?? null,
+        salaryGrossAzn: row.salary.toFixed(2),
+        contractStartDate: start,
+        contractEndDate: null as string | null,
+        contractId: row.id,
+        message: "ƏMAS requires FIN — use convert-to-FIN when citizen ID is available",
+      };
+    }
+    const finPlain =
+      row.finCodeCipher != null
+        ? decryptText(row.finCodeCipher) ?? row.finCode
+        : row.finCode;
     return {
       employeeId: row.id,
+      emasStatus: "READY" as const,
       firstName: row.firstName,
       lastName: row.lastName,
-      finCode: row.finCode,
+      finCode: finPlain,
       positionTitle: row.jobPosition.name,
       departmentName: row.jobPosition.department?.name ?? null,
       salaryGrossAzn: row.salary.toFixed(2),
@@ -288,6 +444,29 @@ export class EmployeesService {
       data.finCode = placeholderEmployeeFin(fin);
       data.finCodeBlindIndex = blindIndex("fin", normalizeFin(fin));
       data.finCodeCipher = encryptText(normalizeFin(fin));
+      data.emasEligible = true;
+    }
+    if (dto.taxResidencyStatus != null) data.taxResidencyStatus = dto.taxResidencyStatus;
+    if (dto.nationality != null) data.nationality = dto.nationality.trim();
+    if (dto.passportNumber != null) {
+      const passport = dto.passportNumber.trim();
+      data.passportBlindIndex = passport
+        ? blindIndex("passport", passport.toUpperCase())
+        : null;
+      data.passportNumberCipher = passport ? encryptText(passport.toUpperCase()) : null;
+    }
+    if (dto.issuingCountry !== undefined) {
+      data.issuingCountry = dto.issuingCountry?.trim() || null;
+    }
+    if (dto.workPermitNumber !== undefined) {
+      data.workPermitNumber = dto.workPermitNumber?.trim() || null;
+    }
+    if (dto.userId !== undefined) data.userId = dto.userId;
+    if (dto.provisionedSatelliteKey !== undefined) {
+      data.provisionedSatelliteKey = dto.provisionedSatelliteKey?.trim() || null;
+    }
+    if (dto.provisionedSatelliteRole !== undefined) {
+      data.provisionedSatelliteRole = dto.provisionedSatelliteRole?.trim() || null;
     }
     if (dto.firstName != null) {
       const firstName = dto.firstName.trim();
@@ -306,6 +485,12 @@ export class EmployeesService {
     if (dto.positionId != null) data.positionId = dto.positionId;
     if (dto.startDate != null) data.startDate = new Date(dto.startDate);
     if (dto.hireDate != null) data.hireDate = new Date(dto.hireDate);
+    if (dto.dateOfBirth !== undefined) {
+      data.dateOfBirth = dto.dateOfBirth ? new Date(dto.dateOfBirth) : null;
+    }
+    if (dto.contractEndDate !== undefined) {
+      data.contractEndDate = dto.contractEndDate ? new Date(dto.contractEndDate) : null;
+    }
     if (dto.salary != null) data.salary = new Decimal(dto.salary);
     if (dto.voen !== undefined) {
       const voen = dto.voen.trim() || null;
@@ -371,8 +556,9 @@ export class EmployeesService {
       });
 
     try {
+      let updated;
       if (positionChanged) {
-        return await this.prisma.$transaction(
+        updated = await this.prisma.$transaction(
           async (tx) => {
             await this.assertPositionSlotAvailableTx(
               tx,
@@ -384,8 +570,13 @@ export class EmployeesService {
           },
           EmployeesService.hireGateTxOptions,
         );
+      } else {
+        updated = await runUpdate(this.prisma);
       }
-      return await runUpdate(this.prisma);
+      await this.staffProvisioning.emitProvisioned(organizationId, updated, {
+        pin: dto.staffPin,
+      });
+      return updated;
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         const target = `${e.meta?.target ?? ""}`;
@@ -399,9 +590,10 @@ export class EmployeesService {
   }
 
   async remove(organizationId: string, id: string) {
-    await this.getOne(organizationId, id);
+    const row = await this.getOne(organizationId, id);
     try {
       await this.prisma.employee.delete({ where: { id } });
+      await this.staffProvisioning.emitDeactivated(organizationId, row);
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
         throw new ConflictException("Нельзя удалить: есть расчётные листовки");
