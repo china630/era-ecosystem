@@ -14,7 +14,6 @@ export class NbcFiscalDriverHttp implements FiscalDriver {
       const id = `NBC-STUB-${Date.now()}`;
       return {
         receiptId: id,
-        fiscalNumber: id,
         qrPayload: `nbc://stub/${id}?amt=${input.amount}`,
         driver: "nbc-stub-fallback",
       };
@@ -30,11 +29,13 @@ export class NbcFiscalDriverHttp implements FiscalDriver {
           : {}),
       },
       body: JSON.stringify({
+        documentRef: input.documentRef,
         amount: input.amount,
         currency: input.currency ?? "AZN",
         paymentMethod: input.paymentMethod,
-        items: input.items,
-        operatorId: input.operatorId,
+        registerRef: input.registerRef,
+        outletCode: input.outletCode,
+        metadata: input.metadata,
       }),
     });
 
@@ -52,7 +53,6 @@ export class NbcFiscalDriverHttp implements FiscalDriver {
     const receiptId = json.receiptId ?? json.fiscalNumber ?? `NBC-${Date.now()}`;
     return {
       receiptId,
-      fiscalNumber: json.fiscalNumber ?? receiptId,
       qrPayload: json.qrPayload ?? `nbc://${receiptId}`,
       driver: "nbc-http",
     };
