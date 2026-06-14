@@ -56,9 +56,13 @@ export function placeholderCounterpartyName(name: string): string {
 
 
 
-export function blindIndex(kind: "voen" | "fin", value: string): string {
+export function blindIndex(kind: "voen" | "fin" | "passport", value: string): string {
   const normalized =
-    kind === "voen" ? normalizeVoen(value) : normalizeFin(value);
+    kind === "voen"
+      ? normalizeVoen(value)
+      : kind === "fin"
+        ? normalizeFin(value)
+        : value.trim().toUpperCase();
   const key = resolveKey("PII_BLIND_INDEX_KEY");
   return createHmac("sha256", key).update(`${kind}:${normalized}`).digest("hex");
 }

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CARD_CONTAINER_CLASS,
   GHOST_BUTTON_CLASS,
-  INPUT_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { useAuth } from "../../../../lib/auth-context";
@@ -187,7 +187,7 @@ export default function SuperAdminOrgHubPage() {
             Set STANDALONE
           </button>
           <input
-            className={`${INPUT_CLASS} min-w-[16rem]`}
+            className={`${MODAL_INPUT_CLASS} min-w-[16rem]`}
             placeholder="Parent org UUID (for DEPARTMENT)"
             value={parentOrgId}
             onChange={(e) => setParentOrgId(e.target.value)}
@@ -202,7 +202,7 @@ export default function SuperAdminOrgHubPage() {
         <h2 className="font-medium text-[#34495E]">Department orgs</h2>
         <div className="flex flex-wrap gap-2">
           <input
-            className={`${INPUT_CLASS} min-w-[12rem]`}
+            className={`${MODAL_INPUT_CLASS} min-w-[12rem]`}
             placeholder="Department name (F&B, Clinic…)"
             value={deptName}
             onChange={(e) => setDeptName(e.target.value)}
@@ -231,7 +231,7 @@ export default function SuperAdminOrgHubPage() {
           <div key={key} className="flex flex-wrap items-center gap-2 border-b border-[#ECF0F1] py-2 text-sm">
             <span className="w-40 font-mono text-xs">{key}</span>
             <input
-              className={`${INPUT_CLASS} min-w-[16rem] flex-1`}
+              className={`${MODAL_INPUT_CLASS} min-w-[16rem] flex-1`}
               placeholder="http://host:port"
               value={endpointDraft[key]?.baseUrl ?? ""}
               onChange={(e) =>

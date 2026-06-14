@@ -9,7 +9,7 @@ import {
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { cpAdminFetch } from "../../../lib/cp-admin-fetch";
+import { cpAdminFetch } from "../../../../lib/cp-admin-fetch";
 
 type LookupResult = {
   found: boolean;

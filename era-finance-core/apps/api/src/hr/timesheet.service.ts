@@ -540,12 +540,13 @@ export class TimesheetService {
     let skipped = 0;
     for (const ev of events) {
       const staffPrefix = ev.staffCode.trim().toLowerCase();
-      const employee = await this.prisma.employee.findFirst({
-        where: {
-          organizationId,
-          id: { startsWith: staffPrefix, mode: "insensitive" },
-        },
-      });
+      const rows = await this.prisma.$queryRaw<{ id: string }[]>`
+        SELECT id::text AS id FROM employees
+        WHERE organization_id = ${organizationId}::uuid
+          AND lower(id::text) LIKE ${`${staffPrefix}%`}
+        LIMIT 1
+      `;
+      const employee = rows[0];
       if (!employee) {
         skipped++;
         continue;

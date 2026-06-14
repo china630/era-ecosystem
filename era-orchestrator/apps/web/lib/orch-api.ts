@@ -3,6 +3,11 @@ export const ORCH_API_URL =
 
 export const ORCH_TOKEN_KEY = "era_orch_access_token";
 
+export function getOrchAccessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(ORCH_TOKEN_KEY);
+}
+
 export async function orchFetch(
   path: string,
   init: RequestInit & { token?: string | null } = {},
