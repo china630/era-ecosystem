@@ -25,6 +25,8 @@ jobs:
         run: node scripts/audit-mdm-identity.mjs
       - name: Reference data consumer boundary audit
         run: node scripts/audit-reference-data.mjs
+
+  orchestrator:
     runs-on: ubuntu-latest
     needs: packages
     timeout-minutes: 25
