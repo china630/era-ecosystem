@@ -26,7 +26,34 @@ Health (no auth): `GET /healthz`
 
 Client: `apps/api/src/data-hub/data-hub-client.service.ts` — `getFxRates`, `getTariff`, `getCompanyByVoen`, `isWorkingDay`.
 
-Customs: `CustomsTaxCalculatorService` resolves tariffs from hub when enabled.
+Customs: `CustomsTaxCalculatorService` resolves tariffs from hub when enabled. `CustomsService` auto-fills `currencyRate` from hub CBAR on `bgdDate` when invoice currency ≠ AZN.
+
+## FX API (`/registry/v1/fx/*`)
+
+| Endpoint | Mode | Notes |
+|----------|------|-------|
+| `GET /fx/rates?date=&symbols=` | Strict | FINAL rates for accounting; Baku `YYYY-MM-DD` |
+| `GET /fx/rates/range?from=&to=&symbol=` | Strict | Historical series |
+| `GET /fx/convert?from=&to=&amount=&date=` | Operational | PRELIMINARY ok before ~10:00 Baku |
+
+**Consumers:** `era-finance-core` (converter, revaluation, customs), `era-bank-core` (EOD/treasury dated FINAL). Industry satellites use Finance `GET /api/logistics/fx-preview` — not hub direct.
+
+See [docs/adr/fx-rates-ecosystem.md](../../docs/adr/fx-rates-ecosystem.md).
+
+## Calendar API (`/registry/v1/calendar/*`)
+
+| Endpoint | Mode | Notes |
+|----------|------|-------|
+| `GET /calendar/:country/day?date=` | Both | `{ isWorking, dayType, label* }` |
+| `GET /calendar/:country/days?from=&to=` | Demand batch | Hotel auto-BAR warm cache |
+| `GET /calendar/:country/is-working-day?date=` | Labor | Alias of `/day` |
+| `GET /calendar/:country/add-business-days?date=&n=` | Labor | Settlement / SLA |
+
+**Consumers:** finance HR (`HrCalendarService`), bank EOD (`DataHubClient.isWorkingDay`), hotel auto-BAR, clinic scheduling, logistics SLA.
+
+Client: `packages/satellite-kit/src/integration/calendar.client.ts`.
+
+See [docs/adr/production-calendar-ecosystem.md](../../docs/adr/production-calendar-ecosystem.md).
 
 ## Data source (hub service)
 
@@ -40,6 +67,22 @@ Cutover: `npm run db:sync-from-finance` then set `ERA_DATA_HUB_DATA_SOURCE=hub`.
 ## Fallback
 
 If hub HTTP fails or `ERA_DATA_HUB_ENABLED=false`, finance keeps local Prisma paths.
+
+## Industry satellites (indirect only)
+
+**Rule:** `era-logistics`, `era-wholesale`, `era-hotel-pms`, etc. **must not** set `ERA_DATA_HUB_*` or call `/registry/v1` directly.
+
+| Handoff | Finance API | satellite-kit |
+|---------|-------------|---------------|
+| FX preview | `GET /api/logistics/fx-preview` | `financeFxPreview` |
+| HS tariff preview | `GET /api/logistics/hs-preview` | `financeHsTariffPreview` |
+| VÖEN lookup | `GET /api/counterparties/voen-preview` | `financeVoenLookup` |
+| Full customs / GTK | Finance UI `/customs` | deep link |
+
+Client: `packages/satellite-kit/src/integration/finance-handoffs.client.ts`.  
+Direct hub client (finance/bank only): `reference-catalog.client.ts`.
+
+See [docs/adr/reference-data-ecosystem.md](../../docs/adr/reference-data-ecosystem.md).
 
 ## Orchestrator (API keys)
 

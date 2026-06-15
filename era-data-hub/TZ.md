@@ -50,6 +50,8 @@ GET responses include `ETag`, `Cache-Control: public, max-age=…` (Redis-backed
 
 | Method | Path | Query |
 |--------|------|-------|
+| GET | `/calendar/:country/day` | `date` |
+| GET | `/calendar/:country/days` | `from`, `to` |
 | GET | `/calendar/:country/is-working-day` | `date` |
 | GET | `/calendar/:country/add-business-days` | `date`, `n` |
 

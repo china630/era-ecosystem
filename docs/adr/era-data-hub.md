@@ -4,7 +4,7 @@
 
 Accepted — **Pass 2** 2026-06-02 (Phase 1 cutover path, CBAR ingest, S8 cache). Домен: **`data.era-365.online`**. Реализация: [era-data-hub/doc/DELIVERY-DATA-HUB.md](../../era-data-hub/doc/DELIVERY-DATA-HUB.md) · планы: [Pass 1](../../.cursor/plans/era_data_hub_p1_6337429e.plan.md) · [Pass 2](../../.cursor/plans/era_data_hub_pass_2_7f78d60e.plan.md).
 
-Связано: [PLATFORM_ADDONS.md](../PLATFORM_ADDONS.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md) · [orchestrator-satellite-vs-module](./orchestrator-satellite-vs-module.md) · [DEVELOPMENT_ROADMAP.md](../DEVELOPMENT_ROADMAP.md).
+Связано: [PLATFORM_ADDONS.md](../PLATFORM_ADDONS.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md) · [reference-data-ecosystem](./reference-data-ecosystem.md) · [orchestrator-satellite-vs-module](./orchestrator-satellite-vs-module.md) · [DEVELOPMENT_ROADMAP.md](../DEVELOPMENT_ROADMAP.md) · [fx-rates-ecosystem](./fx-rates-ecosystem.md) (CBAR FX contract) · [production-calendar-ecosystem](./production-calendar-ecosystem.md) (AZ prod calendar).
 
 ## Контекст
 

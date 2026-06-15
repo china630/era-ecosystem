@@ -145,11 +145,47 @@ export {
   financeSupplierMatch,
   financeExternalPurchase,
   financeEligibilityCheck,
+  financeFxPreview,
+  financeHsTariffPreview,
+  financeVoenLookup,
   type FinanceHandoffOptions,
   type FinanceRateQuoteResult,
   type FinanceCodClearingResult,
   type FinanceExternalPurchaseResult,
+  type FinanceFxPreviewResult,
+  type FinanceHsPreviewResult,
+  type FinanceVoenLookupResult,
 } from "./integration/finance-handoffs.client";
+export {
+  getHsMeta,
+  getHsTariff,
+  getCompanyByVoen,
+  getBanks,
+  validateIban,
+  getUom,
+  getTaxRates,
+  getGeoCountries,
+  getGeoCities,
+  getChartOfAccounts,
+  type ReferenceCatalogClientOptions,
+} from "./integration/reference-catalog.client";
+export {
+  getFxRate,
+  getFxRates,
+  getFxRatesRange,
+  convertFx,
+  type FxRateClientOptions,
+} from "./integration/fx-rate.client";
+export {
+  getCalendarDay,
+  isWorkingDay as isCalendarWorkingDay,
+  addBusinessDays as addCalendarBusinessDays,
+  getCalendarDaysRange,
+  warmCalendarYear,
+  fallbackIsWorkingDay,
+  fallbackDayType,
+  type CalendarClientOptions,
+} from "./integration/calendar.client";
 export {
   assertIndustryModuleActive,
   assertHotelModuleActive,
