@@ -42,10 +42,6 @@ export async function relinkGuestGlobalPerson(
     passportNumber: input.passportNumber ?? undefined,
     nationality: toGuestNationality(input.nationality),
     phone: input.phone ?? undefined,
-    firstName: null,
-    lastName: null,
-    email: null,
-    vipType: null,
   });
   if (globalPersonId) {
     await prisma.guest.update({
