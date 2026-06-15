@@ -525,6 +525,50 @@ export class EmployeesService {
       const v = dto.accountableAccountCode244?.trim();
       data.accountableAccountCode244 = v ? v : null;
     }
+
+    const identityTouched =
+      dto.finCode != null ||
+      dto.passportNumber != null ||
+      dto.issuingCountry !== undefined ||
+      dto.firstName != null ||
+      dto.lastName != null ||
+      dto.nationality != null;
+
+    if (identityTouched) {
+      const firstName =
+        dto.firstName?.trim() ??
+        (current.firstNameCipher ? decryptText(current.firstNameCipher) ?? "" : "");
+      const lastName =
+        dto.lastName?.trim() ??
+        (current.lastNameCipher ? decryptText(current.lastNameCipher) ?? "" : "");
+      const fin =
+        dto.finCode?.trim() ??
+        (current.finCodeCipher ? decryptText(current.finCodeCipher) ?? undefined : undefined);
+      const passport =
+        dto.passportNumber?.trim() ??
+        (current.passportNumberCipher
+          ? decryptText(current.passportNumberCipher) ?? undefined
+          : undefined);
+      const resolved = await this.resolveGlobalPersonId(organizationId, {
+        finCode: fin,
+        passportNumber: passport,
+        issuingCountry: dto.issuingCountry ?? current.issuingCountry ?? undefined,
+        nationality: dto.nationality ?? current.nationality ?? undefined,
+        firstName,
+        lastName,
+      });
+      if (
+        resolved &&
+        current.globalPersonId &&
+        resolved !== current.globalPersonId
+      ) {
+        throw new BadRequestException(
+          "Identity maps to a different MDM person; use convert-to-fin workflow",
+        );
+      }
+      if (resolved) data.globalPersonId = resolved;
+    }
+
     const nextKind = (data.kind as EmployeeKind | undefined) ?? current.kind;
     if (nextKind === EmployeeKind.EMPLOYEE) {
       data.voenBlindIndex = null;

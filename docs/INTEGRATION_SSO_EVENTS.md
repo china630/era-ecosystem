@@ -141,6 +141,7 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 | `SATELLITE_CRM_VISIT_LOGGED` | era-crm | `handleCrmVisitLogged` | Activity log (meta only) |
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
+| `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice (inpatient day) |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |
 
@@ -150,8 +151,57 @@ Idempotency: table `satellite_events_processed` — replay same `correlationId` 
 
 Implementation: [`satellite-event-dispatch.service.ts`](../era-finance-core/apps/api/src/integration/satellite-event-dispatch.service.ts).
 
-### Bank Core events (planned — `industry_banking`)
+### Bank Core events (`industry_banking` / `era-bank-core`)
 
-`era-bank-core` will add `packages/era-contracts/src/events/banking.events.ts` with `SATELLITE_BANK_*` types (e.g. `SATELLITE_BANK_GL_DAILY_SUMMARY`, `SATELLITE_BANK_ACCOUNT_OPENED`, `SATELLITE_BANK_LOAN_DISBURSED`, `SATELLITE_BANK_AML_ALERT_RAISED`). **These are non-money events only** — notifications, analytics, reconciliation, and summarized corporate-journal handoff to finance. **Money never flows over the event bus**; all bank postings are ACID inside `bank-core` (ADR [era-bank-core.md](./adr/era-bank-core.md) D6). Inbound `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` reuse the HR contract family. Spec: [era-bank-core/TZ.md](../era-bank-core/TZ.md) §9.
+Implemented in `packages/era-contracts/src/events/banking.events.ts`:
+
+| Type | Consumer |
+|------|----------|
+| `SATELLITE_BANK_GL_DAILY_SUMMARY` | Finance worker → summarized NAS journal (idempotent by business date) |
+| `SATELLITE_BANK_ACCOUNT_OPENED` | Analytics (planned) |
+| `SATELLITE_BANK_LOAN_DISBURSED` | Analytics (planned) |
+| `SATELLITE_BANK_PAYMENT_POSTED` | Analytics (planned) |
+| `SATELLITE_BANK_AML_ALERT_RAISED` | Compliance hub (engine publish on alert) |
+| `SATELLITE_BANK_REG_REPORT_EXPORTED` | Analytics (engine publish on reg export) |
+| `SATELLITE_BANK_DBO_PAYMENT_SIGNED` | Analytics (engine publish on DBO sign) |
+| `SATELLITE_BANK_CARD_ISSUED` | Analytics (engine publish on issue) |
+| `SATELLITE_BANK_CARD_TXN_DECLINED` | Platform notify (optional) |
+| `SATELLITE_BANK_TREASURY_GAP_SNAPSHOT` | Analytics (engine publish on GAP run / EOD) |
+
+**These are non-money events only** — notifications, analytics, reconciliation, and summarized corporate-journal handoff to finance. **Money never flows over the event bus**; all bank postings are ACID inside `bank-core` (ADR [era-bank-core.md](./adr/era-bank-core.md) D6). Inbound `STAFF_PROVISIONED` / `STAFF_DEACTIVATED` reuse the HR contract family. Spec: [era-bank-core/TZ.md](../era-bank-core/TZ.md) §9.
+
+## Reference data (FX, calendar, HS)
+
+Internal ERA apps consume **era-data-hub** via service token (`DATA_HUB_SERVICE_TOKEN`), not the satellite event bus.
+
+| Data | Hub API | Primary consumers | Industry path |
+|------|---------|-------------------|---------------|
+| CBAR FX | `/registry/v1/fx/*` | finance-core, bank-core | Finance `GET /api/logistics/fx-preview` (`financeFxPreview`) |
+| Production calendar | `/registry/v1/calendar/*` | finance HR, bank EOD | `CalendarClient` (satellite-kit); hotel auto-BAR bulk |
+| HS tariffs | `/registry/v1/hs/*` | finance customs | Finance deep link only |
+
+ADR: [fx-rates-ecosystem.md](./adr/fx-rates-ecosystem.md) · [production-calendar-ecosystem.md](./adr/production-calendar-ecosystem.md) · Consumer guide: [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
 Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
+
+## MDM natural-person identity (internal API)
+
+**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Satellites store **`globalPersonId` only**; PII in MDM.
+
+**Auth:** `Authorization: Bearer` with `MDM_INTERNAL_SERVICE_TOKEN` (alias `SATELLITE_EVENT_SERVICE_TOKEN` in some apps).
+
+**Canonical client:** `linkPersonIdentity` in `@era/satellite-kit` — lookup FIN → else `resolvePersonIdentity`.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/internal/v1/mdm/health` | Liveness |
+| POST | `/internal/v1/mdm/persons/lookup-by-fin` | Consent-aware read / prefill |
+| POST | `/internal/v1/mdm/persons/resolve` | Find-or-create (FIN / passport / VNJ + fullName) |
+| POST | `/internal/v1/mdm/persons/merge` | Foreigner → citizen (explicit workflow) |
+| POST | `/internal/v1/mdm/organizations/register` | VÖEN → `GlobalLegalEntity` |
+
+**Satellite proxies:** `POST /api/mdm/person-lookup` (hotel, clinic), `POST /api/mdm/person-merge` (SatAdmin).
+
+**HR events:** `STAFF_PROVISIONED` payload includes `globalPersonId` when Finance employee is MDM-linked ([workforce-identity ADR](./adr/workforce-identity-and-hr-provisioning.md)).
+
+ADR: [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md) · [mdm-satellite-integration-contract.md](./adr/mdm-satellite-integration-contract.md).

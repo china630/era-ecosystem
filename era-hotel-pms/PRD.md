@@ -81,6 +81,7 @@ Full checklist: [doc/DELIVERY.md](./doc/DELIVERY.md)
 | M11 | ERP / satellite events |
 | M12–M17 | Medical, banquets, stock, agency, POS bridge |
 | M20–M23 | Yield, loyalty hook, room-service QR, maintenance WO |
+| M24 | Auto-BAR from prod calendar (hub `dayType`, MANUAL lock) | **SHIPPED** | nightly `/api/cron/auto-bar` |
 
 ---
 
@@ -99,6 +100,7 @@ Must stories for UAT: [doc/clone-spec/13-nafta-validation-checklist.md](./doc/cl
 | Inbound ERP | E6 webhook |
 | fnb-pos | [fnb-pos-pms-bridge.yaml](./doc/openapi/fnb-pos-pms-bridge.yaml) |
 | Orchestrator | `SATELLITE_HOTEL_*` events |
+| FX display (P2) | Finance or `FxRateClient` display-only for foreign-currency folio labels — no local CBAR ingest |
 
 ---
 

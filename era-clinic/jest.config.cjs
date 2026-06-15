@@ -5,6 +5,7 @@ module.exports = {
   modulePathIgnorePatterns: ["<rootDir>/.next/"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
+    "^@era/clinic-domain$": "<rootDir>/../packages/clinic-domain/src/index.ts",
   },
   transform: {
     "^.+\\.tsx?$": [

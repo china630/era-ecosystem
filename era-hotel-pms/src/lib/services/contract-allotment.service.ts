@@ -1,15 +1,9 @@
 import { prisma } from '@/lib/prisma';
-
-function eachNight(from: Date, to: Date): Date[] {
-  const nights: Date[] = [];
-  const cursor = new Date(from.toISOString().slice(0, 10));
-  const end = new Date(to.toISOString().slice(0, 10));
-  while (cursor < end) {
-    nights.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return nights;
-}
+import {
+  computeBarPoolAfterContractHold,
+  computeContractNightAvailable,
+  eachNight,
+} from '@/lib/services/contract-allotment-core';
 
 export async function listContractAllotments(salesContractId: string) {
   return prisma.contractAllotment.findMany({
@@ -145,8 +139,12 @@ export async function getAvailabilityWithContractAllotment(
         continue;
       }
       const contractBooked = await countContractBookings(roomTypeId, night, salesContractId);
-      const contractAvailable = Math.max(0, allotment.nightlyQuota - contractBooked);
-      available = Math.min(available, contractAvailable);
+      const { available: contractAvail } = computeContractNightAvailable(
+        allotment.nightlyQuota,
+        contractBooked,
+        available,
+      );
+      available = contractAvail;
       dayResults.push({
         date: night.toISOString().slice(0, 10),
         available,
@@ -156,8 +154,12 @@ export async function getAvailabilityWithContractAllotment(
     } else {
       const contractQuota = await getContractAllotmentQuota(roomTypeId, night);
       const contractBooked = await countContractBookings(roomTypeId, night);
-      const contractHeld = Math.max(contractQuota - contractBooked, 0);
-      const barPool = Math.max(0, roomType.baseQuota - contractHeld - (overlapping - contractBooked));
+      const barPool = computeBarPoolAfterContractHold(
+        roomType.baseQuota,
+        overlapping,
+        contractQuota,
+        contractBooked,
+      );
       dayResults.push({
         date: night.toISOString().slice(0, 10),
         available: barPool,

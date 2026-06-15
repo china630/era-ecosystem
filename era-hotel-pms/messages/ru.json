@@ -404,6 +404,7 @@
     "title": "Folio — reservation {id}…",
     "backChessboard": "Back to chessboard",
     "totalBalance": "Total balance:",
+    "ratesIn": "rates quoted in {currency}",
     "readyCheckout": "— ready for check-out",
     "paymentRequired": "— payment required",
     "folioLine": "{type} folio ({status}) — balance {balance} AZN",
@@ -640,6 +641,7 @@
     "preferredBed": "Предпочт. кровать",
     "givenRoomType": "Выданный тип номера",
     "contractRef": "Ссылка на договор",
+    "salesContract": "B2B контракт",
     "roomSearch": "Find room",
     "roomHk": "Housekeeping",
     "attach": "Вложения",
@@ -660,7 +662,9 @@
     "cameraStub": "Camera capture is not configured",
     "repeatGuest": "Повтор гостя",
     "folioPax": "Pax",
-    "folioInvoice": "Invoice"
+    "folioInvoice": "Invoice",
+    "fxEquivalentAzn": "≈ AZN",
+    "fxApprox": "≈",
   },
   "guestCard": {
     "title": "Карточка гостя",
@@ -1312,7 +1316,14 @@
     "variance": "Отклонение", "posPolicy": "Политика POS", "resourcesHint": "Зал блокируется при подтверждении; POS — только доп. позиции.",
     "openCalendar": "Календарь ресурсов", "calendarTitle": "Календарь банкетов", "calendarSubtitle": "Диапазон дат",
     "calendarEmpty": "Нет бронирований", "profitabilityTitle": "Рентабельность мероприятий", "profitabilitySubtitle": "План vs факт",
-    "counterparty": "Контрагент"
+    "counterparty": "Контрагент",
+    "addResource": "Добавить бронь ресурса",
+    "resourceAdded": "Бронь ресурса добавлена",
+    "resourceStart": "Начало",
+    "resourceEnd": "Окончание",
+    "resourceLabel": "Метка (необяз.)",
+    "resourceLabelPlaceholder": "Переговорная / AV",
+    "resourceMissingTimes": "Укажите время начала и окончания"
   },
   "salesContracts": {
     "title": "B2B контракты продаж", "subtitle": "Агентские/корпоративные тарифы и квоты (H-BL-30)",
@@ -1321,7 +1332,14 @@
     "validFrom": "С", "validTo": "По", "allotments": "Квоты", "addAllotment": "Добавить квоту",
     "allotmentSaved": "Квота сохранена", "roomType": "Тип номера", "nightlyQuota": "Квота на ночь",
     "empty": "Нет контрактов", "legacyNote": "Устаревшие правила перенесены в SalesContract.",
-    "contractHint": "Контракт {id}…"
+    "contractHint": "Контракт {id}…",
+    "utilization": "Утилизация",
+    "utilizationTitle": "Утилизация — {code}",
+    "reservationCount": "Активные брони",
+    "allotmentNights": "Квота room-nights",
+    "consumedNights": "Использовано room-nights",
+    "utilizationPercent": "Pick-up %",
+    "totalRevenue": "Выручка по контракту"
   },
   "roomPlan": {
     "title": "План номеров",

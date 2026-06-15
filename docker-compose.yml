@@ -164,6 +164,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${FINANCE_DB:-era_finance}?schema=public
       ERA_DATA_HUB_URL: http://data-hub:4200
       ERA_DATA_HUB_ENABLED: ${ERA_DATA_HUB_ENABLED:-false}
+      ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED: ${ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED:-false}
       DATA_HUB_SERVICE_TOKEN: ${DATA_HUB_SERVICE_TOKEN:-dev-data-hub-service-token}
       REDIS_URL: redis://redis:6379/1
       API_PORT: "4100"
@@ -482,12 +483,108 @@ services:
       ERA_SATELLITE_ORGANIZATION_ID: ${ERA_CLINIC_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-}}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+      RUN_SEED: ${CLINIC_RUN_SEED:-true}
+      PLATFORM_SUPER_ADMIN_EMAILS: ${PLATFORM_SUPER_ADMIN_EMAILS:-chingiz@era.com,shirinov.chingiz@gmail.com,inaram84@gmail.com}
     ports:
       - "3203:3203"
     depends_on:
       postgres:
         condition: service_healthy
       orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  bank-core:
+    build:
+      context: .
+      dockerfile: era-bank-core/Dockerfile
+    container_name: era-bank-core
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: "4300"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${BANK_CORE_DB:-era_bank_core}?schema=public
+      REDIS_URL: redis://redis:6379/5
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
+      BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      CONTROL_PLANE_URL: http://orchestrator:4000
+      ERA_DATA_HUB_URL: http://data-hub:4200/registry/v1
+      ERA_DATA_HUB_ONPREM: ${ERA_DATA_HUB_ONPREM:-false}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
+      PII_BLIND_INDEX_KEY: ${PII_BLIND_INDEX_KEY:-dev-era-pii-blind-index-key-32chars!}
+      RUN_SEED: ${BANK_CORE_RUN_SEED:-true}
+    ports:
+      - "${BANK_CORE_API_PUBLISH_PORT:-4300}:4300"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - era-network
+
+  bank:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-bank
+        SATELLITE_PORT: "3210"
+    container_name: era-bank
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${BANK_SATELLITE_DB:-era_bank}?schema=public
+      PORT: "3210"
+      HOSTNAME: 0.0.0.0
+      ERA_BANK_CORE_URL: http://bank-core:4300
+      BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
+      ERA_SATELLITE_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-${ERA_SATELLITE_ORGANIZATION_ID:-demo-bank-org-001}}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
+      ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
+      ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
+      SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
+      RUN_SEED: ${BANK_RUN_SEED:-true}
+    ports:
+      - "${BANK_SATELLITE_PUBLISH_PORT:-3210}:3210"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bank-core:
+        condition: service_started
+      orchestrator:
+        condition: service_started
+    networks:
+      - era-network
+
+  bank-dbo:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.satellite
+      args:
+        SATELLITE_DIR: era-bank-dbo
+        SATELLITE_PORT: "3211"
+    container_name: era-bank-dbo
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-era}:${POSTGRES_PASSWORD:-era_dev_password}@postgres:5432/${BANK_DBO_DB:-era_bank_dbo}?schema=public
+      PORT: "3211"
+      HOSTNAME: 0.0.0.0
+      ERA_BANK_CORE_URL: http://bank-core:4300
+      BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
+      ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
+      DBO_JWT_SECRET: ${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}
+      RUN_SEED: ${BANK_DBO_RUN_SEED:-true}
+    ports:
+      - "${BANK_DBO_PUBLISH_PORT:-3211}:3211"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      bank-core:
         condition: service_started
     networks:
       - era-network

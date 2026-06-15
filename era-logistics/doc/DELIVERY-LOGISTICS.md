@@ -23,6 +23,7 @@ PRD: [../PRD.md](../PRD.md)
 ## L3
 
 - [x] Customs status read from Finance — `/customs` hub + Finance deep link (SP7)
+- [x] LOG-REF-01: FX + HS tariff preview via Finance handoffs (`/api/fx-preview`, `/api/hs-preview`)
 
 ## L4 — Platform add-ons (v1.0)
 

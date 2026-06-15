@@ -57,6 +57,37 @@ export default function FieldOpsPage() {
     if (res.ok) setLogModalOpen(false);
   }
 
+  async function importTimesheet(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!projectId) return;
+    setBusy(true);
+    const fd = new FormData(e.currentTarget);
+    const res = await fetch("/api/timesheets/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        projectId,
+        rows: [
+          {
+            workerRef: String(fd.get("workerRef") ?? "W001"),
+            hours: Number(fd.get("hours")) || 8,
+            workDate: String(fd.get("workDate")),
+          },
+        ],
+      }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (res.ok) {
+      const warn = Array.isArray(data.warnings) && data.warnings.length
+        ? ` (${data.warnings.join("; ")})`
+        : "";
+      setMessage(`${t("timesheetImported", { count: data.imported })}${warn}`);
+    } else {
+      setMessage(data.error ?? t("failed"));
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -99,6 +130,24 @@ export default function FieldOpsPage() {
                 {t("punchListLink")}
               </Link>
             </p>
+            <form onSubmit={importTimesheet} className={`${FORM_STACK_CLASS} mt-4 rounded border p-3`}>
+              <p className="font-medium">{t("timesheetImport")}</p>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("workerRef")}</label>
+                <input name="workerRef" defaultValue="W001" className={MODAL_INPUT_CLASS} />
+              </div>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("workDate")}</label>
+                <input name="workDate" type="date" required className={MODAL_INPUT_CLASS} />
+              </div>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("hours")}</label>
+                <input name="hours" type="number" defaultValue={8} min={0} step={0.5} className={MODAL_INPUT_CLASS} />
+              </div>
+              <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+                {t("importTimesheet")}
+              </button>
+            </form>
           </>
         )}
       </div>

@@ -10,6 +10,7 @@ import {
   ModalFooter,
   ModalShell,
   MODAL_INPUT_CLASS,
+  VoenLookupField,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
 } from "@era/satellite-kit/ui";
@@ -75,23 +76,18 @@ export function WorkOrdersClient() {
     void refresh();
   }, [refresh]);
 
-  async function lookupVoen() {
-    if (!voen.trim()) return;
-    setMessage("");
-    const res = await fetch(
-      `/api/mdm/voen-lookup?taxId=${encodeURIComponent(voen.trim())}`,
-    );
-    const data = (await res.json()) as {
-      financeCounterpartyId?: string;
-      organizationId?: string;
-      error?: string;
-    };
-    const id = data.financeCounterpartyId ?? data.organizationId;
+  async function lookupVoenResolved(voenDigits: string, name?: string | null) {
+    setMessage(name ? t("voenFound", { name }) : t("voenNotFound"));
+    if (!voenDigits) return;
+    const mdm = await fetch("/api/mdm/voen-lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taxId: voenDigits }),
+    }).then((r) => r.json()).catch(() => null);
+    const id = mdm?.financeCounterpartyId ?? mdm?.organizationId;
     if (id) {
       setCounterpartyId(id);
       setMessage(t("counterpartyLinked", { id: id.slice(0, 8) }));
-    } else {
-      setMessage(data.error ?? t("voenNotFound"));
     }
   }
 
@@ -236,21 +232,18 @@ export function WorkOrdersClient() {
             value={customerName}
             onChange={(e) => setCustomerName(e.target.value)}
           />
-          <div className="flex gap-2">
-            <input
-              className="flex-1 rounded border px-2 py-1 text-[13px]"
-              placeholder={t("voen")}
-              value={voen}
-              onChange={(e) => setVoen(e.target.value)}
-            />
-            <button
-              type="button"
-              className={PRIMARY_BUTTON_CLASS}
-              onClick={() => void lookupVoen()}
-            >
-              {tc("lookup")}
-            </button>
-          </div>
+          <VoenLookupField
+            value={voen}
+            onChange={setVoen}
+            onResolved={(r) => void lookupVoenResolved(r.voen, r.name)}
+            labels={{
+              voen: t("voen"),
+              check: tc("lookup"),
+              found: t("voenFound", { name: "" }),
+              notFound: t("voenNotFound"),
+              invalid: t("voenInvalid"),
+            }}
+          />
           {counterpartyId ? (
             <p className="text-[12px] text-[#7F8C8D]">{t("counterparty")}: {counterpartyId}</p>
           ) : null}

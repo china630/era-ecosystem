@@ -3259,24 +3259,25 @@ Active org context = O_k:
 
 | Feature ID | Справочник | Эндпоинт хаба | Потребитель в ядре | Действие |
 |------------|-----------|---------------|---------------------|----------|
-| FEAT-FC-DH-001 | FX rates | `GET /fx/rates`, `/fx/rates/range`, `/fx/convert` | `fx/cbar-rate-sync.service.ts` (read-through), `CurrencyConverterService` | [x] есть; расширить на range/convert при необходимости дашборда |
+| FEAT-FC-DH-001 | FX rates | `GET /fx/rates`, `/fx/rates/range`, `/fx/convert` | `DataHubClientService`, `CbarRateSyncService`, `CurrencyConverterService`, customs auto-rate | [x] hub read-through; finance CBAR ingest disabled when hub owns ingest |
 | FEAT-FC-DH-002 | HS + тарифы | `GET /hs/:code/tariff` | `customs/customs-tax-calculator.service.ts` | [x] есть; добавить `GET /hs/:code` (словарь) для подсказок HS |
-| FEAT-FC-DH-003 | Календарь АР | `GET /calendar/az/is-working-day`, `/add-business-days` | HR (`timesheet`, `absences`, `payroll-month-calendar`) | [ ] клиент `isWorkingDay` есть → заменить `isAzWorkingDay(...)` на `CalendarClient` (кэш на год); затем удалить `hr/calendar/az-2026.ts` |
-| FEAT-FC-DH-004 | Банки/филиалы | `GET /banks`, `/banks/branches/:code` | `OrganizationBankAccount` (FK на филиал), формы выбора банка | [ ] добавить `getBanks()` / `getBankBranch(code)` в клиент; UI выбора банка/филиала из хаба; локально хранить только IBAN + FK |
-| FEAT-FC-DH-005 | IBAN validate | `GET /iban/validate` | `banking/IbanValidationService` | [ ] чистую валидацию (`validateAzIban`) брать из хаба; платный deep-lookup и аудит остаются в ядре |
-| FEAT-FC-DH-006 | Реестр компаний VÖEN | `GET /companies/:voen` | lookup контрагента (§27.6) | [~] клиент `getCompanyByVoen` есть; включить его в цепочку `checkVoen` (приоритет: хаб → локальный `GlobalCompanyDirectory` → e-taxes); полка C (PII-маскирование) |
-| FEAT-FC-DH-007 | Гео | `GET /geo/countries`, `/geo/cities` | формы адресов/стран | [ ] добавить методы клиента; формы читают из хаба (кэш) |
-| FEAT-FC-DH-008 | UoM | `GET /uom` | каталог номенклатуры, таможня | [ ] добавить метод клиента; справочник UoM из хаба |
-| FEAT-FC-DH-009 | Налоговые ставки | `GET /tax-rates?type=&date=` | налоговые расчёты, ставки ƏDV | [ ] добавить метод; effective-dated ставки из хаба (fallback на локальный `TaxRate`) |
-| FEAT-FC-DH-010 | Эталон плана счетов | `GET /chart-of-accounts?profile=commercial\|budget\|ngo` | онбординг/сверка плана счетов | [ ] **D-DH-1: хаб — единый источник**; добавить `getChartOfAccounts(profile)`; онбординг материализует `Account` орг из эталона хаба; локальный JSON `loadPostingRolesJson` — только fallback |
+| FEAT-FC-DH-003 | Календарь АР | `GET /calendar/az/day`, `/days`, `/add-business-days` | `HrCalendarService`, `DataHubClientService` | [x] hub cutover; `az-2026.ts` removed |
+| FEAT-FC-DH-004 | Банки/филиалы | `GET /banks`, `/banks/branches/:code` | `BankDirectoryService` | [x] hub-first; UI bank picker |
+| FEAT-FC-DH-005 | IBAN validate | `GET /iban/validate` | `IbanValidationService` | [x] hub-first validation |
+| FEAT-FC-DH-006 | Реестр компаний VÖEN | `GET /companies/:voen` | lookup контрагента + `voen-preview` handoff | [x] hub → local → e-taxes chain |
+| FEAT-FC-DH-007 | Гео | `GET /geo/countries`, `/geo/cities` | `SystemCatalogController` | [x] hub-first |
+| FEAT-FC-DH-008 | UoM | `GET /uom` | `SystemCatalogController`, customs | [x] hub-first |
+| FEAT-FC-DH-009 | Налоговые ставки | `GET /tax-rates?type=&date=` | `SystemCatalogController` | [x] hub-first VAT path |
+| FEAT-FC-DH-010 | Эталон плана счетов | `GET /chart-of-accounts?profile=` | org onboarding `chartRemoteLoader` | [x] hub primary, JSON fallback |
 
 **Контур работ для каждой строки:** (1) метод в `DataHubClientService` + типы; (2) перевод потребителя на клиент с локальным кэшем (read-through) и fallback; (3) фича-флаг (общий `ERA_DATA_HUB_ENABLED` + при необходимости частный per-domain); (4) на фазе «contract» — отключение/удаление локального ingest (cron/seeds) после стабилизации.
 
 ### 28.2. БД граждан (оркестратор) — FEAT-FC-CIT-001
 
-- Реестр граждан АР — **отдельная БД на `era-orchestrator`** (не data-hub, не финядро). Финядро запрашивает данные физлица по **FIN-коду** через сервис оркестратора (service-token, PII-маскирование, согласие/аудит).
-- Потребители: карточка контрагента-физлица (поле FIN-код, §27.6 future), карточка сотрудника (HR) для верификации.
-- Контракт эндпоинта оркестратора — **TBD** (определить вместе с CP); ядро держит только тонкий клиент + кэш на запрос, без хранения реестра.
+- Реестр граждан АР — **отдельная БД на `era-orchestrator`** (`era_mdm`, модели `GlobalNaturalPerson`, `PersonIdentifier`). Финядро и спутники вызывают **`internal/v1/mdm/persons/*`** через service-token (`OrchestratorMdmClientService` / `@era/satellite-kit` `linkPersonIdentity`).
+- Потребители: карточка контрагента-физлица / ИП (FIN → `Counterparty.globalPersonId`), карточка сотрудника (HR), hotel/clinic guest/patient/practitioner refs.
+- Контракт: `POST /internal/v1/mdm/persons/lookup-by-fin`, `POST .../resolve`, `POST .../merge`. PII не дублировать в satellite DB — только `globalPersonId`.
+- Статус: **реализовано** (Wave 2 MDM refactor); см. [era-mdm-natural-person-identity.md](../docs/adr/era-mdm-natural-person-identity.md), COVERAGE `FIN-CIT-01`.
 
 ### 28.3. Де-хардкод плана счетов — FEAT-FC-COA-001
 

@@ -40,7 +40,7 @@
 
 - [ ] `/scheduling` — day grid loads from `GET /api/scheduling/slots?date=`
 - [ ] `POST /api/visits/[id]/discount` — `CLINIC_ADMIN` or `BUSINESS_OWNER` only; audit row created
-- [ ] `/executive` — `BUSINESS_OWNER` sees visits today, lab revenue, open orders
+- [ ] `/executive` — date + practitioner filters; KPI from `GET /api/executive/summary`
 - [ ] `GET /api/executive/summary` — 403 for non-owner roles
 
 ## Product modules (v1.0)
@@ -59,9 +59,29 @@
 ## M13 — Inpatient ward UI
 
 1. Sign in as clinic staff (`/login`, seed user with `CLINIC_ADMIN` or ops role).
-2. Open **`/inpatient`** from sidebar (Inpatient wards).
-3. Click **Assign bed** — enter ward code (e.g. `W1`), bed code (e.g. `B01`), and a valid `patientRefId` from an existing patient/visit → **Assign**.
-4. Confirm ward card appears with bed tile **OCCUPIED** and patient name/ref.
-5. Click **Discharge** on the occupied bed → bed returns to **AVAILABLE**; tile shows assign button again.
-6. API smoke (optional): `GET /api/inpatient` → `{ wards: [...] }`; `POST /api/inpatient` assign; `PATCH /api/inpatient/assignments/[id]` discharge.
+2. Enable **`inpatient_day`** in **Admin → Settings** if nav link hidden.
+3. Configure wards in **Admin → Wards & beds** (`/admin/wards`).
+4. Open **`/inpatient`** — admit via bed + patient dropdowns; transfer/discharge from bed tiles.
+5. API smoke (optional): `POST /api/inpatient` `{ action: "admit", bedId, patientRefId }`; `POST /api/cron/inpatient-daily-charges` with cron Bearer token.
+
+## Presets + MDM (P1)
+
+1. **Admin → Settings** — toggle product lines; disabled routes redirect from `/sanatorium` / `/inpatient`.
+2. **Patients** — FIN + MDM lookup; masked `globalPersonId` badge on list.
+3. **Appointments** — Cancel visit from selected appointment panel (K-15).
+
+## Admin master data (2026-06-15) — UI paths (no curl)
+
+Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `docker compose up clinic` seed runs (`RUN_SEED=true`).
+
+1. **`/admin/master-data`** — add/edit practitioner with FIN/passport MDM lookup (resolve path), phone, default slot minutes; link to wards.
+2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
+3. **`/patients`** — register patient; **`/patients/[id]`** — edit patient modal; contraindication add/remove modals on body map.
+4. **`/appointments`** — **New appointment** modal; cancel visit via modal (reason required).
+5. **`/lab-orders`** — **New lab order** modal from patient list.
+6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
+7. **`/executive`** — filter by date and practitioner; KPI from API.
+8. **`/cashier?visitId=`** — pay shows mock fiscal badge and full receipt/fiscal fields.
+
+Coverage: [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) CLI-*.
 

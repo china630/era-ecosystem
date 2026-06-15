@@ -1,19 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import {
+  MODAL_INPUT_CLASS,
+  ModalFooter,
+  ModalShell,
+} from "@era/satellite-kit/ui";
 import { BodySilhouette } from "./BodySilhouette";
 
 type Row = { id: string; bodyPart: string; note: string | null };
 
 export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: string }) {
+  const t = useTranslations("contraindications");
+  const tc = useTranslations("common");
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
+  const [removeRow, setRemoveRow] = useState<Row | null>(null);
+  const [pendingPart, setPendingPart] = useState("");
+  const [note, setNote] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch(`/api/patients/${patientRefId}/contraindications`);
     if (res.ok) {
-      const data = (await res.json()) as Row[];
+      const parsed = await res.json();
+      const data = (parsed.data ?? parsed) as Row[];
       setRows(Array.isArray(data) ? data : []);
     }
     setLoading(false);
@@ -25,31 +38,44 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
 
   const blocked = new Set(rows.map((r) => r.bodyPart));
 
-  async function onToggle(bodyPart: string) {
+  function onZoneClick(bodyPart: string) {
     if (blocked.has(bodyPart)) {
       const row = rows.find((r) => r.bodyPart === bodyPart);
-      if (!row) return;
-      await fetch(`/api/patients/${patientRefId}/contraindications?id=${row.id}`, {
-        method: "DELETE",
-      });
-    } else {
-      await fetch(`/api/patients/${patientRefId}/contraindications`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bodyPart }),
-      });
+      if (row) setRemoveRow(row);
+      return;
     }
+    setPendingPart(bodyPart);
+    setNote("");
+    setAddOpen(true);
+  }
+
+  async function confirmAdd() {
+    await fetch(`/api/patients/${patientRefId}/contraindications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bodyPart: pendingPart, note: note.trim() || undefined }),
+    });
+    setAddOpen(false);
     await load();
   }
 
-  if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
+  async function confirmRemove() {
+    if (!removeRow) return;
+    await fetch(`/api/patients/${patientRefId}/contraindications?id=${removeRow.id}`, {
+      method: "DELETE",
+    });
+    setRemoveRow(null);
+    await load();
+  }
+
+  if (loading) return <p className="text-sm text-slate-500">{tc("loading")}</p>;
 
   return (
     <div className="space-y-3">
-      <BodySilhouette blocked={blocked} onToggle={onToggle} />
+      <BodySilhouette blocked={blocked} onToggle={onZoneClick} />
       <ul className="text-sm text-slate-600">
         {rows.length === 0 ? (
-          <li>No contraindicated zones</li>
+          <li>{t("empty")}</li>
         ) : (
           rows.map((r) => (
             <li key={r.id}>
@@ -59,6 +85,30 @@ export function PatientContraindicationsPanel({ patientRefId }: { patientRefId: 
           ))
         )}
       </ul>
+
+      <ModalShell open={addOpen} title={t("addTitle")} onClose={() => setAddOpen(false)}>
+        <p className="mb-2 text-[13px]">{pendingPart}</p>
+        <input
+          className={MODAL_INPUT_CLASS}
+          placeholder={t("noteOptional")}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <ModalFooter
+          onCancel={() => setAddOpen(false)}
+          onSubmit={() => void confirmAdd()}
+          submitLabel={tc("confirm")}
+        />
+      </ModalShell>
+
+      <ModalShell open={!!removeRow} title={t("removeTitle")} onClose={() => setRemoveRow(null)}>
+        <p className="text-[13px]">{removeRow?.bodyPart}</p>
+        <ModalFooter
+          onCancel={() => setRemoveRow(null)}
+          onSubmit={() => void confirmRemove()}
+          submitLabel={tc("delete")}
+        />
+      </ModalShell>
     </div>
   );
 }

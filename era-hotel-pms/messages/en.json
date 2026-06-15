@@ -403,6 +403,7 @@
     "title": "Folio — reservation {id}…",
     "backChessboard": "Back to chessboard",
     "totalBalance": "Total balance:",
+    "ratesIn": "rates quoted in {currency}",
     "readyCheckout": "— ready for check-out",
     "paymentRequired": "— payment required",
     "folioLine": "{type} folio ({status}) — balance {balance} AZN",
@@ -558,6 +559,7 @@
     "preferredBed": "Preferred bed",
     "givenRoomType": "Given room type",
     "contractRef": "Contract ref.",
+    "salesContract": "B2B sales contract",
     "roomSearch": "Find room",
     "roomHk": "Housekeeping",
     "attach": "Attach",
@@ -579,6 +581,8 @@
     "repeatGuest": "Repeat guest row",
     "folioPax": "Pax",
     "folioInvoice": "Invoice",
+    "fxEquivalentAzn": "≈ AZN",
+    "fxApprox": "≈",
     "folioTab": {
       "all": "All",
       "first": "1st person",
@@ -688,6 +692,18 @@
     "tabLoyalty": "Loyalty",
     "tabTimeShare": "Time share",
     "comingSoon": "Coming soon",
+    "mdm": {
+      "title": "MDM person link",
+      "badge": "MDM",
+      "missing": "Not linked",
+      "lookup": "MDM lookup",
+      "linked": "MDM linked ({id})",
+      "notFound": "No MDM match",
+      "nameRequired": "Enter guest full name first",
+      "finObtained": "FIN obtained (merge)",
+      "mergeFinPrompt": "Enter new FIN code",
+      "mergeSuccess": "MDM records merged"
+    },
     "documents": "Documents",
     "contacts": "Contacts",
     "addresses": "Addresses",
@@ -1330,7 +1346,14 @@
     "calendarEmpty": "No resource bookings in range",
     "profitabilityTitle": "Event profitability",
     "profitabilitySubtitle": "Planned vs actual revenue by BEO",
-    "counterparty": "Counterparty"
+    "counterparty": "Counterparty",
+    "addResource": "Add resource booking",
+    "resourceAdded": "Resource booking added",
+    "resourceStart": "Start",
+    "resourceEnd": "End",
+    "resourceLabel": "Label (optional)",
+    "resourceLabelPlaceholder": "Breakout room / AV setup",
+    "resourceMissingTimes": "Enter start and end times"
   },
   "salesContracts": {
     "title": "B2B sales contracts",
@@ -1353,7 +1376,14 @@
     "nightlyQuota": "Nightly quota",
     "empty": "No sales contracts yet",
     "legacyNote": "Legacy percent rules migrated to SalesContract.",
-    "contractHint": "Contract {id}…"
+    "contractHint": "Contract {id}…",
+    "utilization": "Utilization",
+    "utilizationTitle": "Utilization — {code}",
+    "reservationCount": "Active reservations",
+    "allotmentNights": "Allotment room-nights",
+    "consumedNights": "Consumed room-nights",
+    "utilizationPercent": "Pick-up %",
+    "totalRevenue": "Contract revenue"
   },
   "roomPlan": {
     "title": "Room plan",

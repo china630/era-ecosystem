@@ -4,6 +4,8 @@
     "description": "Спутник клиники и медицинских операций"
   },
   "nav": {
+    "sectionOps": "Операции",
+    "sectionAdmin": "Администрирование",
     "home": "Главная",
     "appointments": "Приёмы",
     "queue": "Очередь ресепшена",
@@ -16,7 +18,12 @@
     "doctor": "Очередь врача",
     "nurse": "Процедуры",
     "cashier": "Касса",
-    "settings": "Настройки"
+    "settings": "Настройки",
+    "patients": "Пациенты",
+    "masterData": "Справочники",
+    "catalog": "Каталог услуг",
+    "templates": "Шаблоны",
+    "audit": "Аудит"
   },
   "login": {
     "title": "ERA Clinic",
@@ -57,12 +64,24 @@
     "value": "Значение",
     "actions": "Действия",
     "complete": "Завершить",
-    "all": "Все"
+    "all": "Все",
+    "add": "Добавить",
+    "delete": "Удалить",
+    "confirmDelete": "Удалить запись?",
+    "saved": "Сохранено",
+    "failed": "Ошибка",
+    "saveFailed": "Не удалось сохранить",
+    "confirm": "Подтвердить"
   },
   "appointments": {
-    "title": "ERA Clinic",
-    "subtitle": "Операционная MVP-оболочка — UI по DESIGN.md.",
-    "shellNote": "Реестры и формы добавления/редактирования будут в модалках по DESIGN.md."
+    "title": "Приёмы",
+    "subtitle": "Расписание ресепшена и check-in",
+    "shellNote": "Выберите приём для управления визитом.",
+    "createTitle": "Новый приём",
+    "cancelVisit": "Отменить визит",
+    "cancelTitle": "Отменить визит",
+    "cancelReason": "Причина отмены (обязательно)",
+    "cancelConfirm": "Подтвердить отмену"
   },
   "labOrders": {
     "title": "Лабораторные заказы",
@@ -70,7 +89,11 @@
     "criticalOnly": "Только критические результаты (M5)",
     "statusFilter": "Фильтр статуса",
     "empty": "Лабораторных заказов пока нет.",
-    "importCsv": "Импорт CSV"
+    "importCsv": "Импорт CSV",
+    "createTitle": "Новый лаб. заказ",
+    "selectPatient": "Выберите пациента",
+    "testCode": "Код теста",
+    "visitIdOptional": "ID визита (необяз.)"
   },
   "labOrdersDetail": {
     "title": "Workflow лабораторного заказа",
@@ -116,12 +139,16 @@
   "doctor": {
     "title": "Очередь врача",
     "subtitle": "Check-in и визиты в работе",
-    "empty": "Очередь пуста."
+    "empty": "Очередь пуста.",
+    "openVisit": "Открыть визит"
   },
   "nurse": {
     "title": "Очередь процедур",
     "subtitle": "Запланированные процедуры для медсестёр",
-    "done": "Выполнено"
+    "done": "Выполнено",
+    "empty": "Нет запланированных процедур.",
+    "completeConfirmTitle": "Завершить процедуру",
+    "completeConfirmBody": "Отметить процедуру выполненной?"
   },
   "queue": {
     "title": "Очередь регистратуры",
@@ -134,7 +161,16 @@
     "title": "Касса клиники",
     "subtitle": "Смена, оплата, фискал (@era/fiscal)",
     "openShift": "Открыть смену",
-    "pay": "Принять оплату"
+    "pay": "Принять оплату",
+    "visitLabel": "Визит",
+    "shiftLabel": "Смена",
+    "mockFiscalBadge": "Mock fiscal (CLI-24 STUB)",
+    "statusLabel": "Статус",
+    "receiptLabel": "Чек",
+    "fiscalLabel": "Фiscal ID",
+    "qrLabel": "QR payload",
+    "settlementOnly": "Только settlement (без реального NBC)",
+    "paymentFailed": "Ошибка оплаты"
   },
   "booking": {
     "title": "Запись на приём",
@@ -157,7 +193,10 @@
     "loadFailed": "Не удалось загрузить сводку.",
     "visitsToday": "Визиты сегодня",
     "labRevenueToday": "Выручка лаборатории сегодня",
-    "openLabOrders": "Открытые лаб. заказы"
+    "openLabOrders": "Открытые лаб. заказы",
+    "filterDate": "Дата",
+    "filterPractitioner": "Врач",
+    "capacityTitle": "Загрузка санатория (неделя)"
   },
   "sanatorium": {
     "title": "Санаторий in-house",
@@ -272,5 +311,122 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "masterData": {
+    "title": "Справочники",
+    "subtitle": "Врачи, кабинеты, ресурсы, типы процедур",
+    "practitioners": "Врачи",
+    "rooms": "Кабинеты",
+    "resources": "Ресурсы",
+    "procedureTypes": "Типы процедур",
+    "code": "Код",
+    "name": "Название",
+    "specialty": "Специальность",
+    "kind": "Тип",
+    "capacity": "Ёмкость",
+    "durationMin": "Длительность (мин)",
+    "resourceCode": "Код ресурса",
+    "wards": "Палаты и койки",
+    "wardCode": "Код палаты",
+    "wardName": "Название палаты",
+    "bedCode": "Код койки",
+    "dailyChargeCode": "Код суточного тарифа",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Не связан",
+    "mdmLookup": "Поиск MDM",
+    "mdmLinked": "MDM связан ({id})",
+    "mdmNotFound": "MDM по FIN не найден",
+    "finRequired": "Введите FIN для поиска",
+    "defaultSlotMinutes": "Слот по умолчанию (мин)",
+    "wardsLink": "Палаты и койки",
+    "editWard": "Редактировать палату",
+    "editBed": "Редактировать койку",
+    "noBeds": "Нет коек",
+    "finCode": "FIN",
+    "passportNumber": "Паспорт",
+    "issuingCountry": "Страна выдачи",
+    "phone": "Телефон",
+    "nameRequired": "Введите ФИО для поиска MDM"
+  },
+  "contraindications": {
+    "addTitle": "Добавить противопоказание",
+    "removeTitle": "Удалить противопоказание",
+    "noteOptional": "Примечание (необяз.)",
+    "empty": "Нет зон противопоказаний"
+  },
+  "visits": {
+    "completeConfirmTitle": "Завершить визит",
+    "completeConfirmBody": "Завершить визит и отправить биллинг?",
+    "completeVisit": "Завершить визит",
+    "completing": "Завершение…",
+    "completeFailed": "Не удалось завершить",
+    "completeSuccess": "Визит завершён",
+    "issuePrescription": "Выписать рецепт",
+    "prescriptionTitle": "Выписать рецепт",
+    "rxSku": "SKU",
+    "rxQty": "Количество",
+    "rxDescription": "Описание",
+    "prescriptionSuccess": "Рецепт выписан ({count} строк)",
+    "prescriptionFailed": "Ошибка выписки"
+  },
+  "patientRegistry": {
+    "title": "Реестр пациентов",
+    "subtitle": "Локальные ссылки на пациентов",
+    "search": "Поиск",
+    "refCode": "Код",
+    "name": "ФИО",
+    "phone": "Телефон",
+    "finCode": "FIN",
+    "passportNumber": "Паспорт",
+    "issuingCountry": "Страна выдачи",
+    "createTitle": "Новый пациент",
+    "openCard": "Карточка",
+    "mdmLookup": "Поиск MDM",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Не связан",
+    "mdmLinked": "MDM связан ({id})",
+    "mdmNotFound": "MDM по FIN не найден",
+    "finRequired": "Введите FIN для поиска",
+    "nameRequired": "Введите ФИО для поиска MDM",
+    "finObtained": "Получен FIN (слияние)",
+    "mergeFinPrompt": "Введите новый FIN",
+    "mergeFinSuccess": "Записи MDM объединены",
+    "editPatient": "Редактировать пациента",
+    "backToList": "К списку пациентов",
+    "fullName": "ФИО",
+    "contraindicationsTitle": "Противопоказания (карта тела)"
+  },
+  "catalogAdmin": {
+    "title": "Каталог услуг",
+    "subtitle": "Кэш прайса из Finance",
+    "code": "Код",
+    "description": "Описание",
+    "amount": "Сумма",
+    "syncFromFinance": "Синхронизация из Finance",
+    "synced": "Синхронизировано: {count}",
+    "empty": "Каталог пуст."
+  },
+  "templatesAdmin": {
+    "title": "Шаблоны",
+    "subtitle": "Клинические и программы санатория",
+    "clinicalTab": "Клинические",
+    "programTab": "Программы",
+    "code": "Код",
+    "titleField": "Название",
+    "specialty": "Специальность",
+    "name": "Название",
+    "durationDays": "Дней",
+    "procedureCode": "Код процедуры",
+    "quotaTotal": "Квота",
+    "procedureName": "Название процедуры",
+    "bodyJson": "Body JSON"
+  },
+  "audit": {
+    "title": "Журнал аудита",
+    "subtitle": "Изменения в спутнике",
+    "when": "Когда",
+    "entity": "Сущность",
+    "action": "Действие",
+    "user": "Пользователь"
   }
 }

@@ -132,6 +132,7 @@ export async function executeSatelliteSsoExchange(
   const token = await signSatelliteSession({
     sub: user.id,
     login: user.login,
+    email: body.email,
     role: satelliteRole,
     roles: roleCodes,
     fullName: user.fullName,

@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { IntegrationSyncRunService } from "../integrations/integration-sync-run.service";
 import { AttachCustomsDeclarationDto, UpsertCustomsDeclarationDto } from "./dto/customs-declaration.dto";
 import { CustomsTaxCalculatorService } from "./customs-tax-calculator.service";
+import { CbarRateSyncService } from "../fx/cbar-rate-sync.service";
 
 function buildFullCaptureNotes(dto: CustomsDeclarationFullPrefillCapture): string | null {
   const lines: string[] = [];
@@ -43,6 +44,7 @@ export class CustomsService {
     private readonly counterparties: CounterpartiesService,
     private readonly taxCalculator: CustomsTaxCalculatorService,
     private readonly posting: PostingAccountResolver,
+    private readonly cbarSync: CbarRateSyncService,
   ) {}
 
   list(organizationId: string) {
@@ -174,6 +176,26 @@ export class CustomsService {
     const bgdDate = new Date(`${dto.bgdDate.slice(0, 10)}T00:00:00.000Z`);
     const notes = buildFullCaptureNotes(dto);
 
+    let resolvedCurrencyRate: number | null =
+      dto.currencyRate != null && dto.currencyRate !== undefined
+        ? Number(dto.currencyRate)
+        : null;
+    const currencyUpper = dto.currency.trim().toUpperCase();
+    if (
+      (resolvedCurrencyRate == null || !Number.isFinite(resolvedCurrencyRate)) &&
+      currencyUpper !== "AZN" &&
+      currencyUpper !== "AZM"
+    ) {
+      try {
+        resolvedCurrencyRate = await this.cbarSync.getFinalOfficialAznPerUnit(
+          currencyUpper,
+          bgdDate,
+        );
+      } catch {
+        resolvedCurrencyRate = null;
+      }
+    }
+
     let senderCounterpartyId: string | null = null;
     let receiverCounterpartyId: string | null = null;
     if (dto.senderVoen && /^\d{10}$/.test(dto.senderVoen)) {
@@ -282,9 +304,11 @@ export class CustomsService {
             status: CustomsDeclarationStatus.DRAFT,
             regimeCode: dto.regimeCode?.trim() || null,
             currencyRate:
-              dto.currencyRate != null && dto.currencyRate !== undefined
-                ? new Prisma.Decimal(dto.currencyRate)
-                : null,
+              resolvedCurrencyRate != null && Number.isFinite(resolvedCurrencyRate)
+                ? new Prisma.Decimal(resolvedCurrencyRate)
+                : dto.currencyRate != null && dto.currencyRate !== undefined
+                  ? new Prisma.Decimal(dto.currencyRate)
+                  : null,
             senderVoen: dto.senderVoen?.trim() ?? null,
             senderName: dto.senderName?.trim() ?? null,
             receiverVoen: dto.receiverVoen?.trim() ?? null,

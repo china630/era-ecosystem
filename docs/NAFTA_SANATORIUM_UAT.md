@@ -108,9 +108,46 @@ Buttons on operational screens (next to **+**), gated by `ERA_EXCEL_IMPORT_ENABL
 
 | System | Role |
 |--------|------|
-| ElectraWeb | hotel PMS export |
-| Custom clinic | medical export; linked via FIN / `hotelResNo` |
+| ElectraWeb | hotel PMS export (chunked ~1000 rows — merge before import) |
+| WebOnly clinic | merged `Randevular.merged.xlsx` + guest registry; linked to hotel guest via passport |
+| Custom clinic CSV/XLS | procedures, rooms, practitioners (`Downloads/WO`) |
 | Hotel SPA | replaced by ERA check-in lifecycle after import |
+
+### 6.1 Nafta Elektraweb merge inventory (2026-06)
+
+| Dataset | Merged file | Unique keys | Notes |
+|---------|-------------|-------------|-------|
+| Guest Cards | `Guest Cards.merged.2026-06-13.*.xlsx` | 7 383 `Guest Id` | `Repeat Count` for loyalty seed |
+| FOCP reservations | `Front Office Control Panel.merged.2026-06-15.*.xlsx` | 1 346 `Res Id` | T-room = deferred corp. checkout — [ADR](./adr/hotel-deferred-corporate-checkout.md) |
+| Folio Transactions 2026 | `Folio 01 jan - 14 jun 2026/Folio Transactions.merged.xlsx` | 27 721 `Id` | 2026-01-01 … 2026-06-14 |
+| Folio Transactions 2025 | `Folio 2025/Folio Transactions.merged.2025.xlsx` | 14 260 `Id` | **97% POS ledger (`999 FB`)** — not used for stay migration |
+| WebOnly Randevular | `WO RV/Randevular.merged.xlsx` | 31 787 appts | 2026-02-17 … 2026-06-13; `merge-randevular.js` |
+
+Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md) §15.
+
+### 6.2 Migration cutover — point zero 31.12.2025, scope 2026+
+
+**Decision (Nafta):** Elektraweb was not used consistently in 2025 (folio is POS-heavy, reservations may be purged). **Do not replay 2024–2025 operational history** in ERA. Treat **2026-01-01** as the migration window; **31.12.2025** (or first business day 2026) as **point zero** for open balances.
+
+| Layer | Import into ERA | Source at cutover |
+|-------|-----------------|-------------------|
+| Master data | Full | Rooms, rates, agencies, revenue codes (EW exports) |
+| Guest registry | Full | Guest Cards merged (**7 383**) + MDM passport link |
+| Reservations | **2026+ only** (+ in-house/future at cutover) | FOCP merged; filter `Arrival >= 2026-01-01` or active statuses |
+| Folio charges | **Open / in-house at cutover** + optional 2026 YTD for reconciliation | Folio Transactions merged 2026; **not** 2025 archive |
+| Clinic | Randevular 2026 + WebOnly guests | Already collected |
+| Loyalty `visitCount` | Seed from Guest Cards `Repeat Count` | Do not recompute from 2025 folio |
+
+**Point-zero reports to pull from Elektraweb (if available):**
+
+1. **Agency / city ledger statement** as of 31.12.2025 — opening AR for B2B (optional Phase 1; Finance when 1C ready).
+2. **FOCP** — in-house + future reservations on cutover date (not full historical CheckOut dump unless needed for 2026 overlap).
+3. **Folio / ProFolio** — **open folio lines only** on cutover date (in-house guests + unsettled `T` corporate rows per [deferred-checkout ADR](./adr/hotel-deferred-corporate-checkout.md)).
+4. **Guest Cards** — snapshot on cutover date (refresh merged file once before go-live).
+
+**Explicitly out of scope:** 2025 folio replay, 2024 folio, historical CheckOut reservation archive, GL opening balances without 1C.
+
+After go-live, ERA is source of truth; Elektraweb read-only until decommission.
 
 Product traceability: [era-hotel-pms/doc/nafta/README.md](../era-hotel-pms/doc/nafta/README.md)
 

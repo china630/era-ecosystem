@@ -89,6 +89,7 @@ export default function GuestCardModal({
     specialNotes: 0,
     allergens: 0,
   });
+  const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
 
   const isCreate = open && !guestId;
 
@@ -142,6 +143,7 @@ export default function GuestCardModal({
       setIsLocked(Boolean(g.isLocked));
       setPhoneVerified(Boolean(g.phoneVerified));
       setEmailVerified(Boolean(g.emailVerified));
+      setGlobalPersonId(g.globalPersonId ? String(g.globalPersonId) : null);
       setDetailFields({
         phone: String(g.phone ?? ''),
         email: String(g.email ?? ''),
@@ -185,7 +187,8 @@ export default function GuestCardModal({
     if (!guestId) {
       setLoading(false);
       setStats(null);
-      setTab('identity');
+      setTab('details');
+      setGlobalPersonId(null);
       return;
     }
     void load();
@@ -208,6 +211,8 @@ export default function GuestCardModal({
           phone: phone || null,
           email: email || null,
           vipType: vipType || null,
+          nationalIdFin: detailFields.nationalIdFin || null,
+          passportNumber: detailFields.passportNumber || null,
         }),
       });
       const json = await res.json();
@@ -445,6 +450,12 @@ export default function GuestCardModal({
                   fields={detailFields}
                   phoneVerified={phoneVerified}
                   emailVerified={emailVerified}
+                  fullName={fullName || `${firstName} ${lastName}`.trim()}
+                  nationality={nationality}
+                  guestId={guestId}
+                  globalPersonId={globalPersonId}
+                  onGlobalPersonIdChange={setGlobalPersonId}
+                  onReload={() => (guestId ? void load() : undefined)}
                   onChange={(key, value) => setDetailFields((f) => ({ ...f, [key]: value }))}
                   onVerified={(key, value) => {
                     if (key === 'phoneVerified') setPhoneVerified(value);

@@ -111,6 +111,20 @@ export class DataHubClientService {
     }
   }
 
+  isoDateBaku(d: Date): string {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Baku",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(d);
+    const y = parts.find((p) => p.type === "year")?.value;
+    const m = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
+    if (!y || !m || !day) return d.toISOString().slice(0, 10);
+    return `${y}-${m}-${day}`;
+  }
+
   async getFxRates(date?: string, symbols = "USD,EUR"): Promise<DataHubFxRate[] | null> {
     const q = new URLSearchParams({ symbols });
     if (date) q.set("date", date);
@@ -120,6 +134,13 @@ export class DataHubClientService {
 
   async getCompanyByVoen(voen: string): Promise<Record<string, unknown> | null> {
     return this.getJson<Record<string, unknown>>(`/companies/${voen}?maskPii=false`);
+  }
+
+  async getHsMeta(hsCode: string): Promise<{ hsCode: string; description?: string | null } | null> {
+    const code = hsCode.replace(/\D/g, "");
+    const body = await this.getJson<{ hsCode: string; description?: string }>(`/hs/${code}`);
+    if (!body?.hsCode) return null;
+    return { hsCode: body.hsCode, description: body.description ?? null };
   }
 
   async getTariff(hsCode: string, date: string): Promise<DataHubTariff | null> {
@@ -141,10 +162,48 @@ export class DataHubClientService {
   }
 
   async isWorkingDay(date: string, country = "az"): Promise<boolean | null> {
-    const body = await this.getJson<{ isWorkingDay: boolean }>(
+    const body = await this.getJson<{ isWorking: boolean }>(
       `/calendar/${country}/is-working-day?date=${encodeURIComponent(date)}`,
     );
-    return body?.isWorkingDay ?? null;
+    if (body?.isWorking != null) return body.isWorking;
+    return null;
+  }
+
+  async getCalendarDay(
+    date: string,
+    country = "az",
+  ): Promise<{
+    isWorking: boolean;
+    dayType: string;
+    labelEn?: string | null;
+  } | null> {
+    const body = await this.getJson<{
+      isWorking: boolean;
+      dayType: string;
+      labelEn?: string | null;
+    }>(`/calendar/${country}/day?date=${encodeURIComponent(date)}`);
+    return body ?? null;
+  }
+
+  async getCalendarDaysRange(
+    from: string,
+    to: string,
+    country = "az",
+  ): Promise<
+    Array<{
+      date: string;
+      isWorking: boolean;
+      dayType: string;
+    }> | null
+  > {
+    const q = new URLSearchParams({
+      from: from.trim(),
+      to: to.trim(),
+    });
+    const body = await this.getJson<{
+      days: Array<{ date: string; isWorking: boolean; dayType: string }>;
+    }>(`/calendar/${country}/days?${q}`);
+    return body?.days ?? null;
   }
 
   async getBanks(): Promise<{ banks: DataHubBank[] } | null> {
@@ -203,9 +262,75 @@ export class DataHubClientService {
       date: date.trim(),
       n: String(n),
     });
-    const body = await this.getJson<{ date: string }>(
+    const body = await this.getJson<{ resultDate: string }>(
       `/calendar/${country}/add-business-days?${q}`,
     );
-    return body?.date ?? null;
+    return body?.resultDate ?? null;
+  }
+
+  async getFxRatesRange(
+    from: string,
+    to: string,
+    symbol: string,
+  ): Promise<{ symbol: string; points: Array<{ rateDate: string; rate: number }> } | null> {
+    const q = new URLSearchParams({
+      from: from.trim(),
+      to: to.trim(),
+      symbol: symbol.trim().toUpperCase(),
+    });
+    return this.getJson(`/fx/rates/range?${q}`);
+  }
+
+  async convertFx(
+    from: string,
+    to: string,
+    amount: number,
+    date?: string,
+  ): Promise<{
+    from: string;
+    to: string;
+    amount: number;
+    result: number;
+    rateDate?: string;
+  } | null> {
+    const q = new URLSearchParams({
+      from: from.trim().toUpperCase(),
+      to: to.trim().toUpperCase(),
+      amount: String(amount),
+    });
+    if (date?.trim()) q.set("date", date.trim());
+    return this.getJson(`/fx/convert?${q}`);
+  }
+
+  /** Operational rate: hub first, allows PRELIMINARY; falls back to local DB read-through. */
+  async getOperationalAznPerUnit(
+    currencyCode: string,
+    date: Date,
+  ): Promise<{ rate: number; rateDate: string; isFallback: boolean } | null> {
+    const upper = currencyCode.trim().toUpperCase();
+    if (upper === "AZN" || upper === "AZM") {
+      return { rate: 1, rateDate: date.toISOString().slice(0, 10), isFallback: false };
+    }
+    const dateKey = this.isoDateBaku(date);
+    if (this.isEnabled()) {
+      const remote = await this.getFxRates(dateKey, upper);
+      const hit = remote?.find((r) => r.currencyCode === upper);
+      if (hit?.rate != null && Number.isFinite(hit.rate)) {
+        return {
+          rate: hit.rate,
+          rateDate: hit.rateDate ?? dateKey,
+          isFallback: hit.rateDate !== dateKey,
+        };
+      }
+      const converted = await this.convertFx(upper, "AZN", 1, dateKey);
+      if (converted?.result != null && Number.isFinite(converted.result)) {
+        return {
+          rate: converted.result,
+          rateDate: dateKey,
+          isFallback: false,
+        };
+      }
+    }
+    return null;
   }
 }

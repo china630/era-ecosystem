@@ -1,4 +1,5 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { dischargeAdmission } from "@/domain/inpatient/adt.service";
 import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
@@ -9,25 +10,16 @@ export async function PATCH(
     const { id } = await params;
     const assignment = await prisma.bedAssignment.findUnique({
       where: { id },
-      include: { bed: true },
+      select: { admissionId: true, dischargedAt: true },
     });
     if (!assignment) return jsonError("Assignment not found", 404);
     if (assignment.dischargedAt) return jsonError("Already discharged", 400);
-
-    const updated = await prisma.$transaction(async (tx) => {
-      const row = await tx.bedAssignment.update({
-        where: { id },
-        data: { dischargedAt: new Date() },
-      });
-      await tx.bed.update({
-        where: { id: assignment.bedId },
-        data: { status: "AVAILABLE" },
-      });
-      return row;
-    });
-
-    return jsonOk(updated);
+    if (!assignment.admissionId) return jsonError("Admission not linked", 400);
+    const admission = await dischargeAdmission(assignment.admissionId);
+    return jsonOk(admission);
   } catch (err) {
+    const msg = err instanceof Error ? err.message : "Failed";
+    if (msg.includes("not found")) return jsonError(msg, 404);
     return handleRouteError(err);
   }
 }

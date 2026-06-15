@@ -41,4 +41,10 @@ for svc in hotel-pms fnb-pos clinic retail-pos logistics construction crm auto-s
   run_migrate "$svc" "node scripts/docker-migrate-deploy.mjs" || echo "WARN: migrate skipped or failed for $svc"
 done
 
+# Bank CBS stack
+run_migrate bank-core "cd /app/packages/database && npx prisma migrate deploy" || echo "WARN: bank-core migrate failed"
+for svc in bank bank-dbo; do
+  run_migrate "$svc" "node scripts/docker-migrate-deploy.mjs" || echo "WARN: migrate skipped or failed for $svc"
+done
+
 echo "==> migrate-all: done"

@@ -53,6 +53,7 @@ export function CreateCounterpartyModal({
   const [finCode, setFinCode] = useState("");
   const [finCheckBusy, setFinCheckBusy] = useState(false);
   const [finVerified, setFinVerified] = useState(false);
+  const [mdmPersonId, setMdmPersonId] = useState<string | null>(null);
   const [manualCheckTax, setManualCheckTax] = useState(false);
   const [manualCheckInternal, setManualCheckInternal] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -222,7 +223,7 @@ export function CreateCounterpartyModal({
       const res = await apiFetch("/api/counterparties/lookup-fin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fin }),
+        body: JSON.stringify({ fin, fullName: name.trim() || undefined }),
       });
       if (!res.ok) {
         toast.error(await res.text());
@@ -231,6 +232,7 @@ export function CreateCounterpartyModal({
       const j = await safeJson<{
         found?: boolean;
         fullName?: string | null;
+        globalPersonId?: string | null;
         message?: string;
       }>(res);
       if (!j?.found) {
@@ -238,12 +240,14 @@ export function CreateCounterpartyModal({
           t("counterparties.finNotFound", { defaultValue: "FIN tapılmadı" }),
         );
         setFinVerified(false);
+        setMdmPersonId(null);
         return;
       }
       if (j.fullName?.trim() && !isPoisonLookupName(j.fullName)) {
         setName(j.fullName.trim());
       }
       setFinVerified(true);
+      setMdmPersonId(j.globalPersonId ?? null);
       toast.success(t("counterparties.finFound", { defaultValue: "FIN təsdiqləndi" }));
     } catch (err) {
       console.error("[handleCheckFin]", err);
@@ -270,6 +274,7 @@ export function CreateCounterpartyModal({
     setFinCode("");
     setFinCheckBusy(false);
     setFinVerified(false);
+    setMdmPersonId(null);
     setManualCheckTax(false);
     setManualCheckInternal(false);
     setBusy(false);
@@ -480,6 +485,7 @@ export function CreateCounterpartyModal({
                 maxLength={7}
                 onChange={(e) => {
                   setFinVerified(false);
+                  setMdmPersonId(null);
                   setFinCode(e.target.value.toUpperCase().slice(0, 7));
                 }}
                 className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
@@ -505,6 +511,7 @@ export function CreateCounterpartyModal({
             {finVerified ? (
               <span className="mt-1 inline-block rounded bg-violet-100 px-2 py-0.5 text-[12px] text-violet-900">
                 FIN ✓
+                {mdmPersonId ? ` · MDM ${mdmPersonId.slice(0, 4)}…${mdmPersonId.slice(-4)}` : ""}
               </span>
             ) : null}
           </div>

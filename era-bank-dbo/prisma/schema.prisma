@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DboChannel {
+  RETAIL
+  CORPORATE
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum SignStatus {
+  PENDING
+  SIGNED
+  REJECTED
+  EXPIRED
+}
+
+model CustomerSession {
+  id               String     @id @default(cuid())
+  customerId       String
+  globalPersonId   String?
+  channel          DboChannel
+  deviceId         String?
+  customerJwt      String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime   @default(now())
+
+  signRequestsRequested PaymentSignRequest[] @relation("RequestedBy")
+  signRequestsSigned    PaymentSignRequest[] @relation("SignedBy")
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model CorporateApiKey {
+  id              String       @id @default(cuid())
+  customerId      String
+  keyHash         String       @unique
+  permissionsJson Json
+  ipAllowlist     String[]
+  status          ApiKeyStatus @default(ACTIVE)
+  expiresAt       DateTime?
+  createdAt       DateTime     @default(now())
+
+  @@index([customerId])
+}
+
+model PaymentSignRequest {
+  id                   String     @id @default(cuid())
+  engineOrderId        String     @unique
+  customerId           String
+  status               SignStatus @default(PENDING)
+  requestedBySessionId String
+  signedBySessionId    String?
+  asanTransactionId    String?
+  expiresAt            DateTime
+  createdAt            DateTime   @default(now())
+
+  requestedBy CustomerSession  @relation("RequestedBy", fields: [requestedBySessionId], references: [id])
+  signedBy    CustomerSession? @relation("SignedBy", fields: [signedBySessionId], references: [id])
+
+  @@index([customerId, status])
+}

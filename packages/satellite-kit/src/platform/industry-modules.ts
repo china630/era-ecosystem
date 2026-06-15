@@ -9,7 +9,8 @@ export type IndustryModuleKey =
   | "CLINIC"
   | "WHOLESALE"
   | "HOTEL_PMS"
-  | "FNB_POS";
+  | "FNB_POS"
+  | "BANKING";
 
 /** @deprecated Use IndustryModuleKey */
 export type LegacyIndustryModuleKey =
@@ -29,6 +30,7 @@ export const INDUSTRY_MODULE_SLUGS = [
   "industry_wholesale",
   "industry_hotel_pms",
   "industry_fnb_pos",
+  "industry_banking",
 ] as const;
 
 /** Slugs accepted during one-release migration */
@@ -147,6 +149,16 @@ export const INDUSTRY_NAV_ITEMS: Array<{
     title: "F&B POS",
     description: "Restaurant POS, KDS, bridge",
   },
+  {
+    key: "BANKING",
+    slug: "industry_banking",
+    href: "/industry/banking",
+    vertical: "banking",
+    satelliteUrlEnv: "NEXT_PUBLIC_SATELLITE_BANK_URL",
+    moduleField: "industryBanking",
+    title: "Bank CBS",
+    description: "Teller ops, CBS back-office",
+  },
 ];
 
 const LEGACY_SLUG_TO_ITEM: Record<string, IndustryModuleSlug> = {
@@ -202,6 +214,7 @@ export function satelliteUrlForItem(
     CLINIC: e.ERA_CLINIC_ORIGIN,
     WHOLESALE: e.ERA_WHOLESALE_ORIGIN,
     HOTEL_PMS: e.ERA_HOTEL_PMS_ORIGIN,
+    BANKING: e.ERA_BANK_ORIGIN ?? e.NEXT_PUBLIC_SATELLITE_BANK_URL,
   };
   return eraOrigins[item.key] ?? null;
 }

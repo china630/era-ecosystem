@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "title": "ERA Internet Bank",
+    "description": "Retail and corporate digital banking"
+  },
+  "nav": {
+    "home": "Home",
+    "accounts": "Accounts",
+    "cards": "Cards",
+    "pay": "Pay",
+    "transfers": "Transfer",
+    "approve": "Approve",
+    "more": "More",
+    "logout": "Log out"
+  },
+  "login": {
+    "title": "Sign in",
+    "retailTab": "Retail",
+    "corporateTab": "Corporate",
+    "finLabel": "FIN",
+    "voenLabel": "VÖEN",
+    "otpRequest": "Send OTP",
+    "otpVerify": "Verify",
+    "otpCode": "OTP code",
+    "asanLogin": "ASAN Sign (stub)",
+    "asanComplete": "Complete ASAN",
+    "devHint": "Dev OTP: 123456"
+  },
+  "dashboard": {
+    "title": "Home",
+    "totalBalance": "Total balance",
+    "recentActivity": "Recent activity",
+    "noAccounts": "No accounts found"
+  },
+  "accounts": {
+    "title": "My accounts",
+    "balance": "Balance",
+    "iban": "IBAN",
+    "viewDetails": "Details"
+  },
+  "transfers": {
+    "title": "Internal transfer",
+    "from": "From",
+    "to": "To",
+    "amount": "Amount (AZN)",
+    "submit": "Transfer",
+    "success": "Transfer submitted"
+  },
+  "payments": {
+    "title": "Payments",
+    "new": "New payment",
+    "beneficiary": "Beneficiary IBAN",
+    "beneficiaryName": "Name",
+    "purpose": "Purpose",
+    "amount": "Amount (AZN)",
+    "create": "Create",
+    "submit": "Submit",
+    "status": "Status",
+    "empty": "No payment orders"
+  },
+  "approve": {
+    "title": "Approval queue",
+    "sign": "Sign with ASAN",
+    "empty": "No pending signatures",
+    "orderId": "Order"
+  },
+  "cards": {
+    "title": "Cards",
+    "expiry": "Expires",
+    "status": "Status",
+    "viewDetails": "Details",
+    "back": "Back to cards",
+    "temporaryBlock": "Block temporarily"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Error",
+    "back": "Back",
+    "save": "Save",
+    "cancel": "Cancel"
+  }
+}

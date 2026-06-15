@@ -8,9 +8,9 @@ describe("treatment planner work windows", () => {
     expect(out.getMinutes()).toBe(0);
   });
 
-  it("rolls to next day 09:00 after 17:00", () => {
+  it("rolls to next day 09:00 after 17:00", async () => {
     const slot = new Date("2026-06-04T17:30:00");
-    const out = nextWorkSlot(slot);
+    const out = await nextWorkSlot(slot);
     expect(out.getDate()).toBe(5);
     expect(out.getHours()).toBe(9);
   });

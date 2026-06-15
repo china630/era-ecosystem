@@ -9,7 +9,13 @@ import { PageHeader } from "@era/satellite-kit/ui";
 export default function DoctorPage() {
   const t = useTranslations("doctor");
   const [visits, setVisits] = useState<
-    Array<{ id: string; patientRef: { fullName: string }; status: string }>
+    Array<{
+      id: string;
+      patientRef: { fullName: string };
+      status: string;
+      scheduledAt?: string;
+      practitioner?: { fullName: string };
+    }>
   >([]);
 
   useEffect(() => {
@@ -20,6 +26,8 @@ export default function DoctorPage() {
           visit?: { id: string; status: string } | null;
           patientRef: { fullName: string };
           status: string;
+          scheduledAt: string;
+          practitioner: { fullName: string };
         }>;
         setVisits(
           rows
@@ -32,6 +40,8 @@ export default function DoctorPage() {
               id: a.visit!.id,
               status: a.visit!.status,
               patientRef: a.patientRef,
+              scheduledAt: a.scheduledAt,
+              practitioner: a.practitioner,
             })),
         );
       });
@@ -46,9 +56,15 @@ export default function DoctorPage() {
             <li key={v.id} className="flex items-center justify-between rounded border p-2">
               <span>
                 {v.patientRef.fullName} — {v.status}
+                {v.scheduledAt ? (
+                  <span className="block text-xs text-slate-500">
+                    {new Date(v.scheduledAt).toLocaleString()}
+                    {v.practitioner ? ` · ${v.practitioner.fullName}` : ""}
+                  </span>
+                ) : null}
               </span>
               <Link href={`/visits/${v.id}`} className={PRIMARY_BUTTON_CLASS}>
-                Open
+                {t("openVisit")}
               </Link>
             </li>
           ))}

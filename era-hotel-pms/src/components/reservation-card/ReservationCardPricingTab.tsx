@@ -1,8 +1,15 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { FORM_FIELD_GROUP_CLASS, MODAL_FIELD_LABEL_CLASS, MODAL_INPUT_CLASS, PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { FORM_FIELD_GROUP_CLASS, FxEquivalentBadge, MODAL_FIELD_LABEL_CLASS, MODAL_INPUT_CLASS, PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
 import type { DailyRateRow } from './types';
+
+function resolveDisplayCurrency(dailyRates: DailyRateRow[]): string {
+  const codes = dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase());
+  const foreign = codes.find((c) => c !== 'AZN');
+  return foreign ?? codes[0] ?? 'AZN';
+}
 
 export function ReservationCardPricingTab({
   isCreate,
@@ -37,11 +44,28 @@ export function ReservationCardPricingTab({
 }) {
   const t = useTranslations('reservationCard');
   const tb = useTranslations('booking');
+  const displayCurrency = useMemo(() => resolveDisplayCurrency(dailyRates), [dailyRates]);
 
   return (
     <div className="space-y-4">
       <p className="text-right text-lg font-semibold text-[#34495E]">
-        {isCreate ? (quoteText ?? tb('quotePending')) : `${t('total')}: ${totalAmount.toFixed(2)} AZN`}
+        {isCreate ? (
+          quoteText ?? tb('quotePending')
+        ) : (
+          <span className="inline-flex flex-col items-end gap-0.5">
+            <span>
+              {t('total')}: {totalAmount.toFixed(2)} {displayCurrency}
+            </span>
+            {displayCurrency !== 'AZN' ? (
+              <FxEquivalentBadge
+                amount={totalAmount}
+                currencyCode={displayCurrency}
+                label={t('fxApprox')}
+                className="font-normal"
+              />
+            ) : null}
+          </span>
+        )}
       </p>
       {!isCreate ? (
         <div className="flex flex-wrap items-center gap-4 text-[13px]">

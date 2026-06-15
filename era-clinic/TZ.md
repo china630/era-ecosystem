@@ -1,6 +1,6 @@
 # ERA Clinic — Technical specification (TZ)
 
-Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CLINIC.md](./doc/DELIVERY-CLINIC.md).
+Product requirements: [PRD.md](./PRD.md). Delivery tracker: [doc/DELIVERY-CLINIC.md](./doc/DELIVERY-CLINIC.md). Architecture: [doc/ARCHITECTURE.md](./doc/ARCHITECTURE.md). Full plan: [doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md](./doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md).
 
 ## Stack
 

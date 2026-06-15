@@ -11,6 +11,7 @@ import {
 
 const complaintSchema = z.object({ text: z.string().min(1) });
 const diagnosisSchema = z.object({
+  icdCodeId: z.string().min(1),
   icdCode: z.string().optional(),
   description: z.string().min(1),
 });

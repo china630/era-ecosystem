@@ -9,6 +9,7 @@ export * from "./clinic.events";
 export * from "./wholesale.events";
 export * from "./fb.events";
 export * from "./hr.events";
+export * from "./banking.events";
 export * from "./satellite-event";
 export {
   INVOICE_GL_POSTED,

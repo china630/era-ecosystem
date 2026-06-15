@@ -8,11 +8,13 @@ datasource db {
 }
 
 model Tenant {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  outlets   Outlet[]
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  enabledPresets  String[] @default(["outpatient"]) @map("enabled_presets")
+  defaultOutletId String?  @map("default_outlet_id")
+  createdAt       DateTime @default(now())
+  outlets         Outlet[]
 }
 
 enum LabOrderStatus {
@@ -107,17 +109,25 @@ model PatientRef {
   episodes         ClinicalEpisode[]
   procedureOrders       ProcedureOrder[]
   contraindications     PatientContraindication[]
+  bedAssignments        BedAssignment[]
+  inpatientAdmissions   InpatientAdmission[]
   createdAt             DateTime          @default(now())
 }
 
 model Practitioner {
-  id             String          @id @default(cuid())
-  code           String          @unique
-  fullName       String
-  specialty      String?
-  appointments   Appointment[]
-  visits         Visit[]
-  resourceBookings ResourceBooking[]
+  id                 String            @id @default(cuid())
+  code               String            @unique
+  fullName           String
+  specialty          String?
+  globalPersonId     String?           @map("global_person_id")
+  finCode            String?           @map("fin_code")
+  passportNumber     String?           @map("passport_number")
+  issuingCountry     String?           @map("issuing_country")
+  phone              String?
+  defaultSlotMinutes Int               @default(30) @map("default_slot_minutes")
+  appointments       Appointment[]
+  visits             Visit[]
+  resourceBookings   ResourceBooking[]
 }
 
 model Room {
@@ -468,12 +478,43 @@ model ProcedureOrder {
   @@index([resourceId, scheduledAt])
 }
 
+enum InpatientAdmissionStatus {
+  ADMITTED
+  DISCHARGED
+  TRANSFERRED
+}
+
+model InpatientAdmission {
+  id           String                   @id @default(cuid())
+  patientRefId String                   @map("patient_ref_id")
+  status       InpatientAdmissionStatus @default(ADMITTED)
+  admittedAt   DateTime                 @default(now()) @map("admitted_at")
+  dischargedAt DateTime?                @map("discharged_at")
+  patient      PatientRef               @relation(fields: [patientRefId], references: [id])
+  assignments  BedAssignment[]
+  dailyCharges InpatientDailyCharge[]
+
+  @@index([patientRefId, status])
+}
+
+model InpatientDailyCharge {
+  id          String             @id @default(cuid())
+  admissionId String             @map("admission_id")
+  chargeDate  DateTime           @map("charge_date") @db.Date
+  emittedAt   DateTime           @default(now()) @map("emitted_at")
+  admission   InpatientAdmission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
+
+  @@unique([admissionId, chargeDate])
+  @@map("inpatient_daily_charges")
+}
+
 model Ward {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  beds      Bed[]
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  dailyChargeCode String?  @map("daily_charge_code")
+  beds            Bed[]
+  createdAt       DateTime @default(now())
 }
 
 model Bed {
@@ -488,14 +529,18 @@ model Bed {
 }
 
 model BedAssignment {
-  id           String    @id @default(cuid())
+  id           String              @id @default(cuid())
   bedId        String
-  patientRefId String
-  admittedAt   DateTime  @default(now())
-  dischargedAt DateTime?
-  bed          Bed       @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  patientRefId String              @map("patient_ref_id")
+  admissionId  String?             @map("admission_id")
+  admittedAt   DateTime            @default(now()) @map("admitted_at")
+  dischargedAt DateTime?           @map("discharged_at")
+  bed          Bed                 @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  patient      PatientRef          @relation(fields: [patientRefId], references: [id])
+  admission    InpatientAdmission? @relation(fields: [admissionId], references: [id])
 
   @@index([bedId, dischargedAt])
+  @@index([admissionId])
 }
 
 model CpoeEntry {

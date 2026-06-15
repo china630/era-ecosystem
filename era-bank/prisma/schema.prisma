@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OpsUserStatus {
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+/// Operational staff — branch-bound; no ledger data.
+model OpsRole {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  name       String
+  limitsJson Json      @default("{}")
+  users      OpsUser[]
+  createdAt  DateTime  @default(now())
+}
+
+model OpsUser {
+  id             String        @id @default(cuid())
+  username       String        @unique
+  passwordHash   String?
+  fullName       String
+  globalPersonId String?
+  branchId       String
+  opsRoleId      String
+  opsRole        OpsRole       @relation(fields: [opsRoleId], references: [id])
+  status         OpsUserStatus @default(ACTIVE)
+  sessions       OpsSession[]
+  actionLogs     OpsActionLog[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([opsRoleId])
+  @@index([branchId])
+  @@index([status])
+}
+
+model OpsSession {
+  id        String    @id @default(cuid())
+  opsUserId String
+  opsUser   OpsUser   @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
+  branchId  String
+  openedAt  DateTime  @default(now())
+  closedAt  DateTime?
+
+  @@index([opsUserId])
+  @@index([branchId])
+}
+
+/// Operational UI audit — immutable ledger audit lives in era-bank-core.
+model OpsActionLog {
+  id           String   @id @default(cuid())
+  opsUserId    String
+  opsUser      OpsUser  @relation(fields: [opsUserId], references: [id], onDelete: Cascade)
+  action       String
+  refType      String?
+  refId        String?
+  metadataJson Json?
+  at           DateTime @default(now())
+
+  @@index([opsUserId])
+  @@index([at])
+}

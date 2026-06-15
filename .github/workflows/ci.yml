@@ -21,8 +21,10 @@ jobs:
           node-version: "22"
       - name: Build shared packages
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
-
-  orchestrator:
+      - name: MDM identity pattern audit
+        run: node scripts/audit-mdm-identity.mjs
+      - name: Reference data consumer boundary audit
+        run: node scripts/audit-reference-data.mjs
     runs-on: ubuntu-latest
     needs: packages
     timeout-minutes: 25
@@ -109,6 +111,8 @@ jobs:
       - name: Validate posting role presets
         working-directory: era-finance-core/packages/database
         run: npx tsx prisma/scripts/validate-posting-roles.ts
+      - name: NAS literal guard (finance API)
+        run: node scripts/lint-nas-literals.mjs
       - name: Validate no NAS literals in API
         working-directory: era-finance-core
         run: npm run validate:no-nas-literals
@@ -131,6 +135,26 @@ jobs:
           NODE_ENV: production
         run: npm run build
 
+  bank-core:
+    runs-on: ubuntu-latest
+    needs: packages
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://build:build@127.0.0.1:5432/build?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build shared packages
+        run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
+      - name: Install, test, build bank-core
+        working-directory: era-bank-core
+        run: |
+          npm ci
+          npm test -- --ci
+          npm run build
+
   satellite:
     runs-on: ubuntu-latest
     needs: packages
@@ -148,6 +172,8 @@ jobs:
           - era-crm
           - era-auto-service
           - era-wholesale
+          - era-bank
+          - era-bank-dbo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -333,14 +333,74 @@ Nav label: `nav.elektrawebImport`.
 | [clone-spec/09-master-data.md](./clone-spec/09-master-data.md) | Master data spec + import summary |
 | [ELEKTRAWEB-PARITY.md](./ELEKTRAWEB-PARITY.md) | Parity manifest pointer |
 | [docs/adr/hotel-elektraweb-import.md](../../docs/adr/hotel-elektraweb-import.md) | Architecture decision record |
+| [docs/adr/hotel-deferred-corporate-checkout.md](../../docs/adr/hotel-deferred-corporate-checkout.md) | T-room / city-ledger checkout parity |
 | [.cursor/rules/hotel-import-module.mdc](../.cursor/rules/hotel-import-module.mdc) | Cursor module map |
 
 ---
 
-## 15. Version history
+## 15. Elektraweb export limits & pre-merge scripts
+
+Elektraweb UI exports **at most ~1000 rows per download** unless the operator scrolls the full grid before export. Nafta migration therefore produces **overlapping chunk files** that must be merged **before** wizard upload.
+
+### 15.1 Merge scripts (`era-hotel-pms/scripts/`)
+
+| Script | Dedupe key | Output |
+|--------|------------|--------|
+| `merge-guest-cards.js` | `Guest Id` | `Guest Cards.merged.*.xlsx` |
+| `merge-reservations.js` | `Res Id` (prefers InHouse > Reservation > CheckOut) | `Front Office Control Panel.merged.*.xlsx` |
+| `merge-folio-transactions.js` | Folio transaction `Id` | `Folio Transactions.merged.xlsx` + `.summary.json` |
+
+```bash
+# Guest cards (all chunks in Downloads)
+node era-hotel-pms/scripts/merge-guest-cards.js "C:/Users/.../Downloads"
+
+# Reservations (explicit files or folder glob)
+node era-hotel-pms/scripts/merge-reservations.js --files chunk1.xlsx chunk2.xlsx --out merged.xlsx
+
+# Folio transactions (folder of chunks)
+node era-hotel-pms/scripts/merge-folio-transactions.js "C:/Users/.../Folio 01 jan - 14 jun 2026"
+```
+
+When the last chunk has **< ~850 rows**, the export is likely complete for that filter. Chunks with **900–1000 rows** usually need another date slice.
+
+### 15.2 Report types (do not confuse)
+
+| Elektraweb report | Contents | ERA use |
+|-------------------|----------|---------|
+| **Guest Cards** | Full guest registry | `Guest.externalRef`, MDM link, loyalty `visitCount` seed |
+| **Front Office Control Panel** | Reservations / room states | `Reservation.externalRef`; see T-room ADR |
+| **Folio Transactions** | All POS/folio movements (room, SPA, F&B, cash) | `FolioCharge.externalRef`; stay reconstruction |
+| **ProFolio Transactions** | Accommodation / ROOM lines only | Cross-check; not a substitute for full Folio Transactions |
+
+Early 2024 Folio Transactions exports may be **F&B-heavy** (`999 FB` POS account) before room/SPA posting matured. From 2026, Folio Transactions includes real guest names, `ACCOMMODATION`, and `SPA MEDIKAL` rows.
+
+### 15.3 T-prefixed `Room No` (FOCP)
+
+Not a physical room. See [hotel-deferred-corporate-checkout ADR](../../docs/adr/hotel-deferred-corporate-checkout.md):
+
+- **Deferred settlement:** guest departed; agency/corporate invoice pending → import as `CHECKED_OUT` + settlement flag (planned); never assign `T{ResId}` to `Room`.
+- **System ledger:** `999 FB`, `DEBITORLAR`, `TIBB AMBULATOR FOLIO`, `Sanal Folyo` → skip reservation import.
+
+### 15.4 Loyalty / visit history (bootstrap)
+
+| Source | What it gives | Limit |
+|--------|---------------|-------|
+| **Guest Cards** `Repeat Count` | Elektraweb visit counter per guest id | Best single-field seed (Nafta merged: ~5.6k guests with count > 0) |
+| **Folio Transactions** | Group by `Res Id` → stay window (`Arrival`/`Departure`), guest name, agency | Reconstructs **stays**, not guest identity; name spelling varies |
+| **FOCP reservations** | Full reservation rows when export complete | Preferred for stay list when available |
+| **WebOnly guest registry** | Clinic bridge (`Qonaq Id` + passport) | Not loyalty; crosswalk to Elektraweb `Guest Id` via passport |
+
+**Recommendation:** seed `Guest.visitCount` from merged Guest Cards; optionally recompute from merged folio + reservations after 2024–2026 folio archive is complete. Folio alone is **insufficient** for identity (duplicate names, multi-guest strings) but **necessary** to validate/enrich stay dates and spend.
+
+Phase 1 UAT does **not** require full historical folio replay — see [NAFTA_SANATORIUM_UAT.md](../../docs/NAFTA_SANATORIUM_UAT.md).
+
+---
+
+## 16. Version history
 
 | Date | Change |
 |------|--------|
 | 2026-06-12 | Stage 26: engine, adapters, schema, reference seed, super-admin API |
 | 2026-06-12 | UI consolidated to phased wizard; removed Import from master-data / stock / agencies |
 | 2026-06-12 | Guest import MDM `globalPersonId` resolve; super-admin-only gate |
+| 2026-06-15 | Pre-merge scripts; Folio vs ProFolio; T-room ADR; loyalty bootstrap notes (Nafta) |

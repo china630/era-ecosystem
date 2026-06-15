@@ -10,6 +10,7 @@ import {
   MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  VoenLookupField,
 } from '@era/satellite-kit/ui';
 import { EraDataGrid, PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
@@ -39,6 +40,8 @@ export default function TravelAgenciesPage() {
   const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
+  const [agencyVoen, setAgencyVoen] = useState('');
+  const [agencyNameHint, setAgencyNameHint] = useState('');
 
   const load = useCallback(async () => {
     const res = await fetch('/api/admin/travel-agencies');
@@ -66,11 +69,15 @@ export default function TravelAgenciesPage() {
 
   function openCreate() {
     setEditRow(null);
+    setAgencyVoen('');
+    setAgencyNameHint('');
     setModalOpen(true);
   }
 
   function openEdit(row: AgencyRow) {
     setEditRow(row);
+    setAgencyVoen(row.voen ?? '');
+    setAgencyNameHint('');
     setModalOpen(true);
   }
 
@@ -154,7 +161,7 @@ export default function TravelAgenciesPage() {
                 id: editRow?.id,
                 code: fd.get('code'),
                 name: fd.get('name'),
-                voen: (fd.get('voen') as string) || undefined,
+                voen: agencyVoen || (fd.get('voen') as string) || undefined,
                 commissionPercent: fd.get('commission')
                   ? Number(fd.get('commission'))
                   : undefined,
@@ -192,15 +199,24 @@ export default function TravelAgenciesPage() {
               required
             />
           </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ag-voen">VÖEN</label>
-            <input
-              id="ag-voen"
-              name="voen"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRow?.voen ?? ''}
-            />
-          </div>
+          <VoenLookupField
+            value={agencyVoen}
+            onChange={setAgencyVoen}
+            onResolved={(r) => {
+              if (r.found && r.name) setAgencyNameHint(r.name);
+            }}
+            labels={{
+              voen: 'VÖEN',
+              check: tc('check'),
+              found: tc('found'),
+              notFound: tc('notFound'),
+              invalid: tc('invalid'),
+            }}
+          />
+          {agencyNameHint ? (
+            <p className="text-xs text-[#7F8C8D]">{agencyNameHint}</p>
+          ) : null}
+          <input type="hidden" name="voen" value={agencyVoen} />
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ag-commission">{t('commission')}</label>
             <input

@@ -34,6 +34,7 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Bank Core (CBS) ADR | [era-bank-core.md](./adr/era-bank-core.md) — headless engine + `era-bank` satellite (D9) |
 | Bank engine spec | [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) |
 | Bank satellite spec | [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) (`industry_banking`) |
+| Bank DBO channel | [era-bank-dbo/doc/DELIVERY-BANK-DBO.md](../era-bank-dbo/doc/DELIVERY-BANK-DBO.md) · `:3211` retail/corporate PWA |
 
 ## Per-satellite layout
 
@@ -153,6 +154,23 @@ Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-r
 ```markdown
 | Владелец бизнеса | `BUSINESS_OWNER` | Маппинг `OWNER`/`DIRECTOR` из control plane; биллинг — Finance |
 ```
+
+## Natural-person MDM (cross-satellite)
+
+- **SoR:** Orchestrator `era_mdm` — store **`globalPersonId` only** in satellite DBs.
+- **Client:** `@era/satellite-kit` `linkPersonIdentity` (lookup FIN → resolve-or-create).
+- **Clinic:** `PatientRef`, `Practitioner` — strict; `/api/mdm/person-lookup`, `/api/mdm/person-merge`.
+- **Hotel:** `Guest` — strong; GuestCardModal details tab MDM lookup + merge.
+- **Finance:** `Employee`, `Counterparty` (ИП) — `OrchestratorMdmClientService`.
+- **Bank:** CIF natural + `POST /cif/customers/:id/beneficial-owners` (API).
+- Audit matrix: [MDM_IDENTITY_AUDIT.md](./MDM_IDENTITY_AUDIT.md) · ADR [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
+
+## Reference data (era-data-hub)
+
+- **SoR:** `era-data-hub` `/registry/v1/*` — FX, calendar, HS, banks, VÖEN directory, geo, UoM, tax, CoA templates.
+- **Primary consumers:** `era-finance-core`, `era-bank-core` (`ERA_DATA_HUB_ENABLED`, `DATA_HUB_SERVICE_TOKEN`).
+- **Industry rule:** no direct hub calls; use Finance handoffs (`financeFxPreview`, `financeHsTariffPreview`, `financeVoenLookup`) or deep links to Finance UI.
+- Audit: [REFERENCE_DATA_CONSUMER_AUDIT.md](./REFERENCE_DATA_CONSUMER_AUDIT.md) · ADR [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md).
 
 ## Finance boundary (all satellites)
 

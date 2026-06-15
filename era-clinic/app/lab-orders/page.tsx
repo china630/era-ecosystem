@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   ColorLegend,
+  MODAL_INPUT_CLASS,
+  ModalFooter,
+  ModalShell,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
@@ -18,25 +23,63 @@ type LabOrder = {
   patientRef: { refCode: string; fullName: string };
 };
 
+type PatientOption = { id: string; refCode: string; fullName: string };
+
 export default function LabOrdersPage() {
   const t = useTranslations("labOrders");
   const tc = useTranslations("common");
   const tNav = useTranslations("nav");
+  const router = useRouter();
   const [orders, setOrders] = useState<LabOrder[]>([]);
+  const [patients, setPatients] = useState<PatientOption[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({ patientRefCode: "", testCode: "", visitId: "" });
 
-  useEffect(() => {
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set("status", statusFilter);
     if (criticalOnly) params.set("criticalOnly", "true");
     const query = params.toString() ? `?${params}` : "";
-    fetch(`/api/lab-orders${query}`)
-      .then((res) => res.json())
-      .then((data) => setOrders(Array.isArray(data) ? data : []))
-      .finally(() => setLoading(false));
+    const res = await fetch(`/api/lab-orders${query}`);
+    const data = await res.json();
+    setOrders(Array.isArray(data) ? data : (data.data ?? []));
+    setLoading(false);
   }, [statusFilter, criticalOnly]);
+
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    void fetch("/api/patients")
+      .then((r) => r.json())
+      .then((d) => setPatients((d.data ?? d) as PatientOption[]));
+  }, []);
+
+  async function createOrder() {
+    const patient = patients.find((p) => p.refCode === form.patientRefCode);
+    if (!patient || !form.testCode.trim()) return;
+    const res = await fetch("/api/lab-orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patientRefCode: patient.refCode,
+        patientFullName: patient.fullName,
+        testCode: form.testCode.trim(),
+        visitId: form.visitId.trim() || undefined,
+      }),
+    });
+    const data = await res.json();
+    const order = data.data ?? data;
+    setCreateOpen(false);
+    setForm({ patientRefCode: "", testCode: "", visitId: "" });
+    if (order?.id) router.push(`/lab-orders/${order.id}`);
+    else await loadOrders();
+  }
 
   async function completeOrder(id: string) {
     await fetch(`/api/lab-orders/${id}/complete`, { method: "POST" });
@@ -52,10 +95,13 @@ export default function LabOrdersPage() {
         subtitle={t("subtitle")}
         actions={
           <div className="flex gap-2">
-            <Link href="/admin/lis-profiles" className={PRIMARY_BUTTON_CLASS}>
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCreateOpen(true)}>
+              {t("createTitle")}
+            </button>
+            <Link href="/admin/lis-profiles" className={SECONDARY_BUTTON_CLASS}>
               {t("importCsv")}
             </Link>
-            <Link href="/" className={PRIMARY_BUTTON_CLASS}>
+            <Link href="/" className={SECONDARY_BUTTON_CLASS}>
               {tNav("home")}
             </Link>
           </div>
@@ -136,6 +182,36 @@ export default function LabOrdersPage() {
           </ul>
         )}
       </div>
+
+      <ModalShell open={createOpen} title={t("createTitle")} onClose={() => setCreateOpen(false)}>
+        <div className="space-y-2">
+          <select
+            className={MODAL_INPUT_CLASS}
+            value={form.patientRefCode}
+            onChange={(e) => setForm({ ...form, patientRefCode: e.target.value })}
+          >
+            <option value="">{t("selectPatient")}</option>
+            {patients.map((p) => (
+              <option key={p.id} value={p.refCode}>
+                {p.fullName} ({p.refCode})
+              </option>
+            ))}
+          </select>
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("testCode")}
+            value={form.testCode}
+            onChange={(e) => setForm({ ...form, testCode: e.target.value })}
+          />
+          <input
+            className={MODAL_INPUT_CLASS}
+            placeholder={t("visitIdOptional")}
+            value={form.visitId}
+            onChange={(e) => setForm({ ...form, visitId: e.target.value })}
+          />
+        </div>
+        <ModalFooter onCancel={() => setCreateOpen(false)} onSubmit={() => void createOrder()} submitLabel={tc("save")} />
+      </ModalShell>
     </>
   );
 }

@@ -297,20 +297,6 @@ export async function checkInReservation(id: string) {
       checkInDate: reservation.checkInDate.toISOString(),
       checkOutDate: reservation.checkOutDate.toISOString(),
     }).catch((e) => console.error('Guest lifecycle check-in failed', e));
-    if (updated.ratePlan.medicalFlag) {
-      const { isClinicHttpBridgeEnabled, notifyClinicCheckIn } = await import(
-        '@/lib/integration/clinic-check-in-bridge'
-      );
-      if (isClinicHttpBridgeEnabled()) {
-        void notifyClinicCheckIn({
-          reservationId: id,
-          guestName: updated.guest.fullName,
-          passportNumber: updated.guest.passportNumber ?? undefined,
-          phone: updated.guest.phone ?? undefined,
-          globalPersonId: updated.guest.globalPersonId,
-        }).catch((e) => console.error('Clinic HTTP check-in bridge failed', e));
-      }
-    }
     if (
       process.env.ERA_DOOR_LOCK_ENABLED === '1' &&
       updated.room?.roomNumber

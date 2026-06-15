@@ -76,6 +76,8 @@ export default function SanatoriumPage() {
   const [chartDate, setChartDate] = useState(todayIso());
   const [complaint, setComplaint] = useState("");
   const [icdCode, setIcdCode] = useState("");
+  const [icdCodeId, setIcdCodeId] = useState("");
+  const [icdOptions, setIcdOptions] = useState<Array<{ id: string; code: string; description: string }>>([]);
   const [diagnosis, setDiagnosis] = useState("");
   const [testCode, setTestCode] = useState("CBC");
   const [programCode, setProgramCode] = useState("DETOX-7");
@@ -185,6 +187,7 @@ export default function SanatoriumPage() {
       }
       if (action === "diagnosis") {
         setIcdCode("");
+        setIcdCodeId("");
         setDiagnosis("");
         setDiagnosisModalOpen(false);
       }
@@ -464,7 +467,13 @@ export default function SanatoriumPage() {
         footer={
           <ModalFooter
             onCancel={() => setDiagnosisModalOpen(false)}
-            onSubmit={() => void postAction("diagnosis", { icdCode, description: diagnosis })}
+            onSubmit={() =>
+              void postAction("diagnosis", {
+                icdCodeId,
+                icdCode,
+                description: diagnosis,
+              })
+            }
             busy={busy}
             submitLabel={t("addDiagnosis")}
           />
@@ -473,11 +482,29 @@ export default function SanatoriumPage() {
         <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS}>ICD</label>
-            <input
+            <select
               className={MODAL_INPUT_CLASS}
-              value={icdCode}
-              onChange={(e) => setIcdCode(e.target.value)}
-            />
+              value={icdCodeId}
+              onFocus={() => {
+                void fetch("/api/icd")
+                  .then((r) => r.json())
+                  .then((d) => setIcdOptions(d.items ?? []));
+              }}
+              onChange={(e) => {
+                const id = e.target.value;
+                setIcdCodeId(id);
+                const row = icdOptions.find((x) => x.id === id);
+                if (row) setIcdCode(row.code);
+              }}
+              required
+            >
+              <option value="">—</option>
+              {icdOptions.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.code} — {row.description}
+                </option>
+              ))}
+            </select>
           </div>
           <div className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS}>{t("description")}</label>

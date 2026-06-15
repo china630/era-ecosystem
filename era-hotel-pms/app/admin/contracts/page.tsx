@@ -61,6 +61,14 @@ export default function SalesContractsPage() {
   const [allotmentModal, setAllotmentModal] = useState<Contract | null>(null);
   const [busy, setBusy] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
+  const [utilizationModal, setUtilizationModal] = useState<{
+    code: string;
+    reservationCount: number;
+    allotmentNights: number;
+    consumedNights: number;
+    utilizationPercent: number | null;
+    totalRevenue: number;
+  } | null>(null);
 
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -108,6 +116,13 @@ export default function SalesContractsPage() {
         <p className="text-sm text-red-600">{tc('noPermission')}</p>
       </AppShell>
     );
+  }
+
+  async function showUtilization(contractId: string) {
+    const res = await fetch(`/api/admin/contracts/${contractId}?utilization=1`);
+    const data = await res.json();
+    if (res.ok) setUtilizationModal(data);
+    else setMsg(data.error ?? tc('error'));
   }
 
   async function createContract(e: React.FormEvent) {
@@ -218,6 +233,13 @@ export default function SalesContractsPage() {
                           {t('activate')}
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className={SECONDARY_BUTTON_CLASS}
+                        onClick={() => void showUtilization(c.id)}
+                      >
+                        {t('utilization')}
+                      </button>
                       <button
                         type="button"
                         className={SECONDARY_BUTTON_CLASS}
@@ -336,6 +358,36 @@ export default function SalesContractsPage() {
             <p className="text-xs text-[#7F8C8D]">{t('contractHint', { id: selectedContractId.slice(0, 8) })}</p>
           )}
         </form>
+      </EraModal>
+
+      <EraModal
+        open={!!utilizationModal}
+        title={t('utilizationTitle', { code: utilizationModal?.code ?? '' })}
+        onClose={() => setUtilizationModal(null)}
+        footer={
+          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setUtilizationModal(null)}>
+            {tc('close')}
+          </button>
+        }
+      >
+        {utilizationModal && (
+          <dl className="grid grid-cols-2 gap-3 text-sm">
+            <dt className="text-[#7F8C8D]">{t('reservationCount')}</dt>
+            <dd>{utilizationModal.reservationCount}</dd>
+            <dt className="text-[#7F8C8D]">{t('allotmentNights')}</dt>
+            <dd>{utilizationModal.allotmentNights}</dd>
+            <dt className="text-[#7F8C8D]">{t('consumedNights')}</dt>
+            <dd>{utilizationModal.consumedNights}</dd>
+            <dt className="text-[#7F8C8D]">{t('utilizationPercent')}</dt>
+            <dd>
+              {utilizationModal.utilizationPercent != null
+                ? `${utilizationModal.utilizationPercent}%`
+                : '—'}
+            </dd>
+            <dt className="text-[#7F8C8D]">{t('totalRevenue')}</dt>
+            <dd>{utilizationModal.totalRevenue} AZN</dd>
+          </dl>
+        )}
       </EraModal>
     </AppShell>
   );

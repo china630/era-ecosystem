@@ -5,6 +5,7 @@ import {
   isSatelliteClinicPrescriptionIssued,
   isSatelliteClinicProcedureCompleted,
   isSatelliteClinicVisitCompleted,
+  isSatelliteClinicWardDayCharge,
   isSatelliteHotelGuestCheckedIn,
   isSatelliteHotelGuestCheckedOut,
   isSatelliteHotelRoomChanged,
@@ -27,6 +28,7 @@ import {
   satelliteClinicPrescriptionIssuedSchema,
   satelliteClinicProcedureCompletedSchema,
   satelliteClinicVisitCompletedSchema,
+  satelliteClinicWardDayChargeSchema,
   satelliteHotelGuestCheckedInSchema,
   satelliteHotelGuestCheckedOutSchema,
   satelliteHotelRoomChangedSchema,
@@ -42,6 +44,8 @@ import {
   satelliteRetailShiftClosedSchema,
   satelliteWholesaleOrderConfirmedSchema,
   satelliteFbStockConsumptionCompletedSchema,
+  isSatelliteBankGlDailySummary,
+  satelliteBankGlDailySummarySchema,
 } from "@era/contracts";
 import { LedgerType, Prisma, type PostingRole } from "@erafinance/database";
 import {
@@ -127,6 +131,10 @@ export class SatelliteEventDispatchService {
       const event = satelliteClinicPrescriptionIssuedSchema.parse(data);
       return this.handleClinicPrescription(organizationId, event);
     }
+    if (isSatelliteClinicWardDayCharge(data)) {
+      const event = satelliteClinicWardDayChargeSchema.parse(data);
+      return this.handleClinicWardDayCharge(organizationId, event);
+    }
     if (isSatelliteHotelGuestCheckedIn(data)) {
       const event = satelliteHotelGuestCheckedInSchema.parse(data);
       return this.handleHotelGuestLifecycle(organizationId, event, "checked_in");
@@ -162,6 +170,10 @@ export class SatelliteEventDispatchService {
         event.payload.events,
       );
       return { meta: result };
+    }
+    if (isSatelliteBankGlDailySummary(data)) {
+      const event = satelliteBankGlDailySummarySchema.parse(data);
+      return this.handleBankGlDailySummary(organizationId, event);
     }
     throw new Error("Unhandled satellite event type");
   }
@@ -781,6 +793,40 @@ export class SatelliteEventDispatchService {
     };
   }
 
+  private async handleClinicWardDayCharge(
+    organizationId: string,
+    event: ReturnType<typeof satelliteClinicWardDayChargeSchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    const cpId = await this.resolveCounterpartyId(organizationId);
+    const amount = event.payload.amountNet;
+    const transactionId = await this.prisma.$transaction(async (tx) =>
+      this.postBalancedJournal(tx, organizationId, {
+        amount,
+        reference: `clinic-ward:${event.payload.admissionId}:${event.payload.chargeDate}`,
+        description: `Inpatient ward day ${event.payload.wardCode}/${event.payload.bedCode}`,
+        counterpartyId: cpId,
+      }),
+    );
+    let invoiceId: string | undefined;
+    if (cpId) {
+      invoiceId = await this.createDraftInvoice(
+        organizationId,
+        cpId,
+        amount,
+        `Ward day ${event.payload.chargeDate}`,
+        event.payload.admissionId,
+      );
+    }
+    return {
+      transactionId,
+      invoiceId,
+      meta: {
+        admissionId: event.payload.admissionId,
+        chargeDate: event.payload.chargeDate,
+      },
+    };
+  }
+
   private async handleHotelGuestLifecycle(
     organizationId: string,
     event: {
@@ -833,6 +879,51 @@ export class SatelliteEventDispatchService {
         outletId: event.payload.outletId,
         lineCount: event.payload.lines.length,
       },
+    };
+  }
+
+  private async handleBankGlDailySummary(
+    organizationId: string,
+    event: ReturnType<typeof satelliteBankGlDailySummarySchema.parse>,
+  ): Promise<SatelliteDispatchResult> {
+    const ref = `BANK-GL-SUMMARY-${event.payload.businessDate}`;
+    const existing = await this.prisma.journalTransaction.findFirst({
+      where: { organizationId, reference: ref },
+      select: { id: true },
+    });
+    if (existing) {
+      return { transactionId: existing.id, meta: { idempotent: true } };
+    }
+
+    const lines: PostTransactionLine[] = event.payload.lines
+      .filter((l) => l.debit > 0 || l.credit > 0)
+      .map((l) => ({
+        accountCode: l.glCode,
+        debit: l.debit,
+        credit: l.credit,
+      }));
+
+    if (lines.length === 0) {
+      return { meta: { skipped: true, reason: "empty_lines" } };
+    }
+
+    this.accounting.validateBalance(lines);
+
+    const { transactionId } = await this.prisma.$transaction(async (tx) => {
+      const posted = await this.accounting.postJournalInTransaction(tx, {
+        organizationId,
+        date: new Date(`${event.payload.businessDate}T12:00:00.000Z`),
+        reference: ref,
+        description: `Bank CBS GL daily summary ${event.payload.businessDate}`,
+        ledgerType: LedgerType.NAS,
+        lines,
+      });
+      return posted;
+    });
+
+    return {
+      transactionId,
+      meta: { businessDate: event.payload.businessDate, lineCount: lines.length },
     };
   }
 }

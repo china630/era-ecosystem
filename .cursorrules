@@ -7,6 +7,7 @@
 | `era-common-laws.mdc` | Language, tenancy, security, compliance, integrity |
 | `era-architecture-boundaries.mdc` | Control plane vs satellites, SSO, MDM, events |
 | `documentation-upkeep.mdc` | Docs as part of definition of done |
+| `era-coverage-definition.mdc` | SHIPPED vs API/STUB; actor-aware COVERAGE_MATRIX |
 
 **Per-app rules:** each project under `era-*/.cursor/rules/` (local-dev, module-map, ui). Finance: `era-finance-core/.cursor/rules/`. Shared libs: `packages/.cursor/rules/shared-packages.mdc`.
 

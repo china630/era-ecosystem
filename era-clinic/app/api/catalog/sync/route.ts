@@ -1,4 +1,5 @@
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
 import { prisma } from "@/lib/prisma";
 
 type CatalogItem = { code: string; description: string; amount: number };
@@ -23,6 +24,8 @@ async function fetchFinanceCatalog(): Promise<CatalogItem[]> {
 
 export async function POST() {
   try {
+    const guard = await assertClinicAdminWrite();
+    if (guard.error) return guard.error;
     let items = await fetchFinanceCatalog();
     if (items.length === 0) {
       items = [
