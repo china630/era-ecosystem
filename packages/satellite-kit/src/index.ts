@@ -123,8 +123,11 @@ export {
   lookupLegalEntityByVoen,
   resolvePersonIdentity,
   mergePersonRecords,
+  linkPersonIdentity,
+  isValidAzFin,
   type MdmLookupOptions,
   type PersonIdentityInput,
+  type MdmClientOptions,
 } from "./integration/mdm-lookup.client";
 export {
   resolveGlobalPerson,
