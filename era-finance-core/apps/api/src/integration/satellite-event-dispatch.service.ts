@@ -887,7 +887,7 @@ export class SatelliteEventDispatchService {
     event: ReturnType<typeof satelliteBankGlDailySummarySchema.parse>,
   ): Promise<SatelliteDispatchResult> {
     const ref = `BANK-GL-SUMMARY-${event.payload.businessDate}`;
-    const existing = await this.prisma.journalTransaction.findFirst({
+    const existing = await this.prisma.transaction.findFirst({
       where: { organizationId, reference: ref },
       select: { id: true },
     });
