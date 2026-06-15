@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 const createSchema = z.object({
   subcontractorName: z.string().min(1),
   amountNet: z.number().nonnegative(),
+  voen: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -38,7 +39,7 @@ export async function POST(
         projectId: id,
         subcontractorName: body.subcontractorName,
         amountNet: body.amountNet,
-        notes: body.notes,
+        notes: body.voen ? `voen:${body.voen}${body.notes ? `; ${body.notes}` : ""}` : body.notes,
         status: "SUBMITTED",
       },
     });

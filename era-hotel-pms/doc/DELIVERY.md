@@ -24,7 +24,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 
 - [x] Prisma: HotelProfile, RoomType, RatePlan, MealPlan, RevenueCode, Department
 - [x] API: `/api/hotel/profile`, `/api/master/*`
-- [x] UI stub: `/admin/master-data`
+- [x] UI stub: `/admin/master-data` — **SHIPPED** full modal CRUD (2026-06)
 
 ## Stage 2 — PMS core (PMS-01, 02, 03, 07)
 
@@ -52,7 +52,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 ## Stage 6 — HK, channel, medical
 
 - [x] Housekeeping tasks + OOO
-- [x] Channel sync errors + OTA cancel stub
+- [s] Channel sync errors + OTA cancel stub (vendor creds)
 - [x] Medical alerts, orders, lab, procedure → folio
 
 ## Deferred (post-MVP)
@@ -310,7 +310,7 @@ Client: `@era/satellite-kit`.
 
 PRD M20–M23 · [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
-- [x] M20: Yield management rules (BAR by occupancy stub)
+- [s] M20: Yield management rules (BAR by occupancy stub)
 - [x] M21: Guest loyalty tier hook → `platform_loyalty`
 - [x] M22: Room service QR menu → fb-pos ticket
 - [x] M23: Maintenance work order from HK

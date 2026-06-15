@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
+import { relinkGuestGlobalPerson } from '@/lib/services/guest.service';
 
 export async function getGuestStats(id: string) {
   const guest = await prisma.guest.findUnique({ where: { id } });
@@ -93,7 +94,23 @@ export async function patchGuestFull(
     isLocked: boolean;
   }>,
 ) {
-  const { birthDate, visaExpiry, marriageDate, bonusPercent, ...rest } = input;
+  const { birthDate, visaExpiry, marriageDate, bonusPercent, nationalIdFin, passportNumber, fullName, nationality, phone, ...rest } = input;
+  if (
+    nationalIdFin !== undefined ||
+    passportNumber !== undefined ||
+    fullName !== undefined
+  ) {
+    const existing = await prisma.guest.findUnique({ where: { id } });
+    if (existing) {
+      await relinkGuestGlobalPerson(id, {
+        fullName: fullName ?? existing.fullName,
+        nationalIdFin: nationalIdFin ?? existing.nationalIdFin,
+        passportNumber: passportNumber ?? existing.passportNumber,
+        nationality: nationality ?? existing.nationality,
+        phone: phone ?? existing.phone,
+      });
+    }
+  }
   await prisma.guest.update({
     where: { id },
     data: {

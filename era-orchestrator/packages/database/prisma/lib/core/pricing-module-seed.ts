@@ -41,6 +41,7 @@ const INDUSTRY_SATELLITE_SEED: ReadonlyArray<{
   { key: "industry_auto_service", name: "Auto STO", sortOrder: 106, pricePerMonth: 18 },
   { key: "industry_clinic", name: "Clinic", sortOrder: 107, pricePerMonth: 22 },
   { key: "industry_wholesale", name: "Wholesale", sortOrder: 108, pricePerMonth: 18 },
+  { key: "industry_banking", name: "Bank CBS", sortOrder: 109, pricePerMonth: 99 },
 ];
 
 /**
@@ -246,6 +247,78 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
     isPremium: false,
     satelliteKey: "industry_hotel_pms",
   },
+  {
+    key: "banking_core",
+    name: "Bank Core (kernel)",
+    pricePerMonth: 0,
+    sortOrder: 120,
+    isPremium: false,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_payments",
+    name: "Payments hub",
+    pricePerMonth: 29,
+    sortOrder: 121,
+    isPremium: false,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_deposits",
+    name: "Deposits",
+    pricePerMonth: 19,
+    sortOrder: 122,
+    isPremium: false,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_loans",
+    name: "Lending",
+    pricePerMonth: 29,
+    sortOrder: 123,
+    isPremium: false,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_aml",
+    name: "AML / Compliance",
+    pricePerMonth: 39,
+    sortOrder: 124,
+    isPremium: true,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_regreporting",
+    name: "Regulatory reporting",
+    pricePerMonth: 29,
+    sortOrder: 125,
+    isPremium: true,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_dbo",
+    name: "Digital banking (DBO)",
+    pricePerMonth: 19,
+    sortOrder: 126,
+    isPremium: false,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_cards",
+    name: "Cards",
+    pricePerMonth: 29,
+    sortOrder: 127,
+    isPremium: true,
+    satelliteKey: "industry_banking",
+  },
+  {
+    key: "banking_treasury",
+    name: "Treasury / ALM",
+    pricePerMonth: 39,
+    sortOrder: 128,
+    isPremium: true,
+    satelliteKey: "industry_banking",
+  },
 ];
 
 async function ensureSatellites(prisma: PrismaClient): Promise<void> {
@@ -270,6 +343,7 @@ async function ensureSatellites(prisma: PrismaClient): Promise<void> {
     industry_auto_service: "auto",
     industry_clinic: "clinic",
     industry_wholesale: "wholesale",
+    industry_banking: "banking",
   };
   for (const s of INDUSTRY_SATELLITE_SEED) {
     await prisma.satellite.upsert({
@@ -288,7 +362,12 @@ async function ensureSatellites(prisma: PrismaClient): Promise<void> {
 function moduleSeedData(m: PricingModuleSeedRow) {
   const catalogKind = inferPricingCatalogKind(m.key);
   let satelliteKey =
-    m.satelliteKey ?? (m.key.startsWith("hotel_") ? "industry_hotel_pms" : null);
+    m.satelliteKey ??
+    (m.key.startsWith("hotel_")
+      ? "industry_hotel_pms"
+      : m.key.startsWith("banking_")
+        ? "industry_banking"
+        : null);
   if (!satelliteKey && FINANCE_TRIAL_ELIGIBLE.has(m.key)) {
     satelliteKey = "finance_core";
   }

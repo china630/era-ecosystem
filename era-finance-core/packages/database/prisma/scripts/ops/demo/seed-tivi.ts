@@ -32,7 +32,11 @@ import {
 } from "@prisma/client";
 import { closePrismaPool, createPrismaClient } from "../../../prisma-client";
 import { calculatePrivateNonOilPayroll } from "../../../../../../apps/api/src/hr/payroll-calculator.ts";
-import { isAzWorkingDay } from "../../../../../../apps/api/src/hr/calendar/az-2026.ts";
+function seedFallbackIsWorkingDay(year: number, monthIndex0: number, day: number): boolean {
+  const t = Date.UTC(year, monthIndex0, day);
+  const dow = new Date(t).getUTCDay();
+  return dow !== 0 && dow !== 6;
+}
 import { loadChartJson, seedChartOfAccountsForOrganization } from "../../../lib/chart/chart-seed";
 import { PRICING_MODULE_SEED_DEFAULTS } from "../../../lib/core/pricing-module-seed";
 
@@ -476,7 +480,7 @@ async function main(): Promise<void> {
     });
     for (const emp of emps) {
       for (let d = 1; d <= lastDay; d++) {
-        const work = isAzWorkingDay(y, m - 1, d);
+        const work = seedFallbackIsWorkingDay(y, m - 1, d);
         const dayDate = new Date(Date.UTC(y, m - 1, d, 12, 0, 0, 0));
         await prisma.timesheetEntry.create({
           data: {

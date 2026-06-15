@@ -61,6 +61,7 @@ export default function TripDetailPage() {
   const [podSignatureUrl, setPodSignatureUrl] = useState("");
   const [fuelLiters, setFuelLiters] = useState("");
   const [fuelCost, setFuelCost] = useState("");
+  const [slaEta, setSlaEta] = useState<string | null>(null);
 
   const loadTrip = useCallback(async () => {
     if (!id) return;
@@ -80,6 +81,11 @@ export default function TripDetailPage() {
     setPodSignatureUrl(data.podSignatureUrl ?? "");
     setFuelLiters(data.fuelLiters != null ? String(data.fuelLiters) : "");
     setFuelCost(data.fuelCost != null ? String(data.fuelCost) : "");
+    const from = new Date().toISOString().slice(0, 10);
+    void fetch(`/api/sla/eta?from=${from}&days=3`)
+      .then((r) => r.json())
+      .then((d) => setSlaEta(d.eta ?? null))
+      .catch(() => setSlaEta(null));
     setLoading(false);
   }, [id, t]);
 
@@ -277,6 +283,11 @@ export default function TripDetailPage() {
 
         <section className="space-y-2 text-[13px]">
           <h2 className="font-semibold">{t("statusActions")}</h2>
+          {trip.status === "PLANNED" && slaEta ? (
+            <p className="text-[12px] text-[#2980B9]">
+              {t("slaEta")}: {slaEta} ({t("businessDays")}: 3)
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             {trip.status === "PLANNED" && (
               <button

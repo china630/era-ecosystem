@@ -10,11 +10,34 @@ function parseDate(raw: string): Date {
   return d;
 }
 
+function toDayDto(
+  row: {
+    country: string;
+    date: Date;
+    isWorking: boolean;
+    dayType: string;
+    labelAz: string | null;
+    labelRu: string | null;
+    labelEn: string | null;
+  },
+  dateRaw: string,
+) {
+  return {
+    country: row.country,
+    date: dateRaw.slice(0, 10),
+    isWorking: row.isWorking,
+    dayType: row.dayType,
+    labelAz: row.labelAz,
+    labelRu: row.labelRu,
+    labelEn: row.labelEn,
+  };
+}
+
 @Injectable()
 export class CalendarService {
   constructor(private readonly ds: DataSourceService) {}
 
-  async isWorkingDay(country: string, dateRaw: string) {
+  private async findRow(country: string, dateRaw: string) {
     const date = parseDate(dateRaw);
     const row = await this.ds.hubDb().calendarDay.findUnique({
       where: { country_date: { country: country.toUpperCase(), date } },
@@ -25,12 +48,44 @@ export class CalendarService {
         message: `No calendar row for ${country} ${dateRaw.slice(0, 10)}`,
       });
     }
+    return row;
+  }
+
+  async getDay(country: string, dateRaw: string) {
+    const row = await this.findRow(country, dateRaw);
     return {
       meta: registryMeta("calendar_days", dateRaw.slice(0, 10)),
-      country: row.country,
-      date: dateRaw.slice(0, 10),
-      isWorking: row.isWorking,
-      dayType: row.dayType,
+      ...toDayDto(row, dateRaw),
+    };
+  }
+
+  async isWorkingDay(country: string, dateRaw: string) {
+    const row = await this.findRow(country, dateRaw);
+    return {
+      meta: registryMeta("calendar_days", dateRaw.slice(0, 10)),
+      ...toDayDto(row, dateRaw),
+    };
+  }
+
+  async getDaysRange(country: string, fromRaw: string, toRaw: string) {
+    const from = parseDate(fromRaw);
+    const to = parseDate(toRaw);
+    if (from.getTime() > to.getTime()) {
+      throw new BadRequestException({ code: "INVALID_RANGE", message: "from must be <= to" });
+    }
+    const c = country.toUpperCase();
+    const rows = await this.ds.hubDb().calendarDay.findMany({
+      where: { country: c, date: { gte: from, lte: to } },
+      orderBy: { date: "asc" },
+    });
+    return {
+      meta: registryMeta("calendar_days", `${fromRaw.slice(0, 10)}..${toRaw.slice(0, 10)}`),
+      country: c,
+      from: fromRaw.slice(0, 10),
+      to: toRaw.slice(0, 10),
+      days: rows.map((row) =>
+        toDayDto(row, row.date.toISOString().slice(0, 10)),
+      ),
     };
   }
 

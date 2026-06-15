@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { CounterpartyRole, UserRole } from "@erafinance/database";
+import { CounterpartyRole, CounterpartyLegalForm, UserRole } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -25,6 +25,7 @@ import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-c
 import { MergeCounterpartiesDto } from "./dto/merge-counterparties.dto";
 import { UpdateCounterpartyDto } from "./dto/update-counterparty.dto";
 import { CounterpartiesService } from "./counterparties.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import {
   blindIndex,
   encryptText,
@@ -64,7 +65,42 @@ export class CounterpartiesController {
     private readonly prisma: PrismaService,
     private readonly svc: CounterpartiesService,
     private readonly orchestratorMdm: OrchestratorMdmClientService,
+    private readonly dataHub: DataHubClientService,
   ) {}
+
+  @Get("voen-preview")
+  @ApiOperation({ summary: "VÖEN company preview (hub-first, read-only)" })
+  async voenPreview(@Query("voen") voen: string) {
+    const id = (voen ?? "").replace(/\D/g, "");
+    if (!/^\d{10}$/.test(id)) {
+      throw new ConflictException("VÖEN must be 10 digits");
+    }
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getCompanyByVoen(id);
+      if (remote) {
+        return {
+          found: true,
+          voen: id,
+          name: String(remote.name ?? remote.nameAz ?? id),
+          legalAddress: (remote.legalAddress as string) ?? null,
+          vatStatus: Boolean(remote.vatStatus ?? remote.isVatPayer),
+          source: "era-data-hub",
+        };
+      }
+    }
+    const local = await this.prisma.globalCounterparty.findUnique({ where: { taxId: id } });
+    if (local) {
+      return {
+        found: true,
+        voen: id,
+        name: local.name,
+        legalAddress: local.legalAddress,
+        vatStatus: local.vatStatus,
+        source: "finance-local",
+      };
+    }
+    return { found: false, voen: id, source: "none" };
+  }
 
   @Post("lookup-fin")
   @ApiOperation({ summary: "Lookup natural person by FIN (orchestrator MDM)" })
@@ -72,6 +108,19 @@ export class CounterpartiesController {
     @OrganizationId() organizationId: string,
     @Body() dto: LookupFinDto,
   ) {
+    if (dto.fullName?.trim()) {
+      const linked = await this.orchestratorMdm.linkPersonIdentity(
+        { fin: dto.fin, fullName: dto.fullName.trim() },
+        organizationId,
+      );
+      if (linked.globalPersonId) {
+        return {
+          found: true,
+          globalPersonId: linked.globalPersonId,
+          masked: linked.masked,
+        };
+      }
+    }
     const remote = await this.orchestratorMdm.lookupPersonByFin(dto.fin, organizationId);
     if (!remote) {
       return { found: false, message: "Orchestrator unavailable" };
@@ -231,6 +280,15 @@ export class CounterpartiesController {
 
     const kind = counterpartyKindFromLegalForm(dto.legalForm);
 
+    let globalPersonId: string | null = null;
+    if (dto.legalForm === CounterpartyLegalForm.INDIVIDUAL && dto.finCode?.trim()) {
+      const linked = await this.orchestratorMdm.linkPersonIdentity(
+        { fin: normalizeFin(dto.finCode.trim()), fullName: name },
+        orgId,
+      );
+      globalPersonId = linked.globalPersonId;
+    }
+
     try {
       const linked = await this.svc.findOrCreateByVoen({
         organizationId: orgId,
@@ -255,6 +313,7 @@ export class CounterpartiesController {
           ...(dto.portalLocale !== undefined && {
             portalLocale: dto.portalLocale,
           }),
+          ...(globalPersonId ? { globalPersonId } : {}),
           ...counterpartyExtraFields(dto),
         },
         include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },
@@ -292,6 +351,7 @@ export class CounterpartiesController {
         ...(dto.portalLocale !== undefined && {
           portalLocale: dto.portalLocale,
         }),
+        ...(globalPersonId ? { globalPersonId } : {}),
         ...counterpartyExtraFields(dto),
       },
       include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },

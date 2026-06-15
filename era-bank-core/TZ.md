@@ -260,7 +260,7 @@ Rules:
 
 - Accounts are single-currency; a customer holds N accounts for N currencies.
 - FX conversion posts through a transit/position GL account with FX difference legs (pattern mirrors finance-core acct 662/762; concrete CBAR codes from data-hub COA template).
-- EOD revaluation marks open FX positions to the CBAR official rate (data-hub `GET /fx/rates`).
+- EOD revaluation marks open FX positions to the CBAR official rate (`data-hub` `GET /fx/rates?date=` — **FINAL only** for posting; `DataHubClient.getFxRate(currency, asOf)`; on-prem fallback `ref-data-snapshot.fxRates[]`).
 
 ## §7. Inter-branch settlement (МФР) — worked mechanics
 

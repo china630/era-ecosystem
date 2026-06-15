@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
+  FxEquivalentBadge,
   GHOST_BUTTON_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
@@ -69,14 +70,17 @@ export default function FolioPage() {
     { method: 'CASH', amount: '' },
   ]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [pricingCurrency, setPricingCurrency] = useState('AZN');
 
   const load = useCallback(async () => {
-    const [fRes, rRes] = await Promise.all([
+    const [fRes, rRes, resRes] = await Promise.all([
       fetch(`/api/folios?reservationId=${reservationId}`),
       fetch('/api/master/revenue-codes'),
+      fetch(`/api/reservations/${reservationId}`),
     ]);
     const fData = await fRes.json();
     const rData = await rRes.json();
+    const resData = resRes.ok ? await resRes.json() : null;
     if (fRes.ok) {
       setFolios(fData);
       if (fData[0]) setSelectedFolio(fData[0].id);
@@ -90,6 +94,11 @@ export default function FolioPage() {
       }
     }
     if (rRes.ok) setRevenueCodes(rData);
+    const rates = (resData?.dailyRates as Array<{ currencyCode?: string }> | undefined) ?? [];
+    const foreign = rates
+      .map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase())
+      .find((c) => c !== 'AZN');
+    setPricingCurrency(foreign ?? rates[0]?.currencyCode?.trim().toUpperCase() ?? 'AZN');
   }, [reservationId]);
 
   useEffect(() => {
@@ -195,6 +204,12 @@ export default function FolioPage() {
         }`}
       >
         {t('totalBalance')} <strong>{totalBalance.toFixed(2)} AZN</strong>
+        {pricingCurrency !== 'AZN' ? (
+          <span className="ml-2 inline-block">
+            ({t('ratesIn', { currency: pricingCurrency })}{' '}
+            <FxEquivalentBadge amount={Math.abs(totalBalance)} currencyCode="AZN" to={pricingCurrency} label="≈" />)
+          </span>
+        ) : null}
         {Math.abs(totalBalance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
       </PageSection>
 

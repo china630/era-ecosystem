@@ -70,7 +70,7 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 
 API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 
-**`era-bank`** carries the `industry_banking` gate and is a UI/workflow client of the headless **`era-bank-core`** engine (`:4300`); it holds **no ledger/money state** (ADR D9). Its `/api` is a BFF proxy to the engine.
+**`era-bank`** carries the `industry_banking` gate and is a UI/workflow client of the headless **`era-bank-core`** engine (`:4300`); it holds **no ledger/money state** (ADR D9). Its `/api` is a BFF proxy to the engine. GL reads use **`/api/gl/*`** (trial balance, chart) — not nested under `/api/accounts`.
 
 ---
 
@@ -106,7 +106,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Wholesale | `industry_wholesale` | `/industry/wholesale` | `wholesale` |
 | Bank (satellite) | `industry_banking` | `/industry/banking` | `banking` |
 
-**Banking modules** (`catalog_kind = MODULE`, `satellite_key = industry_banking`): `banking_core` (mandatory), `banking_deposits`, `banking_loans`, `banking_cards`, `banking_payments`, `banking_aml`, `banking_treasury`, `banking_dbo`, `banking_regreporting`. Bundles `banking_bundle_retail|universal`. Branch metering quota: `active_branches`. The `industry_banking` gate is carried by the **`era-bank`** satellite; the regulated logic runs in the headless **`era-bank-core`** engine (`banking_dbo` channels in future `era-bank-dbo`).
+**Banking modules** (`catalog_kind = MODULE`, `satellite_key = industry_banking`): `banking_core` (mandatory), `banking_deposits`, `banking_loans`, `banking_cards`, `banking_payments`, `banking_aml`, `banking_treasury`, `banking_dbo`, `banking_regreporting`. Bundles `banking_bundle_retail|universal`. Branch metering quota: `active_branches`. The `industry_banking` gate is carried by the **`era-bank`** satellite; the regulated logic runs in the headless **`era-bank-core`** engine. Customer self-service runs in **`era-bank-dbo`** (`:3211`, module `banking_dbo`).
 
 **Legacy slugs** (read for one release): `industry_fnb_pos`, `industry_retail`, `industry_logistics`, `industry_crm`, `industry_auto_service`. Migrate: `node scripts/migrate-industry-module-slugs.mjs`.
 
@@ -144,7 +144,9 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Storage add-on gate | `PLATFORM_STORAGE_ENABLED` | `true` — enables upload API routes |
 | S3 driver | `STORAGE_DRIVER`, `S3_*`, `AWS_*` | See [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) § platform_storage |
 | Data Hub (internal) | `ERA_DATA_HUB_URL` | `http://data-hub:4200` |
-| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `false` / `true` on finance-core |
+| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** only |
+| Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
+| Industry reference data | — | **No** direct hub; use Finance handoffs (`financeFxPreview`, `financeHsTariffPreview`) |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
 | Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |

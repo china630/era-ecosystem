@@ -93,6 +93,10 @@ export function ReservationCardEditor({
   const [preferredBed, setPreferredBed] = useState('');
   const [givenRoomTypeId, setGivenRoomTypeId] = useState('');
   const [contractRef, setContractRef] = useState('');
+  const [salesContractId, setSalesContractId] = useState('');
+  const [salesContracts, setSalesContracts] = useState<
+    Array<{ id: string; label: string; agencyId: string | null; ratePlanId: string; code: string }>
+  >([]);
   const [attachments, setAttachments] = useState<AttachmentRow[]>([]);
   const [attachOpen, setAttachOpen] = useState(false);
   const [roomStatus, setRoomStatus] = useState('');
@@ -160,6 +164,7 @@ export function ReservationCardEditor({
     setPreferredBed(String(json.preferredBed ?? ''));
     setGivenRoomTypeId(String(json.givenRoomTypeId ?? ''));
     setContractRef(String(json.contractRef ?? ''));
+    setSalesContractId(String(json.salesContractId ?? ''));
     setAttachments((json.attachments as AttachmentRow[]) ?? []);
     const rm = json.room as { status?: string } | null | undefined;
     setRoomStatus(rm?.status ?? '');
@@ -270,7 +275,10 @@ export function ReservationCardEditor({
       fetch('/api/master/rate-plans').then((r) => r.json()),
       fetch('/api/guests').then((r) => r.json()),
       fetch('/api/rooms').then((r) => r.json()),
-    ]).then(([ag, src, rt, mp, rp, g, rm]) => {
+      fetch('/api/admin/contracts?status=ACTIVE')
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+    ]).then(([ag, src, rt, mp, rp, g, rm, contracts]) => {
       if (Array.isArray(ag)) {
         setAgencies(ag.map((x: { id: string; code: string; name: string }) => ({
           id: x.id,
@@ -302,6 +310,25 @@ export function ReservationCardEditor({
       }
       if (Array.isArray(rm)) {
         setRooms(rm.map((x: { id: string; roomNumber: string }) => ({ id: x.id, roomNumber: x.roomNumber })));
+      }
+      if (Array.isArray(contracts)) {
+        setSalesContracts(
+          contracts.map(
+            (x: {
+              id: string;
+              code: string;
+              name: string;
+              agencyId: string | null;
+              ratePlanId: string;
+            }) => ({
+              id: x.id,
+              code: x.code,
+              agencyId: x.agencyId,
+              ratePlanId: x.ratePlanId,
+              label: `${x.code} — ${x.name}`,
+            }),
+          ),
+        );
       }
     });
   }, [open, load, isCreate, tc]);
@@ -468,6 +495,7 @@ export function ReservationCardEditor({
       preferredBed,
       givenRoomTypeId,
       contractRef,
+      salesContractId,
       creditLimitAzn,
     }),
     [
@@ -503,11 +531,30 @@ export function ReservationCardEditor({
       preferredBed,
       givenRoomTypeId,
       contractRef,
+      salesContractId,
       creditLimitAzn,
     ],
   );
 
   function onLeftChange(patch: Partial<Record<string, string>>) {
+    if (patch.salesContractId !== undefined) {
+      const cid = patch.salesContractId;
+      setSalesContractId(cid);
+      if (cid) {
+        const contract = salesContracts.find((c) => c.id === cid);
+        if (contract) {
+          setRatePlanId(contract.ratePlanId);
+          if (contract.agencyId) setAgencyId(contract.agencyId);
+          setContractRef(contract.code);
+        }
+      } else {
+        setContractRef('');
+      }
+      const rest = { ...patch };
+      delete rest.salesContractId;
+      if (Object.keys(rest).length === 0) return;
+      patch = rest;
+    }
     const m: Record<string, (v: string) => void> = {
       checkIn: setCheckIn,
       checkOut: setCheckOut,
@@ -541,6 +588,7 @@ export function ReservationCardEditor({
       preferredBed: setPreferredBed,
       givenRoomTypeId: setGivenRoomTypeId,
       contractRef: setContractRef,
+      salesContractId: setSalesContractId,
       creditLimitAzn: setCreditLimitAzn,
     };
     for (const [k, v] of Object.entries(patch)) {
@@ -565,6 +613,7 @@ export function ReservationCardEditor({
             guestId,
             agencyId: agencyId || undefined,
             sourceId: sourceId || undefined,
+            salesContractId: salesContractId || undefined,
             mealPlanId: mealPlanId || undefined,
             checkInDate: mergeDateTime(checkIn, checkInTime),
             checkOutDate: mergeDateTime(checkOut, checkOutTime),
@@ -614,6 +663,7 @@ export function ReservationCardEditor({
           preferredBed: preferredBed || null,
           givenRoomTypeId: givenRoomTypeId || null,
           contractRef: contractRef || null,
+          salesContractId: salesContractId || null,
           creditLimitAzn:
             creditLimitAzn.trim() === '' ? null : Math.round(Number(creditLimitAzn) * 100) / 100,
           useManualRate,
@@ -702,6 +752,11 @@ export function ReservationCardEditor({
     })),
   );
 
+  const pricingDisplayCurrency =
+    dailyRates.map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase()).find((c) => c !== 'AZN') ??
+    dailyRates[0]?.currencyCode?.trim().toUpperCase() ??
+    'AZN';
+
   async function uploadAttachment(file: File) {
     if (!reservationId) return;
     setBusy(true);
@@ -782,6 +837,7 @@ export function ReservationCardEditor({
             isLocked={isLocked}
             agencies={agencies}
             sources={sources}
+            salesContracts={salesContracts}
             roomTypes={roomTypes}
             mealPlans={mealPlans}
             ratePlans={ratePlans}
@@ -884,6 +940,7 @@ export function ReservationCardEditor({
                     reservationId={reservationId!}
                     folioTab={folioTab}
                     lines={folioLines}
+                    displayCurrency={pricingDisplayCurrency}
                     onFolioTab={setFolioTab}
                   />
                 ))}

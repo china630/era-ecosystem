@@ -34,18 +34,28 @@ export default function BanquetDetailPage() {
   const [linePrice, setLinePrice] = useState('100');
   const [staffRole, setStaffRole] = useState('WAITER');
   const [staffName, setStaffName] = useState('');
+  const [saloons, setSaloons] = useState<Array<{ id: string; code: string; name: string }>>([]);
+  const [resourceSaloonId, setResourceSaloonId] = useState('');
+  const [resourceLabel, setResourceLabel] = useState('');
+  const [resourceStart, setResourceStart] = useState('');
+  const [resourceEnd, setResourceEnd] = useState('');
 
   const load = useCallback(async () => {
     const id = params.id;
-    const [evRes, stRes, setRes] = await Promise.all([
+    const [evRes, stRes, setRes, banquetRes] = await Promise.all([
       fetch(`/api/banquets/${id}`),
       fetch(`/api/banquets/${id}/staff`),
       fetch(`/api/banquets/${id}/settlement`),
+      fetch('/api/banquets'),
     ]);
     setEvent(await evRes.json());
     setStaff(await stRes.json());
     setSettlement(await setRes.json());
-  }, [params.id]);
+    const banquetData = await banquetRes.json();
+    const list = banquetData.saloons ?? [];
+    setSaloons(list);
+    if (!resourceSaloonId && list[0]?.id) setResourceSaloonId(list[0].id);
+  }, [params.id, resourceSaloonId]);
 
   useEffect(() => {
     if (can(PERMISSIONS.RESERVATIONS_READ)) void load();
@@ -90,6 +100,30 @@ export default function BanquetDetailPage() {
     setMsg(res.ok ? t('staffAdded') : data.error ?? tc('error'));
     if (res.ok) {
       setStaffName('');
+      await load();
+    }
+  }
+
+  async function addResource(e: React.FormEvent) {
+    e.preventDefault();
+    if (!resourceStart || !resourceEnd) {
+      setMsg(t('resourceMissingTimes'));
+      return;
+    }
+    const res = await fetch(`/api/banquets/${params.id}/resources`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        saloonId: resourceSaloonId || undefined,
+        label: resourceLabel || undefined,
+        startAt: new Date(resourceStart).toISOString(),
+        endAt: new Date(resourceEnd).toISOString(),
+      }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? t('resourceAdded') : data.error ?? tc('error'));
+    if (res.ok) {
+      setResourceLabel('');
       await load();
     }
   }
@@ -191,13 +225,66 @@ export default function BanquetDetailPage() {
             {t('openCalendar')}
           </Link>
           <ul className="mt-4 space-y-2 text-sm">
-            {((event?.resourceBookings as Array<{ id: string; label?: string | null; startAt: string; saloon?: { name: string } | null }>) ?? []).map((b) => (
+            {((event?.resourceBookings as Array<{ id: string; label?: string | null; startAt: string; endAt?: string; saloon?: { name: string } | null }>) ?? []).map((b) => (
               <li key={b.id}>
                 {b.label ?? b.saloon?.name ?? 'Resource'} —{' '}
                 {new Date(b.startAt).toLocaleString()}
+                {b.endAt ? ` → ${new Date(b.endAt).toLocaleString()}` : ''}
               </li>
             ))}
           </ul>
+          {event?.status === 'DRAFT' && can(PERMISSIONS.RESERVATIONS_WRITE) && (
+            <form onSubmit={addResource} className={`${FORM_STACK_CLASS} mt-6 max-w-md`}>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t('saloon')}</label>
+                <select
+                  className={MODAL_INPUT_CLASS}
+                  value={resourceSaloonId}
+                  onChange={(e) => setResourceSaloonId(e.target.value)}
+                >
+                  {saloons.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.code} — {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceLabel')}</label>
+                <input
+                  className={MODAL_INPUT_CLASS}
+                  value={resourceLabel}
+                  onChange={(e) => setResourceLabel(e.target.value)}
+                  placeholder={t('resourceLabelPlaceholder')}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={FORM_FIELD_GROUP_CLASS}>
+                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceStart')}</label>
+                  <input
+                    type="datetime-local"
+                    className={MODAL_INPUT_CLASS}
+                    value={resourceStart}
+                    onChange={(e) => setResourceStart(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={FORM_FIELD_GROUP_CLASS}>
+                  <label className={MODAL_FIELD_LABEL_CLASS}>{t('resourceEnd')}</label>
+                  <input
+                    type="datetime-local"
+                    className={MODAL_INPUT_CLASS}
+                    value={resourceEnd}
+                    onChange={(e) => setResourceEnd(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <button type="submit" className={PRIMARY_BUTTON_CLASS}>
+                {t('addResource')}
+              </button>
+            </form>
+          )}
         </PageSection>
       )}
 

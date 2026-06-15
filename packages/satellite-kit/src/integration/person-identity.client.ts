@@ -88,6 +88,32 @@ export async function resolvePersonIdentity(
   return { globalPersonId: data.globalPersonId ?? data.id ?? null };
 }
 
+/** AZ FIN: 7 chars, no I/O. */
+export function isValidAzFin(fin: string): boolean {
+  return /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/.test(fin.trim());
+}
+
+/** Canonical: lookup FIN → else resolve-or-create. */
+export async function linkPersonIdentity(
+  input: PersonIdentityInput,
+  opts?: MdmClientOptions & { requesterOrgId?: string; purpose?: string },
+): Promise<{ globalPersonId: string | null; created?: boolean; masked?: boolean }> {
+  if (!input.fullName?.trim()) {
+    return { globalPersonId: null };
+  }
+  if (input.fin?.trim()) {
+    const lookup = await lookupGlobalPersonByFin(input.fin.trim(), opts);
+    if (lookup.globalPersonId) {
+      return { globalPersonId: lookup.globalPersonId, masked: lookup.masked };
+    }
+  }
+  const resolved = await resolvePersonIdentity(input, opts);
+  return {
+    globalPersonId: resolved.globalPersonId,
+    created: Boolean(resolved.globalPersonId),
+  };
+}
+
 /** Merge foreigner record into citizen record when FIN is obtained. */
 export async function mergePersonRecords(
   sourcePersonId: string,

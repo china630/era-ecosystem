@@ -11,7 +11,7 @@
 | ID | Module | Status |
 |----|--------|--------|
 | DH-1 | FX rates + history + CBAR ingest | **DONE** (Pass 2) |
-| DH-2 | Production calendar AZ | **MVP** |
+| DH-2 | Production calendar AZ | **DONE** (2025–2028 seed, full dayType, bulk API) |
 | DH-3 | HS + customs tariffs | **MVP** |
 | DH-6 | Company directory (VÖEN) | **MVP** (PII shelf C) |
 | DH-7 | Banks + branches | **MVP** |

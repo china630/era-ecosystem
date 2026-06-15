@@ -39,6 +39,7 @@ const ENDPOINT_PRESETS = [
   "industry_fnb_pos",
   "industry_clinic",
   "industry_retail_pos",
+  "industry_banking",
   "finance_core",
 ];
 

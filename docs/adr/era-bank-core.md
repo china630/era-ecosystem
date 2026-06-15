@@ -1,6 +1,6 @@
 # ADR: ERA Bank Core (`banking-core`) and `industry_banking` satellite
 
-**Status:** Proposed (2026-06-08) — foundation for a new product line.
+**Status:** Accepted (MVP implemented 2026-06-14)
 **Decision owners:** Platform architecture.
 **Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md) · [era-data-hub.md](./era-data-hub.md) · [satellite-finance-bridge-pattern.md](./satellite-finance-bridge-pattern.md)
 **Product docs:** [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md)

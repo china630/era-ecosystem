@@ -4,6 +4,8 @@ Functional modules per application. **Finance** = source of truth for GL, sales/
 
 **Versions:** [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — **v1.0** / **v1.1** / **v2.0** = shipped.
 
+**Full readiness (Doc / API / UI / actors):** [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md). Module **DONE** here = minimum API + DELIVERY checkbox; actor UI may still be `[~]` until COVERAGE_MATRIX row is **SHIPPED**.
+
 **Architecture:** [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) · **Platform add-ons:** [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md)
 
 Industry Solutions entitlements (Finance sidebar): see [industry-satellite-sync.md](../era-finance-core/docs/industry-satellite-sync.md).
@@ -281,6 +283,8 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 
 ## era-clinic
 
+Product lines & presets: [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-presets.md) · [CLINIC-FULL-IMPLEMENTATION-PLAN.md](../era-clinic/doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
+
 | Module | Since | Notes |
 |--------|-------|-------|
 | M0 Shell | — | **DONE** |
@@ -296,9 +300,10 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 | M10 EHR / CPOE lite | v1.1 | visit CPOE | **DONE** |
 | M11 LIS HL7 import | v1.1 | `/api/lab/import` | **DONE** |
 | M12 Insurance eligibility | v1.1 | FINANCE proxy | **DONE** |
-| M13 Inpatient beds | v1.1 | ward UI | **DONE** |
+| M13 Inpatient beds | v1.1 | ward-lite stub → preset `inpatient_day` | **PARTIAL** |
 | M14 Telehealth + portal | v1.0 | — | **DONE** |
 | K5 Sanatorium bridge | — | **DONE** |
+| Presets | 2026-06 | outpatient / sanatorium / inpatient_day / wellness | **PLANNED** |
 | Events | — | visit + lab completed |
 | Growth | — | DELIVERY K6 |
 
@@ -328,13 +333,28 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 | M2 Memberships / RBAC | Access, transfer, disputes | **DONE** |
 | M3 Entitlements validate | Billing block, module gate | **DONE** |
 | M4 Event gateway | Fan-out to Finance worker | **DONE** |
-| M5 MDM Phase 1 | Global person registry | **DONE** |
+| M5 MDM Phase 1 | Global person registry + satellite `linkPersonIdentity` | **DONE** |
 | M6 Ownership dispute | CP1 procedure | **DONE** |
 | M7 Billing SoT | CP-BILLING post-paid | **DONE** |
 | M8 Platform add-ons API | [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) CP-B2–B8 | **Live** |
 | M9 Launcher web | `:3100` module grid | **DONE** |
 
 **ADR:** [control-plane-billing-migration.md](../era-orchestrator/doc/adr/control-plane-billing-migration.md)
+
+---
+
+## Platform reference data (`era-data-hub` / `platform_reference_data`)
+
+ADDON — not an industry satellite. CBAR FX, HS tariffs, calendar, banks, geo, COA templates.
+
+| ID | Capability | API | Status |
+|----|------------|-----|--------|
+| DH-FX-01 | CBAR FX ingest + `/registry/v1/fx/*` | rates, range, convert | **SHIPPED** |
+| DH-CAL-01 | Production calendar AZ multi-year | `/calendar/az/*` | **SHIPPED** |
+| DH-HS-01 | HS tariff effective-dated | `/hs/:code/tariff` | **SHIPPED** |
+| FC-DH-HANDOFF | Industry Finance proxies (fx/hs/voen preview) | finance API | **SHIPPED** |
+
+ADR: [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md) · [fx-rates-ecosystem.md](./adr/fx-rates-ecosystem.md) · [era-data-hub.md](./adr/era-data-hub.md) · consumer: [DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
 ---
 
@@ -349,14 +369,14 @@ Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS, second 
 | `banking_core` | Kernel: ledger (CBAR COA), ACID posting engine, CIF, balances/holds, EOD/EOM, Product Factory, `Branch`/МФР, audit | L1 mandatory | **PLANNED** |
 | `banking_deposits` | Deposits/savings (+ADİF) | L2 | **PLANNED** |
 | `banking_loans` | Loans (scoring, AKB/credit registry, ƏMDK, IFRS 9 ECL) | L2 | **PLANNED** |
-| `banking_cards` | Cards (AzeriCard/MilliKart) | L2 | **PLANNED** |
+| `banking_cards` | Cards (AzeriCard/MilliKart) | L2 | **MVP** |
 | `banking_payments` | Payments hub (AZIPS/XÖHKS/AÖS/SWIFT, ISO 20022) | L2 | **PLANNED** |
 | `banking_aml` | AML/CFT/KYC + FMN reporting | L2 | **PLANNED** |
-| `banking_treasury` | Treasury / ALM / liquidity | L2 | **PLANNED** |
-| `banking_dbo` | Digital banking + ASAN İmza/SİMA | L2 | **PLANNED** |
+| `banking_treasury` | Treasury / ALM / liquidity | L2 | **MVP** |
+| `banking_dbo` | Digital banking + ASAN İmza/SİMA | L2 | **MVP** (`era-bank-dbo` :3211) |
 | `banking_regreporting` | CBAR prudential + FATCA/CRS | L2 | **PLANNED** |
 
-A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels go to a future `era-bank-dbo` app.
+A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels run in **`era-bank-dbo`** (:3211).
 
 **Architecture laws:** money is ACID (no money over event bus); engine headless / satellite holds no money; thin kernel (no bank/product logic in L1); branches = internal dimension (not orgs); MDM shared (store `globalPersonId` only). Phases P0–P7 in PRD §7 / TZ §12.
 

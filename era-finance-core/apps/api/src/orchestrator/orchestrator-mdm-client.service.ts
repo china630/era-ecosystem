@@ -112,6 +112,21 @@ export class OrchestratorMdmClientService {
     }
   }
 
+  /** Lookup FIN then resolve-or-create (canonical satellite pattern). */
+  async linkPersonIdentity(
+    input: ResolvePersonInput,
+    requesterOrgId?: string,
+  ): Promise<{ globalPersonId: string | null; masked?: boolean }> {
+    if (input.fin?.trim()) {
+      const lookup = await this.lookupPersonByFin(input.fin.trim(), requesterOrgId ?? "");
+      if (lookup?.globalPersonId) {
+        return { globalPersonId: lookup.globalPersonId, masked: lookup.masked };
+      }
+    }
+    const resolved = await this.resolvePersonIdentity(input);
+    return { globalPersonId: resolved.globalPersonId };
+  }
+
   async mergePersons(
     sourcePersonId: string,
     targetPersonId: string,

@@ -25,12 +25,33 @@
 
 | Область | Почему не v1 |
 |---------|----------------|
-| Стационар, палаты, операционная | Отдельный продукт / гос. МИС |
-| HL7/FHIR, LIS, DICOM | Phase K4+ интеграции |
+| **Full HIS** (OR, MAR, ward pharmacy, DRG/case billing) | Separate product appendix on same satellite — see [ADR clinic-product-lines](../../docs/adr/clinic-product-lines-and-presets.md) Phase 6 |
+| HL7/FHIR production, DICOM / PACS | Phase K4+ integrations |
 | Национальный e-recept (Dərman) | Регуляторный контур AZ — Phase 3 |
-| Полная EMR (история болезни, ICD-10 coding) | Упрощённая карта визита |
-| Страховые ТПА и pre-auth | Finance + модуль договоров §4.15 |
-| Склад медикаментов / фармаопт | Finance inventory или отдельный модуль |
+| Полная EMR (долгая история болезни) | Упрощённая карта визита + CPOE lite |
+| Страховые ТПА и pre-auth (full) | Finance + модуль договоров §4.15 |
+| Склад медикаментов / фармаопт | Finance inventory или retail pharmacy preset |
+
+**In scope (future on same `era-clinic`):** preset **`inpatient_day`** — ward/bed master, ADT-light, daily charges — not full HIS. Current M13 is a **stub** until [CLINIC-FULL-IMPLEMENTATION-PLAN Phase 4](doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md).
+
+---
+
+## §1.4. Product lines & operation presets
+
+Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-product-lines-and-presets.md) · Implementation plan: [doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md](doc/CLINIC-FULL-IMPLEMENTATION-PLAN.md)
+
+| Product line | `Outlet.preset` | Gate | Notes |
+|--------------|-----------------|------|-------|
+| **ERA Clinic Outpatient** | `outpatient` (default) | `industry_clinic` | Polyclinic, diagnostics — core PRD |
+| **ERA Clinic Inpatient Day** | `inpatient_day` | `industry_clinic` + future `clinic_inpatient_day` module | Ward-lite; not full hospital MIS |
+| **ERA Sanatorium Clinical** | `sanatorium_clinical` | `industry_clinic` + hotel bundle | Requires `era-hotel-pms` + bus integration |
+| **ERA Wellness** | `wellness` | `industry_clinic` | SV8 — scheduling + resources, no EMR |
+
+**Not a separate industry:** there is no `industry_hospital` launcher tile. “Hospital pack” = same satellite + inpatient modules.
+
+**Sanatorium business:** orchestrator entitlements `industry_hotel_pms` + `industry_clinic` (+ optional retail), not a standalone sanatorium satellite.
+
+**Code packaging:** domain logic migrates to `era-clinic/src/domain/`; extract to `packages/clinic-domain` only after inpatient ADT API stabilizes (ADR D5).
 
 ---
 
@@ -67,8 +88,8 @@
 | ID | Module | Status | Finance |
 |----|--------|--------|---------|
 | M0 | Platform shell, SSO | **DONE** | — |
-| M1 | Patient registry (ref, не полная EMR) | **DONE** | Counterparty / patient ref sync |
-| M2 | Practitioners, rooms, schedule | **DONE** | — |
+| M1 | Patient registry (ref, не полная EMR) | **SHIPPED** (registry UI) | Counterparty / patient ref sync |
+| M2 | Practitioners, rooms, schedule | **SHIPPED** (master-data admin) | — |
 | M3 | Appointment & check-in | **DONE** | — |
 | M4 | Visit card & clinical services | **DONE** | `VISIT_COMPLETED` |
 | M5 | **Laboratory orders & results** | **DONE** | `LAB_ORDER_COMPLETED`; portal on publish |
@@ -80,7 +101,7 @@
 | M10 | EHR templates / CPOE lite | **DONE** | ERPs/07 §2 |
 | M11 | LIS analyzer import (HL7/file) | **DONE** | ERPs/07 §3 |
 | M12 | Insurance / DMS eligibility | **DONE** | **Finance** §4.15 |
-| M13 | Inpatient / bed management | **DONE** | ERPs/07 §7 |
+| M13 | Inpatient / bed management (ADT-light) | **SHIPPED** | ERPs/07 §7; preset `inpatient_day` |
 | M14 | Telehealth + patient portal | **DONE** | **PLATFORM** portal |
 
 См. [MODULES_CATALOG § roadmap](../docs/MODULES_CATALOG.md#industry-module-roadmap) · [PRODUCT_VERSIONING](../docs/PRODUCT_VERSIONING.md).
@@ -179,4 +200,4 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 | 2026-05-25 | SP2: lab orders UI + scheduling slots stub API |
 | 2026-05-25 | SW3/K2-K3: full lab lifecycle, discount audit, executive summary |
 | 2026-05-28 | Enrichment W1: M5 critical flag, M6 price cache |
-| 2026-05-28 | Enrichment W2: M9–M14 (Gemini medical ERP) |
+| 2026-06-16 | §1.4 product lines & presets; out-of-scope clarified (full HIS vs inpatient_day); M13 → PARTIAL |

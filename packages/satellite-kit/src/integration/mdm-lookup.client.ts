@@ -39,7 +39,10 @@ export {
   lookupGlobalPersonByFin,
   resolvePersonIdentity,
   mergePersonRecords,
+  linkPersonIdentity,
+  isValidAzFin,
   type PersonIdentityInput,
+  type MdmClientOptions,
 } from "./person-identity.client";
 
 /** Resolve legal entity by VÖEN (B2B invoicing party). */

@@ -23,6 +23,7 @@ export default function SchedulingPage() {
   const tNav = useTranslations("nav");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [practitionerCode, setPractitionerCode] = useState("");
+  const [practitioners, setPractitioners] = useState<Array<{ code: string; fullName: string }>>([]);
   const [data, setData] = useState<SlotsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [dragFrom, setDragFrom] = useState<string | null>(null);
@@ -37,6 +38,12 @@ export default function SchedulingPage() {
       .then(setData)
       .finally(() => setLoading(false));
   }
+
+  useEffect(() => {
+    void fetch("/api/admin/practitioners")
+      .then((r) => r.json())
+      .then((d) => setPractitioners((d.data ?? d) as Array<{ code: string; fullName: string }>));
+  }, []);
 
   useEffect(() => {
     loadSlots();
@@ -90,12 +97,18 @@ export default function SchedulingPage() {
           </label>
           <label className="flex items-center gap-2">
             {t("practitionerCode")}
-            <input
+            <select
               className="rounded border px-2 py-1"
-              placeholder={t("optional")}
               value={practitionerCode}
               onChange={(e) => setPractitionerCode(e.target.value)}
-            />
+            >
+              <option value="">{t("allPractitioners")}</option>
+              {practitioners.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.fullName} ({p.code})
+                </option>
+              ))}
+            </select>
           </label>
         </div>
 

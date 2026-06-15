@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.INDUSTRY_SATELLITE_MODULE_KEYS = exports.HOTEL_PRICING_BUNDLE_KEYS = exports.HOTEL_LEGACY_MODULE_KEYS = exports.HOTEL_MODULE_KEY_ALIASES = exports.HOTEL_PRICING_MODULE_KEYS = void 0;
+exports.BANKING_PRICING_MODULE_KEYS = exports.INDUSTRY_SATELLITE_MODULE_KEYS = exports.HOTEL_PRICING_BUNDLE_KEYS = exports.HOTEL_LEGACY_MODULE_KEYS = exports.HOTEL_MODULE_KEY_ALIASES = exports.HOTEL_PRICING_MODULE_KEYS = void 0;
 exports.resolveHotelModuleKey = resolveHotelModuleKey;
 exports.consolidateHotelModuleKeys = consolidateHotelModuleKeys;
 exports.isHotelModuleActive = isHotelModuleActive;
@@ -46,6 +46,18 @@ exports.INDUSTRY_SATELLITE_MODULE_KEYS = [
     "industry_auto_service",
     "industry_clinic",
     "industry_wholesale",
+    "industry_banking",
+];
+exports.BANKING_PRICING_MODULE_KEYS = [
+    "banking_core",
+    "banking_deposits",
+    "banking_loans",
+    "banking_cards",
+    "banking_payments",
+    "banking_aml",
+    "banking_treasury",
+    "banking_dbo",
+    "banking_regreporting",
 ];
 /** Resolve canonical hotel module key (handles legacy slugs). */
 function resolveHotelModuleKey(moduleKey) {

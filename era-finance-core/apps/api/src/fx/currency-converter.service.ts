@@ -1,21 +1,15 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
-import { CbarFxService } from "./cbar-fx.service";
+import { CbarRateSyncService } from "./cbar-rate-sync.service";
 
 /**
- * Консолидация сумм в валюту отчёта холдинга по курсу ЦБА (см. TZ §1.1, PRD §1.1).
- * Для периодов длиннее одного месяца сводный P&L холдинга режется на календарные
- * фрагменты; на каждый фрагмент вызывается `convert` со своим `asOf` (см. HoldingsReportingService).
+ * Consolidates amounts to reporting currency via CBAR (era-data-hub when enabled).
+ * Strict accounting path uses FINAL rates only (see CbarRateSyncService.getFinalOfficialAznPerUnit).
  */
 @Injectable()
 export class CurrencyConverterService {
-  constructor(private readonly cbar: CbarFxService) {}
+  constructor(private readonly cbarSync: CbarRateSyncService) {}
 
-  /**
-   * Переводит сумму из `fromCurrency` в `toCurrency` на дату `asOf` (календарь Баку в CbarFxService).
-   * Кросс-курс через AZN: from → AZN → to. Для «исторического» периода вызывайте метод
-   * несколько раз с разными `asOf` (например, конец каждого месяца для доли P&L за месяц).
-   */
   async convert(
     amount: Prisma.Decimal,
     fromCurrency: string,
@@ -27,11 +21,11 @@ export class CurrencyConverterService {
     if (from === to) return amount;
     const inAzn = await this.toAzn(amount, from, asOf);
     if (to === "AZN" || to === "AZM") return inAzn;
-    const rateTo = await this.cbar.getLatestRate(to, asOf);
-    const aznPerUnit = new Prisma.Decimal(rateTo.rate);
+    const rateTo = await this.cbarSync.getFinalOfficialAznPerUnit(to, asOf);
+    const aznPerUnit = new Prisma.Decimal(rateTo);
     if (aznPerUnit.lte(0)) {
       throw new Error(
-        `CBAR invalid rate for ${to} as of ${asOf.toISOString().slice(0, 10)}: ${rateTo.rate}`,
+        `CBAR invalid rate for ${to} as of ${asOf.toISOString().slice(0, 10)}: ${rateTo}`,
       );
     }
     return inAzn.div(aznPerUnit);
@@ -43,7 +37,7 @@ export class CurrencyConverterService {
     asOf: Date,
   ): Promise<Prisma.Decimal> {
     if (from === "AZN" || from === "AZM") return amount;
-    const r = await this.cbar.getLatestRate(from, asOf);
-    return amount.mul(new Prisma.Decimal(r.rate));
+    const r = await this.cbarSync.getFinalOfficialAznPerUnit(from, asOf);
+    return amount.mul(new Prisma.Decimal(r));
   }
 }

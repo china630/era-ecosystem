@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply antialiased;
+}
+
+input,
+select,
+textarea,
+button {
+  @apply outline-none;
+}

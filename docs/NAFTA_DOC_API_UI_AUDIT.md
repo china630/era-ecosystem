@@ -2,7 +2,9 @@
 
 Living matrix for **Nafta sanatorium pilot** satellites: find features documented as shipped but missing API or UI, and APIs without operator screens.
 
-**Method:** for each capability, classify three layers:
+**Canonical actor matrix:** [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md) (Doc / API / UI × Ops / SatAdmin / OrgOwner / SuperAdmin).
+
+**Method:** for each capability, classify layers:
 
 | Layer | Source of truth |
 |-------|-----------------|
@@ -14,7 +16,7 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 
 | Tag | Meaning |
 |-----|---------|
-| **OK** | Doc ≈ API ≈ UI (or API-only by design, documented) |
+| **OK** | Doc ≈ API ≈ UI for declared actor (or HEADLESS by design) |
 | **API-only** | Backend exists; FO/ops cannot act without curl/Postman |
 | **UI-only** | Screen exists; thin or undocumented |
 | **Doc-only** | Documented / planned; no implementation |
@@ -33,21 +35,21 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 | era-clinic | 3203 | Sanatorium clinical, lab, queue |
 | era-retail-pos | 3204 | Pharmacy retail (optional department) |
 
-**Last audit:** 2026-06-14 (post code-closure waves A–F)
+**Last audit:** 2026-06-15 (coverage honesty + clinic admin wave)
 
 ---
 
 ## Executive summary
 
-| Satellite | Doc coverage | API | UI | Top gap pattern |
-|-----------|--------------|-----|-----|-----------------|
-| **hotel-pms** | ~96% | ~96% | ~94% | bar-rates Excel import; vendor STUB |
-| **era-clinic** | ~92% | ~93% | ~90% | HL7 LIS (deferred) |
-| **era-fnb-pos** | ~94% | ~94% | ~92% | Real KKM (external) |
-| **era-finance-core** | ~88% | ~88% | ~82% | Event monitor (headless by design) |
-| **era-orchestrator** | ~94% | ~96% | ~90% | Vendor notify STUB |
+| Satellite | Doc (strict) | API | Ops UI | SatAdmin UI | Top gap pattern |
+|-----------|--------------|-----|--------|-------------|-----------------|
+| **hotel-pms** | high | ~96% | ~94% | master-data SHIPPED | bar-rates Excel BLOCKED; notify STUB |
+| **era-clinic** | realigned | ~93% | ~85% post-wave | master-data was missing → **fixed 2026-06-15** | was doc drift M1/M2 |
+| **era-fnb-pos** | high | ~94% | ~92% | menu partial | Real KKM external |
+| **era-finance-core** | quartet-only DELIVERY | ~88% | ERP strong | `/admin/data` | event worker HEADLESS |
+| **era-orchestrator** | high | ~96% | launcher OK | super-admin OK | vendor notify STUB |
 
-**P0 / P1 / P2 closure:** all `N-DUI-*` and `N-DOC-*` **closed**. **Waves A–F code closure** closed fnb pay/shift, channel mappings, reservation page, sanatorium chart, R7 filters, MDM admin write, BAR bootstrap.
+**Previous audit (2026-06-14) overstated clinic UI (~90%)** by counting ops flows (sanatorium, queue, LIS) while **master data, appointment create, patient registry** were API-only — see [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli).
 
 ---
 
@@ -56,55 +58,32 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 | ID | Area | Status | Notes |
 |----|------|--------|-------|
 | P3 | Staff provision webhook | By design | orchestrator → satellite |
-| P3 | OTA webhook ingest (prod creds) | External | adapter stub OK; live creds needed |
-| P3 | Minibar IoT / door lock | External | webhook + HK fallback |
-| — | hotel bar-rates adapter | Blocked on Excel | [IMPORT-PRICING-MAP](../era-hotel-pms/doc/nafta/IMPORT-PRICING-MAP.md) needs Nafta export |
-| — | hotel H-BL-06 Twilio/SendGrid | Partial (STUB) | platform notify OK |
-| — | hotel/clinic e-qaimé / HL7 | External | prod cert / LIS vendor |
-| — | fnb real KKM NBC | External | stub fiscal at POS |
-| — | finance E8 consumption event | Integration | Finance worker |
-| — | 1C / opening balances | Phase 2 Nafta | external ERP |
+| P3 | OTA webhook ingest (prod creds) | External | adapter stub OK |
+| — | hotel bar-rates adapter | Blocked | [IMPORT-PRICING-MAP](../era-hotel-pms/doc/nafta/IMPORT-PRICING-MAP.md) |
+| — | hotel/clinic HL7 / NBC / e-qaimé | STUB | prod vendor |
+| — | finance E8 consumption event | HEADLESS | Finance worker |
 
 ---
 
-## Closed — waves A–F (2026-06-14)
+## era-clinic (full matrix)
 
-| Wave | Resolution |
-|------|------------|
-| A | fnb CARD pay + shift UI + meal entitlements badge |
-| B | hotel channel mappings UI + `/reservations/[id]` page |
-| C | clinic sanatorium treatment chart + schedule API |
-| D | hotel R7 OOO/INSPECTED filters; contract-pricing API 410 |
-| E | orchestrator MDM admin write (`/super-admin/mdm/persons`); Finance holding UI verified |
-| F | hotel `bar-bootstrap` fileless import adapter |
-
----
-
-## Closed — P0 (was UAT demo blockers)
-
-| ID | Resolution |
-|----|------------|
-| N-DUI-01 | fnb `/orders` in-house guest search + link |
-| N-DUI-02 | clinic `/visits/[id]` Complete visit button |
-| N-DUI-03 | clinic nav → `/reception/queue` |
-| N-DUI-04 | hotel `/migration` prefill + submit actions |
-| N-DUI-05 | orch `/super-admin/orgs/[orgId]` hub + workspace departments card |
-
----
-
-## Closed — P1 (was Done in BACKLOG, missing ops UI)
-
-| ID | Resolution |
-|----|------------|
-| N-DUI-10–22 | Reservation card panels, channel/yield/audit, fnb floor/daily menu, clinic LIS/queue, finance HR provisioning |
-
----
-
-## Closed — P2 (was doc ↔ code)
-
-| ID | Resolution |
-|----|------------|
-| N-DOC-01–05 | City ledger snapshot, label alignment, inpatient UI, boundary doc |
+| Feature | Doc | API | OpsUI | SatAdmin | Gap (pre-2026-06-15) | Now |
+|---------|-----|-----|-------|----------|------------------------|-----|
+| Practitioners / rooms / resources | M2 | partial | — | **missing** | Doc drift | **SHIPPED** `/admin/master-data` |
+| Procedure types | vNext | read-only | — | **missing** | Doc drift | **SHIPPED** master-data tab |
+| Patient registry M1 | PRD | partial | **missing** | — | Doc drift | **SHIPPED** `/patients` |
+| Appointment create K-01 | PRD | yes | **missing** | — | API-only | **SHIPPED** modal |
+| Service catalog M6 | PRD | yes | — | **missing** | API-only | **SHIPPED** `/admin/catalog` |
+| Procedure rules | M11 | yes | — | inline form | UX + FIFO rules | **SHIPPED** modal + tabs |
+| Clinical/program templates | vNext | partial | — | **missing** | seed-only | **SHIPPED** `/admin/templates` |
+| LIS profiles | M11 | yes | — | yes | OK | **OK** |
+| Sanatorium chart | K5 | yes | yes | yes | OK | **OK** |
+| Reception queue | W3 | yes | yes | — | OK | **OK** |
+| Lab lifecycle | K2 | yes | yes | — | OK | **OK** |
+| Inpatient M13 | PRD | yes | yes | assign modal | ward master free-text | **SHIPPED** `/admin/wards` edit/delete |
+| Executive K-14 | PRD | yes | yes filters | — | client bypass | **SHIPPED** API-driven |
+| Docker demo seed | ops | — | — | — | missing | **SHIPPED** `RUN_SEED` |
+| HL7 LIS prod | deferred | stub | — | — | external | **STUB** |
 
 ---
 
@@ -113,51 +92,16 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 | Feature | Doc | API | UI | Gap |
 |---------|-----|-----|-----|-----|
 | Channel mappings | H-BL-25 | yes | `/channel` | **OK** |
-| Reservation deep link | FO | yes | `/reservations/[id]` | **OK** |
-| BAR bootstrap | IMPORT-PRICING-MAP | yes | import wizard step 21a | **OK** |
-| R7 rack filters | FO spec | yes | `/` aside | **OK** |
+| BAR bootstrap | IMPORT-PRICING-MAP | yes | wizard 21a | **OK** |
 | Import bar-rates | IMPORT-PRICING-MAP | partial | wizard | **Blocked (Excel)** |
-| Omnichannel | H-BL-06 | STUB vendor | send pages | **Partial (STUB)** |
-| e-qaimé | H-BL-24 | stub | folio read-only | **Stub** |
+| Omnichannel H-BL-06 | BACKLOG | STUB vendor | send pages | **Partial (STUB)** |
+| Master data admin | DELIVERY | yes | `/admin/master-data` | **OK** |
 
 ---
 
-## era-clinic (updated highlights)
+## era-fnb-pos / finance / orchestrator
 
-| Feature | Doc | API | UI | Gap |
-|---------|-----|-----|-----|-----|
-| Sanatorium chart | K5 | yes | `/sanatorium` treatment chart | **OK** |
-| Reception queue / LIS / inpatient | W3/M11/M13 | yes | nav + pages | **OK** |
-
----
-
-## era-fnb-pos (updated highlights)
-
-| Feature | Doc | API | UI | Gap |
-|---------|-----|-----|-----|-----|
-| CARD pay | F-P1-3 | yes | `/orders` | **OK** |
-| Shift UI | FB-06 | yes | `/orders` PosShiftPanel | **OK** |
-| Meal entitlements hint | H-BL-04 | yes | `/orders` badge | **OK** |
-| In-house guest link | FB-04 | yes | `/orders` | **OK** |
-
----
-
-## era-finance-core (updated highlights)
-
-| Feature | Doc | API | UI | Gap |
-|---------|-----|-----|-----|-----|
-| Holding UI | LOCAL_UAT | yes | `/companies`, `/holding` | **OK** |
-| City ledger snapshot | Boundary | event + DB | counterparty modal | **OK** |
-| e-qaimé | ADR stub | stub | invoice modal | **Stub** |
-
----
-
-## era-orchestrator (updated highlights)
-
-| Feature | Doc | API | UI | Gap |
-|---------|-----|-----|-----|-----|
-| MDM admin write | DELIVERY | `v1/admin/mdm/persons/*` | `/super-admin/mdm/persons` | **OK** |
-| Department orgs | NAFTA §3 | yes | super-admin org hub | **OK** |
+See [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md) FNB-*, FIN-*, ORCH-* rows.
 
 ---
 
@@ -165,9 +109,9 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 
 | Satellite | Map |
 |-----------|-----|
+| clinic | `era-clinic/.cursor/rules/era-clinic-module-map.mdc` |
 | hotel-pms | `era-hotel-pms/.cursor/rules/era-hotel-pms-module-map.mdc` |
 | fnb-pos | `era-fnb-pos/.cursor/rules/era-fnb-pos-module-map.mdc` |
-| clinic | `era-clinic/.cursor/rules/era-clinic-module-map.mdc` |
 
 ---
 
@@ -175,6 +119,5 @@ Living matrix for **Nafta sanatorium pilot** satellites: find features documente
 
 | Date | Change |
 |------|--------|
-| 2026-06-14 | Initial Nafta stack audit |
-| 2026-06-14 | Post P0+P1+P2 closure |
-| 2026-06-14 | Post waves A–F code closure |
+| 2026-06-14 | Initial Nafta stack audit; waves A–F |
+| 2026-06-16 | Clinic matrix gaps closure; [CLINIC_DOC_API_UI_AUDIT.md](./CLINIC_DOC_API_UI_AUDIT.md) before/after tables |

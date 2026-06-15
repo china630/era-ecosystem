@@ -1,6 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
-import { isAzWorkingDay } from "./calendar/az-2026";
+
+function fallbackIsWorkingDay(isoDate: string): boolean {
+  const d = new Date(`${isoDate.slice(0, 10)}T12:00:00.000Z`);
+  const dow = d.getUTCDay();
+  return dow !== 0 && dow !== 6;
+}
 
 @Injectable()
 export class HrCalendarService {
@@ -11,8 +16,19 @@ export class HrCalendarService {
       const remote = await this.dataHub.isWorkingDay(isoDate, "az");
       if (remote !== null) return remote;
     }
-    const [y, m, d] = isoDate.split("-").map(Number);
-    return isAzWorkingDay(y, m - 1, d);
+    return fallbackIsWorkingDay(isoDate);
+  }
+
+  async getDay(isoDate: string) {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getCalendarDay(isoDate, "az");
+      if (remote) return remote;
+    }
+    const working = fallbackIsWorkingDay(isoDate);
+    return {
+      isWorking: working,
+      dayType: working ? "working" : "weekend",
+    };
   }
 
   async countWorkingDaysInMonth(year: number, month1to12: number): Promise<number> {
@@ -23,5 +39,20 @@ export class HrCalendarService {
       if (await this.isWorkingDay(iso)) n += 1;
     }
     return n;
+  }
+
+  async addBusinessDays(isoDate: string, n: number): Promise<string> {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.addBusinessDays(isoDate, n, "az");
+      if (remote) return remote;
+    }
+    let cursor = new Date(`${isoDate.slice(0, 10)}T12:00:00.000Z`);
+    let added = 0;
+    while (added < n) {
+      cursor = new Date(cursor.getTime() + 86400000);
+      const iso = cursor.toISOString().slice(0, 10);
+      if (await this.isWorkingDay(iso)) added++;
+    }
+    return cursor.toISOString().slice(0, 10);
   }
 }

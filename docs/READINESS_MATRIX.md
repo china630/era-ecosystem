@@ -6,9 +6,42 @@ Living snapshot of **code + DELIVERY** readiness.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
-Last updated: 2026-06-14 (Nafta code-closure waves A–F — see [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md))
+Last updated: 2026-06-15 (Reference data ecosystem refactor — FC-DH / LOG-REF rows)
 
-> **Not yet in the matrix:** `era-bank-core` (`industry_banking`, CBS) — **PROPOSED / pre-development**, tracked in [era-bank-core/PRD.md](../era-bank-core/PRD.md) §7 (phases P0–P7) and ADR [era-bank-core.md](./adr/era-bank-core.md). Add columns/rows once P0 lands.
+> **Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`):** Engine MVP P0–P7; **ops teller UX GA** with modal CRUD compliance. See [era-bank/doc/DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md), [BANK_DOC_API_UI_AUDIT.md](./BANK_DOC_API_UI_AUDIT.md), [era-bank-core/doc/DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md).
+
+> **Clinic (`era-clinic`):** Matrix gaps closure (Phases 0–7). See [CLINIC_DOC_API_UI_AUDIT.md](./CLINIC_DOC_API_UI_AUDIT.md), [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli), [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md).
+
+### Bank Ops UX GA (2026-06)
+
+| Module | Engine | Ops UI | DBO | Verdict |
+|--------|--------|--------|-----|---------|
+| `banking_core` | MVP | **GA** | — | Teller day green; modal CRUD + `/api/gl` BFF |
+| `banking_payments` | MVP+posting | **GA** | MVP | Staff + customer |
+| `banking_deposits` | MVP+posting | **GA** | — | Open/close |
+| `banking_loans` | MVP+posting | **GA** | — | Disburse/repay |
+| `banking_aml` | MVP | GA | preflight | Unchanged |
+| `banking_cards` | MVP | GA | stretch | Unchanged |
+| `banking_treasury` | MVP | GA | — | Unchanged |
+| `banking_regreporting` | MVP | GA | — | Unchanged |
+| `banking_dbo` | MVP | — | GA | Unchanged |
+
+**Production certification** (live rails, FMN, pentest): [era-bank/doc/CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md) — parallel track, not blocking ops pilot.
+
+### Banking modules (MVP engine)
+
+| Module | API level | Notes |
+|--------|-----------|-------|
+| `industry_banking` | MVP | Gate on `era-bank` satellite |
+| `banking_core` | MVP | Kernel + posting engine |
+| `banking_payments` | MVP | Stub rail |
+| `banking_deposits` | MVP | Term deposits |
+| `banking_loans` | MVP | Loan contracts |
+| `banking_aml` | MVP | Screening + FMN stub |
+| `banking_regreporting` | MVP | CBAR prudential |
+| `banking_dbo` | MVP | `era-bank-dbo` channel |
+| `banking_cards` | MVP | Auth/capture + MockAzeriCard gateway |
+| `banking_treasury` | MVP | FX + GAP |
 
 ---
 
@@ -165,7 +198,7 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 | construction | Live | Live | Live | Live | Live | Events | Full §4 hooks |
 | crm-field | Live | Live | Live | Live | Live | MDM | v2.0 WhatsApp live; full §4 hooks |
 | auto-sto | Live | Live | Live | Live | Live | Events | v2.0 tool crib; full §4 hooks |
-| clinic | Live | Live | Live | Live | Live | Events | v2.0 `/portal`; full §4 hooks |
+| clinic | Live | Live | Live | Live | Live | Events | Admin master-data + registry (2026-06-15); see [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli) |
 | wholesale | Live | Live | Live | Live | Live | Live | Full §4 hooks |
 
 ---
@@ -293,3 +326,13 @@ Regenerate: `node scripts/readiness-coverage.mjs` (full table) or `node scripts/
 3. **Optional product** — FB table booking via `createBookingSlot` on pay (§4.3); не блокер UAT.
 4. **UI program** (не блокер тестов) — admin modals, FB floor polish, Hotel FAQ block.
 5. **Manufacturing / IFRS** — только если пилот требует tier 2+ Finance modules.
+
+---
+
+## 7. Actor coverage matrix
+
+**Authoritative:** [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md) — Doc / API / UI × Ops / SatAdmin / OrgOwner / SuperAdmin.
+
+**Strict DELIVERY %** (SHIPPED `[x]` only, excludes `[~]`/`[s]`/`[h]`): `node scripts/readiness-strict-delivery.mjs`.
+
+**Clinic 2026-06-15:** master data, patient registry, appointment create, catalog admin, templates, settings persist — see CLI-* rows (target all **SHIPPED**).

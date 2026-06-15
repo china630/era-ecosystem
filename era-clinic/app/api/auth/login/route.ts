@@ -7,6 +7,11 @@ import {
 } from "@era/satellite-kit";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { getEnabledPresets } from "@/domain/settings/settings.service";
+import {
+  PRESETS_COOKIE,
+  serializePresetsCookie,
+} from "@/domain/presets/preset-cookie";
 import { prisma } from "@/lib/prisma";
 
 const schema = z.object({ login: z.string().min(1), password: z.string().min(1) });
@@ -25,9 +30,11 @@ export async function POST(request: Request) {
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.login,
+      email: user.email ?? undefined,
       role: user.role.code,
       fullName: user.fullName,
     });
+    const enabledPresets = await getEnabledPresets();
     const res = jsonOk({
       user: {
         id: user.id,
@@ -36,12 +43,19 @@ export async function POST(request: Request) {
         role: user.role.code,
       },
       token,
+      enabledPresets,
     });
     res.cookies.set(authCookieName(), token, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 4,
+    });
+    res.cookies.set(PRESETS_COOKIE, serializePresetsCookie(enabledPresets), {
+      httpOnly: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
     });
     return res;
   } catch (err) {

@@ -84,7 +84,9 @@ Progress is stored in browser `localStorage` (`era-hotel-import-wizard-v1`) for 
 
 ## References
 
-- Operator guide: [era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md](../../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md)
+- Operator guide: [era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md](../../era-hotel-pms/doc/ELEKTRAWEB-IMPORT.md) — §15 pre-merge scripts, Folio vs ProFolio
+- Deferred checkout (T-room): [hotel-deferred-corporate-checkout.md](./hotel-deferred-corporate-checkout.md)
 - Delivery: [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELIVERY.md) Stage 26
 - Module map: [era-hotel-pms/.cursor/rules/hotel-import-module.mdc](../../era-hotel-pms/.cursor/rules/hotel-import-module.mdc)
 - Migration SQL: `era-hotel-pms/prisma/migrations/20260612200000_elektraweb_import/`
+- Merge scripts: `era-hotel-pms/scripts/merge-guest-cards.js`, `merge-reservations.js`, `merge-folio-transactions.js`

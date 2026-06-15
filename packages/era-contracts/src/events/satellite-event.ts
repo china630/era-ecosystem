@@ -28,6 +28,9 @@ import {
 import { isSatelliteWholesaleOrderConfirmed } from "./wholesale.events";
 import { isSatelliteFbStockConsumptionCompleted } from "./fb.events";
 import {
+  isSatelliteBankGlDailySummary,
+} from "./banking.events";
+import {
   isSatelliteStaffClockBatch,
   isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
@@ -63,7 +66,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteFbStockConsumptionCompleted(data) ||
     isSatelliteStaffProvisioned(data) ||
     isSatelliteStaffDeactivated(data) ||
-    isSatelliteStaffClockBatch(data)
+    isSatelliteStaffClockBatch(data) ||
+    isSatelliteBankGlDailySummary(data)
   );
 }
 

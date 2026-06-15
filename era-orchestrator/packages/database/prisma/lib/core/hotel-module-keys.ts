@@ -44,6 +44,19 @@ export const INDUSTRY_SATELLITE_MODULE_KEYS = [
   "industry_auto_service",
   "industry_clinic",
   "industry_wholesale",
+  "industry_banking",
+] as const;
+
+export const BANKING_PRICING_MODULE_KEYS = [
+  "banking_core",
+  "banking_deposits",
+  "banking_loans",
+  "banking_cards",
+  "banking_payments",
+  "banking_aml",
+  "banking_treasury",
+  "banking_dbo",
+  "banking_regreporting",
 ] as const;
 
 export type IndustrySatelliteModuleKey = (typeof INDUSTRY_SATELLITE_MODULE_KEYS)[number];

@@ -110,7 +110,13 @@
     "plannedQty": "Planned qty",
     "requisitionQty": "Requisition qty",
     "materialRequisitions": "Material requisitions",
-    "noRequisitions": "No requisitions yet."
+    "noRequisitions": "No requisitions yet.",
+    "subcontractorClaim": "Subcontractor claim (M9)",
+    "subVoen": "Subcontractor VÖEN",
+    "subName": "Subcontractor name",
+    "claimAmount": "Amount (AZN)",
+    "saveClaim": "Save claim",
+    "claimSaved": "Claim saved"
   },
   "fieldOps": {
     "title": "Field operations (W2)",
@@ -124,7 +130,13 @@
     "saveLog": "Save diary",
     "logSaved": "Diary saved",
     "failed": "Error",
-    "punchListLink": "Punch list and claims in project details →"
+    "punchListLink": "Punch list and claims in project details →",
+    "timesheetImport": "Timesheet import (calendar norm)",
+    "workerRef": "Worker ref",
+    "workDate": "Work date",
+    "hours": "Hours",
+    "importTimesheet": "Import timesheet",
+    "timesheetImported": "Imported {count} row(s)"
   },
   "materialRequisitions": {
     "title": "Material requisitions",

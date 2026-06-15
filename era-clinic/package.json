@@ -11,9 +11,11 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed:vnext": "npx tsx prisma/seed-vnext.ts",
+    "db:seed": "npx tsx prisma/seed-vnext.ts",
     "test": "jest --ci"
   },
   "dependencies": {
+    "@era/clinic-domain": "file:../packages/clinic-domain",
     "@era/contracts": "file:../packages/era-contracts",
     "@era/fiscal": "file:../packages/era-fiscal",
     "@era/satellite-kit": "file:../packages/satellite-kit",

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  ModalFooter,
+  ModalShell,
+  PRIMARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
 type Proc = {
@@ -10,25 +15,30 @@ type Proc = {
   procedureName: string;
   procedureCode: string;
   scheduledAt: string;
+  status: string;
   patientRef: { fullName: string };
 };
 
 export default function NursePage() {
   const t = useTranslations("nurse");
+  const tc = useTranslations("common");
   const [orders, setOrders] = useState<Proc[]>([]);
+  const [completeId, setCompleteId] = useState<string | null>(null);
 
   async function load() {
     const res = await fetch("/api/procedures");
     const d = await res.json();
-    setOrders(d.data ?? d);
+    const rows = (d.data ?? d) as Proc[];
+    setOrders(rows.filter((o) => o.status === "SCHEDULED"));
   }
 
   useEffect(() => {
     void load();
   }, []);
 
-  async function complete(id: string) {
-    await fetch(`/api/procedures/${id}/complete`, {
+  async function confirmComplete() {
+    if (!completeId) return;
+    await fetch(`/api/procedures/${completeId}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -36,6 +46,7 @@ export default function NursePage() {
         amountNet: 0,
       }),
     });
+    setCompleteId(null);
     await load();
   }
 
@@ -50,17 +61,23 @@ export default function NursePage() {
                 {o.patientRef.fullName} — {o.procedureName} @{" "}
                 {new Date(o.scheduledAt).toLocaleTimeString()}
               </span>
-              <button
-                type="button"
-                className={PRIMARY_BUTTON_CLASS}
-                onClick={() => void complete(o.id)}
-              >
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setCompleteId(o.id)}>
                 {t("done")}
               </button>
             </li>
           ))}
+          {orders.length === 0 && <li className="text-slate-500">{t("empty")}</li>}
         </ul>
       </div>
+
+      <ModalShell open={!!completeId} title={t("completeConfirmTitle")} onClose={() => setCompleteId(null)}>
+        <p className="text-[13px]">{t("completeConfirmBody")}</p>
+        <ModalFooter
+          onCancel={() => setCompleteId(null)}
+          onSubmit={() => void confirmComplete()}
+          submitLabel={t("done")}
+        />
+      </ModalShell>
     </>
   );
 }

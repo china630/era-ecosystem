@@ -68,7 +68,9 @@ export default function AppointmentsPage() {
       setMessage(data.error ?? t("bookingFailed"));
       return;
     }
-    setMessage(t("booked", { plate: data.vehiclePlate }));
+    setMessage(
+      data.calendarAdjusted ? t("calendarAdjusted") : t("booked", { plate: data.vehiclePlate }),
+    );
     setVehiclePlate("");
     setCustomerName("");
     setScheduledAt("");

@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "title": "ERA Интернет-банк",
+    "description": "Розничный и корпоративный цифровой банкинг"
+  },
+  "nav": {
+    "home": "Главная",
+    "accounts": "Счета",
+    "cards": "Карты",
+    "pay": "Платежи",
+    "transfers": "Переводы",
+    "approve": "Подпись",
+    "more": "Ещё",
+    "logout": "Выход"
+  },
+  "login": {
+    "title": "Вход",
+    "retailTab": "Физлицо",
+    "corporateTab": "Юрлицо",
+    "finLabel": "FIN",
+    "voenLabel": "VÖEN",
+    "otpRequest": "Отправить OTP",
+    "otpVerify": "Подтвердить",
+    "otpCode": "Код OTP",
+    "asanLogin": "ASAN İmza (stub)",
+    "asanComplete": "Подтвердить ASAN",
+    "devHint": "Dev OTP: 123456"
+  },
+  "dashboard": {
+    "title": "Главная",
+    "totalBalance": "Общий баланс",
+    "recentActivity": "Последние операции",
+    "noAccounts": "Счета не найдены"
+  },
+  "accounts": {
+    "title": "Мои счета",
+    "balance": "Баланс",
+    "iban": "IBAN",
+    "viewDetails": "Подробнее"
+  },
+  "transfers": {
+    "title": "Внутренний перевод",
+    "from": "Со счёта",
+    "to": "На счёт",
+    "amount": "Сумма (AZN)",
+    "submit": "Перевести",
+    "success": "Перевод отправлен"
+  },
+  "payments": {
+    "title": "Платежи",
+    "new": "Новый платёж",
+    "beneficiary": "IBAN получателя",
+    "beneficiaryName": "Имя",
+    "purpose": "Назначение",
+    "amount": "Сумма (AZN)",
+    "create": "Создать",
+    "submit": "Отправить",
+    "status": "Статус",
+    "empty": "Нет платёжных поручений"
+  },
+  "approve": {
+    "title": "Очередь подписи",
+    "sign": "Подписать ASAN",
+    "empty": "Нет ожидающих подписей",
+    "orderId": "Поручение"
+  },
+  "cards": {
+    "title": "Карты",
+    "expiry": "Срок",
+    "status": "Статус",
+    "viewDetails": "Подробнее",
+    "back": "К списку карт",
+    "temporaryBlock": "Временно заблокировать"
+  },
+  "common": {
+    "loading": "Загрузка…",
+    "error": "Ошибка",
+    "back": "Назад",
+    "save": "Сохранить",
+    "cancel": "Отмена"
+  }
+}

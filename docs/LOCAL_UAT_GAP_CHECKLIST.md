@@ -150,7 +150,7 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 | **Con** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
 | **CRM** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
 | **Auto** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
-| **Cli** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** (executive page) |
+| **Cli** | **Done** | **Done** (admin master-data, modal CRUD) | **Done** (`EraAppRouteShell`) | **Partial** (inpatient ward codes) |
 | **Who** | **Done** | **Partial** | **Done** (`EraAppRouteShell`) | **Partial** |
 
 **Gaps (ecosystem-wide UI program)**
@@ -185,21 +185,29 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 | Capability | Orch API | Fin UI/API | Hot | FB | Ret | Log | Con | CRM | Auto | Cli | Who |
 |------------|----------|------------|-----|-----|-----|-----|-----|-----|------|-----|-----|
 | `GlobalLegalEntity` (VÖEN) | **Done** | **Done** (super-admin + counterparty adapter) | **Partial** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Partial** | **Missing** |
-| `GlobalNaturalPerson` | **Done** (API) | **Partial** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Partial** | **Missing** |
-| `globalPersonId` on domain records | — | — | **Done** (guest + MDM lookup) | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Done** | **Missing** |
+| `GlobalNaturalPerson` | **Done** (API) | **Done** (HR + counterparty) | **Done** (guest resolve) | **Partial** (roster gate) | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Done** (patient + practitioner) | **Missing** |
+| `globalPersonId` on domain records | — | **Done** (Employee) | **Done** (guest) | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Missing** | **Done** (PatientRef + Practitioner) | **Missing** |
 | Org register via `mdm/organizations/register` | **Done** | **Done** (`ERA_MDM_REGISTRATION_CUTOVER` → Orch only) | — | — | — | — | — | — | — | — | — |
-| Satellite calls Orch MDM for lookup | **N/A** | **Done** (Finance) | **Done** (person lookup API) | **Missing** | **Missing** | **Missing** | **Partial** | **Partial** | **Partial** | **Partial** | **Partial** |
+| Satellite calls Orch MDM for lookup | **N/A** | **Done** (`linkPersonIdentity`) | **Done** (lookup→resolve) | **Partial** | **Missing** | **Missing** | **Partial** | **Partial** | **Partial** | **Done** | **Partial** (bank CIF) |
 
-**Clinic:** `PatientRef.globalPersonId`, sanatorium episodes.
+**Clinic:** `PatientRef.globalPersonId`, `Practitioner.globalPersonId` (strict), sanatorium episodes; ops merge via `/api/mdm/person-merge`.
 
-**Hotel:** `Guest.globalPersonId` in Prisma + FIN lookup on new guest (P5).
+**Hotel:** `Guest.globalPersonId`; create/edit via `linkPersonIdentity`; optional `ERA_HOTEL_GUEST_MDM_STRICT`; merge on guest card.
+
+**Finance:** `Employee.globalPersonId`, `Counterparty.globalPersonId` (ИП + FIN); `POST /hr/employees/:id/convert-to-fin`.
+
+**Bank:** CIF natural + `POST /cif/customers/:id/beneficial-owners` (API).
+
+**Audit:** [`MDM_IDENTITY_AUDIT.md`](./MDM_IDENTITY_AUDIT.md) · CI `node scripts/audit-mdm-identity.mjs`.
 
 **CRM / Finance boundary:** lead convert → Finance counterparty; no local MDM duplicate ([`era-crm/doc/clone-spec/01-finance-boundary.md`](../era-crm/doc/clone-spec/01-finance-boundary.md)).
 
 **Gaps**
 
 - [x] Finance org → MDM link on create (`ERA_MDM_REGISTER_VIA_ORCH`, `POST /internal/v1/mdm/organizations/link`)
-- [x] Hotel guest ↔ `globalPersonId` + MDM lookup (`lookupGlobalPersonByFin`, `/api/mdm/person-lookup`)
+- [x] Hotel guest ↔ `globalPersonId` + MDM lookup→resolve (`linkPersonIdentity`, `/api/mdm/person-lookup`)
+- [x] Clinic practitioner MDM link (Wave 1a)
+- [x] Finance employee/counterparty `globalPersonId`
 - [ ] B2B VÖEN lookup component shared (Finance counterparty UX → satellites that need invoicing party)
 - [ ] Citizen consent portal (Phase 2+)
 
@@ -207,6 +215,11 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 
 ```bash
 curl -s http://127.0.0.1:4100/internal/v1/mdm/health
+# Resolve (service token):
+curl -s -X POST http://127.0.0.1:4100/internal/v1/mdm/persons/resolve \
+  -H "Authorization: Bearer $MDM_INTERNAL_SERVICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"fullName":"Test User","fin":"5ABC123","nationality":"AZ"}'
 # Finance UI: /super-admin/data/mdm/companies, .../counterparties
 ```
 
@@ -265,7 +278,7 @@ flowchart TD
 | ~~P7~~ | Register audit, executive FB/Hot | **Done (P7)** |
 | ~~SP7~~ | Seven industry modules depth | **Done (SP7)** — see DELIVERY SP7 sections |
 | P01–P08 | ERA Program Orchestrator (UAT sync, CP2, addons Live) | **Done** — see `.cursor/plans/era_program_orchestrator_1fe445ab.plan.md` |
-| H-BL-01 … H-BL-10 | Hospitality P2 product gaps (split pay, credit limit, meal gate, …) | **Open** — [BACKLOG-PRODUCTION.md § Product gaps](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md#product-gaps--not-covered-by-other-satellites-2026-06-14) |
+| H-BL-01 … H-BL-10 | Hospitality P2 product gaps | **Partial** — core flows Done; split pay / meal gate see [BACKLOG](../era-hotel-pms/doc/BACKLOG-PRODUCTION.md) |
 | H-BL-30 … H-BL-31 | B2B contract mgmt / full MICE | **Future** — confirm with Nafta |
 
 ---

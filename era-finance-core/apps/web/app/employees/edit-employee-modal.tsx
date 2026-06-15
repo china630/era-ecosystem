@@ -30,6 +30,7 @@ type EmployeeDetail = {
   id: string;
   kind?: string;
   finCode: string;
+  globalPersonId?: string | null;
   voen?: string | null;
   firstName: string;
   lastName: string;
@@ -90,6 +91,7 @@ export function EditEmployeeModal({
   const [vacationBalanceLabel, setVacationBalanceLabel] = useState("—");
   const [provisionedSatelliteKey, setProvisionedSatelliteKey] = useState("");
   const [provisionedSatelliteRole, setProvisionedSatelliteRole] = useState("");
+  const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
 
   const title = useMemo(() => t("employees.editSection"), [t]);
 
@@ -152,6 +154,7 @@ export function EditEmployeeModal({
       setVacationBalanceLabel(formatVacationDaysBalance(r.vacationDaysBalance));
       setProvisionedSatelliteKey(r.provisionedSatelliteKey?.trim() ?? "");
       setProvisionedSatelliteRole(r.provisionedSatelliteRole?.trim() ?? "");
+      setGlobalPersonId(r.globalPersonId ?? null);
     } catch {
       setLoadErr(t("employees.loadErr"));
     } finally {
@@ -320,6 +323,13 @@ export function EditEmployeeModal({
                     onChange={(e) => setFinCode(normalizeFinInput(e.target.value))}
                     className={`mt-1 block w-full ${MODAL_INPUT_CLASS} font-mono uppercase`}
                   />
+                  {globalPersonId ? (
+                    <span className="mt-1 block text-[11px] text-violet-800">
+                      MDM: {globalPersonId.slice(0, 4)}…{globalPersonId.slice(-4)}
+                    </span>
+                  ) : (
+                    <span className="mt-1 block text-[11px] text-amber-700">{t("employees.mdmMissing", { defaultValue: "MDM not linked" })}</span>
+                  )}
                 </label>
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("employees.kind")}

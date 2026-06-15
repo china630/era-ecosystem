@@ -1,0 +1,18 @@
+{
+  "version": "2026-06-15",
+  "fxRates": [
+    { "code": "USD", "rate": 1.7, "rateDate": "2026-06-14", "asOf": "2026-06-14" },
+    { "code": "EUR", "rate": 1.85, "rateDate": "2026-06-14", "asOf": "2026-06-14" }
+  ],
+  "banks": [{ "mfo": "200001", "name": "Demo Bank", "swift": "DEMUAZ22" }],
+  "coaSubset": [
+    { "code": "1000101", "name": "Cash in vault" },
+    { "code": "2200101", "name": "Customer current accounts" }
+  ],
+  "calendar": { "timezone": "Asia/Baku", "weekendDays": [6, 0] },
+  "calendarDays": [
+    { "date": "2026-06-14", "isWorking": false, "dayType": "weekend" },
+    { "date": "2026-06-15", "isWorking": false, "dayType": "holiday" },
+    { "date": "2026-06-16", "isWorking": true, "dayType": "working" }
+  ]
+}
