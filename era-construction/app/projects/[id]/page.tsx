@@ -6,7 +6,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  VoenLookupField,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
@@ -48,6 +53,9 @@ export default function ProjectDetailPage() {
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [subName, setSubName] = useState("");
+  const [subVoen, setSubVoen] = useState("");
+  const [subAmount, setSubAmount] = useState("1000");
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -158,6 +166,51 @@ export default function ProjectDetailPage() {
                   ))}
                 </ul>
               )}
+            </div>
+
+            <div className={`${FORM_STACK_CLASS} rounded border p-4`}>
+              <h2 className="text-[13px] font-semibold">{t("subcontractorClaim")}</h2>
+              <VoenLookupField
+                value={subVoen}
+                onChange={setSubVoen}
+                onResolved={(r) => {
+                  if (r.found && r.name) setSubName(r.name);
+                }}
+                labels={{
+                  voen: t("subVoen"),
+                  check: tc("check"),
+                  found: tc("found"),
+                  notFound: tc("notFound"),
+                  invalid: tc("invalid"),
+                }}
+              />
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("subName")}</label>
+                <input className={MODAL_INPUT_CLASS} value={subName} onChange={(e) => setSubName(e.target.value)} />
+              </div>
+              <div className={FORM_FIELD_GROUP_CLASS}>
+                <label className={MODAL_FIELD_LABEL_CLASS}>{t("claimAmount")}</label>
+                <input className={MODAL_INPUT_CLASS} value={subAmount} onChange={(e) => setSubAmount(e.target.value)} inputMode="decimal" />
+              </div>
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                onClick={async () => {
+                  const res = await fetch(`/api/projects/${id}/subcontractor-claims`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      subcontractorName: subName || subVoen,
+                      amountNet: Number(subAmount) || 0,
+                      voen: subVoen || undefined,
+                    }),
+                  });
+                  const data = await res.json();
+                  setMessage(res.ok ? t("claimSaved") : (data.error ?? tc("error")));
+                }}
+              >
+                {t("saveClaim")}
+              </button>
             </div>
           </>
         )}

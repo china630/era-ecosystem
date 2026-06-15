@@ -63,13 +63,14 @@ Operational TMS-lite: fleet, trip, waybill, POD → событие `SATELLITE_LO
 | M3 | Waybill document | **DONE** | `POST /api/trips/:id/waybill` |
 | M4 | POD (photo/signature stub) | **DONE** | — |
 | M5 | Fuel norm per trip | **DONE** | Cost event Phase 2 |
-| M6 | Customs handoff flag | **DONE** | Finance `trade_pro` read hub — DELIVERY L3 |
+| M6 | Customs handoff flag | **DONE** | Finance `trade_pro` + hub CBAR; ops FX preview on `/customs` |
 | **M7** | **Fleet compliance** | Fleet docs | **DONE** | `GET /api/fleet/alerts`, `/fleet` UI |
 | M4 (extend) | POD photo + signature | Last mile | **DONE** | `podPhotoUrl`, `podSignatureUrl` on `Trip` |
 | M8 | Multi-stop trip (`trip_points`) | VRP lite | **DONE** | ERPs/06 §2 |
 | M9 | Driver mobile workflow API | Last mile | **DONE** | ERPs/06 §3 |
 | M10 | Rate matrix / tariffs | OMS billing | **DONE** | **Finance** |
 | M11 | COD split & clearing | Courier COD | **DONE** | **Finance** |
+| M14 | SLA ETA (business days) | **DONE** | `GET /api/sla/eta` via hub calendar |
 | M12 | Hub cross-dock scanning | WMS hub | **DONE** | ERPs/06 §6 |
 | M13 | Customer tracking portal | Visibility | **DONE** | **PLATFORM** `portal` |
 

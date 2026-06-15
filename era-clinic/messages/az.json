@@ -4,6 +4,8 @@
     "description": "Klinika və tibbi əməliyyatlar peyk modulu"
   },
   "nav": {
+    "sectionOps": "Əməliyyat",
+    "sectionAdmin": "İdarəetmə",
     "home": "Əsas",
     "appointments": "Qəbullar",
     "queue": "Resepsiya növbəsi",
@@ -16,7 +18,12 @@
     "doctor": "Həkim növbəsi",
     "nurse": "Prosedurlar",
     "cashier": "Kassa",
-    "settings": "Parametrlər"
+    "settings": "Parametrlər",
+    "patients": "Xəstələr",
+    "masterData": "Soraqçalar",
+    "catalog": "Xidmət kataloqu",
+    "templates": "Şablonlar",
+    "audit": "Audit"
   },
   "login": {
     "title": "ERA Clinic",
@@ -57,12 +64,24 @@
     "value": "Dəyər",
     "actions": "Əməliyyatlar",
     "complete": "Tamamla",
-    "all": "Hamısı"
+    "all": "Hamısı",
+    "add": "Əlavə et",
+    "delete": "Sil",
+    "confirmDelete": "Silmək istəyirsiniz?",
+    "saved": "Saxlanıldı",
+    "failed": "Uğursuz",
+    "saveFailed": "Saxlama uğursuz",
+    "confirm": "Təsdiq"
   },
   "appointments": {
-    "title": "ERA Clinic",
-    "subtitle": "Əməliyyat MVP qabığı — UI DESIGN.md-ə uyğundur.",
-    "shellNote": "Reyestr ekranları və əlavə/redaktə axınları DESIGN.md-ə uyğun modallarla tətbiq olunacaq."
+    "title": "Qəbullar",
+    "subtitle": "Resepşn cədvəli və check-in",
+    "shellNote": "Viziti idarə etmək üçün qəbula klik edin.",
+    "createTitle": "Yeni qəbul",
+    "cancelVisit": "Viziti ləğv et",
+    "cancelTitle": "Viziti ləğv et",
+    "cancelReason": "Ləğv səbəbi (məcburi)",
+    "cancelConfirm": "Ləğvi təsdiq et"
   },
   "labOrders": {
     "title": "Laboratoriya sifarişləri",
@@ -70,7 +89,11 @@
     "criticalOnly": "Yalnız kritik nəticələr (M5)",
     "statusFilter": "Status filtri",
     "empty": "Hələ laboratoriya sifarişi yoxdur.",
-    "importCsv": "CSV import"
+    "importCsv": "CSV import",
+    "createTitle": "Yeni lab sifarişi",
+    "selectPatient": "Xəstə seçin",
+    "testCode": "Test kodu",
+    "visitIdOptional": "Vizit ID (istəyə bağlı)"
   },
   "labOrdersDetail": {
     "title": "Laboratoriya sifarişi iş axını",
@@ -116,12 +139,16 @@
   "doctor": {
     "title": "Həkim növbəsi",
     "subtitle": "Check-in və davam edən vizitlər",
-    "empty": "Növbə boşdur."
+    "empty": "Növbə boşdur.",
+    "openVisit": "Viziti aç"
   },
   "nurse": {
     "title": "Prosedur növbəsi",
     "subtitle": "Tibb bacısı üçün planlaşdırılmış prosedurlar",
-    "done": "Tamamla"
+    "done": "Tamamla",
+    "empty": "Planlaşdırılmış prosedur yoxdur.",
+    "completeConfirmTitle": "Proseduru tamamla",
+    "completeConfirmBody": "Proseduru tamamlanmış kimi qeyd edək?"
   },
   "queue": {
     "title": "Resepşn növbəsi",
@@ -134,7 +161,16 @@
     "title": "Klinika kassası",
     "subtitle": "Növbə, ödəniş, fiskal (@era/fiscal)",
     "openShift": "Növbəni aç",
-    "pay": "Ödəniş qəbul et"
+    "pay": "Ödəniş qəbul et",
+    "visitLabel": "Vizit",
+    "shiftLabel": "Növbə",
+    "mockFiscalBadge": "Mock fiskal (CLI-24 STUB)",
+    "statusLabel": "Status",
+    "receiptLabel": "Qəbz",
+    "fiscalLabel": "Fiskal ID",
+    "qrLabel": "QR",
+    "settlementOnly": "Yalnız hesablaşma (real NBC yoxdur)",
+    "paymentFailed": "Ödəniş uğursuz"
   },
   "booking": {
     "title": "Qəbul üçün yazılma",
@@ -157,7 +193,10 @@
     "loadFailed": "Xülasə yüklənmədi.",
     "visitsToday": "Bu gün vizitlər",
     "labRevenueToday": "Bu gün lab gəliri",
-    "openLabOrders": "Açıq lab sifarişləri"
+    "openLabOrders": "Açıq lab sifarişləri",
+    "filterDate": "Tarix",
+    "filterPractitioner": "Həkim",
+    "capacityTitle": "Sanatoriya yüklənməsi (həftə)"
   },
   "sanatorium": {
     "title": "Sanatoriya daxili",
@@ -272,5 +311,122 @@
     "localeAz": "AZ",
     "localeRu": "RU",
     "localeEn": "EN"
+  },
+  "masterData": {
+    "title": "Soraqçalar",
+    "subtitle": "Həkimlər, otaqlar, resurslar",
+    "practitioners": "Həkimlər",
+    "rooms": "Otaqlar",
+    "resources": "Resurslar",
+    "procedureTypes": "Prosedur növləri",
+    "code": "Kod",
+    "name": "Ad",
+    "specialty": "İxtisas",
+    "kind": "Növ",
+    "capacity": "Tutum",
+    "durationMin": "Müddət (dəq)",
+    "resourceCode": "Resurs kodu",
+    "wards": "Palata və çarpayılar",
+    "wardCode": "Palata kodu",
+    "wardName": "Palata adı",
+    "bedCode": "Çarpayı kodu",
+    "dailyChargeCode": "Gündəlik xidmət kodu",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Bağlı deyil",
+    "mdmLookup": "MDM axtarış",
+    "mdmLinked": "MDM bağlı ({id})",
+    "mdmNotFound": "FIN üçün MDM tapılmadı",
+    "finRequired": "Axtarış üçün FIN daxil edin",
+    "defaultSlotMinutes": "Slot (dəq)",
+    "wardsLink": "Palata və çarpayılar",
+    "editWard": "Palatanı redaktə et",
+    "editBed": "Çarpayını redaktə et",
+    "noBeds": "Çarpayı yoxdur",
+    "finCode": "FIN",
+    "passportNumber": "Pasport",
+    "issuingCountry": "Ölkə",
+    "phone": "Telefon",
+    "nameRequired": "MDM üçün ad soyad daxil edin"
+  },
+  "contraindications": {
+    "addTitle": "Əks-göstərmə əlavə et",
+    "removeTitle": "Əks-göstərməni sil",
+    "noteOptional": "Qeyd (istəyə bağlı)",
+    "empty": "Əks-göstərmə zonası yoxdur"
+  },
+  "visits": {
+    "completeConfirmTitle": "Viziti tamamla",
+    "completeConfirmBody": "Viziti tamamlayıb hesablaşmanı göndərək?",
+    "completeVisit": "Viziti tamamla",
+    "completing": "Tamamlanır…",
+    "completeFailed": "Tamamlama uğursuz",
+    "completeSuccess": "Vizit tamamlandı",
+    "issuePrescription": "Resept yaz",
+    "prescriptionTitle": "Resept yaz",
+    "rxSku": "SKU",
+    "rxQty": "Miqdar",
+    "rxDescription": "Təsvir",
+    "prescriptionSuccess": "Resept yazıldı ({count} sətir)",
+    "prescriptionFailed": "Resept uğursuz"
+  },
+  "patientRegistry": {
+    "title": "Xəstə reyestri",
+    "subtitle": "Lokal xəstə istinadları",
+    "search": "Axtarış",
+    "refCode": "Kod",
+    "name": "Ad",
+    "phone": "Telefon",
+    "finCode": "FIN",
+    "passportNumber": "Pasport",
+    "issuingCountry": "Ölkə",
+    "createTitle": "Yeni xəstə",
+    "openCard": "Kart",
+    "mdmLookup": "MDM axtarış",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Bağlı deyil",
+    "mdmLinked": "MDM bağlı ({id})",
+    "mdmNotFound": "FIN üçün MDM tapılmadı",
+    "finRequired": "Axtarış üçün FIN daxil edin",
+    "nameRequired": "MDM üçün ad soyad daxil edin",
+    "finObtained": "FIN alındı (birləşdirmə)",
+    "mergeFinPrompt": "Yeni FIN daxil edin",
+    "mergeFinSuccess": "MDM qeydləri birləşdirildi",
+    "editPatient": "Xəstəni redaktə et",
+    "backToList": "Xəstələrə qayıt",
+    "fullName": "Ad soyad",
+    "contraindicationsTitle": "Əks-göstərmələr (bədən xəritəsi)"
+  },
+  "catalogAdmin": {
+    "title": "Xidmət kataloqu",
+    "subtitle": "Finance qiymət keshi",
+    "syncFromFinance": "Finance-dan sinxron",
+    "synced": "Sinxron: {count}",
+    "empty": "Kataloq boşdur.",
+    "code": "Kod",
+    "description": "Təsvir",
+    "amount": "Məbləğ"
+  },
+  "templatesAdmin": {
+    "title": "Şablonlar",
+    "subtitle": "Klinik və proqram şablonları",
+    "clinicalTab": "Klinik",
+    "programTab": "Proqramlar",
+    "code": "Kod",
+    "titleField": "Başlıq",
+    "specialty": "İxtisas",
+    "name": "Ad",
+    "durationDays": "Gün",
+    "procedureCode": "Prosedur kodu",
+    "quotaTotal": "Kvota",
+    "procedureName": "Prosedur adı",
+    "bodyJson": "Body JSON"
+  },
+  "audit": {
+    "title": "Audit jurnalı",
+    "subtitle": "Dəyişikliklər",
+    "when": "Vaxt",
+    "entity": "Obekt",
+    "action": "Əməliyyat",
+    "user": "İstifadəçi"
   }
 }

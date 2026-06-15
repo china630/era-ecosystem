@@ -115,6 +115,9 @@ const satelliteDirs = [
   { dir: "era-auto-service", db: "era_auto_service", mode: "push", adminRole: "AUTO_ADMIN" },
   { dir: "era-wholesale", db: "era_wholesale", mode: "push", adminRole: "WHOLESALE_ADMIN" },
   { dir: "era-clinic", db: "era_clinic", mode: "push", adminRole: "CLINIC_ADMIN" },
+  { dir: "era-bank-core", db: "era_bank_core", mode: "migrate-core", adminRole: null },
+  { dir: "era-bank", db: "era_bank", mode: "push", adminRole: "TELLER" },
+  { dir: "era-bank-dbo", db: "era_bank_dbo", mode: "push", adminRole: null },
 ];
 
 async function main() {
@@ -200,6 +203,17 @@ async function main() {
           satRoot,
           env,
         );
+      } else if (mode === "migrate-core") {
+        run(
+          `${dir} migrate deploy`,
+          "npm run db:migrate:deploy",
+          satRoot,
+          env,
+        );
+        runOptional(`${dir} seed`, "npm run db:seed", satRoot, {
+          ...env,
+          ERA_BANK_ORGANIZATION_ID: process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001",
+        });
       } else {
         runOptional(`${dir} db push`, "npx prisma db push", satRoot, env);
       }
@@ -215,6 +229,12 @@ async function main() {
             ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
           },
         );
+      }
+      if (dir === "era-clinic") {
+        runOptional(`${dir} db seed`, "npm run db:seed", satRoot, env);
+      }
+      if (dir === "era-bank" || dir === "era-bank-dbo") {
+        runOptional(`${dir} db seed`, "npm run db:seed", satRoot, env);
       }
     }
     runOptional(

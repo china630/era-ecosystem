@@ -54,11 +54,13 @@ export type ReservationCardLeftPanelProps = {
   preferredBed: string;
   givenRoomTypeId: string;
   contractRef: string;
+  salesContractId: string;
   creditLimitAzn: string;
   folioBalance: number;
   reservationId?: string | null;
   agencies: SelectOption[];
   sources: SelectOption[];
+  salesContracts: Array<{ id: string; label: string; agencyId: string | null; ratePlanId: string; code: string }>;
   roomTypes: SelectOption[];
   mealPlans: SelectOption[];
   ratePlans: SelectOption[];
@@ -81,6 +83,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     isLocked,
     agencies,
     sources,
+    salesContracts,
     roomTypes,
     mealPlans,
     ratePlans,
@@ -187,6 +190,19 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             {roomTypes.map((rt) => (
               <option key={rt.id} value={rt.id}>{rt.label}</option>
             ))}
+          </select>
+        </div>
+        <div className={FORM_FIELD_GROUP_CLASS}>
+          <label className={MODAL_FIELD_LABEL_CLASS}>{t('salesContract')}</label>
+          <select className={MODAL_INPUT_CLASS} value={props.salesContractId} onChange={set('salesContractId')}>
+            <option value="">—</option>
+            {salesContracts
+              .filter((c) => !props.agencyId || !c.agencyId || c.agencyId === props.agencyId)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
           </select>
         </div>
         <div className={FORM_FIELD_GROUP_CLASS}>

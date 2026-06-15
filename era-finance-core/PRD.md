@@ -697,9 +697,9 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 ---
 
-### 4.18. Data Hub: потребление справочников + де-хардкод плана счетов (v-next, PLANNED)
+### 4.18. Data Hub: потребление справочников + де-хардкод плана счетов (v-next)
 
-**Статус блока:** [~] **PARTIAL (data-hub-consumer-wave-1)** — `era-data-hub` (DaaS, `data.era-365.online`) уже поднят и владеет справочниками (см. [ADR era-data-hub](../docs/adr/era-data-hub.md), [era-data-hub/PRD.md](../era-data-hub/PRD.md)). Финядро должно **потреблять** глобальные справочники через API хаба (с локальным кэшем и fallback), а не хранить/наполнять их у себя. Параллельно — устранить **хардкоды кодов плана счетов** в коде ядра: все проводки только через **ключи `PostingRole`** (см. §4.12 posting roles). Техконтракт — [TZ.md](./TZ.md) **§28**.
+**Статус блока:** [x] **SHIPPED (reference-data refactor 2026-06)** — `era-data-hub` SoR; finance/bank primary consumers; industry indirect via Finance handoffs. См. [REFERENCE_DATA_CONSUMER_AUDIT.md](../docs/REFERENCE_DATA_CONSUMER_AUDIT.md), ADR [reference-data-ecosystem.md](../docs/adr/reference-data-ecosystem.md).
 
 **Принцип миграции (из ADR):** **expand/contract** — сначала хаб становится владельцем (system of record), финядро читает через адаптер с фича-флагом, и только потом из ядра удаляются ingest и дублирующие таблицы. Никаких «больших взрывов». Per-tenant данные (проводки, выписки, декларации, счета орг, карточки контрагентов) **остаются** в ядре.
 
@@ -707,16 +707,16 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 | Feature ID | Справочник | Сейчас в ядре | Целевой источник (Data Hub) | Статус потребления в ядре |
 |------------|-----------|----------------|------------------------------|----------------------------|
-| **FEAT-FC-DH-001** | Курсы валют ЦБА | `CbarOfficialRate` + cron | `GET /fx/rates` | [x] подключено (`cbar-rate-sync` при `ERA_DATA_HUB_ENABLED`) |
+| **FEAT-FC-DH-001** | Курсы валют ЦБА | `CbarOfficialRate` + cron (legacy) | `GET /fx/rates`, `/fx/convert` | [x] hub read-through: converter, dashboard, customs auto-rate on `bgdDate`; cron skip via `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` |
 | **FEAT-FC-DH-002** | Коды ВЭД (HS) + тарифы | `CustomsTariffRate` | `GET /hs/:code/tariff` | [x] подключено (`CustomsTaxCalculator`) |
-| **FEAT-FC-DH-003** | Произв. календарь АР | хардкод `hr/calendar/az-2026.ts` | `GET /calendar/az/*` | [~] клиент есть (`isWorkingDay`), HR ещё не переведён |
-| **FEAT-FC-DH-004** | Банки и филиалы | `BankGlossary` / `BankBranch` | `GET /banks`, `/banks/branches/:code` | [ ] нет клиента/потребления |
-| **FEAT-FC-DH-005** | Валидация IBAN | `iban.util` / `IbanValidationService` | `GET /iban/validate` | [ ] нет потребления (чистая валидация → хаб) |
-| **FEAT-FC-DH-006** | Реестр компаний (VÖEN) | `GlobalCompanyDirectory` | `GET /companies/:voen` (полка C) | [~] клиент `getCompanyByVoen` есть, но lookup контрагента всё ещё локальный |
-| **FEAT-FC-DH-007** | Гео (страны/города) | seeds `geo/*` | `GET /geo/countries`, `/geo/cities` | [ ] нет потребления |
-| **FEAT-FC-DH-008** | Единицы измерения | `UnitOfMeasure` | `GET /uom` | [ ] нет потребления |
-| **FEAT-FC-DH-009** | Налоговые ставки | `TaxRate` | `GET /tax-rates` | [ ] нет потребления |
-| **FEAT-FC-DH-010** | Эталонный план счетов | `catalog/national/chart-of-accounts-*.json` | `GET /chart-of-accounts?profile=` | [ ] нет потребления (онбординг читает локальный JSON) |
+| **FEAT-FC-DH-003** | Произв. календарь АР | хардкод (удалён) | `GET /calendar/az/*` | [x] hub: `HrCalendarService`, timesheet/payroll norm; fallback Sat/Sun only |
+| **FEAT-FC-DH-004** | Банки и филиалы | `BankGlossary` / `BankBranch` | `GET /banks`, `/banks/branches/:code` | [x] `BankDirectoryService` hub-first |
+| **FEAT-FC-DH-005** | Валидация IBAN | `iban.util` / `IbanValidationService` | `GET /iban/validate` | [x] `IbanValidationService` hub-first |
+| **FEAT-FC-DH-006** | Реестр компаний (VÖEN) | `GlobalCompanyDirectory` | `GET /companies/:voen` | [x] hub-first `lookupGlobalByVoen` + `GET /counterparties/voen-preview` handoff |
+| **FEAT-FC-DH-007** | Гео (страны/города) | seeds `geo/*` | `GET /geo/countries`, `/geo/cities` | [x] `SystemCatalogController` hub-first |
+| **FEAT-FC-DH-008** | Единицы измерения | `UnitOfMeasure` | `GET /uom` | [x] `SystemCatalogController` hub-first |
+| **FEAT-FC-DH-009** | Налоговые ставки | `TaxRate` | `GET /tax-rates` | [x] `SystemCatalogController` hub-first |
+| **FEAT-FC-DH-010** | Эталонный план счетов | `catalog/national/chart-of-accounts-*.json` | `GET /chart-of-accounts?profile=` | [x] org onboarding via `chartRemoteLoader` (hub primary, JSON fallback) |
 
 **Важно (граница):** материализованный план счетов **организации** (`Account` per-tenant с проводками), счета банков организации (`OrganizationBankAccount`), карточки контрагентов — **остаются в ядре**. Хаб отдаёт только **эталоны** (для онбординга/сверки/автозаполнения) и **глобальные** справочники. Список валют (`Currency`) и список **активных счетов организации** — это не предмет выноса; из хаба берутся курсы и эталоны, а не операционные данные.
 
@@ -724,9 +724,9 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 | Feature ID | Назначение | Источник |
 |------------|-----------|----------|
-| **FEAT-FC-CIT-001** | Данные физлиц по **FIN-коду** (для контрагентов-физлиц и сотрудников) | **Отдельная БД граждан на `era-orchestrator`** (не data-hub, не финядро) |
+| **FEAT-FC-CIT-001** | Данные физлиц по **FIN-коду** (контрагенты-физлица, сотрудники) | **Orchestrator `era_mdm`** via `internal/v1/mdm/persons/*`; Finance `OrchestratorMdmClientService` + `Counterparty.globalPersonId` / `Employee.globalPersonId` |
 
-Финядро **не хранит** реестр граждан; обращается за данными по FIN-коду через сервис оркестратора (PII, маскирование, согласие). Связано с §4.17.6 (поле FIN-код в карточке контрагента-физлица — будущая итерация).
+Финядро **не хранит** реестр граждан; обращается через service-token (`linkPersonIdentity`). PII в MDM; локально — `globalPersonId` и blind-index FIN где нужен UX. См. ADR [era-mdm-natural-person-identity.md](../docs/adr/era-mdm-natural-person-identity.md), COVERAGE `FIN-CIT-01`.
 
 #### 4.18.3. Де-хардкод плана счетов (FEAT-FC-COA-001)
 

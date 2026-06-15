@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import FinanceBoundaryBanner from '@/components/FinanceBoundaryBanner';
 import { ReservationCardAuthorizationsPanel } from '@/components/reservation-card/ReservationCardAuthorizationsPanel';
-import { PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { FxEquivalentBadge, PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
 import type { FolioSubTab } from './types';
 
 type FolioLine = {
@@ -22,11 +22,14 @@ export function ReservationCardFolioTab({
   reservationId,
   folioTab,
   lines,
+  displayCurrency = 'AZN',
   onFolioTab,
 }: {
   reservationId: string;
   folioTab: FolioSubTab;
   lines: FolioLine[];
+  /** Reservation pricing currency for display-only AZN equivalent (HT-FX-01). */
+  displayCurrency?: string;
   onFolioTab: (tab: FolioSubTab) => void;
 }) {
   const t = useTranslations('reservationCard');
@@ -67,6 +70,9 @@ export function ReservationCardFolioTab({
               <th className="p-2 text-left">{t('department')}</th>
               <th className="p-2 text-left">{t('folioDesc')}</th>
               <th className="p-2 text-right">{t('amount')}</th>
+              {displayCurrency !== 'AZN' ? (
+                <th className="p-2 text-right">{t('fxEquivalentAzn')}</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -77,7 +83,18 @@ export function ReservationCardFolioTab({
                 <td className="p-2">{line.invoiceRef ?? '—'}</td>
                 <td className="p-2">{line.revenueCode?.code ?? '—'}</td>
                 <td className="p-2">{line.description ?? '—'}</td>
-                <td className="p-2 text-right">{Number(line.amount).toFixed(2)}</td>
+                <td className="p-2 text-right">
+                  {Number(line.amount).toFixed(2)} {displayCurrency}
+                </td>
+                {displayCurrency !== 'AZN' ? (
+                  <td className="p-2 text-right">
+                    <FxEquivalentBadge
+                      amount={Number(line.amount)}
+                      currencyCode={displayCurrency}
+                      label={t('fxApprox')}
+                    />
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

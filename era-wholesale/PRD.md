@@ -70,6 +70,8 @@
 
 `SATELLITE_WHOLESALE_ORDER_CONFIRMED` — orderId, buyerCounterpartyId, amountNet, lineCount.
 
+**Import / foreign supplier (PLANNED):** purchase orders in foreign currency show AZN equivalent via Finance `financeFxPreview` / `financeExternalPurchase` — accounting FX stays in Finance.
+
 ---
 
 ## §7. Phases

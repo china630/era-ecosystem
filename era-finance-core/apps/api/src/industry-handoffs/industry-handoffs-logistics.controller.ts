@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { UserRole } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
@@ -27,5 +27,32 @@ export class IndustryHandoffsLogisticsController {
   @ApiOperation({ summary: "v1.1 — COD split and clearing" })
   codClearing(@OrganizationId() organizationId: string, @Body() dto: CodClearingDto) {
     return this.handoffs.codClearing(organizationId, dto);
+  }
+
+  @Get("fx-preview")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @ApiOperation({ summary: "Operational CBAR FX preview (via data-hub)" })
+  fxPreview(
+    @Query("from") from: string,
+    @Query("amount") amount: string,
+    @Query("to") to?: string,
+    @Query("date") date?: string,
+  ) {
+    return this.handoffs.fxPreview({
+      from,
+      to,
+      amount: Number(amount),
+      date,
+    });
+  }
+
+  @Get("hs-preview")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.USER)
+  @ApiOperation({ summary: "HS tariff preview (via data-hub)" })
+  hsPreview(
+    @Query("code") code: string,
+    @Query("date") date?: string,
+  ) {
+    return this.handoffs.hsPreview({ hsCode: code, date });
   }
 }

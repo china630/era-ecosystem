@@ -8,7 +8,14 @@ import {
   redirectNoStore,
   verifySatelliteSession,
 } from "@era/satellite-kit/auth/middleware-edge";
+import { hasClinicAdminAccess } from "@/lib/auth/clinic-admin-access";
 import { sessionHasClinicRole, CLINIC_ROLE } from "@/lib/clinic-roles";
+import {
+  parsePresetsCookie,
+  pathnameRequiresPreset,
+  hasPresetInList,
+  PRESETS_COOKIE,
+} from "@/domain/presets/preset-cookie";
 
 const COOKIE = authCookieName();
 
@@ -94,6 +101,23 @@ export async function middleware(request: NextRequest) {
         ])
       ) {
         return roleGuardResponse(request, reqHeaders);
+      }
+    }
+    if (pathname.startsWith("/admin")) {
+      if (!hasClinicAdminAccess(session)) {
+        return roleGuardResponse(request, reqHeaders);
+      }
+    }
+    const requiredPreset = pathnameRequiresPreset(pathname);
+    if (requiredPreset) {
+      const enabled = parsePresetsCookie(
+        request.cookies.get(PRESETS_COOKIE)?.value,
+      );
+      if (!hasPresetInList(enabled, requiredPreset)) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
+        url.searchParams.set("error", "preset_disabled");
+        return redirectNoStore(url);
       }
     }
     return NextResponse.next({ request: { headers: reqHeaders } });

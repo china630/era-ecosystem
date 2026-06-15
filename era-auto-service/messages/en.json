@@ -100,7 +100,8 @@
     "book": "Book",
     "upcoming": "Upcoming",
     "bookingFailed": "Error booking",
-    "booked": "Booked {plate}"
+    "booked": "Booked {plate}",
+    "calendarAdjusted": "Date adjusted to next working day"
   },
   "workOrders": {
     "title": "Work orders",
@@ -124,6 +125,8 @@
     "vehicleSaved": "Vehicle card saved",
     "counterpartyLinked": "Counterparty: {id}…",
     "voenNotFound": "VÖEN not found in Finance MDM",
+    "voenFound": "Company: {name}",
+    "voenInvalid": "VÖEN must be 10 digits",
     "workOrderCreated": "Work order {code} created",
     "laborAdded": "Labor line added",
     "partAdded": "Part line added",

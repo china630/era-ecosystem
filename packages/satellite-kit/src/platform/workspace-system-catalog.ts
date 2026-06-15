@@ -73,6 +73,12 @@ export const WORKSPACE_SYSTEMS: WorkspaceSystemMeta[] = [
     sanatoriumRelevant: false,
     i18nKey: "wholesale",
   },
+  {
+    key: "BANKING",
+    pricingModuleKey: "industry_banking",
+    sanatoriumRelevant: false,
+    i18nKey: "banking",
+  },
 ];
 
 export const SANATORIUM_SYSTEM_KEYS: WorkspaceSystemKey[] = WORKSPACE_SYSTEMS.filter(
@@ -91,4 +97,5 @@ export const WORKSPACE_SATELLITE_KEY: Record<WorkspaceSystemKey, string> = {
   AUTO_SERVICE: "industry_auto_service",
   CLINIC: "industry_clinic",
   WHOLESALE: "industry_wholesale",
+  BANKING: "industry_banking",
 };

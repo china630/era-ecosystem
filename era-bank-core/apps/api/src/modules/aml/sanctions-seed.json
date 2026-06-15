@@ -1,0 +1,6 @@
+[
+  { "listSource": "OFAC", "name": "SANCTION TARGET ALPHA" },
+  { "listSource": "EU", "name": "SANCTION TARGET BETA" },
+  { "listSource": "UN", "name": "SANCTION TARGET GAMMA" },
+  { "listSource": "LOCAL", "name": "BLOCKED ENTITY DEMO" }
+]

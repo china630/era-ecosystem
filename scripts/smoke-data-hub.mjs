@@ -35,9 +35,37 @@ async function get(path, label) {
 async function main() {
   console.log(`Smoke data-hub @ ${base}\n`);
   await get("/healthz", "healthz");
-  await get("/registry/v1/fx/rates?symbols=USD,EUR", "fx/rates");
+  const fxRates = await get("/registry/v1/fx/rates?symbols=USD,EUR", "fx/rates");
   const today = new Date().toISOString().slice(0, 10);
+  await get(`/registry/v1/fx/rates?date=${today}&symbols=USD,EUR`, "fx/rates-dated");
+  await get(
+    `/registry/v1/fx/convert?from=USD&to=AZN&amount=100&date=${today}`,
+    "fx/convert",
+  );
+  if (fxRates?.rates?.length) {
+    const sample = fxRates.rates[0];
+    console.log(
+      `  sample: ${sample.currencyCode}=${sample.rate} status=${sample.status ?? "n/a"} date=${sample.rateDate ?? today}`,
+    );
+  }
   await get(`/registry/v1/calendar/az/is-working-day?date=${today}`, "calendar/is-working-day");
+  await get(`/registry/v1/calendar/az/day?date=${today}`, "calendar/day");
+  await get(
+    `/registry/v1/calendar/az/days?from=${today.slice(0, 4)}-01-01&to=${today.slice(0, 4)}-01-07`,
+    "calendar/days-bulk",
+  );
+  await get(
+    `/registry/v1/calendar/az/add-business-days?date=${today}&n=3`,
+    "calendar/add-business-days",
+  );
+  // transferred_working sample (2026-01-17)
+  await get("/registry/v1/calendar/az/day?date=2026-01-17", "calendar/transferred-working");
+  await get("/registry/v1/banks", "banks");
+  await get("/registry/v1/uom", "uom");
+  await get("/registry/v1/geo/countries", "geo/countries");
+  await get(`/registry/v1/tax-rates?type=VAT&date=${today}`, "tax-rates");
+  await get("/registry/v1/chart-of-accounts?profile=commercial", "chart-of-accounts");
+  await get("/registry/v1/iban/validate?iban=AZ21NABZ01350100000000001951", "iban/validate");
   if (process.exitCode) {
     process.exit(process.exitCode);
   }

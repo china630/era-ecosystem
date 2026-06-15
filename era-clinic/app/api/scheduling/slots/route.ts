@@ -18,7 +18,7 @@ export async function GET(req: Request) {
     });
 
     const day = query.date ? new Date(query.date) : new Date();
-    const slots = await getAvailableSlots({
+    const slotsResult = await getAvailableSlots({
       date: day,
       practitionerCode: query.practitionerCode,
       resourceCode: query.resourceCode,
@@ -28,7 +28,9 @@ export async function GET(req: Request) {
       date: day.toISOString().slice(0, 10),
       practitionerCode: query.practitionerCode ?? null,
       resourceCode: query.resourceCode ?? null,
-      slots,
+      slotMinutes: slotsResult.slotMinutes,
+      slots: slotsResult.slots,
+      meta: slotsResult.meta,
       source: "scheduling",
     });
   } catch (err) {

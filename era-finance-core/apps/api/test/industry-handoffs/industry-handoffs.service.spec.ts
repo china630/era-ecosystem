@@ -7,7 +7,8 @@ describe("IndustryHandoffsService", () => {
     industryStockCheckLog: { create: jest.fn() },
   };
   const inventory = { getInventorySettings: jest.fn().mockResolvedValue({}) };
-  const service = new IndustryHandoffsService(prisma as never, inventory as never);
+  const dataHub = { isEnabled: jest.fn().mockReturnValue(false) } as any;
+  const service = new IndustryHandoffsService(prisma as never, inventory as never, dataHub);
 
   it("stockCheck returns variance", async () => {
     prisma.product.findFirst.mockResolvedValue({

@@ -5,6 +5,8 @@ export type SatelliteSessionPayload = {
   login: string;
   role: string;
   fullName: string;
+  /** User email when known (SSO + local login); used for platform super-admin gates. */
+  email?: string;
   organizationId?: string;
   /** All mapped satellite roles (includes primary `role`). */
   roles?: string[];
@@ -33,6 +35,7 @@ export async function signSatelliteSession(
     role: payload.role,
     fullName: payload.fullName,
   };
+  if (payload.email) claims.email = payload.email;
   if (payload.organizationId) claims.organizationId = payload.organizationId;
   if (payload.roles?.length) claims.roles = payload.roles;
   if (payload.isOwner != null) claims.isOwner = payload.isOwner;
@@ -61,6 +64,7 @@ export async function verifySatelliteSession(
     login: String(payload.login ?? ""),
     role: String(payload.role ?? ""),
     fullName: String(payload.fullName ?? ""),
+    email: payload.email ? String(payload.email) : undefined,
     organizationId: payload.organizationId
       ? String(payload.organizationId)
       : undefined,

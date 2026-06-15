@@ -116,3 +116,15 @@ export async function createCompatibilityRule(input: {
 export async function deleteCompatibilityRule(id: string) {
   return prisma.procedureCompatibilityRule.delete({ where: { id } });
 }
+
+export async function updateCompatibilityRule(
+  id: string,
+  data: {
+    ruleType?: ProcedureCompatibilityRuleType;
+    minHours?: number | null;
+    note?: string | null;
+    active?: boolean;
+  },
+) {
+  return prisma.procedureCompatibilityRule.update({ where: { id }, data });
+}

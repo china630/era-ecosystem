@@ -102,7 +102,16 @@
     "body": "Tam GTK / e-gömrük və tarif məlumatları Finance Core (`industry_logistics`) modulunda saxlanılır. Bu satellit yalnız gediş səviyyəsində gömrük hazırlığını göstərir.",
     "openFinance": "Finance gömrük modulunu aç →",
     "financeUrlHint": "Dərin keçid üçün NEXT_PUBLIC_FINANCE_WEB_URL təyin edin.",
-    "uatHint": "Lokal UAT: POD ilə gedişi tamamlayın, Finance worker hadisələri qəbul etdiyini yoxlayın, sonra Finance UI-da gömrük rəsmiləşdirin."
+    "uatHint": "Lokal UAT: POD ilə gedişi tamamlayın, Finance worker hadisələri qəbul etdiyini yoxlayın, sonra Finance UI-da gömrük rəsmiləşdirin.",
+    "fxPreviewTitle": "CBA məzənnə önizləməsi (operativ)",
+    "fxPreviewHint": "Finance → data-hub vasitəsilə qiymətləndirmə. Uçot məzənnəsi Finance Trade Pro-da BGD tarixinə təyin olunur.",
+    "fxPreviewCurrency": "Valyuta",
+    "fxPreviewAmount": "Məbləğ",
+    "fxPreviewButton": "AZN-ə çevir",
+    "fxPreviewLoading": "Yüklənir…",
+    "fxPreviewFailed": "Məzənnə önizləməsi mövcud deyil",
+    "fxPreviewResult": "{amount} {from} ≈ {result} {to} (CBA {date})",
+    "fxPreviewFallback": "ilkin / keş"
   },
   "fuelReport": {
     "title": "Yanacaq hesabatı",

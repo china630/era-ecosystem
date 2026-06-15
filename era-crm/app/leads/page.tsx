@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   PRIMARY_BUTTON_CLASS,
+  VoenLookupField,
 } from "@era/satellite-kit/ui";
 import { PageHeader } from "@era/satellite-kit/ui";
 
@@ -63,6 +64,8 @@ function LeadsPipelineContent() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prefillNotice, setPrefillNotice] = useState("");
+  const [companyVoen, setCompanyVoen] = useState("");
+  const [companyName, setCompanyName] = useState("");
 
   const canAssign = session ? ASSIGN_ROLES.has(session.role.code) : false;
 
@@ -140,6 +143,26 @@ function LeadsPipelineContent() {
     }
   }
 
+  async function scheduleFollowUpBusinessDays(leadId: string, days: number) {
+    setMessage("");
+    try {
+      const res = await fetch(`/api/leads/${leadId}/follow-up`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          offsetBusinessDays: days,
+          fromDate: new Date().toISOString(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Follow-up failed");
+      setMessage(t("followUpScheduled", { id: leadId.slice(0, 8) }));
+      await loadLeads(myLeadsOnly);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    }
+  }
+
   async function assignLead(id: string, ownerId: string) {
     setMessage("");
     try {
@@ -181,6 +204,23 @@ function LeadsPipelineContent() {
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+        <div className="max-w-md">
+          <VoenLookupField
+            value={companyVoen}
+            onChange={setCompanyVoen}
+            onResolved={(r) => setCompanyName(r.found ? (r.name ?? "") : "")}
+            labels={{
+              voen: t("companyVoen"),
+              check: tc("check"),
+              found: t("companyFound"),
+              notFound: t("companyNotFound"),
+              invalid: t("companyVoenInvalid"),
+            }}
+          />
+          {companyName ? (
+            <p className="mt-1 text-[12px] text-[#2980B9]">{companyName}</p>
+          ) : null}
+        </div>
         <div className="flex flex-wrap items-center gap-4 text-[13px]">
           <label className="flex items-center gap-2">
             <input
@@ -253,6 +293,18 @@ function LeadsPipelineContent() {
                             }}
                           />
                         </label>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {[1, 3, 5].map((d) => (
+                            <button
+                              key={d}
+                              type="button"
+                              className="rounded border px-1.5 py-0.5 text-[10px] text-[#2980B9]"
+                              onClick={() => void scheduleFollowUpBusinessDays(lead.id, d)}
+                            >
+                              +{d} {t("businessDays")}
+                            </button>
+                          ))}
+                        </div>
                         <button
                           type="button"
                           className="mt-1 text-[11px] text-[#2980B9] underline"

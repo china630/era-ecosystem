@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { InventoryService } from "../inventory/inventory.service";
+import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import type { StockCheckDto } from "./dto/stock-check.dto";
 import type { RateQuoteDto } from "./dto/rate-quote.dto";
 import type { CodClearingDto } from "./dto/cod-clearing.dto";
@@ -14,6 +15,7 @@ export class IndustryHandoffsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventory: InventoryService,
+    private readonly dataHub: DataHubClientService,
   ) {}
 
   async stockCheck(organizationId: string, dto: StockCheckDto) {
@@ -234,6 +236,80 @@ export class IndustryHandoffsService {
       hubShare: Number(row.hubShare),
       clientShare: Number(row.clientShare),
       status: row.status,
+    };
+  }
+
+  /** Operational FX preview for industry satellites (hub via finance; not for GL posting). */
+  async fxPreview(params: {
+    from: string;
+    to?: string;
+    amount: number;
+    date?: string;
+  }) {
+    const from = params.from.trim().toUpperCase();
+    const to = (params.to ?? "AZN").trim().toUpperCase();
+    const amount = params.amount;
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new BadRequestException("amount must be a non-negative number");
+    }
+    const date =
+      params.date?.trim() ||
+      this.dataHub.isoDateBaku(new Date());
+
+    if (this.dataHub.isEnabled()) {
+      const converted = await this.dataHub.convertFx(from, to, amount, date);
+      if (converted) {
+        return {
+          from: converted.from,
+          to: converted.to,
+          amount: converted.amount,
+          result: converted.result,
+          rateDate: date,
+          source: "era-data-hub",
+          isFallback: false,
+        };
+      }
+      const op = await this.dataHub.getOperationalAznPerUnit(from, new Date(`${date}T12:00:00.000Z`));
+      if (op && to === "AZN") {
+        return {
+          from,
+          to,
+          amount,
+          result: Math.round(amount * op.rate * 1e8) / 1e8,
+          rateDate: op.rateDate,
+          source: "era-data-hub",
+          isFallback: op.isFallback,
+        };
+      }
+    }
+
+    throw new BadRequestException(
+      "FX preview unavailable (enable ERA_DATA_HUB_ENABLED and DATA_HUB_SERVICE_TOKEN)",
+    );
+  }
+
+  /** HS tariff preview for industry satellites (read-only; via hub). */
+  async hsPreview(params: { hsCode: string; date?: string }) {
+    const code = params.hsCode.replace(/\D/g, "").trim();
+    if (code.length < 4) {
+      throw new BadRequestException("hsCode required (min 4 digits)");
+    }
+    const rateDate =
+      params.date?.trim() ||
+      this.dataHub.isoDateBaku(new Date());
+    const tariff = await this.dataHub.getTariff(code, rateDate);
+    if (!tariff) {
+      throw new NotFoundException(`No HS tariff for ${code} on ${rateDate}`);
+    }
+    const meta = await this.dataHub.getHsMeta(code);
+    return {
+      hsCode: tariff.hsCode,
+      description: meta?.description ?? null,
+      dutyRatePercent: tariff.dutyRatePercent,
+      vatRatePercent: tariff.vatRatePercent,
+      excisePercent: tariff.excisePercent,
+      rateDate,
+      source: this.dataHub.isEnabled() ? "era-data-hub" : "finance-local",
     };
   }
 

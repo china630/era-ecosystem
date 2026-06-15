@@ -404,6 +404,7 @@
     "title": "Folio — reservation {id}…",
     "backChessboard": "Back to chessboard",
     "totalBalance": "Total balance:",
+    "ratesIn": "rates quoted in {currency}",
     "readyCheckout": "— ready for check-out",
     "paymentRequired": "— payment required",
     "folioLine": "{type} folio ({status}) — balance {balance} AZN",
@@ -640,6 +641,7 @@
     "preferredBed": "Üstünlük verilən çarpayı",
     "givenRoomType": "Verilmiş otaq tipi",
     "contractRef": "Müqavilə ref.",
+    "salesContract": "B2B satış müqaviləsi",
     "roomSearch": "Find room",
     "roomHk": "Housekeeping",
     "attach": "Əlavə",
@@ -660,7 +662,9 @@
     "cameraStub": "Camera capture is not configured",
     "repeatGuest": "Təkrar qonaq",
     "folioPax": "Pax",
-    "folioInvoice": "Invoice"
+    "folioInvoice": "Invoice",
+    "fxEquivalentAzn": "≈ AZN",
+    "fxApprox": "≈"
   },
   "guestCard": {
     "title": "Qonaq kartı",
@@ -1312,7 +1316,14 @@
     "variance": "Fərq", "posPolicy": "POS siyasəti", "resourcesHint": "Təsdiqdə zal bloklanır; POS yalnız əlavələr.",
     "openCalendar": "Resurs təqvimi", "calendarTitle": "Banket resurs təqvimi", "calendarSubtitle": "Tarix aralığı",
     "calendarEmpty": "Rezervasiya yoxdur", "profitabilityTitle": "Tədbir rentabelliyi", "profitabilitySubtitle": "Plan vs fakt",
-    "counterparty": "Kontragent"
+    "counterparty": "Kontragent",
+    "addResource": "Resurs bronu əlavə et",
+    "resourceAdded": "Resurs bronu əlavə olundu",
+    "resourceStart": "Başlanğıc",
+    "resourceEnd": "Bitmə",
+    "resourceLabel": "Etiket (ixtiyari)",
+    "resourceLabelPlaceholder": "Breakout otaq / AV",
+    "resourceMissingTimes": "Başlanğıc və bitmə vaxtını daxil edin"
   },
   "salesContracts": {
     "title": "B2B satış müqavilələri", "subtitle": "Agentlik/korporativ tariflər və kvotalar (H-BL-30)",
@@ -1321,7 +1332,14 @@
     "validFrom": "Başlanğıc", "validTo": "Bitmə", "allotments": "Kvotalar", "addAllotment": "Kvota əlavə et",
     "allotmentSaved": "Kvota saxlanıldı", "roomType": "Otaq tipi", "nightlyQuota": "Gecəlik kvota",
     "empty": "Müqavilə yoxdur", "legacyNote": "Köhnə faiz qaydaları SalesContract-a köçürülüb.",
-    "contractHint": "Müqavilə {id}…"
+    "contractHint": "Müqavilə {id}…",
+    "utilization": "Utilizasiya",
+    "utilizationTitle": "Utilizasiya — {code}",
+    "reservationCount": "Aktiv rezervasiyalar",
+    "allotmentNights": "Allotment otaq-gecələri",
+    "consumedNights": "İstifadə olunan otaq-gecələri",
+    "utilizationPercent": "Pick-up %",
+    "totalRevenue": "Müqavilə gəliri"
   },
   "roomPlan": {
     "title": "Otaq planı",

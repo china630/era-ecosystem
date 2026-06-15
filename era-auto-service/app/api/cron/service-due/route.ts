@@ -2,6 +2,7 @@ import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { sendNotification, createBookingSlots } from "@/integration/control-plane-platform.client";
 import { platformNotificationsEnabled } from "@/lib/platform-notify";
+import { nextServiceAppointmentDay } from "@/lib/production-calendar";
 
 const CRON_SECRET = process.env.PLATFORM_CRON_SECRET ?? "";
 
@@ -31,7 +32,9 @@ export async function POST(req: Request) {
     for (const wo of workOrders) {
       if (!wo.vehiclePlate || !organizationId) continue;
 
-      const slotStart = new Date(Date.now() + 24 * 3600_000);
+      const tomorrowIso = new Date(Date.now() + 24 * 3600_000).toISOString().slice(0, 10);
+      const workingIso = await nextServiceAppointmentDay(tomorrowIso);
+      const slotStart = new Date(`${workingIso}T10:00:00.000Z`);
       const slotEnd = new Date(slotStart.getTime() + 60 * 60_000);
       const slot = await createBookingSlots(
         {

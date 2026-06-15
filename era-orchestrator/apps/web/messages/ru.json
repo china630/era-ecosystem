@@ -380,6 +380,13 @@
         "highlight1": "B2B-каталог",
         "highlight2": "Pick & pack",
         "highlight3": "Накладные"
+      },
+      "banking": {
+        "title": "Bank CBS",
+        "tagline": "Core banking, teller, EOD",
+        "highlight1": "CIF и счета",
+        "highlight2": "Платежи и продукты",
+        "highlight3": "Регуляторное CBS-ядро"
       }
     }
   },

@@ -380,6 +380,13 @@
         "highlight1": "B2B kataloq",
         "highlight2": "Pick & pack",
         "highlight3": "Çatdırılma qaimələri"
+      },
+      "banking": {
+        "title": "Bank CBS",
+        "tagline": "Core banking, teller, EOD",
+        "highlight1": "CIF və hesablar",
+        "highlight2": "Ödənişlər və məhsullar",
+        "highlight3": "Tənzimlənən CBS mühərriki"
       }
     }
   },

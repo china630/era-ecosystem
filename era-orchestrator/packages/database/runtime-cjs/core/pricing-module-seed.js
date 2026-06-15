@@ -6,6 +6,17 @@ exports.ensureMissingPricingModules = ensureMissingPricingModules;
 const client_1 = require("../../generated/client");
 const pricing_module_keys_1 = require("./pricing-module-keys");
 const hotel_module_keys_1 = require("./hotel-module-keys");
+const FINANCE_TRIAL_ELIGIBLE = new Set([
+    "nas",
+    "ifrs_mapping",
+    "manufacturing",
+    "fixed_assets",
+    "inventory",
+    "hr_full",
+    "audit_hub",
+    pricing_module_keys_1.PRICING_MODULE_CASH_BANK_PRO,
+]);
+const INDUSTRY_TRIAL_ELIGIBLE = new Set(hotel_module_keys_1.INDUSTRY_SATELLITE_MODULE_KEYS);
 const INDUSTRY_SATELLITE_SEED = [
     { key: "industry_hotel_pms", name: "Hotel PMS", sortOrder: 100, pricePerMonth: 28 },
     { key: "industry_fnb_pos", name: "F&B POS", sortOrder: 101, pricePerMonth: 22 },
@@ -16,6 +27,7 @@ const INDUSTRY_SATELLITE_SEED = [
     { key: "industry_auto_service", name: "Auto STO", sortOrder: 106, pricePerMonth: 18 },
     { key: "industry_clinic", name: "Clinic", sortOrder: 107, pricePerMonth: 22 },
     { key: "industry_wholesale", name: "Wholesale", sortOrder: 108, pricePerMonth: 18 },
+    { key: "industry_banking", name: "Bank CBS", sortOrder: 109, pricePerMonth: 99 },
 ];
 /**
  * Canonical defaults for `pricing_modules` — synced with Super-Admin catalog (2026-05).
@@ -27,11 +39,49 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         pricePerMonth: 38,
         sortOrder: 0,
         isPremium: false,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
     },
-    { key: "inventory", name: "Warehouse", pricePerMonth: 19, sortOrder: 1 },
-    { key: "manufacturing", name: "Manufacturing", pricePerMonth: 19, sortOrder: 2 },
-    { key: "hr_full", name: "HR", pricePerMonth: 19, sortOrder: 3 },
-    { key: "ifrs_mapping", name: "IFRS", pricePerMonth: 19, sortOrder: 4 },
+    {
+        key: "nas",
+        name: "General Ledger (NAS)",
+        pricePerMonth: 0,
+        sortOrder: 0,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "inventory",
+        name: "Warehouse",
+        pricePerMonth: 19,
+        sortOrder: 1,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "manufacturing",
+        name: "Manufacturing",
+        pricePerMonth: 19,
+        sortOrder: 2,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "hr_full",
+        name: "HR",
+        pricePerMonth: 19,
+        sortOrder: 3,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
+    {
+        key: "ifrs_mapping",
+        name: "IFRS",
+        pricePerMonth: 19,
+        sortOrder: 4,
+        satelliteKey: "finance_core",
+        trialEligibleInTrial: true,
+    },
     { key: "tax_pro", name: "Tax Pro", pricePerMonth: 19, sortOrder: 10, isPremium: true },
     { key: "trade_pro", name: "Trade Pro", pricePerMonth: 19, sortOrder: 11, isPremium: true },
     { key: "audit_hub", name: "Audit Hub", pricePerMonth: 99, sortOrder: 12, isPremium: true },
@@ -91,6 +141,7 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         sortOrder: s.sortOrder,
         isPremium: false,
         satelliteKey: null,
+        trialEligibleInTrial: true,
     })),
     // Hotel PMS submodules (9-key taxonomy)
     {
@@ -181,8 +232,90 @@ exports.PRICING_MODULE_SEED_DEFAULTS = [
         isPremium: false,
         satelliteKey: "industry_hotel_pms",
     },
+    {
+        key: "banking_core",
+        name: "Bank Core (kernel)",
+        pricePerMonth: 0,
+        sortOrder: 120,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_payments",
+        name: "Payments hub",
+        pricePerMonth: 29,
+        sortOrder: 121,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_deposits",
+        name: "Deposits",
+        pricePerMonth: 19,
+        sortOrder: 122,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_loans",
+        name: "Lending",
+        pricePerMonth: 29,
+        sortOrder: 123,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_aml",
+        name: "AML / Compliance",
+        pricePerMonth: 39,
+        sortOrder: 124,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_regreporting",
+        name: "Regulatory reporting",
+        pricePerMonth: 29,
+        sortOrder: 125,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_dbo",
+        name: "Digital banking (DBO)",
+        pricePerMonth: 19,
+        sortOrder: 126,
+        isPremium: false,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_cards",
+        name: "Cards",
+        pricePerMonth: 29,
+        sortOrder: 127,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
+    {
+        key: "banking_treasury",
+        name: "Treasury / ALM",
+        pricePerMonth: 39,
+        sortOrder: 128,
+        isPremium: true,
+        satelliteKey: "industry_banking",
+    },
 ];
 async function ensureSatellites(prisma) {
+    await prisma.satellite.upsert({
+        where: { key: "finance_core" },
+        create: {
+            key: "finance_core",
+            name: "Finance Core",
+            verticalSlug: "finance",
+            sortOrder: 50,
+        },
+        update: { name: "Finance Core" },
+    });
     const verticalByKey = {
         industry_hotel_pms: "hotel",
         industry_fnb_pos: "fnb",
@@ -193,6 +326,7 @@ async function ensureSatellites(prisma) {
         industry_auto_service: "auto",
         industry_clinic: "clinic",
         industry_wholesale: "wholesale",
+        industry_banking: "banking",
     };
     for (const s of INDUSTRY_SATELLITE_SEED) {
         await prisma.satellite.upsert({
@@ -209,6 +343,25 @@ async function ensureSatellites(prisma) {
 }
 function moduleSeedData(m) {
     const catalogKind = (0, hotel_module_keys_1.inferPricingCatalogKind)(m.key);
+    let satelliteKey = m.satelliteKey ??
+        (m.key.startsWith("hotel_")
+            ? "industry_hotel_pms"
+            : m.key.startsWith("banking_")
+                ? "industry_banking"
+                : null);
+    if (!satelliteKey && FINANCE_TRIAL_ELIGIBLE.has(m.key)) {
+        satelliteKey = "finance_core";
+    }
+    let trialEligibleInTrial = m.trialEligibleInTrial ?? false;
+    if (!trialEligibleInTrial) {
+        if (FINANCE_TRIAL_ELIGIBLE.has(m.key))
+            trialEligibleInTrial = true;
+        if (INDUSTRY_TRIAL_ELIGIBLE.has(m.key)) {
+            trialEligibleInTrial = true;
+        }
+        if (m.key === "hotel_core")
+            trialEligibleInTrial = true;
+    }
     return {
         key: m.key,
         name: m.name,
@@ -216,7 +369,8 @@ function moduleSeedData(m) {
         sortOrder: m.sortOrder,
         isPremium: m.isPremium ?? false,
         catalogKind,
-        satelliteKey: m.satelliteKey ?? (m.key.startsWith("hotel_") ? "industry_hotel_pms" : null),
+        satelliteKey,
+        trialEligibleInTrial,
     };
 }
 async function seedPricingModuleIfEmpty(prisma) {

@@ -104,7 +104,12 @@
     "followUp": "Follow-up",
     "convert": "Convert",
     "converted": "Lead converted — event {id}",
-    "followUpScheduled": "Follow-up scheduled {id}"
+    "followUpScheduled": "Follow-up scheduled {id}",
+    "businessDays": "biz days",
+    "companyVoen": "Company VÖEN",
+    "companyFound": "Company found",
+    "companyNotFound": "Company not found",
+    "companyVoenInvalid": "VÖEN must be 10 digits"
   },
   "visits": {
     "title": "Field visits",

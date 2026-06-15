@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "title": "ERA İnternet Bank",
+    "description": "Fərdi və korporativ rəqəmsal bank xidmətləri"
+  },
+  "nav": {
+    "home": "Əsas",
+    "accounts": "Hesablar",
+    "cards": "Kartlar",
+    "pay": "Ödəniş",
+    "transfers": "Köçürmə",
+    "approve": "Təsdiq",
+    "more": "Daha çox",
+    "logout": "Çıxış"
+  },
+  "login": {
+    "title": "Daxil ol",
+    "retailTab": "Fərdi",
+    "corporateTab": "Korporativ",
+    "finLabel": "FIN",
+    "voenLabel": "VÖEN",
+    "otpRequest": "OTP göndər",
+    "otpVerify": "Təsdiqlə",
+    "otpCode": "OTP kodu",
+    "asanLogin": "ASAN İmza (stub)",
+    "asanComplete": "ASAN təsdiqi",
+    "devHint": "Dev OTP: 123456"
+  },
+  "dashboard": {
+    "title": "Əsas",
+    "totalBalance": "Ümumi balans",
+    "recentActivity": "Son əməliyyatlar",
+    "noAccounts": "Hesab tapılmadı"
+  },
+  "accounts": {
+    "title": "Hesablarım",
+    "balance": "Balans",
+    "iban": "IBAN",
+    "viewDetails": "Detallar"
+  },
+  "transfers": {
+    "title": "Daxili köçürmə",
+    "from": "Haradan",
+    "to": "Haraya",
+    "amount": "Məbləğ (AZN)",
+    "submit": "Köçür",
+    "success": "Köçürmə göndərildi"
+  },
+  "payments": {
+    "title": "Ödənişlər",
+    "new": "Yeni ödəniş",
+    "beneficiary": "Benefisiar IBAN",
+    "beneficiaryName": "Ad",
+    "purpose": "Təyinat",
+    "amount": "Məbləğ (AZN)",
+    "create": "Yarat",
+    "submit": "Göndər",
+    "status": "Status",
+    "empty": "Ödəniş sifarişi yoxdur"
+  },
+  "approve": {
+    "title": "Təsdiq növbəsi",
+    "sign": "ASAN ilə imzala",
+    "empty": "Gözləyən imza yoxdur",
+    "orderId": "Sifariş"
+  },
+  "cards": {
+    "title": "Kartlar",
+    "expiry": "Bitmə",
+    "status": "Status",
+    "viewDetails": "Detallar",
+    "back": "Kartlara qayıt",
+    "temporaryBlock": "Müvəqqəti blok"
+  },
+  "common": {
+    "loading": "Yüklənir…",
+    "error": "Xəta",
+    "back": "Geri",
+    "save": "Saxla",
+    "cancel": "Ləğv et"
+  }
+}

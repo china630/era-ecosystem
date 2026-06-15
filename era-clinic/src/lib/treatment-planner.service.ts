@@ -1,6 +1,7 @@
 import type { BodyPart } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
+import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
 
 const WORK_START_HOUR = 9;
 const WORK_END_HOUR = 17;
@@ -39,15 +40,22 @@ export function skipLunch(slot: Date): Date {
 }
 
 /** @internal exported for unit tests */
-export function nextWorkSlot(cursor: Date): Date {
+export async function nextWorkSlot(cursor: Date): Promise<Date> {
   let d = new Date(cursor);
   d = skipLunch(d);
   if (d.getHours() >= WORK_END_HOUR) {
     d.setDate(d.getDate() + 1);
     d.setHours(WORK_START_HOUR, 0, 0, 0);
+    d = await nextSchedulingDay(d);
+    d.setHours(WORK_START_HOUR, 0, 0, 0);
   }
   if (d.getHours() < WORK_START_HOUR) {
     d.setHours(WORK_START_HOUR, 0, 0, 0);
+  }
+  if (!(await isElectiveSchedulingAllowed(d))) {
+    const next = await nextSchedulingDay(d);
+    next.setHours(WORK_START_HOUR, 0, 0, 0);
+    return next;
   }
   return d;
 }
@@ -115,7 +123,7 @@ export async function planProgramFifo(
     if (!resource) continue;
 
     const duration = item.durationMin;
-    let slotStart = nextWorkSlot(cursor);
+    let slotStart = await nextWorkSlot(cursor);
     if (!item.afterLunchAllowed && slotStart.getHours() >= LUNCH_END_HOUR) {
       slotStart.setDate(slotStart.getDate() + 1);
       slotStart.setHours(WORK_START_HOUR, 0, 0, 0);
@@ -202,7 +210,7 @@ export async function planProgramFifo(
         break;
       }
       slotStart = addMinutes(slotStart, SLOT_MINUTES);
-      slotStart = nextWorkSlot(slotStart);
+      slotStart = await nextWorkSlot(slotStart);
     }
   }
 

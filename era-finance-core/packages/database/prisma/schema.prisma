@@ -2604,6 +2604,7 @@ model Counterparty {
   phonesJson         Json?                  @default("[]") @map("phones_json")
   finCodeCipher      String?                @map("fin_code_cipher")
   finCodeBlindIndex  String?                @map("fin_code_blind_index")
+  globalPersonId     String?                @map("global_person_id") @db.Uuid
   globalId        String?                   @map("global_id") @db.Uuid
   /// *
   ///    * Предпочитаемый язык портала счёта для клиента: `az` | `ru` | `en` (nullable).

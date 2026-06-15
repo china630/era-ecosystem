@@ -8,8 +8,10 @@ PRD: [../PRD.md](../PRD.md)
 
 ## K1 — MVP приём
 
-- [x] Patient ref + practitioner + room
-- [x] Schedule + check-in (K-01, K-02)
+- [x] Patient ref API + `/patients` registry UI (M1)
+- [x] Practitioner + room models; SatAdmin CRUD `/admin/master-data` (M2)
+- [x] Schedule + check-in (K-02) — `/appointments`
+- [x] Appointment create UI (K-01) — modal on `/appointments`
 - [x] Visit services + close → `SATELLITE_CLINIC_VISIT_COMPLETED` E2E
 
 ## K2 — Лаборатория
@@ -27,7 +29,7 @@ PRD: [../PRD.md](../PRD.md)
 ## K3
 
 - [x] Scheduling day view stub — `/scheduling` + `GET /api/scheduling/slots`
-- [x] Discount audit (K-13) — `VisitDiscountAudit`, `POST /api/visits/[id]/discount`
+- [x] Discount audit (K-13) — API + visit card modal UI
 - [x] Executive dashboard (K-14) — `/executive` + `GET /api/executive/summary` (`BUSINESS_OWNER`)
 - [x] Multi-room schedule (drag reschedule) — см. Product modules M9 (v1.0)
 
@@ -70,13 +72,27 @@ Client: `@era/satellite-kit`.
 
 - [x] Lab lifecycle + executive summary
 - [x] Sanatorium bridge (hotel integration)
-- [x] Admin settings UI playbook `/admin/settings`
+- [x] Admin settings UI `/admin/settings` — persisted via `/api/admin/settings`
+
+## Admin master data (2026-06-15)
+
+Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
+
+- [x] `/admin/master-data` — practitioners (FIN/MDM/defaultSlotMinutes), rooms, resources, procedure types (modal CRUD)
+- [x] `/admin/wards` — ward/bed create+edit+delete modals
+- [x] `/patients` — registry list + create modal (M1)
+- [x] `/admin/catalog` — service cache + Finance sync (M6)
+- [x] `/admin/templates` — clinical + program templates
+- [x] `/admin/procedure-rules` — compatibility + FIFO sequence rules (modal)
+- [x] `/admin/audit` — satellite audit log viewer
+- [x] Docker `RUN_SEED` + bootstrap `db:seed:vnext`
+- [s] HL7 LIS prod adapter — CSV only until vendor
 
 ## Product modules (v1.0)
 
 Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 
-- [x] M6: Service catalog cache API + sync from Finance price list stub
+- [x] M6: Service catalog cache API + SatAdmin `/admin/catalog` + sync
 - [x] M5: Critical lab flag UI on publish (beyond refMin/refMax)
 - [x] M9: Multi-room drag reschedule
 - [x] M14: Telehealth / portal deep link on lab publish
@@ -86,7 +102,7 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 - [x] M10: EHR templates / CPOE lite
 - [x] M11: LIS analyzer import
 - [x] M12: Insurance / DMS eligibility
-- [x] M13: Inpatient / bed management
+- [x] M13: Inpatient / bed management — **SHIPPED** (ADT-light + `/admin/wards` modal CRUD + daily charge cron)
 
 ## vNext — Clinic + shared fiscal (2026-06)
 
@@ -101,8 +117,7 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 ### `@era/fiscal`
 
-- [x] Package `packages/era-fiscal` (`mock|nbc|cybernet` stubs); `ERA_FISCAL_PROVIDER` + `KKM_DRIVER` fallback
-- [x] Migrated retail, F&B, hotel folio pay, clinic cashier; removed local KKM providers
+- [s] `@era/fiscal` NBC/Cybernet — mock/stub until prod cert
 
 ### Clinic UX
 

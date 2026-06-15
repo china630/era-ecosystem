@@ -26,6 +26,8 @@
     "description": "Retail POS — ERA industry satellite"
   },
   "nav": {
+    "sectionOps": "Operations",
+    "sectionAdmin": "Administration",
     "home": "Home",
     "appointments": "Appointments",
     "queue": "Reception queue",
@@ -38,7 +40,12 @@
     "doctor": "Doctor queue",
     "nurse": "Nurse procedures",
     "cashier": "Cashier",
-    "settings": "Settings"
+    "settings": "Settings",
+    "patients": "Patients",
+    "masterData": "Master data",
+    "catalog": "Service catalog",
+    "templates": "Templates",
+    "audit": "Audit log"
   },
   "login": {
     "title": "ERA Clinic",
@@ -95,12 +102,25 @@
     "failed": "Failed",
     "error": "Error",
     "loadingFailed": "Load failed",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "add": "Add",
+    "delete": "Delete",
+    "confirmDelete": "Delete this record?",
+    "saved": "Saved",
+    "confirm": "Confirm"
   },
   "appointments": {
-    "title": "ERA Clinic",
-    "subtitle": "MVP operational shell — UI per DESIGN.md.",
-    "shellNote": "Registries and create/edit forms will use modals per DESIGN.md."
+    "title": "Appointments",
+    "subtitle": "Reception schedule and check-in",
+    "shellNote": "Select an appointment to manage the visit.",
+    "createTitle": "New appointment",
+    "patientRefCode": "Patient ref code",
+    "patientName": "Patient name",
+    "patientPhone": "Phone",
+    "cancelVisit": "Cancel visit",
+    "cancelTitle": "Cancel visit",
+    "cancelReason": "Cancellation reason (required)",
+    "cancelConfirm": "Confirm cancel"
   },
   "labOrders": {
     "title": "Lab orders",
@@ -108,7 +128,11 @@
     "criticalOnly": "Critical results only (M5)",
     "statusFilter": "Status filter",
     "empty": "No lab orders yet.",
-    "importCsv": "Import CSV"
+    "importCsv": "Import CSV",
+    "createTitle": "New lab order",
+    "selectPatient": "Select patient",
+    "testCode": "Test code",
+    "visitIdOptional": "Visit ID (optional)"
   },
   "labOrdersDetail": {
     "title": "Lab order workflow",
@@ -154,12 +178,16 @@
   "doctor": {
     "title": "Doctor queue",
     "subtitle": "Checked-in and in-progress visits",
-    "empty": "No patients in queue."
+    "empty": "No patients in queue.",
+    "openVisit": "Open visit"
   },
   "nurse": {
     "title": "Procedure queue",
     "subtitle": "Scheduled procedures for nursing",
-    "done": "Complete"
+    "done": "Complete",
+    "empty": "No scheduled procedures.",
+    "completeConfirmTitle": "Complete procedure",
+    "completeConfirmBody": "Mark this procedure as completed and post consumables?"
   },
   "queue": {
     "title": "Reception queue",
@@ -172,7 +200,16 @@
     "title": "Clinic cashier",
     "subtitle": "Shift, payment, and fiscal receipt (@era/fiscal)",
     "openShift": "Open shift",
-    "pay": "Collect payment"
+    "pay": "Collect payment",
+    "visitLabel": "Visit",
+    "shiftLabel": "Shift",
+    "mockFiscalBadge": "Mock fiscal (CLI-24 STUB)",
+    "statusLabel": "Status",
+    "receiptLabel": "Receipt",
+    "fiscalLabel": "Fiscal ID",
+    "qrLabel": "QR payload",
+    "settlementOnly": "Settlement-only mode (no real NBC)",
+    "paymentFailed": "Payment failed"
   },
   "booking": {
     "title": "Book an appointment",
@@ -195,7 +232,10 @@
     "loadFailed": "Could not load summary.",
     "visitsToday": "Visits today",
     "labRevenueToday": "Lab revenue today",
-    "openLabOrders": "Open lab orders"
+    "openLabOrders": "Open lab orders",
+    "filterDate": "Date",
+    "filterPractitioner": "Practitioner",
+    "capacityTitle": "Sanatorium load (week)"
   },
   "sanatorium": {
     "title": "Sanatorium in-house",
@@ -240,7 +280,8 @@
     "title": "Clinic settings",
     "subtitle": "Admin — UI playbook (list + ModalShell)",
     "clinicName": "Name clinic",
-    "editClinic": "Edit clinic"
+    "editClinic": "Edit clinic",
+    "enabledPresets": "Enabled product lines"
   },
   "lisProfiles": {
     "title": "LIS file profiles",
@@ -273,7 +314,12 @@
     "codeB": "Code B",
     "addRule": "Add rule",
     "added": "Rule added.",
-    "empty": "No rules configured."
+    "empty": "No rules configured.",
+    "compatTab": "Compatibility",
+    "sequenceTab": "Sequence (FIFO)",
+    "minGap": "Min gap (minutes)",
+    "minHours": "Min hours",
+    "note": "Note"
   },
   "inpatient": {
     "title": "Inpatient wards",
@@ -281,13 +327,15 @@
     "assignBed": "Assign bed",
     "assign": "Assign",
     "discharge": "Discharge",
+    "transfer": "Transfer",
     "addBed": "Add bed",
-    "wardCode": "Ward code",
-    "bedCode": "Bed code",
-    "patientRefId": "Patient ref ID",
-    "empty": "No wards yet — assign a bed to create ward and bed records.",
+    "selectBed": "Select bed",
+    "selectPatient": "Select patient",
+    "configureWardsHint": "Configure wards in Admin → Master data.",
+    "empty": "No wards configured.",
     "assigned": "Patient assigned to bed.",
-    "discharged": "Patient discharged."
+    "discharged": "Patient discharged.",
+    "transferred": "Patient transferred."
   },
   "admin": {
     "settings": {
@@ -297,5 +345,125 @@
       "edit": "Edit",
       "save": "Save"
     }
+  },
+  "masterData": {
+    "title": "Master data",
+    "subtitle": "Practitioners, rooms, resources, procedure types, wards",
+    "practitioners": "Practitioners",
+    "rooms": "Rooms",
+    "resources": "Resources",
+    "procedureTypes": "Procedure types",
+    "wards": "Wards & beds",
+    "wardCode": "Ward code",
+    "wardName": "Ward name",
+    "bedCode": "Bed code",
+    "dailyChargeCode": "Daily charge code",
+    "mdmLink": "MDM link",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Not linked",
+    "mdmLookup": "MDM lookup",
+    "mdmLinked": "MDM linked ({id})",
+    "mdmNotFound": "No MDM match for FIN",
+    "finRequired": "Enter FIN for lookup",
+    "defaultSlotMinutes": "Default slot (minutes)",
+    "wardsLink": "Wards & beds",
+    "editWard": "Edit ward",
+    "editBed": "Edit bed",
+    "noBeds": "No beds",
+    "code": "Code",
+    "name": "Name",
+    "specialty": "Specialty",
+    "kind": "Kind",
+    "capacity": "Capacity",
+    "durationMin": "Duration (min)",
+    "resourceCode": "Resource code",
+    "finCode": "FIN (optional)",
+    "passportNumber": "Passport",
+    "issuingCountry": "Issuing country",
+    "phone": "Phone",
+    "nameRequired": "Enter full name for MDM lookup"
+  },
+  "contraindications": {
+    "addTitle": "Add contraindication",
+    "removeTitle": "Remove contraindication",
+    "noteOptional": "Note (optional)",
+    "empty": "No contraindicated zones"
+  },
+  "visits": {
+    "completeConfirmTitle": "Complete visit",
+    "completeConfirmBody": "Complete visit and post billing?",
+    "completeVisit": "Complete visit",
+    "completing": "Completing…",
+    "completeFailed": "Complete failed",
+    "completeSuccess": "Visit completed",
+    "issuePrescription": "Issue prescription",
+    "prescriptionTitle": "Issue prescription",
+    "rxSku": "SKU",
+    "rxQty": "Quantity",
+    "rxDescription": "Description (optional)",
+    "prescriptionSuccess": "Prescription issued ({count} line(s))",
+    "prescriptionFailed": "Prescription failed"
+  },
+  "patientRegistry": {
+    "title": "Patient registry",
+    "subtitle": "Local patient references (MDM-linked)",
+    "search": "Search patients",
+    "refCode": "Ref code",
+    "name": "Full name",
+    "phone": "Phone",
+    "finCode": "FIN",
+    "passportNumber": "Passport",
+    "issuingCountry": "Issuing country",
+    "createTitle": "Register patient",
+    "openCard": "Open card",
+    "mdmLookup": "MDM lookup",
+    "mdmBadge": "MDM",
+    "mdmMissing": "Not linked",
+    "mdmLinked": "MDM linked ({id})",
+    "mdmNotFound": "No MDM match for FIN",
+    "finRequired": "Enter FIN for lookup",
+    "nameRequired": "Enter full name for MDM lookup",
+    "finObtained": "FIN obtained (merge)",
+    "mergeFinPrompt": "Enter new FIN code",
+    "mergeFinSuccess": "MDM records merged",
+    "editPatient": "Edit patient",
+    "backToList": "Back to patients",
+    "fullName": "Full name",
+    "contraindicationsTitle": "Contraindications (body map)"
+  },
+  "catalogAdmin": {
+    "title": "Service catalog",
+    "subtitle": "Cached price list from Finance",
+    "code": "Code",
+    "description": "Description",
+    "amount": "Amount",
+    "lastSync": "Last sync",
+    "stale": "Stale (>24h)",
+    "syncFromFinance": "Sync from Finance",
+    "synced": "Synced {count} item(s)",
+    "empty": "Catalog empty."
+  },
+  "templatesAdmin": {
+    "title": "Clinical templates",
+    "subtitle": "CPOE and sanatorium program templates",
+    "clinicalTab": "Clinical",
+    "programTab": "Programs",
+    "code": "Code",
+    "titleField": "Title",
+    "specialty": "Specialty",
+    "name": "Name",
+    "durationDays": "Duration (days)",
+    "procedureCode": "Procedure code",
+    "procedureName": "Procedure name",
+    "quotaTotal": "Quota",
+    "bodyJson": "Body JSON"
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitle": "Satellite mutation trail",
+    "when": "When",
+    "entity": "Entity",
+    "action": "Action",
+    "user": "User"
   }
 }

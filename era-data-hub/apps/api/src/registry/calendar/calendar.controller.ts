@@ -11,7 +11,24 @@ import { CalendarService } from "./calendar.service";
 export class CalendarController {
   constructor(private readonly calendar: CalendarService) {}
 
+  @Get(":country/day")
+  @ApiOperation({ summary: "Single calendar day with dayType and labels" })
+  getDay(@Param("country") country: string, @Query("date") date: string) {
+    return this.calendar.getDay(country, date);
+  }
+
+  @Get(":country/days")
+  @ApiOperation({ summary: "Bulk calendar days for cache warm-up" })
+  getDays(
+    @Param("country") country: string,
+    @Query("from") from: string,
+    @Query("to") to: string,
+  ) {
+    return this.calendar.getDaysRange(country, from, to);
+  }
+
   @Get(":country/is-working-day")
+  @ApiOperation({ summary: "Working day check (alias of /day)" })
   isWorking(@Param("country") country: string, @Query("date") date: string) {
     return this.calendar.isWorkingDay(country, date);
   }

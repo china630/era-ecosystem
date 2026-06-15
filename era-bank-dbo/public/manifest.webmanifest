@@ -1,0 +1,18 @@
+{
+  "name": "ERA Internet Bank",
+  "short_name": "ERA Bank",
+  "description": "Digital banking for retail and corporate customers",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F4F6F8",
+  "theme_color": "#0B5FFF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

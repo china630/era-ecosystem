@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed — 2026-06-03. Доработки следующей версии по двум сателлитам (**`era-clinic`**, **`era-hotel-pms`**) и кросс-сателлитной интеграции через **`era-orchestrator`**; **`era-data-hub`** в этой работе не меняется.
+Proposed — 2026-06-03. Доработки следующей версии по двум сателлитам (**`era-clinic`**, **`era-hotel-pms`**) и кросс-сателлитной интеграции через **`era-orchestrator`**. **`era-data-hub`** schema не меняется; **clinic scheduling** потребляет prod calendar read-only ([production-calendar-ecosystem.md](./production-calendar-ecosystem.md)).
 
-Связано: [INTEGRATION_SSO_EVENTS.md](../INTEGRATION_SSO_EVENTS.md) · [satellite-finance-bridge-pattern](./satellite-finance-bridge-pattern.md) · [HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITALITY_FINANCE_BOUNDARY.md) · [orchestrator-satellite-vs-module](./orchestrator-satellite-vs-module.md) · [hotel-module-taxonomy](./hotel-module-taxonomy.md) · [era-data-hub](./era-data-hub.md). План реализации: [SANATORIUM-VNEXT-PLAN.md](../SANATORIUM-VNEXT-PLAN.md).
+Связано: [INTEGRATION_SSO_EVENTS.md](../INTEGRATION_SSO_EVENTS.md) · [satellite-finance-bridge-pattern](./satellite-finance-bridge-pattern.md) · [HOSPITALITY_FINANCE_BOUNDARY.md](../HOSPITALITY_FINANCE_BOUNDARY.md) · [orchestrator-satellite-vs-module](./orchestrator-satellite-vs-module.md) · [hotel-module-taxonomy](./hotel-module-taxonomy.md) · [clinic-product-lines-and-presets](./clinic-product-lines-and-presets.md) · [era-data-hub](./era-data-hub.md). План реализации: [SANATORIUM-VNEXT-PLAN.md](../SANATORIUM-VNEXT-PLAN.md).
 
 ## Контекст
 

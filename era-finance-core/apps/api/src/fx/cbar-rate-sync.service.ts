@@ -147,14 +147,15 @@ export class CbarRateSyncService {
     if (upper === "AZN" || upper === "AZM") {
       return 1;
     }
-    const key = this.cbar.formatBakuDate(date);
+    const dateKey = this.dataHub.isoDateBaku(date);
     if (this.dataHub.isEnabled()) {
-      const remote = await this.dataHub.getFxRates(key, upper);
+      const remote = await this.dataHub.getFxRates(dateKey, upper);
       const hit = remote?.find((r) => r.currencyCode === upper);
       if (hit?.rate != null && Number.isFinite(hit.rate)) {
         return hit.rate;
       }
     }
+    const key = this.cbar.formatBakuDate(date);
     const rateDate = bakuDdMmYyyyToRateDate(key);
     const row = await this.prisma.cbarOfficialRate.findUnique({
       where: {
@@ -268,6 +269,47 @@ export class CbarRateSyncService {
   }> {
     const codes = await this.systemConfig.getFxDashboardCurrencyCodes();
     const todayKey = this.cbar.formatBakuDate(now);
+    const hubDateKey = this.dataHub.isoDateBaku(now);
+
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getFxRates(hubDateKey, codes.join(","));
+      if (remote?.length) {
+        const byCode = new Map(remote.map((r) => [r.currencyCode, r]));
+        const rates: FxDashboardRateRow[] = codes.map((code) => {
+          const hit = byCode.get(code);
+          if (hit) {
+            const rateDateBaku = hit.rateDate
+              ? this.cbar.formatBakuDate(new Date(`${hit.rateDate}T12:00:00.000Z`))
+              : todayKey;
+            return {
+              currencyCode: code,
+              rate: hit.rate,
+              value: hit.rate,
+              nominal: 1,
+              rateDateBaku,
+              isFallback: rateDateBaku !== todayKey,
+              isUnavailable: false,
+            };
+          }
+          return {
+            currencyCode: code,
+            rate: 0,
+            value: 0,
+            nominal: 1,
+            rateDateBaku: todayKey,
+            isFallback: true,
+            isUnavailable: true,
+          };
+        });
+        const allHit = rates.every((r) => !r.isUnavailable);
+        if (allHit) {
+          return {
+            rates,
+            isFallback: rates.some((r) => r.isFallback),
+          };
+        }
+      }
+    }
 
     const rowToFx = (row: {
       currencyCode: string;

@@ -157,6 +157,20 @@ Pick next wave from **P2** unless Nafta onsite UAT surfaces a blocker elsewhere.
 
 ---
 
+---
+
+## Bank CBS MVP — Shipped (2026-06-14)
+
+Headless **era-bank-core** (P0–P7) + ops **era-bank** + customer **era-bank-dbo**. All `banking_*` modules at **MVP** in [READINESS_MATRIX.md](./READINESS_MATRIX.md).
+
+| Deliverable | Doc |
+|-------------|-----|
+| Engine DELIVERY P0–P7 | [DELIVERY-BANK-CORE](../era-bank-core/doc/DELIVERY-BANK-CORE.md) |
+| Full-stack UAT | [UAT-SMOKE-FULL](../era-bank-core/doc/UAT-SMOKE-FULL.md) |
+| Security / performance | [SECURITY-CHECKLIST](../era-bank-core/doc/SECURITY-CHECKLIST.md) · [PERFORMANCE](../era-bank-core/doc/PERFORMANCE.md) |
+
+---
+
 ## Standards
 
 - [PRODUCT_VERSIONING.md](./PRODUCT_VERSIONING.md) — naming rules

@@ -31,6 +31,16 @@ export type FinanceExternalPurchaseResult = {
   purchase: Record<string, unknown>;
 };
 
+export type FinanceFxPreviewResult = {
+  from: string;
+  to: string;
+  amount: number;
+  result: number;
+  rateDate: string;
+  source: string;
+  isFallback: boolean;
+};
+
 function financeApiBaseUrl(): string {
   const raw =
     process.env.ERA_FINANCE_API_INTERNAL_URL ??
@@ -138,4 +148,50 @@ export function financeEligibilityCheck<T extends Record<string, unknown>>(
   opts?: FinanceHandoffOptions,
 ) {
   return postJson<unknown>("/insurance/eligibility-check", body, opts);
+}
+
+export function financeFxPreview(
+  params: { from: string; to?: string; amount: number; date?: string },
+  opts?: FinanceHandoffOptions,
+) {
+  const q = new URLSearchParams({
+    from: params.from.trim().toUpperCase(),
+    amount: String(params.amount),
+  });
+  if (params.to?.trim()) q.set("to", params.to.trim().toUpperCase());
+  if (params.date?.trim()) q.set("date", params.date.trim());
+  return getJson<FinanceFxPreviewResult>(`/logistics/fx-preview?${q}`, opts);
+}
+
+export type FinanceHsPreviewResult = {
+  hsCode: string;
+  description?: string | null;
+  dutyRatePercent: number;
+  vatRatePercent: number;
+  excisePercent: number;
+  rateDate: string;
+  source: string;
+};
+
+export type FinanceVoenLookupResult = {
+  found: boolean;
+  voen: string;
+  name?: string | null;
+  legalAddress?: string | null;
+  vatStatus?: boolean;
+  source?: string;
+};
+
+export function financeHsTariffPreview(
+  params: { hsCode: string; date?: string },
+  opts?: FinanceHandoffOptions,
+) {
+  const q = new URLSearchParams({ code: params.hsCode.replace(/\D/g, "") });
+  if (params.date?.trim()) q.set("date", params.date.trim());
+  return getJson<FinanceHsPreviewResult>(`/logistics/hs-preview?${q}`, opts);
+}
+
+export function financeVoenLookup(voen: string, opts?: FinanceHandoffOptions) {
+  const q = new URLSearchParams({ voen: voen.replace(/\D/g, "") });
+  return getJson<FinanceVoenLookupResult>(`/counterparties/voen-preview?${q}`, opts);
 }

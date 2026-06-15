@@ -28,6 +28,8 @@ Source: NotebookLM export 2026-05-25. E2E processes for ERA mapping — not per-
 | PROC-22 | Invoice Generation (Guest) | Checkout request | Receptionist | Hotel Invoice List | hotel-pms | P0 | 3 |
 | PROC-23 | Channel Stop-Sell | High occupancy | Res Manager | Stop Sale, Channel logs | hotel-pms | P1 | 5 |
 | PROC-24 | Rate Code / Contract Setup | New season | Sales Mgr | Contract Details, Rate Codes | hotel-pms | P0 | 3 |
+
+**P4 (H-BL-30):** PROC-24 implemented via `/admin/contracts` — `SalesContract` + DERIVED rate plan + `ContractAllotment`; legacy `/admin/contract-pricing` retired. UAT: create ACTIVE contract, book under `salesContractId`, verify allotment pick-up on utilization report.
 | PROC-25 | Prepayment / Deposit Handling | Booking deposit | Cashier | Deposit Transactions, Prepayment | hotel-pms | P0 | 3 |
 | PROC-26 | Routing Instructions Setup | Package booking | Receptionist | Folio Routing List | hotel-pms | P0 | 3 |
 | PROC-27 | Guest Profile Creation (CRM) | First time booking | Receptionist | Guest Cards | hotel-pms | P0 | 3 |

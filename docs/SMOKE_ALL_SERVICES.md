@@ -59,7 +59,12 @@ Scripts: `node tools/smoke-platform-home.mjs`, `node tools/smoke-satellite-login
 | http://auto-service.era-365.online/api/health | 200 |
 | http://wholesale.era-365.online/api/health | 200 |
 | http://clinic.era-365.online/api/health | 200 |
+| http://127.0.0.1:4300/api/health | 200 JSON ok (bank-core engine) |
+| http://127.0.0.1:3210/api/health | 200 JSON ok (era-bank ops) |
+| http://127.0.0.1:3211/api/health | 200 JSON ok (era-bank-dbo) |
 | https://api.era-365.online/auth/login | 405/400 (route alive) |
+
+Full bank stack UAT: [era-bank-core/doc/UAT-SMOKE-FULL.md](./era-bank-core/doc/UAT-SMOKE-FULL.md). Card stub: `node tools/card-acquiring-stub.mjs authorize --amount 5000 --token <cardId>`.
 
 ## Finance (Traefik)
 
@@ -319,8 +324,16 @@ curl -s -X POST http://localhost:3300/api/sanatorium/episodes/from-stay \
   -d '{"reservationId":"<id>","guestName":"Ali","passportNumber":"AA123","organizationId":"nafta-sanatorium-org"}'
 curl -s http://localhost:3300/api/sanatorium/episodes -H "Cookie: era_clinic_session=..."
 
-# HN-P — MDM health + org register (internal)
+# HN-P — MDM health + resolve + merge (internal)
 curl -s http://localhost:4000/internal/v1/mdm/health
+curl -s -X POST http://localhost:4000/internal/v1/mdm/persons/resolve \
+  -H "Authorization: Bearer $MDM_INTERNAL_SERVICE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"fullName":"Smoke Test","fin":"5SMK123","nationality":"AZ"}'
+# Satellite proxy (hotel session):
+curl -s -X POST http://localhost:3000/api/mdm/person-lookup \
+  -H "Content-Type: application/json" -H "Cookie: era_hotel_session=..." \
+  -d '{"fullName":"Smoke Guest","passport":"XX9999999","issuingCountry":"TR"}'
 
 # HN-7 — transfers
 curl -s http://localhost:3000/api/transfers -H "Cookie: era_hotel_session=..."

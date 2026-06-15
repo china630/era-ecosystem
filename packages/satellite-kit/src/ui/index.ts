@@ -55,6 +55,8 @@ export { useControlPlaneSubscription, type ControlPlaneQuotaSnapshot } from "./u
 export { useSatelliteOpsSession, type SatelliteOpsSession } from "./use-satellite-ops-session";
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
 export { EraDataGrid } from "./era-data-grid";
+export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
+export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";
 export type {
   EraOpsNavItem,
   EraOpsNavSection,

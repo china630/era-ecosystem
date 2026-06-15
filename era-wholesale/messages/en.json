@@ -94,6 +94,26 @@
     "subtitle": "MVP operational shell per DESIGN.md.",
     "shellNote": "Registries and forms will use modals per DESIGN.md."
   },
+  "importOrders": {
+    "title": "Import purchase orders",
+    "subtitle": "Foreign-currency PO with Finance FX preview and payment terms",
+    "externalRef": "External ref",
+    "supplierVoen": "Supplier VÖEN",
+    "currency": "Currency",
+    "amount": "Amount (foreign)",
+    "paymentTerms": "Payment term (business days)",
+    "dueDate": "Due date",
+    "create": "Create import PO",
+    "confirmFinance": "Confirm → Finance",
+    "created": "Import PO created",
+    "confirmed": "Sent to Finance",
+    "list": "Import orders",
+    "backOrders": "Back to orders",
+    "openAdmin": "Open import PO admin",
+    "voenFound": "Company found",
+    "voenNotFound": "VÖEN not found",
+    "voenInvalid": "VÖEN must be 10 digits"
+  },
   "pickLists": {
     "title": "Pick lists",
     "subtitle": "W2 — pick confirmation + credit limit",

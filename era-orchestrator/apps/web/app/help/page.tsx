@@ -1,16 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { FaqSection, SatelliteLocaleToggle, PublicLegalFooter } from "@era/satellite-kit/ui";
 import type { Locale } from "@era/i18n-common";
+import { useAuth } from "../../lib/auth-context";
 
 export default function HelpPage() {
   const t = useTranslations("help");
   const tAuth = useTranslations("auth");
   const locale = useLocale() as Locale;
-  const router = useRouter();
+  const { ready, token } = useAuth();
 
   const items = useMemo(
     () => [
@@ -21,11 +21,15 @@ export default function HelpPage() {
     [t],
   );
 
+  const showInlineLocale = ready && !token;
+
   return (
-    <main className="mx-auto max-w-lg py-10">
-      <div className="mb-4 flex justify-end">
-        <SatelliteLocaleToggle locale={locale} />
-      </div>
+    <main className={showInlineLocale ? "mx-auto max-w-lg py-10" : "mx-auto max-w-2xl"}>
+      {showInlineLocale ? (
+        <div className="mb-4 flex justify-end">
+          <SatelliteLocaleToggle locale={locale} />
+        </div>
+      ) : null}
       <FaqSection title={t("title")} items={items} />
       <PublicLegalFooter
         locale={locale}

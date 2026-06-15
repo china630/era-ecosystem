@@ -119,3 +119,31 @@ export function isSatelliteClinicPrescriptionIssued(
 ): data is SatelliteClinicPrescriptionIssuedEvent {
   return satelliteClinicPrescriptionIssuedSchema.safeParse(data).success;
 }
+
+export const SATELLITE_CLINIC_WARD_DAY_CHARGE =
+  "SATELLITE_CLINIC_WARD_DAY_CHARGE" as const;
+
+export const satelliteClinicWardDayChargeSchema =
+  satelliteEventBaseSchema.extend({
+    type: z.literal(SATELLITE_CLINIC_WARD_DAY_CHARGE),
+    payload: z.object({
+      admissionId: z.string(),
+      patientRef: z.string(),
+      wardCode: z.string(),
+      bedCode: z.string(),
+      chargeDate: z.string(),
+      serviceCode: z.string(),
+      amountNet: z.number(),
+      currency: z.literal("AZN"),
+    }),
+  });
+
+export type SatelliteClinicWardDayChargeEvent = z.infer<
+  typeof satelliteClinicWardDayChargeSchema
+>;
+
+export function isSatelliteClinicWardDayCharge(
+  data: unknown,
+): data is SatelliteClinicWardDayChargeEvent {
+  return satelliteClinicWardDayChargeSchema.safeParse(data).success;
+}

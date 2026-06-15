@@ -99,6 +99,10 @@ export async function bulkUpsertBarRates(input: {
 export async function patchBarRate(id: string, amount: number) {
   return prisma.roomTypeRate.update({
     where: { id },
-    data: { amount: toDecimal(amount) },
+    data: {
+      amount: toDecimal(amount),
+      source: "MANUAL",
+      lockedAt: new Date(),
+    },
   });
 }

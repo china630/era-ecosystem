@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CARD_CONTAINER_CLASS, PageHeader, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { financeWebUrl } from "@era/satellite-kit";
+import { FxPreviewCard } from "@/components/FxPreviewCard";
+import { HsPreviewCard } from "@/components/HsPreviewCard";
 
 export default async function CustomsStatusPage() {
   const t = await getTranslations("customs");
@@ -31,6 +33,10 @@ export default async function CustomsStatusPage() {
           <p className="text-[#7F8C8D]">{t("financeUrlHint")}</p>
         )}
         <p className="text-xs text-[#7F8C8D]">{t("uatHint")}</p>
+      </div>
+      <div className="mt-4 space-y-4">
+        <FxPreviewCard />
+        <HsPreviewCard />
       </div>
     </div>
   );

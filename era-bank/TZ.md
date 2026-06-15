@@ -103,12 +103,15 @@ Every money/data route is a typed proxy to `era-bank-core` (engine TZ §8). Exam
 
 Routes mirror engine API families: `cif`, `accounts`, `postings`, `gl`, `branches`, `eod`, `deposits`, `loans`, `cards`, `payments`, `aml`, `treasury`, `reports`, `product-templates`.
 
+**GL BFF:** ops UI reads chart and trial balance via `app/api/gl/[[...path]]/route.ts` → engine `/api/v1/gl/*` (not nested under `/accounts`).
+
 ## §5. i18n & UI
 
 - `next-intl` + `@era/i18n-common`; locales az/ru/en; default **az**; cookie `era_i18n_lang`.
 - App shell: `@era/satellite-kit/ui` `EraAppRouteShell` (header order, sidebar width) per [UI_PLAYBOOK_SATELLITES.md](../docs/UI_PLAYBOOK_SATELLITES.md).
 - Login UI: shared `AuthLoginCard` ([DESIGN.md](../DESIGN.md)).
 - No raw enum/DB keys in UI; localized labels + badges.
+- **Modal CRUD (mandatory):** one index route per entity; create, detail, edit, and workflow actions in `OpsModalShell` modals — no standalone `/new` or `/[id]` ops pages (redirects with query params only). See `.cursor/rules/era-bank-ui.mdc`.
 
 ## §6. Security
 

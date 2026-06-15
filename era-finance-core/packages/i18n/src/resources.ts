@@ -2466,6 +2466,7 @@ export const resources = {
         provisionedSatelliteRoleAuto: "Авто (из должности)",
         provisionedSatelliteRoleHint:
           "Пусто — роль выводится из названия штатной должности (waiter → WAITER и т.д.).",
+        mdmMissing: "MDM не связан",
       },
       hrAnalytics: {
         title: "Календарь отсутствий",
@@ -6088,6 +6089,7 @@ export const resources = {
         provisionedSatelliteRoleAuto: "Avto (vəzifədən)",
         provisionedSatelliteRoleHint:
           "Boş — rol ştat vəzifəsinin adından çıxarılır (waiter → WAITER və s.).",
+        mdmMissing: "MDM bağlanmayıb",
       },
       hrAnalytics: {
         title: "İstirahət təqvimi",

@@ -134,7 +134,9 @@
     "completeFailed": "Could not complete",
     "tripCompleted": "Trip completed — event sent",
     "podWarn": "POD not recorded yet. Save POD before completing or continue.",
-    "statusChanged": "Status → {status}"
+    "statusChanged": "Status → {status}",
+    "slaEta": "ETA (business calendar)",
+    "businessDays": "business days"
   },
   "fleet": {
     "title": "Fleet compliance",
@@ -150,7 +152,27 @@
     "body": "Finance Core (`industry_logistics`) owns full GTK / e-customs and tariff data. The satellite shows trip readiness.",
     "openFinance": "Open Finance customs module →",
     "financeUrlHint": "Set NEXT_PUBLIC_FINANCE_WEB_URL for the link.",
-    "uatHint": "Local UAT: complete trip with POD, verify Finance worker events, then process customs in Finance UI."
+    "uatHint": "Local UAT: complete trip with POD, verify Finance worker events, then process customs in Finance UI.",
+    "fxPreviewTitle": "CBAR FX preview (operational)",
+    "fxPreviewHint": "Read-only estimate via Finance → data-hub. Accounting rates are set in Finance Trade Pro on BGD date.",
+    "fxPreviewCurrency": "Currency",
+    "fxPreviewAmount": "Amount",
+    "fxPreviewButton": "Convert to AZN",
+    "fxPreviewLoading": "Loading…",
+    "fxPreviewFailed": "FX preview unavailable",
+    "fxPreviewResult": "{amount} {from} ≈ {result} {to} (CBAR {date})",
+    "fxPreviewFallback": "preliminary / cached",
+    "hsPreviewTitle": "HS tariff preview (read-only)",
+    "hsPreviewHint": "Via Finance → data-hub. Full declarations remain in Finance Trade Pro.",
+    "hsCodePlaceholder": "HS code",
+    "hsPreviewLoad": "Load tariff",
+    "hsPreviewFailed": "HS preview unavailable",
+    "hsCodeRequired": "Enter at least 4 digits",
+    "hsCode": "HS code",
+    "hsDescription": "Description",
+    "dutyRate": "Duty",
+    "vatRate": "VAT",
+    "hsSource": "Source"
   },
   "fuelReport": {
     "title": "Fuel report",

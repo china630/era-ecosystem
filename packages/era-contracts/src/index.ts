@@ -39,3 +39,5 @@ export type SatelliteHotelEvent = {
 export * from "./events";
 export * from "./accounting";
 export * from "./subscription";
+export * from "./reference-data";
+export * from "./mdm";

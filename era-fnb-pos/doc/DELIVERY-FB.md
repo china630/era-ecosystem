@@ -19,7 +19,7 @@ PMS bridge (ready): [era-hotel-pms/doc/DELIVERY.md](../../era-hotel-pms/doc/DELI
 
 - [x] FB-01 Floor + open ticket — `/floor` wired to `POST /api/tickets`
 - [x] FB-02 KDS fire/done — `/orders` fire + `/kds` mark done via API
-- [x] FB-03 Cash/card + KKM — `POST /api/tickets/{id}/pay` + `src/lib/kkm/` (`KKM_DRIVER=mock`)
+- [s] FB-03 Cash/card + KKM mock — `POST /api/tickets/{id}/pay` + `@era/fiscal` stub
 - [x] FB-04 Room charge → PMS — `POST /api/tickets/{id}/room-charge`, `GET /api/in-house`
 - [x] FB-05 Void line — `POST /api/tickets/{id}/lines/{lineId}/void`
 - [x] FB-06 Z-close shift — `POST /api/shifts/open|close` + PMS `pos-shift-status`

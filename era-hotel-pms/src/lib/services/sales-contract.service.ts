@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { computeUtilizationPercent } from '@/lib/services/contract-allotment-core';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import type { SalesContractStatus, SalesContractCounterpartyType } from '@prisma/client';
 
@@ -201,8 +202,7 @@ export async function getContractUtilization(contractId: string) {
     reservationCount: reservations.length,
     allotmentNights,
     consumedNights,
-    utilizationPercent:
-      allotmentNights > 0 ? Math.round((consumedNights / allotmentNights) * 10000) / 100 : null,
+    utilizationPercent: computeUtilizationPercent(allotmentNights, consumedNights),
     totalRevenue: decimalToNumber(totalRevenue._sum.totalAmount ?? 0),
   };
 }

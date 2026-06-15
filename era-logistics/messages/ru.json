@@ -102,7 +102,16 @@
     "body": "Полные данные GTK / e-таможни и тарифов ведёт Finance Core (`industry_logistics`). Спутник показывает готовность по рейсу.",
     "openFinance": "Открыть таможенный модуль Finance →",
     "financeUrlHint": "Укажите NEXT_PUBLIC_FINANCE_WEB_URL для ссылки.",
-    "uatHint": "Локальный UAT: завершите рейс с POD, проверьте приём событий в Finance worker, затем оформите таможню в Finance UI."
+    "uatHint": "Локальный UAT: завершите рейс с POD, проверьте приём событий в Finance worker, затем оформите таможню в Finance UI.",
+    "fxPreviewTitle": "Предпросмотр курса ЦБА (операционный)",
+    "fxPreviewHint": "Оценка через Finance → data-hub. Учётный курс задаётся в Finance Trade Pro на дату БГД.",
+    "fxPreviewCurrency": "Валюта",
+    "fxPreviewAmount": "Сумма",
+    "fxPreviewButton": "Конвертировать в AZN",
+    "fxPreviewLoading": "Загрузка…",
+    "fxPreviewFailed": "Предпросмотр курса недоступен",
+    "fxPreviewResult": "{amount} {from} ≈ {result} {to} (ЦБА {date})",
+    "fxPreviewFallback": "предварительный / кэш"
   },
   "fuelReport": {
     "title": "Отчёт по топливу",

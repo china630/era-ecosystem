@@ -45,6 +45,9 @@
 | F&B POS | 3202 | `fnb-pos.era-365.online` |
 | PostgreSQL | 5432 | — |
 | Redis | 6379 | — |
+| Bank Core API | 4300 | `bank-api.era-365.online` (headless) |
+| Bank ops satellite | 3210 | `bank.era-365.online` |
+| Bank DBO channel | 3211 | `dbo.era-365.online` (planned host) |
 
 > **Точка входа (v1.0):** откройте **Orchestrator Web** `http://127.0.0.1:3000` (или `app.era-365.online`). Industry launcher и регистрация — на Orch; Finance Web — `http://127.0.0.1:3100`; SSO в сателлиты: `node scripts/sso-launch-smoke.mjs` ([QUARTET_UAT.md](./QUARTET_UAT.md)). Finance tile uses JWT handoff (`/auth/cp-handoff`) — [ADR cp-finance-handoff](./adr/cp-finance-handoff.md).
 
@@ -77,7 +80,7 @@ cp .env.example .env
 
 Отредактируйте секреты (`POSTGRES_PASSWORD`, `ERA_JWT_SECRET`, `AUTH_JWT_SECRET`, токены bridge и т.д.).
 
-PostgreSQL при первом старте Docker создаёт **11** БД (см. `docker/postgres/init-databases.sql`):
+PostgreSQL при первом старте Docker создаёт **14** БД (см. `docker/postgres/init-databases.sql`), включая `era_bank_core`, `era_bank`, `era_bank_dbo`:
 
 | Переменная | База данных |
 |------------|-------------|
@@ -126,7 +129,7 @@ docker compose up -d --build
 
 | Контейнер | Назначение |
 |-----------|------------|
-| `era-postgres` | PostgreSQL 16, 11 БД |
+| `era-postgres` | PostgreSQL 16, 14 БД |
 | `era-redis` | Redis 7 (очереди, кэш) |
 | `era-traefik` | Reverse proxy (file provider) |
 | `era-orchestrator` | Control plane API `:4000` + Web `:3000` |
@@ -676,6 +679,40 @@ Smoke all services: [`SMOKE_ALL_SERVICES.md`](./SMOKE_ALL_SERVICES.md).
 | Hotel: `Reservation.groupId` / `RoomChangePlan` does not exist | Не применены миграции Hotel. Из корня с паролем из `.env`: `cd era-hotel-pms` и `DATABASE_URL=postgresql://era:$POSTGRES_PASSWORD@localhost:5432/era_hotel_pms?schema=public npx prisma migrate deploy` — или `npm run bootstrap:local` (флаг `--migrate-satellites` по умолчанию). В Docker entrypoint вызывает `prisma migrate deploy`; при WARN в логах — выполните команду с хоста. |
 | `[i18n] MISSING_MESSAGE: common.accessDenied` | Обновите образ `hotel-pms` и `packages/i18n-common` (`common.*.json` с ключом `accessDenied`). |
 | `@era/contracts` not found | `npm run build` в `packages/era-contracts`, затем `npm install` в consumer |
+
+---
+
+## 13. Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`)
+
+Ports: **4300** (engine), **3210** (ops satellite), **3211** (DBO channel). Env: [`ECOSYSTEM_URLS.md`](./ECOSYSTEM_URLS.md) § Bank.
+
+### Docker (with full stack)
+
+```bash
+docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
+docker compose up -d bank-core bank bank-dbo
+bash docker/scripts/migrate-all.sh
+```
+
+### Local dev
+
+```bash
+# Engine
+cd era-bank-core && cp .env.example .env && npm install
+npm run db:migrate:deploy && npm run db:seed && npm run dev
+
+# Ops satellite
+cd era-bank && cp .env.example .env && npm install
+npx prisma db push && npm run db:seed && npm run dev
+
+# DBO channel
+cd era-bank-dbo && cp .env.example .env && npm install
+npx prisma db push && npm run db:seed && npm run dev
+```
+
+UAT: [era-bank-core/doc/UAT-SMOKE-FULL.md](../era-bank-core/doc/UAT-SMOKE-FULL.md) · Ops teller walkthrough: [era-bank/doc/UAT-SMOKE.md](../era-bank/doc/UAT-SMOKE.md) · Card stub: `node tools/card-acquiring-stub.mjs`
+
+On-prem reference data (no live data-hub): set `ERA_DATA_HUB_ONPREM=true` in `era-bank-core/.env`, validate bundle with `npm run ref-data:load`. Hardening tools: `node era-bank-core/tools/load/posting-benchmark.mjs`, `node era-bank-core/tools/audit/replay-day.mjs <date>`.
 
 ---
 
