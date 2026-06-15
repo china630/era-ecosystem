@@ -1,6 +1,10 @@
 import { linkPersonIdentity } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
-import { normalizeGuestInput, type CreateGuestInput } from '@/lib/guest-input';
+import { normalizeGuestInput, type CreateGuestInput, type GuestNationality } from '@/lib/guest-input';
+
+function toGuestNationality(value?: string): GuestNationality {
+  return value === 'OTHER' ? 'OTHER' : 'AZ';
+}
 
 export async function resolveGuestGlobalPersonId(
   input: CreateGuestInput,
@@ -36,7 +40,7 @@ export async function relinkGuestGlobalPerson(
     fullName: input.fullName,
     nationalIdFin: input.nationalIdFin ?? undefined,
     passportNumber: input.passportNumber ?? undefined,
-    nationality: input.nationality ?? 'AZ',
+    nationality: toGuestNationality(input.nationality),
     phone: input.phone ?? undefined,
     firstName: null,
     lastName: null,

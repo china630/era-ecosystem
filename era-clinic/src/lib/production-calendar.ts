@@ -1,7 +1,7 @@
 import {
   getCalendarDay,
-  type CalendarDayType,
 } from "@era/satellite-kit";
+import type { CalendarDayType } from "@era/contracts";
 
 const SHORTENED_END_HOUR = 13;
 

@@ -179,6 +179,7 @@ export {
   convertFx,
   type FxRateClientOptions,
 } from "./integration/fx-rate.client";
+export type { CalendarDayType, CalendarDayPoint } from "@era/contracts";
 export {
   getCalendarDay,
   isWorkingDay as isCalendarWorkingDay,
