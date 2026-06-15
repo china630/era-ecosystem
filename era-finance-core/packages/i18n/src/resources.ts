@@ -6089,6 +6089,7 @@ export const resources = {
         provisionedSatelliteRoleAuto: "Avto (vəzifədən)",
         provisionedSatelliteRoleHint:
           "Boş — rol ştat vəzifəsinin adından çıxarılır (waiter → WAITER və s.).",
+        mdmMissing: "MDM bağlanmayıb",
       },
       hrAnalytics: {
         title: "İstirahət təqvimi",
