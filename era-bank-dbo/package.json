@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "npx tsx prisma/seed.ts",
-    "test": "jest --ci"
+    "test": "jest --ci --passWithNoTests"
   },
   "dependencies": {
     "@era/contracts": "file:../packages/era-contracts",

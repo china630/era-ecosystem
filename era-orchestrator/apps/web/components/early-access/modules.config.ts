@@ -15,4 +15,5 @@ export const EARLY_ACCESS_MODULES: Record<
   WHOLESALE: { title: "Wholesale & Distribution", priceAzn: 20 },
   HOTEL_PMS: { title: "Hotel PMS", priceAzn: 28 },
   FNB_POS: { title: "F&B POS", priceAzn: 18 },
+  BANKING: { title: "Banking", priceAzn: 35 },
 };

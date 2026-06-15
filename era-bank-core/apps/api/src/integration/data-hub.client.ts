@@ -10,6 +10,16 @@ type SnapshotCalendarDay = {
   isWorking: boolean;
   dayType: string;
 };
+type SnapshotBankRow = { mfo: string; name: string; swift?: string };
+type SnapshotCoaRow = { code: string; name: string };
+
+type RefDataSnapshot = {
+  fxRates: SnapshotFxRow[];
+  calendarDays?: SnapshotCalendarDay[];
+  calendar?: { timezone?: string; weekendDays?: number[] };
+  banks?: SnapshotBankRow[];
+  coaSubset?: SnapshotCoaRow[];
+};
 
 @Injectable()
 export class DataHubClient {
@@ -17,11 +27,7 @@ export class DataHubClient {
   private readonly baseUrl: string;
   private readonly onPrem: boolean;
   private readonly serviceToken: string | undefined;
-  private snapshotCache: {
-    fxRates: SnapshotFxRow[];
-    calendarDays?: SnapshotCalendarDay[];
-    calendar?: { timezone?: string; weekendDays?: number[] };
-  } | null = null;
+  private snapshotCache: RefDataSnapshot | null = null;
 
   constructor(config: ConfigService) {
     const raw = config.get<string>("ERA_DATA_HUB_URL") ?? "http://127.0.0.1:4200/registry/v1";
@@ -38,11 +44,7 @@ export class DataHubClient {
     ];
     for (const path of candidates) {
       if (existsSync(path)) {
-        this.snapshotCache = JSON.parse(readFileSync(path, "utf8")) as {
-          fxRates: SnapshotFxRow[];
-          calendarDays?: SnapshotCalendarDay[];
-          calendar?: { timezone?: string; weekendDays?: number[] };
-        };
+        this.snapshotCache = JSON.parse(readFileSync(path, "utf8")) as RefDataSnapshot;
         return this.snapshotCache;
       }
     }
@@ -261,7 +263,7 @@ export class DataHubClient {
           ? res.data.accounts
           : res.data.accounts?.accounts;
         if (Array.isArray(raw)) {
-          return raw.slice(0, 50).map((a: { code?: string; name?: string }) => ({
+          return raw.slice(0, 50).map((a: { code?: string; name?: string; nameAz?: string }) => ({
             code: String(a.code ?? ""),
             name: String(a.name ?? a.nameAz ?? ""),
           }));

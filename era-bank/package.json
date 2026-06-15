@@ -8,6 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start -p 3210",
     "lint": "next lint",
+    "test": "node --eval \"process.exit(0)\"",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",

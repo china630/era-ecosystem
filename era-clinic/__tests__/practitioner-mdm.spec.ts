@@ -1,4 +1,4 @@
-import { isValidAzFin } from "@era/satellite-kit";
+import { isValidAzFin } from "@era/satellite-kit/integration/person-identity.client";
 
 describe("practitioner MDM helpers", () => {
   it("validates AZ FIN format", () => {
