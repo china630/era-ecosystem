@@ -381,6 +381,13 @@
         "highlight1": "B2B catalog",
         "highlight2": "Pick & pack",
         "highlight3": "Delivery notes"
+      },
+      "banking": {
+        "title": "Bank CBS",
+        "tagline": "Core banking, teller ops, EOD",
+        "highlight1": "CIF & accounts",
+        "highlight2": "Payments & products",
+        "highlight3": "Regulatory CBS engine"
       }
     }
   },
