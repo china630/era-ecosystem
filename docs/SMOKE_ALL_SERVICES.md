@@ -295,7 +295,7 @@ Automated via GitHub Actions ([`docs/CI_CD.md`](./CI_CD.md)):
 | Workflow | What it verifies |
 |----------|------------------|
 | [`ci.yml`](../.github/workflows/ci.yml) | Packages, orchestrator/finance tests, satellite build+jest |
-| [`build-images.yml`](../.github/workflows/build-images.yml) | 13 images pushed to GHCR |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | 16 images pushed to GHCR (incl. bank-core, bank, bank-dbo) |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | `docker-compose.prod.yml` pull, migrate, `ecosystem-smoke-all.mjs` |
 
 Manual parity:

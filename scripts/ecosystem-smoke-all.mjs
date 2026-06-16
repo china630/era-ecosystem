@@ -21,6 +21,9 @@ const targets = [
   { name: "crm", url: process.env.CRM_URL ?? `${base}:3207`, path: "/api/health" },
   { name: "auto-service", url: process.env.AUTO_SERVICE_URL ?? `${base}:3208`, path: "/api/health" },
   { name: "wholesale", url: process.env.WHOLESALE_URL ?? `${base}:3209`, path: "/api/health" },
+  { name: "bank-core", url: process.env.BANK_CORE_URL ?? `${base}:4300`, path: "/api/health" },
+  { name: "bank", url: process.env.BANK_URL ?? `${base}:3210`, path: "/api/health" },
+  { name: "bank-dbo", url: process.env.BANK_DBO_URL ?? `${base}:3211`, path: "/api/health" },
 ];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
