@@ -75,3 +75,18 @@ services:
     <<: *ghcr-image
     build: !reset null
     image: ${GHCR_IMAGE_PREFIX}/wholesale:${IMAGE_TAG}
+
+  bank-core:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/bank-core:${IMAGE_TAG}
+
+  bank:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/bank:${IMAGE_TAG}
+
+  bank-dbo:
+    <<: *ghcr-image
+    build: !reset null
+    image: ${GHCR_IMAGE_PREFIX}/bank-dbo:${IMAGE_TAG}
