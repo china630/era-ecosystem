@@ -1,11 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
-  SECONDARY_BUTTON_CLASS,
-} from "./design-system";
+import { SECONDARY_BUTTON_CLASS } from "./design-system";
+import { Field, FieldRow } from "./field";
 
 export type VoenLookupResult = {
   found: boolean;
@@ -28,7 +25,7 @@ export function VoenLookupField({
   value: string;
   onChange: (voen: string) => void;
   onResolved?: (result: VoenLookupResult) => void;
-  /** BFF route proxying Finance `GET /counterparties/voen-preview` (DH-006 handoff). */
+  /** BFF route proxying orchestrator `GET /platform/v1/catalog/companies/:voen` (DH-006). */
   lookupPath?: string;
   labels: {
     voen: string;
@@ -69,11 +66,11 @@ export function VoenLookupField({
   }
 
   return (
-    <div className={`space-y-1 ${className ?? ""}`.trim()}>
-      <label className={MODAL_FIELD_LABEL_CLASS}>{labels.voen}</label>
-      <div className="flex gap-2">
-        <input
-          className={MODAL_INPUT_CLASS}
+    <div className={className}>
+      <FieldRow cols={2} className="items-end">
+        <Field
+          label={labels.voen}
+          preset="voen"
           value={value}
           maxLength={10}
           inputMode="numeric"
@@ -82,14 +79,14 @@ export function VoenLookupField({
         />
         <button
           type="button"
-          className={SECONDARY_BUTTON_CLASS}
+          className={`${SECONDARY_BUTTON_CLASS} self-end`}
           disabled={busy || disabled}
           onClick={() => void check()}
         >
           {labels.check}
         </button>
-      </div>
-      {status ? <p className="text-xs text-[#7F8C8D]">{status}</p> : null}
+      </FieldRow>
+      {status ? <p className="mt-1 text-xs text-[#7F8C8D]">{status}</p> : null}
     </div>
   );
 }

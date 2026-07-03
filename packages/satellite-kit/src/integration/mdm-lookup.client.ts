@@ -40,9 +40,15 @@ export {
   resolvePersonIdentity,
   mergePersonRecords,
   linkPersonIdentity,
+  listPersonIdentifiers,
+  getPersonOpsProfile,
+  resolveIdentifierForCompliance,
   isValidAzFin,
   type PersonIdentityInput,
   type MdmClientOptions,
+  type PersonIdentifierSummary,
+  type PersonOpsProfile,
+  type ComplianceIdentityResult,
 } from "./person-identity.client";
 
 /** Resolve legal entity by VÖEN (B2B invoicing party). */
