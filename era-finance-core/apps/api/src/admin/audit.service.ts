@@ -130,7 +130,7 @@ export class AdminAuditLogsService {
       employeeIds.size
         ? this.prisma.employee.findMany({
             where: { organizationId, id: { in: [...employeeIds] } },
-            select: { id: true, firstName: true, lastName: true },
+            select: { id: true, globalPersonId: true },
           })
         : Promise.resolve([]),
     ]);
@@ -139,7 +139,7 @@ export class AdminAuditLogsService {
     const empMap = new Map(
       employees.map((e) => [
         e.id,
-        [e.firstName, e.lastName].filter(Boolean).join(" ").trim() || e.id,
+        e.globalPersonId || e.id,
       ]),
     );
 
