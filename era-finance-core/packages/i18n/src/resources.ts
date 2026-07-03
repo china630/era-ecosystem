@@ -2477,6 +2477,15 @@ export const resources = {
         satelliteRoleCashier: "Кассир",
         satelliteRoleStaff: "Персонал",
         mdmMissing: "MDM не связан",
+        personMdmBanner:
+          "Персональные данные хранятся в MDM; эта форма создаёт только кадровое расширение для payroll.",
+        accessDenied: "Доступ ограничен",
+        resolveNameRequired: "Укажите ФИО для поиска в MDM",
+        resolveFailed: "Не удалось найти или создать персону в MDM",
+        resolveOk: "Персона связана с MDM",
+        personSection: "Персона (MDM)",
+        resolveNameHint: "ФИО (подсказка для поиска)",
+        resolvePerson: "Найти в MDM",
       },
       hrAnalytics: {
         title: "Календарь отсутствий",
@@ -6124,6 +6133,15 @@ export const resources = {
         satelliteRoleCashier: "Kassir",
         satelliteRoleStaff: "Personal",
         mdmMissing: "MDM bağlanmayıb",
+        personMdmBanner:
+          "Şəxsi məlumatlar MDM-də saxlanılır; bu forma yalnız payroll üçün kadr genişlənməsi yaradır.",
+        accessDenied: "Giriş məhdudlaşdırılıb",
+        resolveNameRequired: "MDM axtarışı üçün A.S.A. daxil edin",
+        resolveFailed: "MDM-də şəxsi tapmaq və ya yaratmaq alınmadı",
+        resolveOk: "Şəxs MDM ilə əlaqələndirildi",
+        personSection: "Şəxs (MDM)",
+        resolveNameHint: "A.S.A. (axtarış ipucu)",
+        resolvePerson: "MDM-də tap",
       },
       hrAnalytics: {
         title: "İstirahət təqvimi",
