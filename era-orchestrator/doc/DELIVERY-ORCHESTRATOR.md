@@ -35,6 +35,13 @@ PRD: [../PRD.md](../PRD.md)
 - [x] PII encrypt + blind index (see [doc/adr/era-mdm-phase1.md](adr/era-mdm-phase1.md))
 - [x] Finance registration cutover — canonical `POST /auth/register-organization` + MDM; Finance `ERA_MDM_REGISTRATION_CUTOVER=true` redirects
 
+## CP-MDM-P2 — Citizen consent portal (R1-N02)
+
+- [x] `POST /portal/v1/mdm/access/session` — guest QR → consent session
+- [x] `GET /portal/v1/mdm/access/requests` + `POST .../decide` — grant/deny + `PersonAccessGrant`
+- [x] UI `/portal/person-access` — en/az/ru; BFF `/api/portal/mdm/*`
+- [x] Auto pending `PersonAccessRequest` on masked FIN lookup without grant
+
 ## CP-BILLING — Platform billing (single migration)
 
 **One plan, one cutover** — full inventory: [CP-BILLING-MIGRATION.md](../../docs/CP-BILLING-MIGRATION.md)
@@ -65,8 +72,70 @@ PRD: [../PRD.md](../PRD.md)
 
 Env: `REFERENCE_DATA_VALID_API_KEYS`, `REFERENCE_DATA_DEFAULT_ORG_ID`. Consumer doc: [DATA-HUB-CONSUMER.md](../../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
+## CP-CATALOG-GATEWAY — Platform integration gateway (Wave 2)
+
+Industry satellites read calendar, FX convert, VÖEN directory via orchestrator (not data-hub / finance directly).
+
+- [x] `GET /platform/v1/catalog/calendar/*` — proxy to data-hub
+- [x] `GET /platform/v1/catalog/fx/convert`
+- [x] `GET /platform/v1/catalog/companies/:voen`
+- [x] Auth: `SATELLITE_EVENT_SERVICE_TOKEN` + `X-Organization-Id`; entitlement `platform_reference_data`
+- [x] `@era/satellite-kit` `platform-catalog.client.ts` + calendar/finance handoff delegates
+
+Env (orchestrator): `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. Industry: `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID`.
+
 ## Quartet product (SP6)
 
 - [x] Track A smoke — `scripts/quartet-smoke.mjs`, CI `quartet-smoke` job
 - [x] Track B — entitlement source of truth via `getSubscriptionMe`; quota `internal/v1/quota` UAT Wave F
 - [x] Notifications Live on staging — provider env (`SMS_PROVIDER`, email transport) documented in UAT-SMOKE-PLATFORM
+
+## CP-WF-ABS — Workforce absence workflow (Plan A)
+
+- [x] `WorkforceEmployment` + `WorkforceAbsence` schema + audit log
+- [x] `GET/POST /platform/v1/workforce/employments` — MDM `globalPersonId` hire
+- [x] `GET/POST/PATCH /platform/v1/workforce/absences/*` — submit/approve/reject/cancel + overlap guard
+- [x] `WORKFORCE_ABSENCE_*` → `era-satellite-events` → Finance mirror (when `hr_full`)
+- [x] Web `/workspace/workforce/employments`, `/workspace/workforce/absences` (+ new, detail) + BFF + i18n en/az/ru
+- [x] UAT — [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) `CP-WF-ABS-01`
+
+## CP-WF-ORG — Workforce org structure (Plan B)
+
+- [x] `WorkforceScope`, `OrgUnit`, `OrgUnitCommercialLink`, `WorkforcePosition` schema
+- [x] `GET/POST /platform/v1/workforce/scope/*`, `/org-units/*`, `/positions/*`, employment `transfer`
+- [x] `WORKFORCE_ORG_UNIT_*`, `WORKFORCE_POSITION_*`, `WORKFORCE_EMPLOYMENT_TRANSFERRED` events
+- [x] Web `/workspace/workforce/org-structure`, `/positions`; employments hire requires orgUnit + position + i18n en/az/ru
+- [x] UAT — [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) `CP-WF-ORG-01`, `CP-WF-POS-01`
+
+## CP-WF-SEC — Role templates, hire, Security Admin (Plan C)
+
+- [x] `SatelliteRoleTemplate`, `WorkforceRoleBinding`, `ManualGrant`, `WorkforceSeatAllocation` schema
+- [x] `POST /platform/v1/workforce/employments/hire`, terminate, reprovision; role-templates; manual-grants; security overview
+- [x] `STAFF_PROVISIONED` v2 (`cpEmploymentId`) published from CP; `WorkforceAssignment` registry upgrade
+- [x] Web `/workspace/workforce/security`; employments hire wizard + satellite checkboxes + i18n en
+
+## CP-WF-HUB — v3 Workforce clean cutover (Plan E)
+
+- [x] `platform_workforce` SKU + trial bundle; policy `cp_workforce` only
+- [x] Legacy removal: no `finance_hr`/`local_master`; Finance STAFF publisher removed; clinic POST practitioners 403
+- [x] `tools/bootstrap-local.mjs --workforce-seed`; `scripts/v3-workforce-smoke.mjs`; `scripts/nafta-onboard-departments.mjs`
+- [x] Audit v3 rules (`WORKFORCE_DUAL_PATH`, `WORKFORCE_V3_PUBLISHER`); baseline empty
+- [x] ADR [cp-core-workforce-hub.md](../docs/adr/cp-core-workforce-hub.md); runbook [v3-workforce-cutover.md](../docs/runbooks/v3-workforce-cutover.md)
+
+## CP-WF-F — Workforce extensions (Plan F)
+
+- [x] F6: `platform_workforce` SKU + workspace tile; strict entitlement guard
+- [x] F4: `WorkforceSeatService` + `POST /internal/v1/licensing/seats/check` + Security seats widget
+- [x] F5: `WorkforceAuditLog` correlation fields + `/workspace/workforce/security/audit` + satellite-kit stamp
+- [x] F1: Export API + `/workspace/workforce/export` UI; Nafta §7
+- [x] F3: ƏMAS boundary ADR + `getEmasPrefill` cpEmploymentId + absence mirror
+- [x] F2: `WORKFORCE_TIMESHEET_*` events + construction import publish + Finance consumer
+- [x] ADRs F1–F5; COVERAGE `CP-WF-EXP-01`, `CP-WF-SEAT-01`, `CN-CAL-02`
+
+## CP-WF-PII — Workforce PII tiers (Plan D)
+
+- [x] MDM `POST /internal/v1/mdm/persons/ops-profile/batch` + `workforce-resolve`; `WORKFORCE_OPS_PROFILE_BATCH` access log
+- [x] Web BFF `/api/platform/mdm/workforce/*`; `@era/satellite-kit` `workforce-person.client.ts`
+- [x] CP employments/absences lists — MDM batch display + masked FIN; Finance Employee payroll-only + MDM read-through
+- [x] Audit `WORKFORCE_PII_LEAK` + ADR [cp-workforce-pii-tiers.md](../docs/adr/cp-workforce-pii-tiers.md)
+- [x] UAT — [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) `CP-WF-SEC-01`, `CP-WF-HIRE-01`, `CLI-WF-01`

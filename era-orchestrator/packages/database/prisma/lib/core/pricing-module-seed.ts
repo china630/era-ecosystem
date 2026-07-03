@@ -83,10 +83,17 @@ export const PRICING_MODULE_SEED_DEFAULTS: ReadonlyArray<PricingModuleSeedRow> =
   },
   {
     key: "hr_full",
-    name: "HR",
+    name: "HR & Payroll",
     pricePerMonth: 19,
     sortOrder: 3,
     satelliteKey: "finance_core",
+    trialEligibleInTrial: true,
+  },
+  {
+    key: "platform_workforce",
+    name: "Workforce Hub (CP)",
+    pricePerMonth: 0,
+    sortOrder: 3,
     trialEligibleInTrial: true,
   },
   {

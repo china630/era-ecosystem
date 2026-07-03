@@ -22,6 +22,7 @@ import { WorkforceModule } from "../workforce/workforce.module";
     PermissionsGuard,
   ],
   exports: [
+    SatelliteEventsService,
     SatelliteEndpointRegistryService,
     SatelliteFanoutWorker,
     SatelliteEventSubscriberRegistry,

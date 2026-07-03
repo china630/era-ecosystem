@@ -13,6 +13,7 @@ import { SatelliteConnectService } from "./satellite-connect.service";
 import { SubscriptionAccessService } from "./subscription-access.service";
 import { TrialEntitlementResolver } from "./trial-entitlement.resolver";
 import { buildHotelModuleEntitlements } from "./hotel-module-entitlements.util";
+import { buildSettlementPolicy } from "./settlement-policy.util";
 import { ConnectSatelliteDto } from "./dto/connect-satellite.dto";
 import { SelectPlanDto } from "./dto/select-plan.dto";
 import { UpdateSubscriptionModulesDto } from "./dto/update-subscription-modules.dto";
@@ -43,12 +44,14 @@ export class SubscriptionController {
       this.prisma.organization.findUnique({
         where: { id: organizationId },
         select: {
+          id: true,
           billingStatus: true,
           whatsappAlertsUsed: true,
           operatingMode: true,
           parentOrgId: true,
           fiscalRouting: true,
           revenueRouting: true,
+          settings: true,
         },
       }),
     ]);
@@ -66,12 +69,44 @@ export class SubscriptionController {
     }
 
     const waBalance = org?.whatsappAlertsUsed ?? 0;
-    const [satelliteEntitlements, moduleTrials, connectableSatellites] =
+    const [satelliteEntitlements, moduleTrials, connectableSatellites, parentOrg, deptChildCount] =
       await Promise.all([
         this.trialResolver.listSatelliteEntitlements(organizationId),
         this.trialResolver.listModuleTrials(organizationId),
         this.trialResolver.listConnectableSatelliteKeys(organizationId),
+        org?.parentOrgId
+          ? this.prisma.organization.findUnique({
+              where: { id: org.parentOrgId },
+              select: {
+                id: true,
+                operatingMode: true,
+                parentOrgId: true,
+                fiscalRouting: true,
+                settings: true,
+              },
+            })
+          : Promise.resolve(null),
+        org?.operatingMode === "STANDALONE"
+          ? this.prisma.organization.count({
+              where: {
+                parentOrgId: organizationId,
+                fiscalRouting: "PARENT",
+              },
+            })
+          : Promise.resolve(0),
       ]);
+    const settlementPolicy = org
+      ? buildSettlementPolicy(org, {
+          parentOrg,
+          departmentChildCount: deptChildCount,
+        })
+      : buildSettlementPolicy({
+          id: organizationId,
+          operatingMode: "STANDALONE",
+          parentOrgId: null,
+          fiscalRouting: "OWN",
+          settings: {},
+        });
     return {
       tier: snapshot.tier,
       activeModules: snapshot.activeModules,
@@ -97,6 +132,7 @@ export class SubscriptionController {
         fiscalRouting: org?.fiscalRouting ?? "OWN",
         revenueRouting: org?.revenueRouting ?? "OWN",
       },
+      settlementPolicy,
       expiresAt: expiresAt?.toISOString() ?? null,
       isTrial: snapshot.isTrial,
       billingStatus: org?.billingStatus ?? BillingStatus.ACTIVE,

@@ -38,6 +38,12 @@ import * as QRCode from "qrcode";
 
 const FIN_PATTERN = /^[0-9A-HJ-NP-Za-hj-np-z]{7}$/;
 
+function maskIdentifierValue(value: string): string {
+  const v = value.trim();
+  if (v.length <= 4) return "****";
+  return `${"*".repeat(Math.min(v.length - 4, 6))}${v.slice(-4)}`;
+}
+
 @Injectable()
 export class MdmService {
   constructor(
@@ -214,6 +220,11 @@ export class MdmService {
       ? decryptText(person.fullNameCipher)
       : null;
     if (!grant && input.requesterOrgId) {
+      await this.ensurePendingAccessRequest(
+        person.id,
+        input.requesterOrgId.trim(),
+        input.purpose ?? "identity_lookup",
+      );
       return {
         found: true as const,
         globalPersonId: person.id,
@@ -549,6 +560,126 @@ export class MdmService {
     });
   }
 
+  private async ensurePendingAccessRequest(
+    personId: string,
+    requesterOrgId: string,
+    purpose: string,
+  ) {
+    const existing = await this.mdm.personAccessRequest.findFirst({
+      where: { personId, requesterOrgId, status: "PENDING" },
+    });
+    if (existing) return existing;
+    return this.mdm.personAccessRequest.create({
+      data: { personId, requesterOrgId, purpose },
+    });
+  }
+
+  /** Citizen consent portal — exchange guest QR for short-lived session token. */
+  createConsentPortalSession(guestToken: string) {
+    const verified = verifyGuestIdentityToken(guestToken);
+    if (!verified) {
+      throw new BadRequestException("invalid or expired guest token");
+    }
+    const expiresAt = defaultGuestIdentityExpiresAt(3600);
+    const sessionToken = signGuestIdentityToken(
+      verified.globalPersonId,
+      expiresAt,
+    );
+    return {
+      sessionToken,
+      globalPersonId: verified.globalPersonId,
+      expiresAt: new Date(expiresAt * 1000).toISOString(),
+    };
+  }
+
+  assertConsentPortalSession(sessionToken: string): string {
+    const verified = verifyGuestIdentityToken(sessionToken);
+    if (!verified) {
+      throw new BadRequestException("invalid or expired consent session");
+    }
+    return verified.globalPersonId;
+  }
+
+  async listPendingAccessRequestsForPerson(globalPersonId: string) {
+    const personId = await this.resolveCanonicalPersonId(globalPersonId);
+    const rows = await this.mdm.personAccessRequest.findMany({
+      where: { personId, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+    });
+    const orgIds = [...new Set(rows.map((r) => r.requesterOrgId))];
+    const orgs =
+      orgIds.length > 0
+        ? await this.controlPlane.organization.findMany({
+            where: { id: { in: orgIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+    const orgNameById = new Map(orgs.map((o) => [o.id, o.name]));
+    return {
+      globalPersonId: personId,
+      requests: rows.map((r) => ({
+        id: r.id,
+        requesterOrgId: r.requesterOrgId,
+        requesterOrgName: orgNameById.get(r.requesterOrgId) ?? null,
+        purpose: r.purpose,
+        createdAt: r.createdAt.toISOString(),
+      })),
+    };
+  }
+
+  async decidePersonAccessRequest(input: {
+    requestId: string;
+    globalPersonId: string;
+    grant: boolean;
+  }) {
+    const personId = await this.resolveCanonicalPersonId(input.globalPersonId);
+    const req = await this.mdm.personAccessRequest.findFirst({
+      where: { id: input.requestId, personId },
+    });
+    if (!req || req.status !== "PENDING") {
+      throw new NotFoundException("access request not found");
+    }
+
+    await this.mdm.$transaction(async (tx) => {
+      await tx.personAccessRequest.update({
+        where: { id: req.id },
+        data: {
+          status: input.grant ? "GRANTED" : "DENIED",
+          decidedAt: new Date(),
+        },
+      });
+      if (input.grant) {
+        await tx.personAccessGrant.upsert({
+          where: {
+            personId_granteeOrgId: {
+              personId,
+              granteeOrgId: req.requesterOrgId,
+            },
+          },
+          create: {
+            personId,
+            granteeOrgId: req.requesterOrgId,
+          },
+          update: {},
+        });
+      }
+      await tx.personAccessLog.create({
+        data: {
+          personId,
+          actorOrgId: req.requesterOrgId,
+          action: input.grant ? "CONSENT_GRANTED" : "CONSENT_DENIED",
+          metaJson: JSON.stringify({ requestId: req.id, purpose: req.purpose }),
+        },
+      });
+    });
+
+    return {
+      ok: true,
+      requestId: req.id,
+      granted: input.grant,
+    };
+  }
+
   async linkExistingOrganization(input: {
     organizationId: string;
     name: string;
@@ -658,5 +789,260 @@ export class MdmService {
       };
     });
     return { total, page, pageSize, items };
+  }
+
+  async getPersonOpsProfile(personId: string, requesterOrgId?: string) {
+    const profile = await this.resolveOpsProfileData(
+      personId,
+      requesterOrgId?.trim(),
+    );
+    const orgId = requesterOrgId?.trim();
+    if (orgId) {
+      await this.mdm.personAccessLog.create({
+        data: {
+          personId: profile.globalPersonId,
+          actorOrgId: orgId,
+          action: "OPS_PROFILE_READ",
+          metaJson: JSON.stringify({ accessDenied: profile.accessDenied }),
+        },
+      });
+    }
+    return profile;
+  }
+
+  /** Compact table row for workforce HR screens (batch-friendly). */
+  compactWorkforceDisplay(profile: {
+    globalPersonId: string;
+    fullName: string | null;
+    identifiers: Array<{ maskedValue: string; isPrimary: boolean }>;
+    accessDenied: boolean;
+  }) {
+    const primary =
+      profile.identifiers.find((i) => i.isPrimary) ?? profile.identifiers[0];
+    return {
+      globalPersonId: profile.globalPersonId,
+      displayName: profile.accessDenied ? null : profile.fullName,
+      primaryIdentifierMasked: primary?.maskedValue ?? null,
+      accessDenied: profile.accessDenied,
+    };
+  }
+
+  async batchGetPersonOpsProfile(
+    personIds: string[],
+    organizationId: string,
+  ): Promise<
+    Record<
+      string,
+      {
+        globalPersonId: string;
+        displayName: string | null;
+        primaryIdentifierMasked: string | null;
+        accessDenied: boolean;
+      }
+    >
+  > {
+    const orgId = organizationId?.trim();
+    if (!orgId) throw new BadRequestException("organizationId required");
+    const unique = [...new Set(personIds.filter(Boolean))].slice(0, 100);
+    const out: Record<
+      string,
+      {
+        globalPersonId: string;
+        displayName: string | null;
+        primaryIdentifierMasked: string | null;
+        accessDenied: boolean;
+      }
+    > = {};
+    let logPersonId: string | null = null;
+    for (const pid of unique) {
+      try {
+        const profile = await this.resolveOpsProfileData(pid, orgId);
+        if (!logPersonId) logPersonId = profile.globalPersonId;
+        out[profile.globalPersonId] = this.compactWorkforceDisplay(profile);
+      } catch {
+        out[pid] = {
+          globalPersonId: pid,
+          displayName: null,
+          primaryIdentifierMasked: null,
+          accessDenied: true,
+        };
+      }
+    }
+    if (unique.length > 0 && logPersonId) {
+      await this.mdm.personAccessLog.create({
+        data: {
+          personId: logPersonId,
+          actorOrgId: orgId,
+          action: "WORKFORCE_OPS_PROFILE_BATCH",
+          metaJson: JSON.stringify({ count: unique.length, personIds: unique }),
+        },
+      });
+    }
+    return out;
+  }
+
+  /** Hire intake: resolve/create person + workforce access grant + ops profile. */
+  async workforceResolvePerson(
+    input: ResolvePersonInput & { organizationId: string },
+  ) {
+    const orgId = input.organizationId.trim();
+    if (!orgId) throw new BadRequestException("organizationId required");
+
+    let existingId: string | null = null;
+    const identifiers = collectIdentifierInputs(input);
+    for (const ident of identifiers) {
+      const found = await this.findPersonByIdentifier(
+        ident.type,
+        ident.issuingCountry ?? "AZ",
+        ident.value,
+      );
+      if (found) {
+        existingId = await this.resolveCanonicalPersonId(found.id);
+        break;
+      }
+    }
+
+    const resolved = await this.resolveOrCreatePerson(input, true);
+    await this.ensureWorkforceAccessGrant(resolved.globalPersonId, orgId);
+    const profile = await this.resolveOpsProfileData(resolved.globalPersonId, orgId);
+    return {
+      globalPersonId: resolved.globalPersonId,
+      created: !existingId,
+      opsProfile: this.compactWorkforceDisplay(profile),
+    };
+  }
+
+  async ensureWorkforceAccessGrant(personId: string, granteeOrgId: string) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    await this.mdm.personAccessGrant.upsert({
+      where: {
+        personId_granteeOrgId: {
+          personId: canonical,
+          granteeOrgId: granteeOrgId.trim(),
+        },
+      },
+      create: {
+        personId: canonical,
+        granteeOrgId: granteeOrgId.trim(),
+      },
+      update: {},
+    });
+  }
+
+  private async resolveOpsProfileData(
+    personId: string,
+    requesterOrgId?: string,
+  ) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { id: canonical },
+    });
+    if (!person) throw new NotFoundException("person not found");
+
+    const orgId = requesterOrgId?.trim();
+    const grant =
+      orgId &&
+      (await this.mdm.personAccessGrant.findUnique({
+        where: {
+          personId_granteeOrgId: { personId: canonical, granteeOrgId: orgId },
+        },
+      }));
+    const accessDenied = Boolean(orgId && !grant);
+
+    const rows = await this.mdm.personIdentifier.findMany({
+      where: { personId: canonical },
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+    });
+
+    const identifiers = rows.map((row) => {
+      if (accessDenied) {
+        return {
+          type: row.type,
+          maskedValue: "***",
+          issuingCountry: row.issuingCountry,
+          isPrimary: row.isPrimary,
+        };
+      }
+      const plain = decryptText(row.valueCipher) ?? "";
+      return {
+        type: row.type,
+        maskedValue: maskIdentifierValue(plain),
+        issuingCountry: row.issuingCountry,
+        isPrimary: row.isPrimary,
+      };
+    });
+
+    return {
+      globalPersonId: canonical,
+      fullName:
+        !accessDenied && person.fullNameCipher
+          ? (decryptText(person.fullNameCipher) ?? "").trim() || null
+          : null,
+      phoneMasked:
+        !accessDenied && person.phoneCipher
+          ? maskPhone(decryptText(person.phoneCipher))
+          : null,
+      identifiers,
+      accessDenied,
+    };
+  }
+
+  async resolveIdentifierForCompliance(
+    personId: string,
+    requesterOrgId: string,
+  ) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const orgId = requesterOrgId.trim();
+    if (!orgId) throw new BadRequestException("organizationId required");
+
+    const grant = await this.mdm.personAccessGrant.findUnique({
+      where: {
+        personId_granteeOrgId: { personId: canonical, granteeOrgId: orgId },
+      },
+    });
+    if (!grant) {
+      return {
+        globalPersonId: canonical,
+        fin: null as string | null,
+        passportNumber: null as string | null,
+        issuingCountry: null as string | null,
+        accessDenied: true as const,
+      };
+    }
+
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: canonical,
+        actorOrgId: orgId,
+        action: "COMPLIANCE_RESOLVE",
+        metaJson: JSON.stringify({ purpose: "export" }),
+      },
+    });
+
+    const rows = await this.mdm.personIdentifier.findMany({
+      where: { personId: canonical },
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+    });
+
+    let fin: string | null = null;
+    let passportNumber: string | null = null;
+    let issuingCountry: string | null = null;
+
+    for (const row of rows) {
+      const plain = (decryptText(row.valueCipher) ?? "").trim();
+      if (row.type === "AZ_FIN" && !fin) fin = plain;
+      if (row.type === "PASSPORT" && !passportNumber) {
+        passportNumber = plain;
+        issuingCountry = row.issuingCountry;
+      }
+    }
+
+    return {
+      globalPersonId: canonical,
+      fin,
+      passportNumber,
+      issuingCountry,
+      accessDenied: false as const,
+    };
   }
 }
