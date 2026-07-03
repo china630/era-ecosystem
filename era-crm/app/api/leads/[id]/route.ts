@@ -58,7 +58,16 @@ export async function PATCH(
       title: body.title ?? lead.title,
     };
 
-    const gateError = validatePartyForStage(merged, lead.stage);
+    const gateError = validatePartyForStage(
+      {
+        partyKind: merged.partyKind,
+        taxId: merged.taxId ?? null,
+        companyName: merged.companyName ?? null,
+        contactPhone: merged.contactPhone ?? null,
+        stage: merged.stage,
+      },
+      lead.stage,
+    );
     if (gateError) return jsonError(gateError, 400);
 
     const updated = await prisma.lead.update({
