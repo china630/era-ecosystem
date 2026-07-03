@@ -87,6 +87,7 @@ export const ModuleEntitlementKeySchema = z.enum([
   "banking_pro",
   "kassa_pro",
   "hr_full",
+  "platform_workforce",
   "nas",
   "ifrs",
   "production",

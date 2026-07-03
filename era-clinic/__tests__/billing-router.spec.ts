@@ -11,9 +11,21 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 jest.mock("@era/satellite-kit", () => ({
-  resolveOperatingMode: jest.fn().mockResolvedValue("LOCAL"),
+  resolveOperatingMode: jest.fn().mockResolvedValue({
+    mode: "STANDALONE",
+    parentOrgId: null,
+    fiscalRouting: "OWN",
+    revenueRouting: "OWN",
+  }),
+  resolveSettlementPolicy: jest.fn().mockResolvedValue({
+    settlementHub: "SATELLITE_OWN",
+    pendingSettlementNaPolicy: "BLOCK",
+    hubOrganizationId: null,
+    deferWalkInToHub: false,
+  }),
   satelliteOrganizationId: jest.fn().mockReturnValue("org1"),
   shouldRouteRevenueToParent: jest.fn().mockReturnValue(false),
+  shouldDeferWalkInToHub: jest.fn().mockReturnValue(false),
 }));
 
 describe("billing-router", () => {

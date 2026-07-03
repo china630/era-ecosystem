@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -53,11 +54,12 @@ export default function CrmSettingsPage() {
           <tr>
             <td className="p-3 font-medium">{t("voenLookup")}</td>
             <td className="p-3">
-              <input
-                className="h-9 w-full max-w-xs rounded-lg border border-[#D5DADF] px-3 text-sm"
+              <Field
+                label={t("voenLookup")}
+                preset="voen"
                 value={voen}
-                onChange={(e) => setVoen(e.target.value)}
-                placeholder="1234567890"
+                onChange={(e) => setVoen(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                inputMode="numeric"
               />
             </td>
             <td className="p-3 text-right">
@@ -88,7 +90,7 @@ export default function CrmSettingsPage() {
       </table>
       {mdmResult ? <p className="mt-2 text-xs text-[#7F8C8D]">{mdmResult}</p> : null}
       <ModalShell open={open} title={t("editTeam")} onClose={() => setOpen(false)}>
-        <input className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Field label={t("teamName")} preset="shortText" value={draft} onChange={(e) => setDraft(e.target.value)} />
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setTeamName(draft.trim() || teamName); setOpen(false); }} submitLabel={tc("save")} />
       </ModalShell>
     </div>

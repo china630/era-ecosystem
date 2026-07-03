@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -63,9 +64,9 @@ export default function SettingsPage() {
         onClose={() => setModalOpen(false)}
         title="Edit store name"
       >
-        <label className="block text-sm font-medium text-[#34495E]">Name</label>
-        <input
-          className="mt-2 h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm"
+        <Field
+          label="Name"
+          preset="shortText"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />

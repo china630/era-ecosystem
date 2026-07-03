@@ -1,0 +1,478 @@
+name,type,segment,city,address,phones,discount,has_contact,sub_facility_count,sources
+Türkmed Medical Center,private,potential-client,Abşeron,"Abşeron rayonu, Masazır qəsəbəsi, Əliağa Vahid küçəsi",(+994 55) 242 00 76 | (+994 12) 347 37 85,14%,yes,0,its.gov.az + sosial.gov.az
+Bioloji Təbabət Klinikası,private,potential-client,Bakı / Sumqayıt / Göyçay / Masallı,"Bakı, 3-cü mkr, Pişəvəri küç. 110 | Sumqayıt, Ziya Bünyadov küç. 22 | Göyçay, M.Muradov küç. 12 | Masallı, E.Hüseynov küç.",(+994 12) 430 89 89 | (+994 18) 655 03 23 | (+994 20) 274 70 80 | (+994 25) 215 50 89,10%,yes,0,sosial.gov.az
+Pro İmplant Dental Clinic,private,potential-client,Bakı / Sumqayıt,"Bakı, Əliəşrəf Əlizadə küç. 45 | Sumqayıt, Səməd Vurğun küç. 145A",(+994 51) 800 03 03 | (+994 10) 334 03 03,10%,yes,0,sosial.gov.az
+32 Beauty Billur Dent,private,potential-client,Bakı,Məmməd Araz küç. 63,(+994 12) 561 32 80 | (+994 12) 561 32 90 | (+994 50) 708 25 21,5%,yes,0,sosial.gov.az
+32 Gözəl Müasir Stomotoloji Klinika,private,potential-client,Bakı,Azərbaycan pr. 12,(+994 12) 596 73 13 | (+994 70) 533 32 32,10%,yes,0,sosial.gov.az
+5A Dent,private,potential-client,Bakı,Zərifə Əliyeva küç. 31B,(+994 12) 493 00 24,5%,yes,0,sosial.gov.az
+AA Estetik Klinika,private,potential-client,Bakı,"Bakı şəhəri̇, Səbail rayonu, Neftçi Qurban Abbasov",(+994 50) 830 18 48,,yes,0,its.gov.az
+Adil Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Ahu Estetik Klinika,private,potential-client,Bakı,"Xətai ray., Məhəmməd Hadi küç. 106",(+994 70) 530 50 81,10%,yes,0,sosial.gov.az
+Ailə Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Alliance Clinic,private,potential-client,Bakı,"Bakı şəhəri, Abbas Səhhət küçəsi 59/61",+99 412 310 07 88 | +99 410 310 07 88,,yes,0,its.gov.az
+Amana Clinic,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Mirəli Seyidov küçəsi, ev 4",(+994 12) 432 99 99 | (+994 70) 432 99 99,,yes,0,its.gov.az
+Amana Klinika,private,potential-client,Bakı,"Yasamal ray., Mirəli Seyidov küç. 20D",(+994 12) 432 99 99 | (+994 70) 432 99 99,5%,yes,0,sosial.gov.az
+AMT Klinika,private,potential-client,Bakı,"Bakı, Nəsimi rayonu, Sübhi Salayev küçəsi 102-114, AZ1022",+994 12 596 52 55 | (+994 12) 596 53 55,,yes,0,its.gov.az + tibbiportal.az
+Andromed,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Ankara Klinik,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Məhsəti Gəncəvi küçəsi, 155",(+994 70) 632 07 57 | (+994 77) 632 07 57,,yes,0,its.gov.az + tibbiportal.az
+Apex Clinic,private,potential-client,Bakı,Həsən Məcidov küç. 12,(+994 12) 525 48 47 | (+994 50) 444 48 47,5%,yes,0,sosial.gov.az
+Apifitoterapiya,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Appro Hospital,private,potential-client,Bakı,"Bakı ş.,Suraxanı rayonu,Yeni Suraxan qəsəbəsi,Mər kəzi küçəsi,4T",(+994 10) 203 00 88,15%,yes,0,its.gov.az + sosial.gov.az
+Aristokrat Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+ARS Reabilitasiya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Aşıq Molla Cuma küçəsi 44B",(+994 12) 564 04 07/08 | (+994 12) 564 88 17,,yes,0,its.gov.az
+AsMed Ortopedi Protez-Onurğa Mərkəzi,private,potential-client,Bakı,"Nərimanov ray., Əhməd Rəcəbli-1 küç. 23C",(+994 12) 555 77 02 | (+994 70) 222 66 02,5%,yes,0,sosial.gov.az
+Assmed Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Lökbatan, D.Bünyadzadə 3A",(+994 12) 445 17 17 | (+994 12) 445 18 18,,yes,0,its.gov.az + tibbiportal.az
+Atlas Klinika,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+AVAZ Eşitmə və Nitq Mərkəzi,private,potential-client,Bakı,Ənvər Qasımzadə küç. 72,(+994 12) 440 35 85 | (+994 50) 277 35 35,9%,yes,0,sosial.gov.az
+Avita Clinic,private,potential-client,Bakı,"Bakı şəhəri, Binə qəsəsbəsi, Əli İsazadə küçəsi 139",(+994 70) 202 27 02,,yes,0,its.gov.az
+Avrasiya Hospital,private,potential-client,Bakı,"Bakı şəhəri, Ak.H.Əliyev küçəsi 15, AZ1078",(+994 12) 1116 | (+994 55) 979 01 01,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Avropa Beynalxalq Hospital,private,potential-client,Bakı,"Bakı şəhəri, Səbail rayonu, Mikayıl Müşfiq küçəsi",(+994) 10 430 03 03,,yes,0,its.gov.az
+Ayan-M,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Ayan-N,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Aysmed Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Az Dent,private,potential-client,Bakı,Hüseyn Cavid pr. 54B,(+994 12) 510 77 88 | (+994 12) 510 77 87 | (+994 55) 237 54 54,10%,yes,0,sosial.gov.az
+Azad Gülüş Dental Clinic By Raman Maharramov,private,potential-client,Bakı,Məhəmməd Naxçıvani küç. 22,(+994 12) 436 82 23 | (+994 50) 232 32 96,5%,yes,0,sosial.gov.az
+Azevromed Klinikası,private,potential-client,Bakı,"Bakı şəh., Suraxanı r-nu, Yeni Günəşli V massivi, Samir Cəfərov küç. 2",+994 12 478 18 48 | (+994 12) 478 32 57 | (+994 12) 478 18 48 | (+994 50) 753 67 07,25%,yes,0,its.gov.az + sosial.gov.az
+Azər-Türk Med Laser Clinic,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, Süleyman Vəzirov küçəsi, 65",(+994 12) 310-17-77 (+994 55) 444 97 91/92,,yes,0,its.gov.az
+Azər-Türk-Med,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Azərbaycan Tibb Universiteti Tədris Cərrahiyyə Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Mirqasımov küçəsi, 1004-cü məhəllə",(+994 12) 449 82 54 | (+994 12) 440 01 26,,yes,0,its.gov.az
+Azərbaycan Tibb Universitetinin Tədris Terapevtik Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Mərdanov qardaşları küçəsi 100, AZ-1078",(+994 12) 441 33 18 | (+994 12) 441 33 48,,yes,0,its.gov.az
+Badam Medical Center,private,potential-client,Bakı,"Bakı şəhəri, Səbail rayonu, Abbasqulu Abbaszadə küçəsi 13A",(+994 12) 538 66 69 | (+994 12) 539 66 69 | *6699 | (+994 12) 538 66 99,10%,yes,0,its.gov.az + sosial.gov.az
+Bakı Ağrı Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Mirəli Seyidov 106",(+994 55/012) 460 71 70 | (+994 12) 460 71 70 | (+994 55) 460 71 70,4%,yes,0,its.gov.az + sosial.gov.az
+Bakı Bərpa Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Əbdulvahab Salamzadə 593",(+994 12) 432 87 88,,yes,0,its.gov.az
+Bakı City Hospital,private,potential-client,Bakı,"Bakı, Lev Tolstoy küçəsi 170, AZ1095",(+994 70) 213 32 36,,yes,0,its.gov.az
+Bakı Göz Klinikası,private,potential-client,Bakı,"Bakı şəhəri,Səbail rayonu,Teymur Elçin küçəsi, ev 6, mənzil1",(+994 12) 555 70 47 | (+994 50) 585 01 10,,yes,0,its.gov.az
+Bakı Patologiya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Əhməd Rəcəbli 208",(+994 12) 564 84 42 | (+994 77) 403 71 04/05,,yes,0,its.gov.az
+Bakı Tehran Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Baku Central Hospital,private,potential-client,Bakı,"Bakı şəhəri, Binəqədi ray., Svetlana Məmmədova küç., giriş 91, AZ1113",(+994 12) 569 24 50 | (+994 55) 772 15 55,,yes,0,its.gov.az
+Baku City Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Baku Clinic Diamed,private,potential-client,Bakı,"Bakı şəhəri, Akademik Həsən Əliyev 493 (köhnə 101)",+994 12 465 06 06 | (+994 50) 465 06 06,,yes,0,its.gov.az
+Baku Medical Plaza,private,potential-client,Bakı,"Bakı şəhəri, Xətai ray, Babək prospekti, ev 92N",909 | (+994 55) 605 87 49 | (+994 55) 604 49 09,5%,yes,0,its.gov.az + sosial.gov.az + tibbiportal.az + medportal.az
+Baku Medical Plaza (Babək),private,potential-client,Bakı,,,,no,0,tibbiportal.az + medportal.az
+Baku Siti Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Batı Göz Klinika,private,potential-client,Bakı,"Nəsimi ray., Vaqif pr. 75A",*4033 | (+994 12) 310 40 33,10%,yes,0,sosial.gov.az
+Batıgöz Klinikası,private,potential-client,Bakı,"Bakı şəhəri Nəsimi rayonu, Vaqif prospekti 75 A, AZ1007",(+994 12) 4033 | (+994 12) 310 40 33,,yes,0,its.gov.az
+Berlin Ailə və Uşaq Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu,Abbas Mirzə Şərifzadə küçəsi 315 C",(+994 12) 310 03 66,,yes,0,its.gov.az
+Beynəlxalq Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Beynəlxalq Tibb Mərkəzi Nərimanov,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Bəyaz Diş Klinika,private,potential-client,Bakı,Həsənoğlu küç. 15A,(+994 12) 464 51 08 | (+994 10) 511 08 08 | (+994 55) 904 05 80,10%,yes,0,sosial.gov.az
+Bioestetik Group,private,potential-client,Bakı,Faiq Yusifov küç. 57,(+994 12) 564 41 45 | (+994 55) 966 11 09,5%,yes,0,sosial.gov.az
+Biolab,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Biomed Spektr,private,potential-client,Bakı,"Bakı şəhəri, Abbasqulu ağa Bakixanov küçəsi 7",(012) 498 00 65,,yes,0,its.gov.az
+Biosis,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Biovista Hospital,private,potential-client,Bakı,"Bakı şəhəri, 34 2-ci yaşayış massivi, 151 Badamdar şossesi",(+994 50) 999 83 30,,yes,0,its.gov.az
+BMP Medilux,private,potential-client,Bakı,,,,no,0,medportal.az
+Body Harmony Baku,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Bona Dea Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Briz-L Göz Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, 917-ci məhəllə M.Əlizadə 46",(+994 12) 541 19 00 | (+994 12) 541 24 00,,yes,0,its.gov.az
+Buta Clinic,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Yəhya Bakuvi küç, 24A",+994 50/55/70 207 29 21,,yes,0,its.gov.az
+Büllur Klinika,private,potential-client,Bakı,Mirəli Qaşqay küç. 93,(+994 55) 331 22 93,10%,yes,0,sosial.gov.az + tibbiportal.az
+Canpolad Doktor,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Caspian International Hospital,private,potential-client,Bakı,"Bakı şəhəri, Badamdar,1-ci yaşayış massivi, 31",(+994 12) 07 17 | (+99412) 502 50 15,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Celamig Göz Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, S.Rəhimov küçəsi 126/64, AZ1014",(+994 12) 596 12 51 | (+994 70) 738 90 00,,yes,0,its.gov.az
+Citomed Klinikası,private,potential-client,Bakı,"Bakı şəh., Nərimanov ray., ​Möhsun Sənani küçəsi, 26​1",+994 50 806 76 96 | (+994 12) 541 57 96,,yes,0,its.gov.az
+Davinci International Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dental Arts Studio,private,potential-client,Bakı,Məmməd Araz küç. 111,(+994 12) 561 01 91 | (+994 50) 317 37 59 | (+994 55) 317 37 59,10%,yes,0,sosial.gov.az
+Dental Plus Diş Klinikası,private,potential-client,Bakı,"Xətai ray., Məhəmməd Hadi küç. 68B",(+994 55) 480 84 15,12%,yes,0,sosial.gov.az
+Dentamed Estetik Stomatoloji Klinika,private,potential-client,Bakı,Koroğlu Rəhimov küç. 3A,(+994 55) 282 13 33,15%,yes,0,sosial.gov.az
+Dəniz Dent,private,potential-client,Bakı,Tolstoy küç. 137,(+994 12) 596 59 04 | (+994 12) 597 42 04 | (+994 70) 214 04 30,10%,yes,0,sosial.gov.az
+Dəniz Hospital,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, İlqar Zülfüqarov",(+994 51) 816 03 03,,yes,0,its.gov.az
+Diabetik Ayaq Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Diaqnoz Medical Center,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dialab 1,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dialab 2,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dialab Klinika,private,potential-client,Bakı,"Səbail ray., İstiqlaliyyət küç. 31",(+994 12) 492 20 56 | (+994 12) 497 44 49,20%,yes,0,sosial.gov.az
+Diamed Medical Group,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Diamed Medical Group Neftçilər,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Diamond Medical Park,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Mirəli Seyidov küçəsi 43",(+994 55) 600 24 00 | (+994 51) 600 24 00 | *2400,30%,yes,0,its.gov.az + sosial.gov.az
+Dimed Medical Centre,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Doktor Davud,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dr. Bubnovski Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Dr. Smiles Dental Boutique,private,potential-client,Bakı,Adil İsgəndərov küç. 4/41,(+994 12) 492-08-44 | (+994 50) 378-97-20,15%,yes,0,sosial.gov.az
+Dr.Kamal Klinika,private,potential-client,Bakı,"Bakı şəhəri, Eldar Tağızadə küç.1",(+994 50) 323 11 19 | (+994 55) 310 80 66,,yes,0,its.gov.az
+Dream Smile,private,potential-client,Bakı,Mirəli Qaşqay küç. 85D,(+994 50) 272 66 22,19%,yes,0,sosial.gov.az
+Dünya Diş Klinikası,private,potential-client,Bakı,29-cu Binə küç. 29,(+994 55) 472 96 16,3%,yes,0,sosial.gov.az
+Dünya Göz Klinikası,private,potential-client,Bakı,"Səbail ray., Bayıl qəs., Mikayıl Hüseynov küç. 39",(+994 12) 404 44 69,14%,yes,0,sosial.gov.az
+Dünyagöz,private,potential-client,Bakı,"Bakı şəhəri, Səbail rayonu, M.Useynov ev 39",(+994 12) 404 44 69,,yes,0,its.gov.az + tibbiportal.az
+EGE Hospital,private,potential-client,Bakı,"Bakı şəhəri, Ak.H.Əliyev küçəsi 38, AZ1078",(+994 12) 1117 | (+994 12) 599 11 17,,yes,0,its.gov.az + tibbiportal.az
+Eh Dental Clinic,private,potential-client,Bakı,Qarabağ küç. 71,(+994 55) 299 86 86,9%,yes,0,sosial.gov.az
+El Dent,private,potential-client,Bakı,Qara Qarayev pr. 30/42,(+994 55) 545 34 35,20%,yes,0,sosial.gov.az
+Elmed Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Eltac,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Endokrin Mərkəz,private,potential-client,Bakı,,,,no,0,tibbiportal.az + medportal.az
+Epilife Estetik Mərkəzi,private,potential-client,Bakı,Aşıq Molla Cümə küç. 7A,(+994 12) 567 09 05 | (+994 55) 518 09 05 | (+994 77) 518 09 05,9%,yes,0,sosial.gov.az
+Episom Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov ray, Ə.Rəcəbli 19R",(+994 12) 464 89 20,,yes,0,its.gov.az
+Etalon Hospital,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Xıdır Mustafayev küçəsi",(+994 12) 505 33 55 | (+994 77) 505 33 55,,yes,0,its.gov.az
+Euromed Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az + medportal.az
+Face Art Klinika,private,potential-client,Bakı,Möhsün Sənani küç. 106,(+994 10) 554 54 14,5%,yes,0,sosial.gov.az
+Faqma,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+FALCK Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nizami küçəsi 162",(+994 55) 500 30 26 | (+994 12) 599 85 87 / 88,,yes,0,its.gov.az
+Fetal Mərkəz NS Genetics,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Nəcəf Nərimanov küçəsi 109",(+994 50) 209 75 55,,yes,0,its.gov.az
+Fizyore,private,potential-client,Bakı,"Bakı şəhəri, Sabunçu r., Bakıxanov q., Muxtar Fətəliyev, 97",(+994 70) 400 01 00,,yes,0,its.gov.az
+Fonus Eşitmə Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, İzzət Həmidov küçəsi 3",(+994 12) 597 12 00 | (+994 55) 664 63 36,,yes,0,its.gov.az
+Freyd Psixoloji Mərkəz,private,potential-client,Bakı,Mehdi Hüseynzadə küç. 131/141 | Məhəmməd Hadi küç. 78,(+994 70) 965 93 95 | (+994 77) 804 69 09,35%,yes,0,sosial.gov.az
+Funda Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, İ.Hidayətzadə küçəsi 163",(+994 12) \*0777 | (+994 12) 567 55 82,,yes,0,its.gov.az
+Genom Genetic Clinic Laboratory,private,potential-client,Bakı,Mərkəzi Bulvar küç. 3,(+994 12) 526 18 65 | (+994 50) 999 03 27,20%,yes,0,sosial.gov.az
+German Hospital,private,potential-client,Bakı,"Bakı şəhəri, İsmayıl bəy Qutqaşınlı 50",(+994 12) 538 66 60 | (+994 55) 455 78 81,,yes,0,its.gov.az + tibbiportal.az
+Gülçin,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Güvən Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Happy Smile Stomatoloji Klinika,private,potential-client,Bakı,"Nəsimi ray., Mirəli Qaşqay küç. 39",(+994 12) 541 54 75 | (+994 50) 501 00 93,10%,yes,0,sosial.gov.az
+Harmony Health Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi Rayonu. Salatın Əsgərova küçəsi",(+994 12) 464 55 55,,yes,0,its.gov.az
+Hat Medicine,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+HAYAT Clinic,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Mətbuat prospekti 35",(+994 12) 404 14 04 | (+994 55) 261 14 04,,yes,0,its.gov.az + tibbiportal.az
+HB Güvən Klinik,private,potential-client,Bakı,"Bakı şəhəri, Ataturk prospekti 3078",(+994 12) 959,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Health Med,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Hicama Sağlıqlı Yaşam Mərkəzi,private,potential-client,Bakı,"Yasamal ray., Əsəd Əhmədov küç. 9",(+994 12) 434 88 08,5%,yes,0,sosial.gov.az
+High Medical Care,private,potential-client,Bakı,Ağa Nemətulla küç. 250,(+994 12) 464 78 17 | (+994 10) 330 04 44 | (+994 99) 330 04 44,20%,yes,0,sosial.gov.az
+Hijama Cupping Center,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Hind Klinikası,private,potential-client,Bakı,Balababa Məcidov küç. 22,(+994 55) 316 93 93,25%,yes,0,sosial.gov.az + tibbiportal.az
+Hollywood Dental,private,potential-client,Bakı,Mirzəbala Əhmədzadə küç. 13A,(+994 12) 566 76 96,4%,yes,0,sosial.gov.az
+Hövsan Tibb Mərkəzi,private,potential-client,Bakı,"Hövsan qəs., Qələbə küç. 7",(+994 12) 449 22 11 | (+994 50) 499 22 11 | (+994 99) 599 22 11,5%,yes,0,sosial.gov.az
+HTC Cliniva Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Qara Qarayev pr. 84",(+994 55) 282 00 99 | (+994 12) 323 95 01,,yes,0,its.gov.az
+Xətai Estetik Klinikası,private,potential-client,Bakı,"Bakı şəhəri Xətai rayonu, Süleyman Vəzirov küçəsi",(+994 50) 245 85 04 | (+994 12) 490 83 61 | (+994 12) 490 83 62 | (+994 50) 204 84 41,6%,yes,0,its.gov.az + sosial.gov.az
+Xüsusi Müalicə Sağlamlıq Kompleksi,private,potential-client,Bakı,"Bakı şəhəri, Səbail rayonu, Badamdar şossesi 31T",(+994 12) 493 81 25 | (+994 12) 493 90 93,,yes,0,its.gov.az
+International Medical Center 1,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayon, Rəsul Rza küç. 24",(+994 12) 596 13 16,,yes,0,its.gov.az
+International SOS,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+İmplant Art,private,potential-client,Bakı,Bəsti Bağırova küç. 12,(+994 50) 596 20 50,5%,yes,0,sosial.gov.az
+İnam Klinika,private,potential-client,Bakı,Dilarə Əliyeva küç. 175,(+994 12) 594 11 03 | (+994 50) 525 25 07,4%,yes,0,sosial.gov.az + tibbiportal.az + medportal.az
+İnci Laboratoriya,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, Bülbül prospekti 58G",+994 12 493 80 47/48,,yes,0,its.gov.az
+İnsan Diaqnostik Müalicə Mərkəzi,private,potential-client,Bakı,"Bakıxanov qəs., Mahır Əmirov küç. 96",(+994 12) 429 99 47 | (+994 12) 429 77 53 | (+994 51) 637 35 30,20%,yes,0,sosial.gov.az
+İran Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+İris Estetik Klinika,private,potential-client,Bakı,Nigar Rəfibəyli küç. 20,(+994 12) 492 40 45 | (+994 55) 533 78 76,9%,yes,0,sosial.gov.az
+İstanbul Hospital,private,potential-client,Bakı,"Bakı şəhəri, Binəqədi rayonu, S.S.Axundov küçəsi 141",(+994 12) 562 40 02 | (+994 55) 265 40 03,,yes,0,its.gov.az + tibbiportal.az
+İstanbul NS klinikası,private,potential-client,Bakı,"Bakı şəhəri, Atatürk prospekti 140, AZ1130",(+994 12) 465 85 00 | (+994 55) 467 85 00,,yes,0,its.gov.az + tibbiportal.az
+Kəpəz Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, Cəlil Məmmədquluzadə küçəsi 101A",(+994 12) 449 67 57 | (+994 55) 990 00 88,,yes,0,its.gov.az
+Konq-Hi Koreya,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Korea Şərq Təbabəti,private,potential-client,Bakı,"Bakı şəhəri, Səbail rayonu, Neftçilər prospekti 65",(+994 50) 290 28 37,,yes,0,its.gov.az
+Kraton Clinic,private,potential-client,Bakı,"Bakı şəhəri, Şəfayət Mehdiyev 1054",(+994 12/70) 431 11 44 | (+994 12) 431 11 44 | (+994 70) 431 11 44,6%,yes,0,its.gov.az + sosial.gov.az
+Qaragöz Klinika,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Qələbə Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Qələndər Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Labco Klinik Laboratoriya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Həsənoğlu küçəsi 17",\*4050,,yes,0,its.gov.az
+Lalisa Estetik Mərkəzi,private,potential-client,Bakı,Tbilisi pr. 1058,(+994 55) 709 03 03,3%,yes,0,sosial.gov.az
+Lanset,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Lanset Cərrahlıq Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Sabit Rəhman küçəsi 35",(+994 12) 448 47 02 | (+994 70) 887 13 13,,yes,0,its.gov.az
+Leyla Medical Center,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, Yusif Səfərov küçəsi 19",(+994 12) 0101 | (+994 12) 490 21 31,,yes,0,its.gov.az
+Leyla Şıxlinski Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Limbak Labor,private,potential-client,Bakı,"Bakı şəhəri, Kazım Kazımzadə 123",(+994 12) 408 96 37 | (+994 12) 539 96 37,,yes,0,its.gov.az
+LİV Bona Dea Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Mehdi Abbasov küçəsi 2",900,,yes,0,its.gov.az
+Loft Dent,private,potential-client,Bakı,Mirəli Seyidov küç. 19A,(+994 10) 533 33 03 | (+994 99) 533 33 03,9%,yes,0,sosial.gov.az
+Loğman Klinika,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Əlif Hacıyev küçəsi 12",(+994 12) 421 12 62 | (+994 12) 323 26 26 | (+994 12) 421 90 91 | (+994 50) 700 12 62 | (+994 99) 700 12 62,10%,yes,0,its.gov.az + sosial.gov.az + tibbiportal.az
+Loğman Q.Qarayev,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Loğmed Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Kamil Balakişiyev 61 küçəsi",(+994 12) 421 77 33 | (+994 12) 421 53 93,,yes,0,its.gov.az
+Loqos Gənclik,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Loqos Xalqlar Dostluğu,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Loqos Nərimanov,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Lor Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Əhməd Rəcəbli küçəsi 19 K",(+994 12) 0111 | (+994 51) 477 01 11,,yes,0,its.gov.az + tibbiportal.az
+Lovely Dent by Dr Khayal Samadov,private,potential-client,Bakı,İzzəddin Həsənoğlu küç. 31,(+994 50) 202 33 35,9%,yes,0,sosial.gov.az
+Lux International Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Faiq Yusifov 146A",(+994 50) 800 30 60,,yes,0,its.gov.az
+Lux İnternational Hospital,private,potential-client,Bakı,"Nərimanov ray., Faiq Yüsifov küç. 146B",*3060 | (+994 12) 599 30 60 | (+994 50) 800 30 60,5%,yes,0,sosial.gov.az
+Macrobiosis Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+MayoMed Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Əhməd Rəcəbli 207",(+994 50) 278 93 94,,yes,0,its.gov.az
+Mayomed Medical,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Med Olimp Klinikası,private,potential-client,Bakı,İnşaatçılar pr. 28,(+994 12) 565 02 75 | (+994 55) 247 48 45,15%,yes,0,sosial.gov.az
+Med Servis Özəl Tibb Mərkəzi,private,potential-client,Bakı,Cəlil Məmmədquluzadə küç. 3,(+994 12) 596 68 44 | (+994 12) 596 68 48 | (+994 50) 220 56 12,5%,yes,0,sosial.gov.az
+Medaura Klinik,private,potential-client,Bakı,Salatın Əsgərova küç. 178,(+994 70) 221 34 76,25%,yes,0,sosial.gov.az
+MedEra Hospital,private,potential-client,Bakı,"Bakı şəhəri, Binəqədi Rayonu, Əcəmi Naxçıvani küçəsi 53, AZ1130",(+994 12) 992 | (+994 12) 561 03 03,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Medholding,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Medholding Estetik Klinika,private,potential-client,Bakı,"Yasamal ray., Fuad İbrahimbəyov küç. 20B",(+994 12) 436 87 84 | (+994 50) 203 77 78,30%,yes,0,sosial.gov.az
+Medholding Stomatoloji Klinika,private,potential-client,Bakı,"Yasamal ray., Fuad İbrahimbəyov küç. 20B",(+994 12) 594 25 26 | (+994 10) 220 02 12,5%,yes,0,sosial.gov.az
+Medi Club,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Medi Grand,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Mediart Klinika,private,potential-client,Bakı,İzzət Nəbiyev küç. 40A,(+994 12) 510 01 17 | (+994 12) 538 01 17 | (+994 77) 219 01 17,2%,yes,0,sosial.gov.az
+Medical City,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, 28 May küçəsi 13",(+994 10) 521 25 05,,yes,0,its.gov.az
+Medicare Hospital,private,potential-client,Bakı,"Bakı şəhəri, Sabunçu, Ə.Məmmədəliyev, 5",(+994 12) 450-07-17,,yes,0,its.gov.az
+Medicine Park,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Medikal House,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Mediks,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Medikus Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, A.M.Şərifzadə küçəsi 55",(+994 70) 312 10 70 | (+994 10) 312 10 70,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Mediland Hospital,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, Sabit Orucov küçəsi, bina 17C",(+994 12) 0303 | (+994 12) 488 74 18,,yes,0,its.gov.az + tibbiportal.az
+MediLife Clinic,private,potential-client,Bakı,"Bakıxanov qəs., Səmədbəy Mehmandarov küç. 8",(+994 12) 425 11 99 | (+994 99) 425 11 99 | (+994 70) 525 11 99,20%,yes,0,sosial.gov.az
+Medilux Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+MediPark Diaqnostik Klinika,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu S.Vurğun küçəsi 116",+994 12 541 54 40 | (+994 55) 540 02 75,,yes,0,its.gov.az
+Mediplanet Klinika,private,potential-client,Bakı,Yusif bəy İbrahim küç. 1,(+994 12) 497 12 50 | (+994 12) 497 13 80 | (+994 55) 427 12 00 | (+994 51) 522 12 00,9%,yes,0,sosial.gov.az
+Medipoint Klinikası,private,potential-client,Bakı,"Bakı şəhəri ,Binəqədi rayonu,Şövkət Məmmədova,4C",(+994 12) 377 01 22 | (+994 10) 317 01 22,,yes,0,its.gov.az
+Medistyle Hospital,private,potential-client,Bakı,"Bakı şəhəri, Albert Aqarunov küçəsi 16",+99451 979 00 00,,yes,0,its.gov.az + tibbiportal.az
+Medolimp Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+MedServis,private,potential-client,Bakı,"Bakı şəhəri, Сəlil Məmmədquluzadə küç.3",(+994 12) 596 68 44 | (+994 12) 596 68 48,,yes,0,its.gov.az + tibbiportal.az
+Megapol Sağlamlıq Mərkəzi,private,potential-client,Bakı,Nizami Nərimanov küç. 75,(+994 12) 565 50 71 | (+994 51) 641 14 80,10%,yes,0,sosial.gov.az
+Memorial Klinik,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Qara Qarayev prospekti 38A",(+994 12) 210 10 50 | (+994 55) 410 10 50 | (+994 55) 710 10 50 | (+994 22) 428 97 97 | (+994 70) 628 97 97 | (+994 70) 528 97 97,4%,yes,0,its.gov.az + sosial.gov.az
+Məlhəm Beynəlxalq Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Cəmşid Naxçıvanski küçəsi 433, AZ 1118",(+994 12) 803 | (+994 51) 201 71 42,,yes,0,its.gov.az
+Mərcan Medicare Klinik,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, M. Cəfərov küçəsi, ev 12\. AZ1102",+994 55 450 85 05 | \*8505 | *8505 | (+994 12) 310 85 85 | (+994 55) 450 85 05,25%,yes,0,its.gov.az + sosial.gov.az
+Mərkəzi Kimyəvi və Toksikoloji Laboratoriya,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, A.A.Mirqasımov küçəsi 1",(+994 12) 594 30 75 | (+994 12) 594 30 54,,yes,0,its.gov.az
+Mərkəzi Klinika,private,potential-client,Bakı,"Bakı şəhəri, Parlament prospekti 76, AZ1006",(+994 12) 105 | (+994 12) 492 10 92,,yes,0,its.gov.az
+Mərkəzi Klinika Ambulatoriya,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Mərkəzi Neftçilər Xəstəxanası,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, Yusif Səfərov 21",(+9941240) 4-28-00,,yes,0,its.gov.az
+Microsyst Medical Centre,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Milan Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Əhməd Rəcəbli-1 küçəsi, ev 21",(+994 12) 409 90 91/92 | (+994 50) 378 43 29,,yes,0,its.gov.az
+Milana Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Milli İdman Tibb və Reabilitasiya Elmi-Praktiki İnstitutu,private,potential-client,Bakı,"Bakı şəhəri, Olimpiya küç. 4A",(+994 12) 525 83 07/09/10,,yes,0,its.gov.az
+Modern Hospital,private,potential-client,Bakı,"Bakı şəhəri, Babək pr., 85k, AZ1119",(+994 12) 949 | (+994 12) 570 03 03,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Müasir Diaqnostika Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, Rəşid Behbudov küç. 56",(+99412) 465-87-72 | (+99412) 910,,yes,0,its.gov.az
+N Med Lazer Center,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+N.Tusi adına Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, Zərdabi küçəsi 53",(+994 12) 434 00 99 | (+994 10) 228 85 66 | +994 12 431 35 31 | (+994 50) 208 02 55 | (+994 12) 431 35 31 | (+994 12) 433 66 84,5%,yes,0,its.gov.az + sosial.gov.az
+Narınc Psixologiya Mərkəzi,private,potential-client,Bakı,"Xətai ray., Məhəmməd Hadi küç. 27 | Atatürk pr. 57C",(+994 12) 480 47 81 | (+994 55) 258 27 00 | (+994 55) 253 27 00,9%,yes,0,sosial.gov.az
+National Prime Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov ray.Əhməd Rəcəbli küç 3,ev 30",(+994 12) 464 87 87 | (+994 51) 444 87 87,,yes,0,its.gov.az
+NB Lazur Hospital,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Neyron,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+New Life,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+New Med Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Nəbz Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az + medportal.az
+Nəfəs Psixologiya Mərkəzi,private,potential-client,Bakı,Qəzənfər Musabəyov küç. 4,(+994 50) 390 12 22 | (+994 50) 490 12 22,10%,yes,0,sosial.gov.az
+Nəsrəddin Tusi Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Nigar Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Nitq İnkişaf Mərkəzi,private,potential-client,Bakı,İlqar Zülfüqarov küç. 16A,(+994 55) 903 38 16,6%,yes,0,sosial.gov.az
+Nova Med Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Nur Dent R,private,potential-client,Bakı,Bəkir Çobanzadə küç. 227,(+994 12) 370 70 17 | (+994 50) 318 20 75,5%,yes,0,sosial.gov.az
+Nurlu Diaqnostik Müalicə Mərkəzi,private,potential-client,Bakı,"Bakixanov qəs., Xəlil bəy Xasməmmədov küç. 28",(+994 12) 425 19 02 | (+994 12) 425 42 53 | (+994 55) 814 31 44,14%,yes,0,sosial.gov.az
+Nurlu Diaqnostika Müalicə Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Bakıxanov qəsəbəsi, 28 Xəlil bəy Xasməmmədov küçəsi",(+994 55) 814 31 44 | +994 12 425 19 02 /42 53,,yes,0,its.gov.az
+Oksigen Klinik Xəstəxanası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, 1959-cu məhəllə",(+994 12) 906 | (+994 70) 906 09 06 | (+994 55) 471 55 55,20%,yes,0,its.gov.az + sosial.gov.az
+Olimp Hospital,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, İnşaatçılar prospekti 8-10, AZ1073",(+994 12) 2100 | (+994 12) 538 88 00,,yes,0,its.gov.az
+Only Dent,private,potential-client,Bakı,Mirəli Seyidov küç. 31/38,(+994 12) 505 07 17 | (+994 12) 505 07 18 | (+994 55) 214 04 30,10%,yes,0,sosial.gov.az
+Optimed,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Ömür Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az + medportal.az
+Özəl Uşaq Psixologiya Mərkəzi,private,potential-client,Bakı,Təbriz küç. 94A,(+994 10) 212 42 48,4%,yes,0,sosial.gov.az
+Panacea Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Pantovita,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Photomed Diaqnostika Mərkəzi,private,potential-client,Bakı,"Bakı şəh., Süleyman Rüstəm küç., 69",(+994)50 596 56 56,,yes,0,its.gov.az
+PM Akademiya,private,potential-client,Bakı,Hənifə Ələsgərov küç. 33,(+994 12) 441 23 43 | (+994 77) 341 23 43 | (+994 77) 271 23 43,4%,yes,0,sosial.gov.az
+Premium Clinic,private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, A.Məhərrəmov küçəsi, 25B",+994 12 430 05 01 | (+994 12) 430 05 02,,yes,0,its.gov.az
+Premium Dental,private,potential-client,Bakı,"Azadlıq pr., 3071-ci məhəllə",(+994 12) 561 66 66 | (+994 70) 336 68 96,14%,yes,0,sosial.gov.az
+PrestijMed,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Qurban Xəlilov küçəsi 26A",(+994 50) 500 60 77,,yes,0,its.gov.az
+Psixologiya Elmi-Tədqiqat İnstitutu,private,potential-client,Bakı,Ziya Bünyadov pr. 38,(+994 12) 480 36 29 | (+994 55) 257 27 00,9%,yes,0,sosial.gov.az
+Radiologypharmacy,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu,Xocalı pr 37,Dəmirchi Tower 19 cu mərtəbə",(+994 77) 505 12 70,,yes,0,its.gov.az
+Real Hospital,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Zahid Xəlilov küçəsi 99/101",(+994 12) 537 23 23 | (+994 55) 525 23 23 | +994 18 642 45 80,,yes,0,its.gov.az
+Referans Klinik Laboratoriya Mərkəzi & Poliklinik (Əhmədli filialı),private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, M.Hadi küçəsi 229D",(+994 12) 374 94 34 | (+994 77) 426 00 33,,yes,0,its.gov.az
+Referans Klinik Laboratoriya Mərkəzi & Poliklinik (Mərkəzi filial),private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, M.Məmmədzadə 8A",(+994 12) 310 00 22 | (+994 12) 310 00 33,,yes,0,its.gov.az
+Reproduktiv Sağlamlıq Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Rezonans Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Xətai ray., Əhmədli qəs., Ramiz Quliyev küç., 4",(+994 50) 500 26 56,,yes,0,its.gov.az
+Rövşən Həsənovun Nevrologiya Klinikası,private,potential-client,Bakı,Məhəmməd Naxçıvani küç. 9,(+994 12) 436 69 98 | (+994 12) 436 69 99 | (+994 50) 356 41 85,9%,yes,0,sosial.gov.az
+Saf Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Y.V.Çəmənzəminli küçəsi 18A, AZ1078",(+994 50) 278 37 96 | (+994 50) 278 37 99,,yes,0,its.gov.az
+Sağlam Ailə Nərimanov,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Sağlam Ailə Ultralab,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Sağlam Diş Müasir Stomotoloji Klinika,private,potential-client,Bakı,Sakit Qocayev küç. 39A | Əlif Hacıyev küç. 15 | Tbilisi pr. 49B,*6644 | (+994 12) 429 42 24 | (+994 55) 600 81 23 | (+994 12) 520 31 61 | (+994 12) 525 00 50,5%,yes,0,sosial.gov.az
+Salutem,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Sanator-Kurort Reabilitasiya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Xəzər rayonu, Buzovna qəsəbəsi, Dənizkənarı, 17D",(+994 50) 551 69 49,,yes,0,its.gov.az
+Sentrum Medikal,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Serebral İflic Akademiyası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, H.Əliyev prospekti 79/2",(+994 12) 566 24 74 | (+994 55) 466 24 74 | (+994 12) 567 24 77 | (+994 70) 366 24 74,5%,yes,0,its.gov.az + sosial.gov.az
+Sədəf Müalicə-Diaqnostika Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Qaradağ rayon, Sahil qəsəbəsi, B.Əliyev küçəsi 33",(+994 12) 446 32 01 | (+994 55) 402 32 01,,yes,0,its.gov.az
+Səhhət Azərbaycan-Almaniya Klinikası,private,potential-client,Bakı,"Bakı şəhəri, Nizami rayonu, Q.Qarayev prospekti 2380- 103, AZ1118",(+994 12) 447 85 55 | (+994 12) 447 50 92,,yes,0,its.gov.az
+Smart Diaqnostika Laboratoriyası,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu, Əhməd Rəcəbli 2 küç, 20",(+994 50) 635 90 01,,yes,0,its.gov.az
+Solidmed Fizioterapiya ve Reabilitasiya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu,Şəfaət Mehdiyev küç 133B",(+994 55) 700 91 11,,yes,0,its.gov.az
+Solomed Laboratoriya Poliklinika,private,potential-client,Bakı,"Nərimanov ray., Faiq Yusifov küç. 26A",*1032 | (+994 55) 330 10 32,5%,yes,0,sosial.gov.az
+Spero Hospital (Dobromed),private,potential-client,Bakı,"Bakı şəhəri, Nəsimi rayonu, 20 Yanvar küçəsi 1B",(+994 12) 430 43 03 | (+994 12) 430 42 26,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Starlab,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Stimul Hospital,private,potential-client,Bakı,"Bakı şəhəri Bakıxanov qəs., Yavər Əliyev kü., 26, AZ1040",(+994 12) 565 38 08 | (+994 12) 565 38 38 | (+994 12) 565 38 18 | (+994 12) 555 20 20,9%,yes,0,its.gov.az + sosial.gov.az
+Swiss Dent,private,potential-client,Bakı,Abbas Mirzə Şərifzadə küç. 34,*3200 | (+994 12) 432 32 00 | (+994 99) 830 32 00,5%,yes,0,sosial.gov.az
+Şəfa Ocağı,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Tibbi Reabilitasiya Mərkəzi,private,potential-client,Bakı,"Bakı şəhəri, Xəzər rayayonu, Baba Əliyev küçəsi, 11",(+99412) 454-07-18,,yes,0,its.gov.az
+Turan Hospital,private,potential-client,Bakı,"Bakı şəhəri, Xətai rayonu, Əhmədli qəsəbəsi, Sarayevo küçəsi 184",(+994 12) 570 23 02 | (+994 55) 270 05 24,,yes,0,its.gov.az
+Türk-Amerikan Medical Center,private,potential-client,Bakı,"Bakı şəhəri , Yusif Vəzir Çəmənzəminli küçəsi 18",(+994 50) 230 04 50,,yes,0,its.gov.az
+UltraMed Tibb Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Unikal Klinika,private,potential-client,Bakı,"Sumqayıt şəhəri, Bakı küçəsi 37, 44-cü məhəllə",(018) 642 46 55 | (+994 50) 285 21 76,,yes,0,its.gov.az
+Uniklinika,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Kazım Kazımzadə 99",(+994 50) 393 05 55,,yes,0,its.gov.az
+Universal Hospital,private,potential-client,Bakı,"Bakı şəhəri, Binəqədi rayonu,Cəfər Xəndan küçəsi 196",(+994 99) 599 65 56,,yes,0,its.gov.az
+Uşaq Müalicə-Bərpa Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Uzmanlar Klinikası,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+V.A Dent Estetik Klinika,private,potential-client,Bakı,Şəfayət Mehdiyev küç. 1054,(+994 12) 530 77 11 | (+994 50) 310 77 09 | (+994 55) 231 77 09,4%,yes,0,sosial.gov.az
+Vertebra Onurğa Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Vimay-Med,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Vital Hospital,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, Dadaş Bünyadzadə küç. 1",(+994 50) 312 23 12 | (+994 12) 437 52 10,,yes,0,its.gov.az + tibbiportal.az
+Vital Klinika Yasamal,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+VM Endokrinologiya və Diabet,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Voxel Dent,private,potential-client,Bakı,Sabit Rəhman küç. 80D,(+994 50) 800 12 45,4%,yes,0,sosial.gov.az
+Yasamal Hospital,private,potential-client,Bakı,"Bakı şəhəri, Yasamal rayonu, M.Xiyabani",(+994 50) 711 01 03 (WP) | (012) 525 91 33,,yes,0,its.gov.az
+Yaşam Klinika,private,potential-client,Bakı,Fətəli Xan Xoyski küç. 112,(+994 12) 465 72 23 | (+994 50) 494 00 27 | (+994 70) 273 47 47,30%,yes,0,sosial.gov.az + tibbiportal.az
+Yeni Həyat,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Yeni Klinika,private,potential-client,Bakı,"Bakı şəhəri, Heydər Əliyev pr.140",(+994 12) 505 62 31,,yes,0,its.gov.az
+Yeni Med,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Yeni Nəsil,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Yeni Tibbi Texnologiyalar,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+Z Dent Stomatoloji Klinika,private,potential-client,Bakı,Atatürk pr. 138 | Əsəd Əhmədov küç. 19,(+994 12) 563 33 03 | (+994 55) 333 03 37 | (+994 12) 433 34 43 | (+994 55) 440 43 34,15%,yes,0,sosial.gov.az
+Zahra Clinic,private,potential-client,Bakı,Heydər Əliyev pr. 66/68,(+994 55) 838 09 11 | (+994 50) 212 02 90,10%,yes,0,sosial.gov.az
+Zəfəran Hospital,private,potential-client,Bakı,"Bakı şəhəri, Nərimanov rayonu,Asif Məmmədov küçəsi 30",(+994 12) 9977 | (+994 55) 909 99 77,,yes,0,its.gov.az
+Zirə Müalicə Diaqnostika Mərkəzi,private,potential-client,Bakı,,,,no,0,tibbiportal.az
+West Hospital,private,potential-client,Bakı,"Bakı şəhəri, Binəqədi rayonu, Şövkət Məmmədova küçəsi 52",(+994 12) 404 76 06,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+White Estetic Dental Klinika,private,potential-client,Bakı,Afiyəddin Cəlilov küç. 82A,(+994 12) 496 77 71/72 | (+994 50) 496 77 72,9%,yes,0,sosial.gov.az
+Elmas Klinik,private,potential-client,Balakən,"Balakən şəhəri, Səttar Gözəlov küç.193",(+994 50) 475 13 93,,yes,0,its.gov.az
+Qarabağ Klinik,private,potential-client,Bərdə,"Bərdə rayonu, H.Əliyev pr. 124 A",(+994 50) 461 40 00,,yes,0,its.gov.az
+MS Clinic,private,potential-client,Bərdə,"Bərdə şəhəri, Ü.Hacıbəyov 11B",(+994 50) 229 00 06,,yes,0,its.gov.az
+Yovşan Klinika,private,potential-client,Biləsuvar,"Biləsuvar şəhəri, H. Əliyev pr. 333",(+994 77) 295 38 38 | (+994 25) 295 38 38,2%,yes,0,its.gov.az + sosial.gov.az
+Nuranə Hospital,private,potential-client,Cəlilabad,"Cəlilabad rayonu,Cəlilabad şəhəri,Heydər Əliyev Prospekti 159",(+994 55) 755 37 95,,yes,0,its.gov.az
+APPRO Lab,private,potential-client,Gəncə,"Gəncə şəhəri, Ş.İ.Xətai, 50A",(+994 51) 205 00 33,,yes,0,its.gov.az
+DNK İstanbul Hospital,private,potential-client,Gəncə,"Gəncə şəhəri, Şah İsmayıl Xətai 93",(+994 10) 310 03 11 | (+994 55) 284 00 74,,yes,0,its.gov.az
+Gəncə Beynəlxalq Xəstəxanası,private,potential-client,Gəncə,"Gəncə şəhəri, Heydər Əliyev prospekti 60, AZ2000",(+994 22) 255 38 38 | (+994 55) 500 71 00,,yes,0,its.gov.az
+Gəncə Memorial Hospital,private,potential-client,Gəncə,"Gəncə şəhəri, Xətai pr. 550A",(+994 70) 528 97 97,,yes,0,its.gov.az
+İstanbul Genetics Klinika,private,potential-client,Gəncə,"Gəncə şəhəri, H. Əliyev pr. 64",(+994 50) 885 70 07,,yes,0,its.gov.az
+Mərkəzi Klinika Gəncə Xəstəxanası,private,potential-client,Gəncə,"Gəncə şəhəri, Totanlı küçəsi 17, AZ2016",(+994 12) 0105 | (+994 22) 264 09 09,,yes,0,its.gov.az
+Sağlam Ailə (Gəncə),private,potential-client,Gəncə,"Gəncə şəhəri, Kəpəz rayonu, Azərbaycan Bayrağı küçəsi",(022) 310,,yes,0,its.gov.az
+Sağlam Həyat (Gəncə),private,potential-client,Gəncə,"Gəncə şəhəri, Kəpəz rayonu, Atatürk prospekti 10",+994 51 235 82 82,,yes,0,its.gov.az
+Vest Medical Center,private,potential-client,Gəncə,"Gəncə şəhəri, H.Məmmədquluzadə küç",(+994) 55 643 36 24,,yes,0,its.gov.az
+Med Life Hospital,private,potential-client,Goranboy,"Goranboy şəhəri, Cəfər Cabbarlı 33",(+994 50) 839 17 18,,yes,0,its.gov.az
+N-kay Medical,private,potential-client,Xaçmaz,"Xaçmaz şəhəri, N.Nərimanov küçəsi 49",+994 23 325 18 54,,yes,0,its.gov.az
+Annenfeld Memorial Hospital,private,potential-client,Qazax,"Şəmkir şəhəri, Şəmkir-Qazax şossesi, 392 km",+994 51 401 03 03 | (+994 55) 203 69 33,,yes,0,its.gov.az
+Sağlam Həyat Tibb Mərkəzi,private,potential-client,Qəbələ,Həzi Aslanov küç. 86,(+994 24) 205 03 46 | (+994 50) 807 17 80 | (+994 51) 305 36 94,9%,yes,0,sosial.gov.az
+Sağlam Həyat Tibb Mərkəzi (Qəbələ),private,potential-client,Qəbələ,"Qəbələ şəhəri, H.Aslanov 102",(+994 50) 807 17 80,,yes,0,its.gov.az
+Günəş Reabilitasiya Mərkəzi,private,potential-client,Quba,"Quba şəhəri, H.Əliyev prospekti, 5-ci məhəllə",+994 23 336 74 48 | (+994 50) 580 46 48,,yes,0,its.gov.az
+Mediaz Hospital,private,potential-client,Quba,"Quba şəhəri, Heydər Əliyev pros., 163 A",(+994 70) 669 01 03 | (+994 55) 669 01 03,2%,yes,0,its.gov.az + sosial.gov.az
+Şahdağ Quba və Truskavets sanatorium,private,potential-client,Quba,"Quba şəhəri,Yusif Qasımov küç 66",(+994 51) 638 86 66,,yes,0,its.gov.az
+OKİ Hospital,private,potential-client,Qusar,"Qusar şəhəri, Fəxrəddin Musayev 27, AZ3800",(+994 12) 0038 | (+994 50) 597 16 47,,yes,0,its.gov.az
+Avicenna Medical Center,private,potential-client,Lənkəran,"Lənkəran şəhəri, Soltanağa Bayramov küçəsi 19",(+994 25) 255 30 03 | (+994 50) 507203233,,yes,0,its.gov.az
+Medican Hospital,private,potential-client,Lənkəran,"Lənkəran rayonu, Lənkəran şəhəri, 20 yanvar, ev 71, AZ4200",(+994 70) 255 02 98 | (+994 50) 255 02 98,,yes,0,its.gov.az
+Bioloji Təbabət Klinikası (Masallı),private,potential-client,Masallı,"Masallı rayonu, Elşad Hüseynov küçəsi",(+994 25) 215 50 89 | (+994 55) 532 89 88,,yes,0,its.gov.az
+MasMedical Center Referans,private,potential-client,Masallı,"Masallı rayonu, Masallı şəhəri, Qarabağ, ev 26, mənzil 28",(+994 12) \*0033 | (+994 25) 215 49 95,,yes,0,its.gov.az
+Medika Hospital,private,potential-client,,"Baki şəhəri, Xətai rayonu, Nəsrəddin Tusi küçəsi 21",+994 12 373 07 45 | (+994 55) 202 07 45,,yes,0,its.gov.az + tibbiportal.az + medportal.az
+Ailəm Medical Center,private,potential-client,Mingəçevir,"Mingəçevir şəhəri,Səməd Vurğun küçəsi ,b.2/1",(+994 70) 804 88 44,,yes,0,its.gov.az
+Medipark Klinika (Mingəçevir),private,potential-client,Mingəçevir,"Mingəçevir şəhəri, N.Nərimanov, 28",+994 50 234 50 63,,yes,0,its.gov.az
+Nərgiz Klinikası (Mingəçevir),private,potential-client,Mingəçevir,"Mingəçevir şəhəri, M.Maqomayev 81B",+994 70 274 29 09,,yes,0,its.gov.az
+Regional Hospital (Mingəçevir),private,potential-client,Mingəçevir,"Mingəçevir şəhəri, Dilarə Əliyeva küçəsi 2C",(+994 12) 0771 | (+994 70) 228 77 71,,yes,0,its.gov.az
+Şəfa Tibbi Diaqnostika,private,potential-client,Mingəçevir,"Mingəçevir şəhəri, Xan Şuşinski küçəsi ev 2A",+994 24 275 35 58 | +994 50 671 06 20,,yes,0,its.gov.az + tibbiportal.az
+MasterLab Laboratory Center,private,potential-client,Saatlı,"Saatlı rayonu, H.Əliyev pr., 295A",(+994 50) 555 10 49 (+994 70) 555 10 49,,yes,0,its.gov.az
+"""Muğan Klinika"" Tibbi Diaqnostika Mərkəzi",private,potential-client,Sabirabad,"Sabirabad şəhəri, Muğan prospekti 40A",(+994 21) 235 77 44 | (+994 70) 235 77 44,,yes,0,its.gov.az
+Omega Hospital,private,potential-client,Sabirabad,Heydər Əliyev pr. 48,(+994 55) 372 95 65,10%,yes,0,sosial.gov.az
+Omeqa Hospital,private,potential-client,Sabirabad,"Sabirabad rayonu, Heydər Əliyev prospekti 48",(+994 21) 235 90 50 | (+994 55/70) 372 95 65,,yes,0,its.gov.az
+Aran Regional Klinika,private,potential-client,Salyan,"Salyan rayonu, T.Davudzadə 123",\*0052 | (+994 51/70) 367 00 52,,yes,0,its.gov.az
+22 Century Estetik Klinika,private,potential-client,Sumqayıt,İsmət Qayıbov küç. 5009,(+994 55) 548 00 22,9%,yes,0,sosial.gov.az
+AQS Dental Klinika,private,potential-client,Sumqayıt,Babək pr. 241,(+994 18) 658 51 81 | (+994 55) 854 25 98,4%,yes,0,sosial.gov.az
+Batıgöz Klinikası (Sumqayıt),private,potential-client,Sumqayıt,"Sumqayıt şəhəri, Bulvar küçəsi 145 B",(+994 10) 310 83 31,,yes,0,its.gov.az
+Boulevard Medical Center,private,potential-client,Sumqayıt,"Sumqayıt şəhəri, Bulvar küçəsi, 79",\*5225 | (+994 55) 524 25 25,,yes,0,its.gov.az
+Doktor AZ Klinikası,private,potential-client,Sumqayıt,"Sumqayıt şəh., 3-cü məh., S.Bədəlbəyli küç., 4",+994 55 524 78 39 | (+994 18) 644 80 60,,yes,0,its.gov.az
+İmplant Estetik Klinika,private,potential-client,Sumqayıt,Cəlil Məmmədquluzadə küç. 77B,(+994 12) 585 18 96 | (+994 50) 744 18 96,5%,yes,0,sosial.gov.az
+İOL Göz Klinikası,private,potential-client,Sumqayıt,"Sumqayıt şəhəri, N. Nərimanov küçəsi, 45-ci məhəllə",(018) 652 18 08 | (+994 51) 660 01 03,,yes,0,its.gov.az
+İtea Dental,private,potential-client,Sumqayıt,Ağa Quliyev küç. 31,(+994 18) 644 90 07 | (+994 50) 253 43 66,10%,yes,0,sosial.gov.az
+Qəlb Klinikası,private,potential-client,Sumqayıt,"Sumqayıt şəhəri,9-cu mikrorayon 69B",+994 18 644 92 68 | (+994 50) 720 04 68 | (+994 18) 644 92 68 | (+994 77) 332 57 72,10%,yes,0,its.gov.az + sosial.gov.az
+Liman Klinika,private,potential-client,Sumqayıt,Səməd Vurğun küç. 35A,(+994 18) 642 02 09 | (+994 12) 585 14 21 | (+994 50) 235 24 34,4%,yes,0,sosial.gov.az
+Liman Klinika (Sumqayıt),private,potential-client,Sumqayıt,"Sumqayıt şəhəri, 6-cı mkr, H.Salayev küçəsi 35A-35B",(+994 50) 235 24 34 | (+994 12) 585 14 21,,yes,0,its.gov.az
+Medilaz Tibb Mərkəzi,private,potential-client,Sumqayıt,Səməd Vurğun küç.,(+994 18) 642 10 50 | (+994 55) 642 10 50 | (+994 70) 642 10 50,9%,yes,0,sosial.gov.az
+Perla Academy Reabilitasiya Mərkəzi,private,potential-client,Sumqayıt,Niyazi küç. 48B,(+994 998) 35 40 00 | (+994 998) 95 40 00,10%,yes,0,sosial.gov.az
+Prezi-dent Klinika,private,potential-client,Sumqayıt,9-cu mkr.,(+994 51) 466 96 42 | (+994 55) 875 46 16,2%,yes,0,sosial.gov.az
+Sum Modern Dental Clinic,private,potential-client,Sumqayıt,Səməd Vurğun küç. 163A,(+994 18) 644 25 48 | (+994 55) 300 96 00,10%,yes,0,sosial.gov.az
+Şəfqət Klinikası,private,potential-client,Sumqayıt,"Sumqayıt şəhəri, S.Vurğun küçəsi 92a",(+994 186) 54 14 24,,yes,0,its.gov.az
+Yaşa Sağlamlıq Mərkəzi,private,potential-client,Sumqayıt,Cəlil Məmmədquluzadə küç. 61,(+994 50) 256 57 02,9%,yes,0,sosial.gov.az
+MedLab Klinikası,private,potential-client,Şamaxı,"Şamaxı şəhəri, Gənclər küçəsi 15",(+994 50) 316 47 57 | (+994 20) 265 47 57,,yes,0,its.gov.az
+Alyans Klinik,private,potential-client,Şəki,"Şəki şəhəri, M.F.Axundov küçəsi, 351A",(+994 55) 925-55-11 | (+994 50) 586-03-36,,yes,0,its.gov.az
+Bonum Medical,private,potential-client,Şəki,"Şəki şəhəri, Zərifə Əliyeva küçəsi 90",(+994 50) 663 00 88,,yes,0,its.gov.az
+Medikus Klinikası (Şirvan),private,potential-client,Şirvan,"Şirvan şəhəri, M. İbrahimov küç., 266",(+994 99) 312 37 57 | (+994 10) 212 37 57,,yes,0,its.gov.az
+Mediyus Clinic Şirvan,private,potential-client,Şirvan,"Şirvan şəhəri, F,Eynullayev küc ev 15",(+994 55) 869 22 44,,yes,0,its.gov.az
+Sağlam Həyat (Şirvan),private,potential-client,Şirvan,"Şirvan şəhəri, M.Ə.Rəsulzadə küçəsi",(+994 21) 215 25 27,,yes,0,its.gov.az
+HAYAT Hospital,private,potential-client,Zaqatala,"Zaqatala şəhəri, Zərifə Əliyeva 50",(+994 50) 890 44 22,,yes,0,its.gov.az
+Labstyle Hospital,private,potential-client,Zaqatala,"Zaqatala rayonu, Vidadi küçəsi 34",+994 24 225 29 71 | (+994 70) 225 29 71,10%,yes,0,its.gov.az + sosial.gov.az
+Zəngilan Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Abşeron,"Abşeron rayonu, Masazır qəsəbəsi, Əliağa Vahid küçəsi 178",(+99412) 341-46-17,,yes,2,its.gov.az
+Laçın Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Ağcabədi,"Ağcabədi rayonu, Taxtakörpü qəsəbəsi",(+9942127) 7-83-39,,yes,16,its.gov.az
+Bakı Baş Səhiyyə Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Mikayıl Müşfiq 1 M",(+994 12) 596 33 15,,yes,107,its.gov.az
+Lökbatan Tibb Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Qaradağ rayonu, Lökbatan qəsəbəsi, Nizami küçəsi 9",(+9941244) 5-23-26,,yes,2,its.gov.az
+Nərimanov Tibb Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Nərimanov rayonu, Koroğlu Rəhimov küçəsi 29.",(+994 12) 564-88-25,,yes,7,its.gov.az
+Respublika Pediatriya Mərkəzi,state-network,reference/contractor,Bakı,"Bakı, Yusif Səfərov küçəsi, 12",+994 12 595 38 56,,yes,8,its.gov.az
+Sabunçu Tibb Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Sabunçu rayonu, Əsildar Məmmədəliyev küçəsi 20",(+99412) 450-06-26,,yes,4,its.gov.az
+Şəmkir Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Bakı,"Şəmkir şəhəri, Bakı-Qazax magistralı 407-ci km",(+9942230) 5-32-21,,yes,67,its.gov.az
+Şuşa Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, Əsəd Əhmədov 26",(+99412) 432-72-87,,yes,4,its.gov.az
+Xocavənd Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Beyləqan,Beyləqan rayon inzibati ərazisində yerləşən Xocavənd rayonundan olan məcburi köçkünlər üçün salınmış qəsəbə,(+994 21) 223-54-00,,yes,10,its.gov.az
+Cəbrayıl Rayon Mərkəzi Xəstəxana,state-network,reference/contractor,Biləsuvar,Biləsuvar rayonu 3 saylı məcburi köçkün qəsəbəsi,(+9942638) 4-35-02,,yes,12,its.gov.az
+Cəlilabad Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Cəlilabad,Cəlilabad şəh. M.Hüseyn küçəsi 82,(+99425) 245-22-68,,yes,71,its.gov.az
+Füzuli Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Füzuli,Füzuli rayonu Bala Bəhmənli kəndi,(+99426) 31-400-96,,yes,30,its.gov.az
+Gədəbəy Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Gədəbəy,"Gədəbəy şəhəri, C.Ağayev küç. 4.",(02232) 6-01-52,,yes,48,its.gov.az
+Kəlbəcər Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Gəncə,"Gəncə şəhəri, Gülüstan qəsəbəsi, Mirzə Şəfi Vazeh pr. 84",(+9942225) 8-08-49,,yes,112,its.gov.az
+Lənkəran Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Gəncə,"Lənkəran şəhəri, Nizami Gəncəvi küçəsi 67",(+9942525) 4-79-32,,yes,72,its.gov.az
+Goranboy Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Goranboy,"Goranboy rayonu, H.Əliyev 116",(+99422) 242 31 96,,yes,63,its.gov.az
+Xocalı Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Goranboy,Goranboy rayon Aşağı Ağcakənd qəsəbəsi,(+9942224) 7-45-43,,yes,14,its.gov.az
+Göyçay Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Göyçay,"Göyçay şəhəri, Nizami küç. 183",(+9942027) 4-18-40,,yes,47,its.gov.az
+Göygöl Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Göygöl,"Göygöl rayonu, Mir Cəlal Paşayev küçəsi 1",(+9942220) 5-20-79,,yes,36,its.gov.az
+Hacıqabul Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Hacıqabul,"Hacıqabul rayonu, İ.Qayıbov küçəsi 15",(+9942120) 4-26-89,,yes,22,its.gov.az
+Xaçmaz Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Xaçmaz,"Xaçmaz şəhəri, N.Nərimanov küçəsi 303.",(+994 23 32) 5 24 64,,yes,63,its.gov.az
+Xızı Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Xızı,"Xızı şəhəri, Heydər Əliyev prospekti 247",(+9942331) 5-00-34,,yes,8,its.gov.az
+İmişli Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,İmişli,"İmişli şəhəri, X.Bəylərov küçəsi 92",(+9942124) 6-24-78,,yes,48,its.gov.az
+İsmayıllı Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,İsmayıllı,"İsmayıllı rayonu, M.F.Axundov küçəsi 65",(+9941228) 5-53-13,,yes,43,its.gov.az
+Kürdəmir Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Kürdəmir,"Kürdəmir şəhəri, X.İslamzadə küçəsi 12",(+9942025) 5-04-24,,yes,49,its.gov.az
+Lerik Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Lerik,"Lerik şəhəri, H.Əliyev meydanı 2",(+9942527) 4-60-45,,yes,64,its.gov.az
+Naftalan Şəhər Mərkəzi Xəstəxanası,state-network,reference/contractor,Naftalan,"Naftalan şəhəri, İslam Həsənzadə küçəsi 197",(+9942235) 2-30-23,,yes,2,its.gov.az
+Neftçala Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Neftçala,"Neftçala rayonu, M.Ə. Sabir küçəsi 506",(+9942126) 3-38-48,,yes,20,its.gov.az
+Ucar Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Oğuz,"Ucar şəhəri, Oğuz küçəsi 93",(+9942021) 3-00-01,,yes,26,its.gov.az
+Saatlı Mərkəzi Rayon Xəstəxanası,state-network,reference/contractor,Saatlı,"Saatlı rayonu, Heydər Əliyev prospekti 300",(+9942128) 53-8-14,,yes,31,its.gov.az
+Sumqayıt Tibb Mərkəzi,state-network,reference/contractor,Sumqayıt,"Sumqayıt şəhəri, Heydər Əliyev prospekti 7",(+9941865) 4-31-87 | (+994 18) 656 82 55 | (+994 99) 800 02 55 | (+994 50) 800 02 55,4%,yes,0,its.gov.az + sosial.gov.az
+Şirvan Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Şirvan,"Şirvan şəhəri, Heydər Əliyev pr.16",(+9942121) 5-05-43,,yes,2,its.gov.az
+Yevlax Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Yevlax,"Yevlax şəhəri, C.Mustafayev küçəsi, ev 105",(+99455) 500-66-51,,yes,9,its.gov.az
+Zaqatala Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Zaqatala,"Zaqatala şəhəri, Zərifə Əliyeva küçəsi, 58",(+9942422) 5-23-00,,yes,40,its.gov.az
+Akademik M.Cavadzadə adına Respublika Kliniki Uroloji Xəstəxanası,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Səbail rayonu, Əhməd Cavad küçəsi 19",(+99412) 492-24-17,,yes,0,its.gov.az
+Akademik M.Mirqasımov adına Respublika Klinik Xəstəxanası,state-or-agency,reference/contractor,Bakı,"Bakı, Yasamal rayonu, Abbas Mirzə Şərifzadə küçəsi, 212",(+994 12) 430 77 36,,yes,0,its.gov.az
+Bakı Respublika Endokrinoloji Mərkəz,state-or-agency,reference/contractor,Bakı,Bakı ş. Səbail r Üzeyir Hacıbəyli 123.,(+99412) 598-51-49,,yes,0,its.gov.az
+Xətai Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xətai rayonu, Yusif Səfərov küçəsi 25",(+99412) 565-32-10,,yes,0,its.gov.az
+Xəzər Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xəzər rayonu, Mərdəkan qəsəbəsə, Ramin qasımov 30 küçəsi",(+99412) 454-53-77 | (+994 12) 422 02 30 | (+994 12) 422 03 10,,yes,0,its.gov.az + tibbiportal.az
+Respublika Perinatal Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xətai rayonu, Yusif Səfərov 22",(+99412) 489-51-14,,yes,0,its.gov.az
+Abşeron Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Bakı,"Abşeron rayonu, Bakı-Quba-Rusiya yolu, şərqi 8-ci km.",(+99412) 342-26-11,,yes,16,its.gov.az
+Kliniki Tibbi Mərkəz,state-network,reference/contractor,Bakı,"Bakı şəhəri, Nəsimi rayonu, A.A.Mirqasımov, 1",(+99412) 597-98-92,,yes,1,its.gov.az
+Respublika Dəri Zöhrəvi Dispanseri,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Nəsimi rayonu, Bül-bül pr. 83",(+994 12) 597-27-46,,yes,0,its.gov.az
+Respublika Neyrocərrahiyyə Xəstəxanası,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xətai rayonu, Xudu Məmmədov küçəsi 4",(+99412) 371-52-01,,yes,0,its.gov.az
+Ağdam Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Ağdam,"Ağdam rayonu, Quzanlı qəsəbəsi, Zərifə Əliyeva küçəsi",(+9942632) 5-02-33,,yes,118,its.gov.az
+Ağdaş Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Ağdaş,"Ağdaş şəhəri, Heydər Əliyev prospekti 184",(+9942023) 5-54-99,,yes,59,its.gov.az
+Ağstafa Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Ağstafa,"Ağstafa şəhəri, Heydər Əliyev prospekti 50",(+9942222) 5-15-89,,yes,24,its.gov.az
+Ağsu Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Ağsu,Ağsu rayonu M.Ə.Rəsulzadə küçəsi,(+9942022) 6-23-57,,yes,36,its.gov.az
+Astara Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Astara,"Astara şəhəri, M.Cavadzadə küçəsi 1",(+9942522) 5-42-24,,yes,38,its.gov.az
+Qaradağ Tibb Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Qaradağ rayonu, Qobustan qəsəbəsi, Namiq Niftəliyev küçəsi.",(+99412) 544-67-73,,yes,3,its.gov.az
+Nizami Tibb Mərkəzi,state-network,reference/contractor,Bakı,"Bakı şəhəri, Nizami rayonu, Yavər Səfərov 10",(+99412) 570-16-10,,yes,2,its.gov.az
+Beyləqan Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Beyləqan,Beyləqan şəh. Sevil Qazıyeva 21,(+994 50) 564-43-46,,yes,34,its.gov.az
+Biləsuvar Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Biləsuvar,"Biləsuvar şəhəri, H. Əliyev küçəsi, 82",(+994 2529) 5-38-67,,yes,22,its.gov.az
+Gəncə Şəhər Birləşmiş Xəstəxanası,state-network,reference/contractor,Gəncə,"Gəncə şəhəri, Nizami pr. 410a",(+9942226) 6-58-68,,yes,14,its.gov.az
+Zərdab Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Zərdab,"Zərdab şəhəri, Azərbaycan küçəsi 125",(+9942029) 6-45-89,,yes,27,its.gov.az
+Bakı Sağlamlıq Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Azadlıq 112, AZ1110",(+994 12) 950 | (+994 12) 440 00 57,,yes,0,its.gov.az
+Binəqədi Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Binəqədi rayonu, M.Ə.Rəsulzadə qəsəbəsi, Azadlıq prospekti 195",(+994 12) 412-06-15,,yes,0,its.gov.az
+Elmi-Tədqiqat Ağciyər Xəstəlikləri İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, E.Süleymanov küç. 2514",(+99412) 421 44 98,,yes,0,its.gov.az
+Elmi-Tədqiqat Kardiologiya İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəh, Nərimanov r-nu, Fətəli Xan Xoyski küç, 85",(+99412) 564 49 72,,yes,0,its.gov.az
+Elmi-Tədqiqat Pediatriya İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı ş., Bəsti Bağırova küç, 17",(+99412) 594 79 06,,yes,0,its.gov.az
+Elmi-Tədqiqat Tibbi Profilaktika İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Badamdar qəs., Mustafa bəy Topçubaşov küç., 216",(012) 594-78-34,,yes,0,its.gov.az
+Mingəçevir Şəhər Mərkəzi Xəstəxanası,state-or-agency,reference/contractor,Mingəçevir,"Mingəçevir şəhəri,. 20 Yanvar küçəsi 12",(+9942427) 4-80-17,,yes,0,its.gov.az
+Ağcabədi Rayon Mərkəzi Xəstəxanası,state-or-agency,reference/contractor,Saatlı,"Heydər Əliyev, Saatlı, AZ4900",,,no,0,its.gov.az
+Sabirabad Rayon Mərkəzi Xəstəxanası,state-or-agency,reference/contractor,,"Sabirabd rayonu, Muğan prospekti, Qalaqayın kəndi",(+9942123) 5-52-99,,yes,0,its.gov.az
+Şamaxı Rayon Mərkəzi Xəstəxanası,state-or-agency,reference/contractor,Şamaxı,"Şamaxı şəhəri, Mövsüm Qədirli küçəsi 87",(+9942026) 5-70-41,,yes,0,its.gov.az
+Yardımlı Rayon Mərkəzi Xəstəxanası,state-or-agency,reference/contractor,Yardımlı,"Yardımlı rayonu, Heydər Əliyev küçəsi 224",(+9942520) 6-10-86,,yes,0,its.gov.az
+Balakən Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Balakən,"Balakən şəhəri, H.Əliyev küçəsi 1",(+9942429) 5-52-95,,yes,11,its.gov.az
+Bərdə Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Bərdə,"Bərdə rayonu, Nəriman Nərimanov küçəsi 2",(+9942020) 5-30-90,,yes,83,its.gov.az
+Daşkəsən Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Daşkəsən,"Daşkəsən rayonu, A.Abdullayev 1A",(+9942221) 5-40-22,,yes,28,its.gov.az
+Qax Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Qax,"Qax rayonu, 9 Aprel küçəsi AZ 3400",(+994 2425) 5-20-36,,yes,35,its.gov.az
+Qazax Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Qazax,"Qazax şəhəri, Heydər Əliyev prospekti 172",(+9942229) 5-17-82,,yes,37,its.gov.az
+Qəbələ Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Qəbələ,"Qəbələ rayonu, Abbas Səhhət küçəsi 12",(+9942420) 5-41-60,,yes,37,its.gov.az
+Qobustan Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Qobustan,"Qobustan rayonu, Qobustan şəhər, Heydər Əliyev küçəsi 272",(+9945124) 4-65-45,,yes,15,its.gov.az
+Quba Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Quba,"Quba rayonu, Fətəli xan küçəsi 42",(+9942333) 5-37-47,,yes,113,its.gov.az
+Qusar Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Qusar,"Qusar şəhəri, Məlikov küçəsi 2A",(+9942338) 5-56-73,,yes,59,its.gov.az
+Masallı Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Masallı,"Masallı şəhəri, Zərifə Əliyeva küçəsi 6",(+9942521) 5-32-63,,yes,56,its.gov.az
+Oğuz Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Oğuz,"Oğuz şəhəri, Dədə Qorqud küçəsi 1",(+9942421) 5-35-03,,yes,27,its.gov.az
+Pirallahı Tibb Mərkəzi,state-network,reference/contractor,,Pirallahı rayonu Kamil Rzayev küçəsi 22/13.,(+99412) 457-08-48,,yes,1,its.gov.az
+Salyan Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Salyan,"Salyan şəhəri, H.Z.Tağıyev küçəsi114",(+9942125) 5-47-64,,yes,47,its.gov.az
+Samux Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Samux,"Samux şəhəri, Mikayıl Müşfiq küçəsi",(+9942227) 5-10-27,,yes,32,its.gov.az
+Siyəzən Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Siyəzən,"Siyəzən rayonu, Babək küçəsi 48 A.",(+9942330) 4-29-76,,yes,14,its.gov.az
+Qubadlı Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Sumqayıt,"Sumqayıt şəhəri, Mehdi Hüseynzadə küçəsi 11, 9-cu məhəllə",(+9941865) 5-89-35,,yes,4,its.gov.az
+Suraxanı Tibb Mərkəzi,state-network,reference/contractor,,"Suraxanı rayonu, Atamoğlan Rzayev küçəsi 1",(+99412) 477-20-04,,yes,1,its.gov.az
+Şabran Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Şabran,"Şabran rayonu, Heydər Əliyev pr. 93",(+99412) 585-66-15,,yes,31,its.gov.az
+Şəki Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Şəki,"Şəki şəhəri, Zərifə Əliyeva 127",(+9942424) 4-11-73,,yes,60,its.gov.az
+Tərtər Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Tərtər,"Tərtər şəhəri, R. Mürsəlov küçəsi 18",(+994 2223) 6-30-36,,yes,38,its.gov.az
+Tovuz Rayon Mərkəzi Xəstəxanası,state-network,reference/contractor,Tovuz,"Tovuz rayonu, Şəhriyar küçəsi 32",(+9942231) 5-31-78,,yes,55,its.gov.az
+Artromed Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xətai rayonu, Əhmədli , Gəncə pr. 34",+994 50 461 38 08,,yes,0,its.gov.az + tibbiportal.az
+Daxili İşlər Nazirliyinin Tibb İdarəsinin Respublika Hospitalı,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Nərimanov rayonu, Ziya Bünyadov pr. 36",(+994 12) 1844,,yes,0,its.gov.az
+Diaqnoz Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xətai rayonu, Əhmədli, Sarayevo küçəsi 38C, AZ1149",+994 12 904 | (+994 12) 370 40 65,,yes,0,its.gov.az
+Dövlət Təhlükəsizliyi Xidmətinin Hərbi-tibb baş idarəsi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Badamdar qəsəbəsi, Məktəbli 1 küçəsi",(+994 12) 405 73 51 | (+994 12) 405 73 00,,yes,0,its.gov.az
+Elmi-Tədqiqat Mamalıq və Ginekologiya İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, Kazım Kazımzadə küçəsi,118",(+994 12) 510 09 52 | (+994 12) 538 52 05,,yes,0,its.gov.az
+Elmi-Tədqiqat Tibbi Bərpa İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəh, Xətai pr., 3.",(+99412) 466 44 43,,yes,0,its.gov.az
+Elmi-Tədqiqat Travmatologiya və Ortopediya İnstitutu,state-or-agency,reference/contractor,Bakı,"Bakı şəh, Nəsimi r-nu, Abbas Səhhət küç, 32",(+994 12) 440-53-21 | (+994 12) 440-11-75,,yes,0,its.gov.az
+Eurolab Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, 122 G döngəsi, H.Sarabski küç.,24",+994 12 597 41 00 | +994 12 597 42 00,,yes,0,its.gov.az
+FLORENCE Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, H.Zərdabi prospekti, ev 78V",(+994 55) 866 84 44,15%,yes,0,its.gov.az + sosial.gov.az
+Fövqəladə Hallar Nazirliyinin Tibb Xidməti İdarəsi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, Tblisi pr-ti 57",(+994 12) 512 14 44,,yes,0,its.gov.az
+Həyat Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Xəzər rayonu, Qala qəsəbəsi, Xaşaxuna bağ sahəsi 91K",(+994 70) 404 75 92 | (+994 12) 559 97 48,,yes,0,its.gov.az
+Karia Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Quba şəhəri, Bakı-Quba yolu ,Gənclər parkının yanı",(+994 51) 511 05 45 | (+994 50) 658 13 31,,yes,0,its.gov.az
+M.A.Topçubaşov adına Elmi Cərrahiyyə Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəh, Abbas Mirzə Şərifzadə küç, 196",(+994) 12 432 11 86,,yes,0,its.gov.az
+Mərkəzi Gömrük Hospitalı,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, K.Kazımzadə küçəsi, 118, AZ1065",+994 12 404 08 08 | (+994 50) 246 00 37,,yes,0,its.gov.az + tibbiportal.az
+Milli Hematologiya və Transfuziologiya Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəh, Fətəli xan Xoyski küç, 128",1842,,yes,0,its.gov.az
+Müdafiə Nazirliyinin Baş Klinik Hospitalı,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Nəsimi rayonu, Ceyhun Səlimov küçəsi ev 2, AZ 1009",(+994 12) 430 50 74,,yes,0,its.gov.az
+Naftalan Sağlamlıq Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı Şəhəri,Səbail Rayonu,Badamdar Qəsəbəsi,M.Müşfiq Küçəsi,ev.1",(+994 50) 444 67 00,,yes,0,its.gov.az
+Respublika Diaqnostika Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Yasamal rayonu, Tbilisi prospekti 147, AZ1122",(+994 12) 530 90 29 | (+994 50) 229 81 90,,yes,0,its.gov.az
+Vitamed Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Sabunçu rayonu, Bakıxanov qəsəbəsi, 94",(+994 12) 404 41 71 | (+994 50) 304 41 71,,yes,0,its.gov.az
+Zəfər Tibb Mərkəzi,state-or-agency,reference/contractor,Bakı,"Bakı şəhəri, Şəfayət Mehdiyev 129",(+994 51) 290 66 17 | (+994 51) 290 66 11,10%,yes,0,its.gov.az + sosial.gov.az
+Ozon Tibb Mərkəzi,state-or-agency,reference/contractor,Gəncə,"Gəncə şəhəri, 20 Yanvar küçəsi 141",(022) 267 01 43,,yes,0,its.gov.az
+Yeni Gəncə Tibb Mərkəzi,state-or-agency,reference/contractor,Gəncə,"Gəncə şəhəri, yeni Gəncə qəsəbəsi, 28 May küçəsi 23",(+994 22) 254 07 00 | (+994 50) 559 03 03,,yes,0,its.gov.az
+Medisan Tibb Mərkəzi,state-or-agency,reference/contractor,İmişli,"İmişli rayonu,H.Əliyev prospekti 131",(+994 21) 246 10 70 | (+994 70) 246 10 70,,yes,0,its.gov.az
+İsmayıllı Sağlamlıq Mərkəzi,state-or-agency,reference/contractor,İsmayıllı,"Ismayıllı rayonu, M.F.Axundov küçəsi 19",(+994 50) 975 62 62 | (+994 50) 880 81 82,9%,yes,0,its.gov.az + sosial.gov.az
+AS Tibb Mərkəzi,state-or-agency,reference/contractor,Kürdəmir,"Kürdəmir rayonu, Xırdapay kəndi",(+994 50) 350 74 20 | (+994 50) 450 06 04,,yes,0,its.gov.az
+Referans Qəbələ Tibb Mərkəzi,state-or-agency,reference/contractor,Qəbələ,"Qəbələ şəhəri, Abbas Səhhət küçəsi 25A",(+994 77) 760 00 33,,yes,0,its.gov.az
+Tuva Tibb Mərkəzi,state-or-agency,reference/contractor,Masallı,"Masallı rayon, Qızılavar kəndi",(+994 51) 324 83 88,4%,yes,0,its.gov.az + sosial.gov.az
+Nur Sağlamlıq Mərkəzi,state-or-agency,reference/contractor,Naftalan,"Naftalan şəhəri, Ş.Qurbanov 78",(+994 99) 701 01 05 | (+994 55) 341 01 02,,yes,0,its.gov.az
+Şəmkir Sağlamlıq Tibb Mərkəzi,state-or-agency,reference/contractor,Şəmkir,"Şəmkir şəhəri, H.Aslanov küçəsi. 4c",(+994 55) 497 82 05 | (+994 51) 497 05 05,,yes,0,its.gov.az
+Medical Center Tibb Mərkəzi,state-or-agency,reference/contractor,Tovuz,"Tovuz şəhəri, M. Şəhriyar, 99",(+994 51) 315 05 00,,yes,0,its.gov.az
+Tovuz Tibb Mərkəzi,state-or-agency,reference/contractor,Tovuz,"Tovuz rayonu,Tovuz şəhəri, İ.Mürşüdov ev 44",(+994 50) 829 63 38 | (+ 994 223) 15 59 59,,yes,0,its.gov.az

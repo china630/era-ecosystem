@@ -12,7 +12,6 @@ import {
   Min,
   ValidateIf,
 } from "class-validator";
-import { AZ_FIN_CODE_PATTERN } from "../../utils/validators/fin.validator";
 
 export class UpdateEmployeeDto {
   @ApiPropertyOptional({ enum: EmployeeKind })
@@ -26,13 +25,6 @@ export class UpdateEmployeeDto {
   @IsString()
   @Matches(/^\d{10}$/, { message: "voen must be 10 digits" })
   voen?: string;
-  @ApiPropertyOptional({ example: "1A2B3C4" })
-  @IsOptional()
-  @IsString()
-  @Matches(AZ_FIN_CODE_PATTERN, {
-    message: "finCode must be 7 chars (A–Z/0–9, excluding I and O)",
-  })
-  finCode?: string;
 
   @ApiPropertyOptional({ enum: TaxResidencyStatus })
   @IsOptional()
@@ -47,16 +39,6 @@ export class UpdateEmployeeDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  passportNumber?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  issuingCountry?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
   workPermitNumber?: string;
 
   @ApiPropertyOptional()
@@ -67,29 +49,9 @@ export class UpdateEmployeeDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  provisionedSatelliteKey?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  provisionedSatelliteRole?: string | null;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
   staffPin?: string;
 
   @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  firstName?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @ApiPropertyOptional({ description: "Ata adı (отчество)" })
   @IsOptional()
   @IsString()
   patronymic?: string;
@@ -147,6 +109,7 @@ export class UpdateEmployeeDto {
   contractEndDate?: string;
 
   @ApiPropertyOptional({
+    description: "Initial vacation days at migration date.",
     example: 0,
   })
   @IsOptional()
@@ -166,10 +129,7 @@ export class UpdateEmployeeDto {
   @Min(0)
   avgMonthlySalaryLastYear?: number | null;
 
-  @ApiPropertyOptional({
-    description: "Субсчёт подотчётного лица (244.xx) для кассы KXO",
-    example: "244.01",
-  })
+  @ApiPropertyOptional({ description: "244 accountable advance GL subcode" })
   @IsOptional()
   @IsString()
   accountableAccountCode244?: string | null;

@@ -16,15 +16,12 @@ import { AccountingService, type PostTransactionLine } from "../accounting/accou
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { assertWarehouseNotUnderReconciliation } from "../inventory/inventory-reconciliation-lock";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import {
   blindIndex,
   encryptText,
   normalizeFin,
-  normalizeName,
   normalizeVoen,
-  placeholderEmployeeFin,
-  placeholderEmployeeFirstName,
-  placeholderEmployeeLastName,
 } from "../security/pii-crypto.util";
 import { OpeningBalanceFinanceLineDto } from "./dto/opening-balance-finance-line.dto";
 import { OpeningBalanceHrLineDto } from "./dto/opening-balance-hr-line.dto";
@@ -45,6 +42,7 @@ export class OpeningBalancesService {
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
+    private readonly mdm: OrchestratorMdmClientService,
   ) {}
 
   private async ensureTechnicalOpeningAccount(
@@ -178,20 +176,29 @@ export class OpeningBalancesService {
             "For CONTRACTOR, voen is required (10 digits)",
           );
         }
+        const fullName = [row.lastName, row.firstName, row.patronymic]
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .join(" ");
+        const linked = await this.mdm.workforceResolve({
+          organizationId,
+          fin: normalizeFin(row.finCode.trim()),
+          fullName,
+        });
+        if (!linked?.globalPersonId) {
+          throw new BadRequestException(
+            `Could not resolve MDM person for FIN ${row.finCode.trim()}`,
+          );
+        }
         await tx.employee.create({
           data: {
             organizationId,
             kind,
-            finCode: placeholderEmployeeFin(row.finCode.trim()),
-            finCodeCipher: encryptText(normalizeFin(row.finCode.trim())),
-            finCodeBlindIndex: blindIndex("fin", normalizeFin(row.finCode.trim())),
-            firstName: placeholderEmployeeFirstName(row.firstName.trim()),
-            firstNameCipher: encryptText(normalizeName(row.firstName.trim())),
-            lastName: placeholderEmployeeLastName(row.lastName.trim()),
-            lastNameCipher: encryptText(normalizeName(row.lastName.trim())),
+            globalPersonId: linked.globalPersonId,
+            emasEligible: Boolean(normalizeFin(row.finCode.trim())),
             patronymic: row.patronymic.trim(),
             positionId: row.positionId,
-            startDate: new Date(row.hireDate), // baseline for Absences/Timesheet.
+            startDate: new Date(row.hireDate),
             hireDate: new Date(row.hireDate),
             salary: new Decimal(row.salary),
             initialVacationDays: new Decimal(row.initialVacationDays ?? 0),

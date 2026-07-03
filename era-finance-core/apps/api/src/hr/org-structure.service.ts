@@ -5,6 +5,8 @@ import {
 } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { batchEmployeePersonMap } from "./employee-person.util";
 import { normalizeListPagination } from "../common/list-pagination";
 import { CreateDepartmentDto } from "./dto/create-department.dto";
 import { CreateJobPositionDto } from "./dto/create-job-position.dto";
@@ -24,7 +26,10 @@ export type DepartmentTreeNode = {
 
 @Injectable()
 export class OrgStructureService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mdm: OrchestratorMdmClientService,
+  ) {}
 
   /**
    * Для новой организации: корневой отдел HQ и должность Generalist (без сотрудников).
@@ -72,10 +77,15 @@ export class OrgStructureService {
     const depts = await this.prisma.department.findMany({
       where: { organizationId },
       include: {
-        manager: { select: { id: true, firstName: true, lastName: true } },
+        manager: { select: { id: true, globalPersonId: true } },
       },
       orderBy: { name: "asc" },
     });
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      depts.map((d) => d.manager?.globalPersonId).filter((id): id is string => Boolean(id)),
+    );
     const nodeMap = new Map<string, DepartmentTreeNode>();
     for (const d of depts) {
       nodeMap.set(d.id, {
@@ -84,11 +94,14 @@ export class OrgStructureService {
         parentId: d.parentId,
         managerId: d.managerId,
         manager: d.manager
-          ? {
-              id: d.manager.id,
-              firstName: d.manager.firstName,
-              lastName: d.manager.lastName,
-            }
+          ? (() => {
+              const p = personMap.get(d.manager.globalPersonId);
+              return {
+                id: d.manager.id,
+                firstName: p?.firstName ?? "—",
+                lastName: p?.lastName ?? "—",
+              };
+            })()
           : null,
         children: [],
       });
@@ -155,12 +168,26 @@ export class OrgStructureService {
     }
   }
 
+  private async enrichManagerField(
+    organizationId: string,
+    manager: { id: string; globalPersonId: string } | null,
+  ): Promise<{ id: string; firstName: string; lastName: string } | null> {
+    if (!manager) return null;
+    const map = await batchEmployeePersonMap(this.mdm, organizationId, [manager.globalPersonId]);
+    const p = map.get(manager.globalPersonId);
+    return {
+      id: manager.id,
+      firstName: p?.firstName ?? "—",
+      lastName: p?.lastName ?? "—",
+    };
+  }
+
   async createDepartment(organizationId: string, dto: CreateDepartmentDto) {
     if (dto.parentId) {
       await this.assertDepartmentInOrg(organizationId, dto.parentId);
     }
     await this.assertManagerInOrg(organizationId, dto.managerId ?? null);
-    return this.prisma.department.create({
+    const created = await this.prisma.department.create({
       data: {
         organizationId,
         name: dto.name.trim(),
@@ -168,9 +195,13 @@ export class OrgStructureService {
         managerId: dto.managerId ?? null,
       },
       include: {
-        manager: { select: { id: true, firstName: true, lastName: true } },
+        manager: { select: { id: true, globalPersonId: true } },
       },
     });
+    return {
+      ...created,
+      manager: await this.enrichManagerField(organizationId, created.manager),
+    };
   }
 
   async updateDepartment(organizationId: string, id: string, dto: UpdateDepartmentDto) {
@@ -188,13 +219,17 @@ export class OrgStructureService {
     if (dto.name != null) data.name = dto.name.trim();
     if (dto.parentId !== undefined) data.parentId = dto.parentId;
     if (dto.managerId !== undefined) data.managerId = dto.managerId;
-    return this.prisma.department.update({
+    const updated = await this.prisma.department.update({
       where: { id },
       data,
       include: {
-        manager: { select: { id: true, firstName: true, lastName: true } },
+        manager: { select: { id: true, globalPersonId: true } },
       },
     });
+    return {
+      ...updated,
+      manager: await this.enrichManagerField(organizationId, updated.manager),
+    };
   }
 
   async listJobPositions(

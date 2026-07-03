@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { userPermissions } from '@/lib/services/user.service';
 import { permissionsForRole } from '@/lib/auth/permissions';
 import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
+import { canRunHotelImport } from '@/lib/import/auth';
 
 export async function GET() {
   try {
@@ -22,6 +23,13 @@ export async function GET() {
       select: { name: true, organizationId: true },
     });
 
+    const canRunElektrawebImport = await canRunHotelImport({
+      email: user.email,
+      login: user.login,
+      status: user.status,
+      roleCode: user.role.code,
+    });
+
     return jsonOk({
       id: user.id,
       login: user.login,
@@ -33,6 +41,7 @@ export async function GET() {
       organizationName: profile?.name ?? null,
       organizationId: profile?.organizationId ?? null,
       isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
+      canRunElektrawebImport,
     });
   } catch (err) {
     return handleRouteError(err);

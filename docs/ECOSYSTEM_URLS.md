@@ -25,6 +25,31 @@ Bank Core is a regulated **headless engine** (CBS, second core), **not** an indu
 
 Finance Web proxies `/api/*` → `finance-core:4100` and `/cp/*` → `orchestrator:4000`.
 
+### Orchestrator platform catalog (industry satellites)
+
+Base: `http://127.0.0.1:4000/platform/v1/catalog` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`, header `X-Organization-Id`).
+
+| Path | Purpose |
+|------|---------|
+| `GET /calendar/:country/day?date=` | Production calendar day |
+| `GET /calendar/:country/days?from=&to=` | Bulk days (hotel BAR warm cache) |
+| `GET /calendar/:country/add-business-days?date=&n=` | Business-day offset |
+| `GET /fx/convert?from=&to=&amount=&date=` | FX display convert |
+| `GET /companies/:voen` | VÖEN company directory |
+
+Orchestrator proxies to data-hub `/registry/v1/*`. See [orchestrator-platform-integration-gateway.md](./adr/orchestrator-platform-integration-gateway.md).
+
+### Orchestrator platform workforce (industry satellites)
+
+Base: `http://127.0.0.1:4000/platform/v1/workforce` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`, header `X-Organization-Id`).
+
+| Path | Purpose |
+|------|---------|
+| `GET /policy?satelliteKey=industry_clinic` | Hire mode: `cp_workforce` \| `disabled` |
+| `/workspace/workforce/*` | CP Workforce hub (employments, absences, org, security) |
+
+See [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-provisioning.md).
+
 ---
 
 ## Public hub (Orchestrator web `:3000`)
@@ -146,7 +171,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Data Hub (internal) | `ERA_DATA_HUB_URL` | `http://data-hub:4200` |
 | Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** only |
 | Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
-| Industry reference data | — | **No** direct hub; use Finance handoffs (`financeFxPreview`, `financeHsTariffPreview`) |
+| Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |
 | Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |
@@ -154,6 +179,7 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Bank satellite → engine | `ERA_BANK_CORE_URL`, `BANK_CORE_SERVICE_TOKEN` | `era-bank` BFF calls to `era-bank-core` |
 | Bank satellite origin | `ERA_BANK_ORIGIN` | `https://bank.era-365.online` |
 | Sanatorium per-satellite org (docker) | `ERA_HOTEL_ORGANIZATION_ID`, `ERA_FB_ORGANIZATION_ID`, `ERA_CLINIC_ORGANIZATION_ID`, `ERA_RETAIL_ORGANIZATION_ID` | See [NAFTA_SANATORIUM_UAT.md](./NAFTA_SANATORIUM_UAT.md); fallback `ERA_SATELLITE_ORGANIZATION_ID` |
+| Hotel guest MDM strict | `ERA_HOTEL_GUEST_MDM_STRICT` | `true` in production templates — create blocked without MDM link after transient resolve |
 | Dev module unlock (deprecated) | `ERA_DEV_UNLOCK_ALL_MODULES` | Superseded by [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) — use owner Connect + super-admin trial UI |
 
 **JWT issuer (current):** `era-orchestrator`

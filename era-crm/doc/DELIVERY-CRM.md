@@ -57,3 +57,17 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 ## Planned — v1.1
 
 - [x] M10: Pipeline automation
+
+## Planned — v3.0 (party model, partners, import)
+
+ADR: [crm-lead-party-model-and-prospect-import](../../docs/adr/crm-lead-party-model-and-prospect-import.md) · PRD §9 · audit [V3-AUDIT.md](./V3-AUDIT.md)
+
+- [x] M11: Lead party profile — `partyKind`, `taxId`, `companyName`, phone, `activitySector`, `prospectType`
+- [x] M12: Lead card page `/leads/[id]`
+- [x] M13: Create lead UI on `/leads` (persist VÖEN lookup)
+- [x] M14: CSV/XLSX import — `POST /api/leads/import`, dedup, import report
+- [x] M15: Finance auto-counterparty on convert (extended event contract)
+- [x] M16: Individual FIN via MDM — `globalPersonId` on lead
+- [x] Stage validation — VÖEN required QUALIFIED+ for legal entities
+- [x] COVERAGE_MATRIX rows CRM-PARTY-01/02, CRM-IMPORT-01/02, CRM-CONV-01
+- [x] UAT-SMOKE UI: create lead → qualify → convert → Finance CP visible

@@ -96,7 +96,12 @@ describe("OpeningBalancesService (finance import)", () => {
         ),
     } as unknown as AccountingService;
 
-    const service = new OpeningBalancesService(prisma, accounting, createMockPostingResolver());
+    const service = new OpeningBalancesService(
+      prisma,
+      accounting,
+      createMockPostingResolver(),
+      { workforceResolve: jest.fn() } as never,
+    );
     const result = await service.importFinance(organizationId, [
       {
         accountCode: "101",

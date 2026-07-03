@@ -5,11 +5,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
   FORM_STACK_CLASS,
   FxEquivalentBadge,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
@@ -115,10 +114,13 @@ export default function ImportOrdersAdminPage() {
         {message ? <p className="text-[13px]">{message}</p> : null}
         <form onSubmit={createOrder} className={FORM_STACK_CLASS}>
           <div className="grid gap-4 md:grid-cols-2">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("externalRef")}</label>
-              <input className={MODAL_INPUT_CLASS} value={externalRef} onChange={(e) => setExternalRef(e.target.value)} placeholder="WS-PO-001" />
-            </div>
+            <Field
+              label={t("externalRef")}
+              preset="code"
+              value={externalRef}
+              onChange={(e) => setExternalRef(e.target.value)}
+              placeholder="WS-PO-001"
+            />
             <VoenLookupField
               value={supplierVoen}
               onChange={setSupplierVoen}
@@ -130,26 +132,43 @@ export default function ImportOrdersAdminPage() {
                 invalid: t("voenInvalid"),
               }}
             />
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("currency")}</label>
-              <input className={MODAL_INPUT_CLASS} value={currencyCode} maxLength={3} onChange={(e) => setCurrencyCode(e.target.value.toUpperCase())} />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("amount")}</label>
-              <input className={MODAL_INPUT_CLASS} value={amountForeign} onChange={(e) => setAmountForeign(e.target.value)} inputMode="decimal" />
-              {currencyCode !== "AZN" ? (
-                <FxEquivalentBadge amount={Number(amountForeign) || 0} currencyCode={currencyCode} className="mt-1 block" />
-              ) : null}
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("paymentTerms")}</label>
-              <input className={MODAL_INPUT_CLASS} value={paymentTermDays} onChange={(e) => setPaymentTermDays(e.target.value)} inputMode="numeric" />
+            <FieldRow cols={2} className="md:col-span-2">
+              <Field
+                label={t("currency")}
+                preset="code"
+                value={currencyCode}
+                maxLength={3}
+                onChange={(e) => setCurrencyCode(e.target.value.toUpperCase())}
+              />
+              <div>
+                <Field
+                  label={t("amount")}
+                  preset="amount"
+                  value={amountForeign}
+                  onChange={(e) => setAmountForeign(e.target.value)}
+                  inputMode="decimal"
+                />
+                {currencyCode !== "AZN" ? (
+                  <FxEquivalentBadge amount={Number(amountForeign) || 0} currencyCode={currencyCode} className="mt-1 block" />
+                ) : null}
+              </div>
+            </FieldRow>
+            <div>
+              <Field
+                label={t("paymentTerms")}
+                preset="count"
+                value={paymentTermDays}
+                onChange={(e) => setPaymentTermDays(e.target.value)}
+                inputMode="numeric"
+              />
               {duePreview ? <p className="mt-1 text-xs text-[#7F8C8D]">{t("dueDate")}: {duePreview}</p> : null}
             </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>SKU</label>
-              <input className={MODAL_INPUT_CLASS} value={sku} onChange={(e) => setSku(e.target.value)} />
-            </div>
+            <Field
+              label="SKU"
+              preset="code"
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+            />
           </div>
           <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>{t("create")}</button>
         </form>

@@ -26,7 +26,7 @@ git push -u origin feature/my-change
 | Workflow | Trigger | Role |
 |----------|---------|------|
 | [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
-| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 13 app images → GHCR |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
 | [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After build on `dev`, manual | SSH pull-only on droplet |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | Manual only | Prod deploy + environment approval |

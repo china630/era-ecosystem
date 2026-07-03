@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import { relinkGuestGlobalPerson } from '@/lib/services/guest.service';
+import {
+  enrichGuestWithMdmProfile,
+  updateGuestIdentity,
+} from '@/lib/guest-identity';
 
 export async function getGuestStats(id: string) {
   const guest = await prisma.guest.findUnique({ where: { id } });
@@ -47,7 +50,8 @@ export async function getGuestFull(id: string) {
   const guest = await prisma.guest.findUnique({ where: { id } });
   if (!guest) throw new Error('Guest not found');
   const stats = await getGuestStats(id);
-  return { guest, stats };
+  const enriched = await enrichGuestWithMdmProfile(guest);
+  return { guest: enriched, stats, mdmProfile: enriched.mdmProfile };
 }
 
 export async function patchGuestFull(
@@ -94,27 +98,44 @@ export async function patchGuestFull(
     isLocked: boolean;
   }>,
 ) {
-  const { birthDate, visaExpiry, marriageDate, bonusPercent, nationalIdFin, passportNumber, fullName, nationality, phone, ...rest } = input;
+  const {
+    birthDate,
+    visaExpiry,
+    marriageDate,
+    bonusPercent,
+    nationalIdFin,
+    passportNumber,
+    fullName,
+    nationality,
+    phone,
+    ...rest
+  } = input;
+
   if (
     nationalIdFin !== undefined ||
     passportNumber !== undefined ||
-    fullName !== undefined
+    (fullName !== undefined && (nationalIdFin || passportNumber))
   ) {
     const existing = await prisma.guest.findUnique({ where: { id } });
     if (existing) {
-      await relinkGuestGlobalPerson(id, {
+      await updateGuestIdentity(id, {
         fullName: fullName ?? existing.fullName,
-        nationalIdFin: nationalIdFin ?? existing.nationalIdFin,
-        passportNumber: passportNumber ?? existing.passportNumber,
+        nationalIdFin: nationalIdFin ?? undefined,
+        passportNumber: passportNumber ?? undefined,
         nationality: nationality ?? existing.nationality,
         phone: phone ?? existing.phone,
+        globalPersonId: existing.globalPersonId,
       });
     }
   }
+
   await prisma.guest.update({
     where: { id },
     data: {
       ...rest,
+      ...(fullName !== undefined ? { fullName } : {}),
+      ...(nationality !== undefined ? { nationality } : {}),
+      ...(phone !== undefined ? { phone } : {}),
       birthDate: birthDate === undefined ? undefined : birthDate ? new Date(birthDate) : null,
       visaExpiry:
         visaExpiry === undefined ? undefined : visaExpiry ? new Date(visaExpiry) : null,

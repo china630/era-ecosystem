@@ -192,7 +192,7 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 
 **Clinic:** `PatientRef.globalPersonId`, `Practitioner.globalPersonId` (strict), sanatorium episodes; ops merge via `/api/mdm/person-merge`.
 
-**Hotel:** `Guest.globalPersonId`; create/edit via `linkPersonIdentity`; optional `ERA_HOTEL_GUEST_MDM_STRICT`; merge on guest card.
+**Hotel:** `Guest.globalPersonId` only for identity (W4); ops cache local; create/edit via transient FIN/passport → `linkPersonIdentity`; masked display via `/api/mdm/person-ops-profile`; `ERA_HOTEL_GUEST_MDM_STRICT` in prod.
 
 **Finance:** `Employee.globalPersonId`, `Counterparty.globalPersonId` (ИП + FIN); `POST /hr/employees/:id/convert-to-fin`.
 
@@ -208,10 +208,22 @@ Target: main screens = **lists/tables**; create/edit/delete = **`EraModal` / `Mo
 - [x] Hotel guest ↔ `globalPersonId` + MDM lookup→resolve (`linkPersonIdentity`, `/api/mdm/person-lookup`)
 - [x] Clinic practitioner MDM link (Wave 1a)
 - [x] Finance employee/counterparty `globalPersonId`
-- [ ] B2B VÖEN lookup component shared (Finance counterparty UX → satellites that need invoicing party)
-- [ ] Citizen consent portal (Phase 2+)
+- [x] B2B VÖEN lookup component shared — `@era/satellite-kit` `VoenLookupField` + `fetchVoenPreviewFromRequest` BFF
+- [x] Citizen consent portal — orchestrator `/portal/person-access` (MDM Phase 2 MVP)
 
 **Local UAT MDM**
+
+**R1 integration smoke (2026-06-16)** — code + UAT-SMOKE path verification:
+
+| # | Flow | App | R1 |
+|---|------|-----|-----|
+| U1 | Patient create + MDM link | era-clinic | **PASS** — `patient-identity.ts`, `/patients` UAT-SMOKE |
+| U2 | Practitioner via Finance HR provision | finance + clinic | **PASS** — staff-provision + WORKFORCE_HIRE_VIA_FINANCE guard |
+| U3 | Hotel guest create + masked ID card | era-hotel-pms | **PASS** — W4 guest-identity + ops-profile BFF |
+| U4 | Hotel guest merge FIN | era-hotel-pms | **PASS** — `/api/mdm/person-merge` |
+| U5 | VÖEN lookup wholesale/construction | industry + orch | **PASS** — platformVoenLookup BFF |
+| U6 | FX badge without finance container | hotel + orch | **PASS** — fx-preview → platform catalog |
+| U7 | FNB staff login after HR provision | finance + fnb | **PASS** — staff-provision event path |
 
 ```bash
 curl -s http://127.0.0.1:4100/internal/v1/mdm/health
@@ -293,3 +305,61 @@ When closing a gap:
 4. Run `node scripts/delivery-readiness.mjs` if DELIVERY checkboxes changed.
 
 Skill: `era-readiness-matrix` for matrix sync.
+
+---
+
+## 11. CP workforce absence (Plan A UAT-SMOKE)
+
+| Step | Path | Expected |
+|------|------|----------|
+| 1 | Orch OWNER → `/workspace/workforce/employments` | Hire with MDM `globalPersonId` |
+| 2 | `/workspace/workforce/absences/new` → submit | Status SUBMITTED |
+| 3 | Detail → Approve | Status APPROVED; event enqueued |
+| 4 (optional Finance) | `/payroll` → absences list + syncAbsences | Mirror row; locked M/X cells |
+| 5 | i18n spot-check az/ru on absence screens | Labels render |
+
+## 12. CP workforce org structure (Plan B UAT-SMOKE)
+
+| Step | Path | Expected |
+|------|------|----------|
+| 1 | `/workspace/workforce/org-structure` → bootstrap | Scope + root org unit |
+| 2 | Create Med Block under root | Flat list shows tree nodes |
+| 3 | `/workspace/workforce/positions` → create (2 slots) | Position listed |
+| 4 | `/workspace/workforce/employments` → hire ×2 | OK; 3rd hire → slots error |
+| 5 (optional Finance) | `/hr/structure` | Mirror read-only + Workspace banner |
+
+## 13. CP workforce roles + Security Admin (Plan C UAT-SMOKE)
+
+| Step | Action | Expected |
+|------|--------|----------|
+| 1 | `/workspace/workforce/security` → role matrix | Therapist → clinic DOCTOR |
+| 2 | `/workspace/workforce/employments` → hire (clinic checked) | Bindings + STAFF_PROVISIONED |
+| 3 | Clinic login as hired staff | Doctor routes OK |
+| 4 | Security → manual grant CLINIC_ADMIN → revoke | Admin routes toggle; audit tail |
+| 5 | Terminate employment | Clinic login disabled |
+
+## 14. v3 Workforce clean cutover (Plan E UAT-SMOKE)
+
+Prerequisite: Plans A–D merged; `platform_workforce` on Nafta parent org; `node tools/bootstrap-local.mjs --workforce-seed`.
+
+| Step | Action | Expected |
+|------|--------|----------|
+| W1 | `/workspace/workforce/security` | Role matrix seeded (Therapist → clinic DOCTOR) |
+| W2 | Hire via CP (MDM FIN → Med Block → Therapist + Clinic) | Employment ACTIVE; clinic POST practitioners **403** |
+| W3 | Clinic login as doctor | Reception/doctor routes OK |
+| W4 | Submit + approve vacation in CP | Absence APPROVED |
+| W5 | (Optional Finance) sync absences on timesheet | Locked M/X |
+| W6 | Terminate employment | Clinic login disabled |
+| W7 | `node scripts/v3-workforce-smoke.mjs` + `npm run audit:integration:strict` | 0 issues |
+
+See also [NAFTA_SANATORIUM_UAT.md §6](./NAFTA_SANATORIUM_UAT.md) and [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
+
+## 15. Plan F extensions (export, seats, construction timesheet)
+
+| Step | Action | Expected |
+|------|--------|----------|
+| F-EXP | `/workspace/workforce/export` → roster CSV | Active employments; no FIN column |
+| F-SEAT | Security Admin seats widget | used/limit; 11th distinct hire blocked at tier limit |
+| F-AUD | Grant role → `/workspace/workforce/security/audit` | Row with action + globalPersonId |
+| F-TS | Construction import with `cpEmploymentId` → CP approve → (optional Finance) | WORK rows on payroll timesheet |
+| F-QA | `node scripts/v3-workforce-f-smoke.mjs` | All static checks pass |

@@ -21,53 +21,84 @@ const ROLE_CODES: Record<string, string> = {
   STAFF: CLINIC_ROLE.RECEPTION,
 };
 
+async function ensureRole(roleCode: string) {
+  let role = await prisma.role.findFirst({ where: { code: roleCode } });
+  if (!role) {
+    role = await prisma.role.create({
+      data: { code: roleCode, name: roleCode.replace(/_/g, " ") },
+    });
+  }
+  return role;
+}
+
 export async function handleStaffProvisionEvent(event: unknown) {
+  /** T3 ops cache: fullName from STAFF_PROVISIONED is display-only; MDM is identity SoR. */
   if (isSatelliteStaffProvisioned(event)) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
     const roleCode = ROLE_CODES[p.satelliteRole] ?? CLINIC_ROLE.RECEPTION;
-    let role = await prisma.role.findFirst({ where: { code: roleCode } });
-    if (!role) {
-      role = await prisma.role.create({
-        data: { code: roleCode, name: roleCode.replace(/_/g, " ") },
-      });
-    }
+    const role = await ensureRole(roleCode);
 
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
     const passwordHash = hashPassword(p.pin ?? "0000");
+    const globalPersonId = parsed.globalPersonId ?? null;
+    const cpEmploymentId = p.cpEmploymentId;
 
-    await prisma.practitioner.upsert({
-      where: { code: p.staffCode },
-      create: {
-        code: p.staffCode,
-        fullName: p.fullName,
-        globalPersonId: parsed.globalPersonId ?? null,
-      },
-      update: {
-        fullName: p.fullName,
-        globalPersonId: parsed.globalPersonId ?? null,
-      },
-    });
-
-    const existingUser = await prisma.user.findUnique({ where: { login } });
+    const byCp = await prisma.user.findFirst({ where: { cpEmploymentId } });
+    const existingUser = byCp ?? (await prisma.user.findUnique({ where: { login } }));
+    let userId: string;
     if (existingUser) {
       await prisma.user.update({
         where: { id: existingUser.id },
-        data: { fullName: p.fullName, roleId: role.id, status: "ACTIVE" },
+        data: {
+          fullName: p.fullName,
+          roleId: role.id,
+          status: "ACTIVE",
+          globalPersonId,
+          cpEmploymentId,
+          ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
+        },
       });
-      return { satelliteUserId: existingUser.id };
+      userId = existingUser.id;
+    } else {
+      const user = await prisma.user.create({
+        data: {
+          login,
+          fullName: p.fullName,
+          passwordHash,
+          roleId: role.id,
+          isCrossSystem: true,
+          globalPersonId,
+          cpEmploymentId,
+          ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
+        },
+      });
+      userId = user.id;
     }
 
-    const user = await prisma.user.create({
-      data: {
-        login,
+    const practitionerBase = {
+      code: p.staffCode,
+      fullName: p.fullName,
+      globalPersonId,
+      cpEmploymentId,
+      userId,
+      active: true,
+      ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
+    };
+
+    await prisma.practitioner.upsert({
+      where: { cpEmploymentId },
+      create: practitionerBase,
+      update: {
         fullName: p.fullName,
-        passwordHash,
-        roleId: role.id,
-        isCrossSystem: true,
+        globalPersonId,
+        userId,
+        active: true,
+        ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
       },
     });
-    return { satelliteUserId: user.id };
+
+    return { satelliteUserId: userId };
   }
 
   if (isSatelliteStaffDeactivated(event)) {
@@ -79,6 +110,14 @@ export async function handleStaffProvisionEvent(event: unknown) {
         data: { status: "INACTIVE" },
       });
     }
+    await prisma.user.updateMany({
+      where: { cpEmploymentId: p.cpEmploymentId },
+      data: { status: "INACTIVE" },
+    });
+    await prisma.practitioner.updateMany({
+      where: { cpEmploymentId: p.cpEmploymentId },
+      data: { active: false },
+    });
     return { ok: true };
   }
 

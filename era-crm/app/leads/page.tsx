@@ -6,10 +6,13 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   PRIMARY_BUTTON_CLASS,
   VoenLookupField,
+  PageHeader,
 } from "@era/satellite-kit/ui";
-import { PageHeader } from "@era/satellite-kit/ui";
 
 type Agent = {
   id: string;
@@ -24,6 +27,11 @@ type Lead = {
   contactRef: string;
   stage: string;
   channel: string;
+  partyKind?: string;
+  taxId?: string | null;
+  companyName?: string | null;
+  prospectType?: string;
+  activitySector?: string | null;
   ownerId?: string | null;
   owner?: { id: string; fullName: string; login: string } | null;
   estimatedAmount?: string | number | null;
@@ -61,19 +69,39 @@ function LeadsPipelineContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [session, setSession] = useState<SessionUser | null>(null);
   const [myLeadsOnly, setMyLeadsOnly] = useState(false);
+  const [prospectFilter, setProspectFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [prefillNotice, setPrefillNotice] = useState("");
-  const [companyVoen, setCompanyVoen] = useState("");
-  const [companyName, setCompanyName] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+
+  const [formTitle, setFormTitle] = useState("");
+  const [formPartyKind, setFormPartyKind] = useState<"INDIVIDUAL" | "LEGAL_ENTITY">(
+    "LEGAL_ENTITY",
+  );
+  const [formTaxId, setFormTaxId] = useState("");
+  const [formCompanyName, setFormCompanyName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formProspectType, setFormProspectType] = useState<
+    "CUSTOMER" | "PARTNER" | "OTHER"
+  >("CUSTOMER");
+  const [formSector, setFormSector] = useState("");
+  const [formAmount, setFormAmount] = useState("");
+  const [formFin, setFormFin] = useState("");
+  const [formGlobalPersonId, setFormGlobalPersonId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const canAssign = session ? ASSIGN_ROLES.has(session.role.code) : false;
 
-  async function loadLeads(mine = myLeadsOnly) {
+  async function loadLeads(mine = myLeadsOnly, prospect = prospectFilter) {
     setLoading(true);
     try {
-      const query = mine ? "?mine=true" : "";
-      const res = await fetch(`/api/leads${query}`);
+      const params = new URLSearchParams();
+      if (mine) params.set("mine", "true");
+      if (prospect) params.set("prospectType", prospect);
+      const qs = params.toString();
+      const res = await fetch(`/api/leads${qs ? `?${qs}` : ""}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load leads");
       setLeads(data);
@@ -103,12 +131,69 @@ function LeadsPipelineContent() {
       setPrefillNotice(
         t("prefill", { channel: channel ?? "", contactRef: contactRef ?? "" }),
       );
+      setFormPhone(contactRef);
+      setShowCreate(true);
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   useEffect(() => {
-    void loadLeads(myLeadsOnly);
-  }, [myLeadsOnly]);
+    void loadLeads(myLeadsOnly, prospectFilter);
+  }, [myLeadsOnly, prospectFilter]);
+
+  async function resolveFin() {
+    if (!formFin.trim() || formPartyKind !== "INDIVIDUAL") return;
+    const res = await fetch("/api/mdm/person-lookup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fin: formFin.trim(),
+        fullName: formTitle.trim() || undefined,
+        phone: formPhone.trim() || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.globalPersonId) {
+      setFormGlobalPersonId(data.globalPersonId);
+      setMessage(t("finLinked"));
+    }
+  }
+
+  async function createLead() {
+    setCreating(true);
+    setMessage("");
+    try {
+      const body: Record<string, unknown> = {
+        title: formTitle.trim() || formCompanyName.trim() || formPhone.trim(),
+        partyKind: formPartyKind,
+        prospectType: formProspectType,
+        activitySector: formSector.trim() || undefined,
+        contactPhone: formPhone.trim() || undefined,
+        contactEmail: formEmail.trim() || undefined,
+        contactRef: formPhone.trim() || formEmail.trim() || undefined,
+        channel: formPhone.trim() ? "phone" : "other",
+        estimatedAmount: formAmount ? Number(formAmount) : undefined,
+        globalPersonId: formGlobalPersonId ?? undefined,
+      };
+      if (formPartyKind === "LEGAL_ENTITY") {
+        body.taxId = formTaxId.trim() || undefined;
+        body.companyName = formCompanyName.trim() || undefined;
+      }
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Create failed");
+      setMessage(t("leadCreated", { id: data.id.slice(0, 8) }));
+      setShowCreate(false);
+      await loadLeads(myLeadsOnly, prospectFilter);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Error");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   async function convertLead(id: string) {
     setMessage("");
@@ -117,7 +202,7 @@ function LeadsPipelineContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Convert failed");
       setMessage(t("converted", { id: id.slice(0, 8) }));
-      await loadLeads();
+      await loadLeads(myLeadsOnly, prospectFilter);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     }
@@ -137,7 +222,7 @@ function LeadsPipelineContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Follow-up failed");
       setMessage(t("followUpScheduled", { id: leadId.slice(0, 8) }));
-      await loadLeads(myLeadsOnly);
+      await loadLeads(myLeadsOnly, prospectFilter);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     }
@@ -157,7 +242,7 @@ function LeadsPipelineContent() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Follow-up failed");
       setMessage(t("followUpScheduled", { id: leadId.slice(0, 8) }));
-      await loadLeads(myLeadsOnly);
+      await loadLeads(myLeadsOnly, prospectFilter);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     }
@@ -173,7 +258,7 @@ function LeadsPipelineContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Assign failed");
-      await loadLeads();
+      await loadLeads(myLeadsOnly, prospectFilter);
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Error");
     }
@@ -191,6 +276,13 @@ function LeadsPipelineContent() {
         subtitle={t("subtitle")}
         actions={
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => setShowCreate(true)}
+            >
+              {t("createLead")}
+            </button>
             <Link href="/visits" className={PRIMARY_BUTTON_CLASS}>
               {t("visits")}
             </Link>
@@ -204,23 +296,6 @@ function LeadsPipelineContent() {
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
-        <div className="max-w-md">
-          <VoenLookupField
-            value={companyVoen}
-            onChange={setCompanyVoen}
-            onResolved={(r) => setCompanyName(r.found ? (r.name ?? "") : "")}
-            labels={{
-              voen: t("companyVoen"),
-              check: tc("check"),
-              found: t("companyFound"),
-              notFound: t("companyNotFound"),
-              invalid: t("companyVoenInvalid"),
-            }}
-          />
-          {companyName ? (
-            <p className="mt-1 text-[12px] text-[#2980B9]">{companyName}</p>
-          ) : null}
-        </div>
         <div className="flex flex-wrap items-center gap-4 text-[13px]">
           <label className="flex items-center gap-2">
             <input
@@ -233,12 +308,151 @@ function LeadsPipelineContent() {
               <span className="text-[#7F8C8D]">({session.fullName})</span>
             )}
           </label>
+          <label className="flex items-center gap-2">
+            {t("prospectFilter")}
+            <select
+              className="rounded border px-2 py-1"
+              value={prospectFilter}
+              onChange={(e) => setProspectFilter(e.target.value)}
+            >
+              <option value="">{tc("all")}</option>
+              <option value="CUSTOMER">{t("prospectCustomer")}</option>
+              <option value="PARTNER">{t("prospectPartner")}</option>
+              <option value="OTHER">{t("prospectOther")}</option>
+            </select>
+          </label>
         </div>
 
         {loading && <p className="text-[13px]">{tc("loading")}</p>}
         {message && <p className="text-[13px]">{message}</p>}
         {prefillNotice && (
           <p className="text-[13px] text-[#2980B9]">{prefillNotice}</p>
+        )}
+
+        {showCreate && (
+          <div className="rounded border border-[#D5DBDB] bg-[#FAFBFC] p-4 space-y-3 max-w-lg">
+            <h3 className="text-[14px] font-semibold">{t("createLead")}</h3>
+            <FieldSelect
+              label={t("partyKind")}
+              preset="selectWide"
+              value={formPartyKind}
+              onChange={(e) =>
+                setFormPartyKind(e.target.value as "INDIVIDUAL" | "LEGAL_ENTITY")
+              }
+            >
+              <option value="LEGAL_ENTITY">{t("legalEntity")}</option>
+              <option value="INDIVIDUAL">{t("individual")}</option>
+            </FieldSelect>
+            <Field
+              label={tc("name")}
+              preset="shortText"
+              value={formTitle}
+              onChange={(e) => setFormTitle(e.target.value)}
+            />
+            {formPartyKind === "LEGAL_ENTITY" && (
+              <>
+                <VoenLookupField
+                  value={formTaxId}
+                  onChange={setFormTaxId}
+                  onResolved={(r) => {
+                    if (r.found && r.name) setFormCompanyName(r.name);
+                  }}
+                  labels={{
+                    voen: t("companyVoen"),
+                    check: tc("check"),
+                    found: t("companyFound"),
+                    notFound: t("companyNotFound"),
+                    invalid: t("companyVoenInvalid"),
+                  }}
+                />
+                <Field
+                  label={t("companyName")}
+                  preset="shortText"
+                  value={formCompanyName}
+                  onChange={(e) => setFormCompanyName(e.target.value)}
+                />
+              </>
+            )}
+            <FieldRow cols={2}>
+              <Field
+                label={t("contactPhone")}
+                preset="phone"
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value)}
+              />
+              <Field
+                label={t("contactEmail")}
+                preset="shortText"
+                type="email"
+                value={formEmail}
+                onChange={(e) => setFormEmail(e.target.value)}
+              />
+            </FieldRow>
+            {formPartyKind === "INDIVIDUAL" && (
+              <div className="flex gap-2 items-end">
+                <Field
+                  label="FIN"
+                  preset="fin"
+                  className="flex-1"
+                  value={formFin}
+                  onChange={(e) => setFormFin(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="rounded border px-2 py-1 text-[12px]"
+                  onClick={() => void resolveFin()}
+                >
+                  {t("finLookup")}
+                </button>
+              </div>
+            )}
+            <FieldSelect
+              label={t("prospectType")}
+              preset="selectWide"
+              value={formProspectType}
+              onChange={(e) =>
+                setFormProspectType(
+                  e.target.value as "CUSTOMER" | "PARTNER" | "OTHER",
+                )
+              }
+            >
+              <option value="CUSTOMER">{t("prospectCustomer")}</option>
+              <option value="PARTNER">{t("prospectPartner")}</option>
+              <option value="OTHER">{t("prospectOther")}</option>
+            </FieldSelect>
+            <FieldRow cols={2}>
+              <Field
+                label={t("activitySector")}
+                preset="shortText"
+                value={formSector}
+                onChange={(e) => setFormSector(e.target.value)}
+              />
+              <Field
+                label={t("estimatedAmount")}
+                preset="amount"
+                type="number"
+                value={formAmount}
+                onChange={(e) => setFormAmount(e.target.value)}
+              />
+            </FieldRow>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={creating}
+                onClick={() => void createLead()}
+              >
+                {creating ? tc("loading") : tc("save")}
+              </button>
+              <button
+                type="button"
+                className="rounded border px-3 py-1 text-[13px]"
+                onClick={() => setShowCreate(false)}
+              >
+                {tc("cancel")}
+              </button>
+            </div>
+          </div>
         )}
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
@@ -250,8 +464,24 @@ function LeadsPipelineContent() {
               <ul className="mt-2 space-y-2">
                 {items.map((lead) => (
                   <li key={lead.id} className="rounded bg-[#F8F9FA] p-2 text-[12px]">
-                    <div className="font-medium">{lead.title}</div>
+                    <Link
+                      href={`/leads/${lead.id}`}
+                      className="font-medium text-[#2980B9] hover:underline"
+                    >
+                      {lead.title}
+                    </Link>
                     <div className="text-[#7F8C8D]">{lead.contactRef}</div>
+                    {lead.taxId && (
+                      <div className="text-[11px] text-[#7F8C8D]">
+                        VÖEN: {lead.taxId}
+                      </div>
+                    )}
+                    {lead.prospectType === "PARTNER" && (
+                      <span className="text-[10px] text-[#E67E22]">{t("prospectPartner")}</span>
+                    )}
+                    {lead.activitySector && (
+                      <div className="text-[11px]">{lead.activitySector}</div>
+                    )}
                     {lead.owner && (
                       <div className="text-[11px] text-[#7F8C8D]">
                         {t("owner")}: {lead.owner.fullName}
@@ -299,7 +529,9 @@ function LeadsPipelineContent() {
                               key={d}
                               type="button"
                               className="rounded border px-1.5 py-0.5 text-[10px] text-[#2980B9]"
-                              onClick={() => void scheduleFollowUpBusinessDays(lead.id, d)}
+                              onClick={() =>
+                                void scheduleFollowUpBusinessDays(lead.id, d)
+                              }
                             >
                               +{d} {t("businessDays")}
                             </button>

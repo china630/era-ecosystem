@@ -1,6 +1,5 @@
 "use client";
 
-import { Pencil } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
@@ -12,8 +11,6 @@ import { ListPaginationFooter } from "../../../components/list-pagination-footer
 import { formatMoneyAzn } from "../../../lib/format-money";
 import {
   CARD_CONTAINER_CLASS,
-  DATA_TABLE_ACTIONS_TD_CLASS,
-  DATA_TABLE_ACTIONS_TH_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TD_CLASS,
@@ -22,16 +19,7 @@ import {
   DATA_TABLE_TH_RIGHT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  TABLE_ROW_ICON_BTN_CLASS,
 } from "../../../lib/design-system";
-import { JobPositionModal } from "../../../components/hr/job-position-modal";
-import { DepartmentModal } from "../../../components/hr/department-modal";
-import { parseHrEmployeesResponse } from "../../../lib/hr-employees-list";
-
-type DeptFlat = { id: string; name: string; parentId: string | null };
-
-type EmployeeOpt = { id: string; firstName: string; lastName: string };
 
 type JobPositionRow = {
   id: string;
@@ -43,54 +31,32 @@ type JobPositionRow = {
   _count: { employees: number };
 };
 
-const lbl =
-  "block text-xs font-bold text-[#7F8C8D] uppercase tracking-wide mb-1.5";
-
 export default function HrPositionsPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const [flat, setFlat] = useState<DeptFlat[]>([]);
   const [positions, setPositions] = useState<JobPositionRow[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editPosition, setEditPosition] = useState<JobPositionRow | null>(null);
-  const [deptModalOpen, setDeptModalOpen] = useState(false);
-  const [employees, setEmployees] = useState<EmployeeOpt[]>([]);
+
+  const workspacePositionsUrl = `${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/positions`;
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
     const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
-    const [fl, jp, em] = await Promise.all([
-      apiFetch("/api/hr/departments"),
-      apiFetch(`/api/hr/job-positions?${qs.toString()}`),
-      apiFetch("/api/hr/employees?page=1&pageSize=500"),
-    ]);
-    if (!fl.ok) {
-      setError(`${t("hrStructure.loadErr")}: ${fl.status}`);
-      setFlat([]);
-    } else {
-      setFlat(await fl.json());
-    }
+    const jp = await apiFetch(`/api/hr/job-positions?${qs.toString()}`);
     if (!jp.ok) {
-      setError((e) => e ?? `${t("hrStructure.loadErr")}: ${jp.status}`);
+      setError(`${t("hrStructure.loadErr")}: ${jp.status}`);
       setPositions([]);
       setTotal(0);
     } else {
       const parsed = parsePaginatedList<JobPositionRow>(await jp.json());
       setPositions(parsed.items);
       setTotal(parsed.total);
-    }
-    if (em.ok) {
-      const parsedEm = parseHrEmployeesResponse<EmployeeOpt>(await em.json());
-      setEmployees(parsedEm.items);
-    } else {
-      setEmployees([]);
     }
     setLoading(false);
   }, [token, t, page, pageSize]);
@@ -116,28 +82,29 @@ export default function HrPositionsPage() {
 
   return (
     <div className="w-full max-w-none space-y-8">
-      <PageHeader
-        title={t("hrPositions.title")}
-        subtitle={t("hrPositions.subtitle")}
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setEditPosition(null);
-              setCreateOpen(true);
-            }}
-            disabled={flat.length === 0}
-          >
-            + {t("hrStructure.addPosition")}
-          </button>
-        }
-      />
+      <PageHeader title={t("hrPositions.title")} subtitle={t("hrPositions.subtitle")} />
+
+      <div className={`${CARD_CONTAINER_CLASS} border-l-4 border-l-[#2980B9] p-4`}>
+        <p className="text-[13px] font-semibold text-[#34495E]">
+          {t("hrStructure.orgCpBannerTitle")}
+        </p>
+        <p className="mt-1 text-xs text-[#7F8C8D]">{t("hrStructure.positionsCpBannerHint")}</p>
+        <a
+          href={workspacePositionsUrl}
+          className="mt-2 inline-block text-[13px] font-medium text-[#2980B9] hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("hrStructure.managePositionsInWorkspace")} →
+        </a>
+      </div>
+
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       {loading && <p className="text-gray-600 text-sm">{t("common.loading")}</p>}
       {!loading && (
         <>
+          <p className="text-xs text-[#7F8C8D]">{t("hrStructure.mirrorReadOnlyHint")}</p>
           <div className={DATA_TABLE_VIEWPORT_CLASS}>
             <table className={`${DATA_TABLE_CLASS} min-w-full`}>
               <thead>
@@ -149,46 +116,32 @@ export default function HrPositionsPage() {
                   <th className={DATA_TABLE_TH_RIGHT_CLASS}>
                     {t("hrStructure.positionsEmployees")}
                   </th>
-                  <th className={DATA_TABLE_ACTIONS_TH_CLASS}>{t("teamPage.actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {positions.length === 0 ? (
                   <tr className={DATA_TABLE_TR_CLASS}>
-                    <td colSpan={6} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
+                    <td colSpan={5} className={`${DATA_TABLE_TD_CLASS} py-12 text-center`}>
                       <EmptyState
                         title={t("hrStructure.positionsEmpty")}
-                        description={t("hrStructure.positionsEmptyHint")}
+                        description={t("hrStructure.positionsEmptyMirrorHint")}
                       />
                     </td>
                   </tr>
                 ) : (
-                positions.map((p) => (
-                  <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
-                    <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>{p.name}</td>
-                    <td className={DATA_TABLE_TD_CLASS}>{p.department.name}</td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{p.totalSlots}</td>
-                    <td className={`${DATA_TABLE_TD_RIGHT_CLASS} text-xs`}>
-                      {formatMoneyAzn(p.minSalary)} — {formatMoneyAzn(p.maxSalary)}
-                    </td>
-                    <td className={DATA_TABLE_TD_RIGHT_CLASS}>{p._count.employees}</td>
-                    <td className={DATA_TABLE_ACTIONS_TD_CLASS}>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          className={TABLE_ROW_ICON_BTN_CLASS}
-                          title={t("counterparties.edit")}
-                          onClick={() => {
-                            setEditPosition(p);
-                            setCreateOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                  positions.map((p) => (
+                    <tr key={p.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={`${DATA_TABLE_TD_CLASS} font-semibold text-[#34495E]`}>
+                        {p.name}
+                      </td>
+                      <td className={DATA_TABLE_TD_CLASS}>{p.department.name}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{p.totalSlots}</td>
+                      <td className={`${DATA_TABLE_TD_RIGHT_CLASS} text-xs`}>
+                        {formatMoneyAzn(p.minSalary)} — {formatMoneyAzn(p.maxSalary)}
+                      </td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{p._count.employees}</td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
@@ -203,40 +156,6 @@ export default function HrPositionsPage() {
           />
         </>
       )}
-
-      <JobPositionModal
-        open={createOpen}
-        onClose={() => {
-          setCreateOpen(false);
-          setEditPosition(null);
-        }}
-        departments={flat}
-        onCreated={() => void load()}
-        onAddDepartment={() => setDeptModalOpen(true)}
-        editingPosition={
-          editPosition
-            ? {
-                id: editPosition.id,
-                departmentId: editPosition.department.id,
-                name: editPosition.name,
-                totalSlots: editPosition.totalSlots,
-                minSalary: Number(editPosition.minSalary),
-                maxSalary: Number(editPosition.maxSalary),
-              }
-            : null
-        }
-      />
-      <DepartmentModal
-        open={deptModalOpen}
-        onClose={() => setDeptModalOpen(false)}
-        departments={flat}
-        employees={employees}
-        onCreated={() => {
-          setDeptModalOpen(false);
-          void load();
-        }}
-        editingDepartment={null}
-      />
     </div>
   );
 }

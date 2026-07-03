@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { Field, FieldSelect, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
 import {
   AmountInput,
   OpsError,
-  OpsField,
   StatusBadge,
   formatAznMinor,
   maskIban,
@@ -106,10 +105,10 @@ export function AccountOpenModal({ open, onClose, onCreated }: AccountOpenModalP
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <OpsField name="customerId" label={t("customerId")} defaultValue="demo-retail-customer" />
-        <OpsField name="branchId" label={t("branchId")} defaultValue="demo-branch-hq" />
-        <OpsField name="glAccountId" label="GL account id" defaultValue={glId} />
-        <OpsField name="currency" label={t("currency")} defaultValue="AZN" />
+        <Field name="customerId" label={t("customerId")} preset="code" defaultValue="demo-retail-customer" />
+        <Field name="branchId" label={t("branchId")} preset="code" defaultValue="demo-branch-hq" />
+        <Field name="glAccountId" label="GL account id" preset="code" defaultValue={glId} />
+        <Field name="currency" label={t("currency")} preset="code" defaultValue="AZN" />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>

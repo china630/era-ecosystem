@@ -54,6 +54,10 @@ jobs:
         run: |
           node --check scripts/sso-launch-smoke.mjs
           node --check era-hotel-pms/scripts/test-pos-bridge.mjs
+          node --check scripts/run-integration-audits.mjs
+
+      - name: Integration audits strict
+        run: node scripts/run-integration-audits.mjs --strict
 
       - name: Upload compose logs on failure
         if: failure()

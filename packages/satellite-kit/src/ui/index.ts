@@ -1,5 +1,8 @@
 export { orchPublicHref, orchWebUrl } from "../platform/orch-web-url";
 export * from "./design-system";
+export { FIELD_WIDTH, fieldWidthClass, type FieldWidthPreset } from "./field-presets";
+export { Field, FieldSelect, FieldTextarea, FieldRow, type FieldProps, type FieldSelectProps, type FieldTextareaProps } from "./field";
+export { FieldSection } from "./field-section";
 export { buildAuthLoginLabels } from "./auth-login-labels";
 export { AuthLoginCard, type AuthLoginCardLabels, type AuthLoginCardProps } from "./auth-login-card";
 export { AuthPageHeader } from "./auth-page-header";
@@ -56,6 +59,7 @@ export { useSatelliteOpsSession, type SatelliteOpsSession } from "./use-satellit
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
 export { EraDataGrid } from "./era-data-grid";
 export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
+export { buildVoenLookupLabels, type VoenLookupFieldLabels } from "./voen-lookup-labels";
 export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";
 export type {
   EraOpsNavItem,

@@ -47,13 +47,14 @@
 
 ## FB-1b — Mixed settlement (Nafta)
 
-See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing.md).
+See [ADR fb-mixed-settlement-routing](../../docs/adr/fb-mixed-settlement-routing.md) and [ADR unified-settlement-hub](../../docs/adr/unified-settlement-hub.md).
 
 1. Walk-in ticket: `POST /api/tickets` `{ "serviceChannel": "WALK_IN", "walkInLabel": "Street", "lines": [...] }`
-2. `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` → **201**, local fiscal (even when org `DEPARTMENT` + `fiscalRouting=PARENT`)
-3. In-house: `PATCH /api/tickets/{id}` `{ "roomChargeReservationId": "<uuid-or-room>" }`
-4. `POST /api/tickets/{id}/pay` → **400** (settle via room charge)
-5. `POST /api/tickets/{id}/room-charge` → folio charge on hotel PMS
+2. **Hub mode** (`settlementPolicy.deferWalkInToHub`): `POST /api/tickets/{id}/defer-to-hub` → **200**; pay at hotel `/front-cash/pending`; callback closes ticket
+3. **Own mode**: `POST /api/tickets/{id}/pay` `{ "method": "CASH" }` → **201**, local fiscal
+4. In-house: `PATCH /api/tickets/{id}` `{ "roomChargeReservationId": "<uuid-or-room>" }`
+5. `POST /api/tickets/{id}/pay` → **400** (settle via room charge)
+6. `POST /api/tickets/{id}/room-charge` → folio charge on hotel PMS
 
 ## Quartet (Track A)
 

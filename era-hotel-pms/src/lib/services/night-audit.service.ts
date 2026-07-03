@@ -9,6 +9,8 @@ import {
   lockBusinessDateForAudit,
 } from '@/lib/services/business-date.service';
 import { getNightlyRoomChargeForDate } from '@/lib/services/pricing-quote.service';
+import { getPendingSummary, assertNoOpenPendingForNightAudit } from '@/lib/services/settlement-hub.service';
+import { resolveSettlementPolicy } from '@era/satellite-kit';
 
 export async function getNightAuditStatus() {
   const openShift = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
@@ -19,8 +21,13 @@ export async function getNightAuditStatus() {
     include: { nightRuns: { orderBy: { createdAt: 'desc' }, take: 1 } },
   });
   const inHouseCount = await prisma.reservation.count({ where: { status: 'IN_HOUSE' } });
+  const pendingSummary = await getPendingSummary(currentBiz);
   const { getBusinessDateStatus } = await import('@/lib/services/business-date.service');
   const bizStatus = await getBusinessDateStatus();
+  const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+  const settlementPolicy = orgId
+    ? await resolveSettlementPolicy(orgId)
+    : { pendingSettlementNaPolicy: 'BLOCK' as const };
   return {
     openShift,
     posShiftStatus,
@@ -28,6 +35,10 @@ export async function getNightAuditStatus() {
     lastRun: businessDay?.nightRuns[0] ?? null,
     inHouseCount,
     businessDate: bizStatus,
+    pendingSettlement: {
+      count: pendingSummary.pendingCount,
+      policy: settlementPolicy.pendingSettlementNaPolicy,
+    },
   };
 }
 
@@ -63,6 +74,21 @@ export async function runNightAudit() {
 
   try {
     steps.push('Step 1: Pre-check cash + POS shifts — OK');
+
+    const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim() ?? '';
+    const settlementPolicy = orgId
+      ? await resolveSettlementPolicy(orgId)
+      : { pendingSettlementNaPolicy: 'BLOCK' as const };
+    const pendingCheck = await assertNoOpenPendingForNightAudit(
+      settlementPolicy.pendingSettlementNaPolicy,
+      date,
+    );
+    if (pendingCheck.note) {
+      steps.push(`Step 1b: Pending settlement reconciliation — ${pendingCheck.note}`);
+    } else {
+      steps.push('Step 1b: Pending settlement reconciliation — OK');
+    }
+
     const inHouseCount = await prisma.reservation.count({ where: { status: 'IN_HOUSE' } });
     steps.push(`Step 2: In-house reservations: ${inHouseCount}`);
 

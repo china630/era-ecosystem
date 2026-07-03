@@ -12,9 +12,11 @@ Global read-only catalogs (FX, calendar, HS, banks, VÖEN directory, geo, UoM, t
 
 1. **SoR:** `era-data-hub` `/registry/v1/*` when `ERA_DATA_HUB_DATA_SOURCE=hub`.
 2. **Expand/contract:** hub owns ingest → finance read-through + fallback → disable finance duplicate cron/seeds.
-3. **Industry rule:** no `ERA_DATA_HUB_*` or `/registry/v1` in `era-logistics`, `era-hotel-pms`, etc. Use Finance API handoffs (`financeFxPreview`, `financeHsTariffPreview`, `financeVoenLookup`) or deep links.
+3. **Industry rule (updated 2026-06-16):** industry satellites **must not** call `era-data-hub` or `era-finance-core` for **sync global catalog reads** (calendar, FX display convert, VÖEN directory). Use **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` via `@era/satellite-kit` — see [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md). HS tariff preview and tenant counterparty operations remain Finance-only.
 4. **Split from MDM:** natural/legal person identity lives in orchestrator `era_mdm`, not data-hub. VÖEN **company directory** in hub ≠ MDM person registry.
 5. **Tenant data stays in finance:** org `Account`, counterparty cards, customs declarations, bank accounts per org.
+
+**Legacy (pre–Wave 2):** Finance API handoffs (`financeFxPreview`, `financeVoenLookup`) and direct hub via `calendar.client.ts` — **deprecated** for industry; removal tracked in Wave 2.
 
 ## Consumer matrix
 
@@ -22,11 +24,13 @@ Global read-only catalogs (FX, calendar, HS, banks, VÖEN directory, geo, UoM, t
 |----------|------|----------|
 | era-finance-core | `DATA_HUB_SERVICE_TOKEN` | All P1 |
 | era-bank-core | same + on-prem snapshot | FX, calendar, banks, CoA subset |
-| Industry | Finance Bearer / session | Handoffs only |
+| Industry | Orchestrator `SATELLITE_EVENT_SERVICE_TOKEN` | Platform gateway `/platform/v1/catalog/*` only |
+| era-orchestrator | `DATA_HUB_SERVICE_TOKEN` (backend proxy) | Hub proxy for gateway |
 | External B2B | `X-Api-Key` via orchestrator | Metered read |
 
 ## Related
 
+- [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md)
 - [era-data-hub.md](./era-data-hub.md)
 - [fx-rates-ecosystem.md](./fx-rates-ecosystem.md)
 - [production-calendar-ecosystem.md](./production-calendar-ecosystem.md)

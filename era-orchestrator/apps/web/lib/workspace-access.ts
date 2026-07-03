@@ -170,4 +170,26 @@ export function workspaceSatelliteKey(key: WorkspaceSystemKey): string {
 
 }
 
+const WORKFORCE_MODULE = "platform_workforce";
+
+export function workforceHubStatus(
+
+  snapshot: SubscriptionSnapshot | null,
+
+): WorkspaceSystemStatus {
+
+  if (!snapshot) return "not_connected";
+
+  if (snapshot.readOnly) return "read_only";
+
+  const mods = snapshot.activeModules ?? [];
+
+  if (mods.includes(WORKFORCE_MODULE)) return "active";
+
+  if (snapshot.isTrial) return "not_connected";
+
+  return "not_subscribed";
+
+}
+
 

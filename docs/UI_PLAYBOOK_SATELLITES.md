@@ -78,6 +78,8 @@ flowchart LR
 
 - [ ] Uses `CARD_CONTAINER_CLASS` + `DATA_TABLE_CLASS` tokens
 - [ ] Create/edit in modal, not dedicated `/new` page
+- [ ] Modal scalar fields use **`Field` / `FieldSelect` / `FieldTextarea`** with explicit **`preset`** from `@era/satellite-kit/ui` (see DESIGN.md § Field width taxonomy)
+- [ ] Related fields grouped in **`FieldRow`**; dense left rails use **`FieldSection`**
 - [ ] Errors shown inline in modal (not alert)
 - [ ] API/server errors on auth pages → **Sonner toast top-right** via `showApiError` from `@era/satellite-kit/ui` (no inline red text under fields)
 - [ ] i18n keys if app has locale files
@@ -87,6 +89,21 @@ flowchart LR
 
 - Copying full Finance ERP density to satellites (subscription locks, holdings tree in sidebar)
 - Orch web super-admin (separate shell — see [orch-admin-shell.md](./adr/orch-admin-shell.md))
+
+## Visual regression (design drift)
+
+Golden modal screenshots live in `e2e/design-regression/snapshots/`. Run against local demo seed:
+
+```bash
+npm run bootstrap:local:demo
+# start hotel :3201 + clinic :3203
+npm run test:design-regression
+npm run test:design-regression:update   # after intentional UI change — review PNG diff in PR
+```
+
+Nightly CI: [`.github/workflows/design-regression.yml`](../.github/workflows/design-regression.yml). PR CI runs token lint only (`npm run lint:design-tokens`).
+
+Modal migration waves: [`FIELD_SYSTEM_MODAL_WAVES.md`](./FIELD_SYSTEM_MODAL_WAVES.md).
 
 ## Public auth pages (`/login`)
 

@@ -1,0 +1,3 @@
+id,name,legal_name,city,address,phone,email,website,voen,organizer_type,source_url
+org-001,Caspian Event Organisers MMC,Caspian Event Organisers MMC,Bakı,"Nərimanov rayonu, Zaur Nudirəliyev küçəsi, 61, AZ1075",+994 12 404 10 00,info@ceo.az,https://events.ceo.az,,exhibition_organizer,https://events.ceo.az/en/main
+org-002,Iteca Caspian MMC,Iteca Caspian MMC,Bakı,"Nərimanov rayonu, Zaur Nudirəliyev küçəsi, 61, AZ1075",+994 12 404 1000,info@iteca.az,https://www.iteca.az,,exhibition_organizer,https://www.iteca.az

@@ -6,7 +6,11 @@ Living snapshot of **code + DELIVERY** readiness.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
-Last updated: 2026-06-15 (Reference data ecosystem refactor — FC-DH / LOG-REF rows)
+**R1 re-audit (2026-06-16):** Integration domains A–E **COMPLIANT**; automated strict audit **0 issues**. See [audit-snapshots/r1-delta-2026-06-16.md](./audit-snapshots/r1-delta-2026-06-16.md).
+
+Last updated: 2026-06-16 (R1 full layer re-audit — W1–W5 verified; **v3 Workforce Plans A–E** — CP hub clean cutover)
+
+> **Workforce v3 (orchestrator):** Absence (A), org structure (B), role templates + CP provisioning + Security Admin (C), PII tiers (D), clean cutover (E) — see [COVERAGE_MATRIX CP-WF-*](./COVERAGE_MATRIX.md), master ADR [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md), runbook [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
 
 > **Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`):** Engine MVP P0–P7; **ops teller UX GA** with modal CRUD compliance. See [era-bank/doc/DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md), [BANK_DOC_API_UI_AUDIT.md](./BANK_DOC_API_UI_AUDIT.md), [era-bank-core/doc/DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md).
 

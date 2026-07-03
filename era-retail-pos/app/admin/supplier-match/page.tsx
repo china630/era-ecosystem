@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import {
-  FORM_FIELD_GROUP_CLASS,
+  Field,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 
@@ -61,16 +59,14 @@ export default function SupplierMatchPage() {
         }
       >
         <form id={formId} onSubmit={onSubmit} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>Invoice ref</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={invoiceRef}
-              onChange={(e) => setInvoiceRef(e.target.value)}
-              placeholder="Invoice ref"
-              required
-            />
-          </div>
+          <Field
+            label="Invoice ref"
+            preset="code"
+            value={invoiceRef}
+            onChange={(e) => setInvoiceRef(e.target.value)}
+            placeholder="Invoice ref"
+            required
+          />
         </form>
       </ModalShell>
     </main>

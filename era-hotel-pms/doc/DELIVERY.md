@@ -276,8 +276,8 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 - [x] Verify screens: PATCH APIs + edit modals + table filters on master-data, stock, travel-agencies, guests
 - [x] Retire policy: `active` flags, room inventory soft state, ops guards — [ADR](../../docs/adr/hotel-master-data-retire-policy.md)
 - [x] Reference seed: `npm run db:seed:reference` (RevenueCode, BedType, RoomView — no wipe)
-- [ ] Chart of Accounts — **not imported** (finance-core boundary)
-- [ ] Future: owner-facing import (entitlement + audit) — see ADR
+- [x] Chart of Accounts — intentionally **excluded** (finance-core SoR; [ADR §5](../../docs/adr/hotel-elektraweb-import.md))
+- [x] Owner-facing import — Hotel_Admin+ with `hotel_migration_pro` entitlement + `SatelliteAuditLog` on upload
 
 **Migration:** `20260612200000_elektraweb_import`
 
@@ -392,7 +392,7 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] `MigrationRegistration` + `GET/POST /api/migration/registrations`, prefill skeleton
 - [x] CP module `hotel_migration_pro` (all hotel types; alias `migration_pro`) — catalog seed, all hotel bundles, nav `/migration`, API gate
 - [x] Executive dashboard pulls clinic capacity when `CLINIC_URL` + `CLINIC_BRIDGE_SECRET` set
-- [ ] Apply migration `20260604180000_hotel_service_migration` on `era_hotel_pms` (use `scripts/docker-migrate-deploy.mjs`, not `db push` — avoids `User_phone_key` drift)
+- [x] Apply migration `20260604180000_hotel_service_migration` on `era_hotel_pms` (via `scripts/docker-migrate-deploy.mjs` / compose entrypoint)
 
 ## Nafta W0 gap closure (2026-06-13)
 

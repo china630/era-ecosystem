@@ -41,3 +41,4 @@ export * from "./accounting";
 export * from "./subscription";
 export * from "./reference-data";
 export * from "./mdm";
+export * from "./workforce";

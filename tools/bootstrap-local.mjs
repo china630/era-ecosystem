@@ -6,6 +6,7 @@
  * Usage:
  *   node tools/bootstrap-local.mjs [--reset-password] [--skip-finance] [--skip-orch]
  *                                  [--demo] [--migrate-satellites] [--skip-satellites]
+ *                                  [--workforce-seed] [--skip-workforce]
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -49,6 +50,8 @@ const skipOrch = args.has("--skip-orch");
 const withDemo = args.has("--demo");
 const migrateSatellites =
   args.has("--migrate-satellites") || !args.has("--skip-satellites");
+const workforceSeed = args.has("--workforce-seed");
+const skipWorkforce = args.has("--skip-workforce");
 
 const pgUser = process.env.POSTGRES_USER ?? "era";
 const pgPass = process.env.POSTGRES_PASSWORD ?? "era_dev_password";
@@ -262,6 +265,19 @@ async function main() {
     "node tools/write-local-credentials.mjs",
     root,
   );
+
+  if (workforceSeed && !skipWorkforce) {
+    runOptional(
+      "v3 workforce Nafta seed (org tree + role matrix)",
+      "node scripts/nafta-onboard-departments.mjs",
+      root,
+    );
+    runOptional(
+      "v3 workforce smoke",
+      "node scripts/v3-workforce-smoke.mjs",
+      root,
+    );
+  }
 
   process.stdout.write("\n[bootstrap] Done.\n");
 }

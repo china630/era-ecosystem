@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Query } from "@nestjs/common";
 import { Public } from "../auth/decorators/public.decorator";
 import { MdmService } from "./mdm.service";
 import type { ResolvePersonInput } from "./mdm-person-identity.types";
@@ -72,6 +72,56 @@ export class MdmController {
   ) {
     this.guard(auth, xToken);
     return this.mdm.listPersonIdentifiers(personId);
+  }
+
+  @Post("persons/ops-profile/batch")
+  batchOpsProfile(
+    @Body() body: { personIds: string[]; organizationId: string },
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    return this.mdm.batchGetPersonOpsProfile(
+      body.personIds ?? [],
+      body.organizationId ?? "",
+    );
+  }
+
+  @Post("persons/workforce-resolve")
+  workforceResolve(
+    @Body()
+    body: ResolvePersonInput & { organizationId: string },
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    return this.mdm.workforceResolvePerson(body);
+  }
+
+  @Get("persons/:personId/ops-profile")
+  opsProfile(
+    @Param("personId") personId: string,
+    @Query("organizationId") organizationId?: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    return this.mdm.getPersonOpsProfile(personId, organizationId?.trim());
+  }
+
+  @Get("persons/:personId/compliance-identity")
+  complianceIdentity(
+    @Param("personId") personId: string,
+    @Query("organizationId") organizationId?: string,
+    @Headers("authorization") auth?: string,
+    @Headers("x-service-token") xToken?: string,
+  ) {
+    this.guard(auth, xToken);
+    const orgId = organizationId?.trim();
+    if (!orgId) {
+      throw new BadRequestException("organizationId query required");
+    }
+    return this.mdm.resolveIdentifierForCompliance(personId, orgId);
   }
 
   @Post("persons")

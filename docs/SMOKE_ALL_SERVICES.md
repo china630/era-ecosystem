@@ -4,6 +4,15 @@ Run from umbrella root after `cp .env.example .env`.
 
 **Phase A gate:** platform smoke (orchestrator RBAC, control-plane auth, 13 ingress event types, contracts/gov-budget) + vertical E2E samples below.
 
+## Integration audits (static CI)
+
+```bash
+npm run audit:integration:strict
+node scripts/refresh-integration-audit-docs.mjs --write   # after delivery wave
+```
+
+See [INTEGRATION_AUDIT_CI.md](./INTEGRATION_AUDIT_CI.md).
+
 ## Hosts file
 
 ```
@@ -250,6 +259,7 @@ Finance worker idempotency: table `satellite_events_processed` — replay same `
 | Retail R3 | `POST /api/receipts/:id/void`, `POST /api/receipts/:id/return`, `POST /api/shifts/close` |
 | Retail R2 | `GET /api/presets` |
 | CRM C1 | `POST /api/leads` → `POST /api/leads/:id/convert` |
+| CRM C3 | v3.0: party fields on lead + extended convert event + `POST /api/leads/import` |
 | CRM C2 | `GET/POST /api/visits` |
 | Logistics L1 | `POST /api/trips` → `POST /api/trips/:id/complete` |
 | Logistics L2 | `GET/PATCH /api/trips/:id`, `GET/POST /api/trips/:id/pod`, `GET/POST /api/trips/:id/fuel-report`, `GET /api/reports/fuel?from=&to=` |
@@ -295,7 +305,7 @@ Automated via GitHub Actions ([`docs/CI_CD.md`](./CI_CD.md)):
 | Workflow | What it verifies |
 |----------|------------------|
 | [`ci.yml`](../.github/workflows/ci.yml) | Packages, orchestrator/finance tests, satellite build+jest |
-| [`build-images.yml`](../.github/workflows/build-images.yml) | 13 images pushed to GHCR |
+| [`build-images.yml`](../.github/workflows/build-images.yml) | 16 images pushed to GHCR (incl. bank-core, bank, bank-dbo) |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | `docker-compose.prod.yml` pull, migrate, `ecosystem-smoke-all.mjs` |
 
 Manual parity:
@@ -454,10 +464,15 @@ curl -s -X POST http://localhost:3300/api/receipts/<RECEIPT_ID>/apply-promo \
   -d '{"discountPercent":10}'
 ```
 
-### era-crm (:3303)
+### era-crm (:3207 local / :3303 docker)
 
 ```bash
-curl -s -X POST http://localhost:3303/api/visits \
+curl -s -X POST http://localhost:3207/api/leads \
+  -H "Content-Type: application/json" \
+  -H "Cookie: era_satellite_token=<token>" \
+  -d '{"title":"Test MMC","partyKind":"LEGAL_ENTITY","taxId":"1234567890","companyName":"Test MMC","contactPhone":"+994501234567","activitySector":"hotels"}'
+
+curl -s -X POST http://localhost:3207/api/visits \
   -H "Content-Type: application/json" \
   -d '{"leadId":"<id>","latitude":40.4093,"longitude":49.8671,"addressLabel":"Baku"}'
 

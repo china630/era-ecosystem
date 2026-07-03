@@ -1,9 +1,9 @@
 /**
- * Backfill PatientRef.globalPersonId via MDM resolve.
- * Run: npx tsx prisma/scripts/backfill-global-person-id.ts
+ * Report PatientRef rows missing globalPersonId (run before W1 migration to resolve via legacy script).
+ * Post-migration: lists orphans requiring manual MDM resolve in UI.
+ * Usage: npx tsx prisma/scripts/backfill-global-person-id.ts
  */
 import "dotenv/config";
-import { resolvePersonIdentity } from "@era/satellite-kit";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -11,48 +11,20 @@ const prisma = new PrismaClient();
 async function main() {
   const patients = await prisma.patientRef.findMany({
     where: { globalPersonId: null },
-    select: {
-      id: true,
-      fullName: true,
-      phone: true,
-      finCode: true,
-      passportNumber: true,
-      issuingCountry: true,
-      nationality: true,
-    },
+    select: { id: true, refCode: true, fullName: true, phone: true },
   });
 
-  let linked = 0;
-  let skipped = 0;
-  let failed = 0;
-  for (const p of patients) {
-    try {
-      const r = await resolvePersonIdentity({
-        fin: p.finCode ?? undefined,
-        passport: p.passportNumber ?? undefined,
-        issuingCountry: p.issuingCountry ?? p.nationality ?? undefined,
-        fullName: p.fullName,
-        phone: p.phone ?? undefined,
-        nationality: p.nationality ?? undefined,
-      });
-      if (!r.globalPersonId) {
-        skipped++;
-        continue;
-      }
-      await prisma.patientRef.update({
-        where: { id: p.id },
-        data: { globalPersonId: r.globalPersonId },
-      });
-      linked++;
-    } catch (err) {
-      failed++;
-      console.warn(
-        `Skip patient ${p.id}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
+  if (patients.length === 0) {
+    console.log("All patients have globalPersonId.");
+    return;
   }
-  console.log(
-    `Linked ${linked} / ${patients.length} patients (skipped ${skipped}, failed ${failed})`,
+
+  console.warn(`Patients without globalPersonId: ${patients.length}`);
+  for (const p of patients) {
+    console.warn(`  ${p.refCode} — ${p.fullName} (${p.id})`);
+  }
+  console.warn(
+    "Resolve via clinic UI (re-enter FIN/passport) or run pre-migration backfill before DROP columns.",
   );
 }
 

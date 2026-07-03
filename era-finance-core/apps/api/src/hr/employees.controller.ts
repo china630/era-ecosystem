@@ -31,6 +31,7 @@ import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { BulkPrefillEmployeesDto } from "./dto/bulk-prefill-employees.dto";
 import { BulkSyncResultEmployeesDto } from "./dto/bulk-sync-result-employees.dto";
 import { ConvertEmployeeToFinDto, CreateEmployeeDto } from "./dto/create-employee.dto";
+import { ResolveEmployeePersonDto } from "./dto/resolve-employee-person.dto";
 import { UpdateEmployeeDto } from "./dto/update-employee.dto";
 import { DepartmentHeadScopeService } from "./department-head-scope.service";
 import { EmployeesService } from "./employees.service";
@@ -86,6 +87,16 @@ export class EmployeesController {
     });
   }
 
+  @Get("emas-prefill")
+  @ApiOperation({ summary: "ƏMAS prefill by cpEmploymentId or employeeId" })
+  getEmasPrefill(
+    @OrganizationId() organizationId: string,
+    @Query("employeeId") employeeId?: string,
+    @Query("cpEmploymentId") cpEmploymentId?: string,
+  ) {
+    return this.employees.getEmasPrefill(organizationId, { employeeId, cpEmploymentId });
+  }
+
   @Get(":id/prefill")
   @ApiOperation({
     summary:
@@ -127,6 +138,17 @@ export class EmployeesController {
   @ApiOperation({ summary: "Сотрудник по id" })
   getOne(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.employees.getOne(organizationId, id);
+  }
+
+  @Post("resolve-person")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.HR_MANAGER)
+  @ApiOperation({ summary: "Resolve MDM person for payroll hire (FIN lookup, no local PII persist)" })
+  resolvePerson(
+    @OrganizationId() organizationId: string,
+    @Body() dto: ResolveEmployeePersonDto,
+  ) {
+    return this.employees.resolvePersonForHire(organizationId, dto);
   }
 
   @Post()

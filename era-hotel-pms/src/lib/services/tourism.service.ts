@@ -1,6 +1,25 @@
+import { resolveIdentifierForCompliance } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 import { getPropertyCode } from '@/lib/services/hotel.service';
 import { getTourismAdapter } from '@/lib/compliance/tourism-adapter';
+
+async function resolveGuestPassportForExport(guest: {
+  globalPersonId: string | null;
+  fullName: string;
+}): Promise<string> {
+  if (!guest.globalPersonId) {
+    console.warn(`Tourism export: guest ${guest.fullName} missing globalPersonId`);
+    return '';
+  }
+  const identity = await resolveIdentifierForCompliance(guest.globalPersonId);
+  if (!identity || identity.accessDenied) {
+    console.warn(
+      `Tourism export: MDM compliance resolve denied for ${guest.globalPersonId}`,
+    );
+    return '';
+  }
+  return identity.passportNumber ?? identity.fin ?? '';
+}
 
 async function buildPayload(reservationId: string) {
   const res = await prisma.reservation.findUniqueOrThrow({
@@ -8,9 +27,10 @@ async function buildPayload(reservationId: string) {
     include: { guest: true, room: { include: { roomType: true } }, roomType: true },
   });
   const propertyCode = await getPropertyCode();
+  const passportNumber = await resolveGuestPassportForExport(res.guest);
   return {
     fullName: res.guest.fullName,
-    passportNumber: res.guest.passportNumber ?? res.guest.nationalIdFin ?? '',
+    passportNumber,
     checkInDate: res.checkInDate.toISOString().slice(0, 10),
     checkOutDate: res.checkOutDate.toISOString().slice(0, 10),
     roomNumber: res.room?.roomNumber ?? null,

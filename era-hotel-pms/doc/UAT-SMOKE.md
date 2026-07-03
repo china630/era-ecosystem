@@ -35,8 +35,9 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 
 ## 2. Booking (PMS-01)
 
-1. `/bookings/new` — create guest via **+ New guest**; optional **FIN (MDM lookup)** → `globalPersonId` on guest.
-2. Create 3-night booking (room type + rate + dates).
+1. `/bookings/new` — create guest via **+ New guest**; enter FIN/passport in lookup fields → MDM link → verify guest row has `globalPersonId` and **no** local FIN/passport columns (DB).
+2. `/guests` — open guest card; Details tab shows **masked** FIN/passport from MDM ops-profile; edit uses transient lookup only.
+3. Create 3-night booking (room type + rate + dates).
 3. Confirm reservation on chessboard.
 
 ## 3. Check-in & folio (PMS-03, FIN-01)
@@ -65,6 +66,13 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 2. Run night audit � must fail with message.
 3. Close shift, run night audit � steps list + COMPLETED.
 4. Journal: `NIGHT_AUDIT_CLOSED`.
+
+### 6b. Settlement hub (pending walk-in)
+
+1. With Nafta org policy (`settlementHub=HOTEL_FRONT_CASH`): fb-pos walk-in ticket → **Send to reception**.
+2. `/front-cash/pending` — row appears; pay CASH → mock fiscal; fb ticket CLOSED via callback.
+3. Clinic walk-in visit complete → pending row; pay at Front Cash → visit `settledAt` set.
+4. Leave a pending row open → night audit **blocks** (default `pendingSettlementNaPolicy=BLOCK`); after pay → NA succeeds.
 
 ## 7. Channel (CH-01, CH-02)
 
@@ -318,6 +326,14 @@ UI paths (no curl) for [NAFTA_DOC_API_UI_AUDIT](../../docs/NAFTA_DOC_API_UI_AUDI
 ## Pass criteria
 
 - `npm run build` succeeds.
-- No blocking errors in flows 1�11 and �20.
+- No blocking errors in flows 1–11 and §20.
 - Outbound journal reflects folio ops when channels enabled.
+
+## 26. Platform catalog gateway (Wave 2 — no finance-core for FX/VÖEN)
+
+Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-core stopped** (sanatorium-autonomous smoke).
+
+1. **FX badge:** `/admin/master-data` → rate plan in **USD** → booking/folio shows AZN equivalent via `FxEquivalentBadge` (`GET /api/fx-preview` → orchestrator catalog).
+2. **Travel agency VÖEN:** `/admin/travel-agencies` (or counterparty form with VÖEN field) → lookup returns company name without finance API up.
+3. **Auto-BAR calendar:** `/admin/bar-calendar` loads; non-working days respected (orchestrator calendar proxy + Sat/Sun fallback if hub down).
 

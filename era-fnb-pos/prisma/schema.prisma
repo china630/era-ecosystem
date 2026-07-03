@@ -20,6 +20,7 @@ enum TableStatus {
 enum TicketStatus {
   OPEN
   HELD
+  PENDING_HUB
   CLOSED
   VOID
 }
@@ -155,6 +156,8 @@ model Ticket {
   walkInLabel             String?      @map("walk_in_label")
   beoId                   String?      @map("beo_id")
   roomChargeReservationId String?      @map("room_charge_reservation_id")
+  settlementPendingId     String?      @map("settlement_pending_id")
+  hubFiscalReceiptId      String?      @map("hub_fiscal_receipt_id")
   subtotalAzn             Decimal      @default(0) @map("subtotal_azn") @db.Decimal(12, 2)
   discountPercent         Decimal      @default(0) @map("discount_percent") @db.Decimal(5, 2)
   totalAzn                Decimal      @default(0) @map("total_azn") @db.Decimal(12, 2)
@@ -207,6 +210,7 @@ model StaffRoster {
   pinHash        String   @map("pin_hash")
   globalPersonId String?  @map("global_person_id")
   financeEmployeeId String? @map("finance_employee_id")
+  cpEmploymentId  String? @unique @map("cp_employment_id")
   active         Boolean  @default(true)
   createdAt      DateTime @default(now()) @map("created_at")
 
@@ -244,6 +248,7 @@ model User {
   role              Role      @relation(fields: [roleId], references: [id])
   globalPersonId    String?   @map("global_person_id")
   financeEmployeeId String?   @map("finance_employee_id")
+  cpEmploymentId    String?   @unique @map("cp_employment_id")
   status            String    @default("ACTIVE")
   isCrossSystem     Boolean   @default(false) @map("is_cross_system")
   lastLoginAt       DateTime? @map("last_login_at")

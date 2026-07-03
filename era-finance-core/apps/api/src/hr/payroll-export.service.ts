@@ -1,11 +1,16 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import ExcelJS from "exceljs";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { batchEmployeePersonMap } from "./employee-person.util";
 import { decryptText } from "../security/pii-crypto.util";
 
 @Injectable()
 export class PayrollExportService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mdm: OrchestratorMdmClientService,
+  ) {}
 
   async buildRunXlsxBuffer(
     organizationId: string,
@@ -18,6 +23,12 @@ export class PayrollExportService {
       },
     });
     if (!run) throw new NotFoundException("Payroll run not found");
+
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      run.slips.map((s) => s.employee.globalPersonId),
+    );
 
     const wb = new ExcelJS.Workbook();
     wb.creator = "ERA Finance";
@@ -39,7 +50,8 @@ export class PayrollExportService {
     ];
 
     for (const s of run.slips) {
-      const fio = `${s.employee.lastName} ${s.employee.firstName}`.trim();
+      const p = personMap.get(s.employee.globalPersonId);
+      const fio = `${p?.lastName ?? "—"} ${p?.firstName ?? "—"}`.trim();
       sheet.addRow({
         voen: s.employee.voenCipher ? (decryptText(s.employee.voenCipher) ?? "") : "",
         fio,

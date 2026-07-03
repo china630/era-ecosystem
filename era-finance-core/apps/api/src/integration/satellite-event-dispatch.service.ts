@@ -22,6 +22,15 @@ import {
   isSatelliteWholesaleOrderConfirmed,
   isSatelliteFbStockConsumptionCompleted,
   isSatelliteStaffClockBatch,
+  isSatelliteWorkforceAbsenceApproved,
+  isSatelliteWorkforceAbsenceCancelled,
+  isSatelliteWorkforceAbsenceUpdated,
+  isSatelliteWorkforceEmploymentTransferred,
+  isSatelliteWorkforceEmploymentHired,
+  isSatelliteWorkforceOrgUnitArchived,
+  isSatelliteWorkforceOrgUnitUpserted,
+  isSatelliteWorkforcePositionUpserted,
+  isSatelliteWorkforceTimesheetApproved,
   satelliteStaffClockBatchSchema,
   satelliteAutoWorkOrderCompletedSchema,
   satelliteClinicLabOrderCompletedSchema,
@@ -54,8 +63,13 @@ import {
 } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { InvoicesService } from "../invoices/invoices.service";
-import { PrismaService } from "../prisma/prisma.service";
+import { CounterpartiesService } from "../counterparties/counterparties.service";
 import { TimesheetService } from "../hr/timesheet.service";
+import { PrismaService } from "../prisma/prisma.service";
+import { WorkforceAbsenceSyncService } from "./workforce-absence-sync.service";
+import { WorkforceOrgSyncService } from "./workforce-org-sync.service";
+import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.service";
+import { WorkforceTimesheetSyncService } from "./workforce-timesheet-sync.service";
 
 export type SatelliteDispatchResult = {
   transactionId?: string;
@@ -73,12 +87,44 @@ export class SatelliteEventDispatchService {
     private readonly invoices: InvoicesService,
     private readonly posting: PostingAccountResolver,
     private readonly timesheet: TimesheetService,
+    private readonly workforceAbsenceSync: WorkforceAbsenceSyncService,
+    private readonly workforceOrgSync: WorkforceOrgSyncService,
+    private readonly workforceEmploymentSync: WorkforceEmploymentSyncService,
+    private readonly workforceTimesheetSync: WorkforceTimesheetSyncService,
+    private readonly counterparties: CounterpartiesService,
   ) {}
 
   async dispatch(
     organizationId: string,
     data: unknown,
   ): Promise<SatelliteDispatchResult> {
+    if (isSatelliteWorkforceAbsenceApproved(data)) {
+      return this.workforceAbsenceSync.handleApproved(organizationId, data);
+    }
+    if (isSatelliteWorkforceAbsenceUpdated(data)) {
+      return this.workforceAbsenceSync.handleUpdated(organizationId, data);
+    }
+    if (isSatelliteWorkforceAbsenceCancelled(data)) {
+      return this.workforceAbsenceSync.handleCancelled(organizationId, data);
+    }
+    if (isSatelliteWorkforceOrgUnitUpserted(data)) {
+      return this.workforceOrgSync.handleOrgUnitUpserted(organizationId, data);
+    }
+    if (isSatelliteWorkforceOrgUnitArchived(data)) {
+      return this.workforceOrgSync.handleOrgUnitArchived(organizationId, data);
+    }
+    if (isSatelliteWorkforcePositionUpserted(data)) {
+      return this.workforceOrgSync.handlePositionUpserted(organizationId, data);
+    }
+    if (isSatelliteWorkforceEmploymentTransferred(data)) {
+      return this.workforceOrgSync.handleEmploymentTransferred(organizationId, data);
+    }
+    if (isSatelliteWorkforceEmploymentHired(data)) {
+      return this.workforceEmploymentSync.handleHired(organizationId, data);
+    }
+    if (isSatelliteWorkforceTimesheetApproved(data)) {
+      return this.workforceTimesheetSync.handleApproved(organizationId, data);
+    }
     if (isSatelliteHotelNightAuditClosed(data)) {
       const event = satelliteHotelNightAuditClosedSchema.parse(data);
       return this.handleHotelNightAudit(organizationId, event);
@@ -553,10 +599,38 @@ export class SatelliteEventDispatchService {
     organizationId: string,
     event: ReturnType<typeof satelliteCrmLeadConvertedSchema.parse>,
   ): Promise<SatelliteDispatchResult> {
-    const cpId = await this.resolveCounterpartyId(
+    let cpId = await this.resolveCounterpartyId(
       organizationId,
       event.payload.counterpartyId,
     );
+
+    if (!cpId) {
+      const partyKind = event.payload.partyKind
+        ?? (event.payload.taxId ? "LEGAL_ENTITY" : "INDIVIDUAL");
+
+      if (partyKind === "LEGAL_ENTITY" && event.payload.taxId) {
+        const cp = await this.counterparties.findOrCreateByVoen({
+          organizationId,
+          taxId: event.payload.taxId,
+          nameFallback: event.payload.companyName?.trim() || event.payload.taxId,
+          legalAddressFallback: null,
+        });
+        cpId = cp.id;
+      } else if (partyKind === "INDIVIDUAL") {
+        const cp = await this.counterparties.findOrCreateIndividualForCrm({
+          organizationId,
+          nameFallback:
+            event.payload.companyName?.trim()
+            || event.payload.contactPhone
+            || `CRM lead ${event.payload.leadId.slice(0, 8)}`,
+          contactPhone: event.payload.contactPhone,
+          contactEmail: event.payload.contactEmail,
+          globalPersonId: event.payload.globalPersonId,
+        });
+        cpId = cp.id;
+      }
+    }
+
     let invoiceId: string | undefined;
     if (cpId && event.payload.estimatedAmount && event.payload.estimatedAmount > 0) {
       invoiceId = await this.createDraftInvoice(

@@ -160,17 +160,18 @@ Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-r
 - **SoR:** Orchestrator `era_mdm` — store **`globalPersonId` only** in satellite DBs.
 - **Client:** `@era/satellite-kit` `linkPersonIdentity` (lookup FIN → resolve-or-create).
 - **Clinic:** `PatientRef`, `Practitioner` — strict; `/api/mdm/person-lookup`, `/api/mdm/person-merge`.
-- **Hotel:** `Guest` — strong; GuestCardModal details tab MDM lookup + merge.
+- **Hotel:** `Guest` — **strong + ops cache (W4)**; identity MDM-only (`globalPersonId`); masked ops-profile on guest card; transient FIN/passport at intake.
 - **Finance:** `Employee`, `Counterparty` (ИП) — `OrchestratorMdmClientService`.
 - **Bank:** CIF natural + `POST /cif/customers/:id/beneficial-owners` (API).
-- Audit matrix: [MDM_IDENTITY_AUDIT.md](./MDM_IDENTITY_AUDIT.md) · ADR [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
+- Audit matrix: [MDM_IDENTITY_AUDIT.md](./MDM_IDENTITY_AUDIT.md) · layer compliance [DATA_MODEL_INTEGRATION_AUDIT.md](./DATA_MODEL_INTEGRATION_AUDIT.md) · ADR [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md).
 
 ## Reference data (era-data-hub)
 
 - **SoR:** `era-data-hub` `/registry/v1/*` — FX, calendar, HS, banks, VÖEN directory, geo, UoM, tax, CoA templates.
 - **Primary consumers:** `era-finance-core`, `era-bank-core` (`ERA_DATA_HUB_ENABLED`, `DATA_HUB_SERVICE_TOKEN`).
-- **Industry rule:** no direct hub calls; use Finance handoffs (`financeFxPreview`, `financeHsTariffPreview`, `financeVoenLookup`) or deep links to Finance UI.
-- Audit: [REFERENCE_DATA_CONSUMER_AUDIT.md](./REFERENCE_DATA_CONSUMER_AUDIT.md) · ADR [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md).
+- **Industry rule:** sync catalog reads via **Orchestrator Platform Gateway** `GET /platform/v1/catalog/*` (not data-hub or Finance handoffs). HS tariff preview and tenant counterparty ops remain Finance-only.
+- ADR: [orchestrator-platform-integration-gateway.md](./adr/orchestrator-platform-integration-gateway.md) · [reference-data-ecosystem.md](./adr/reference-data-ecosystem.md)
+- Audit: [REFERENCE_DATA_CONSUMER_AUDIT.md](./REFERENCE_DATA_CONSUMER_AUDIT.md) · layer compliance [DATA_MODEL_INTEGRATION_AUDIT.md](./DATA_MODEL_INTEGRATION_AUDIT.md)
 
 ## Finance boundary (all satellites)
 

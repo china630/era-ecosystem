@@ -17,7 +17,8 @@ describe("PsaService.generateInvoice", () => {
       },
     };
     const invoices = {};
-    const svc = new PsaService(prisma as any, invoices as any);
+    const mdm = {};
+    const svc = new PsaService(prisma as any, invoices as any, mdm as any);
     await expect(
       svc.generateInvoice("org", "proj", {
         dateFrom: "2026-05-10",

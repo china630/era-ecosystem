@@ -40,7 +40,11 @@ type Episode = {
   id: string;
   reservationId: string | null;
   hotelStayId: string | null;
+  roomNumber: string | null;
   organizationId: string;
+  patientOrigin: string;
+  programCode: string | null;
+  checkupCompletedAt: string | null;
   status: string;
   openedAt: string;
   patientRef: { id: string; fullName: string; refCode: string } | null;
@@ -87,6 +91,11 @@ export default function SanatoriumPage() {
   const [diagnosisModalOpen, setDiagnosisModalOpen] = useState(false);
   const [labModalOpen, setLabModalOpen] = useState(false);
   const [programModalOpen, setProgramModalOpen] = useState(false);
+  const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [rescheduleOrderId, setRescheduleOrderId] = useState<string | null>(null);
+  const [rescheduleTime, setRescheduleTime] = useState("09:00");
+  const [walkInName, setWalkInName] = useState("");
+  const [walkInFin, setWalkInFin] = useState("");
   const [busy, setBusy] = useState(false);
 
   const loadList = useCallback(async () => {
@@ -175,7 +184,7 @@ export default function SanatoriumPage() {
     }
     setMsg(
       res.ok
-        ? action === "instantiate-program"
+        ? action === "instantiate-program" || action === "complete-checkup"
           ? t("programStarted")
           : t("saved")
         : (data.error ?? t("failed")),
@@ -192,9 +201,53 @@ export default function SanatoriumPage() {
         setDiagnosisModalOpen(false);
       }
       if (action === "lab") setLabModalOpen(false);
-      if (action === "instantiate-program") setProgramModalOpen(false);
+      if (action === "instantiate-program" || action === "complete-checkup") {
+        setProgramModalOpen(false);
+      }
       await reloadEpisode();
     }
+  }
+
+  async function registerWalkIn() {
+    setBusy(true);
+    const res = await fetch("/api/sanatorium/episodes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: walkInName,
+        fin: walkInFin || undefined,
+        programCode,
+      }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (!res.ok) {
+      setMsg(data.error ?? t("failed"));
+      return;
+    }
+    setWalkInModalOpen(false);
+    setWalkInName("");
+    setWalkInFin("");
+    setMsg(t("walkInRegistered"));
+    await loadList();
+    const ep = data.data ?? data;
+    if (ep?.id) setSelectedId(ep.id);
+  }
+
+  async function rescheduleProcedure() {
+    if (!rescheduleOrderId) return;
+    setBusy(true);
+    const scheduledAt = new Date(`${chartDate}T${rescheduleTime}:00`).toISOString();
+    const res = await fetch(`/api/procedures/${rescheduleOrderId}/reschedule`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduledAt }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    setMsg(res.ok ? t("rescheduled") : (data.error ?? t("failed")));
+    setRescheduleOrderId(null);
+    if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
 
   async function completeProcedure(orderId: string) {
@@ -212,6 +265,10 @@ export default function SanatoriumPage() {
   }
 
   const program = selected?.programInstance;
+  const canCompleteCheckup =
+    selected &&
+    !program &&
+    (selected.complaints.length > 0 || selected.diagnoses.length > 0);
 
   return (
     <>
@@ -219,9 +276,17 @@ export default function SanatoriumPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-            {tNav("home")}
-          </Link>
+          <div className="flex gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+              {t("registerWalkIn")}
+            </button>
+            <Link href="/sanatorium/resources" className={PRIMARY_BUTTON_CLASS}>
+              {t("resourceCalendar")}
+            </Link>
+            <Link href="/" className={PRIMARY_BUTTON_CLASS}>
+              {tNav("home")}
+            </Link>
+          </div>
         }
       />
       <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-6`}>
@@ -375,13 +440,17 @@ export default function SanatoriumPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded border border-dashed border-[#ECF0F1] p-4">
+              <div className="rounded border border-dashed border-[#ECF0F1] p-4 space-y-2">
+                {!selected.checkupCompletedAt && (
+                  <p className="text-[13px] text-[#7F8C8D]">{t("checkupPendingHint")}</p>
+                )}
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
+                  disabled={!canCompleteCheckup}
                   onClick={() => setProgramModalOpen(true)}
                 >
-                  {t("startProgram")}
+                  {t("completeCheckupSchedule")}
                 </button>
               </div>
             )}
@@ -407,16 +476,30 @@ export default function SanatoriumPage() {
                       </td>
                       <td className="px-3 py-2">{o.procedureName}</td>
                       <td className="px-3 py-2">{statusLabel(o.status)}</td>
-                      <td className="px-3 py-2 text-right">
+                      <td className="px-3 py-2 text-right space-x-2">
                         {o.status === "SCHEDULED" || o.status === "IN_PROGRESS" ? (
-                          <button
-                            type="button"
-                            className={PRIMARY_BUTTON_CLASS}
-                            disabled={busy}
-                            onClick={() => void completeProcedure(o.id)}
-                          >
-                            {t("complete")}
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              className={PRIMARY_BUTTON_CLASS}
+                              disabled={busy}
+                              onClick={() => void completeProcedure(o.id)}
+                            >
+                              {t("complete")}
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded border px-2 py-1 text-xs"
+                              onClick={() => {
+                                setRescheduleOrderId(o.id);
+                                setRescheduleTime(
+                                  new Date(o.scheduledAt).toISOString().slice(11, 16),
+                                );
+                              }}
+                            >
+                              {t("reschedule")}
+                            </button>
+                          </>
                         ) : null}
                       </td>
                     </tr>
@@ -544,19 +627,20 @@ export default function SanatoriumPage() {
 
       <ModalShell
         open={programModalOpen}
-        title={t("startProgram")}
+        title={t("completeCheckupSchedule")}
         onClose={() => setProgramModalOpen(false)}
         footer={
           <ModalFooter
             onCancel={() => setProgramModalOpen(false)}
             onSubmit={() =>
-              void postAction("instantiate-program", {
-                programCode,
+              void postAction("complete-checkup", {
+                programCode: programCode || selected?.programCode || "DETOX-7",
                 startsOn: new Date(`${programStartsOn}T09:00:00`).toISOString(),
               })
             }
             busy={busy}
-            submitLabel={t("startProgram")}
+            submitDisabled={!canCompleteCheckup}
+            submitLabel={t("completeCheckupSchedule")}
           />
         }
       >
@@ -579,6 +663,52 @@ export default function SanatoriumPage() {
             />
           </div>
         </div>
+      </ModalShell>
+
+      <ModalShell
+        open={walkInModalOpen}
+        title={t("registerWalkIn")}
+        onClose={() => setWalkInModalOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setWalkInModalOpen(false)}
+            onSubmit={() => void registerWalkIn()}
+            busy={busy}
+            submitLabel={t("registerWalkIn")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("walkInName")}</label>
+            <input className={MODAL_INPUT_CLASS} value={walkInName} onChange={(e) => setWalkInName(e.target.value)} />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t("walkInFin")}</label>
+            <input className={MODAL_INPUT_CLASS} value={walkInFin} onChange={(e) => setWalkInFin(e.target.value)} />
+          </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={Boolean(rescheduleOrderId)}
+        title={t("reschedule")}
+        onClose={() => setRescheduleOrderId(null)}
+        footer={
+          <ModalFooter
+            onCancel={() => setRescheduleOrderId(null)}
+            onSubmit={() => void rescheduleProcedure()}
+            busy={busy}
+            submitLabel={t("reschedule")}
+          />
+        }
+      >
+        <input
+          type="time"
+          className={MODAL_INPUT_CLASS}
+          value={rescheduleTime}
+          onChange={(e) => setRescheduleTime(e.target.value)}
+        />
       </ModalShell>
     </>
   );

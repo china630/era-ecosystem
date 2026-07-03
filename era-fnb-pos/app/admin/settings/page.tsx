@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import FbPosNav from "@/components/FbPosNav";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -53,8 +54,9 @@ export default function AdminSettingsPage() {
         </tbody>
       </table>
       <ModalShell open={open} title={t("editOutlet")} onClose={() => setOpen(false)}>
-        <input
-          className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm"
+        <Field
+          label={t("outletName")}
+          preset="shortText"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />

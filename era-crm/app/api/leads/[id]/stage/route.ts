@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { LeadStage } from "@prisma/client";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { validatePartyForStage } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
 import { applyPipelineRules } from "@/lib/pipeline-rules";
 
@@ -17,6 +18,10 @@ export async function PATCH(
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return jsonError("Lead not found", 404);
     const body = bodySchema.parse(await req.json());
+
+    const gateError = validatePartyForStage(lead, body.stage);
+    if (gateError) return jsonError(gateError, 400);
+
     const fromStage = lead.stage;
     const updated = await prisma.lead.update({
       where: { id },

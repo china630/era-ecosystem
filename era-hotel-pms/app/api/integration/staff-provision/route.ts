@@ -29,6 +29,7 @@ export async function POST(request: Request) {
   try {
     const event = await request.json();
     if (isSatelliteStaffProvisioned(event)) {
+      /** T3 ops cache: fullName is display stamp only; identifiers stay in MDM (Plan D). */
       const parsed = satelliteStaffProvisionedSchema.parse(event);
       const p = parsed.payload;
       const roleCode = ROLE_CODES[p.satelliteRole] ?? "reception";
@@ -36,20 +37,41 @@ export async function POST(request: Request) {
       if (!role) return NextResponse.json({ error: `Role ${roleCode} missing` }, { status: 400 });
       const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
       const pin = p.pin ?? "0000";
-      const user = await prisma.user.upsert({
-        where: { login },
-        create: {
-          login,
-          fullName: p.fullName,
-          passwordHash: hashSecret(pin),
-          roleId: role.id,
-          isCrossSystem: true,
-        },
-        update: {
-          fullName: p.fullName,
-          status: "ACTIVE",
-        },
-      });
+      const globalPersonId = parsed.globalPersonId ?? null;
+      const cpEmploymentId = p.cpEmploymentId;
+
+      const byCp = await prisma.user.findFirst({ where: { cpEmploymentId } });
+      const user = byCp
+        ? await prisma.user.update({
+            where: { id: byCp.id },
+            data: {
+              fullName: p.fullName,
+              status: "ACTIVE",
+              globalPersonId,
+              cpEmploymentId,
+              roleId: role.id,
+            },
+          })
+        : await prisma.user.upsert({
+            where: { login },
+            create: {
+              login,
+              fullName: p.fullName,
+              passwordHash: hashSecret(pin),
+              roleId: role.id,
+              isCrossSystem: true,
+              globalPersonId,
+              cpEmploymentId,
+              ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
+            },
+            update: {
+              fullName: p.fullName,
+              status: "ACTIVE",
+              globalPersonId,
+              cpEmploymentId,
+              roleId: role.id,
+            },
+          });
       return NextResponse.json({ satelliteUserId: user.id });
     }
     if (isSatelliteStaffDeactivated(event)) {
@@ -60,6 +82,10 @@ export async function POST(request: Request) {
           data: { status: "DISABLED" },
         });
       }
+      await prisma.user.updateMany({
+        where: { cpEmploymentId: parsed.payload.cpEmploymentId },
+        data: { status: "DISABLED" },
+      });
       return NextResponse.json({ ok: true });
     }
     return NextResponse.json({ error: "Unsupported event" }, { status: 400 });

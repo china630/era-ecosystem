@@ -108,6 +108,18 @@ enum CashShiftStatus {
   CLOSED
 }
 
+enum SettlementPendingStatus {
+  PENDING
+  PAID
+  VOID
+}
+
+enum SettlementSourceSystem {
+  FNB_POS
+  CLINIC
+  RETAIL
+}
+
 enum HousekeepingTaskStatus {
   PENDING
   IN_PROGRESS
@@ -220,20 +232,23 @@ model Role {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  login        String     @unique
-  email        String?
-  phone        String?    @unique
-  passwordHash String
-  fullName     String
-  department   String?
-  status       UserStatus @default(ACTIVE)
-  roleId       String
-  role         Role       @relation(fields: [roleId], references: [id])
-  isCrossSystem Boolean   @default(false)
-  lastLoginAt  DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                String     @id @default(uuid())
+  login             String     @unique
+  email             String?
+  phone             String?    @unique
+  passwordHash      String
+  fullName          String
+  department        String?
+  status            UserStatus @default(ACTIVE)
+  roleId            String
+  role              Role       @relation(fields: [roleId], references: [id])
+  isCrossSystem     Boolean    @default(false)
+  globalPersonId    String?    @map("global_person_id")
+  financeEmployeeId String?    @unique @map("finance_employee_id")
+  cpEmploymentId    String?    @unique @map("cp_employment_id")
+  lastLoginAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   @@index([roleId])
   @@index([status])
@@ -662,9 +677,7 @@ model Guest {
   title              String?
   gender             String?
   nationality        String         @default("AZ")
-  nationalIdFin      String?
   voen               String?
-  passportNumber     String?
   phone              String?
   email              String?
   loyaltyTier        String?
@@ -727,6 +740,8 @@ model Guest {
   migrationRegistrations MigrationRegistration[]
   salesContracts       SalesContract[]     @relation("SalesContractCompany")
   banquetEventsAsCompany BanquetEvent[]    @relation("BanquetCompanyGuest")
+
+  @@index([globalPersonId])
 }
 
 enum MigrationRegistrationStatus {
@@ -1538,8 +1553,39 @@ model CashShift {
   cashier    String
   registerId String
   status     CashShiftStatus @default(OPEN)
+  isPrimary  Boolean         @default(false)
   openedAt   DateTime        @default(now())
   closedAt   DateTime?
+  pendingSettlements SettlementPendingCharge[]
+}
+
+model SettlementPendingCharge {
+  id               String                   @id @default(uuid())
+  status           SettlementPendingStatus  @default(PENDING)
+  sourceSystem     SettlementSourceSystem
+  sourceOrgId      String
+  sourceRef        String
+  idempotencyKey   String                   @unique
+  amount           Decimal                  @db.Decimal(12, 2)
+  currency         String                   @default("AZN")
+  description      String
+  payerLabel       String?
+  globalPersonId   String?
+  reservationId    String?
+  cashShiftId      String?
+  cashShift        CashShift?               @relation(fields: [cashShiftId], references: [id], onDelete: SetNull)
+  paymentMethod    String?
+  fiscalReceiptId  String?
+  fiscalQrPayload  String?
+  paidAt           DateTime?
+  voidReason       String?
+  voidedAt         DateTime?
+  businessDate     DateTime                 @db.Date
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([status, businessDate])
+  @@index([sourceSystem, sourceRef])
 }
 
 model BusinessDay {

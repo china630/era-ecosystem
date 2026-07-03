@@ -82,14 +82,15 @@ model DrawingRevision {
 }
 
 model TimesheetEntry {
-  id         String   @id @default(cuid())
-  projectId  String
-  workerRef  String
-  hours      Decimal  @db.Decimal(10, 2)
-  workDate   DateTime @db.Date
-  source     String   @default("CSV")
-  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  projectId       String
+  workerRef       String
+  cpEmploymentId  String?  @map("cp_employment_id")
+  hours           Decimal  @db.Decimal(10, 2)
+  workDate        DateTime @db.Date
+  source          String   @default("CSV")
+  project         Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
 
   @@index([projectId, workDate])
 }

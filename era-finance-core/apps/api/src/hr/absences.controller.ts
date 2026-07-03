@@ -1,10 +1,8 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
-  Patch,
   Post,
   Query,
   UseGuards,
@@ -25,9 +23,7 @@ import { OrganizationId } from "../common/org-id.decorator";
 import { DepartmentHeadScopeService } from "./department-head-scope.service";
 import { AbsencesService } from "./absences.service";
 import { ListAbsencesQueryDto } from "./dto/list-absences-query.dto";
-import { CreateAbsenceDto } from "./dto/create-absence.dto";
 import { SickPayCalcDto } from "./dto/sick-pay-calc.dto";
-import { UpdateAbsenceDto } from "./dto/update-absence.dto";
 import { VacationPayCalcDto } from "./dto/vacation-pay-calc.dto";
 
 @ApiTags("hr-absences")
@@ -85,7 +81,7 @@ export class AbsencesController {
     UserRole.HR_MANAGER,
     UserRole.DEPARTMENT_HEAD,
   )
-  @ApiOperation({ summary: "Запись отсутствия" })
+  @ApiOperation({ summary: "Запись отсутствия (read-only mirror from CP)" })
   async getOne(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -96,73 +92,6 @@ export class AbsencesController {
       ? await this.scope.resolveManagedDepartmentId(organizationId, user.userId)
       : undefined;
     return this.absences.getOne(organizationId, id, departmentId);
-  }
-
-  @Post()
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
-  @ApiOperation({ summary: "Создать запись отсутствия" })
-  async create(
-    @OrganizationId() organizationId: string,
-    @Body() dto: CreateAbsenceDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    const role = requireOrgRole(user);
-    const departmentId = isDepartmentHeadRole(role)
-      ? await this.scope.resolveManagedDepartmentId(organizationId, user.userId)
-      : undefined;
-    return this.absences.create(organizationId, dto, departmentId);
-  }
-
-  @Patch(":id")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
-  @ApiOperation({ summary: "Обновить запись" })
-  async update(
-    @OrganizationId() organizationId: string,
-    @Param("id") id: string,
-    @Body() dto: UpdateAbsenceDto,
-    @CurrentUser() user: AuthUser,
-  ) {
-    const role = requireOrgRole(user);
-    const departmentId = isDepartmentHeadRole(role)
-      ? await this.scope.resolveManagedDepartmentId(organizationId, user.userId)
-      : undefined;
-    return this.absences.update(organizationId, id, dto, departmentId);
-  }
-
-  @Delete(":id")
-  @UseGuards(RolesGuard)
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.HR_MANAGER,
-    UserRole.DEPARTMENT_HEAD,
-  )
-  @ApiOperation({ summary: "Удалить запись" })
-  async remove(
-    @OrganizationId() organizationId: string,
-    @Param("id") id: string,
-    @CurrentUser() user: AuthUser,
-  ) {
-    const role = requireOrgRole(user);
-    const departmentId = isDepartmentHeadRole(role)
-      ? await this.scope.resolveManagedDepartmentId(organizationId, user.userId)
-      : undefined;
-    return this.absences.remove(organizationId, id, departmentId);
   }
 
   @Post("vacation-pay/calculate")

@@ -1,3 +1,4 @@
+import { resolveIdentifierForCompliance } from '@era/satellite-kit';
 import { prisma } from '@/lib/prisma';
 
 export async function createMigrationRegistration(input: {
@@ -10,7 +11,7 @@ export async function createMigrationRegistration(input: {
   });
   if (!guest) throw new Error('Guest not found');
 
-  const payload = buildMigrationPayload(guest, input.reservationId);
+  const payload = await buildMigrationPayload(guest, input.reservationId);
   return prisma.migrationRegistration.create({
     data: {
       guestId: input.guestId,
@@ -20,11 +21,10 @@ export async function createMigrationRegistration(input: {
   });
 }
 
-export function buildMigrationPayload(
+export async function buildMigrationPayload(
   guest: {
+    globalPersonId: string | null;
     fullName: string;
-    passportNumber: string | null;
-    nationalIdFin: string | null;
     nationality: string;
     birthDate: Date | null;
     visaType: string | null;
@@ -34,13 +34,23 @@ export function buildMigrationPayload(
   },
   reservationId?: string,
 ) {
+  let passportNumber: string | null = null;
+  let nationalIdFin: string | null = null;
+  if (guest.globalPersonId) {
+    const identity = await resolveIdentifierForCompliance(guest.globalPersonId);
+    if (identity && !identity.accessDenied) {
+      passportNumber = identity.passportNumber;
+      nationalIdFin = identity.fin;
+    }
+  }
+
   return {
     schemaVersion: 1,
     reservationId: reservationId ?? null,
     person: {
       fullName: guest.fullName,
-      passportNumber: guest.passportNumber,
-      nationalIdFin: guest.nationalIdFin,
+      passportNumber,
+      nationalIdFin,
       nationality: guest.nationality,
       birthDate: guest.birthDate?.toISOString().slice(0, 10) ?? null,
       visaType: guest.visaType,
@@ -63,6 +73,6 @@ export async function getMigrationPrefill(registrationId: string) {
   if (!row) throw new Error('Registration not found');
   const payload = row.payloadJson
     ? JSON.parse(row.payloadJson)
-    : buildMigrationPayload(row.guest, row.reservationId ?? undefined);
+    : await buildMigrationPayload(row.guest, row.reservationId ?? undefined);
   return { registrationId: row.id, status: row.status, payload };
 }

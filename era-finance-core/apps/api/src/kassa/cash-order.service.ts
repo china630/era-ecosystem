@@ -23,6 +23,8 @@ import {
   resolveCashAccountCodeForCurrency,
 } from "../common/cash-account-code.util";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { attachEmployeePerson, batchEmployeePersonMap, enrichEmployeesWithMdm } from "../hr/employee-person.util";
 import { ReportingService } from "../reporting/reporting.service";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { TreasuryService } from "../treasury/treasury.service";
@@ -57,6 +59,7 @@ export class CashOrderService {
     private readonly treasury: TreasuryService,
     private readonly approvals: ApprovalsService,
     private readonly posting: PostingAccountResolver,
+    private readonly mdm: OrchestratorMdmClientService,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
   ) {}
 
@@ -212,7 +215,7 @@ export class CashOrderService {
     const include = {
       counterparty: { select: { id: true, nameCipher: true, taxIdCipher: true } },
       employee: {
-        select: { id: true, firstName: true, lastName: true, finCode: true },
+        select: { id: true, globalPersonId: true },
       },
       cashFlowItem: { select: { id: true, code: true, name: true } },
       cashDesk: { select: { id: true, name: true } },
@@ -226,7 +229,13 @@ export class CashOrderService {
         include,
       }),
       this.prisma.cashOrder.count({ where }),
-    ]).then(([rows, total]) => ({
+    ]).then(async ([rows, total]) => {
+      const personMap = await batchEmployeePersonMap(
+        this.mdm,
+        organizationId,
+        rows.map((r) => r.employee?.globalPersonId).filter((id): id is string => Boolean(id)),
+      );
+      return {
       items: rows.map((row) => ({
         ...row,
         counterparty: row.counterparty
@@ -240,11 +249,15 @@ export class CashOrderService {
                 : "",
             }
           : null,
+        employee: row.employee
+          ? attachEmployeePerson(row.employee, personMap)
+          : null,
       })),
       total,
       page,
       pageSize,
-    }));
+    };
+    });
   }
 
   async createDraftPko(
@@ -663,11 +676,16 @@ export class CashOrderService {
     });
     if (!order) throw new NotFoundException("Cash order not found");
 
+    let emp = "";
+    if (order.employee?.globalPersonId) {
+      const map = await batchEmployeePersonMap(this.mdm, organizationId, [
+        order.employee.globalPersonId,
+      ]);
+      const p = map.get(order.employee.globalPersonId);
+      emp = p?.displayName ?? `${p?.lastName ?? ""} ${p?.firstName ?? ""}`.trim();
+    }
     const cp = order.counterparty?.nameCipher
       ? decryptText(order.counterparty.nameCipher) ?? ""
-      : "";
-    const emp = order.employee
-      ? `${order.employee.firstName} ${order.employee.lastName}`
       : "";
     const party = cp || emp || "—";
     const amountStr = order.amount.toFixed(2);
@@ -742,16 +760,15 @@ export class CashOrderService {
       today,
       ledgerType,
     );
-    const employees = await this.prisma.employee.findMany({
+    const employeesRaw = await this.prisma.employee.findMany({
       where: { organizationId },
       select: {
         id: true,
-        firstName: true,
-        lastName: true,
-        finCode: true,
+        globalPersonId: true,
         accountableAccountCode244: true,
       },
     });
+    const employees = await enrichEmployeesWithMdm(this.mdm, organizationId, employeesRaw);
     const byAccount = new Map(
       employees
         .filter((e) => e.accountableAccountCode244?.trim())

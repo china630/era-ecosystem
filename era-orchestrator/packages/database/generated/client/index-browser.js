@@ -266,11 +266,149 @@ exports.Prisma.WorkforceAssignmentScalarFieldEnum = {
   organizationId: 'organizationId',
   satelliteKey: 'satelliteKey',
   satelliteUserId: 'satelliteUserId',
+  cpEmploymentId: 'cpEmploymentId',
   financeEmployeeId: 'financeEmployeeId',
   role: 'role',
   status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceScopeScalarFieldEnum = {
+  id: 'id',
+  anchorOrganizationId: 'anchorOrganizationId',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrgUnitScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  parentId: 'parentId',
+  name: 'name',
+  code: 'code',
+  status: 'status',
+  sortOrder: 'sortOrder',
+  managerEmploymentId: 'managerEmploymentId',
+  managerUserId: 'managerUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrgUnitCommercialLinkScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  workforceScopeId: 'workforceScopeId',
+  orgUnitId: 'orgUnitId',
+  linkMode: 'linkMode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforcePositionScalarFieldEnum = {
+  id: 'id',
+  orgUnitId: 'orgUnitId',
+  name: 'name',
+  code: 'code',
+  totalSlots: 'totalSlots',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SatelliteRoleTemplateScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  positionId: 'positionId',
+  satelliteKey: 'satelliteKey',
+  satelliteRole: 'satelliteRole',
+  isDefault: 'isDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceRoleBindingScalarFieldEnum = {
+  id: 'id',
+  employmentId: 'employmentId',
+  satelliteKey: 'satelliteKey',
+  satelliteRole: 'satelliteRole',
+  source: 'source',
+  manualGrantId: 'manualGrantId',
+  status: 'status',
+  satelliteUserId: 'satelliteUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceManualGrantScalarFieldEnum = {
+  id: 'id',
+  employmentId: 'employmentId',
+  satelliteKey: 'satelliteKey',
+  satelliteRole: 'satelliteRole',
+  reason: 'reason',
+  grantedByUserId: 'grantedByUserId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceSeatAllocationScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  globalPersonId: 'globalPersonId',
+  employmentId: 'employmentId',
+  status: 'status',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.WorkforceEmploymentScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  workforceScopeId: 'workforceScopeId',
+  orgUnitId: 'orgUnitId',
+  positionId: 'positionId',
+  globalPersonId: 'globalPersonId',
+  status: 'status',
+  hireDate: 'hireDate',
+  financeEmployeeId: 'financeEmployeeId',
+  commercialOrganizationId: 'commercialOrganizationId',
+  platformUserId: 'platformUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAbsenceScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  kind: 'kind',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  note: 'note',
+  status: 'status',
+  submittedAt: 'submittedAt',
+  approvedAt: 'approvedAt',
+  rejectedAt: 'rejectedAt',
+  cancelledAt: 'cancelledAt',
+  submittedByUserId: 'submittedByUserId',
+  approvedByUserId: 'approvedByUserId',
+  rejectedByUserId: 'rejectedByUserId',
+  cancelledByUserId: 'cancelledByUserId',
+  rejectionReason: 'rejectionReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceAuditLogScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  actorUserId: 'actorUserId',
+  action: 'action',
+  entityType: 'entityType',
+  entityId: 'entityId',
+  payloadJson: 'payloadJson',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.PricingBundleScalarFieldEnum = {
@@ -773,6 +911,46 @@ exports.WorkforceAssignmentStatus = exports.$Enums.WorkforceAssignmentStatus = {
   INACTIVE: 'INACTIVE'
 };
 
+exports.OrgUnitStatus = exports.$Enums.OrgUnitStatus = {
+  ACTIVE: 'ACTIVE',
+  ARCHIVED: 'ARCHIVED'
+};
+
+exports.OrgCommercialLinkMode = exports.$Enums.OrgCommercialLinkMode = {
+  SCOPE_ROOT: 'SCOPE_ROOT',
+  SUBTREE: 'SUBTREE'
+};
+
+exports.RoleBindingSource = exports.$Enums.RoleBindingSource = {
+  TEMPLATE: 'TEMPLATE',
+  MANUAL_GRANT: 'MANUAL_GRANT',
+  HIRE_DEFAULT: 'HIRE_DEFAULT'
+};
+
+exports.RoleBindingStatus = exports.$Enums.RoleBindingStatus = {
+  ACTIVE: 'ACTIVE',
+  REVOKED: 'REVOKED'
+};
+
+exports.WorkforceEmploymentStatus = exports.$Enums.WorkforceEmploymentStatus = {
+  ACTIVE: 'ACTIVE',
+  TERMINATED: 'TERMINATED'
+};
+
+exports.WorkforceAbsenceKind = exports.$Enums.WorkforceAbsenceKind = {
+  VACATION: 'VACATION',
+  SICK: 'SICK',
+  UNPAID: 'UNPAID'
+};
+
+exports.WorkforceAbsenceStatus = exports.$Enums.WorkforceAbsenceStatus = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.PaymentOrderStatus = exports.$Enums.PaymentOrderStatus = {
   PENDING: 'PENDING',
   PAID: 'PAID',
@@ -959,6 +1137,17 @@ exports.Prisma.ModelName = {
   OrganizationSatelliteEntitlement: 'OrganizationSatelliteEntitlement',
   SatelliteEndpoint: 'SatelliteEndpoint',
   WorkforceAssignment: 'WorkforceAssignment',
+  WorkforceScope: 'WorkforceScope',
+  OrgUnit: 'OrgUnit',
+  OrgUnitCommercialLink: 'OrgUnitCommercialLink',
+  WorkforcePosition: 'WorkforcePosition',
+  SatelliteRoleTemplate: 'SatelliteRoleTemplate',
+  WorkforceRoleBinding: 'WorkforceRoleBinding',
+  WorkforceManualGrant: 'WorkforceManualGrant',
+  WorkforceSeatAllocation: 'WorkforceSeatAllocation',
+  WorkforceEmployment: 'WorkforceEmployment',
+  WorkforceAbsence: 'WorkforceAbsence',
+  WorkforceAuditLog: 'WorkforceAuditLog',
   PricingBundle: 'PricingBundle',
   LandingModuleMarketing: 'LandingModuleMarketing',
   PaymentOrder: 'PaymentOrder',

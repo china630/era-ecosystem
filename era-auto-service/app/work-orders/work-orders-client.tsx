@@ -4,12 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   VoenLookupField,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
@@ -220,18 +219,22 @@ export function WorkOrdersClient() {
       <div className="grid gap-4 lg:grid-cols-2">
         <div className={`${CARD_CONTAINER_CLASS} space-y-3 p-4`}>
           <h2 className="text-[14px] font-semibold">{t("vehicleCard")}</h2>
-          <input
-            className="w-full rounded border px-2 py-1 text-[13px]"
-            placeholder={t("plate")}
-            value={plate}
-            onChange={(e) => setPlate(e.target.value)}
-          />
-          <input
-            className="w-full rounded border px-2 py-1 text-[13px]"
-            placeholder={t("customerName")}
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-          />
+          <FieldRow cols={2}>
+            <Field
+              label={t("plate")}
+              preset="code"
+              placeholder={t("plate")}
+              value={plate}
+              onChange={(e) => setPlate(e.target.value)}
+            />
+            <Field
+              label={t("customerName")}
+              preset="shortText"
+              placeholder={t("customerName")}
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+            />
+          </FieldRow>
           <VoenLookupField
             value={voen}
             onChange={setVoen}
@@ -381,16 +384,14 @@ export function WorkOrdersClient() {
         }
       >
         <div className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("woCode")}</label>
-            <input
-              id={newWoFormId}
-              className={MODAL_INPUT_CLASS}
-              placeholder={t("woCode")}
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-            />
-          </div>
+          <Field
+            label={t("woCode")}
+            preset="code"
+            id={newWoFormId}
+            placeholder={t("woCode")}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+          />
         </div>
       </ModalShell>
     </>

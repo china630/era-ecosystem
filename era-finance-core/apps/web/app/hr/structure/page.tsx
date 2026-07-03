@@ -3,16 +3,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiFetch } from "../../../lib/api-client";
-import { inputFieldClass } from "../../../lib/form-classes";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import { EmptyState } from "../../../components/empty-state";
 import { parseHrEmployeesResponse } from "../../../lib/hr-employees-list";
-import {
-  CARD_CONTAINER_CLASS,
-  PRIMARY_BUTTON_CLASS,
-} from "../../../lib/design-system";
-import { DepartmentModal } from "../../../components/hr/department-modal";
+import { CARD_CONTAINER_CLASS } from "../../../lib/design-system";
 
 type TreeNode = {
   id: string;
@@ -22,16 +17,6 @@ type TreeNode = {
   manager: { id: string; firstName: string; lastName: string } | null;
   children: TreeNode[];
 };
-
-type DeptFlat = { id: string; name: string; parentId: string | null };
-
-type EmployeeOpt = {
-  id: string;
-  firstName: string;
-  lastName: string;
-};
-
-const lbl = "block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1.5";
 
 function TreeSkeleton() {
   return (
@@ -51,16 +36,10 @@ function TreeRows({
   nodes,
   depth,
   t,
-  onManagerChange,
-  onEditDepartment,
-  employees,
 }: {
   nodes: TreeNode[];
   depth: number;
   t: (k: string, o?: { defaultValue?: string }) => string;
-  onManagerChange: (deptId: string, managerId: string) => void;
-  onEditDepartment: (node: TreeNode) => void;
-  employees: EmployeeOpt[];
 }) {
   return (
     <>
@@ -71,41 +50,15 @@ function TreeRows({
             style={{ marginLeft: depth * 12 }}
           >
             <span className="font-medium text-gray-900">{n.name}</span>
-            <label className="flex items-center gap-1 text-xs text-slate-600">
-              <span className="text-slate-500 whitespace-nowrap">{t("hrStructure.manager")}</span>
-              <select
-                className="rounded border border-slate-200 text-xs py-1 px-2 max-w-[220px]"
-                value={n.managerId ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  onManagerChange(n.id, v);
-                }}
-              >
-                <option value="">{t("hrStructure.noManager")}</option>
-                {employees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.lastName} {e.firstName}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="rounded border border-[#D5DADF] bg-white px-2 py-1 text-xs font-medium text-[#34495E] hover:bg-[#F4F5F7]"
-              onClick={() => onEditDepartment(n)}
-            >
-              {t("counterparties.edit")}
-            </button>
+            <span className="text-xs text-slate-500">
+              {t("hrStructure.manager")}:{" "}
+              {n.manager
+                ? `${n.manager.lastName} ${n.manager.firstName}`
+                : t("hrStructure.noManager")}
+            </span>
           </div>
           {n.children.length > 0 && (
-            <TreeRows
-              nodes={n.children}
-              depth={depth + 1}
-              t={t}
-              onManagerChange={onManagerChange}
-              onEditDepartment={onEditDepartment}
-              employees={employees}
-            />
+            <TreeRows nodes={n.children} depth={depth + 1} t={t} />
           )}
         </div>
       ))}
@@ -117,33 +70,21 @@ export default function HrStructurePage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const [tree, setTree] = useState<TreeNode[]>([]);
-  const [flat, setFlat] = useState<DeptFlat[]>([]);
-  const [employees, setEmployees] = useState<EmployeeOpt[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [editDept, setEditDept] = useState<TreeNode | null>(null);
+
+  const workspaceOrgUrl = `${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/org-structure`;
 
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setError(null);
-    const [tr, fl, em] = await Promise.all([
-      apiFetch("/api/hr/org-structure/tree"),
-      apiFetch("/api/hr/departments"),
-      apiFetch("/api/hr/employees?page=1&pageSize=500"),
-    ]);
+    const tr = await apiFetch("/api/hr/org-structure/tree");
     if (!tr.ok) {
       setError(`${t("hrStructure.loadErr")}: ${tr.status}`);
       setTree([]);
     } else {
       setTree((await tr.json()) as TreeNode[]);
-    }
-    if (fl.ok) setFlat(await fl.json());
-    if (em.ok) {
-      const parsed = parseHrEmployeesResponse<EmployeeOpt>(await em.json());
-      setEmployees(parsed.items);
     }
     setLoading(false);
   }, [token, t]);
@@ -152,20 +93,6 @@ export default function HrStructurePage() {
     if (!ready || !token) return;
     void load();
   }, [load, ready, token]);
-
-  async function onManagerChange(deptId: string, managerId: string) {
-    if (!token) return;
-    const res = await apiFetch(`/api/hr/departments/${deptId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ managerId: managerId || null }),
-    });
-    if (!res.ok) {
-      alert(await res.text());
-      return;
-    }
-    await load();
-  }
 
   if (!ready) {
     return (
@@ -178,68 +105,37 @@ export default function HrStructurePage() {
 
   return (
     <div className="w-full max-w-none space-y-8">
-      <PageHeader
-        title={t("hrStructure.title")}
-        subtitle={t("hrStructure.subtitle")}
-        actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={() => {
-              setEditDept(null);
-              setCreateOpen(true);
-            }}
-          >
-            + {t("hrStructure.addDept")}
-          </button>
-        }
-      />
+      <PageHeader title={t("hrStructure.title")} subtitle={t("hrStructure.subtitle")} />
+
+      <div className={`${CARD_CONTAINER_CLASS} border-l-4 border-l-[#2980B9] p-4`}>
+        <p className="text-[13px] font-semibold text-[#34495E]">
+          {t("hrStructure.orgCpBannerTitle")}
+        </p>
+        <p className="mt-1 text-xs text-[#7F8C8D]">{t("hrStructure.orgCpBannerHint")}</p>
+        <a
+          href={workspaceOrgUrl}
+          className="mt-2 inline-block text-[13px] font-medium text-[#2980B9] hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("hrStructure.manageOrgInWorkspace")} →
+        </a>
+      </div>
+
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
       <section className="bg-white p-6 shadow-sm rounded-xl border border-slate-100">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">{t("hrStructure.treeTitle")}</h2>
+        <p className="mb-4 text-xs text-[#7F8C8D]">{t("hrStructure.mirrorReadOnlyHint")}</p>
         {loading && <TreeSkeleton />}
         {!loading && tree.length === 0 && (
           <EmptyState
             title={t("hrStructure.departmentsEmptyTitle")}
-            description={t("hrStructure.departmentsEmptyHint")}
+            description={t("hrStructure.departmentsEmptyMirrorHint")}
           />
         )}
-        {!loading && tree.length > 0 && (
-          <TreeRows
-            nodes={tree}
-            depth={0}
-            t={t}
-            onManagerChange={(id, m) => void onManagerChange(id, m)}
-            onEditDepartment={(n) => {
-              setEditDept(n);
-              setCreateOpen(true);
-            }}
-            employees={employees}
-          />
-        )}
+        {!loading && tree.length > 0 && <TreeRows nodes={tree} depth={0} t={t} />}
       </section>
-
-      <DepartmentModal
-        open={createOpen}
-        onClose={() => {
-          setCreateOpen(false);
-          setEditDept(null);
-        }}
-        departments={flat}
-        employees={employees}
-        onCreated={() => void load()}
-        editingDepartment={
-          editDept
-            ? {
-                id: editDept.id,
-                name: editDept.name,
-                parentId: editDept.parentId,
-                managerId: editDept.managerId,
-              }
-            : null
-        }
-      />
     </div>
   );
 }

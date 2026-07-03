@@ -1,0 +1,13 @@
+{
+  "event_type": 2,
+  "event_statuses": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "unique_az_buyers": 1213,
+  "seen_buyer_names": 1450,
+  "list_pages_done": 893,
+  "finished_at": "2026-06-30T07:44:09.062Z"
+}

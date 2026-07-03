@@ -74,14 +74,46 @@
 
 Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `docker compose up clinic` seed runs (`RUN_SEED=true`).
 
-1. **`/admin/master-data`** — add/edit practitioner with FIN/passport MDM lookup (resolve path), phone, default slot minutes; link to wards.
+1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — register patient; **`/patients/[id]`** — edit patient modal; contraindication add/remove modals on body map.
+3. **`/patients`** — register patient with transient FIN/passport; **`/patients/[id]`** — edit shows MDM identifier types; contraindication modals on body map.
 4. **`/appointments`** — **New appointment** modal; cancel visit via modal (reason required).
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
 7. **`/executive`** — filter by date and practitioner; KPI from API.
 8. **`/cashier?visitId=`** — pay shows mock fiscal badge and full receipt/fiscal fields.
+9. **Settlement hub:** walk-in visit complete → hotel `/front-cash/pending`; `/cashier` shows hub banner and blocks pay when `deferWalkInToHub`.
+
+## Sanatorium clinical day
+
+Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan checked in; `programSchedulingMode=AFTER_CHECKUP`.
+
+1. **`/sanatorium`** — episode visible; **no** procedures until checkup (complaint + ICD).
+2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day.
+3. **`/nurse`** — paste QR from hotel check-in (`guestQrToken`) → verify → **Start** → **Complete** → MEDICAL folio line on hotel.
+4. **`/sanatorium/resources`** — read-only occupancy grid.
+5. Reschedule procedure time on chart → conflict rules enforced.
+6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
+7. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).
 
 Coverage: [COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md) CLI-*.
+
+## Platform catalog gateway (Wave 2)
+
+Prerequisite: orchestrator `:4000` + data-hub `:4200`; `SATELLITE_EVENT_SERVICE_TOKEN` + `ERA_SATELLITE_ORGANIZATION_ID` on clinic container.
+
+1. **`/scheduling`** — pick a known non-working day (public holiday in hub seed); new appointment on that date is blocked or warned per clinic rules.
+2. **`/appointments`** — follow-up date suggestion respects business-day calendar (orchestrator `/platform/v1/catalog/calendar/az/add-business-days` via satellite-kit).
+
+## Workforce single path (Wave 3 / Plan C)
+
+### Smoke — CP workforce hire (`cp_workforce`)
+
+Prerequisite: org with `platform_workforce` + `industry_clinic`; orchestrator fan-out + clinic running.
+
+1. Orchestrator → **`/workspace/workforce/security`** → confirm Therapist → clinic **DOCTOR** in role matrix (or seed via `scripts/nafta-onboard-departments.mjs`).
+2. **`/workspace/workforce/employments`** → hire MDM person → Med Block → Therapist → **Clinic** checkbox → submit.
+3. Clinic **`/admin/master-data`** — **Add practitioner** hidden; banner points to CP Workforce; edit specialty/slots only.
+4. Local login as provisioned ops user → `/scheduling` or `/appointments` accessible per DOCTOR role.
+5. (Optional) Security Admin manual grant **CLINIC_ADMIN** → admin routes; revoke → admin blocked, doctor OK.
 

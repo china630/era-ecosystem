@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { EraModal } from '@/components/EraModal';
 import {
@@ -16,8 +16,16 @@ function maskPersonId(id: string | null | undefined): string {
   return `${id.slice(0, 4)}…${id.slice(-4)}`;
 }
 
+type MdmProfile = {
+  identifiers: Array<{ type: string; maskedValue: string; isPrimary: boolean }>;
+  accessDenied?: boolean;
+};
+
 export function GuestCardDetailsTab({
   fields,
+  transientIdentity,
+  mdmProfile,
+  profileLoading,
   phoneVerified,
   emailVerified,
   fullName,
@@ -27,9 +35,13 @@ export function GuestCardDetailsTab({
   onGlobalPersonIdChange,
   onReload,
   onChange,
+  onTransientChange,
   onVerified,
 }: {
   fields: Record<string, string>;
+  transientIdentity: { nationalIdFin: string; passportNumber: string };
+  mdmProfile: MdmProfile | null;
+  profileLoading?: boolean;
   phoneVerified: boolean;
   emailVerified: boolean;
   fullName: string;
@@ -39,6 +51,7 @@ export function GuestCardDetailsTab({
   onGlobalPersonIdChange: (id: string | null) => void;
   onReload?: () => void;
   onChange: (key: string, value: string) => void;
+  onTransientChange: (key: 'nationalIdFin' | 'passportNumber', value: string) => void;
   onVerified: (key: 'phoneVerified' | 'emailVerified', value: boolean) => void;
 }) {
   const t = useTranslations('guestCard');
@@ -47,14 +60,12 @@ export function GuestCardDetailsTab({
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [mergeBusy, setMergeBusy] = useState(false);
 
-  const items: [string, string][] = [
+  const opsItems: [string, string][] = [
     ['phone', t('details.phone')],
     ['email', t('details.email')],
     ['birthDate', t('details.birthDate')],
     ['birthPlace', t('details.birthPlace')],
     ['occupation', t('details.occupation')],
-    ['nationalIdFin', t('details.fin')],
-    ['passportNumber', t('details.passport')],
     ['visaType', t('details.visaType')],
     ['visaNumber', t('details.visaNumber')],
     ['visaExpiry', t('details.visaExpiry')],
@@ -70,6 +81,13 @@ export function GuestCardDetailsTab({
     ['voen', t('details.voen')],
   ];
 
+  const maskedFin =
+    mdmProfile?.identifiers.find((i) => i.type === 'AZ_FIN')?.maskedValue ?? null;
+  const maskedPassport =
+    mdmProfile?.identifiers.find((i) => i.type === 'PASSPORT')?.maskedValue ?? null;
+  const hasFin = Boolean(maskedFin && maskedFin !== '***');
+  const hasPassport = Boolean(maskedPassport && maskedPassport !== '***');
+
   async function lookupMdm() {
     const name = fullName.trim();
     if (!name) {
@@ -80,8 +98,8 @@ export function GuestCardDetailsTab({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        fin: fields.nationalIdFin?.trim() || undefined,
-        passport: fields.passportNumber?.trim() || undefined,
+        fin: transientIdentity.nationalIdFin?.trim() || undefined,
+        passport: transientIdentity.passportNumber?.trim() || undefined,
         issuingCountry: nationality === 'AZ' ? 'AZ' : nationality || undefined,
         fullName: name,
         phone: fields.phone?.trim() || undefined,
@@ -133,7 +151,7 @@ export function GuestCardDetailsTab({
         return;
       }
       onGlobalPersonIdChange(merged.globalPersonId ?? lookup.globalPersonId);
-      onChange('nationalIdFin', targetFin);
+      onTransientChange('nationalIdFin', targetFin);
       setMdmStatus(t('mdm.mergeSuccess'));
       onReload?.();
     } finally {
@@ -153,11 +171,51 @@ export function GuestCardDetailsTab({
             <span className="text-red-600">{t('mdm.missing')}</span>
           )}
         </p>
+        {profileLoading ? (
+          <p className="mt-1 text-[11px] text-[#7F8C8D]">{t('mdm.profileLoading')}</p>
+        ) : null}
+        {globalPersonId && mdmProfile ? (
+          <div className="mt-2 space-y-1 text-[12px]">
+            {maskedFin ? (
+              <p>
+                {t('details.fin')}: <span className="font-mono">{maskedFin}</span>
+              </p>
+            ) : null}
+            {maskedPassport ? (
+              <p>
+                {t('details.passport')}: <span className="font-mono">{maskedPassport}</span>
+              </p>
+            ) : null}
+            {mdmProfile.accessDenied ? (
+              <p className="text-amber-700">{t('mdm.identifierMasked')}</p>
+            ) : null}
+          </div>
+        ) : null}
+        <div className="mt-2 grid gap-3 sm:grid-cols-2">
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('details.fin')} (lookup)</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={transientIdentity.nationalIdFin}
+              onChange={(e) => onTransientChange('nationalIdFin', e.target.value)}
+              placeholder={hasFin ? t('mdm.identifierMasked') : ''}
+            />
+          </div>
+          <div className={FORM_FIELD_GROUP_CLASS}>
+            <label className={MODAL_FIELD_LABEL_CLASS}>{t('details.passport')} (lookup)</label>
+            <input
+              className={MODAL_INPUT_CLASS}
+              value={transientIdentity.passportNumber}
+              onChange={(e) => onTransientChange('passportNumber', e.target.value)}
+              placeholder={hasPassport ? t('mdm.identifierMasked') : ''}
+            />
+          </div>
+        </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void lookupMdm()}>
             {t('mdm.lookup')}
           </button>
-          {guestId && globalPersonId && fields.passportNumber && !fields.nationalIdFin ? (
+          {guestId && globalPersonId && hasPassport && !hasFin ? (
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
@@ -171,7 +229,7 @@ export function GuestCardDetailsTab({
         {mdmStatus ? <p className="mt-2 text-[11px] text-[#7F8C8D]">{mdmStatus}</p> : null}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {items.map(([key, label]) => (
+        {opsItems.map(([key, label]) => (
           <div key={key} className={FORM_FIELD_GROUP_CLASS}>
             <label className={MODAL_FIELD_LABEL_CLASS}>{label}</label>
             <input

@@ -92,6 +92,36 @@ Applies to **`role="dialog"`**, Radix **`Dialog`**, and full-viewport overlays t
 
 ---
 
+## Field width taxonomy (shipped)
+
+Semantic widths live in `@era/satellite-kit/ui` — **`field-presets.ts`** (`FIELD_WIDTH`, `fieldWidthClass`) and field primitives in **`field.tsx`**.
+
+| Preset | Use case | Tailwind |
+|--------|----------|----------|
+| `count` | Adults, children, nights, qty | `w-[6ch]` |
+| `time` | Check-in/out time | `w-[7ch]` |
+| `date` | ISO date fields | `w-[10ch]` |
+| `amount` | Money, rates | `w-[12ch]` + tabular-nums |
+| `voen` | VÖEN (10 digits) | `w-[11ch] min-w-[9.5rem]` |
+| `fin` | FIN (7 chars) | `w-[9ch]` |
+| `phone` | +994 phone | `w-[13ch]` |
+| `code` | Short codes, refs | `w-[14ch]` |
+| `shortText` | Names, labels | `w-[24ch]` |
+| `longText` / `selectWide` / `textarea` | Full rail width | `w-full` |
+| `select` | Compact dropdown | `w-[20ch]` |
+
+**Components (required for new modal CRUD):**
+
+- **`Field`**, **`FieldSelect`**, **`FieldTextarea`** — label + `MODAL_*` tokens + explicit **`preset`**
+- **`FieldRow`** — responsive grid (`cols` 2|3|4|6); `data-testid="field-row"`
+- **`FieldSection`** — collapsible dense-form sections (legend + chevron)
+
+**Deprecated in new code:** raw `<input>` / `<select>` with only `MODAL_INPUT_CLASS` and `w-full` on scalar fields. Ops canvases (POS floor, chessboard) are exempt.
+
+**Enforcement:** `npm run lint:design-tokens` (baseline mode in CI packages job). Modal migration waves: `docs/FIELD_SYSTEM_MODAL_WAVES.md`. After full satellite sweep, new modal CRUD under `era-*/src/components/**` must use `Field*` (ops canvases exempt).
+
+---
+
 ## Typography
 
 - **System fonts:** SF Pro, Segoe UI, sans-serif stack.

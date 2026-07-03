@@ -19,8 +19,25 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const reqHeaders = withPath(request);
 
-  const fnbPublicApi = ["/api/integration/staff-provision"];
+  const fnbPublicApi = ["/api/integration/staff-provision", "/api/integration/settlement-confirmed"];
+
+  function verifyPosBridge(request: NextRequest): boolean {
+    const secret = process.env.POS_BRIDGE_SECRET;
+    if (!secret) return false;
+    const header = request.headers.get("x-pos-bridge-secret");
+    const auth = request.headers.get("authorization");
+    if (header === secret) return true;
+    if (auth?.startsWith("Bearer ") && auth.slice(7) === secret) return true;
+    return false;
+  }
+
   if (pathname.startsWith("/api")) {
+    if (
+      pathname === "/api/integration/settlement-confirmed" &&
+      verifyPosBridge(request)
+    ) {
+      return NextResponse.next({ request: { headers: reqHeaders } });
+    }
     if (isPublicApiPath(pathname, fnbPublicApi)) {
       return NextResponse.next({ request: { headers: reqHeaders } });
     }

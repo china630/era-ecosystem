@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { Field, FieldRow } from "@era/satellite-kit/ui";
 import { CARD_CLASS } from "@/lib/design-system";
 
 type MenuItem = {
@@ -71,30 +72,38 @@ export default function MenuAdminPanel() {
       </div>
       <form onSubmit={createItem} className={`${CARD_CLASS} mb-6 space-y-3 p-4`}>
         <h2 className="text-sm font-semibold">Add menu item</h2>
-        <input
-          className="w-full rounded border px-2 py-1 text-sm"
-          placeholder="Category"
-          value={categoryName}
-          onChange={(e) => setCategoryName(e.target.value)}
-        />
-        <input
-          className="w-full rounded border px-2 py-1 text-sm"
-          placeholder="PLU"
-          value={plu}
-          onChange={(e) => setPlu(e.target.value)}
-        />
-        <input
-          className="w-full rounded border px-2 py-1 text-sm"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="w-full rounded border px-2 py-1 text-sm"
-          placeholder="Price AZN"
-          value={priceAzn}
-          onChange={(e) => setPriceAzn(e.target.value)}
-        />
+        <FieldRow cols={2}>
+          <Field
+            label="Category"
+            preset="shortText"
+            placeholder="Category"
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
+          />
+          <Field
+            label="PLU"
+            preset="code"
+            placeholder="PLU"
+            value={plu}
+            onChange={(e) => setPlu(e.target.value)}
+          />
+        </FieldRow>
+        <FieldRow cols={2}>
+          <Field
+            label="Name"
+            preset="shortText"
+            placeholder="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <Field
+            label="Price AZN"
+            preset="amount"
+            placeholder="Price AZN"
+            value={priceAzn}
+            onChange={(e) => setPriceAzn(e.target.value)}
+          />
+        </FieldRow>
         <button type="submit" className="rounded bg-[#2980B9] px-3 py-1.5 text-sm text-white">
           Save item
         </button>
