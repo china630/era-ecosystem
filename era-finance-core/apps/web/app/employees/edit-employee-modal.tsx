@@ -77,7 +77,9 @@ export function EditEmployeeModal({
   const [tab, setTab] = useState<"form" | "history">("form");
 
   const [kind, setKind] = useState<"EMPLOYEE" | "CONTRACTOR">("EMPLOYEE");
-  const [personDisplay, setPersonDisplay] = useState<EmployeeDetail["person"]>(null);
+  const [personDisplay, setPersonDisplay] = useState<
+    NonNullable<EmployeeDetail["person"]> | null
+  >(null);
   const [voen, setVoen] = useState("");
   const [contractorSocial, setContractorSocial] = useState("");
   const [patronymic, setPatronymic] = useState("");
