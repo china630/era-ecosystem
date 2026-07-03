@@ -51,7 +51,7 @@ export class WorkforceEmploymentsController {
     const managedIds = await this.orgScope.resolveManagedOrgUnitIds(
       organizationId,
       user.sub,
-      user.role,
+      user.role ?? undefined,
     );
     const rows = await this.employments.list(organizationId, {
       status,

@@ -168,7 +168,7 @@ export class WorkforceEmploymentsService {
       action: "EMPLOYMENT_TRANSFERRED",
       entityType: "EMPLOYMENT",
       entityId: id,
-      payload: dto as Record<string, unknown>,
+      payload: dto as unknown as Record<string, unknown>,
     });
 
     await this.satelliteEvents.enqueue({

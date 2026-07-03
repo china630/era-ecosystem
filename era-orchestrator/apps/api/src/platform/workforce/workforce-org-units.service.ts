@@ -104,7 +104,7 @@ export class WorkforceOrgUnitsService {
       action: "ORG_UNIT_UPDATED",
       entityType: "ORG_UNIT",
       entityId: id,
-      payload: dto as Record<string, unknown>,
+      payload: dto as unknown as Record<string, unknown>,
     });
     await this.emitUpsert(link.workforceScope, row);
     return row;

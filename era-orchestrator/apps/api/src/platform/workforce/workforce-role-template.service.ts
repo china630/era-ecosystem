@@ -78,7 +78,7 @@ export class WorkforceRoleTemplateService {
       action: "ROLE_TEMPLATE_UPSERTED",
       entityType: "ROLE_TEMPLATE",
       entityId: row.id,
-      payload: data as Record<string, unknown>,
+      payload: data as unknown as Record<string, unknown>,
     });
     return row;
   }

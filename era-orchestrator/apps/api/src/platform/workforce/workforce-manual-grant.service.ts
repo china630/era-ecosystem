@@ -111,7 +111,7 @@ export class WorkforceManualGrantService {
       action: "MANUAL_GRANT_CREATED",
       entityType: "MANUAL_GRANT",
       entityId: grant.id,
-      payload: dto as Record<string, unknown>,
+      payload: dto as unknown as Record<string, unknown>,
     });
 
     await this.provision.reprovision(organizationId, dto.employmentId, actorUserId);

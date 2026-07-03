@@ -12,6 +12,7 @@ build_pkg() {
 }
 
 build_pkg era-contracts
+build_pkg clinic-domain
 build_pkg i18n-common
 build_pkg era-storage
 build_pkg era-fiscal

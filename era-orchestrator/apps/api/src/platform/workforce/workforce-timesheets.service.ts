@@ -7,7 +7,7 @@ import {
   WORKFORCE_TIMESHEET_APPROVED,
   satelliteWorkforceTimesheetBatchImportedSchema,
 } from "@era/contracts";
-import { Decimal } from "@era365/database";
+import { Prisma } from "@era365/database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { SatelliteEventsService } from "../../satellite-events/satellite-events.service";
 import { WorkforceAuditService } from "./workforce-audit.service";
@@ -45,7 +45,7 @@ export class WorkforceTimesheetsService {
           organizationId,
           employmentId: employment.id,
           workDate: parseDateOnly(row.workDate),
-          hours: new Decimal(row.hours),
+          hours: new Prisma.Decimal(row.hours),
           source: "construction_csv",
           sourceRef: row.sourceEntryId ?? row.workerRef,
           status: "DRAFT",

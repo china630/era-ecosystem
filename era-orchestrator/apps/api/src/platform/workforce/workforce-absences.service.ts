@@ -326,7 +326,7 @@ export class WorkforceAbsencesService {
       action: "ABSENCE_UPDATED",
       entityType: "ABSENCE",
       entityId: id,
-      payload: dto as Record<string, unknown>,
+      payload: dto as unknown as Record<string, unknown>,
     });
 
     if (

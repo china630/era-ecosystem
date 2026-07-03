@@ -47,7 +47,7 @@ export class WorkforceAbsencesController {
     const managedIds = await this.orgScope.resolveManagedOrgUnitIds(
       organizationId,
       user.sub,
-      user.role,
+      user.role ?? undefined,
     );
     const rows = await this.absences.list(organizationId, query, managedIds);
     const personIds = rows.map((r) => r.employment.globalPersonId);

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Field, FieldSelect } from "@era/satellite-kit/ui";
+import { Field, FieldSelect, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { OpsError, StatusBadge, maskIban } from "@/components/ops-ui";
 

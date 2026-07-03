@@ -50,13 +50,18 @@ export class ExcelBulkService {
   async exportEmployees(organizationId: string, employeeIds: string[]): Promise<Buffer> {
     const rows = await this.prisma.employee.findMany({
       where: { organizationId, id: { in: employeeIds } },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      orderBy: [{ globalPersonId: "asc" }, { hireDate: "asc" }],
     });
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("EMAS Export");
-    ws.addRow(["employeeId", "firstName", "lastName", "finCode", "salary"]);
+    ws.addRow(["employeeId", "globalPersonId", "salary", "emasEligible"]);
     for (const row of rows) {
-      ws.addRow([row.id, row.firstName, row.lastName, row.finCode, row.salary.toString()]);
+      ws.addRow([
+        row.id,
+        row.globalPersonId,
+        row.salary.toString(),
+        row.emasEligible ? "true" : "false",
+      ]);
     }
     const runId = await this.syncRuns.start({
       organizationId,
