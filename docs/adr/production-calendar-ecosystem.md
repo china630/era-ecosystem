@@ -34,16 +34,23 @@ AZ production calendar was duplicated in `era-finance-core/hr/calendar/az-2026.t
 
 ### Shared client
 
-`packages/satellite-kit/src/integration/calendar.client.ts` — all satellites; NestJS apps align via `DataHubClientService` (finance/bank).
+| Consumer | Client path |
+|----------|-------------|
+| **Industry satellites** | `packages/satellite-kit` → Orchestrator `GET /platform/v1/catalog/calendar/*` ([orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md)) |
+| **era-finance-core, era-bank-core** | `DataHubClientService` → hub `/registry/v1/calendar/*` directly |
+
+Legacy: `calendar.client.ts` calling `ERA_DATA_HUB_URL` from industry — **deprecated** (Wave 2).
 
 ### Anti-patterns
 
 - Per-app `az-2026.ts` hardcode
-- Hotel calling hub on every `quoteStay()`
+- Industry apps setting `ERA_DATA_HUB_*` or calling `/registry/v1/calendar/*` directly
+- Hotel calling hub on every `quoteStay()` (batch warmYear only)
 - Orchestrator billing using prod calendar (billing = calendar months Baku)
 
 ## Related
 
+- [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md)
 - [hotel-auto-pricing-production-calendar.md](./hotel-auto-pricing-production-calendar.md)
 - [era-data-hub.md](./era-data-hub.md)
 - [hotel-dynamic-rate-plans.md](./hotel-dynamic-rate-plans.md)

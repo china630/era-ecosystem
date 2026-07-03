@@ -20,6 +20,7 @@ export {
   defaultGuestIdentityExpiresAt,
   type GuestIdentityTokenPayload,
 } from "./auth/guest-identity-token";
+export { fetchVoenPreviewFromRequest } from "./bff/voen-preview-route";
 export {
   executeSatelliteSsoExchange,
   type SsoExchangePrisma,
@@ -105,10 +106,17 @@ export {
   parseOperatingMode,
   shouldRouteRevenueToParent,
   shouldFiscalizeOnParent,
+  resolveSettlementPolicy,
+  parseSettlementPolicy,
+  shouldDeferWalkInToHub,
   DEFAULT_OPERATING_MODE,
+  DEFAULT_SETTLEMENT_POLICY,
   type OperatingModeSnapshot,
   type OrgOperatingMode,
   type OrgRouting,
+  type SettlementHubMode,
+  type PendingSettlementNaPolicy,
+  type SettlementPolicySnapshot,
 } from "./integration/operating-mode";
 export {
   fiscalizeForSatellite,
@@ -124,10 +132,16 @@ export {
   resolvePersonIdentity,
   mergePersonRecords,
   linkPersonIdentity,
+  listPersonIdentifiers,
+  getPersonOpsProfile,
+  resolveIdentifierForCompliance,
   isValidAzFin,
   type MdmLookupOptions,
   type PersonIdentityInput,
   type MdmClientOptions,
+  type PersonIdentifierSummary,
+  type PersonOpsProfile,
+  type ComplianceIdentityResult,
 } from "./integration/mdm-lookup.client";
 export {
   resolveGlobalPerson,
@@ -135,6 +149,13 @@ export {
   verifyGuestQrToken,
   type GuestIdentityClientOptions,
 } from "./integration/guest-identity.client";
+export {
+  linkWorkforcePersonIdentity,
+  fetchWorkforcePersonOpsBatch,
+  buildWorkforceDisplayRow,
+  type WorkforceDisplayRow,
+  type WorkforceResolveResult,
+} from "./integration/workforce-person.client";
 export {
   buildFinanceBillingUrl,
   buildFinanceTeamUrl,
@@ -179,6 +200,19 @@ export {
   convertFx,
   type FxRateClientOptions,
 } from "./integration/fx-rate.client";
+export {
+  platformCatalogGet,
+  platformFxConvert,
+  platformVoenLookup,
+  type PlatformCatalogClientOptions,
+} from "./integration/platform-catalog.client";
+export {
+  fetchWorkforcePolicy,
+  isCpWorkforceHireMode,
+  type WorkforcePolicyResult,
+  type WorkforceHireMode,
+  type WorkforcePolicyClientOptions,
+} from "./integration/workforce-policy.client";
 export type { CalendarDayType, CalendarDayPoint } from "@era/contracts";
 export {
   getCalendarDay,
@@ -230,6 +264,8 @@ export {
   buildAuditChangesJson,
   recordSatelliteAudit,
   redactAuditChanges,
+  stampWorkforceAuditContext,
+  type WorkforceAuditContext,
   type MutationAuditContext,
   type SatelliteAuditInput,
   type SatelliteAuditWriter,

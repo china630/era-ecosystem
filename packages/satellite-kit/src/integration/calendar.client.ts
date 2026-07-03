@@ -1,7 +1,5 @@
 /**
- * ERA Data Hub production calendar — read-only client.
- * Labor calendar: isWorking + addBusinessDays.
- * Demand calendar: dayType for hotel auto-BAR (batch via warmYear).
+ * Production calendar — read-only via Orchestrator Platform Catalog Gateway.
  */
 
 import type {
@@ -10,64 +8,18 @@ import type {
   CalendarDayResponse,
   CalendarDaysBulkResponse,
 } from "@era/contracts";
+import {
+  platformCatalogGet,
+  type PlatformCatalogClientOptions,
+} from "./platform-catalog.client";
 
-export type CalendarClientOptions = {
-  dataHubUrl?: string;
-  serviceToken?: string;
-  enabled?: boolean;
-};
+/** @deprecated Use PlatformCatalogClientOptions */
+export type CalendarClientOptions = PlatformCatalogClientOptions;
 
 type CacheEntry<T> = { at: number; value: T };
 
 const YEAR_TTL_MS = 24 * 60 * 60 * 1000;
 const yearCache = new Map<string, CacheEntry<Map<string, CalendarDayPoint>>>();
-
-function hubEnabled(opts?: CalendarClientOptions): boolean {
-  if (opts?.enabled === false) return false;
-  const env = process.env.ERA_DATA_HUB_ENABLED;
-  if (env != null && env.toLowerCase() === "false") return false;
-  return true;
-}
-
-function baseUrl(opts?: CalendarClientOptions): string {
-  return (
-    opts?.dataHubUrl ??
-    process.env.ERA_DATA_HUB_URL ??
-    "http://127.0.0.1:4200"
-  ).replace(/\/$/, "");
-}
-
-function serviceToken(opts?: CalendarClientOptions): string | undefined {
-  return (
-    opts?.serviceToken ??
-    process.env.DATA_HUB_SERVICE_TOKEN ??
-    process.env.SATELLITE_EVENT_SERVICE_TOKEN
-  )?.trim();
-}
-
-function authHeaders(token: string): Record<string, string> {
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function getJson<T>(
-  path: string,
-  opts?: CalendarClientOptions,
-): Promise<T | null> {
-  if (!hubEnabled(opts)) return null;
-  const token = serviceToken(opts);
-  if (!token) return null;
-  const url = `${baseUrl(opts)}/registry/v1${path}`;
-  try {
-    const res = await fetch(url, {
-      headers: authHeaders(token),
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as T;
-  } catch {
-    return null;
-  }
-}
 
 /** Degraded fallback: Sat/Sun non-working only (no per-app az-2026.ts). */
 export function fallbackIsWorkingDay(isoDate: string): boolean {
@@ -100,6 +52,13 @@ function putCachedDays(country: string, days: CalendarDayPoint[]): void {
   const map = new Map<string, CalendarDayPoint>();
   for (const d of days) map.set(d.date, d);
   yearCache.set(cacheKey(country, year), { at: Date.now(), value: map });
+}
+
+async function getJson<T>(
+  path: string,
+  opts?: CalendarClientOptions,
+): Promise<T | null> {
+  return platformCatalogGet<T>(path, opts);
 }
 
 export async function getCalendarDay(

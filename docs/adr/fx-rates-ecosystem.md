@@ -16,7 +16,7 @@ CBAR official FX rates were partially duplicated in `era-finance-core` (direct c
 | **era-data-hub** | Ingest CBAR XML when `ERA_DATA_HUB_DATA_SOURCE=hub`; serve `/registry/v1/fx/*` |
 | **era-finance-core** | Strict accounting conversion, revaluation, customs `currencyRate`, holdings dashboard |
 | **era-bank-core** | Dated FINAL rates for EOD/treasury |
-| **Industry satellites** | Read-only preview via Finance `GET /api/logistics/fx-preview` (`financeFxPreview` in satellite-kit) |
+| **Industry satellites** | Read-only display via Orchestrator `GET /platform/v1/catalog/fx/convert` (`platformFxConvert` / deprecated alias `financeFxPreview` in satellite-kit) — [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md) |
 
 ### Two consumption modes
 
@@ -27,7 +27,8 @@ CBAR official FX rates were partially duplicated in `era-finance-core` (direct c
 
 ### Anti-patterns
 
-- Industry satellites calling `/registry/v1/fx/*` or cbar.az directly
+- Industry satellites calling `/registry/v1/fx/*`, `ERA_DATA_HUB_URL`, or Finance `ERA_FINANCE_API_*` for display convert
+- Industry satellites calling cbar.az directly
 - Finance CBAR ingest when hub owns ingest (`ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true`)
 - Silent `1.7` FX fallback in bank-core production paths
 
@@ -53,6 +54,7 @@ Finance `CustomsService.createFullDraftFromCapture` auto-fills `currencyRate` fr
 
 ## Related
 
+- [orchestrator-platform-integration-gateway.md](./orchestrator-platform-integration-gateway.md)
 - [era-data-hub.md](./era-data-hub.md)
 - [era-data-hub/doc/DATA-HUB-CONSUMER.md](../../era-data-hub/doc/DATA-HUB-CONSUMER.md)
 - Finance TZ §28 FEAT-FC-DH-001
