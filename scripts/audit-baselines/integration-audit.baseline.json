@@ -1,0 +1,6 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-16",
+  "note": "Empty baseline — W1–W4 complete; CI uses --strict. Use --update-baseline only when temporarily allowing known drift during a wave.",
+  "allowedIssues": []
+}

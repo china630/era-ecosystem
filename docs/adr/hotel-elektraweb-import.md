@@ -48,6 +48,8 @@ Progress is stored in browser `localStorage` (`era-hotel-import-wizard-v1`) for 
 
 **Future (planned, not implemented):** grant the same wizard to **organization owners** via Orchestrator entitlement (e.g. `hotel_migration` SKU or `hotel_setup` + audit log). Engine and adapters unchanged; only auth gate and optional org-scoped audit.
 
+**Implemented (2026-06-16):** `hotel_migration_pro` entitlement + `Hotel_Admin`/`DIRECTOR`/`OWNER`/`MANAGER` roles; audit via `SatelliteAuditLog` on each import POST.
+
 ### 4. Guest import and MDM
 
 - Operational model remains **`Guest`** in hotel DB (visits, folio links, VIP flags) — **no new guest table**.

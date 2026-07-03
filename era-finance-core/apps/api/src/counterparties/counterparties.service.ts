@@ -416,5 +416,53 @@ export class CounterpartiesService {
     const ok = invoices + transactions + cashOrders === 0;
     return { ok, counts };
   }
+
+  /** CRM v3.0: find-or-create individual counterparty from lead convert event. */
+  async findOrCreateIndividualForCrm(params: {
+    organizationId: string;
+    nameFallback: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    globalPersonId?: string;
+  }) {
+    const orgId = params.organizationId;
+    if (params.globalPersonId) {
+      const byPerson = await this.prisma.counterparty.findFirst({
+        where: {
+          organizationId: orgId,
+          globalPersonId: params.globalPersonId,
+          deletedAt: null,
+        },
+      });
+      if (byPerson) return byPerson;
+    }
+    if (params.contactEmail?.trim()) {
+      const byEmail = await this.prisma.counterparty.findFirst({
+        where: {
+          organizationId: orgId,
+          email: params.contactEmail.trim(),
+          kind: CounterpartyKind.INDIVIDUAL,
+          deletedAt: null,
+        },
+      });
+      if (byEmail) return byEmail;
+    }
+    const name = params.nameFallback.trim() || "CRM individual";
+    const phones = params.contactPhone?.trim()
+      ? [params.contactPhone.trim()]
+      : [];
+    return this.prisma.counterparty.create({
+      data: {
+        organizationId: orgId,
+        kind: CounterpartyKind.INDIVIDUAL,
+        role: CounterpartyRole.CUSTOMER,
+        legalForm: CounterpartyLegalForm.INDIVIDUAL,
+        nameCipher: encryptText(normalizeName(name)),
+        email: params.contactEmail?.trim() || null,
+        phonesJson: phones,
+        globalPersonId: params.globalPersonId ?? null,
+      },
+    });
+  }
 }
 

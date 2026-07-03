@@ -25,6 +25,11 @@ export async function POST(
       return jsonError("In-house guest: settle at hotel reception", 400);
     }
 
+    const { isWalkInDeferredToHub } = await import("@/lib/billing-router");
+    if (await isWalkInDeferredToHub()) {
+      return jsonError("Walk-in: pay at hotel Front Cash (settlement hub)", 400);
+    }
+
     const paid = visit.receipts.find((r) => r.status === "PAID");
     if (paid) return jsonOk(paid);
 

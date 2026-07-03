@@ -4,6 +4,7 @@ import type {
   SatelliteHotelRoomChangedEvent,
   SatelliteHotelSanatoriumBookingCreatedEvent,
 } from "@era/contracts";
+import { shouldAutoInstantiateProgramOnCheckin } from "@/domain/settings/scheduling-settings";
 import { openEpisodeFromStay } from "@/lib/services/sanatorium.service";
 import { instantiateProgramFromTemplate } from "@/lib/sanatorium-scheduler.service";
 import { prisma } from "@/lib/prisma";
@@ -18,6 +19,7 @@ async function ensureEpisodeAndProgram(
       guestName?: string;
       globalPersonId?: string;
       checkInDate?: string;
+      roomNumber?: string;
     };
   },
 ) {
@@ -30,16 +32,23 @@ async function ensureEpisodeAndProgram(
     organizationId: event.organizationId,
     globalPersonId: p.globalPersonId ?? event.globalPersonId,
     hotelStayId: p.reservationId,
+    programCode: p.programCode,
+    roomNumber: p.roomNumber,
   });
   const existingProgram = await prisma.programInstance.findUnique({
     where: { episodeId: episode.id },
   });
-  if (p.programCode && !existingProgram) {
+  const autoInstantiate = await shouldAutoInstantiateProgramOnCheckin();
+  if (p.programCode && !existingProgram && autoInstantiate) {
     await instantiateProgramFromTemplate({
       episodeId: episode.id,
       programCode: p.programCode,
       reservationId: p.reservationId,
       startsOn: p.checkInDate ? new Date(p.checkInDate) : new Date(),
+    });
+    await prisma.clinicalEpisode.update({
+      where: { id: episode.id },
+      data: { checkupCompletedAt: new Date() },
     });
   }
   return episode;
@@ -81,7 +90,7 @@ export async function handleRoomChanged(event: SatelliteHotelRoomChangedEvent) {
     data: { roomNumber: p.newRoomNumber },
   });
   await prisma.clinicalEpisode.updateMany({
-    where: { reservationId: p.reservationId },
-    data: {},
+    where: { reservationId: p.reservationId, status: "OPEN" },
+    data: { roomNumber: p.newRoomNumber },
   });
 }

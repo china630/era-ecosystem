@@ -10,6 +10,8 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { batchEmployeePersonMap } from "./employee-person.util";
 import { CreateAbsenceDto } from "./dto/create-absence.dto";
 import { UpdateAbsenceDto } from "./dto/update-absence.dto";
 import { SickPayCalcDto } from "./dto/sick-pay-calc.dto";
@@ -117,6 +119,7 @@ export class AbsencesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly absenceTypes: AbsenceTypesService,
+    private readonly mdm: OrchestratorMdmClientService,
   ) {}
 
   async list(
@@ -148,6 +151,8 @@ export class AbsencesService {
     const rows = await this.prisma.absence.findMany({
       where: {
         organizationId,
+        deletedAt: null,
+        approved: true,
         ...(departmentId
           ? { employee: { jobPosition: { departmentId } } }
           : {}),
@@ -157,7 +162,15 @@ export class AbsencesService {
       include: { employee: true, absenceType: true },
     });
 
-    return rows.map((r) => ({
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      rows.map((r) => r.employee.globalPersonId),
+    );
+
+    return rows.map((r) => {
+      const person = personMap.get(r.employee.globalPersonId);
+      return {
       id: r.id,
       organizationId: r.organizationId,
       employeeId: r.employeeId,
@@ -170,8 +183,8 @@ export class AbsencesService {
       updatedAt: r.updatedAt,
       employee: {
         id: r.employee.id,
-        firstName: r.employee.firstName,
-        lastName: r.employee.lastName,
+        firstName: person?.firstName ?? "—",
+        lastName: person?.lastName ?? "—",
       },
       absenceType: r.absenceType
         ? {
@@ -182,7 +195,8 @@ export class AbsencesService {
             color: absenceCalendarColor(r.absenceType.formula),
           }
         : undefined,
-    }));
+      };
+    });
   }
 
   async getOne(organizationId: string, id: string, departmentId?: string) {

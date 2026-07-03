@@ -17,5 +17,8 @@ tmp/era-local-credentials.md
 # Docker persistent data (never commit)
 docker-data/
 
-# IDE / local plans
-.cursor/
+# IDE / local plans (skills + rules under .cursor/ are tracked)
+.cursor/plans/
+
+# Legal entity enrichment cache (local scrape; never commit)
+data/legal-entities/.cache/

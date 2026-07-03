@@ -2,6 +2,8 @@ import { Injectable, Logger } from "@nestjs/common";
 import { Cron } from "@nestjs/schedule";
 import { EmployeeEmploymentStatus, EmployeeKind, UserRole } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { batchEmployeePersonMap } from "./employee-person.util";
 import {
   notificationsPackEnabled,
   sendControlPlaneNotification,
@@ -32,7 +34,10 @@ function sameMonthDay(a: Date, b: Date): boolean {
 export class HrRemindersService {
   private readonly logger = new Logger(HrRemindersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mdm: OrchestratorMdmClientService,
+  ) {}
 
   /** Daily 08:00 Asia/Baku — contract end T-7 and birthdays. */
   @Cron("0 8 * * *", { timeZone: "Asia/Baku" })
@@ -55,15 +60,37 @@ export class HrRemindersService {
       select: {
         id: true,
         organizationId: true,
-        firstName: true,
-        lastName: true,
+        globalPersonId: true,
         contractEndDate: true,
         dateOfBirth: true,
       },
     });
 
+    const byOrg = new Map<string, typeof employees>();
+    for (const emp of employees) {
+      const list = byOrg.get(emp.organizationId) ?? [];
+      list.push(emp);
+      byOrg.set(emp.organizationId, list);
+    }
+    const personLabels = new Map<string, string>();
+    for (const [orgId, orgEmps] of byOrg) {
+      const map = await batchEmployeePersonMap(
+        this.mdm,
+        orgId,
+        orgEmps.map((e) => e.globalPersonId),
+      );
+      for (const e of orgEmps) {
+        const p = map.get(e.globalPersonId);
+        personLabels.set(
+          e.id,
+          p?.displayName ?? `${p?.lastName ?? "—"} ${p?.firstName ?? "—"}`.trim(),
+        );
+      }
+    }
+
     let sent = 0;
     for (const emp of employees) {
+      const label = personLabels.get(emp.id) ?? "Employee";
       const recipients = await this.hrRecipientEmails(emp.organizationId);
       if (recipients.length === 0) continue;
 
@@ -72,7 +99,7 @@ export class HrRemindersService {
           await this.safeNotify(emp.organizationId, email, {
             templateKey: "hr.contract.end.reminder",
             subject: "Employment contract ending in 7 days",
-            body: `${emp.firstName} ${emp.lastName} — contract ends ${emp.contractEndDate.toISOString().slice(0, 10)}`,
+            body: `${label} — contract ends ${emp.contractEndDate.toISOString().slice(0, 10)}`,
             sourceEntityType: "employee",
             sourceEntityId: emp.id,
           });
@@ -85,7 +112,7 @@ export class HrRemindersService {
           await this.safeNotify(emp.organizationId, email, {
             templateKey: "hr.birthday.reminder",
             subject: "Employee birthday today",
-            body: `${emp.firstName} ${emp.lastName} — birthday today`,
+            body: `${label} — birthday today`,
             sourceEntityType: "employee",
             sourceEntityId: emp.id,
           });

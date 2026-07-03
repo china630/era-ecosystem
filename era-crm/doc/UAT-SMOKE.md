@@ -65,3 +65,41 @@ curl -X POST http://localhost:3303/api/inbox \
 - [x] M4: `POST /api/visits` with `latitude`, `longitude`, `addressLabel` → stored; `/visits` shows geo
 - [x] M8: `PATCH /api/leads/:id/follow-up` with `nextContactAt` → notification stub; `/leads` schedule follow-up
 
+## C5–C8 — v3.0 party model + import (UI smoke)
+
+- [ ] Login at `/login`
+- [ ] `/leads` → **Create lead** — legal entity with VÖEN lookup + company name; or individual with phone
+- [ ] Set `prospectType=PARTNER`; filter pipeline by Partner
+- [ ] Open `/leads/[id]` — party block, stage history, visits
+- [ ] Move lead to QUALIFIED (requires VÖEN for legal entity) → PROPOSAL → **Convert**
+- [ ] Finance: counterparty auto-created (`handleCrmLead`); draft invoice if `estimatedAmount` set
+- [ ] `/admin/import` — upload `data/legal-entities/azerbaijan-legal-entities.csv` sample; verify import report
+
+### v3.0 curl smoke (`:3207` local dev)
+
+```bash
+curl http://localhost:3207/api/health
+
+curl -X POST http://localhost:3207/api/leads \
+  -H "Content-Type: application/json" \
+  -H "Cookie: era_satellite_token=<token>" \
+  -d '{"title":"Partner MMC","partyKind":"LEGAL_ENTITY","taxId":"1234567890","companyName":"Partner MMC","contactPhone":"+994501234567","prospectType":"PARTNER","activitySector":"hotels"}'
+
+curl -X PATCH http://localhost:3207/api/leads/<leadId>/stage \
+  -H "Content-Type: application/json" \
+  -H "Cookie: era_satellite_token=<token>" \
+  -d '{"stage":"QUALIFIED"}'
+
+curl -X POST http://localhost:3207/api/leads/<leadId>/convert \
+  -H "Cookie: era_satellite_token=<token>"
+
+curl -X POST http://localhost:3207/api/mdm/person-lookup \
+  -H "Content-Type: application/json" \
+  -H "Cookie: era_satellite_token=<token>" \
+  -d '{"fin":"ABC1234","fullName":"Test User"}'
+
+curl -X POST "http://localhost:3207/api/leads/import?mode=upsert" \
+  -H "Cookie: era_satellite_token=<token>" \
+  -F "file=@../data/legal-entities/azerbaijan-legal-entities.csv"
+```
+

@@ -45,6 +45,10 @@ interface NightAuditStatus {
     locked: boolean;
     strictGate: boolean;
   };
+  pendingSettlement?: {
+    count: number;
+    policy: 'BLOCK' | 'WARN';
+  };
   lastRun: {
     status: string;
     stepsJson: string;
@@ -117,6 +121,10 @@ export default function OperationsPage() {
   }
 
   const hasOpenShift = status?.openShift?.status === 'OPEN';
+  const pendingCount = status?.pendingSettlement?.count ?? 0;
+  const pendingBlocksNa =
+    pendingCount > 0 && status?.pendingSettlement?.policy === 'BLOCK';
+  const naBlocked = hasOpenShift || pendingBlocksNa;
 
   async function openShift(e: React.FormEvent) {
     e.preventDefault();
@@ -283,12 +291,24 @@ export default function OperationsPage() {
             {t('cashShiftStatus')}{' '}
             {hasOpenShift ? t('cashShiftOpenBlock') : t('cashShiftOk')}
           </li>
+          {pendingCount > 0 && (
+            <li className={pendingBlocksNa ? 'text-rose-600 font-medium' : 'text-amber-700'}>
+              {t('pendingSettlementCount', { count: pendingCount })}
+              {' — '}
+              <Link href="/front-cash/pending" className="text-[#2980B9] hover:underline">
+                {t('viewPendingQueue')}
+              </Link>
+            </li>
+          )}
         </ul>
         {hasOpenShift && <p className="mb-3 text-[13px] text-rose-600">{t('closeShiftsBeforeNa')}</p>}
+        {pendingBlocksNa && (
+          <p className="mb-3 text-[13px] text-rose-600">{t('pendingSettlementBlock')}</p>
+        )}
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            disabled={busy || hasOpenShift}
+            disabled={busy || naBlocked}
             onClick={runNightAudit}
             className={PRIMARY_BUTTON_CLASS}
           >

@@ -14,7 +14,17 @@ export async function POST(
     assertPermission(session, PERMISSIONS.RESERVATIONS_CHECKIN);
     const { id } = await params;
     const reservation = await checkInReservation(id);
-    return jsonOk(serialize(reservation));
+    let guestQrToken: string | null = null;
+    if (reservation.ratePlan?.medicalFlag && reservation.guest?.globalPersonId) {
+      try {
+        const { issueGuestQrToken } = await import('@era/satellite-kit');
+        const qr = await issueGuestQrToken(reservation.guest.globalPersonId);
+        guestQrToken = qr?.token ?? null;
+      } catch {
+        guestQrToken = null;
+      }
+    }
+    return jsonOk({ ...serialize(reservation), guestQrToken });
   } catch (err) {
     return handleRouteError(err);
   }

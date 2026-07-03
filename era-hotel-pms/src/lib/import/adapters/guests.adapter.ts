@@ -74,19 +74,20 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
     const existing = await tx.guest.findUnique({ where: { externalRef: row.externalRef } });
 
     let globalPersonId: string | null = existing?.globalPersonId ?? null;
-    if (!dryRun && !globalPersonId && (row.nationalIdFin || row.passportNumber)) {
+    if (!dryRun && (row.nationalIdFin || row.passportNumber)) {
       const fin = row.nationalIdFin?.trim();
       const passport = row.passportNumber?.trim();
       const nationality = row.nationality ?? 'AZ';
       const resolved = await resolvePersonIdentity({
         fin: fin || undefined,
         passport: passport || undefined,
-        issuingCountry: nationality === 'AZ' ? 'AZ' : nationality !== 'OTHER' ? nationality : undefined,
+        issuingCountry:
+          nationality === 'AZ' ? 'AZ' : nationality !== 'OTHER' ? nationality : undefined,
         fullName: row.fullName,
         phone: row.phone ?? undefined,
         nationality: nationality === 'AZ' ? 'AZ' : 'OTHER',
       });
-      globalPersonId = resolved.globalPersonId ?? null;
+      globalPersonId = resolved.globalPersonId ?? globalPersonId;
     }
 
     const data = {
@@ -97,8 +98,6 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
       lastName: row.lastName ?? undefined,
       title: row.title ?? undefined,
       birthDate: row.birthDate ?? undefined,
-      passportNumber: row.passportNumber ?? undefined,
-      nationalIdFin: row.nationalIdFin ?? undefined,
       nationality: row.nationality ?? 'AZ',
       phone: row.phone ?? undefined,
       email: row.email ?? undefined,
@@ -119,8 +118,6 @@ export const guestsAdapter: ImportAdapter<z.infer<typeof rowSchema>> = {
         lastName: data.lastName,
         title: data.title,
         birthDate: data.birthDate,
-        passportNumber: data.passportNumber,
-        nationalIdFin: data.nationalIdFin,
         nationality: data.nationality,
         phone: data.phone,
         email: data.email,

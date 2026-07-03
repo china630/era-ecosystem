@@ -2466,6 +2466,16 @@ export const resources = {
         provisionedSatelliteRoleAuto: "Авто (из должности)",
         provisionedSatelliteRoleHint:
           "Пусто — роль выводится из названия штатной должности (waiter → WAITER и т.д.).",
+        satelliteRoleDoctor: "Врач",
+        satelliteRoleNurse: "Медсестра",
+        satelliteRoleReception: "Регистратура",
+        satelliteRoleClinic_admin: "Администратор клиники",
+        satelliteRoleWaiter: "Официант",
+        satelliteRoleManager: "Менеджер",
+        satelliteRoleHousekeeping: "Горничная",
+        satelliteRoleChef: "Повар",
+        satelliteRoleCashier: "Кассир",
+        satelliteRoleStaff: "Персонал",
         mdmMissing: "MDM не связан",
       },
       hrAnalytics: {
@@ -2565,6 +2575,16 @@ export const resources = {
         department: "Подразделение",
         savePosition: "Добавить должность",
         newDeptButton: "Новое подразделение",
+        orgCpBannerTitle: "Оргструктура — в ERA Workspace",
+        orgCpBannerHint:
+          "Кадровое дерево и должности ведутся в control plane. Здесь — зеркало CostCenter для payroll и GL.",
+        positionsCpBannerHint:
+          "Штатные единицы создаются в Workforce → Positions. Здесь — зеркало с вилкой ЗП для расчёта.",
+        manageOrgInWorkspace: "Открыть Workforce → Org structure",
+        managePositionsInWorkspace: "Открыть Workforce → Positions",
+        mirrorReadOnlyHint: "Только чтение — изменения через ERA Workspace → Workforce.",
+        departmentsEmptyMirrorHint: "Создайте оргструктуру в Workspace или дождитесь синхронизации событий CP.",
+        positionsEmptyMirrorHint: "Создайте должности в Workspace или дождитесь синхронизации событий CP.",
       },
       counterparties: {
         title: "Контрагенты",
@@ -2779,6 +2799,10 @@ export const resources = {
         loadErr: "Ошибка",
         tabRuns: "Расчёты",
         tabAbsences: "Отпуска и отсутствия",
+        absenceCpBannerTitle: "Управление отпусками — в ERA Workspace",
+        absenceCpBannerHint:
+          "Заявки и согласование отпусков/больничных ведутся в control plane. Здесь — зеркало для расчёта зарплаты и табеля.",
+        manageAbsencesInWorkspace: "Открыть Workforce → Absences",
         absencesTitle: "Отпуска и отсутствия",
         absenceNew: "Новая запись",
         absenceType: "Тип",
@@ -6089,6 +6113,16 @@ export const resources = {
         provisionedSatelliteRoleAuto: "Avto (vəzifədən)",
         provisionedSatelliteRoleHint:
           "Boş — rol ştat vəzifəsinin adından çıxarılır (waiter → WAITER və s.).",
+        satelliteRoleDoctor: "Həkim",
+        satelliteRoleNurse: "Tibb bacısı",
+        satelliteRoleReception: "Qeydiyyat",
+        satelliteRoleClinic_admin: "Klinika administratoru",
+        satelliteRoleWaiter: "Ofisiant",
+        satelliteRoleManager: "Menecer",
+        satelliteRoleHousekeeping: "Otaq xidməti",
+        satelliteRoleChef: "Aşpaz",
+        satelliteRoleCashier: "Kassir",
+        satelliteRoleStaff: "Personal",
         mdmMissing: "MDM bağlanmayıb",
       },
       hrAnalytics: {
@@ -6196,6 +6230,16 @@ export const resources = {
         department: "Bölmə",
         savePosition: "Vəzifə əlavə et",
         newDeptButton: "Yeni bölmə yarat",
+        orgCpBannerTitle: "Orqstruktur — ERA Workspace-də",
+        orgCpBannerHint:
+          "Kadr ağacı və vəzifələr control plane-də idarə olunur. Burada — payroll və GL üçün CostCenter güzgüsü.",
+        positionsCpBannerHint:
+          "Ştat vahidləri Workforce → Positions-da yaradılır. Burada — əməkhaqqı üçün güzgü.",
+        manageOrgInWorkspace: "Workforce → Org structure aç",
+        managePositionsInWorkspace: "Workforce → Positions aç",
+        mirrorReadOnlyHint: "Yalnız oxuma — dəyişikliklər ERA Workspace → Workforce-da.",
+        departmentsEmptyMirrorHint: "Workspace-də org struktur yaradın və ya CP sinxronizasiyasını gözləyin.",
+        positionsEmptyMirrorHint: "Workspace-də vəzifələr yaradın və ya CP sinxronizasiyasını gözləyin.",
       },
       counterparties: {
         title: "Kontragentlər",
@@ -6410,6 +6454,10 @@ export const resources = {
         loadErr: "Xəta",
         tabRuns: "Hesablamalar",
         tabAbsences: "Məzuniyyət və buraxılışlar",
+        absenceCpBannerTitle: "Məzuniyyət idarəetməsi — ERA Workspace-də",
+        absenceCpBannerHint:
+          "Məzuniyyət/xəstəlik sorğuları və təsdiqi control plane-də aparılır. Burada — əməkhaqqı və tabel üçün güzgü.",
+        manageAbsencesInWorkspace: "Workforce → Absences aç",
         absencesTitle: "Məzuniyyət və buraxılışlar",
         absenceNew: "Yeni qeyd",
         absenceType: "Növ",

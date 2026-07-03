@@ -1,15 +1,20 @@
-import { HttpException } from "@nestjs/common";
+import { BadRequestException, HttpException } from "@nestjs/common";
 import { EmployeeKind, Prisma } from "@erafinance/database";
 import { EmployeesService } from "../../src/hr/employees.service";
 
 describe("EmployeesService hire-gate (M6 Serializable)", () => {
   const mdm = {
-    resolvePersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
+    batchOpsProfile: jest.fn().mockResolvedValue({
+      "person-1": {
+        globalPersonId: "person-1",
+        displayName: "Test User",
+        primaryIdentifierMasked: "1****C4",
+        accessDenied: false,
+      },
+    }),
+    complianceIdentity: jest.fn().mockResolvedValue({ fin: "1A2B3C4" }),
   };
   const syncRuns = {} as ConstructorParameters<typeof EmployeesService>[1];
-  const staffProvisioning = {
-    emitProvisioned: jest.fn().mockResolvedValue(undefined),
-  } as unknown as ConstructorParameters<typeof EmployeesService>[3];
 
   it("create uses Serializable $transaction with quota check inside callback", async () => {
     const captured: { opts?: unknown } = {};
@@ -24,6 +29,7 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
         count: jest.fn().mockResolvedValue(0),
         create: jest.fn().mockResolvedValue({
           id: "emp-new",
+          globalPersonId: "person-1",
           positionId: "pos-1",
           jobPosition: { department: { id: "d1", name: "D" } },
         }),
@@ -36,12 +42,10 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       }),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, syncRuns, mdm as any, staffProvisioning);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any);
     await svc.create("org-1", {
-      finCode: "1".repeat(7),
-      firstName: "A",
-      lastName: "B",
-      patronymic: "",
+      globalPersonId: "person-1",
+      patronymic: "oglu",
       positionId: "pos-1",
       startDate: "2026-01-01",
       hireDate: "2026-01-01",
@@ -79,13 +83,11 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       ),
     } as unknown as ConstructorParameters<typeof EmployeesService>[0];
 
-    const svc = new EmployeesService(prisma, syncRuns, mdm as any, staffProvisioning);
+    const svc = new EmployeesService(prisma, syncRuns, mdm as any);
     await expect(
       svc.create("org-1", {
-        finCode: "2".repeat(7),
-        firstName: "A",
-        lastName: "B",
-        patronymic: "",
+        globalPersonId: "person-1",
+        patronymic: "oglu",
         positionId: "pos-1",
         startDate: "2026-01-01",
         hireDate: "2026-01-01",
@@ -94,5 +96,26 @@ describe("EmployeesService hire-gate (M6 Serializable)", () => {
       }),
     ).rejects.toThrow(HttpException);
     expect(txClient.employee.create).not.toHaveBeenCalled();
+  });
+
+  it("create rejects when MDM person missing", async () => {
+    const mdmMissing = {
+      batchOpsProfile: jest.fn().mockResolvedValue({}),
+      complianceIdentity: jest.fn(),
+    };
+    const prisma = { $transaction: jest.fn() } as unknown as ConstructorParameters<
+      typeof EmployeesService
+    >[0];
+    const svc = new EmployeesService(prisma, syncRuns, mdmMissing as any);
+    await expect(
+      svc.create("org-1", {
+        globalPersonId: "missing",
+        patronymic: "oglu",
+        positionId: "pos-1",
+        startDate: "2026-01-01",
+        hireDate: "2026-01-01",
+        salary: 1000,
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   ModalFooter,
   ModalShell,
 } from "@era/satellite-kit/ui";
@@ -66,18 +68,46 @@ export default function AppointmentCreateModal({ open, onClose, onCreated }: Pro
 
   return (
     <ModalShell open={open} title={t("createTitle")} onClose={onClose}>
-      <div className="space-y-2">
-        <input className={MODAL_INPUT_CLASS} placeholder={t("patientRefCode")} value={patientRefCode} onChange={(e) => setPatientRefCode(e.target.value)} />
-        <input className={MODAL_INPUT_CLASS} placeholder={t("patientName")} value={patientFullName} onChange={(e) => setPatientFullName(e.target.value)} />
-        <input className={MODAL_INPUT_CLASS} placeholder={t("patientPhone")} value={patientPhone} onChange={(e) => setPatientPhone(e.target.value)} />
-        <select className={MODAL_INPUT_CLASS} value={practitionerCode} onChange={(e) => setPractitionerCode(e.target.value)}>
+      <div className="space-y-4">
+        <FieldRow cols={2}>
+          <Field
+            label={t("patientRefCode")}
+            preset="code"
+            value={patientRefCode}
+            onChange={(e) => setPatientRefCode(e.target.value)}
+          />
+          <Field
+            label={t("patientPhone")}
+            preset="phone"
+            value={patientPhone}
+            onChange={(e) => setPatientPhone(e.target.value)}
+          />
+        </FieldRow>
+        <Field
+          label={t("patientName")}
+          preset="shortText"
+          value={patientFullName}
+          onChange={(e) => setPatientFullName(e.target.value)}
+        />
+        <FieldSelect
+          label={t("practitioner")}
+          preset="selectWide"
+          value={practitionerCode}
+          onChange={(e) => setPractitionerCode(e.target.value)}
+        >
           {practitioners.map((p) => (
             <option key={p.code} value={p.code}>
               {p.fullName} ({p.code})
             </option>
           ))}
-        </select>
-        <input type="datetime-local" className={MODAL_INPUT_CLASS} value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+        </FieldSelect>
+        <Field
+          label={t("scheduledAt")}
+          preset="longText"
+          type="datetime-local"
+          value={scheduledAt}
+          onChange={(e) => setScheduledAt(e.target.value)}
+        />
         {error ? <p className="text-[13px] text-[#C0392B]">{error}</p> : null}
       </div>
       <ModalFooter onCancel={onClose} onSubmit={() => void submit()} submitLabel={busy ? "…" : tc("save")} />

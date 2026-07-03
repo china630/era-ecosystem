@@ -18,7 +18,7 @@ type VisitDetail = {
   status: string;
   patientOrigin: string;
   amountNet: string;
-  patientRef: { fullName: string; refCode: string; finCode?: string | null };
+  patientRef: { fullName: string; refCode: string; globalPersonId?: string | null };
   practitioner: { fullName: string };
   serviceLines: Array<{ serviceCode: string; description: string; amount: string }>;
 };
@@ -103,10 +103,12 @@ export default function VisitDetailPage() {
 
   async function checkInsurance() {
     if (!visit) return;
+    const fin = window.prompt(t("insuranceFinPrompt"));
+    if (!fin?.trim()) return;
     const res = await fetch("/api/insurance/check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ patientFin: visit.patientRef.finCode ?? undefined }),
+      body: JSON.stringify({ patientFin: fin.trim().toUpperCase() }),
     });
     const data = await res.json();
     setInsuranceResult(JSON.stringify(data.data ?? data, null, 2));

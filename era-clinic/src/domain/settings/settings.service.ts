@@ -5,6 +5,11 @@ import {
   isClinicPreset,
   type ClinicPresetCode,
 } from "@/domain/presets/clinic-presets";
+import { SANATORIUM_DEFAULT_SETTINGS } from "@/domain/settings/scheduling-settings";
+import type {
+  ProcedureOverQuotaPolicy,
+  ProgramSchedulingMode,
+} from "@prisma/client";
 
 const DEFAULT_TENANT_CODE = "default";
 
@@ -18,6 +23,9 @@ export async function getDefaultTenant() {
         code: DEFAULT_TENANT_CODE,
         name: "Nafta Clinic",
         enabledPresets: [CLINIC_PRESET.OUTPATIENT, CLINIC_PRESET.SANATORIUM_CLINICAL],
+        programSchedulingMode: SANATORIUM_DEFAULT_SETTINGS.programSchedulingMode,
+        schedulingSlotMinutes: SANATORIUM_DEFAULT_SETTINGS.schedulingSlotMinutes,
+        procedureOverQuotaPolicy: SANATORIUM_DEFAULT_SETTINGS.procedureOverQuotaPolicy,
       },
     });
   }
@@ -30,12 +38,18 @@ export async function getClinicSettings() {
     clinicName: tenant.name,
     tenantId: tenant.id,
     enabledPresets: tenant.enabledPresets as ClinicPresetCode[],
+    programSchedulingMode: tenant.programSchedulingMode,
+    schedulingSlotMinutes: tenant.schedulingSlotMinutes,
+    procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
   };
 }
 
 export async function updateClinicSettings(input: {
   clinicName?: string;
   enabledPresets?: string[];
+  programSchedulingMode?: ProgramSchedulingMode;
+  schedulingSlotMinutes?: number;
+  procedureOverQuotaPolicy?: ProcedureOverQuotaPolicy;
 }) {
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
@@ -55,6 +69,15 @@ export async function updateClinicSettings(input: {
     update: {
       ...(input.clinicName ? { name: input.clinicName } : {}),
       ...(presets ? { enabledPresets: presets } : {}),
+      ...(input.programSchedulingMode
+        ? { programSchedulingMode: input.programSchedulingMode }
+        : {}),
+      ...(input.schedulingSlotMinutes != null
+        ? { schedulingSlotMinutes: input.schedulingSlotMinutes }
+        : {}),
+      ...(input.procedureOverQuotaPolicy
+        ? { procedureOverQuotaPolicy: input.procedureOverQuotaPolicy }
+        : {}),
     },
   });
 }

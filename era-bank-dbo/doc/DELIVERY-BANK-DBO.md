@@ -2,32 +2,33 @@
 
 Sprint 3 channel app. Engine truth in `era-bank-core` `banking_dbo` module; this app is BFF + customer UI only.
 
-## Scope
+## Scaffold & channel DB
 
-| Area | Status | Notes |
-|------|--------|-------|
-| Scaffold Next.js :3211 | [x] | package.json, Docker, env |
-| Channel Prisma (sessions, API keys, sign requests) | [x] | No ledger tables |
-| BFF `/api/*` → engine `/api/v1/dbo/*` | [x] | Service token + customer JWT forward |
-| Retail PWA UI | [x] | login, dashboard, accounts, transfers, payments |
-| Corporate approve queue | [x] | `/payments/approve` + `PaymentSignRequest` |
-| ASAN/SİMA stub adapter | [x] | Dev mock via engine + channel redirect |
-| OTP dev fallback | [x] | Fixed code `123456` |
-| Open API B2B | [x] | Engine `/dbo/open/*` + channel key seed |
-| AML preflight | [x] | Engine `POST /dbo/payments/orders/:id/preflight` |
-| Entitlement gate `banking_dbo` | [x] | Orchestrator seed + engine guards |
-| Customer cards (stretch) | [x] | `/cards` read-only + temporary block |
+- [x] Next.js app on port **3211** — package.json, Docker, env
+- [x] Channel Prisma — sessions, API keys, sign requests (no ledger tables)
+- [x] BFF `/api/*` → engine `/api/v1/dbo/*` — service token + customer JWT forward
+- [x] Entitlement gate `banking_dbo` — orchestrator seed + engine guards
 
-## Routes
+## Retail customer UI
 
-| Route | Actor | Description |
-|-------|-------|-------------|
-| `/login` | Customer | Retail FIN / Corporate VÖEN + OTP or ASAN stub |
-| `/dashboard` | Customer | Aggregated balance |
-| `/accounts`, `/accounts/[id]` | Customer | Account list and detail |
-| `/transfers` | Customer | Internal transfer form |
-| `/payments`, `/payments/new` | Customer | Payment orders |
-| `/payments/approve` | Corporate signatory | Pending sign queue |
+- [x] `/login` — Retail FIN + OTP dev fallback (`123456`) or ASAN/SİMA stub
+- [x] `/dashboard` — aggregated balance from engine
+- [x] `/accounts`, `/accounts/[id]` — account list and detail
+- [x] `/transfers` — internal transfer form
+- [x] `/payments`, `/payments/new` — payment orders create + list
+
+## Corporate signatory
+
+- [x] `/login` — Corporate VÖEN + OTP
+- [x] `/payments/approve` — pending sign queue + ASAN sign flow
+- [x] `PaymentSignRequest` in channel DB — multi-signatory workflow
+
+## Engine integration
+
+- [x] ASAN/SİMA stub adapter — dev mock via engine + channel redirect
+- [x] Open API B2B — engine `/dbo/open/*` + channel API key seed
+- [x] AML preflight — engine `POST /dbo/payments/orders/:id/preflight`
+- [x] Customer cards (stretch) — `/cards` read-only + temporary block
 
 ## BFF API map
 

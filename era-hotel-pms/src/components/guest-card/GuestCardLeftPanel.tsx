@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { FORM_FIELD_GROUP_CLASS, MODAL_FIELD_LABEL_CLASS, MODAL_INPUT_CLASS } from '@era/satellite-kit/ui';
+import { Field } from '@era/satellite-kit/ui';
 
 export function GuestCardLeftPanel({
   fullName,
@@ -32,6 +32,16 @@ export function GuestCardLeftPanel({
 }) {
   const t = useTranslations('guestCard');
 
+  const scalarFields = [
+    ['fullName', fullName, t('fields.fullName'), 'longText'] as const,
+    ['firstName', firstName, t('fields.firstName'), 'shortText'] as const,
+    ['lastName', lastName, t('fields.lastName'), 'shortText'] as const,
+    ['title', title, t('fields.title'), 'code'] as const,
+    ['gender', gender, t('fields.gender'), 'code'] as const,
+    ['nationality', nationality, t('fields.nationality'), 'code'] as const,
+    ['vipType', vipType, t('fields.vipType'), 'shortText'] as const,
+  ];
+
   return (
     <aside className="space-y-3 border-r border-[#D5DADF] pr-3">
       {allergenCount != null && allergenCount > 0 ? (
@@ -47,25 +57,14 @@ export function GuestCardLeftPanel({
       >
         {t('idReader')}
       </button>
-      {(
-        [
-          ['fullName', fullName, t('fields.fullName')],
-          ['firstName', firstName, t('fields.firstName')],
-          ['lastName', lastName, t('fields.lastName')],
-          ['title', title, t('fields.title')],
-          ['gender', gender, t('fields.gender')],
-          ['nationality', nationality, t('fields.nationality')],
-          ['vipType', vipType, t('fields.vipType')],
-        ] as const
-      ).map(([key, val, label]) => (
-        <div key={key} className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{label}</label>
-          <input
-            className={MODAL_INPUT_CLASS}
-            value={val}
-            onChange={(e) => onChange({ [key]: e.target.value })}
-          />
-        </div>
+      {scalarFields.map(([key, val, label, preset]) => (
+        <Field
+          key={key}
+          label={label}
+          preset={preset}
+          value={val}
+          onChange={(e) => onChange({ [key]: e.target.value })}
+        />
       ))}
       <label className="flex items-center gap-2 text-[13px]">
         <input

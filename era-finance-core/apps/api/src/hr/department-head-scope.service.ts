@@ -1,71 +1,75 @@
 import { ForbiddenException, Injectable } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { decryptText } from "../security/pii-crypto.util";
-
-function norm(v: string | null | undefined): string {
-  return (v ?? "").trim().toLowerCase();
-}
 
 @Injectable()
 export class DepartmentHeadScopeService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Resolves "own department" for DEPARTMENT_HEAD role.
-   * Mapping strategy: current user must match an Employee by first/last name,
-   * and this employee must be assigned as department manager.
+   * Resolves managed department for DEPARTMENT_HEAD via stable CP employment id mirror.
    */
   async resolveManagedDepartmentId(
     organizationId: string,
     userId: string,
   ): Promise<string> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { firstNameCipher: true, lastNameCipher: true },
-    });
-    if (!user) {
-      throw new ForbiddenException("User not found for department scope");
-    }
-
-    const firstName = norm(user.firstNameCipher ? decryptText(user.firstNameCipher) : null);
-    const lastName = norm(user.lastNameCipher ? decryptText(user.lastNameCipher) : null);
-    const fullName = [firstName, lastName].filter(Boolean).join(" ").trim();
-    if ((!firstName || !lastName) && !fullName) {
-      throw new ForbiddenException(
-        "DEPARTMENT_HEAD profile is not linked to a managed department",
-      );
-    }
-
-    const employees = await this.prisma.employee.findMany({
-      where: { organizationId },
-      select: { id: true, firstName: true, lastName: true },
-    });
-
-    const matched = employees.find((e) => {
-      const ef = norm(e.firstName);
-      const el = norm(e.lastName);
-      const eFull = `${ef} ${el}`.trim();
-      if (firstName && lastName && ef === firstName && el === lastName) {
-        return true;
-      }
-      return Boolean(fullName) && eFull === fullName;
-    });
-
-    if (!matched) {
-      throw new ForbiddenException(
-        "DEPARTMENT_HEAD is not mapped to an employee manager profile",
-      );
-    }
-
-    const managed = await this.prisma.department.findMany({
-      where: { organizationId, managerId: matched.id },
-      select: { id: true },
-    });
-    if (managed.length !== 1) {
+    const ids = await this.resolveManagedDepartmentIds(organizationId, userId);
+    if (ids.length !== 1) {
       throw new ForbiddenException(
         "DEPARTMENT_HEAD must be assigned to exactly one managed department",
       );
     }
-    return managed[0].id;
+    return ids[0];
+  }
+
+  async resolveManagedDepartmentIds(
+    organizationId: string,
+    userId: string,
+  ): Promise<string[]> {
+    const employee = await this.prisma.employee.findFirst({
+      where: { organizationId, userId, deletedAt: null },
+      select: { id: true, cpEmploymentId: true },
+    });
+    if (!employee?.cpEmploymentId) {
+      throw new ForbiddenException(
+        "DEPARTMENT_HEAD profile is not linked to a CP employment",
+      );
+    }
+
+    const managedRoots = await this.prisma.department.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        managerEmploymentId: employee.cpEmploymentId,
+      },
+      select: { id: true },
+    });
+    if (managedRoots.length === 0) {
+      throw new ForbiddenException(
+        "DEPARTMENT_HEAD is not mapped as manager of any department",
+      );
+    }
+
+    const all = await this.prisma.department.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, parentId: true },
+    });
+    const byParent = new Map<string | null, string[]>();
+    for (const d of all) {
+      const key = d.parentId;
+      const arr = byParent.get(key) ?? [];
+      arr.push(d.id);
+      byParent.set(key, arr);
+    }
+
+    const out = new Set<string>();
+    for (const root of managedRoots) {
+      const stack = [root.id];
+      while (stack.length) {
+        const cur = stack.pop()!;
+        out.add(cur);
+        for (const child of byParent.get(cur) ?? []) stack.push(child);
+      }
+    }
+    return [...out];
   }
 }

@@ -20,13 +20,21 @@ npx tsx prisma/scripts/backfill-global-person-id.ts
 Suspected duplicates are grouped by:
 
 - Same normalized phone (+994…)
-- Same FIN (`nationalIdFin`, 7 chars)
+- Same `globalPersonId` on multiple `Guest` rows (data quality — should be one guest row per person per deployment)
 
 **Merge workflow (orchestrator MDM):**
 
-1. Super-admin opens orchestrator MDM internal UI / `mergePersons` API.
-2. Pick canonical `globalPersonId`; satellite guest rows update on next backfill or manual `globalPersonId` patch.
+1. Reception uses guest card **FIN obtained (merge)** or orchestrator MDM merge API.
+2. Pick canonical `globalPersonId`; hotel updates guest row via `POST /api/mdm/person-merge`.
 3. Re-run dedup report until `suspectedDuplicateGroups` is acceptable for go-live.
+
+**Pre-migration (W4 cutover):**
+
+```bash
+npx tsx prisma/scripts/backfill-global-person-id.ts
+npx tsx prisma/scripts/report-guests-without-mdm-link.ts   # blockers CSV
+npx tsx prisma/scripts/strip-guest-identity-columns.ts     # post-migration verify
+```
 
 ## Performance (7k rows)
 

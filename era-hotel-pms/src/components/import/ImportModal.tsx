@@ -40,10 +40,10 @@ export function ImportButton({
   onComplete?: () => void;
   className?: string;
 }) {
-  const { isPlatformSuperAdmin, loading } = useAuth();
+  const { canRunElektrawebImport, loading } = useAuth();
   const [open, setOpen] = useState(false);
 
-  if (loading || !isPlatformSuperAdmin) return null;
+  if (loading || !canRunElektrawebImport) return null;
 
   return (
     <>

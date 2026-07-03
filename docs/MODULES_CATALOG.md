@@ -63,6 +63,22 @@ Module IDs — each app **`PRD.md` §4**. **M11 / M12** (promotions, customer at
 | Platform | CP-B3–B8 | Booking, portal, payments, loyalty, domain, delivery | orchestrator | **Live** |
 | era-orchestrator + Finance | — | MDM registration cutover (`ERA_MDM_REGISTRATION_CUTOVER`) | orchestrator | **DONE** |
 
+### Shipped in v3.0
+
+| App | Module | Capability | Owner | Status |
+|-----|--------|------------|-------|--------|
+| era-crm | M11–M16 | Party profile, lead card, create UI, CSV import, Finance auto-CP, FIN/MDM | SATELLITE + FINANCE + contracts | **DONE** |
+
+### Planned in v3.1+ (Bitrix backlog)
+
+| App | Module | Capability | Status |
+|-----|--------|------------|--------|
+| era-crm | M17–M21 | Inbox 2-way, timeline, merge, Partner hook, import mapper | **DEFERRED (v3.1)** |
+| era-crm | M22–M28 | KPI, Contact/Company split, quotes, calendar, comms | **DEFERRED (v4.0)** |
+| era-crm | M29–M30 | Mobile field sales, field ACL | **DEFERRED (v5.0+)** |
+
+See ADR [crm-lead-party-model §8](../adr/crm-lead-party-model-and-prospect-import.md#8-bitrix24-benchmark-backlog-deferred).
+
 ---
 
 ## Platform add-ons (orchestrator — cross-cutting)
@@ -255,8 +271,17 @@ Bundles: `hotel_bundle_city`, `hotel_bundle_resort`, `hotel_bundle_sanatorium` �
 | M8 Next-contact reminder | v1.0 | — | **DONE** |
 | M9 Lead scoring / SLA | v1.0 | — | **DONE** |
 | M10 Pipeline automation | v1.1 | pipeline-rules | **DONE** |
+| M11 Party profile | v3.0 | individual + legal, VÖEN, sector, partner tag | **DONE** |
+| M12 Lead card page | v3.0 | `/leads/[id]` | **DONE** |
+| M13 Create lead UI | v3.0 | form on `/leads` | **DONE** |
+| M14 Prospect import | v3.0 | CSV/XLSX from e-taxes enrichment | **DONE** |
+| M15 Finance auto-CP | v3.0 | extended convert event | **DONE** |
+| M16 Individual FIN | v3.0 | MDM `globalPersonId` | **DONE** |
+| M17–M21 | v3.1 | Bitrix backlog: inbox, timeline, merge, Partner, import mapper | **DEFERRED** |
+| M22–M28 | v4.0 | KPI, Contact/Company, custom fields, quotes, calendar, comms | **DEFERRED** |
+| M29–M30 | v5.0+ | Mobile, field ACL | **DEFERRED** |
 | Events | — | converted, visit logged |
-| Growth | — | DELIVERY C4 |
+| Growth | — | DELIVERY C4 · v3.0 ADR [crm-lead-party-model](../adr/crm-lead-party-model-and-prospect-import.md) |
 
 ---
 

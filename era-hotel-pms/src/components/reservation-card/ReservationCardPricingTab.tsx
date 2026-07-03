@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { FORM_FIELD_GROUP_CLASS, FxEquivalentBadge, MODAL_FIELD_LABEL_CLASS, MODAL_INPUT_CLASS, PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
+import { FxEquivalentBadge, Field, MODAL_INPUT_CLASS, PRIMARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
 import type { DailyRateRow } from './types';
 
 function resolveDisplayCurrency(dailyRates: DailyRateRow[]): string {
@@ -74,17 +74,15 @@ export function ReservationCardPricingTab({
             {t('useManualRate')}
           </label>
           {useManualRate ? (
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('manualDailyRate')}</label>
-              <input
-                type="number"
-                step="0.01"
-                className={MODAL_INPUT_CLASS}
-                value={manualDailyRate}
-                disabled={isLocked}
-                onChange={(e) => onManualRate(e.target.value)}
-              />
-            </div>
+            <Field
+              label={t('manualDailyRate')}
+              preset="amount"
+              type="number"
+              step="0.01"
+              value={manualDailyRate}
+              disabled={isLocked}
+              onChange={(e) => onManualRate(e.target.value)}
+            />
           ) : null}
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={discountActive} disabled={isLocked} onChange={(e) => onToggle('discountActive', e.target.checked)} />

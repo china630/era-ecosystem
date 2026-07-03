@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     "/api/portal/session",
     "/api/sanatorium/episodes/from-stay",
     "/api/integration/hotel-lifecycle",
+    "/api/integration/settlement-confirmed",
     "/api/booking",
   ];
   if (pathname.startsWith("/api")) {

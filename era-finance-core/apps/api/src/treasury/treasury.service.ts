@@ -6,6 +6,8 @@ import {
   Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { attachEmployeePerson, batchEmployeePersonMap } from "../hr/employee-person.util";
 
 const DEFAULT_CASH_FLOW_ITEMS: { code: string; name: string }[] = [
   { code: "CF-OPS", name: "Əməliyyat fəaliyyəti üzrə ödənişlər" },
@@ -17,7 +19,35 @@ const DEFAULT_CASH_FLOW_ITEMS: { code: string; name: string }[] = [
 
 @Injectable()
 export class TreasuryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mdm: OrchestratorMdmClientService,
+  ) {}
+
+  private async enrichDeskEmployee<T extends { employee: { id: string; globalPersonId: string } | null }>(
+    organizationId: string,
+    row: T,
+  ) {
+    if (!row.employee) return { ...row, employee: null };
+    const map = await batchEmployeePersonMap(this.mdm, organizationId, [row.employee.globalPersonId]);
+    return {
+      ...row,
+      employee: attachEmployeePerson(row.employee, map),
+    };
+  }
+
+  private async enrichDeskEmployees(
+    organizationId: string,
+    rows: Array<{ employee: { id: string; globalPersonId: string } | null }>,
+  ) {
+    const ids = rows.map((r) => r.employee?.globalPersonId).filter((id): id is string => Boolean(id));
+    const map = await batchEmployeePersonMap(this.mdm, organizationId, ids);
+    return rows.map((r) =>
+      r.employee
+        ? { ...r, employee: attachEmployeePerson(r.employee, map) }
+        : { ...r, employee: null },
+    );
+  }
 
   /**
    * Список статей ДДС; при пустом справочнике создаёт типовой набор.
@@ -62,16 +92,17 @@ export class TreasuryService {
     });
   }
 
-  listCashDesks(organizationId: string) {
-    return this.prisma.cashDesk.findMany({
+  async listCashDesks(organizationId: string) {
+    const rows = await this.prisma.cashDesk.findMany({
       where: { organizationId, isActive: true },
       orderBy: [{ name: "asc" }],
       include: {
         employee: {
-          select: { id: true, firstName: true, lastName: true, finCode: true },
+          select: { id: true, globalPersonId: true },
         },
       },
     });
+    return this.enrichDeskEmployees(organizationId, rows);
   }
 
   async createCashDesk(
@@ -80,7 +111,7 @@ export class TreasuryService {
   ) {
     const name = dto.name.trim();
     if (!name) throw new BadRequestException("name required");
-    return this.prisma.cashDesk.create({
+    const created = await this.prisma.cashDesk.create({
       data: {
         organizationId,
         name,
@@ -89,10 +120,11 @@ export class TreasuryService {
       },
       include: {
         employee: {
-          select: { id: true, firstName: true, lastName: true, finCode: true },
+          select: { id: true, globalPersonId: true },
         },
       },
     });
+    return this.enrichDeskEmployee(organizationId, created);
   }
 
   async assertCashFlowItem(organizationId: string, id: string) {

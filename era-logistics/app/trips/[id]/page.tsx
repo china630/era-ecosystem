@@ -7,12 +7,12 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   ColorLegend,
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
+  FieldTextarea,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
@@ -365,42 +365,33 @@ export default function TripDetailPage() {
         }
       >
         <form id={podFormId} onSubmit={savePod} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("recipient")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={podRecipient}
-              onChange={(e) => setPodRecipient(e.target.value)}
-              required
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("photoUrl")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={podPhotoUrl}
-              onChange={(e) => setPodPhotoUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("signatureUrl")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={podSignatureUrl}
-              onChange={(e) => setPodSignatureUrl(e.target.value)}
-              placeholder="https://…"
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("notes")}</label>
-            <textarea
-              className={MODAL_INPUT_CLASS}
-              rows={2}
-              value={podNotes}
-              onChange={(e) => setPodNotes(e.target.value)}
-            />
-          </div>
+          <Field
+            label={t("recipient")}
+            preset="shortText"
+            value={podRecipient}
+            onChange={(e) => setPodRecipient(e.target.value)}
+            required
+          />
+          <Field
+            label={t("photoUrl")}
+            preset="longText"
+            value={podPhotoUrl}
+            onChange={(e) => setPodPhotoUrl(e.target.value)}
+            placeholder="https://…"
+          />
+          <Field
+            label={t("signatureUrl")}
+            preset="longText"
+            value={podSignatureUrl}
+            onChange={(e) => setPodSignatureUrl(e.target.value)}
+            placeholder="https://…"
+          />
+          <FieldTextarea
+            label={t("notes")}
+            rows={2}
+            value={podNotes}
+            onChange={(e) => setPodNotes(e.target.value)}
+          />
         </form>
       </ModalShell>
 
@@ -420,32 +411,28 @@ export default function TripDetailPage() {
         }
       >
         <form id={fuelFormId} onSubmit={saveFuel} className={FORM_STACK_CLASS}>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("liters")}</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className={MODAL_INPUT_CLASS}
-                value={fuelLiters}
-                onChange={(e) => setFuelLiters(e.target.value)}
-                required
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t("costAzn")}</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className={MODAL_INPUT_CLASS}
-                value={fuelCost}
-                onChange={(e) => setFuelCost(e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <FieldRow cols={2}>
+            <Field
+              label={t("liters")}
+              preset="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={fuelLiters}
+              onChange={(e) => setFuelLiters(e.target.value)}
+              required
+            />
+            <Field
+              label={t("costAzn")}
+              preset="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={fuelCost}
+              onChange={(e) => setFuelCost(e.target.value)}
+              required
+            />
+          </FieldRow>
         </form>
       </ModalShell>
     </>

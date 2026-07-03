@@ -1,24 +1,29 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+
+import { jsonOk, handleRouteError, jsonError } from "@/lib/api-utils";
+
 import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+
 import {
-  updatePractitioner,
+  updatePractitionerOpsCatalog,
   deletePractitioner,
   auditMasterChange,
-  listPractitioners,
+  getPractitionerById,
 } from "@/lib/services/clinic-master-data.service";
-import { linkPractitionerGlobalPerson } from "@/lib/practitioner-identity";
 
-const updateSchema = z.object({
-  fullName: z.string().min(1).optional(),
+import { isCpWorkforceHireModeActive } from "@/lib/workforce-policy";
+
+const opsUpdateSchema = z.object({
   specialty: z.string().nullable().optional(),
-  finCode: z.string().optional(),
-  passportNumber: z.string().optional(),
-  issuingCountry: z.string().optional(),
-  phone: z.string().optional(),
-  globalPersonId: z.string().nullable().optional(),
   defaultSlotMinutes: z.number().int().min(5).max(240).optional(),
 });
+
+function isProvisionedPractitioner(row: {
+  globalPersonId?: string | null;
+  financeEmployeeId?: string | null;
+}): boolean {
+  return Boolean(row.globalPersonId || row.financeEmployeeId);
+}
 
 export async function PATCH(
   req: Request,
@@ -27,47 +32,34 @@ export async function PATCH(
   try {
     const guard = await assertClinicAdminWrite();
     if (guard.error) return guard.error;
+
     const { id } = await ctx.params;
-    const body = updateSchema.parse(await req.json());
-
-    const row = await updatePractitioner(id, {
-      fullName: body.fullName,
-      specialty: body.specialty,
-      finCode: body.finCode ?? undefined,
-      passportNumber: body.passportNumber ?? undefined,
-      issuingCountry: body.issuingCountry ?? undefined,
-      phone: body.phone ?? undefined,
-      globalPersonId: body.globalPersonId,
-      defaultSlotMinutes: body.defaultSlotMinutes,
-    });
-
-    if (
-      body.finCode?.trim() ||
-      body.passportNumber?.trim() ||
-      body.fullName?.trim()
-    ) {
-      await linkPractitionerGlobalPerson({
-        practitionerId: id,
-        fullName: body.fullName ?? row.fullName,
-        fin: body.finCode,
-        passport: body.passportNumber,
-        issuingCountry: body.issuingCountry,
-        phone: body.phone,
-      });
+    const existing = await getPractitionerById(id);
+    if (!existing) {
+      return jsonError("Not found", 404);
     }
 
-    const refreshed = await listPractitioners().then((rows) =>
-      rows.find((r) => r.id === id),
-    );
+    const cpWorkforce = await isCpWorkforceHireModeActive();
+    const provisioned = isProvisionedPractitioner(existing);
 
-    await auditMasterChange(
-      { userId: guard.session.sub, request: req },
-      "practitioner",
-      id,
-      "UPDATE",
-      body,
+    if (cpWorkforce || provisioned) {
+      const body = opsUpdateSchema.parse(await req.json());
+      const row = await updatePractitionerOpsCatalog(id, body);
+      await auditMasterChange(
+        { userId: guard.session.sub, request: req },
+        "practitioner",
+        id,
+        "UPDATE_OPS",
+        body,
+      );
+      return jsonOk(row);
+    }
+
+    return jsonError(
+      "Identity changes via CP Workforce only. Enable platform_workforce and hire from Workspace.",
+      403,
+      { code: "WORKFORCE_OPS_CATALOG_ONLY" },
     );
-    return jsonOk(refreshed ?? row);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -80,7 +72,21 @@ export async function DELETE(
   try {
     const guard = await assertClinicAdminWrite();
     if (guard.error) return guard.error;
+
     const { id } = await ctx.params;
+    const existing = await getPractitionerById(id);
+    if (!existing) {
+      return jsonError("Not found", 404);
+    }
+
+    if (isProvisionedPractitioner(existing) || (await isCpWorkforceHireModeActive())) {
+      return jsonError(
+        "Deactivate provisioned staff in ERA Workspace → Workforce (terminate employment).",
+        403,
+        { code: "WORKFORCE_DEACTIVATE_VIA_CP" },
+      );
+    }
+
     await deletePractitioner(id);
     await auditMasterChange(
       { userId: guard.session.sub, request: req },

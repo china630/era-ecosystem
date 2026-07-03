@@ -30,6 +30,7 @@ import {
   Users,
   UtensilsCrossed,
   Wrench,
+  Banknote,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
@@ -73,7 +74,7 @@ function souvenirRetailHref(): string {
 }
 
 export default function HotelOpsShell({ children }: { children: React.ReactNode }) {
-  const { user, can, isPlatformSuperAdmin } = useAuth();
+  const { user, can, isPlatformSuperAdmin, canRunElektrawebImport } = useAuth();
   const pathname = usePathname() ?? '';
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -203,6 +204,20 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               labelKey: 'operations',
               icon: Moon,
               show: can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL),
+            },
+          ]),
+        },
+        {
+          id: 'hotel_front_cash',
+          title: t('sectionFrontCash'),
+          icon: Banknote,
+          items: sectionItems([
+            {
+              id: 'fc-pending',
+              href: '/front-cash/pending',
+              labelKey: 'pendingSettlement',
+              icon: Banknote,
+              show: can(PERMISSIONS.FOLIO_PAYMENT) || can(PERMISSIONS.FOLIO_VOID),
             },
           ]),
         },
@@ -475,7 +490,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
               href: '/admin/import',
               labelKey: 'elektrawebImport',
               icon: FileText,
-              show: isPlatformSuperAdmin,
+              show: canRunElektrawebImport,
             },
           ]),
         },
@@ -581,7 +596,7 @@ export default function HotelOpsShell({ children }: { children: React.ReactNode 
         },
       ].filter((section) => section.items.length > 0),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- can() identity stable enough per render
-    [t, can, user?.role, isPlatformSuperAdmin],
+    [t, can, user?.role, isPlatformSuperAdmin, canRunElektrawebImport],
   );
 
   const headerQuickLinkClass = (active: boolean) =>

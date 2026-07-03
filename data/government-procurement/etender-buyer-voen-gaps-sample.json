@@ -1,0 +1,185 @@
+{
+  "sampled_unique_names": 253,
+  "failures": [
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "HEYDƏR MƏSCİDİ İDARƏSİ ",
+      "event_id": 354387,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"FÜZULİ RAYON MƏRKƏZİ XƏSTƏXANASI\" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 354384,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN  MİLLİ  ELMLƏR AKADEMİYASI",
+      "event_id": 354331,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN DÖVLƏT SU EHTİYATLARI AGENTLİYİ",
+      "event_id": 354312,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"AĞCİYƏR XƏSTƏLİKLƏRİ MƏRKƏZİ\" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 354299,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"NİZAMİ TİBB MƏRKƏZİ\" PUBLİK  HÜQUQİ ŞƏXSİ",
+      "event_id": 354296,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"ABŞERON RAYON MƏRKƏZİ XƏSTƏXANASI\" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 354280,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN RESPUBLİKASININ İPOTEKA VƏ KREDİT ZƏMANƏT FONDU",
+      "event_id": 354270,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"XOCAVƏND RAYON MƏRKƏZİ XƏSTƏXANASI\" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 354265,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"BAKI  BAŞ SƏHİYYƏ MƏRKƏZİ \" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 354236,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"AZƏRENERJİKOMPLEKTLƏŞDİRMƏ\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+      "event_id": 354226,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN RESPUBLIKASI SƏHİYYƏ NAZİRLİYİ",
+      "event_id": 353950,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN RESPUBLİKASI AİLƏ, QADIN VƏ UŞAQ PROBLEMLƏRİ ÜZRƏ DÖVLƏT KOMİTƏSİNİN QƏBƏLƏ UŞAQ VƏ AİLƏLƏRƏ DƏSTƏK MƏRKƏZİ",
+      "event_id": 353859,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"RESPUBLİKA GİGİYENA VƏ EPİDEMİOLOGİYA MƏRKƏZİ\" PUBLİK HÜQUQİ ŞƏXSİ",
+      "event_id": 353826,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "İQTİSADİ İSLAHATLARIN TƏHLİLİ VƏ KOMMUNİKASİYA MƏRKƏZİ",
+      "event_id": 353553,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AZƏRBAYCAN RESPUBLİKASI FÖVQƏLADƏ HALLAR NAZİRLİYİNİN MADDİ TEXNİKİ-TƏCHİZAT  İDARƏSİ",
+      "event_id": 353550,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "AĞDAM RAYON İCRA HAKİMİYYƏTİ",
+      "event_id": 353522,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "RUSİYA FEDERASİYASI SƏHİYYƏ NAZİRLİYİNİN FEDERAL DÖVLƏT MUXTAR ALİ TƏHSİL MÜƏSSİSƏSİ İ. M. SEÇENOV ADINA BİRİNCİ MOSKVA DÖVLƏT TİBB UNİVERSİTETİNİN (SEÇENOV UNİVERSİTETİNİN) BAKI FİLİALI",
+      "event_id": 353484,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"NAXÇIVAN DÖVLƏT UNİVERSİTETİ\" PUBLİK HÜQUQİ ŞƏXS",
+      "event_id": 353469,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    },
+    {
+      "reason": "detail_fetch_failed",
+      "list_name": "\"LİFTTƏMİR\" İSTEHSALAT BİRLİYİ",
+      "event_id": 353444,
+      "event_status": 1,
+      "organizationVoen": "",
+      "detail_name": "",
+      "error": "fetch failed"
+    }
+  ]
+}

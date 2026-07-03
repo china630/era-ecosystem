@@ -4,14 +4,14 @@ import { decimalToNumber } from '@/lib/decimal';
 export type GuestDedupSummary = {
   totalGuests: number;
   withoutGlobalPersonId: number;
-  withoutIdentifier: number;
+  withoutMdmLink: number;
   suspectedDuplicateGroups: number;
   suspectedDuplicateGuests: number;
 };
 
 export type DuplicateGroup = {
   key: string;
-  matchType: 'PHONE' | 'FIN';
+  matchType: 'PHONE' | 'GLOBAL_PERSON_ID';
   guestIds: string[];
   labels: string[];
 };
@@ -22,18 +22,14 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
       id: true,
       globalPersonId: true,
       phone: true,
-      nationalIdFin: true,
-      passportNumber: true,
     },
   });
 
   const withoutGlobalPersonId = guests.filter((g) => !g.globalPersonId).length;
-  const withoutIdentifier = guests.filter(
-    (g) => !g.nationalIdFin && !g.passportNumber,
-  ).length;
+  const withoutMdmLink = withoutGlobalPersonId;
 
   const phoneMap = new Map<string, string[]>();
-  const finMap = new Map<string, string[]>();
+  const personMap = new Map<string, string[]>();
 
   for (const g of guests) {
     const phone = g.phone?.replace(/\s+/g, '').trim();
@@ -42,11 +38,11 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
       list.push(g.id);
       phoneMap.set(phone, list);
     }
-    const fin = g.nationalIdFin?.trim().toUpperCase();
-    if (fin && fin.length === 7) {
-      const list = finMap.get(fin) ?? [];
+    const pid = g.globalPersonId?.trim();
+    if (pid) {
+      const list = personMap.get(pid) ?? [];
       list.push(g.id);
-      finMap.set(fin, list);
+      personMap.set(pid, list);
     }
   }
 
@@ -56,9 +52,9 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
       groups.push({ key, matchType: 'PHONE', guestIds: ids, labels: ids });
     }
   }
-  for (const [key, ids] of finMap) {
+  for (const [key, ids] of personMap) {
     if (ids.length > 1) {
-      groups.push({ key, matchType: 'FIN', guestIds: ids, labels: ids });
+      groups.push({ key, matchType: 'GLOBAL_PERSON_ID', guestIds: ids, labels: ids });
     }
   }
 
@@ -67,7 +63,7 @@ export async function getGuestDedupSummary(): Promise<GuestDedupSummary> {
   return {
     totalGuests: guests.length,
     withoutGlobalPersonId,
-    withoutIdentifier,
+    withoutMdmLink,
     suspectedDuplicateGroups: groups.length,
     suspectedDuplicateGuests: dupGuestIds.size,
   };
@@ -79,12 +75,12 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       id: true,
       fullName: true,
       phone: true,
-      nationalIdFin: true,
+      globalPersonId: true,
     },
   });
 
   const byPhone = new Map<string, typeof guests>();
-  const byFin = new Map<string, typeof guests>();
+  const byPerson = new Map<string, typeof guests>();
 
   for (const g of guests) {
     const phone = g.phone?.replace(/\s+/g, '').trim();
@@ -93,11 +89,11 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       list.push(g);
       byPhone.set(phone, list);
     }
-    const fin = g.nationalIdFin?.trim().toUpperCase();
-    if (fin && fin.length === 7) {
-      const list = byFin.get(fin) ?? [];
+    const pid = g.globalPersonId?.trim();
+    if (pid) {
+      const list = byPerson.get(pid) ?? [];
       list.push(g);
-      byFin.set(fin, list);
+      byPerson.set(pid, list);
     }
   }
 
@@ -112,11 +108,11 @@ export async function listDuplicateGroups(limit = 50): Promise<DuplicateGroup[]>
       });
     }
   }
-  for (const [key, list] of byFin) {
+  for (const [key, list] of byPerson) {
     if (list.length > 1) {
       groups.push({
         key,
-        matchType: 'FIN',
+        matchType: 'GLOBAL_PERSON_ID',
         guestIds: list.map((g) => g.id),
         labels: list.map((g) => g.fullName ?? g.id),
       });

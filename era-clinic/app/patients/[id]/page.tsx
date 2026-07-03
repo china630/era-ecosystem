@@ -6,7 +6,9 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
 import {
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   ModalFooter,
   ModalShell,
   SECONDARY_BUTTON_CLASS,
@@ -17,10 +19,8 @@ type Patient = {
   refCode: string;
   fullName: string;
   phone?: string | null;
-  finCode?: string | null;
-  passportNumber?: string | null;
-  issuingCountry?: string | null;
   globalPersonId?: string | null;
+  identifiersSummary?: Array<{ type: string; issuingCountry: string | null; isPrimary: boolean }>;
 };
 
 function maskPersonId(id: string | null | undefined): string {
@@ -55,9 +55,9 @@ export default function PatientCardPage() {
     setForm({
       fullName: p.fullName ?? "",
       phone: p.phone ?? "",
-      finCode: p.finCode ?? "",
-      passportNumber: p.passportNumber ?? "",
-      issuingCountry: p.issuingCountry ?? "AZ",
+      finCode: "",
+      passportNumber: "",
+      issuingCountry: "AZ",
     });
   }, [params.id]);
 
@@ -133,9 +133,9 @@ export default function PatientCardPage() {
       body: JSON.stringify({
         fullName: form.fullName,
         phone: form.phone || null,
-        finCode: form.finCode || null,
-        passportNumber: form.passportNumber || null,
-        issuingCountry: form.issuingCountry || null,
+        finCode: form.finCode.trim() || null,
+        passportNumber: form.passportNumber.trim() || null,
+        issuingCountry: form.issuingCountry.trim() || null,
       }),
     });
     const data = await res.json();
@@ -169,11 +169,18 @@ export default function PatientCardPage() {
               <span className="text-red-600">{t("mdmMissing")}</span>
             )}
           </p>
+          {patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
+            <p className="text-xs text-slate-500">
+              {patient.identifiersSummary.map((i) => i.type).join(", ")}
+            </p>
+          ) : null}
         </div>
         <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
           {tc("edit")}
         </button>
-        {patient.globalPersonId && patient.passportNumber && !patient.finCode ? (
+        {patient.globalPersonId &&
+        patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
+        !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") ? (
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void mergeFinObtained()}>
             {t("finObtained")}
           </button>
@@ -188,43 +195,45 @@ export default function PatientCardPage() {
       </section>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
-        <div className="space-y-2">
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("fullName")}
+        <div className="space-y-4">
+          <Field
+            label={t("fullName")}
+            preset="shortText"
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("phone")}
+          <Field
+            label={t("phone")}
+            preset="phone"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
-          <div className="flex gap-2">
-            <input
-              className={MODAL_INPUT_CLASS}
-              placeholder={t("finCode")}
+          <FieldRow cols={2} className="items-end">
+            <Field
+              label={t("finCode")}
+              preset="fin"
               value={form.finCode}
               onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
             />
-            <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void lookupMdm()}>
+            <button type="button" className={`${SECONDARY_BUTTON_CLASS} self-end`} onClick={() => void lookupMdm()}>
               {t("mdmLookup")}
             </button>
-          </div>
+          </FieldRow>
           {mdmStatus ? <p className="text-xs text-[#7F8C8D]">{mdmStatus}</p> : null}
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("passportNumber")}
-            value={form.passportNumber}
-            onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
-          />
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("issuingCountry")}
-            value={form.issuingCountry}
-            onChange={(e) => setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })}
-          />
+          <FieldRow cols={2}>
+            <Field
+              label={t("passportNumber")}
+              preset="code"
+              value={form.passportNumber}
+              onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
+            />
+            <Field
+              label={t("issuingCountry")}
+              preset="code"
+              value={form.issuingCountry}
+              onChange={(e) => setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })}
+            />
+          </FieldRow>
         </div>
         <ModalFooter onCancel={() => setEditOpen(false)} onSubmit={() => void savePatient()} submitLabel={tc("save")} />
       </ModalShell>

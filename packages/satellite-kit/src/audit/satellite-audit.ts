@@ -64,7 +64,30 @@ export function auditIntegrityHash(payload: string): string {
   return createHash("sha256").update(payload).digest("hex");
 }
 
-/** Persist audit row via injected writer (Prisma per satellite). */
+/** Optional workforce correlation fields for satellite ops audit. */
+export type WorkforceAuditContext = {
+  cpEmploymentId?: string | null;
+  globalPersonId?: string | null;
+};
+
+export function stampWorkforceAuditContext(
+  session: WorkforceAuditContext | null | undefined,
+  changes?: Record<string, unknown> | null,
+): Record<string, unknown> | undefined {
+  if (!session?.cpEmploymentId && !session?.globalPersonId) {
+    return changes ?? undefined;
+  }
+  return {
+    ...(changes ?? {}),
+    ...(session?.cpEmploymentId
+      ? { cpEmploymentId: session.cpEmploymentId }
+      : {}),
+    ...(session?.globalPersonId
+      ? { globalPersonId: session.globalPersonId }
+      : {}),
+  };
+}
+
 export async function recordSatelliteAudit(
   write: SatelliteAuditWriter,
   input: SatelliteAuditInput,

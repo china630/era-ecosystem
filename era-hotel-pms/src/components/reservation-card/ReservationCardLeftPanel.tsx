@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { Bed, Lock, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import {
-  FORM_FIELD_GROUP_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldRow,
+  FieldSection,
+  FieldSelect,
   SECONDARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
 import { ReservationCardEarlyLatePanel } from '@/components/reservation-card/ReservationCardEarlyLatePanel';
@@ -101,130 +102,82 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     onChange({ [key]: e.target.value });
 
+  const disabled = isLocked;
+
   return (
-    <aside className="space-y-3 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
-      <fieldset className="space-y-2" disabled={isLocked}>
-        <legend className="font-semibold text-[#34495E]">{t('stay')}</legend>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{tb('checkIn')}</label>
-          <input type="date" className={MODAL_INPUT_CLASS} value={props.checkIn} onChange={set('checkIn')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{tb('checkOut')}</label>
-          <input type="date" className={MODAL_INPUT_CLASS} value={props.checkOut} onChange={set('checkOut')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('nights')}</label>
-          <input className={MODAL_INPUT_CLASS} value={String(nights)} readOnly />
-        </div>
-        {!isCreate ? (
-          <>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('checkInTime')}</label>
-              <input type="time" className={MODAL_INPUT_CLASS} value={props.checkInTime} onChange={set('checkInTime')} />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{t('checkOutTime')}</label>
-              <input type="time" className={MODAL_INPUT_CLASS} value={props.checkOutTime} onChange={set('checkOutTime')} />
-            </div>
-            {props.reservationId ? (
-              <ReservationCardEarlyLatePanel
-                reservationId={props.reservationId}
-                checkInTime={props.checkInTime}
-                checkOutTime={props.checkOutTime}
-              />
-            ) : null}
-          </>
-        ) : null}
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('voucherNo')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.voucherNo} onChange={set('voucherNo')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('resNo')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.resNo} onChange={set('resNo')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('shareNo')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.shareNo} onChange={set('shareNo')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('agency')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.agencyId} onChange={set('agencyId')}>
-            <option value="">{t('individual')}</option>
-            {agencies.map((a) => (
-              <option key={a.id} value={a.id}>{a.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('source')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.sourceId} onChange={set('sourceId')}>
-            <option value="">—</option>
-            {sources.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{tb('roomType')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.roomTypeId} onChange={set('roomTypeId')} required={isCreate}>
-            {isCreate ? <option value="">{tc('select')}</option> : null}
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('preferredLocation')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.preferredLocation} onChange={set('preferredLocation')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('preferredBed')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.preferredBed} onChange={set('preferredBed')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('givenRoomType')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.givenRoomTypeId} onChange={set('givenRoomTypeId')}>
-            <option value="">—</option>
-            {roomTypes.map((rt) => (
-              <option key={rt.id} value={rt.id}>{rt.label}</option>
-            ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('salesContract')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.salesContractId} onChange={set('salesContractId')}>
-            <option value="">—</option>
-            {salesContracts
-              .filter((c) => !props.agencyId || !c.agencyId || c.agencyId === props.agencyId)
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
+    <aside className="space-y-4 overflow-y-auto border-r border-[#D5DADF] pr-3 text-[13px]">
+      <FieldSection title={t('stay')} defaultOpen>
+        <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+          <FieldRow cols={3}>
+            <Field label={tb('checkIn')} preset="date" type="date" value={props.checkIn} onChange={set('checkIn')} />
+            <Field label={tb('checkOut')} preset="date" type="date" value={props.checkOut} onChange={set('checkOut')} />
+            <Field label={t('nights')} preset="count" value={String(nights)} readOnly />
+          </FieldRow>
+          {!isCreate ? (
+            <>
+              <FieldRow cols={2}>
+                <Field
+                  label={t('checkInTime')}
+                  preset="time"
+                  type="time"
+                  value={props.checkInTime}
+                  onChange={set('checkInTime')}
+                />
+                <Field
+                  label={t('checkOutTime')}
+                  preset="time"
+                  type="time"
+                  value={props.checkOutTime}
+                  onChange={set('checkOutTime')}
+                />
+              </FieldRow>
+              {props.reservationId ? (
+                <ReservationCardEarlyLatePanel
+                  reservationId={props.reservationId}
+                  checkInTime={props.checkInTime}
+                  checkOutTime={props.checkOutTime}
+                />
+              ) : null}
+            </>
+          ) : null}
+          <FieldRow cols={2}>
+            <Field label={t('resNo')} preset="code" value={props.resNo} onChange={set('resNo')} />
+            <Field label={t('voucherNo')} preset="code" value={props.voucherNo} onChange={set('voucherNo')} />
+          </FieldRow>
+          <Field label={t('shareNo')} preset="code" value={props.shareNo} onChange={set('shareNo')} />
+          {isCreate ? (
+            <FieldSelect
+              label={tb('roomType')}
+              preset="selectWide"
+              value={props.roomTypeId}
+              onChange={set('roomTypeId')}
+              required
+            >
+              <option value="">{tc('select')}</option>
+              {roomTypes.map((rt) => (
+                <option key={rt.id} value={rt.id}>
+                  {rt.label}
                 </option>
               ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('contractRef')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.contractRef} onChange={set('contractRef')} />
-        </div>
-        {!isCreate ? (
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('roomNo')}</label>
-            <div className="flex flex-wrap items-center gap-1">
-              <select
+            </FieldSelect>
+          ) : null}
+          {!isCreate ? (
+            <FieldRow cols={2} className="items-end">
+              <FieldSelect
+                label={t('roomNo')}
+                preset="selectWide"
                 id="res-card-room-select"
-                className={MODAL_INPUT_CLASS}
                 value={props.roomId}
                 onChange={set('roomId')}
               >
                 <option value="">—</option>
                 {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>{r.roomNumber}</option>
+                  <option key={r.id} value={r.id}>
+                    {r.roomNumber}
+                  </option>
                 ))}
-              </select>
-              <div className="flex gap-0.5">
+              </FieldSelect>
+              <div className="flex flex-wrap items-end gap-1 pb-0.5">
                 {onToggleLock ? (
                   <button
                     type="button"
@@ -236,7 +189,12 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                   </button>
                 ) : null}
                 {onFocusRoomSelect ? (
-                  <button type="button" className={SECONDARY_BUTTON_CLASS} title={t('roomSearch')} onClick={onFocusRoomSelect}>
+                  <button
+                    type="button"
+                    className={SECONDARY_BUTTON_CLASS}
+                    title={t('roomSearch')}
+                    onClick={onFocusRoomSelect}
+                  >
                     <Search className="h-4 w-4" />
                   </button>
                 ) : null}
@@ -252,145 +210,230 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 <span className={SECONDARY_BUTTON_CLASS} title={t('preferredBed')}>
                   <Bed className="h-4 w-4" />
                 </span>
+                {onAssignRoom ? (
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg border border-[#D5DADF] px-2 text-[12px] hover:bg-[#F8FAFC]"
+                    disabled={assignBusy || !props.roomId}
+                    onClick={onAssignRoom}
+                  >
+                    {t('assignRoom')}
+                  </button>
+                ) : null}
               </div>
-              {onAssignRoom ? (
-                <button
-                  type="button"
-                  className="shrink-0 rounded-lg border border-[#D5DADF] px-2 text-[12px] hover:bg-[#F8FAFC]"
-                  disabled={assignBusy || !props.roomId}
-                  onClick={onAssignRoom}
-                >
-                  {t('assignRoom')}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('roomCount')}</label>
-          <input type="number" min={1} className={MODAL_INPUT_CLASS} value={props.roomCount} onChange={set('roomCount')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('rateType')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.rateType} onChange={set('rateType')} />
-        </div>
-        {isCreate ? (
-          <>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{tb('ratePlan')}</label>
-              <select className={MODAL_INPUT_CLASS} value={props.ratePlanId} onChange={set('ratePlanId')} required>
+            </FieldRow>
+          ) : null}
+        </fieldset>
+      </FieldSection>
+
+      <FieldSection title={t('commercial')} defaultOpen>
+        <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+          <FieldSelect label={t('agency')} preset="selectWide" value={props.agencyId} onChange={set('agencyId')}>
+            <option value="">{t('individual')}</option>
+            {agencies.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldSelect label={t('source')} preset="select" value={props.sourceId} onChange={set('sourceId')}>
+            <option value="">—</option>
+            {sources.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldSelect
+            label={t('salesContract')}
+            preset="selectWide"
+            value={props.salesContractId}
+            onChange={set('salesContractId')}
+          >
+            <option value="">—</option>
+            {salesContracts
+              .filter((c) => !props.agencyId || !c.agencyId || c.agencyId === props.agencyId)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+          </FieldSelect>
+          <Field label={t('contractRef')} preset="code" value={props.contractRef} onChange={set('contractRef')} />
+          {isCreate ? (
+            <>
+              <FieldSelect
+                label={tb('ratePlan')}
+                preset="selectWide"
+                value={props.ratePlanId}
+                onChange={set('ratePlanId')}
+                required
+              >
                 <option value="">{tc('select')}</option>
                 {ratePlans.map((rp) => (
-                  <option key={rp.id} value={rp.id}>{rp.label}</option>
+                  <option key={rp.id} value={rp.id}>
+                    {rp.label}
+                  </option>
                 ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS}>{tb('paymentMethod')}</label>
-              <select className={MODAL_INPUT_CLASS} value={props.paymentMethod} onChange={set('paymentMethod')}>
+              </FieldSelect>
+              <FieldSelect
+                label={tb('paymentMethod')}
+                preset="select"
+                value={props.paymentMethod}
+                onChange={set('paymentMethod')}
+              >
                 <option value="CASH">{tPay('CASH')}</option>
                 <option value="CARD">{tPay('CARD')}</option>
                 <option value="COMPANY_ACCOUNT">{tPay('COMPANY_ACCOUNT')}</option>
-              </select>
-            </div>
-          </>
-        ) : null}
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('mealPlan')}</label>
-          <select className={MODAL_INPUT_CLASS} value={props.mealPlanId} onChange={set('mealPlanId')}>
+              </FieldSelect>
+            </>
+          ) : null}
+          <FieldSelect label={t('mealPlan')} preset="select" value={props.mealPlanId} onChange={set('mealPlanId')}>
             <option value="">—</option>
             {mealPlans.map((m) => (
-              <option key={m.id} value={m.id}>{m.label}</option>
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
             ))}
-          </select>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('adults')}</label>
-          <input type="number" min={0} className={MODAL_INPUT_CLASS} value={props.adults} onChange={set('adults')} />
-        </div>
-        <div className="grid grid-cols-3 gap-1">
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('child11_6')}</label>
-            <input type="number" min={0} className={MODAL_INPUT_CLASS} value={props.children11_6} onChange={set('children11_6')} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('child5_2')}</label>
-            <input type="number" min={0} className={MODAL_INPUT_CLASS} value={props.children5_2} onChange={set('children5_2')} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('child1_0')}</label>
-            <input type="number" min={0} className={MODAL_INPUT_CLASS} value={props.children1_0} onChange={set('children1_0')} />
-          </div>
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('market')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.market} onChange={set('market')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('segment')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.segment} onChange={set('segment')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('optionDate')}</label>
-          <input type="date" className={MODAL_INPUT_CLASS} value={props.optionDate} onChange={set('optionDate')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('optionState')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.optionState} onChange={set('optionState')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('salesProject')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.salesProject} onChange={set('salesProject')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('specialStates')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.specialStates} onChange={set('specialStates')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('resGroup')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.resGroup} onChange={set('resGroup')} />
-        </div>
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{t('colorCode')}</label>
-          <input className={MODAL_INPUT_CLASS} value={props.colorCode} onChange={set('colorCode')} />
-        </div>
-      </fieldset>
+          </FieldSelect>
+        </fieldset>
+      </FieldSection>
+
+      <FieldSection title={t('pax')} defaultOpen>
+        <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+          <Field
+            label={t('adults')}
+            preset="count"
+            type="number"
+            min={0}
+            value={props.adults}
+            onChange={set('adults')}
+          />
+          <FieldRow cols={3}>
+            <Field
+              label={t('child11_6')}
+              preset="count"
+              type="number"
+              min={0}
+              value={props.children11_6}
+              onChange={set('children11_6')}
+            />
+            <Field
+              label={t('child5_2')}
+              preset="count"
+              type="number"
+              min={0}
+              value={props.children5_2}
+              onChange={set('children5_2')}
+            />
+            <Field
+              label={t('child1_0')}
+              preset="count"
+              type="number"
+              min={0}
+              value={props.children1_0}
+              onChange={set('children1_0')}
+            />
+          </FieldRow>
+          <Field
+            label={t('roomCount')}
+            preset="count"
+            type="number"
+            min={1}
+            value={props.roomCount}
+            onChange={set('roomCount')}
+          />
+        </fieldset>
+      </FieldSection>
+
+      <FieldSection title={t('segmentation')} defaultOpen={false}>
+        <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+          <FieldRow cols={2}>
+            <Field label={t('market')} preset="code" value={props.market} onChange={set('market')} />
+            <Field label={t('segment')} preset="code" value={props.segment} onChange={set('segment')} />
+          </FieldRow>
+          <Field label={t('rateType')} preset="code" value={props.rateType} onChange={set('rateType')} />
+          <FieldRow cols={2}>
+            <Field
+              label={t('optionDate')}
+              preset="date"
+              type="date"
+              value={props.optionDate}
+              onChange={set('optionDate')}
+            />
+            <Field label={t('optionState')} preset="shortText" value={props.optionState} onChange={set('optionState')} />
+          </FieldRow>
+        </fieldset>
+      </FieldSection>
+
+      <FieldSection title={t('preferences')} defaultOpen={false}>
+        <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+          <FieldRow cols={2}>
+            <Field
+              label={t('preferredLocation')}
+              preset="shortText"
+              value={props.preferredLocation}
+              onChange={set('preferredLocation')}
+            />
+            <Field label={t('preferredBed')} preset="shortText" value={props.preferredBed} onChange={set('preferredBed')} />
+          </FieldRow>
+          <FieldSelect
+            label={t('givenRoomType')}
+            preset="select"
+            value={props.givenRoomTypeId}
+            onChange={set('givenRoomTypeId')}
+          >
+            <option value="">—</option>
+            {roomTypes.map((rt) => (
+              <option key={rt.id} value={rt.id}>
+                {rt.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldRow cols={2}>
+            <Field label={t('resGroup')} preset="code" value={props.resGroup} onChange={set('resGroup')} />
+            <Field label={t('colorCode')} preset="code" value={props.colorCode} onChange={set('colorCode')} />
+          </FieldRow>
+          <Field label={t('specialStates')} preset="shortText" value={props.specialStates} onChange={set('specialStates')} />
+          <Field label={t('salesProject')} preset="shortText" value={props.salesProject} onChange={set('salesProject')} />
+        </fieldset>
+      </FieldSection>
+
       {!isCreate ? (
-        <fieldset className="space-y-2" disabled={isLocked}>
-          <legend className="font-semibold text-[#34495E]">{t('billing')}</legend>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t('creditLimitAzn')}</label>
-            <input
+        <FieldSection title={t('billing')} defaultOpen>
+          <fieldset disabled={disabled} className="space-y-4 border-0 p-0">
+            <Field
+              label={t('creditLimitAzn')}
+              preset="amount"
               type="number"
               min={0}
               step={0.01}
-              className={MODAL_INPUT_CLASS}
               value={props.creditLimitAzn}
               onChange={set('creditLimitAzn')}
               placeholder={t('creditLimitPlaceholder')}
             />
-          </div>
-          <div className="rounded bg-[#F8FAFC] p-2 text-[12px]">
-            <div className="flex justify-between">
-              <span className="text-[#7F8C8D]">{t('folioBalance')}</span>
-              <span className="font-mono">{props.folioBalance.toFixed(2)} AZN</span>
-            </div>
-            {props.creditLimitAzn !== '' && !Number.isNaN(Number(props.creditLimitAzn)) ? (
-              <div className="mt-1 flex justify-between">
-                <span className="text-[#7F8C8D]">{t('creditRemaining')}</span>
-                <span
-                  className={`font-mono ${
-                    Number(props.creditLimitAzn) - props.folioBalance <= 0 ? 'text-[#E74C3C]' : 'text-[#27AE60]'
-                  }`}
-                >
-                  {Math.max(0, Number(props.creditLimitAzn) - props.folioBalance).toFixed(2)} AZN
-                </span>
+            <div className="rounded bg-[#F8FAFC] p-2 text-[12px]">
+              <div className="flex justify-between">
+                <span className="text-[#7F8C8D]">{t('folioBalance')}</span>
+                <span className="font-mono">{props.folioBalance.toFixed(2)} AZN</span>
               </div>
-            ) : (
-              <p className="mt-1 text-[#7F8C8D]">{t('creditLimitUnset')}</p>
-            )}
-          </div>
-        </fieldset>
+              {props.creditLimitAzn !== '' && !Number.isNaN(Number(props.creditLimitAzn)) ? (
+                <div className="mt-1 flex justify-between">
+                  <span className="text-[#7F8C8D]">{t('creditRemaining')}</span>
+                  <span
+                    className={`font-mono ${
+                      Number(props.creditLimitAzn) - props.folioBalance <= 0 ? 'text-[#E74C3C]' : 'text-[#27AE60]'
+                    }`}
+                  >
+                    {Math.max(0, Number(props.creditLimitAzn) - props.folioBalance).toFixed(2)} AZN
+                  </span>
+                </div>
+              ) : (
+                <p className="mt-1 text-[#7F8C8D]">{t('creditLimitUnset')}</p>
+              )}
+            </div>
+          </fieldset>
+        </FieldSection>
       ) : null}
     </aside>
   );

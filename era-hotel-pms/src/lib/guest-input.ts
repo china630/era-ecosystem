@@ -19,14 +19,14 @@ export const createGuestSchema = z
     const phone = data.phone?.trim() ?? '';
 
     if (data.nationality === 'AZ') {
-      if (!fin && !passport) {
+      if (!fin && !passport && !data.globalPersonId?.trim()) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'AZ guests need FIN or passport number',
           path: ['nationalIdFin'],
         });
       }
-    } else if (!passport) {
+    } else if (!passport && !data.globalPersonId?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Foreign guests need passport or travel document number',
@@ -45,12 +45,11 @@ export const createGuestSchema = z
 
 export type CreateGuestInput = z.infer<typeof createGuestSchema>;
 
+/** Ops cache fields only — identity is transient (MDM link via guest-identity). */
 export function normalizeGuestInput(input: CreateGuestInput) {
   return {
     fullName: input.fullName.trim(),
     nationality: input.nationality,
-    nationalIdFin: input.nationalIdFin?.trim() || null,
-    passportNumber: input.passportNumber?.trim() || null,
     phone: input.phone?.trim() || null,
     voen: input.voen?.trim() || null,
     globalPersonId: input.globalPersonId?.trim() || null,

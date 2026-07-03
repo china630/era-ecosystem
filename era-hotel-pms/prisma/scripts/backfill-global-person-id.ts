@@ -1,12 +1,23 @@
 /**
- * Backfill Guest.globalPersonId via MDM resolve.
+ * Backfill Guest.globalPersonId via MDM resolve (identity from GuestDocument rows).
  * Run: npx tsx prisma/scripts/backfill-global-person-id.ts
  */
 import 'dotenv/config';
-import { resolvePersonIdentity } from '@era/satellite-kit';
+import { linkPersonIdentity } from '@era/satellite-kit';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+const FIN_DOC_TYPES = new Set(['ID_CARD', 'FIN', 'NATIONAL_ID']);
+const PASSPORT_DOC_TYPES = new Set(['PASSPORT']);
+
+function pickDocNumber(
+  documents: { docType: string; docNumber: string; isPrimary: boolean }[],
+  types: Set<string>,
+): string | undefined {
+  const match = documents.find((d) => types.has(d.docType) && d.docNumber.trim());
+  return match?.docNumber.trim();
+}
 
 async function main() {
   const guests = await prisma.guest.findMany({
@@ -15,9 +26,11 @@ async function main() {
       id: true,
       fullName: true,
       phone: true,
-      nationalIdFin: true,
-      passportNumber: true,
       nationality: true,
+      documents: {
+        select: { docType: true, docNumber: true, isPrimary: true },
+        orderBy: [{ isPrimary: 'desc' }, { createdAt: 'desc' }],
+      },
     },
   });
 
@@ -25,20 +38,20 @@ async function main() {
   let skipped = 0;
   let failed = 0;
   for (const g of guests) {
-    const fin = g.nationalIdFin?.trim();
-    const passport = g.passportNumber?.trim();
+    const fin = pickDocNumber(g.documents, FIN_DOC_TYPES);
+    const passport = pickDocNumber(g.documents, PASSPORT_DOC_TYPES);
     if (!fin && !passport) {
       skipped++;
       continue;
     }
     try {
-      const r = await resolvePersonIdentity({
+      const r = await linkPersonIdentity({
         fin: fin || undefined,
         passport: passport || undefined,
         issuingCountry: g.nationality === 'AZ' ? 'AZ' : undefined,
         fullName: g.fullName,
         phone: g.phone ?? undefined,
-        nationality: g.nationality,
+        nationality: g.nationality === 'AZ' ? 'AZ' : 'OTHER',
       });
       if (!r.globalPersonId) {
         skipped++;

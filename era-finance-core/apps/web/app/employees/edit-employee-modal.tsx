@@ -15,10 +15,8 @@ import {
   MODAL_INPUT_CLASS,
   MODAL_INPUT_NUMERIC_CLASS,
 } from "../../lib/design-system";
-import { isValidFinCode, normalizeFinInput } from "../../lib/fin-code";
 import { EntityAuditHistory } from "../../components/admin/entity-audit-history";
 import { Button } from "../../components/ui/button";
-import { HrSatelliteProvisioningFields } from "../../components/hr/HrSatelliteProvisioningFields";
 
 type JobPositionOpt = {
   id: string;
@@ -29,19 +27,19 @@ type JobPositionOpt = {
 type EmployeeDetail = {
   id: string;
   kind?: string;
-  finCode: string;
-  globalPersonId?: string | null;
+  globalPersonId: string;
   voen?: string | null;
-  firstName: string;
-  lastName: string;
   patronymic?: string | null;
   positionId: string;
   startDate: string;
   salary: unknown;
   contractorMonthlySocialAzn?: unknown | null;
   vacationDaysBalance?: unknown | null;
-  provisionedSatelliteKey?: string | null;
-  provisionedSatelliteRole?: string | null;
+  person?: {
+    displayName: string | null;
+    finMasked: string | null;
+    accessDenied: boolean;
+  };
 };
 
 function formatVacationDaysBalance(v: unknown): string {
@@ -79,18 +77,14 @@ export function EditEmployeeModal({
   const [tab, setTab] = useState<"form" | "history">("form");
 
   const [kind, setKind] = useState<"EMPLOYEE" | "CONTRACTOR">("EMPLOYEE");
-  const [finCode, setFinCode] = useState("");
+  const [personDisplay, setPersonDisplay] = useState<EmployeeDetail["person"]>(null);
   const [voen, setVoen] = useState("");
   const [contractorSocial, setContractorSocial] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [patronymic, setPatronymic] = useState("");
   const [positionId, setPositionId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [salary, setSalary] = useState("");
   const [vacationBalanceLabel, setVacationBalanceLabel] = useState("—");
-  const [provisionedSatelliteKey, setProvisionedSatelliteKey] = useState("");
-  const [provisionedSatelliteRole, setProvisionedSatelliteRole] = useState("");
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
 
   const title = useMemo(() => t("employees.editSection"), [t]);
@@ -131,10 +125,8 @@ export function EditEmployeeModal({
       }
       const r = (await res.json()) as EmployeeDetail;
       setKind((r.kind as "EMPLOYEE" | "CONTRACTOR") || "EMPLOYEE");
-      setFinCode(normalizeFinInput(r.finCode ?? ""));
+      setPersonDisplay(r.person ?? null);
       setVoen((r.voen ?? "").replace(/\D/g, ""));
-      setFirstName(r.firstName ?? "");
-      setLastName(r.lastName ?? "");
       setPatronymic((r.patronymic ?? "").trim());
       setPositionId(r.positionId);
       setStartDate(String(r.startDate).slice(0, 10));
@@ -152,8 +144,6 @@ export function EditEmployeeModal({
             : "",
       );
       setVacationBalanceLabel(formatVacationDaysBalance(r.vacationDaysBalance));
-      setProvisionedSatelliteKey(r.provisionedSatelliteKey?.trim() ?? "");
-      setProvisionedSatelliteRole(r.provisionedSatelliteRole?.trim() ?? "");
       setGlobalPersonId(r.globalPersonId ?? null);
     } catch {
       setLoadErr(t("employees.loadErr"));
@@ -176,19 +166,8 @@ export function EditEmployeeModal({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!employeeId || !token || busy) return;
-    if (
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !patronymic.trim() ||
-      !startDate ||
-      salary === "" ||
-      !positionId
-    ) {
+    if (!patronymic.trim() || !startDate || salary === "" || !positionId) {
       toast.error(t("employees.fillRequired"));
-      return;
-    }
-    if (!isValidFinCode(finCode)) {
-      toast.error(t("employees.finInvalidStrict"));
       return;
     }
     if (kind === "CONTRACTOR" && !/^\d{10}$/.test(voen.trim())) {
@@ -203,9 +182,6 @@ export function EditEmployeeModal({
 
     const body: Record<string, unknown> = {
       kind,
-      finCode: finCode.trim(),
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
       patronymic: patronymic.trim(),
       positionId,
       startDate,
@@ -219,8 +195,6 @@ export function EditEmployeeModal({
       body.voen = null;
       body.contractorMonthlySocialAzn = null;
     }
-    body.provisionedSatelliteKey = provisionedSatelliteKey.trim() || null;
-    body.provisionedSatelliteRole = provisionedSatelliteRole.trim() || null;
 
     setBusy(true);
     const res = await apiFetch(`/api/hr/employees/${employeeId}`, {
@@ -286,23 +260,29 @@ export function EditEmployeeModal({
         ) : (
           <form className="mt-4 flex min-h-0 flex-1 flex-col" onSubmit={(e) => void onSubmit(e)}>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+              <p className="m-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-900">
+                {t("employees.personMdmBanner", {
+                  defaultValue: "Personal data lives in MDM; edit payroll fields only.",
+                })}
+              </p>
+              <div className="rounded-lg border border-[#D5DADF] bg-[#F8FAFB] p-3 text-[13px] text-[#34495E] space-y-1">
+                <div>
+                  <span className="text-[#7F8C8D]">{t("employees.thName")}: </span>
+                  {personDisplay?.accessDenied
+                    ? t("employees.accessDenied", { defaultValue: "Access restricted" })
+                    : personDisplay?.displayName ?? "—"}
+                </div>
+                <div>
+                  <span className="text-[#7F8C8D]">{t("employees.thFin")}: </span>
+                  <span className="font-mono">{personDisplay?.finMasked ?? "—"}</span>
+                </div>
+                {globalPersonId ? (
+                  <div className="font-mono text-[11px] text-[#7F8C8D]">{globalPersonId}</div>
+                ) : (
+                  <span className="text-[11px] text-amber-700">{t("employees.mdmMissing", { defaultValue: "MDM not linked" })}</span>
+                )}
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("employees.firstName")}
-                  <input
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("employees.lastName")}
-                  <input
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </label>
                 <label className={`${MODAL_FIELD_LABEL_CLASS} md:col-span-2`}>
                   {t("employees.patronymic")}
                   <input
@@ -310,26 +290,6 @@ export function EditEmployeeModal({
                     value={patronymic}
                     onChange={(e) => setPatronymic(e.target.value)}
                   />
-                </label>
-                <label className={MODAL_FIELD_LABEL_CLASS}>
-                  {t("employees.fin")}
-                  <input
-                    value={finCode}
-                    maxLength={7}
-                    inputMode="text"
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    spellCheck={false}
-                    onChange={(e) => setFinCode(normalizeFinInput(e.target.value))}
-                    className={`mt-1 block w-full ${MODAL_INPUT_CLASS} font-mono uppercase`}
-                  />
-                  {globalPersonId ? (
-                    <span className="mt-1 block text-[11px] text-violet-800">
-                      MDM: {globalPersonId.slice(0, 4)}…{globalPersonId.slice(-4)}
-                    </span>
-                  ) : (
-                    <span className="mt-1 block text-[11px] text-amber-700">{t("employees.mdmMissing", { defaultValue: "MDM not linked" })}</span>
-                  )}
                 </label>
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("employees.kind")}
@@ -414,12 +374,6 @@ export function EditEmployeeModal({
                     </p>
                   </div>
                 ) : null}
-                <HrSatelliteProvisioningFields
-                  satelliteKey={provisionedSatelliteKey}
-                  satelliteRole={provisionedSatelliteRole}
-                  onSatelliteKeyChange={setProvisionedSatelliteKey}
-                  onSatelliteRoleChange={setProvisionedSatelliteRole}
-                />
               </div>
             </div>
 

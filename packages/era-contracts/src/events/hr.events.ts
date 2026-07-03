@@ -6,24 +6,32 @@ export const SATELLITE_STAFF_DEACTIVATED = "STAFF_DEACTIVATED" as const;
 export const SATELLITE_STAFF_CLOCK_BATCH = "STAFF_CLOCK_BATCH" as const;
 
 export const staffProvisionedPayloadSchema = z.object({
-  financeEmployeeId: z.string().min(1),
+  cpEmploymentId: z.string().uuid(),
+  financeEmployeeId: z.string().uuid().optional(),
   satelliteKey: z.string().min(1),
   satelliteRole: z.string().min(1),
   staffCode: z.string().min(1),
-  fullName: z.string().min(1),
+  fullName: z
+    .string()
+    .min(1)
+    .describe("T3 ops cache stamp from MDM at provision time; not authoritative identity"),
   pin: z.string().optional(),
   login: z.string().optional(),
   email: z.string().optional(),
   phone: z.string().optional(),
   positionTitle: z.string().optional(),
+  orgUnitName: z.string().optional(),
   departmentName: z.string().optional(),
+  roleBindingId: z.string().uuid().optional(),
 });
 
 export const staffDeactivatedPayloadSchema = z.object({
-  financeEmployeeId: z.string().min(1),
+  cpEmploymentId: z.string().uuid(),
+  financeEmployeeId: z.string().uuid().optional(),
   satelliteKey: z.string().min(1),
   staffCode: z.string().min(1),
   satelliteUserId: z.string().optional(),
+  roleBindingId: z.string().uuid().optional(),
 });
 
 export const staffClockEventSchema = z.object({

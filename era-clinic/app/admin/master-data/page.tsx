@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -18,10 +20,16 @@ type Practitioner = {
   code: string;
   fullName: string;
   specialty?: string | null;
-  finCode?: string | null;
   globalPersonId?: string | null;
+  financeEmployeeId?: string | null;
   defaultSlotMinutes?: number | null;
 };
+
+type WorkforcePolicy = {
+  hireMode: "cp_workforce" | "disabled";
+};
+
+type IdentifierChip = { type: string; isPrimary: boolean };
 
 function maskPersonId(id: string | null | undefined): string {
   if (!id) return "—";
@@ -61,18 +69,26 @@ export default function MasterDataPage() {
   const [form, setForm] = useState<Record<string, string>>({});
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
+  const [identifierTypes, setIdentifierTypes] = useState<IdentifierChip[]>([]);
+  const [workforcePolicy, setWorkforcePolicy] = useState<WorkforcePolicy | null>(null);
+
+  const cpWorkforceMode = workforcePolicy?.hireMode === "cp_workforce";
+  const blockPractitionerCreate = cpWorkforceMode;
 
   const loadAll = useCallback(async () => {
-    const [p, r, res, pt] = await Promise.all([
+    const [p, r, res, pt, wp] = await Promise.all([
       fetch("/api/admin/practitioners").then((x) => x.json()),
       fetch("/api/admin/rooms").then((x) => x.json()),
       fetch("/api/admin/resources").then((x) => x.json()),
       fetch("/api/admin/procedure-types").then((x) => x.json()),
+      fetch("/api/admin/workforce-policy").then((x) => x.json()),
     ]);
     setPractitioners((p.data ?? p) as Practitioner[]);
     setRooms((r.data ?? r) as Room[]);
     setResources((res.data ?? res) as Resource[]);
     setProcedureTypes((pt.data ?? pt) as ProcedureType[]);
+    const policyPayload = (wp.data ?? wp) as WorkforcePolicy;
+    if (policyPayload?.hireMode) setWorkforcePolicy(policyPayload);
   }, []);
 
   useEffect(() => {
@@ -80,22 +96,42 @@ export default function MasterDataPage() {
   }, [loadAll]);
 
   function openCreate() {
+    if (tab === "practitioners" && blockPractitionerCreate) return;
     setEditingId(null);
     setForm({});
     setMdmStatus(null);
     setGlobalPersonId(null);
+    setIdentifierTypes([]);
     setModalOpen(true);
   }
 
-  function openEdit(row: Record<string, string>, id: string, practitioner?: Practitioner) {
+  async function openEdit(row: Record<string, string>, id: string, practitioner?: Practitioner) {
     setEditingId(id);
-    setForm(row);
+    setForm({
+      code: row.code ?? "",
+      fullName: row.fullName ?? "",
+      specialty: row.specialty ?? "",
+      finCode: "",
+      passportNumber: "",
+      issuingCountry: "",
+      defaultSlotMinutes: row.defaultSlotMinutes ?? "30",
+    });
     setGlobalPersonId(practitioner?.globalPersonId ?? null);
     setMdmStatus(
       practitioner?.globalPersonId
         ? t("mdmLinked", { id: maskPersonId(practitioner.globalPersonId) })
         : null,
     );
+    if (practitioner?.globalPersonId) {
+      const res = await fetch(
+        `/api/mdm/person-identifiers?globalPersonId=${encodeURIComponent(practitioner.globalPersonId)}`,
+      );
+      const parsed = await res.json();
+      const payload = (parsed.data ?? parsed) as { identifiers?: IdentifierChip[] };
+      setIdentifierTypes(payload.identifiers ?? []);
+    } else {
+      setIdentifierTypes([]);
+    }
     setModalOpen(true);
   }
 
@@ -140,18 +176,27 @@ export default function MasterDataPage() {
     let payload: Record<string, unknown> = {};
     if (editingId) {
       if (tab === "practitioners") {
-        payload = {
-          fullName: form.fullName ?? form.name,
-          specialty: form.specialty || null,
-          finCode: form.finCode || null,
-          passportNumber: form.passportNumber || null,
-          issuingCountry: form.issuingCountry || null,
-          phone: form.phone || null,
-          globalPersonId: globalPersonId || undefined,
-          defaultSlotMinutes: form.defaultSlotMinutes
-            ? Number(form.defaultSlotMinutes)
-            : undefined,
-        };
+        const opsOnly =
+          cpWorkforceMode ||
+          Boolean(practitioners.find((x) => x.id === editingId)?.financeEmployeeId);
+        payload = opsOnly
+          ? {
+              specialty: form.specialty || null,
+              defaultSlotMinutes: form.defaultSlotMinutes
+                ? Number(form.defaultSlotMinutes)
+                : undefined,
+            }
+          : {
+              fullName: form.fullName ?? form.name,
+              specialty: form.specialty || null,
+              finCode: form.finCode?.trim() || undefined,
+              passportNumber: form.passportNumber?.trim() || undefined,
+              issuingCountry: form.issuingCountry?.trim() || undefined,
+              globalPersonId: globalPersonId || undefined,
+              defaultSlotMinutes: form.defaultSlotMinutes
+                ? Number(form.defaultSlotMinutes)
+                : undefined,
+            };
       } else if (tab === "rooms") {
         payload = { name: form.name };
       } else if (tab === "resources") {
@@ -172,10 +217,9 @@ export default function MasterDataPage() {
         code: form.code,
         fullName: form.fullName ?? form.name,
         specialty: form.specialty || undefined,
-        finCode: form.finCode || undefined,
-        passportNumber: form.passportNumber || undefined,
-        issuingCountry: form.issuingCountry || undefined,
-        phone: form.phone || undefined,
+        finCode: form.finCode?.trim() || undefined,
+        passportNumber: form.passportNumber?.trim() || undefined,
+        issuingCountry: form.issuingCountry?.trim() || undefined,
         globalPersonId: globalPersonId || undefined,
         defaultSlotMinutes: form.defaultSlotMinutes
           ? Number(form.defaultSlotMinutes)
@@ -246,12 +290,19 @@ export default function MasterDataPage() {
             <Link href="/admin/wards" className={SECONDARY_BUTTON_CLASS}>
               {t("wardsLink")}
             </Link>
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
-              {tc("add")}
-            </button>
+            {!(tab === "practitioners" && blockPractitionerCreate) ? (
+              <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={openCreate}>
+                {tc("add")}
+              </button>
+            ) : null}
           </>
         }
       />
+      {cpWorkforceMode && tab === "practitioners" ? (
+        <p className="mb-3 rounded border border-[#D5DBDB] bg-[#F8F9FA] p-3 text-[13px] text-[#2C3E50]">
+          {t("workforceHireViaCp")}
+        </p>
+      ) : null}
       {msg ? <p className="mb-3 text-[13px] text-[#2C3E50]">{msg}</p> : null}
       <div className="mb-4 flex flex-wrap gap-2">
         {tabs.map((x) => (
@@ -274,6 +325,7 @@ export default function MasterDataPage() {
                 <th className="p-2">{t("name")}</th>
                 <th className="p-2">{t("specialty")}</th>
                 <th className="p-2">{t("mdmBadge")}</th>
+                <th className="p-2">{t("financeLinked")}</th>
                 <th className="p-2">{t("defaultSlotMinutes")}</th>
                 <th className="p-2 text-right">{tc("actions")}</th>
               </tr>
@@ -291,9 +343,16 @@ export default function MasterDataPage() {
                       <span className="text-[#C0392B]">{t("mdmMissing")}</span>
                     )}
                   </td>
+                  <td className="p-2">
+                    {row.financeEmployeeId ? (
+                      <span className="text-[#2980B9]">{t("financeLinkedYes")}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="p-2">{row.defaultSlotMinutes ?? "—"}</td>
                   <td className="p-2 text-right space-x-2">
-                    <button type="button" className="text-[#2980B9]" onClick={() => openEdit({ code: row.code, fullName: row.fullName, specialty: row.specialty ?? "", finCode: row.finCode ?? "", defaultSlotMinutes: String(row.defaultSlotMinutes ?? "30") }, row.id, row)}>
+                    <button type="button" className="text-[#2980B9]" onClick={() => void openEdit({ code: row.code, fullName: row.fullName, specialty: row.specialty ?? "", defaultSlotMinutes: String(row.defaultSlotMinutes ?? "30") }, row.id, row)}>
                       {tc("edit")}
                     </button>
                     <button type="button" className="text-[#C0392B]" onClick={() => void remove(row.id)}>
@@ -397,52 +456,85 @@ export default function MasterDataPage() {
         title={editingId ? tc("edit") : tc("add")}
         onClose={() => setModalOpen(false)}
       >
-        <div className="space-y-2">
+        <div className="space-y-4">
           {!editingId && (tab === "practitioners" || tab === "rooms" || tab === "resources" || tab === "procedureTypes") && (
-            <input className={MODAL_INPUT_CLASS} placeholder={t("code")} value={form.code ?? ""} onChange={(e) => setForm({ ...form, code: e.target.value })} />
+            <Field label={t("code")} preset="code" value={form.code ?? ""} onChange={(e) => setForm({ ...form, code: e.target.value })} />
           )}
           {(tab === "practitioners" || tab === "resources" || tab === "procedureTypes") && (
-            <input className={MODAL_INPUT_CLASS} placeholder={t("name")} value={form.fullName ?? form.name ?? ""} onChange={(e) => setForm({ ...form, fullName: e.target.value, name: e.target.value })} />
+            <Field
+              label={t("name")}
+              preset="shortText"
+              value={form.fullName ?? form.name ?? ""}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value, name: e.target.value })}
+            />
           )}
           {tab === "rooms" && (
-            <input className={MODAL_INPUT_CLASS} placeholder={t("name")} value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Field label={t("name")} preset="shortText" value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           )}
           {tab === "practitioners" && (
             <>
-              <input className={MODAL_INPUT_CLASS} placeholder={t("specialty")} value={form.specialty ?? ""} onChange={(e) => setForm({ ...form, specialty: e.target.value })} />
-              <div className="flex gap-2">
-                <input
-                  className={MODAL_INPUT_CLASS}
-                  placeholder={t("finCode")}
-                  value={form.finCode ?? ""}
-                  onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
+              {(editingId &&
+                (cpWorkforceMode ||
+                  practitioners.find((x) => x.id === editingId)?.financeEmployeeId)) ? (
+                <p className="text-[13px] text-[#7F8C8D]">
+                  {form.fullName} · {form.code}
+                </p>
+              ) : null}
+              {!(
+                editingId &&
+                (cpWorkforceMode ||
+                  practitioners.find((x) => x.id === editingId)?.financeEmployeeId)
+              ) ? (
+                <>
+                  <Field
+                    label={t("specialty")}
+                    preset="shortText"
+                    value={form.specialty ?? ""}
+                    onChange={(e) => setForm({ ...form, specialty: e.target.value })}
+                  />
+                  <FieldRow cols={2} className="items-end">
+                    <Field
+                      label={t("finCode")}
+                      preset="fin"
+                      value={form.finCode ?? ""}
+                      onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
+                    />
+                    <button type="button" className={`${SECONDARY_BUTTON_CLASS} self-end`} onClick={() => void lookupMdm()}>
+                      {t("mdmLookup")}
+                    </button>
+                  </FieldRow>
+                  {mdmStatus ? <p className="text-xs text-[#7F8C8D]">{mdmStatus}</p> : null}
+                  {identifierTypes.length > 0 ? (
+                    <p className="text-xs text-[#7F8C8D]">
+                      {t("identifierTypes")}: {identifierTypes.map((i) => i.type).join(", ")}
+                    </p>
+                  ) : null}
+                  <FieldRow cols={2}>
+                    <Field
+                      label={t("passportNumber")}
+                      preset="code"
+                      value={form.passportNumber ?? ""}
+                      onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
+                    />
+                    <Field
+                      label={t("issuingCountry")}
+                      preset="code"
+                      value={form.issuingCountry ?? ""}
+                      onChange={(e) => setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })}
+                    />
+                  </FieldRow>
+                </>
+              ) : (
+                <Field
+                  label={t("specialty")}
+                  preset="shortText"
+                  value={form.specialty ?? ""}
+                  onChange={(e) => setForm({ ...form, specialty: e.target.value })}
                 />
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void lookupMdm()}>
-                  {t("mdmLookup")}
-                </button>
-              </div>
-              {mdmStatus ? <p className="text-xs text-[#7F8C8D]">{mdmStatus}</p> : null}
-              <input
-                className={MODAL_INPUT_CLASS}
-                placeholder={t("passportNumber")}
-                value={form.passportNumber ?? ""}
-                onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
-              />
-              <input
-                className={MODAL_INPUT_CLASS}
-                placeholder={t("issuingCountry")}
-                value={form.issuingCountry ?? ""}
-                onChange={(e) => setForm({ ...form, issuingCountry: e.target.value.toUpperCase() })}
-              />
-              <input
-                className={MODAL_INPUT_CLASS}
-                placeholder={t("phone")}
-                value={form.phone ?? ""}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              />
-              <input
-                className={MODAL_INPUT_CLASS}
-                placeholder={t("defaultSlotMinutes")}
+              )}
+              <Field
+                label={t("defaultSlotMinutes")}
+                preset="count"
                 value={form.defaultSlotMinutes ?? "30"}
                 onChange={(e) => setForm({ ...form, defaultSlotMinutes: e.target.value })}
               />
@@ -450,18 +542,38 @@ export default function MasterDataPage() {
           )}
           {tab === "resources" && (
             <>
-              <select className={MODAL_INPUT_CLASS} value={form.kind ?? "EQUIPMENT"} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
+              <FieldSelect
+                label={t("kind")}
+                preset="select"
+                value={form.kind ?? "EQUIPMENT"}
+                onChange={(e) => setForm({ ...form, kind: e.target.value })}
+              >
                 <option value="EQUIPMENT">EQUIPMENT</option>
                 <option value="ROOM">ROOM</option>
-              </select>
-              <input className={MODAL_INPUT_CLASS} placeholder={t("capacity")} value={form.capacity ?? "1"} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
+              </FieldSelect>
+              <Field
+                label={t("capacity")}
+                preset="count"
+                value={form.capacity ?? "1"}
+                onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+              />
             </>
           )}
           {tab === "procedureTypes" && (
-            <>
-              <input className={MODAL_INPUT_CLASS} placeholder={t("durationMin")} value={form.durationMin ?? "30"} onChange={(e) => setForm({ ...form, durationMin: e.target.value })} />
-              <input className={MODAL_INPUT_CLASS} placeholder={t("resourceCode")} value={form.resourceCode ?? ""} onChange={(e) => setForm({ ...form, resourceCode: e.target.value })} />
-            </>
+            <FieldRow cols={2}>
+              <Field
+                label={t("durationMin")}
+                preset="count"
+                value={form.durationMin ?? "30"}
+                onChange={(e) => setForm({ ...form, durationMin: e.target.value })}
+              />
+              <Field
+                label={t("resourceCode")}
+                preset="code"
+                value={form.resourceCode ?? ""}
+                onChange={(e) => setForm({ ...form, resourceCode: e.target.value })}
+              />
+            </FieldRow>
           )}
         </div>
         <ModalFooter onCancel={() => setModalOpen(false)} onSubmit={() => void save()} submitLabel={tc("save")} />

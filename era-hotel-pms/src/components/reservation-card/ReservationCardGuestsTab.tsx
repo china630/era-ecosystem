@@ -2,13 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Camera } from 'lucide-react';
-import { showSuccess } from '@era/satellite-kit/ui';
-import {
-  FORM_FIELD_GROUP_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
-  SECONDARY_BUTTON_CLASS,
-} from '@era/satellite-kit/ui';
+import { Field, FieldRow, FieldSelect, MODAL_INPUT_CLASS, SECONDARY_BUTTON_CLASS, showSuccess } from '@era/satellite-kit/ui';
 import type { PaxRow, SelectOption } from './types';
 
 export function ReservationCardGuestsTab({
@@ -53,14 +47,21 @@ export function ReservationCardGuestsTab({
   return (
     <div className="space-y-4">
       {isCreate ? (
-        <div className={FORM_FIELD_GROUP_CLASS}>
-          <label className={MODAL_FIELD_LABEL_CLASS}>{tb('guest')}</label>
-          <select className={MODAL_INPUT_CLASS} value={guestId} onChange={(e) => onGuestId(e.target.value)} required>
+        <div>
+          <FieldSelect
+            label={tb('guest')}
+            preset="selectWide"
+            value={guestId}
+            onChange={(e) => onGuestId(e.target.value)}
+            required
+          >
             <option value="">{tc('select')}</option>
             {guestOptions.map((g) => (
-              <option key={g.id} value={g.id}>{g.label}</option>
+              <option key={g.id} value={g.id}>
+                {g.label}
+              </option>
             ))}
-          </select>
+          </FieldSelect>
           <button type="button" className="mt-2 text-[13px] font-medium text-[#2980B9] hover:underline" onClick={onNewGuest}>
             {tb('newGuest')}
           </button>
@@ -139,24 +140,15 @@ export function ReservationCardGuestsTab({
               </button>
             ) : null}
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(
-              [
-                ['booker', booker],
-                ['guestRep', guestRep],
-                ['paidBy', paidBy],
-                ['vipType', vipType],
-                ['accomType', accomType],
-                ['recordType', recordType],
-                ['tripReason', tripReason],
-              ] as const
-            ).map(([key, val]) => (
-              <div key={key} className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t(key)}</label>
-                <input className={MODAL_INPUT_CLASS} value={val} onChange={(e) => onField(key, e.target.value)} />
-              </div>
-            ))}
-          </div>
+          <FieldRow cols={4}>
+            <Field label={t('booker')} preset="shortText" value={booker} onChange={(e) => onField('booker', e.target.value)} />
+            <Field label={t('guestRep')} preset="shortText" value={guestRep} onChange={(e) => onField('guestRep', e.target.value)} />
+            <Field label={t('paidBy')} preset="shortText" value={paidBy} onChange={(e) => onField('paidBy', e.target.value)} />
+            <Field label={t('vipType')} preset="shortText" value={vipType} onChange={(e) => onField('vipType', e.target.value)} />
+            <Field label={t('accomType')} preset="shortText" value={accomType} onChange={(e) => onField('accomType', e.target.value)} />
+            <Field label={t('recordType')} preset="shortText" value={recordType} onChange={(e) => onField('recordType', e.target.value)} />
+            <Field label={t('tripReason')} preset="shortText" value={tripReason} onChange={(e) => onField('tripReason', e.target.value)} />
+          </FieldRow>
         </>
       )}
     </div>

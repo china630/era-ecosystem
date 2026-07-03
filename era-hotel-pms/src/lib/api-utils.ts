@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { IndustryModuleInactiveError } from '@era/satellite-kit';
+import { GuestMdmRequiredError } from '@/lib/guest-identity';
 
 export function jsonOk<T>(data: T, status = 200) {
   return NextResponse.json(data, { status });
@@ -16,6 +17,9 @@ export function handleRouteError(err: unknown) {
   }
   if (err instanceof IndustryModuleInactiveError) {
     return jsonError(err.message, 403);
+  }
+  if (err instanceof GuestMdmRequiredError) {
+    return jsonError(err.message, 400);
   }
   if (err instanceof Error) {
     const lower = err.message.toLowerCase();

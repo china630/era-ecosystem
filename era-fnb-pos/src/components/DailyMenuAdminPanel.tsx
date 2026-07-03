@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { Field, FieldRow } from '@era/satellite-kit/ui';
 
 type MenuItem = { id: string; plu: string; name: string; category: { name: string } };
 
@@ -60,26 +61,26 @@ export default function DailyMenuAdminPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-end">
-        <label className="text-sm">
-          Date
-          <input
-            type="date"
-            className="ml-2 border rounded px-2 py-1"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-        <button type="button" className="rounded bg-[#2980B9] px-3 py-1 text-white text-sm" onClick={() => void save()}>
-          Save board
-        </button>
-        <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void copyYesterday()}>
-          Copy from yesterday
-        </button>
-        <a className="text-sm text-[#2980B9] underline" href={`/menu/today?outlet=RESTAURANT`} target="_blank" rel="noreferrer">
-          Guest QR menu
-        </a>
-      </div>
+      <FieldRow cols={2} className="items-end">
+        <Field
+          label="Date"
+          preset="date"
+          type="date"
+          value={date}
+          onChange={(e) => setDate(e.target.value)}
+        />
+        <div className="flex flex-wrap gap-2 pb-0.5">
+          <button type="button" className="rounded bg-[#2980B9] px-3 py-1 text-white text-sm" onClick={() => void save()}>
+            Save board
+          </button>
+          <button type="button" className="rounded border px-3 py-1 text-sm" onClick={() => void copyYesterday()}>
+            Copy from yesterday
+          </button>
+          <a className="text-sm text-[#2980B9] underline self-center" href={`/menu/today?outlet=RESTAURANT`} target="_blank" rel="noreferrer">
+            Guest QR menu
+          </a>
+        </div>
+      </FieldRow>
       {msg ? <p className="text-sm text-[#2C3E50]">{msg}</p> : null}
       <ul className="max-h-[60vh] overflow-auto border rounded divide-y">
         {allItems.map((item) => (

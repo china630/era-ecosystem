@@ -126,7 +126,7 @@ Use list **filters** (code/name and entity-specific filters) and **Edit** on eac
 | Travel Agencies.xlsx | `agencies` | `Agency` | `code` | |
 | Product Cards.xlsx | `product-cards` | `Product` | `code` | `productType = SELLABLE` |
 | Stock Cards.xlsx | `stock-cards` | `Product` | `code` | `productType = STOCK` |
-| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**; MDM link below |
+| Guests.xlsx | `guests` | `Guest` | `externalRef` | Elektraweb **Guest Id**; FIN/passport resolve via MDM only (W4 — not persisted on `Guest`) |
 | Reservations.xlsx | `reservations` | `Reservation` | `externalRef` | Elektraweb **Res Id** |
 | Folios.xlsx | `folios` | `FolioCharge` | `externalRef` | Elektraweb folio/charge id |
 | Chart of Accounts | — | — | — | **Excluded** — finance-core |

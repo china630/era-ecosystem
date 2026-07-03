@@ -557,6 +557,10 @@ model Department {
   deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?       @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?       @map("deleted_reason")
+  cpOrgUnitId     String?       @unique @map("cp_org_unit_id") @db.Uuid
+  costCenterCode  String?       @map("cost_center_code")
+  managerEmploymentId String?   @map("manager_employment_id") @db.Uuid
+  source          DepartmentSource @default(CP_EVENT) @map("source")
 
   @@index([organizationId])
   @@index([parentId])
@@ -586,6 +590,8 @@ model JobPosition {
   deletedAt       DateTime?  @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?    @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?    @map("deleted_reason")
+  cpPositionId    String?    @unique @map("cp_position_id") @db.Uuid
+  source          DepartmentSource @default(CP_EVENT) @map("source")
 
   @@index([departmentId])
   @@index([departmentId, deletedAt], map: "job_positions_dept_deleted_at_idx")
@@ -1195,28 +1201,14 @@ model CbarOfficialRate {
 model Employee {
   id                         String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId             String                   @map("organization_id") @db.Uuid
-  /// *
-  ///    * ФИН, ровно 7 символов (валидация в API); optional for foreign employees pending FIN.
-  finCode                    String?                  @map("fin_code")
-  /// MDM canonical person id (orchestrator GlobalNaturalPerson).
-  globalPersonId             String?                  @map("global_person_id") @db.Uuid
+  /// MDM canonical person id (T1 identity vault); no plaintext FIN/name on Employee.
+  globalPersonId             String                   @map("global_person_id") @db.Uuid
   taxResidencyStatus         TaxResidencyStatus       @default(RESIDENT) @map("tax_residency_status")
   nationality                String?                  @default("AZ")
-  passportNumberCipher       String?                  @map("passport_number_cipher")
-  passportBlindIndex         String?                  @map("passport_blind_index")
-  issuingCountry             String?                  @map("issuing_country")
   workPermitNumber           String?                  @map("work_permit_number")
-  /// False when employee has no FIN — ƏMAS sync blocked until convert-to-FIN.
+  /// False when person has no FIN in MDM — ƏMAS sync blocked until convert-to-FIN in MDM.
   emasEligible               Boolean                  @default(true) @map("emas_eligible")
-  /// Satellite operational access provisioning (finance → satellite bus).
-  provisionedSatelliteKey    String?                  @map("provisioned_satellite_key")
-  provisionedSatelliteRole   String?                  @map("provisioned_satellite_role")
-  finCodeCipher              String?                  @map("fin_code_cipher")
-  finCodeBlindIndex          String?                  @map("fin_code_blind_index")
-  firstName                  String                   @map("first_name")
-  firstNameCipher            String?                  @map("first_name_cipher")
-  lastName                   String                   @map("last_name")
-  lastNameCipher             String?                  @map("last_name_cipher")
+  cpEmploymentId             String?                  @unique @map("cp_employment_id") @db.Uuid
   startDate                  DateTime                 @map("start_date") @db.Date
   /// *
   ///    * Дата выхода на работу (миграционная/кадровая точка отсчёта).
@@ -1284,7 +1276,7 @@ model Employee {
   psaTimeEntries                 PsaTimeEntry[]
   employeeDocuments              EmployeeDocument[]
 
-  @@unique([organizationId, finCodeBlindIndex], map: "employees_org_fin_blind_uidx")
+  @@unique([organizationId, globalPersonId], map: "employees_org_global_person_uidx")
   @@index([positionId])
   @@index([organizationId, voenBlindIndex], map: "employees_org_voen_blind_idx")
   @@index([organizationId, createdAt])
@@ -1430,6 +1422,9 @@ model Absence {
   deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?      @map("deleted_reason")
+  cpAbsenceId     String?      @unique @map("cp_absence_id") @db.Uuid
+  cpEmploymentId  String?      @map("cp_employment_id") @db.Uuid
+  source          AbsenceSource @default(CP_EVENT) @map("source")
 
   @@index([organizationId, employeeId])
   @@index([organizationId, startDate])
@@ -4235,6 +4230,16 @@ enum AbsencePayFormula {
   LABOR_LEAVE_304
   SICK_LEAVE_STAJ
   UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
 }
 
 enum HoldingAccessRole {

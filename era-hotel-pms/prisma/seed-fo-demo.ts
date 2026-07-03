@@ -185,8 +185,6 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         nationality: p.nationality,
         phone: p.phone,
         email: p.email,
-        passportNumber: p.passport,
-        nationalIdFin: p.fin ?? null,
         voen: p.voen ?? null,
         vipType: p.vip ?? null,
         greyList: p.greyList ?? false,
@@ -307,7 +305,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         firstName: guest.firstName ?? paxName[0] ?? 'Guest',
         lastName: guest.lastName ?? paxName.slice(1).join(' ') ?? '—',
         nationality: guest.nationality,
-        passportNo: guest.passportNumber,
+        passportNo: GUEST_PROFILES[spec.guestIndex]?.passport ?? 'N/A',
         isPrimary: true,
       },
     });

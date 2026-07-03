@@ -21,10 +21,14 @@ jobs:
           node-version: "22"
       - name: Build shared packages
         run: chmod +x scripts/ci-build-packages.sh && ./scripts/ci-build-packages.sh
-      - name: MDM identity pattern audit
-        run: node scripts/audit-mdm-identity.mjs
-      - name: Reference data consumer boundary audit
-        run: node scripts/audit-reference-data.mjs
+      - name: Integration audit suite (strict)
+        run: node scripts/run-integration-audits.mjs --strict
+      - name: Integration audit unit tests
+        run: node --test scripts/__tests__/integration-audit.spec.mjs
+      - name: Design token lint (baseline)
+        run: node scripts/lint-design-tokens.mjs
+      - name: Design token lint unit tests
+        run: node --test scripts/__tests__/design-tokens.spec.mjs
 
   orchestrator:
     runs-on: ubuntu-latest

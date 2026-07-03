@@ -15,8 +15,7 @@ type GuestRow = {
   fullName: string;
   nationality: string;
   phone: string | null;
-  nationalIdFin: string | null;
-  passportNumber: string | null;
+  globalPersonId: string | null;
 };
 
 export default function GuestsPage() {
@@ -78,6 +77,16 @@ export default function GuestsPage() {
           { key: 'name', header: t('name'), render: (r) => r.fullName },
           { key: 'nationality', header: t('nationality'), render: (r) => r.nationality },
           { key: 'phone', header: t('phone'), render: (r) => r.phone ?? '—' },
+          {
+            key: 'mdm',
+            header: t('mdmLink'),
+            render: (r) =>
+              r.globalPersonId ? (
+                <span className="text-emerald-700">{t('mdmLinked')}</span>
+              ) : (
+                <span className="text-[#7F8C8D]">—</span>
+              ),
+          },
           {
             key: 'actions',
             header: tc('actions'),

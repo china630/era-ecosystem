@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { Field, FieldSelect } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
-import { OpsError, OpsField, StatusBadge, maskIban } from "@/components/ops-ui";
+import { OpsError, StatusBadge, maskIban } from "@/components/ops-ui";
 
 function maskPersonId(id: string | null | undefined): string {
   if (!id) return "—";
@@ -117,20 +117,19 @@ export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("customerType")}</span>
-          <select
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={customerType}
-            onChange={(e) => setCustomerType(e.target.value as "NATURAL" | "LEGAL")}
-          >
-            <option value="NATURAL">{t("natural")}</option>
-            <option value="LEGAL">{t("legal")}</option>
-          </select>
-        </label>
+        <FieldSelect
+          label={t("customerType")}
+          preset="selectWide"
+          className="sm:col-span-2"
+          value={customerType}
+          onChange={(e) => setCustomerType(e.target.value as "NATURAL" | "LEGAL")}
+        >
+          <option value="NATURAL">{t("natural")}</option>
+          <option value="LEGAL">{t("legal")}</option>
+        </FieldSelect>
         {customerType === "NATURAL" ? (
           <>
-            <OpsField name="fin" label="FIN (7 chars)" defaultValue="1234567" />
+            <Field name="fin" label="FIN (7 chars)" preset="fin" defaultValue="1234567" />
             <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -148,9 +147,9 @@ export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps
             </div>
           </>
         ) : (
-          <OpsField name="voen" label="VÖEN (10 digits)" defaultValue="1234567890" />
+          <Field name="voen" label="VÖEN (10 digits)" preset="voen" defaultValue="1234567890" />
         )}
-        <OpsField name="homeBranchId" label={t("homeBranch")} defaultValue="demo-branch-hq" />
+        <Field name="homeBranchId" label={t("homeBranch")} preset="code" defaultValue="demo-branch-hq" />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>
@@ -211,9 +210,9 @@ function UboAddModal({ open, customerId, onClose, onAdded }: UboAddModalProps) {
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-3">
-        <OpsField name="fin" label="FIN" />
-        <OpsField name="passport" label={t("passport")} />
-        <OpsField name="sharePercent" label={t("sharePercent")} defaultValue="25" />
+        <Field name="fin" label="FIN" preset="fin" />
+        <Field name="passport" label={t("passport")} preset="shortText" />
+        <Field name="sharePercent" label={t("sharePercent")} preset="amount" type="number" defaultValue="25" />
         <OpsError message={error} />
       </form>
     </OpsModalShell>

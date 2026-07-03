@@ -1,35 +1,27 @@
 /**
- * Backfill Practitioner.globalPersonId via MDM resolve (requires service token).
+ * Report Practitioner rows missing globalPersonId.
  * Usage: npx tsx prisma/scripts/backfill-practitioner-global-person-id.ts
  */
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
-import { linkPersonIdentity } from "@era/satellite-kit";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const rows = await prisma.practitioner.findMany({
     where: { globalPersonId: null },
+    select: { id: true, code: true, fullName: true },
   });
-  let linked = 0;
-  for (const row of rows) {
-    const result = await linkPersonIdentity({
-      fin: row.finCode ?? undefined,
-      passport: row.passportNumber ?? undefined,
-      issuingCountry: row.issuingCountry ?? undefined,
-      fullName: row.fullName,
-      phone: row.phone ?? undefined,
-    });
-    if (result.globalPersonId) {
-      await prisma.practitioner.update({
-        where: { id: row.id },
-        data: { globalPersonId: result.globalPersonId },
-      });
-      linked++;
-    }
+
+  if (rows.length === 0) {
+    console.info("All practitioners have globalPersonId.");
+    return;
   }
-  console.info(`Practitioner backfill: ${linked}/${rows.length} linked`);
+
+  console.warn(`Practitioners without globalPersonId: ${rows.length}`);
+  for (const row of rows) {
+    console.warn(`  ${row.code} — ${row.fullName} (${row.id})`);
+  }
 }
 
 main()

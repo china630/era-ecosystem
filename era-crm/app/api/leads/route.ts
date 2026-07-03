@@ -1,38 +1,35 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError } from "@/lib/api-utils";
 import { computeLeadScore } from "@/lib/lead-score";
+import {
+  createLeadSchema,
+  toPrismaPartyData,
+} from "@/lib/lead-schemas";
+import { syncContactRef } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
-
-const createSchema = z.object({
-  title: z.string().min(1),
-  contactRef: z.string().min(1),
-  stage: z
-    .enum(["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"])
-    .optional(),
-  channel: z
-    .enum(["whatsapp", "instagram", "visit", "phone", "other"])
-    .optional(),
-  estimatedAmount: z.number().optional(),
-  ownerId: z.string().optional(),
-});
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const ownerId = searchParams.get("ownerId");
     const mine = searchParams.get("mine") === "true";
+    const prospectType = searchParams.get("prospectType");
     const userId = req.headers.get("x-user-id");
 
-    const where =
-      mine && userId
-        ? { ownerId: userId }
-        : ownerId
-          ? { ownerId }
-          : undefined;
+    const where: Record<string, unknown> = {};
+    if (mine && userId) where.ownerId = userId;
+    else if (ownerId) where.ownerId = ownerId;
+    if (
+      prospectType === "CUSTOMER" ||
+      prospectType === "PARTNER" ||
+      prospectType === "OTHER"
+    ) {
+      where.prospectType = prospectType;
+    }
 
     const sort = searchParams.get("sort");
     const leads = await prisma.lead.findMany({
-      where,
+      where: Object.keys(where).length ? where : undefined,
       include: {
         owner: { select: { id: true, fullName: true, login: true } },
         visits: true,
@@ -53,16 +50,27 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = createSchema.parse(await req.json());
+    const raw = await req.json();
+    const body = createLeadSchema.parse(raw);
     const stage = body.stage ?? "NEW";
+    const channel = body.channel ?? "other";
+    const partyData = toPrismaPartyData(body, { channel });
+    const contactRef = syncContactRef(
+      body.contactRef,
+      partyData.contactPhone,
+      channel,
+    );
+    if (!contactRef) {
+      return jsonError("contactRef or contactPhone required", 400);
+    }
+
     const lead = await prisma.lead.create({
       data: {
         title: body.title,
-        contactRef: body.contactRef,
+        contactRef,
         stage,
-        channel: body.channel ?? "other",
-        estimatedAmount: body.estimatedAmount,
-        ownerId: body.ownerId,
+        channel,
+        ...partyData,
         stageHistory: {
           create: { toStage: stage },
         },

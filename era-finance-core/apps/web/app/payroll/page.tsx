@@ -47,7 +47,6 @@ import { Button } from "../../components/ui/button";
 import { VacationCalcModal } from "../../components/payroll/vacation-calc-modal";
 import { SickCalcModal } from "../../components/payroll/sick-calc-modal";
 import { PayrollRunModal } from "../../components/payroll/payroll-run-modal";
-import { AbsenceModal } from "../../components/payroll/absence-modal";
 import {
   EmployeeAbsencesModal,
   type EmployeeAbsenceRow,
@@ -174,7 +173,8 @@ function PayrollPageInner() {
   const [vacModalOpen, setVacModalOpen] = useState(false);
   const [sickModalOpen, setSickModalOpen] = useState(false);
   const [runModalOpen, setRunModalOpen] = useState(false);
-  const [absenceModalOpen, setAbsenceModalOpen] = useState(false);
+
+  const workspaceAbsencesUrl = `${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/absences`;
 
   const [monthValue, setMonthValue] = useState(() =>
     monthValueFromYm(new Date().getFullYear(), new Date().getMonth() + 1),
@@ -201,7 +201,6 @@ function PayrollPageInner() {
   const [markPaidBusyId, setMarkPaidBusyId] = useState<string | null>(null);
   const [downloadBusyId, setDownloadBusyId] = useState<string | null>(null);
   const [taxDetailsSlipId, setTaxDetailsSlipId] = useState<string | null>(null);
-  const [deletingAbsenceId, setDeletingAbsenceId] = useState<string | null>(null);
   const payrollBusy = payrollJob !== null;
 
   useEffect(() => {
@@ -567,19 +566,6 @@ function PayrollPageInner() {
     setDetail(r.ok ? await r.json() : null);
   }
 
-  async function removeAbsence(id: string) {
-    if (!token || deletingAbsenceId !== null || !window.confirm("OK?")) return;
-    setDeletingAbsenceId(id);
-    const res = await apiFetch(`/api/hr/absences/${id}`, { method: "DELETE" });
-    if (!res.ok) {
-      alert(await res.text());
-      setDeletingAbsenceId(null);
-      return;
-    }
-    await loadAbsencesBlock();
-    setDeletingAbsenceId(null);
-  }
-
   type Slip = {
     id: string;
     employee: EmpOpt & { kind?: string; departmentId?: string | null };
@@ -677,14 +663,14 @@ function PayrollPageInner() {
               />
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <button
-                type="button"
+              <a
+                href={workspaceAbsencesUrl}
                 className={SECONDARY_BUTTON_CLASS}
-                onClick={() => setAbsenceModalOpen(true)}
-                disabled={employees.length === 0 || absenceTypes.length === 0}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Yeni qeyd
-              </button>
+                {t("payroll.manageAbsencesInWorkspace")}
+              </a>
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
@@ -1095,6 +1081,20 @@ function PayrollPageInner() {
       </section>
 
       <section className="space-y-3">
+        <div className={`${CARD_CONTAINER_CLASS} border-l-4 border-l-[#2980B9] p-4`}>
+          <p className="text-[13px] font-semibold text-[#34495E]">
+            {t("payroll.absenceCpBannerTitle")}
+          </p>
+          <p className="mt-1 text-xs text-[#7F8C8D]">{t("payroll.absenceCpBannerHint")}</p>
+          <a
+            href={workspaceAbsencesUrl}
+            className="mt-2 inline-block text-[13px] font-medium text-[#2980B9] hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("payroll.manageAbsencesInWorkspace")} →
+          </a>
+        </div>
         <h2 className="text-base font-semibold text-[#34495E]">{t("payroll.tabAbsences")}</h2>
         {absErr && <p className="text-red-600 text-sm">{absErr}</p>}
         {absLoading && <p className="text-gray-600">{t("common.loading")}</p>}
@@ -1111,9 +1111,6 @@ function PayrollPageInner() {
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.absenceThType")}</th>
                   <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("payroll.absenceThPeriod")}</th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("payroll.absenceNote")}</th>
-                  {!hideDestructive ? (
-                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("teamPage.actions")}</th>
-                  ) : null}
                 </tr>
               </thead>
               <tbody>
@@ -1129,25 +1126,6 @@ function PayrollPageInner() {
                       {String(a.startDate).slice(0, 10)} — {String(a.endDate).slice(0, 10)}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>{a.note || "—"}</td>
-                    {!hideDestructive ? (
-                      <td className={DATA_TABLE_TD_CLASS}>
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            type="button"
-                            className={TABLE_ROW_ICON_BTN_CLASS}
-                            title={t("payroll.absenceDelete")}
-                            disabled={deletingAbsenceId !== null}
-                            onClick={() => void removeAbsence(a.id)}
-                          >
-                            {deletingAbsenceId === a.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-[#E74C3C]" aria-hidden />
-                            ) : (
-                              <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    ) : null}
                   </tr>
                 ))}
               </tbody>
@@ -1185,16 +1163,6 @@ function PayrollPageInner() {
             month: m,
             importTimesheet: Boolean(it),
           }).then(() => setRunModalOpen(false));
-        }}
-      />
-      <AbsenceModal
-        open={absenceModalOpen}
-        onClose={() => setAbsenceModalOpen(false)}
-        employees={employees}
-        types={absenceTypes}
-        defaultEmployeeId={calcEmp}
-        onSaved={() => {
-          void loadAbsencesBlock();
         }}
       />
 

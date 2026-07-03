@@ -9,6 +9,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 const openSchema = z.object({
   cashier: z.string().min(1),
   registerId: z.string().min(1),
+  isPrimary: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -40,7 +41,13 @@ export async function POST(request: Request) {
     const body = openSchema.parse(await request.json());
     const existing = await prisma.cashShift.findFirst({ where: { status: 'OPEN' } });
     if (existing) throw new Error('A cash shift is already open');
-    const shift = await prisma.cashShift.create({ data: { ...body, status: 'OPEN' } });
+    const hasPrimary = await prisma.cashShift.findFirst({
+      where: { status: 'OPEN', isPrimary: true },
+    });
+    const isPrimary = body.isPrimary ?? !hasPrimary;
+    const shift = await prisma.cashShift.create({
+      data: { ...body, status: 'OPEN', isPrimary },
+    });
     return jsonOk(serialize(shift), 201);
   } catch (err) {
     return handleRouteError(err);

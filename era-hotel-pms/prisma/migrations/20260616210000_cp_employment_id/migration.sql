@@ -1,0 +1,3 @@
+-- Plan C: CP workforce employment key for staff provision
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "cp_employment_id" TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS "User_cp_employment_id_key" ON "User"("cp_employment_id");

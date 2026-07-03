@@ -13,6 +13,8 @@ import {
   TimesheetStatus,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { enrichEmployeesWithMdm } from "./employee-person.util";
 import { HrCalendarService } from "./hr-calendar.service";
 import type { TimesheetBatchItemDto } from "./dto/timesheet-batch.dto";
 
@@ -59,6 +61,7 @@ export class TimesheetService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly calendar: HrCalendarService,
+    private readonly mdm: OrchestratorMdmClientService,
   ) {}
 
   async findByMonthIfExists(
@@ -116,14 +119,19 @@ export class TimesheetService {
       where: { id: timesheetId, organizationId },
     });
     if (!ts) throw new NotFoundException("Timesheet not found");
-    const employees = await this.prisma.employee.findMany({
+    const rawEmployees = await this.prisma.employee.findMany({
       where: {
         organizationId,
         ...(departmentId ? { jobPosition: { departmentId } } : {}),
       },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      select: { id: true, firstName: true, lastName: true, finCode: true },
+      orderBy: [{ hireDate: "asc" }, { createdAt: "asc" }],
+      select: { id: true, globalPersonId: true },
     });
+    const employees = await enrichEmployeesWithMdm(
+      this.mdm,
+      organizationId,
+      rawEmployees,
+    );
     const employeeIds = employees.map((e) => e.id);
     const entries = await this.prisma.timesheetEntry.findMany({
       where: {

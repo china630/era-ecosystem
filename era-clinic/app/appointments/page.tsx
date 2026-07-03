@@ -38,14 +38,21 @@ export default function AppointmentsPage() {
   const load = useCallback(async () => {
     const res = await fetch("/api/appointments");
     const d = await res.json();
-    setRows(Array.isArray(d) ? d : (d.data ?? []));
+    if (Array.isArray(d)) setRows(d);
+    else if (Array.isArray(d?.data)) setRows(d.data);
+    else setRows([]);
   }, []);
 
   useEffect(() => {
     void load();
     void fetch("/api/templates")
       .then((r) => r.json())
-      .then((d) => setTemplates((d.data ?? d) as typeof templates));
+      .then((d) => {
+        if (Array.isArray(d)) setTemplates(d);
+        else if (Array.isArray(d?.templates)) setTemplates(d.templates);
+        else if (Array.isArray(d?.data)) setTemplates(d.data);
+        else setTemplates([]);
+      });
   }, [load]);
 
   async function cancelVisit(visitId: string) {

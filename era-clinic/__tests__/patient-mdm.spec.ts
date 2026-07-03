@@ -1,14 +1,16 @@
 import { PatientMdmRequiredError } from "@/domain/patient/patient.service";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 
-jest.mock("@/lib/patient-identity", () => ({
-  linkPatientGlobalPerson: jest.fn().mockResolvedValue(null),
+jest.mock("@era/satellite-kit", () => ({
+  listPersonIdentifiers: jest.fn().mockResolvedValue({ identifiers: [] }),
+  linkPersonIdentity: jest.fn().mockResolvedValue({ globalPersonId: null }),
 }));
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
     patientRef: {
       create: jest.fn(),
+      findUnique: jest.fn(),
       findUniqueOrThrow: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -43,7 +45,9 @@ describe("patient MDM enforcement", () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
     prisma.patientRef.update.mockResolvedValue({
       id: "p2",
-      finCode: "ABC1234",
+      fullName: "Test",
+      phone: null,
+      nationality: "AZ",
       globalPersonId: null,
     });
     prisma.patientRef.findUniqueOrThrow.mockResolvedValue({

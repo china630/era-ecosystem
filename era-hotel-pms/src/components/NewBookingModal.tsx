@@ -4,14 +4,11 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
-  PRIMARY_BUTTON_CLASS,
-  SECONDARY_BUTTON_CLASS,
   showApiError,
-  showSuccess,
 } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
 import GuestCardModal from '@/components/GuestCardModal';
@@ -157,134 +154,110 @@ export default function NewBookingModal({
       >
         {msg ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{msg}</p> : null}
         <form id={formId} onSubmit={submit} className={FORM_STACK_CLASS}>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="roomTypeId">
-                {t('roomType')}
-              </label>
-              <select
-                id="roomTypeId"
-                className={MODAL_INPUT_CLASS}
-                value={roomTypeId}
-                onChange={(e) => setRoomTypeId(e.target.value)}
-                required
-              >
-                <option value="">{tc('select')}</option>
-                {roomTypes.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="ratePlanId">
-                {t('ratePlan')}
-              </label>
-              <select
-                id="ratePlanId"
-                className={MODAL_INPUT_CLASS}
-                value={ratePlanId}
-                onChange={(e) => setRatePlanId(e.target.value)}
-                required
-              >
-                <option value="">{tc('select')}</option>
-                {ratePlans.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="agencyId">
-                {t('agency')}
-              </label>
-              <select
-                id="agencyId"
-                className={MODAL_INPUT_CLASS}
-                value={agencyId}
-                onChange={(e) => setAgencyId(e.target.value)}
-              >
-                <option value="">{tc('select')}</option>
-                {agencies.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="guestId">
-                {t('guest')}
-              </label>
-              <select
-                id="guestId"
-                className={MODAL_INPUT_CLASS}
-                value={guestId}
-                onChange={(e) => setGuestId(e.target.value)}
-                required
-              >
-                <option value="">{tc('select')}</option>
-                {guests.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="mt-2 text-[13px] font-medium text-[#2980B9] hover:underline"
-                onClick={() => setGuestCardOpen(true)}
-              >
-                {t('newGuest')}
-              </button>
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="checkIn">
-                {t('checkIn')}
-              </label>
-              <input
-                id="checkIn"
-                type="date"
-                className={MODAL_INPUT_CLASS}
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-                required
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="checkOut">
-                {t('checkOut')}
-              </label>
-              <input
-                id="checkOut"
-                type="date"
-                className={MODAL_INPUT_CLASS}
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                required
-              />
-            </div>
-            <div className={FORM_FIELD_GROUP_CLASS}>
-              <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="paymentMethod">
-                {t('paymentMethod')}
-              </label>
-              <select
-                id="paymentMethod"
-                className={MODAL_INPUT_CLASS}
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              >
-                <option value="CASH">{tPay('CASH')}</option>
-                <option value="CARD">{tPay('CARD')}</option>
-                <option value="COMPANY_ACCOUNT">{tPay('COMPANY_ACCOUNT')}</option>
-              </select>
-            </div>
-            {quoteText ? (
-              <p className="text-[13px] font-medium text-[#2980B9]">
-                {t('quote')}: {quoteText}
-              </p>
-            ) : null}
+          <FieldSelect
+            label={t('roomType')}
+            preset="selectWide"
+            id="roomTypeId"
+            value={roomTypeId}
+            onChange={(e) => setRoomTypeId(e.target.value)}
+            required
+          >
+            <option value="">{tc('select')}</option>
+            {roomTypes.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldSelect
+            label={t('ratePlan')}
+            preset="selectWide"
+            id="ratePlanId"
+            value={ratePlanId}
+            onChange={(e) => setRatePlanId(e.target.value)}
+            required
+          >
+            <option value="">{tc('select')}</option>
+            {ratePlans.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldSelect
+            label={t('agency')}
+            preset="selectWide"
+            id="agencyId"
+            value={agencyId}
+            onChange={(e) => setAgencyId(e.target.value)}
+          >
+            <option value="">{tc('select')}</option>
+            {agencies.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
+              </option>
+            ))}
+          </FieldSelect>
+          <div>
+            <FieldSelect
+              label={t('guest')}
+              preset="selectWide"
+              id="guestId"
+              value={guestId}
+              onChange={(e) => setGuestId(e.target.value)}
+              required
+            >
+              <option value="">{tc('select')}</option>
+              {guests.map((o) => (
+                <option key={o.id} value={o.id}>
+                  {o.label}
+                </option>
+              ))}
+            </FieldSelect>
+            <button
+              type="button"
+              className="mt-2 text-[13px] font-medium text-[#2980B9] hover:underline"
+              onClick={() => setGuestCardOpen(true)}
+            >
+              {t('newGuest')}
+            </button>
+          </div>
+          <FieldRow cols={2}>
+            <Field
+              label={t('checkIn')}
+              preset="date"
+              id="checkIn"
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              required
+            />
+            <Field
+              label={t('checkOut')}
+              preset="date"
+              id="checkOut"
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              required
+            />
+          </FieldRow>
+          <FieldSelect
+            label={t('paymentMethod')}
+            preset="select"
+            id="paymentMethod"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+          >
+            <option value="CASH">{tPay('CASH')}</option>
+            <option value="CARD">{tPay('CARD')}</option>
+            <option value="COMPANY_ACCOUNT">{tPay('COMPANY_ACCOUNT')}</option>
+          </FieldSelect>
+          {quoteText ? (
+            <p className="text-[13px] font-medium text-[#2980B9]">
+              {t('quote')}: {quoteText}
+            </p>
+          ) : null}
         </form>
       </EraModal>
 

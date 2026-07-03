@@ -9,6 +9,7 @@
 | **v1.0** | Текущий релиз: всё со статусом **MVP** / **DONE** в `PRD.md` §4 и `[x]` в DELIVERY. В тексте **не** пишем старые коды волн (W1, W2, SP, Gemini, Wave A–F). |
 | **v1.1** | Shipped 2026-05-26: [MODULES_CATALOG § Shipped v1.1](./MODULES_CATALOG.md#shipped-in-v11). |
 | **v2.0** | Shipped 2026-05-26: platform CP-B3–B8 **Live**, MDM registration cutover, retail fiscal/offline/marketplace, hotel NBC/B2C/locks, auto tool crib, CRM WA live, clinic portal — [MODULES_CATALOG § Shipped v2.0](./MODULES_CATALOG.md#shipped-in-v20). |
+| **v3.0** | Shipped 2026-07-02: CRM party model (M11–M16), prospect import, Finance auto-CP — [MODULES_CATALOG § Shipped v3.0](./MODULES_CATALOG.md#shipped-in-v30). |
 
 ## Статусы модулей (§4 и MODULES_CATALOG)
 
