@@ -75,12 +75,12 @@ export class InventoryAuditService {
       where: { id, organizationId },
       include: {
         warehouse: { select: { id: true, name: true, inventoryAccountCode: true } },
-        responsibleEmployee: { select: { id: true, firstName: true, lastName: true } },
+        responsibleEmployee: { select: { id: true, globalPersonId: true } },
         lines: {
           orderBy: { createdAt: "asc" },
           include: {
             product: { select: { id: true, name: true, sku: true, isService: true } },
-            accountableEmployee: { select: { id: true, firstName: true, lastName: true } },
+            accountableEmployee: { select: { id: true, globalPersonId: true } },
           },
         },
       },
@@ -789,12 +789,12 @@ export class InventoryAuditService {
       where: { id, organizationId },
       include: {
         warehouse: { select: { id: true, name: true, inventoryAccountCode: true } },
-        responsibleEmployee: { select: { id: true, firstName: true, lastName: true } },
+        responsibleEmployee: { select: { id: true, globalPersonId: true } },
         lines: {
           orderBy: { createdAt: "asc" },
           include: {
             product: { select: { id: true, name: true, sku: true, isService: true } },
-            accountableEmployee: { select: { id: true, firstName: true, lastName: true } },
+            accountableEmployee: { select: { id: true, globalPersonId: true } },
           },
         },
       },

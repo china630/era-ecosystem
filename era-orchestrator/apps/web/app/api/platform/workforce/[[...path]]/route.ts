@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ORCH_API_URL } from "../../../../lib/orch-api";
+import { ORCH_API_URL } from "../../../../../lib/orch-api";
 
 async function proxy(
   request: NextRequest,

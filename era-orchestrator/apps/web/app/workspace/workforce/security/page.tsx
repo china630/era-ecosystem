@@ -9,14 +9,16 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { getOrchAccessToken } from "../../../lib/orch-api";
-import { useRequireAuth } from "../../../lib/use-require-auth";
+import { getOrchAccessToken } from "../../../../lib/orch-api";
+import { useRequireAuth } from "../../../../lib/use-require-auth";
 
 const SATELLITES = [
   { key: "industry_clinic", label: "Clinic" },
   { key: "industry_hotel_pms", label: "Hotel PMS" },
   { key: "industry_fnb_pos", label: "F&B POS" },
 ] as const;
+
+type WorkforceSatelliteKey = (typeof SATELLITES)[number]["key"];
 
 const ROLES_BY_SATELLITE: Record<string, string[]> = {
   industry_clinic: ["DOCTOR", "NURSE", "RECEPTION", "CLINIC_ADMIN"],
@@ -86,7 +88,12 @@ export default function WorkforceSecurityPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [grantOpen, setGrantOpen] = useState(false);
-  const [grantForm, setGrantForm] = useState({
+  const [grantForm, setGrantForm] = useState<{
+    employmentId: string;
+    satelliteKey: WorkforceSatelliteKey;
+    satelliteRole: string;
+    reason: string;
+  }>({
     employmentId: "",
     satelliteKey: SATELLITES[0].key,
     satelliteRole: "DOCTOR",
@@ -368,7 +375,7 @@ export default function WorkforceSecurityPage() {
                 onChange={(e) =>
                   setGrantForm((f) => ({
                     ...f,
-                    satelliteKey: e.target.value,
+                    satelliteKey: e.target.value as WorkforceSatelliteKey,
                     satelliteRole: ROLES_BY_SATELLITE[e.target.value]?.[0] ?? "STAFF",
                   }))
                 }

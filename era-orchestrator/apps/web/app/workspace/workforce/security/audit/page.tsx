@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { CARD_CONTAINER_CLASS, PageHeader, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { getOrchAccessToken } from "../../../../lib/orch-api";
-import { useRequireAuth } from "../../../../lib/use-require-auth";
+import { getOrchAccessToken } from "../../../../../lib/orch-api";
+import { useRequireAuth } from "../../../../../lib/use-require-auth";
 
 type AuditRow = {
   id: string;

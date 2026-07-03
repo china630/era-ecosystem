@@ -9,8 +9,8 @@ import {
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
-import { getOrchAccessToken } from "../../../lib/orch-api";
-import { useRequireAuth } from "../../../lib/use-require-auth";
+import { getOrchAccessToken } from "../../../../lib/orch-api";
+import { useRequireAuth } from "../../../../lib/use-require-auth";
 
 async function downloadExport(path: string, filename: string) {
   const token = getOrchAccessToken();

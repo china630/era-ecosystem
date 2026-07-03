@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ORCH_API_URL } from "../../../../../lib/orch-api";
+import { ORCH_API_URL } from "../../../../../../lib/orch-api";
 
 const MDM_SERVICE_TOKEN =
   process.env.MDM_INTERNAL_SERVICE_TOKEN ??
