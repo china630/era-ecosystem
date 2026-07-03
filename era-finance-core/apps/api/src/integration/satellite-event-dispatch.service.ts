@@ -65,6 +65,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { InvoicesService } from "../invoices/invoices.service";
 import { CounterpartiesService } from "../counterparties/counterparties.service";
 import { TimesheetService } from "../hr/timesheet.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { WorkforceAbsenceSyncService } from "./workforce-absence-sync.service";
 import { WorkforceOrgSyncService } from "./workforce-org-sync.service";
 import { WorkforceEmploymentSyncService } from "./workforce-employment-sync.service";
