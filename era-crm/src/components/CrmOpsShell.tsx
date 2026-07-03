@@ -2,7 +2,7 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import type { Locale } from "@era/i18n-common";
-import { LayoutDashboard, Users, MapPin, Inbox, Settings } from "lucide-react";
+import { LayoutDashboard, Users, MapPin, Inbox, Settings, Upload } from "lucide-react";
 import {
   EraAppRouteShell,
   HeaderOrganization,
@@ -26,6 +26,7 @@ export default function CrmOpsShell({ children }: { children: React.ReactNode })
     { href: "/leads", label: t("leads"), icon: Users },
     { href: "/visits", label: t("visits"), icon: MapPin },
     { href: "/inbox", label: t("inbox"), icon: Inbox },
+    { href: "/admin/import", label: t("import"), icon: Upload },
     { href: "/admin/settings", label: t("settings"), icon: Settings },
   ];
 

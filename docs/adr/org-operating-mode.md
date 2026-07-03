@@ -20,4 +20,5 @@
 
 - [satellite-finance-bridge-pattern](./satellite-finance-bridge-pattern.md)
 - [sanatorium-vnext](./sanatorium-vnext.md) SV7/SV14
+- [cp-workforce-org-units.md](./cp-workforce-org-units.md) — commercial `Organization` DEPARTMENT ≠ HR `OrgUnit`; ops DB unchanged
 - Orchestrator: `org-operating-mode.service.ts`, migration `20260604120000_org_operating_mode`

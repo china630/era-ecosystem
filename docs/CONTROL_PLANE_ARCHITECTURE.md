@@ -22,6 +22,8 @@ ERA started as **Finance-only** — identity, subscription, billing, and entitle
 | **Tier** | Resource limits (users, invoices, storage, WA, OCR) | `OrganizationSubscription.currentTier` + quota matrix |
 | **Add-on** | Cross-product platform service | `platform_*` (`catalog_kind = ADDON`) |
 
+**Workforce Hub (v3):** `platform_workforce` — CP hire, org structure, absence workflow, Security Admin, STAFF publisher. Optional Finance `hr_full` for payroll mirror. ADR: [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md).
+
 Hotel PMS uses **9** submodule keys (`hotel_core`, `hotel_housekeeping`, …) — see [`adr/hotel-module-taxonomy.md`](./adr/hotel-module-taxonomy.md) and [`adr/orchestrator-satellite-vs-module.md`](./adr/orchestrator-satellite-vs-module.md).
 
 See also: [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md), [era-orchestrator/doc/adr/control-plane-billing-migration.md](../era-orchestrator/doc/adr/control-plane-billing-migration.md).
@@ -103,6 +105,9 @@ Timezone for billing period: **Asia/Baku** unless noted otherwise in TZ.
 | **Platform add-ons** | Partially Finance (WhatsApp quotas) | **Orchestrator** — see [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) |
 | Satellite event **ingress** | Orchestrator | **Stays orchestrator** |
 | MDM Phase 1 | Orchestrator | **Stays orchestrator** |
+| **Workforce hub (v3 Plan A)** | Finance HR (legacy CRUD) | **Orchestrator** — `WorkforceEmployment`, `WorkforceAbsence` workflow; Finance payroll mirror via `WORKFORCE_ABSENCE_*` ([ADR](./adr/cp-workforce-absence-split.md)) |
+| **Workforce org structure (v3 Plan B)** | Finance `Department` CRUD | **Orchestrator** — `WorkforceScope`, `OrgUnit`, `WorkforcePosition`; Finance CostCenter mirror via `WORKFORCE_ORG_UNIT_*` / `WORKFORCE_POSITION_*` ([ADR](./adr/cp-workforce-org-units.md)) |
+| **Workforce roles + provisioning (v3 Plan C)** | Finance `Employee.provisionedSatellite*` | **Orchestrator** — `SatelliteRoleTemplate`, `WorkforceRoleBinding`, `WorkforceManualGrant`, seat allocation; CP publishes `STAFF_*`; Security Admin UI ([ADR](./adr/cp-workforce-role-templates-and-security-admin.md)) |
 
 ### Finance core keeps (accounting satellite)
 

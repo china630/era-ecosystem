@@ -7,8 +7,7 @@ export function matchesCodeNameQuery(
     roomNumber?: string | null;
     fullName?: string | null;
     phone?: string | null;
-    nationalIdFin?: string | null;
-    passportNumber?: string | null;
+    globalPersonId?: string | null;
     voen?: string | null;
   },
   query: string,
@@ -21,8 +20,7 @@ export function matchesCodeNameQuery(
     row.roomNumber,
     row.fullName,
     row.phone,
-    row.nationalIdFin,
-    row.passportNumber,
+    row.globalPersonId,
     row.voen,
   ]
     .filter(Boolean)

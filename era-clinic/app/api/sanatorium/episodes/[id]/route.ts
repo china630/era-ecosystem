@@ -1,12 +1,13 @@
 import { z } from 'zod';
 import { jsonOk, jsonError, handleRouteError } from '@/lib/api-utils';
-import { prisma } from '@/lib/prisma';
-import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
+import { prisma } from '@/lib/prisma';import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 import {
   addComplaint,
   addDiagnosis,
+  completeCheckupAndSchedule,
   createEpisodeLabOrder,
   getEpisode,
+  registerWalkInEpisode,
 } from '@/lib/services/sanatorium.service';
 
 const complaintSchema = z.object({ text: z.string().min(1) });
@@ -19,6 +20,18 @@ const labSchema = z.object({ testCode: z.string().min(1) });
 const instantiateProgramSchema = z.object({
   programCode: z.string().min(1),
   startsOn: z.string().min(1),
+});
+const completeCheckupSchema = z.object({
+  programCode: z.string().min(1).optional(),
+  startsOn: z.string().min(1).optional(),
+});
+const walkInSchema = z.object({
+  fullName: z.string().min(1),
+  fin: z.string().optional(),
+  passport: z.string().optional(),
+  phone: z.string().optional(),
+  globalPersonId: z.string().optional(),
+  programCode: z.string().optional(),
 });
 
 export async function GET(
@@ -69,6 +82,15 @@ export async function POST(
         programCode: parsed.programCode,
         reservationId: episode.reservationId ?? undefined,
         startsOn: new Date(parsed.startsOn),
+      });
+      return jsonOk(instance);
+    }
+    if (action === 'complete-checkup') {
+      const parsed = completeCheckupSchema.parse(body);
+      const instance = await completeCheckupAndSchedule({
+        episodeId: id,
+        programCode: parsed.programCode,
+        startsOn: parsed.startsOn ? new Date(parsed.startsOn) : undefined,
       });
       return jsonOk(instance);
     }

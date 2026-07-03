@@ -1,0 +1,44 @@
+name: Design regression
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+      - name: Build shared packages image
+        run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
+      - name: Bootstrap local demo
+        run: node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites
+        env:
+          SKIP_HEAVY: '1'
+      - name: Start hotel PMS
+        run: |
+          docker compose build hotel-pms
+          docker compose up -d hotel-pms
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3201/login && break; sleep 2; done
+      - name: Start clinic
+        run: |
+          docker compose build clinic
+          docker compose up -d clinic
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:3203/login && break; sleep 2; done
+      - name: Design regression smoke (no snapshot compare)
+        run: npm run test:design-regression:smoke
+        env:
+          PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
+          PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
+      - name: Run design regression
+        run: npm run test:design-regression
+        env:
+          PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
+          PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203

@@ -6,7 +6,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "standalone",
-  transpilePackages: ["@era/i18n-common", "@era/satellite-kit"],
+  transpilePackages: ["@era/i18n-common", "@era/satellite-kit", "@era/clinic-domain"],
   outputFileTracingIncludes: {
     "/*": [
       "./messages/**/*",

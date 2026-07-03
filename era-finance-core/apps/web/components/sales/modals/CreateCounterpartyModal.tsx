@@ -11,17 +11,16 @@ import {
   counterpartyLegalFormI18nKey,
   type CounterpartyLegalForm,
 } from "../../../lib/counterparty-legal-form";
+import { Field, FieldRow } from "@era/satellite-kit/ui";
 import { notifyListRefresh } from "../../../lib/list-refresh-bus";
 import {
   MODAL_CHECKBOX_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
-  MODAL_INPUT_CLASS,
 } from "../../../lib/design-system";
 import { Button } from "../../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../../ui/select";
 import { SalesModalFooter, SalesModalShell } from "./modal-shell";
 
-const lbl = MODAL_FIELD_LABEL_CLASS;
+const lbl = "block text-[12px] font-medium text-[#34495E] mb-1";
 
 function isPoisonLookupName(name: string): boolean {
   const n = name.trim();
@@ -345,22 +344,23 @@ export function CreateCounterpartyModal({
         onSubmit={(e) => void onSubmit(e)}
         className="space-y-4"
       >
-        <div>
-          <span className={lbl}>{t("counterparties.taxId")}</span>
-          <div className="flex w-full min-w-0 items-stretch gap-2 sm:gap-3">
-            <input
-              name="taxId"
-              inputMode="numeric"
-              maxLength={10}
-              value={digits}
-              onChange={(e) => {
-                setVoenVerified(false);
-                setTaxId(e.target.value.replace(/\D/g, "").slice(0, 10));
-              }}
-              className={`${MODAL_INPUT_CLASS} h-9 min-h-9 min-w-0 flex-1 tabular-nums max-w-none`}
-              aria-invalid={!taxValid && digits.length > 0}
-            />
-            <Button
+        <div className="flex w-full min-w-0 items-end gap-2 sm:gap-3">
+          <Field
+            label={t("counterparties.taxId")}
+            preset="voen"
+            name="taxId"
+            inputMode="numeric"
+            maxLength={10}
+            value={digits}
+            onChange={(e) => {
+              setVoenVerified(false);
+              setTaxId(e.target.value.replace(/\D/g, "").slice(0, 10));
+            }}
+            className="min-w-0 flex-1"
+            inputClassName="max-w-none"
+            aria-invalid={!taxValid && digits.length > 0}
+          />
+          <Button
               type="button"
               variant="secondary"
               disabled={voenCheckBusy || !taxValid}
@@ -378,7 +378,6 @@ export function CreateCounterpartyModal({
                 t("counterparties.yoxla")
               )}
             </Button>
-          </div>
         </div>
         {(manualCheckTax || manualCheckInternal) && (
           <div className="flex flex-wrap gap-2 text-[12px]">
@@ -390,17 +389,15 @@ export function CreateCounterpartyModal({
             ) : null}
           </div>
         )}
-        <div>
-          <span className={lbl}>{t("counterparties.name")}</span>
-          <input
-            name="name"
-            autoComplete="organization"
-            value={name}
-            disabled={fieldsLocked}
-            onChange={(e) => setName(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
-        </div>
+        <Field
+          label={t("counterparties.name")}
+          preset="shortText"
+          name="name"
+          autoComplete="organization"
+          value={name}
+          disabled={fieldsLocked}
+          onChange={(e) => setName(e.target.value)}
+        />
         <div>
           <span className={lbl}>{t("counterparties.legalFormField")}</span>
           <Select
@@ -441,28 +438,27 @@ export function CreateCounterpartyModal({
             <span />
           )}
         </div>
-        <div>
-          <span className={lbl}>{t("counterparties.director", { defaultValue: "Direktor" })}</span>
-          <input
-            value={directorName}
-            disabled={fieldsLocked}
-            onChange={(e) => setDirectorName(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
-        </div>
+        <Field
+          label={t("counterparties.director", { defaultValue: "Direktor" })}
+          preset="shortText"
+          value={directorName}
+          disabled={fieldsLocked}
+          onChange={(e) => setDirectorName(e.target.value)}
+        />
         <div className="space-y-2">
-          <span className={lbl}>{t("counterparties.phones", { defaultValue: "Telefonlar" })}</span>
           {phones.map((ph, idx) => (
             <div key={idx} className="flex gap-2">
-              <input
+              <Field
+                label={idx === 0 ? t("counterparties.phones", { defaultValue: "Telefonlar" }) : "\u00a0"}
+                preset="phone"
                 value={ph}
                 disabled={fieldsLocked}
+                className="flex-1"
                 onChange={(e) => {
                   const next = [...phones];
                   next[idx] = e.target.value;
                   setPhones(next);
                 }}
-                className={MODAL_INPUT_CLASS}
               />
             </div>
           ))}
@@ -477,18 +473,20 @@ export function CreateCounterpartyModal({
         </div>
         {(role === "SUPPLIER" || legalForm === "INDIVIDUAL") && (
           <div>
-            <span className={lbl}>FIN</span>
-            <div className="flex w-full min-w-0 items-stretch gap-2">
-              <input
+            <div className="flex w-full min-w-0 items-end gap-2">
+              <Field
+                label="FIN"
+                preset="fin"
                 value={finCode}
                 disabled={fieldsLocked}
                 maxLength={7}
+                className="min-w-0 flex-1"
+                inputClassName="max-w-none"
                 onChange={(e) => {
                   setFinVerified(false);
                   setMdmPersonId(null);
                   setFinCode(e.target.value.toUpperCase().slice(0, 7));
                 }}
-                className={`${MODAL_INPUT_CLASS} min-w-0 flex-1`}
               />
               <Button
                 type="button"
@@ -533,27 +531,23 @@ export function CreateCounterpartyModal({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <span className={lbl}>{t("counterparties.address")}</span>
-          <input
-            name="address"
-            value={address}
-            disabled={fieldsLocked}
-            onChange={(e) => setAddress(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
-        </div>
-        <div>
-          <span className={lbl}>{t("counterparties.email")}</span>
-          <input
-            name="email"
-            type="email"
-            value={email}
-            disabled={fieldsLocked}
-            onChange={(e) => setEmail(e.target.value)}
-            className={MODAL_INPUT_CLASS}
-          />
-        </div>
+        <Field
+          label={t("counterparties.address")}
+          preset="longText"
+          name="address"
+          value={address}
+          disabled={fieldsLocked}
+          onChange={(e) => setAddress(e.target.value)}
+        />
+        <Field
+          label={t("counterparties.email")}
+          preset="shortText"
+          name="email"
+          type="email"
+          value={email}
+          disabled={fieldsLocked}
+          onChange={(e) => setEmail(e.target.value)}
+        />
       </form>
     </SalesModalShell>
   );

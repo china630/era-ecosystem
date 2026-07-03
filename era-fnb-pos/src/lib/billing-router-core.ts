@@ -4,7 +4,7 @@ export type TicketBillingShape = {
   serviceChannel?: string | null;
 };
 
-export type TicketSettlement = "LOCAL_CASHIER" | "HOTEL_FOLIO";
+export type TicketSettlement = "LOCAL_CASHIER" | "HOTEL_FOLIO" | "HOTEL_HUB";
 
 export type OperatingModeLike = {
   mode: "STANDALONE" | "DEPARTMENT";
@@ -41,8 +41,11 @@ export function shouldRouteInHouseToHotelFolio(mode: OperatingModeLike | null): 
 export function resolveTicketSettlementSync(
   ticket: TicketBillingShape,
   mode: OperatingModeLike | null = null,
+  deferWalkInToHub = false,
 ): TicketSettlement {
-  if (!isInHouseTicket(ticket)) return "LOCAL_CASHIER";
+  if (!isInHouseTicket(ticket)) {
+    return deferWalkInToHub ? "HOTEL_HUB" : "LOCAL_CASHIER";
+  }
 
   if (shouldRouteInHouseToHotelFolio(mode)) return "HOTEL_FOLIO";
 
@@ -54,7 +57,7 @@ export function resolveTicketSettlementSync(
   return "LOCAL_CASHIER";
 }
 
-/** Walk-in and dine-in without hotel link always fiscalize at the POS register. */
+/** Walk-in and dine-in without hotel link fiscalize at POS unless deferred to hub. */
 export function shouldFiscalizeAtPos(settlement: TicketSettlement): boolean {
   return settlement === "LOCAL_CASHIER";
 }
@@ -62,6 +65,9 @@ export function shouldFiscalizeAtPos(settlement: TicketSettlement): boolean {
 export function payBlockedReason(settlement: TicketSettlement): string | null {
   if (settlement === "HOTEL_FOLIO") {
     return "In-house guest: settle via room charge (hotel folio)";
+  }
+  if (settlement === "HOTEL_HUB") {
+    return "Walk-in: send to reception for payment";
   }
   return null;
 }

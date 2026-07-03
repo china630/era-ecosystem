@@ -6,34 +6,18 @@ export async function listPractitioners() {
   return prisma.practitioner.findMany({ orderBy: { code: "asc" } });
 }
 
-export async function createPractitioner(data: {
-  code: string;
-  fullName: string;
-  specialty?: string;
-  globalPersonId?: string | null;
-  finCode?: string | null;
-  passportNumber?: string | null;
-  issuingCountry?: string | null;
-  phone?: string | null;
-  defaultSlotMinutes?: number;
-}) {
-  return prisma.practitioner.create({ data });
-}
-
-export async function updatePractitioner(
+export async function updatePractitionerOpsCatalog(
   id: string,
   data: {
-    fullName?: string;
     specialty?: string | null;
-    globalPersonId?: string | null;
-    finCode?: string | null;
-    passportNumber?: string | null;
-    issuingCountry?: string | null;
-    phone?: string | null;
     defaultSlotMinutes?: number;
   },
 ) {
   return prisma.practitioner.update({ where: { id }, data });
+}
+
+export async function getPractitionerById(id: string) {
+  return prisma.practitioner.findUnique({ where: { id } });
 }
 
 export async function deletePractitioner(id: string) {

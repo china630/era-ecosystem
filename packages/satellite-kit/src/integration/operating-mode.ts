@@ -72,3 +72,60 @@ export function shouldFiscalizeOnParent(mode: OperatingModeSnapshot): boolean {
     Boolean(mode.parentOrgId)
   );
 }
+
+export type SettlementHubMode = "HOTEL_FRONT_CASH" | "SATELLITE_OWN";
+export type PendingSettlementNaPolicy = "BLOCK" | "WARN";
+
+export type SettlementPolicySnapshot = {
+  settlementHub: SettlementHubMode;
+  pendingSettlementNaPolicy: PendingSettlementNaPolicy;
+  hubOrganizationId: string | null;
+  deferWalkInToHub: boolean;
+};
+
+export const DEFAULT_SETTLEMENT_POLICY: SettlementPolicySnapshot = {
+  settlementHub: "SATELLITE_OWN",
+  pendingSettlementNaPolicy: "BLOCK",
+  hubOrganizationId: null,
+  deferWalkInToHub: false,
+};
+
+function asSettlementHub(v: unknown): SettlementHubMode {
+  return v === "HOTEL_FRONT_CASH" ? "HOTEL_FRONT_CASH" : "SATELLITE_OWN";
+}
+
+function asNaPolicy(v: unknown): PendingSettlementNaPolicy {
+  return v === "WARN" ? "WARN" : "BLOCK";
+}
+
+/** Parse the `settlementPolicy` block from a `/v1/subscription/me` snapshot. */
+export function parseSettlementPolicy(
+  snapshot: Record<string, unknown> | null,
+): SettlementPolicySnapshot {
+  const block = snapshot?.settlementPolicy as Record<string, unknown> | undefined;
+  if (!block || typeof block !== "object") return { ...DEFAULT_SETTLEMENT_POLICY };
+  return {
+    settlementHub: asSettlementHub(block.settlementHub),
+    pendingSettlementNaPolicy: asNaPolicy(block.pendingSettlementNaPolicy),
+    hubOrganizationId:
+      typeof block.hubOrganizationId === "string" && block.hubOrganizationId.length > 0
+        ? block.hubOrganizationId
+        : null,
+    deferWalkInToHub: block.deferWalkInToHub === true,
+  };
+}
+
+/** Resolve settlement hub policy from the control plane. */
+export async function resolveSettlementPolicy(
+  organizationId: string,
+): Promise<SettlementPolicySnapshot> {
+  const snapshot = await fetchSubscriptionSnapshot(organizationId);
+  return parseSettlementPolicy(snapshot);
+}
+
+/** True when walk-in charges from this org must defer to hotel Front Cash. */
+export function shouldDeferWalkInToHub(
+  policy: SettlementPolicySnapshot,
+): boolean {
+  return policy.deferWalkInToHub === true;
+}

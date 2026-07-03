@@ -831,7 +831,7 @@ export function ReservationCardEditor({
       {loading && !isCreate ? (
         <p className="py-8 text-center text-[13px] text-[#7F8C8D]">{tc('loading')}</p>
       ) : (
-        <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(260px,30%)_1fr]">
+        <div className="grid min-h-0 flex-1 gap-4 overflow-hidden lg:grid-cols-[minmax(320px,380px)_1fr]">
           <ReservationCardLeftPanel
             isCreate={isCreate}
             isLocked={isLocked}

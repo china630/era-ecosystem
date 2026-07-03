@@ -8,13 +8,16 @@ datasource db {
 }
 
 model Tenant {
-  id              String   @id @default(cuid())
-  code            String   @unique
-  name            String
-  enabledPresets  String[] @default(["outpatient"]) @map("enabled_presets")
-  defaultOutletId String?  @map("default_outlet_id")
-  createdAt       DateTime @default(now())
-  outlets         Outlet[]
+  id                       String                   @id @default(cuid())
+  code                     String                   @unique
+  name                     String
+  enabledPresets           String[]                 @default(["outpatient"]) @map("enabled_presets")
+  programSchedulingMode    ProgramSchedulingMode    @default(AFTER_CHECKUP) @map("program_scheduling_mode")
+  schedulingSlotMinutes    Int                      @default(5) @map("scheduling_slot_minutes")
+  procedureOverQuotaPolicy ProcedureOverQuotaPolicy @default(CHARGE_FOLIO) @map("procedure_over_quota_policy")
+  defaultOutletId          String?                  @map("default_outlet_id")
+  createdAt                DateTime                 @default(now())
+  outlets                  Outlet[]
 }
 
 enum LabOrderStatus {
@@ -49,6 +52,7 @@ enum VisitStatus {
 enum BillingTarget {
   FINANCE
   HOTEL_FOLIO
+  SETTLEMENT_HUB
 }
 
 enum ResourceKind {
@@ -61,6 +65,17 @@ enum ProcedureOrderStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum ProgramSchedulingMode {
+  ON_CHECKIN
+  AFTER_CHECKUP
+}
+
+enum ProcedureOverQuotaPolicy {
+  CHARGE_FOLIO
+  BLOCK
+  WARN_ONLY
 }
 
 enum ClinicReceiptStatus {
@@ -99,9 +114,6 @@ model PatientRef {
   fullName         String
   phone            String?
   nationality      String?           @default("AZ")
-  finCode          String?
-  passportNumber   String?
-  issuingCountry   String?
   globalPersonId   String?
   appointments     Appointment[]
   visits           Visit[]
@@ -120,10 +132,11 @@ model Practitioner {
   fullName           String
   specialty          String?
   globalPersonId     String?           @map("global_person_id")
-  finCode            String?           @map("fin_code")
-  passportNumber     String?           @map("passport_number")
-  issuingCountry     String?           @map("issuing_country")
-  phone              String?
+  financeEmployeeId  String?           @unique @map("finance_employee_id")
+  cpEmploymentId     String?           @unique @map("cp_employment_id")
+  userId             String?           @unique @map("user_id")
+  user               User?             @relation(fields: [userId], references: [id])
+  active             Boolean           @default(true)
   defaultSlotMinutes Int               @default(30) @map("default_slot_minutes")
   appointments       Appointment[]
   visits             Visit[]
@@ -191,8 +204,11 @@ model Visit {
   practitionerId String
   status         VisitStatus          @default(IN_PROGRESS)
   patientOrigin  PatientOrigin        @default(WALK_IN)
-  billingTarget  BillingTarget        @default(FINANCE)
-  reservationId  String?
+  billingTarget        BillingTarget        @default(FINANCE)
+  settlementPendingId  String?
+  hubFiscalReceiptId   String?
+  settledAt            DateTime?
+  reservationId        String?
   roomNumber     String?
   amountNet      Decimal              @default(0) @db.Decimal(12, 2)
   completedAt    DateTime?
@@ -246,22 +262,24 @@ model LabOrder {
 }
 
 model ClinicalEpisode {
-  id             String              @id @default(cuid())
-  patientRefId   String?
-  patientRef     PatientRef?         @relation(fields: [patientRefId], references: [id])
-  globalPersonId String?
-  hotelStayId    String?
-  reservationId  String?
-  organizationId String
-  patientOrigin  PatientOrigin       @default(IN_HOUSE)
-  programCode    String?
-  status         String              @default("OPEN")
-  openedAt       DateTime            @default(now())
-  closedAt       DateTime?
-  complaints     ClinicalComplaint[]
-  diagnoses      ClinicalDiagnosis[]
-  labOrders      LabOrder[]
-  programInstance ProgramInstance?
+  id                  String              @id @default(cuid())
+  patientRefId        String?
+  patientRef          PatientRef?         @relation(fields: [patientRefId], references: [id])
+  globalPersonId      String?
+  hotelStayId         String?
+  reservationId       String?
+  roomNumber          String?
+  organizationId      String
+  patientOrigin       PatientOrigin       @default(IN_HOUSE)
+  programCode         String?
+  checkupCompletedAt  DateTime?
+  status              String              @default("OPEN")
+  openedAt            DateTime            @default(now())
+  closedAt            DateTime?
+  complaints          ClinicalComplaint[]
+  diagnoses           ClinicalDiagnosis[]
+  labOrders           LabOrder[]
+  programInstance     ProgramInstance?
 
   @@index([reservationId])
   @@index([organizationId, status])
@@ -610,18 +628,22 @@ model Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  login         String    @unique
-  email         String?
-  phone         String?   @unique
-  fullName      String
-  passwordHash  String
-  roleId        String
-  role          Role      @relation(fields: [roleId], references: [id])
-  status        String    @default("ACTIVE")
-  isCrossSystem Boolean   @default(false) @map("is_cross_system")
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id                String        @id @default(cuid())
+  login             String        @unique
+  email             String?
+  phone             String?       @unique
+  fullName          String
+  passwordHash      String
+  roleId            String
+  role              Role          @relation(fields: [roleId], references: [id])
+  status            String        @default("ACTIVE")
+  isCrossSystem     Boolean       @default(false) @map("is_cross_system")
+  globalPersonId    String?       @map("global_person_id")
+  financeEmployeeId String?       @unique @map("finance_employee_id")
+  cpEmploymentId    String?       @unique @map("cp_employment_id")
+  practitioner      Practitioner?
+  lastLoginAt       DateTime?     @map("last_login_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
 }
 
 model SatelliteAuditLog {

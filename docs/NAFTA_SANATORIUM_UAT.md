@@ -18,7 +18,7 @@ Extends [QUARTET_UAT.md](./QUARTET_UAT.md) with clinic, pharmacy retail, and **p
 
 Parent flags for departments: `revenueRouting=PARENT`, `fiscalRouting=PARENT`.
 
-**Mixed F&B:** in-house → room charge → folio; walk-in → local pay + KKM ([ADR fb-mixed-settlement-routing](./adr/fb-mixed-settlement-routing.md)).
+**Mixed F&B:** in-house → room charge → folio; walk-in → **hotel Front Cash pending queue** when `settlementHub=HOTEL_FRONT_CASH` ([ADR unified-settlement-hub](./adr/unified-settlement-hub.md)); else local pay + KKM ([ADR fb-mixed-settlement-routing](./adr/fb-mixed-settlement-routing.md)).
 
 ---
 
@@ -45,7 +45,7 @@ docker compose up -d --build
 
 Shared secrets (must match): `ERA_SSO_SHARED_SECRET`, `SATELLITE_EVENT_SERVICE_TOKEN`, `POS_BRIDGE_SECRET`, `PII_*`.
 
-Quick smoke: `node scripts/quartet-smoke.mjs` · `node era-hotel-pms/scripts/test-pos-bridge.mjs`
+Quick smoke: `node scripts/quartet-smoke.mjs` · `node era-hotel-pms/scripts/test-pos-bridge.mjs` · `node scripts/nafta-smoke-a1-a5.mjs` (A1 SSO + A5 settlement hub)
 
 **Doc / API / UI gap matrix:** [NAFTA_DOC_API_UI_AUDIT.md](../../docs/NAFTA_DOC_API_UI_AUDIT.md) — use for forgotten UI and doc drift across Nafta satellites.
 
@@ -92,11 +92,12 @@ Buttons on operational screens (next to **+**), gated by `ERA_EXCEL_IMPORT_ENABL
 |---|------|------|
 | A1 | Orch register + module tiles | SSO opens hotel, fb, clinic |
 | A2 | ElectraWeb import — rooms, guests, in-house reservations | room plan + in-house list |
-| A3 | Check-in → clinic episode | `SATELLITE_HOTEL_GUEST_CHECKED_IN` |
-| A4 | Clinic procedure IN_HOUSE → folio charge | no clinic cashier pay |
-| A5 | F&B walk-in pay | local fiscal (mock KKM) |
+| A3 | Check-in → clinic episode | episode OPEN; procedures only after **complete checkup** (`AFTER_CHECKUP`) |
+| A4 | Clinic procedure IN_HOUSE → folio charge | nurse QR → complete → `MEDICAL` folio; over-quota `CHARGE_FOLIO` |
+| A5 | F&B walk-in → reception | `Send to reception` → `/front-cash/pending` → pay + mock KKM → ticket CLOSED |
+| A5b | Clinic walk-in visit | pending → Front Cash pay → visit settled + finance event after callback |
 | A6 | F&B in-house room charge | folio line, pay blocked at FB |
-| A7 | Check-out / folio total | single settlement point |
+| A7 | Check-out / folio total | single settlement point; NA **blocks** on open pending when `pendingSettlementNaPolicy=BLOCK` |
 | B1 | Finance events received | journals exist, **no 1C match required** |
 | B2 | Night audit event | optional until folio stable |
 
@@ -153,9 +154,77 @@ Product traceability: [era-hotel-pms/doc/nafta/README.md](../era-hotel-pms/doc/n
 
 ---
 
-## 7. Related docs
+## 6. Workforce v3 track (Plan E)
+
+End-to-end CP Workforce hub — run after `node tools/bootstrap-local.mjs --workforce-seed` or `node scripts/nafta-onboard-departments.mjs`.
+
+| Step | Action | Pass |
+|------|--------|------|
+| W1 | Orch `/workspace/workforce/security` — role matrix seeded (Therapist → clinic DOCTOR) | Matrix visible |
+| W2 | Hire via MDM FIN — Med Block — Therapist | Employment ACTIVE; masked name in list |
+| W3 | Clinic login as doctor | Reception/doctor routes OK |
+| W4 | Submit + approve vacation in CP `/workspace/workforce/absences` | Approved; no Finance CRUD |
+| W5 | (If `hr_full`) Finance timesheet sync absences | Locked M/X on draft timesheet |
+| W6 | Terminate employment in CP | Clinic login disabled |
+| W7 | `node scripts/audit-data-model-integration.mjs` + `node scripts/v3-workforce-smoke.mjs` | 0 audit issues; smoke green |
+
+Without Finance: W1–W4, W6–W7 only.
+
+ADR: [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md) · Runbook: [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md)
+
+## 6.1 Workforce absences (CP-only path)
+
+When Finance is **not** connected or `hr_full` is off:
+
+1. Orchestrator login as OWNER → `/workspace/workforce/employments` → hire via MDM `globalPersonId`.
+2. `/workspace/workforce/absences/new` → VACATION → submit → approve.
+3. No Finance API calls required; payroll mirror skipped until `financeEmployeeId` + `hr_full`.
+
+When Finance **is** active: set `financeEmployeeId` on employment (or link via future Plan C provisioning) → approve on CP → Finance `/payroll` shows mirror → `syncAbsences` on draft timesheet.
+
+ADR: [cp-workforce-absence-split.md](./adr/cp-workforce-absence-split.md)
+
+## 6.2 Workforce org structure (CP path)
+
+1. Run `node scripts/nafta-onboard-departments.mjs` (or manual bootstrap) → workforce scope + tree: Sanatorium → Med Block / Administration / F&B.
+2. `/workspace/workforce/positions` → create position with slots in Med Block.
+3. `/workspace/workforce/employments` → hire with `globalPersonId` + org unit + position; 3rd hire rejected when slots full.
+4. (Optional Finance) `/hr/structure` shows mirrored departments; no create/edit — banner links to Workspace.
+
+ADR: [cp-workforce-org-units.md](./adr/cp-workforce-org-units.md)
+
+## 6.3 Workforce roles + Security Admin (CP path)
+
+1. `nafta-onboard-departments.mjs` seeds positions (Therapist, Waiter, Reception) + role matrix templates.
+2. `/workspace/workforce/security` — verify matrix; adjust role dropdowns if needed.
+3. `/workspace/workforce/employments` — hire with satellite checkboxes (clinic for Med Block therapist).
+4. Clinic login → doctor routes; optional manual grant CLINIC_ADMIN + revoke in Security Admin.
+5. Terminate employment → satellite login disabled.
+
+ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md)
+
+---
+
+## 7. Workforce without Finance (Plan F — 1C export)
+
+Nafta parent org: **`platform_workforce` + industry modules**; **`hr_full` off** by default.
+
+| Step | Action | Pass |
+|------|--------|------|
+| F1 | Enable `platform_workforce`; bootstrap workforce scope | `/workspace` shows Workforce Hub tile |
+| F2 | CP hire + absence (§6 W1–W4) | No Finance container required |
+| F3 | `/workspace/workforce/export` → download roster + absences CSV | Files open in Excel; no FIN column |
+| F4 | Monthly: operator imports CSV into 1C (manual procedure) | Documented in runbook |
+| F5 | `node scripts/v3-workforce-f-smoke.mjs` | Static checks green |
+
+ADR: [workforce-external-payroll-and-1c-export.md](./adr/workforce-external-payroll-and-1c-export.md)
+
+---
+
+## 8. Related docs
 
 - [QUARTET_UAT.md](./QUARTET_UAT.md) — base quartet smoke
 - [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md)
 - [tenancy-and-outlet-boundaries.md](./adr/tenancy-and-outlet-boundaries.md)
 - [fb-mixed-settlement-routing.md](./adr/fb-mixed-settlement-routing.md)
+- [unified-settlement-hub.md](./adr/unified-settlement-hub.md)

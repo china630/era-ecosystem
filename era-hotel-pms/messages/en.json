@@ -67,6 +67,7 @@
     "migrationQueue": "Registration queue",
     "sectionNightAudit": "Night Audit",
     "sectionFrontCash": "Front Cash",
+    "pendingSettlement": "Pending settlement",
     "sectionDistribution": "Distribution & B2B Sales",
     "sectionChannel": "Channel Manager",
     "sectionContracts": "Contracts & Yield",
@@ -374,7 +375,9 @@
     "empty": "No guests yet.",
     "created": "Guest created",
     "updated": "Guest saved",
-    "filterPlaceholder": "Filter by name, phone, FIN or passport…"
+    "filterPlaceholder": "Filter by name, phone or MDM link…",
+    "mdmLink": "MDM",
+    "mdmLinked": "Linked"
   },
   "roomStatus": {
     "AVAILABLE": "Available",
@@ -439,6 +442,10 @@
     "cashShiftOpenBlock": "OPEN — block NA",
     "cashShiftOk": "OK",
     "closeShiftsBeforeNa": "Close all cash shifts before night audit.",
+    "pendingSettlement": "Pending settlement",
+    "pendingSettlementCount": "{count} pending charge(s)",
+    "pendingSettlementBlock": "Unsettled walk-in charges block night audit",
+    "viewPendingQueue": "Open pending queue",
     "runNightAudit": "Run night audit",
     "processRetry": "Process outbound retry",
     "nightAuditResult": "Night audit: {status}",
@@ -451,6 +458,30 @@
     "due": "due",
     "markNoShow": "Mark no-show",
     "noShowMarked": "No-show: {name}"
+  },
+  "frontCashPending": {
+    "title": "Pending settlement",
+    "subtitle": "Walk-in charges from F&B and clinic awaiting Front Cash payment.",
+    "empty": "No pending charges.",
+    "colSource": "Source",
+    "colRef": "Reference",
+    "colPayer": "Payer",
+    "colDescription": "Description",
+    "colAmount": "Amount",
+    "colActions": "Actions",
+    "pay": "Pay",
+    "void": "Void",
+    "payModalTitle": "Settle pending charge",
+    "amountReadOnly": "Amount is fixed from the source ticket/visit.",
+    "payCash": "Cash",
+    "payCard": "Card",
+    "paySuccess": "Payment recorded and source notified.",
+    "payFailed": "Payment failed",
+    "voidModalTitle": "Void pending charge",
+    "voidReason": "Reason",
+    "voidConfirm": "Void",
+    "voidSuccess": "Pending charge voided.",
+    "voidFailed": "Void failed"
   },
   "booking": {
     "title": "New booking (PMS-01)",
@@ -488,6 +519,10 @@
   },
   "reservationCard": {
     "stay": "Stay",
+    "commercial": "Commercial",
+    "pax": "Pax",
+    "segmentation": "Segmentation",
+    "preferences": "Preferences",
     "voucherNo": "Voucher no.",
     "adults": "Adults",
     "market": "Market",
@@ -702,7 +737,9 @@
       "nameRequired": "Enter guest full name first",
       "finObtained": "FIN obtained (merge)",
       "mergeFinPrompt": "Enter new FIN code",
-      "mergeSuccess": "MDM records merged"
+      "mergeSuccess": "MDM records merged",
+      "profileLoading": "Loading MDM profile…",
+      "identifierMasked": "Masked — enter new value to re-link"
     },
     "documents": "Documents",
     "contacts": "Contacts",

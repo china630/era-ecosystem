@@ -32,6 +32,23 @@ enum LeadChannel {
   other
 }
 
+enum PartyKind {
+  INDIVIDUAL
+  LEGAL_ENTITY
+}
+
+enum ProspectType {
+  CUSTOMER
+  PARTNER
+  OTHER
+}
+
+enum ImportBatchStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -50,13 +67,25 @@ model Lead {
   title           String
   contactRef      String
   channel         LeadChannel        @default(other)
+  partyKind       PartyKind          @default(LEGAL_ENTITY)
+  taxId           String?
+  companyName     String?
+  contactPhone    String?
+  contactEmail    String?
+  globalPersonId  String?
+  activitySector  String?
+  prospectType    ProspectType       @default(CUSTOMER)
+  addressLabel    String?
+  sourceRef       String?
+  importBatchId   String?
   estimatedAmount Decimal?           @db.Decimal(12, 2)
   counterpartyId  String?
   ownerId         String?
   nextContactAt   DateTime?
-  score           Int       @default(0)
+  score           Int                @default(0)
   scoreUpdatedAt  DateTime?
   owner           User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  importBatch     ImportBatch?       @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
   visits          Visit[]
   stageHistory    LeadStageHistory[]
   inboxThreads    InboxThread[]
@@ -65,6 +94,23 @@ model Lead {
   convertedAt     DateTime?
 
   @@index([ownerId])
+  @@index([taxId])
+  @@index([prospectType])
+  @@index([importBatchId])
+  @@index([contactPhone])
+}
+
+model ImportBatch {
+  id          String            @id @default(cuid())
+  fileName    String
+  createdBy   String?
+  status      ImportBatchStatus @default(PENDING)
+  reportJson  String            @default("{}")
+  createdAt   DateTime          @default(now())
+  completedAt DateTime?
+  leads       Lead[]
+
+  @@index([createdAt])
 }
 
 model LeadStageHistory {

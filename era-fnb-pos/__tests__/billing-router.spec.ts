@@ -42,7 +42,7 @@ describe("billing-router-core", () => {
     expect(settlement).toBe("HOTEL_FOLIO");
   });
 
-  it("walk-in on DEPARTMENT org still uses local cashier", () => {
+  it("walk-in on DEPARTMENT org defers to hotel hub when policy active", () => {
     const settlement = resolveTicketSettlementSync(
       { serviceChannel: "WALK_IN" },
       {
@@ -51,8 +51,27 @@ describe("billing-router-core", () => {
         fiscalRouting: "PARENT",
         revenueRouting: "PARENT",
       },
+      true,
+    );
+    expect(settlement).toBe("HOTEL_HUB");
+  });
+
+  it("walk-in on DEPARTMENT org still uses local cashier without hub policy", () => {
+    const settlement = resolveTicketSettlementSync(
+      { serviceChannel: "WALK_IN" },
+      {
+        mode: "DEPARTMENT",
+        parentOrgId: "parent-1",
+        fiscalRouting: "PARENT",
+        revenueRouting: "PARENT",
+      },
+      false,
     );
     expect(settlement).toBe("LOCAL_CASHIER");
+  });
+
+  it("blocks pay for hotel hub settlement", () => {
+    expect(payBlockedReason("HOTEL_HUB" as TicketSettlement)).toMatch(/reception/i);
   });
 
   it("blocks pay for hotel folio settlement", () => {

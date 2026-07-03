@@ -4,7 +4,7 @@ Living matrix for **honest readiness**. Replaces optimistic DELIVERY-only summar
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-06-15
+**Last updated:** 2026-06-16
 
 ---
 
@@ -40,7 +40,11 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 
 | ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | Status | Blocker |
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------|
-| CLI-01 | Practitioners master | PRD M2 | Y | — | Y `/admin/master-data` | — | — | SHIPPED | MDM link via `linkPersonIdentity` |
+| CLI-01 | Practitioners ops catalog (specialty, slots) | PRD M2 | Y | — | Y `/admin/master-data` | — | — | SHIPPED | Ops edit only; hire via CP Workforce |
+| CLI-WF-01 | Practitioner hire (CP workforce → provision) | ADR cp-core-workforce-hub | Y CP hire + STAFF_PROVISIONED | — | — | Y (payroll mirror optional) | — | SHIPPED | UAT: Workspace hire → clinic DOCTOR login |
+| CP-WF-HUB-01 | CP Workforce hub end-to-end (hire, org, absence, security) | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | Plan E clean cutover |
+| CP-WF-EXP-01 | Workforce CSV export (roster, absences, timesheet) | ADR F1 | Y | — | — | Y `/workspace/workforce/export` | — | SHIPPED | No FIN in default CSV |
+| CP-WF-SEAT-01 | Unified seat licensing + Security Admin widget | ADR F4 | Y | — | — | Y `/workspace/workforce/security` | — | SHIPPED | `POST /internal/v1/licensing/seats/check` |
 | CLI-02 | Rooms master | PRD M2 | Y | — | Y | — | — | SHIPPED | — |
 | CLI-03 | Resources (equipment) | vNext | Y | — | Y | — | — | SHIPPED | — |
 | CLI-04 | Procedure types | vNext | Y | — | Y | — | — | SHIPPED | — |
@@ -71,9 +75,10 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 |----|------------|-----|-----|-------|----------|----------|------------|--------|---------|
 | CLI-MDM-01 | Practitioner MDM link | ADR | Y | — | Y `/admin/master-data` | — | — | SHIPPED | — |
 | CLI-MDM-02 | Patient intake resolve | PRD M1 | Y | Y `/patients` | Y | — | — | SHIPPED | — |
-| HOT-MDM-01 | Guest create/edit MDM link | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | — |
+| HOT-MDM-01 | Guest create/edit MDM link + masked ops-profile | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | — |
 | FIN-CIT-01 | Natural person via MDM (HR/CP) | TZ §28.2 | Y | — | Y | Y | — | SHIPPED | — |
-| FIN-HR-MDM-01 | Employee hire/update/convert-to-fin | ADR | Y | — | Y | Y | — | SHIPPED | — |
+| FIN-HR-MDM-01 | Employee payroll mirror + MDM person read-through | ADR | Y | — | Y | Y | — | SHIPPED | Plan D — no local FIN/name |
+| CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | FIN-CP-MDM-01 | Counterparty ИП FIN → globalPersonId | ADR | Y | — | Y modal | Y | — | SHIPPED | — |
 | BANK-MDM-01 | CIF natural + UBO resolve | ADR D4 | Y | Y CIF modal | Y API | — | — | SHIPPED | — |
 | ORCH-MDM-01 | Org register → GlobalLegalEntity | ADR | Y | — | — | Y | Y | SHIPPED | — |
@@ -102,6 +107,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
 | HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin only `/admin/import` |
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
+| HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 
 ---
 
@@ -173,7 +179,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | CL-CAL-01 | Clinic scheduling skip non-working/mourning | Y | Y | — | SHIPPED | — |
 | LG-CAL-01 | Logistics SLA business-day ETA | Y `/trips/[id]` | Y | — | SHIPPED | `/api/sla/eta` |
 | CN-CAL-01 | Construction timesheet calendar norm | Y field-ops | Y | — | SHIPPED | calendar warn on import |
-| CN-CAL-02 | Construction timesheet → Finance HR | — | — | — | HEADLESS | event export ADR |
+| CN-CAL-02 | Construction timesheet → CP → Finance | ADR F2 | Y event | — | — | — | — | HEADLESS | Import + CP approve + Finance consumer |
 | WS-CAL-01 | Wholesale payment terms business days | — | Y | — | SHIPPED | `/admin/import-orders` |
 | FB-CAL-01 | FNB labor → finance HR | Y | Y | — | HEADLESS | no local calendar |
 | AS-CAL-01 | Auto appointment working days | Y `/appointments` | Y | — | SHIPPED | calendar snap + cron |
@@ -181,7 +187,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 
 ---
 
-## Industry VÖEN preview (Finance handoff)
+## Industry VÖEN preview (platform gateway target; legacy Finance BFF pre-W2)
 
 | ID | Capability | OpsUI | SatAdmin | Status | Blocker |
 |----|------------|-------|----------|--------|---------|
@@ -190,7 +196,19 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | AS-VOEN-01 | Auto work-order corporate VÖEN | Y | Y | SHIPPED | — |
 | HT-VOEN-01 | Hotel travel agency VÖEN | — | Y | SHIPPED | — |
 | CN-VOEN-01 | Construction subcontractor VÖEN | Y | Y | SHIPPED | — |
-| CRM-VOEN-01 | CRM lead company VÖEN | Y | Y | SHIPPED | — |
+| CRM-VOEN-01 | CRM lead company VÖEN | Y | Y | SHIPPED | Persisted on lead (v3.0 M11) |
+
+### era-crm v3.0
+
+| ID | Capability | OpsUI | SatAdmin | Status | Notes |
+|----|------------|-------|----------|--------|-------|
+| CRM-PARTY-01 | Lead party profile (individual + legal) | Y `/leads`, `/leads/[id]` | Y | SHIPPED | `partyKind`, stage gates, FIN/MDM |
+| CRM-PARTY-02 | Partner prospect tag + filter | Y | Y | SHIPPED | `prospectType=PARTNER` |
+| CRM-IMPORT-01 | CSV/XLSX prospect import | — | Y `/admin/import` | SHIPPED | e-taxes enriched columns + dedup |
+| CRM-IMPORT-02 | Activity sector on lead | Y | Y | SHIPPED | `donor_sectors` → `activitySector` |
+| CRM-CONV-01 | Finance auto-counterparty on convert | — | HEADLESS | SHIPPED | extended `SATELLITE_CRM_LEAD_CONVERTED` |
+
+ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-prospect-import.md)
 
 ---
 
@@ -217,6 +235,26 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 
 ---
 
+## era-orchestrator CP workforce (Plan A)
+
+| ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
+|----|------------|-----|-----|-------|----------|----------|------------|-----------|
+| CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire by globalPersonId + orgUnit + position |
+| CP-WF-ABS-01 | Absence workflow | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create → submit → approve on `/workspace/workforce/absences` |
+| CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*` | — | — | Y | — | bootstrap scope → create tree on `/workspace/workforce/org-structure` |
+| CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
+| CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | `/workspace/workforce/security` matrix + manual grants |
+| CP-WF-HIRE-01 | CP hire + STAFF_PROVISIONED | ADR cp-workforce-role-templates-and-security-admin | `POST /platform/v1/workforce/employments/hire` | — | — | Y | — | hire wizard with satellite checkboxes → clinic login |
+
+## era-finance-core HR mirror (Plan A + B + C)
+
+| ID | Capability | Doc | API | OpsUI | SatAdmin | OrgOwner | SuperAdmin | UAT-SMOKE |
+|----|------------|-----|-----|-------|----------|----------|------------|-----------|
+| FIN-HR-ABS-01 | Absence payroll mirror + calculators | TZ §7.0.2 | `GET /hr/absences`, vacation/sick calc | Y (read) | — | — | — | CP approve → Finance payroll list + syncAbsences |
+| FIN-HR-CC-01 | CostCenter mirror (Department/JobPosition) | ADR cp-workforce-org-units | `GET /hr/departments`, `GET /hr/job-positions` | Y (read) | — | — | — | HEADLESS — CP org event → mirror row; UI banner → Workspace |
+
+---
+
 ## Other industry satellites
 
 Modal CRUD audit (LOCAL_UAT §5): **Partial** for FB, Ret, Log, Con, CRM, Auto, Cli (pre-this-PR), Who. See per-app DELIVERY `[~]` rows.
@@ -231,7 +269,10 @@ Modal CRUD audit (LOCAL_UAT §5): **Partial** for FB, Ret, Log, Con, CRM, Auto, 
 node scripts/delivery-readiness.mjs          # engineering checkbox %
 node scripts/readiness-strict-delivery.mjs   # SHIPPED-only % (excludes [~][s][h])
 node scripts/readiness-coverage.mjs          # platform hooks §4
+npm run report:ecosystem-readiness           # HTML dashboard (all apps, filters)
 ```
+
+Interactive report: [ecosystem-readiness-report.html](./ecosystem-readiness-report.html) (open in browser after regen).
 
 Manual rows in this file are authoritative for **actor UI** until `readiness-ui-coverage.mjs` exists.
 
@@ -245,3 +286,4 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-06-16 | CLI-PRESET-* product lines per clinic ADR |
 | 2026-06-15 | DH-FX / FC-FX / BK-FX / LG-FX coverage rows (CBAR ecosystem refactor) |
 | 2026-06-15 | Re-audit pass 2: HT-FX/WS-FX/WS-CAL/CN/AS/CRM-CAL/LG-CAL SHIPPED; IND-VOEN; BANK-MDM UI |
+| 2026-07-02 | CRM v3.0 SHIPPED: CRM-PARTY-*, CRM-IMPORT-*, CRM-CONV-01; CRM-VOEN-01 persist |

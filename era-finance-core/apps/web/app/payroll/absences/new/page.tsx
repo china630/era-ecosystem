@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-/** Legacy URL: отсутствия вводятся с `/payroll` (модалки HR). */
+/** Legacy URL — absence workflow moved to ERA Workspace (CP). */
 export default function LegacyNewAbsenceRedirectPage() {
   redirect("/payroll");
 }

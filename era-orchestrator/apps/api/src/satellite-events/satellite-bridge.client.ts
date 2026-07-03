@@ -1,11 +1,16 @@
 import type { ResolvedSatelliteEndpoint } from "./satellite-endpoint-registry.service";
 
+export type SatelliteBridgeResponse = {
+  satelliteUserId?: string;
+  ok?: boolean;
+};
+
 export async function forwardToSatellite(
   endpoint: ResolvedSatelliteEndpoint,
   path: string,
   event: Record<string, unknown>,
   secretHeader = "x-satellite-bridge-secret",
-): Promise<void> {
+): Promise<SatelliteBridgeResponse> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -28,4 +33,7 @@ export async function forwardToSatellite(
       `Satellite bridge failed: ${res.status} ${text.slice(0, 200)}`,
     );
   }
+
+  const body = (await res.json().catch(() => ({}))) as SatelliteBridgeResponse;
+  return body;
 }

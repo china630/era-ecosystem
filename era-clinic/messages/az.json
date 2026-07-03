@@ -23,7 +23,8 @@
     "masterData": "Soraqçalar",
     "catalog": "Xidmət kataloqu",
     "templates": "Şablonlar",
-    "audit": "Audit"
+    "audit": "Audit",
+    "logout": "Çıxış"
   },
   "login": {
     "title": "ERA Clinic",
@@ -78,6 +79,11 @@
     "subtitle": "Resepşn cədvəli və check-in",
     "shellNote": "Viziti idarə etmək üçün qəbula klik edin.",
     "createTitle": "Yeni qəbul",
+    "patientRefCode": "Xəstə ref kodu",
+    "patientName": "Xəstə adı",
+    "patientPhone": "Telefon",
+    "practitioner": "Həkim",
+    "scheduledAt": "Tarix və vaxt",
     "cancelVisit": "Viziti ləğv et",
     "cancelTitle": "Viziti ləğv et",
     "cancelReason": "Ləğv səbəbi (məcburi)",
@@ -146,9 +152,25 @@
     "title": "Prosedur növbəsi",
     "subtitle": "Tibb bacısı üçün planlaşdırılmış prosedurlar",
     "done": "Tamamla",
+    "start": "Başla",
     "empty": "Planlaşdırılmış prosedur yoxdur.",
     "completeConfirmTitle": "Proseduru tamamla",
-    "completeConfirmBody": "Proseduru tamamlanmış kimi qeyd edək?"
+    "completeConfirmBody": "Proseduru tamamlanmış kimi qeyd edək?",
+    "qrScanTitle": "QR skan",
+    "qrTokenPlaceholder": "QR token",
+    "qrScan": "Yoxla",
+    "qrSuccess": "Qonaq təsdiqləndi",
+    "qrFailed": "QR uğursuz",
+    "qrPatient": "Xəstə",
+    "todayList": "Bugünkü növbə",
+    "completeFailed": "Tamamlama uğursuz"
+  },
+  "sanatoriumResources": {
+    "title": "Resurs təqvimi",
+    "subtitle": "Kabinet doluluğu (5 dəq)",
+    "date": "Tarix",
+    "free": "Boş",
+    "empty": "Resurs yoxdur"
   },
   "queue": {
     "title": "Resepşn növbəsi",
@@ -170,7 +192,8 @@
     "fiscalLabel": "Fiskal ID",
     "qrLabel": "QR",
     "settlementOnly": "Yalnız hesablaşma (real NBC yoxdur)",
-    "paymentFailed": "Ödəniş uğursuz"
+    "paymentFailed": "Ödəniş uğursuz",
+    "hubBanner": "Walk-in ödənişi otel front kassasında aparılır. Viziti tamamlayın — resepsiya ödəyəcək."
   },
   "booking": {
     "title": "Qəbul üçün yazılma",
@@ -228,6 +251,15 @@
     "programQuota": "Prosedur kvotası",
     "quotaUsed": "{used} / {total}",
     "startProgram": "Proqramı başlat",
+    "completeCheckupSchedule": "Checkup tamamla və planla",
+    "checkupPendingHint": "Şikayət və ya ICD diaqnoz əlavə edin, sonra proqramı planlayın.",
+    "registerWalkIn": "Walk-in qeydiyyat",
+    "walkInName": "Ad soyad",
+    "walkInFin": "FIN / pasport",
+    "walkInRegistered": "Walk-in epizod yaradıldı",
+    "resourceCalendar": "Resurs təqvimi",
+    "reschedule": "Yenidən planla",
+    "rescheduled": "Prosedur köçürüldü",
     "startsOn": "Başlanğıc",
     "programStarted": "Proqram başladı",
     "alreadyHasProgram": "Proqram artıq təyin edilib",
@@ -345,8 +377,13 @@
     "finCode": "FIN",
     "passportNumber": "Pasport",
     "issuingCountry": "Ölkə",
+    "identifierTypes": "İdentifikator növləri",
     "phone": "Telefon",
-    "nameRequired": "MDM üçün ad soyad daxil edin"
+    "nameRequired": "MDM üçün ad soyad daxil edin",
+    "workforceHireViaFinance": "Həkimləri Finance HR-da işə götürün (Employees → Clinic provizion). Burada yalnız ixtisas və slot müddətini redaktə edin.",
+    "workforceHireViaCp": "Həkimləri Control Plane Workforce-da işə götürün (/workspace/workforce). Burada yalnız ixtisas və slot müddətini redaktə edin.",
+    "financeLinked": "Finance",
+    "financeLinkedYes": "Bağlı"
   },
   "contraindications": {
     "addTitle": "Əks-göstərmə əlavə et",
@@ -367,7 +404,8 @@
     "rxQty": "Miqdar",
     "rxDescription": "Təsvir",
     "prescriptionSuccess": "Resept yazıldı ({count} sətir)",
-    "prescriptionFailed": "Resept uğursuz"
+    "prescriptionFailed": "Resept uğursuz",
+    "insuranceFinPrompt": "Sığorta yoxlaması üçün xəstə FIN"
   },
   "patientRegistry": {
     "title": "Xəstə reyestri",

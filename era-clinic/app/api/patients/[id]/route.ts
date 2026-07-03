@@ -9,6 +9,7 @@ import {
 const updateSchema = z.object({
   fullName: z.string().min(1).optional(),
   phone: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
   finCode: z.string().nullable().optional(),
   passportNumber: z.string().nullable().optional(),
   issuingCountry: z.string().nullable().optional(),

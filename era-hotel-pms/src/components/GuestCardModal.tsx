@@ -90,6 +90,15 @@ export default function GuestCardModal({
     allergens: 0,
   });
   const [globalPersonId, setGlobalPersonId] = useState<string | null>(null);
+  const [transientIdentity, setTransientIdentity] = useState({
+    nationalIdFin: '',
+    passportNumber: '',
+  });
+  const [mdmProfile, setMdmProfile] = useState<{
+    identifiers: Array<{ type: string; maskedValue: string; isPrimary: boolean }>;
+    accessDenied?: boolean;
+  } | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const isCreate = open && !guestId;
 
@@ -144,14 +153,18 @@ export default function GuestCardModal({
       setPhoneVerified(Boolean(g.phoneVerified));
       setEmailVerified(Boolean(g.emailVerified));
       setGlobalPersonId(g.globalPersonId ? String(g.globalPersonId) : null);
+      setTransientIdentity({ nationalIdFin: '', passportNumber: '' });
+      setMdmProfile(
+        json.mdmProfile && typeof json.mdmProfile === 'object'
+          ? (json.mdmProfile as typeof mdmProfile)
+          : null,
+      );
       setDetailFields({
         phone: String(g.phone ?? ''),
         email: String(g.email ?? ''),
         birthDate: g.birthDate ? String(g.birthDate).slice(0, 10) : '',
         birthPlace: String(g.birthPlace ?? ''),
         occupation: String(g.occupation ?? ''),
-        nationalIdFin: String(g.nationalIdFin ?? ''),
-        passportNumber: String(g.passportNumber ?? ''),
         visaType: String(g.visaType ?? ''),
         visaNumber: String(g.visaNumber ?? ''),
         visaExpiry: g.visaExpiry ? String(g.visaExpiry).slice(0, 10) : '',
@@ -166,6 +179,14 @@ export default function GuestCardModal({
         marriageDate: g.marriageDate ? String(g.marriageDate).slice(0, 10) : '',
         bonusPercent: g.bonusPercent != null ? String(g.bonusPercent) : '',
       });
+      const pid = g.globalPersonId ? String(g.globalPersonId) : null;
+      if (pid && !json.mdmProfile) {
+        setProfileLoading(true);
+        void fetch(`/api/mdm/person-ops-profile?globalPersonId=${encodeURIComponent(pid)}`)
+          .then((r) => (r.ok ? r.json() : null))
+          .then((p) => setMdmProfile(p))
+          .finally(() => setProfileLoading(false));
+      }
       await loadAux(guestId);
       const badgeRes = await fetch(`/api/guests/${guestId}/crm-badges`);
       if (badgeRes.ok) {
@@ -189,6 +210,8 @@ export default function GuestCardModal({
       setStats(null);
       setTab('details');
       setGlobalPersonId(null);
+      setTransientIdentity({ nationalIdFin: '', passportNumber: '' });
+      setMdmProfile(null);
       return;
     }
     void load();
@@ -211,8 +234,8 @@ export default function GuestCardModal({
           phone: phone || null,
           email: email || null,
           vipType: vipType || null,
-          nationalIdFin: detailFields.nationalIdFin || null,
-          passportNumber: detailFields.passportNumber || null,
+          nationalIdFin: transientIdentity.nationalIdFin || null,
+          passportNumber: transientIdentity.passportNumber || null,
         }),
       });
       const json = await res.json();
@@ -263,8 +286,8 @@ export default function GuestCardModal({
           birthDate: detailFields.birthDate || null,
           birthPlace: detailFields.birthPlace || null,
           occupation: detailFields.occupation || null,
-          nationalIdFin: detailFields.nationalIdFin || null,
-          passportNumber: detailFields.passportNumber || null,
+          nationalIdFin: transientIdentity.nationalIdFin || null,
+          passportNumber: transientIdentity.passportNumber || null,
           visaType: detailFields.visaType || null,
           visaNumber: detailFields.visaNumber || null,
           visaExpiry: detailFields.visaExpiry || null,
@@ -448,6 +471,9 @@ export default function GuestCardModal({
               {tab === 'details' && (
                 <GuestCardDetailsTab
                   fields={detailFields}
+                  transientIdentity={transientIdentity}
+                  mdmProfile={mdmProfile}
+                  profileLoading={profileLoading}
                   phoneVerified={phoneVerified}
                   emailVerified={emailVerified}
                   fullName={fullName || `${firstName} ${lastName}`.trim()}
@@ -457,6 +483,9 @@ export default function GuestCardModal({
                   onGlobalPersonIdChange={setGlobalPersonId}
                   onReload={() => (guestId ? void load() : undefined)}
                   onChange={(key, value) => setDetailFields((f) => ({ ...f, [key]: value }))}
+                  onTransientChange={(key, value) =>
+                    setTransientIdentity((f) => ({ ...f, [key]: value }))
+                  }
                   onVerified={(key, value) => {
                     if (key === 'phoneVerified') setPhoneVerified(value);
                     else setEmailVerified(value);
@@ -499,10 +528,13 @@ export default function GuestCardModal({
           if (data.fullName) setFullName(data.fullName);
           if (data.nationality) setNationality(data.nationality);
           if (data.gender) setGender(data.gender);
-          setDetailFields((f) => ({
+          setTransientIdentity((f) => ({
             ...f,
             passportNumber: data.passportNumber ?? f.passportNumber,
             nationalIdFin: data.nationalIdFin ?? f.nationalIdFin,
+          }));
+          setDetailFields((f) => ({
+            ...f,
             birthDate: data.birthDate ?? f.birthDate,
           }));
           showSuccess(t('idReaderApplied'));

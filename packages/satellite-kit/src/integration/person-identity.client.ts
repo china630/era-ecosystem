@@ -114,6 +114,108 @@ export async function linkPersonIdentity(
   };
 }
 
+export type PersonIdentifierSummary = {
+  id: string;
+  type: string;
+  issuingCountry: string | null;
+  trust: string;
+  isPrimary: boolean;
+  createdAt: string;
+};
+
+/** List identifier types for a person (no decrypted values). */
+export async function listPersonIdentifiers(
+  globalPersonId: string,
+  opts?: MdmClientOptions,
+): Promise<{ globalPersonId: string | null; identifiers: PersonIdentifierSummary[] }> {
+  const token = serviceToken(opts);
+  if (!token || !globalPersonId.trim()) {
+    return { globalPersonId: null, identifiers: [] };
+  }
+  const res = await fetch(
+    `${baseUrl(opts)}/internal/v1/mdm/persons/${encodeURIComponent(globalPersonId.trim())}/identifiers`,
+    {
+      headers: authHeaders(token),
+      signal: AbortSignal.timeout(10000),
+    },
+  );
+  if (!res.ok) return { globalPersonId: null, identifiers: [] };
+  const data = (await res.json()) as {
+    globalPersonId?: string;
+    identifiers?: PersonIdentifierSummary[];
+  };
+  return {
+    globalPersonId: data.globalPersonId ?? globalPersonId.trim(),
+    identifiers: data.identifiers ?? [],
+  };
+}
+
+export type PersonOpsProfile = {
+  globalPersonId: string;
+  fullName: string | null;
+  phoneMasked: string | null;
+  identifiers: Array<{
+    type: string;
+    maskedValue: string;
+    issuingCountry?: string | null;
+    isPrimary: boolean;
+  }>;
+  accessDenied?: boolean;
+};
+
+export type ComplianceIdentityResult = {
+  globalPersonId: string;
+  fin: string | null;
+  passportNumber: string | null;
+  issuingCountry: string | null;
+  accessDenied: boolean;
+};
+
+function deploymentOrgId(): string | undefined {
+  return (
+    process.env.ERA_SATELLITE_ORGANIZATION_ID ??
+    process.env.ERA_HOTEL_ORGANIZATION_ID
+  )?.trim();
+}
+
+export async function getPersonOpsProfile(
+  globalPersonId: string,
+  opts?: MdmClientOptions & { organizationId?: string },
+): Promise<PersonOpsProfile | null> {
+  const token = serviceToken(opts);
+  if (!token || !globalPersonId.trim()) return null;
+  const orgId = opts?.organizationId ?? deploymentOrgId();
+  const q = orgId ? `?organizationId=${encodeURIComponent(orgId)}` : "";
+  const res = await fetch(
+    `${baseUrl(opts)}/internal/v1/mdm/persons/${encodeURIComponent(globalPersonId.trim())}/ops-profile${q}`,
+    {
+      headers: authHeaders(token),
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  if (!res.ok) return null;
+  return (await res.json()) as PersonOpsProfile;
+}
+
+export async function resolveIdentifierForCompliance(
+  globalPersonId: string,
+  opts?: MdmClientOptions & { organizationId?: string },
+): Promise<ComplianceIdentityResult | null> {
+  const token = serviceToken(opts);
+  const orgId = opts?.organizationId ?? deploymentOrgId();
+  if (!token || !globalPersonId.trim() || !orgId) return null;
+  const q = `?organizationId=${encodeURIComponent(orgId)}`;
+  const res = await fetch(
+    `${baseUrl(opts)}/internal/v1/mdm/persons/${encodeURIComponent(globalPersonId.trim())}/compliance-identity${q}`,
+    {
+      headers: authHeaders(token),
+      signal: AbortSignal.timeout(10_000),
+    },
+  );
+  if (!res.ok) return null;
+  return (await res.json()) as ComplianceIdentityResult;
+}
+
 /** Merge foreigner record into citizen record when FIN is obtained. */
 export async function mergePersonRecords(
   sourcePersonId: string,

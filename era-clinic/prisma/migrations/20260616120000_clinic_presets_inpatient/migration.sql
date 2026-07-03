@@ -8,7 +8,11 @@ ALTER TABLE "Practitioner" ADD COLUMN IF NOT EXISTS "default_slot_minutes" INTEG
 
 ALTER TABLE "Ward" ADD COLUMN IF NOT EXISTS "daily_charge_code" TEXT;
 
-CREATE TYPE "InpatientAdmissionStatus" AS ENUM ('ADMITTED', 'DISCHARGED', 'TRANSFERRED');
+DO $$ BEGIN
+  CREATE TYPE "InpatientAdmissionStatus" AS ENUM ('ADMITTED', 'DISCHARGED', 'TRANSFERRED');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 CREATE TABLE IF NOT EXISTS "InpatientAdmission" (
   "id" TEXT NOT NULL,

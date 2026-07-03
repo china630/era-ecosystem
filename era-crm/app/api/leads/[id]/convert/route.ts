@@ -11,6 +11,7 @@ import {
   createPromotion,
   createCustomDomain,
 } from "@/integration/control-plane-platform.client";
+import { buildConvertPartyPayload, validatePartyForStage } from "@/lib/lead-party";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
@@ -30,6 +31,9 @@ export async function POST(
     const lead = await prisma.lead.findUnique({ where: { id } });
     if (!lead) return jsonError("Lead not found", 404);
     if (lead.stage === "WON") return jsonOk(lead);
+
+    const gateError = validatePartyForStage(lead, "WON");
+    if (gateError) return jsonError(gateError, 400);
 
     const converted = await prisma.$transaction(async (tx) => {
       const updated = await tx.lead.update({
@@ -55,6 +59,7 @@ export async function POST(
       payload: {
         leadId: converted.id,
         counterpartyId: converted.counterpartyId ?? undefined,
+        ...buildConvertPartyPayload(converted),
         channel: converted.channel,
         estimatedAmount: converted.estimatedAmount
           ? Number(converted.estimatedAmount)

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import { mergePersonRecords } from '@era/satellite-kit';
+import { prisma } from '@/lib/prisma';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
-import { relinkGuestGlobalPerson } from '@/lib/services/guest.service';
 
 const schema = z.object({
   guestId: z.string(),
@@ -24,10 +24,9 @@ export async function POST(request: Request) {
     if (!merged.globalPersonId) {
       throw new Error('MDM merge failed');
     }
-    await relinkGuestGlobalPerson(body.guestId, {
-      fullName: body.fullName,
-      nationalIdFin: body.fin,
-      nationality: body.nationality,
+    await prisma.guest.update({
+      where: { id: body.guestId },
+      data: { globalPersonId: merged.globalPersonId },
     });
     return jsonOk({ globalPersonId: merged.globalPersonId });
   } catch (err) {

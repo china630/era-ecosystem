@@ -45,7 +45,8 @@
     "masterData": "Master data",
     "catalog": "Service catalog",
     "templates": "Templates",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "logout": "Log out"
   },
   "login": {
     "title": "ERA Clinic",
@@ -117,6 +118,8 @@
     "patientRefCode": "Patient ref code",
     "patientName": "Patient name",
     "patientPhone": "Phone",
+    "practitioner": "Practitioner",
+    "scheduledAt": "Scheduled at",
     "cancelVisit": "Cancel visit",
     "cancelTitle": "Cancel visit",
     "cancelReason": "Cancellation reason (required)",
@@ -185,9 +188,25 @@
     "title": "Procedure queue",
     "subtitle": "Scheduled procedures for nursing",
     "done": "Complete",
+    "start": "Start",
     "empty": "No scheduled procedures.",
     "completeConfirmTitle": "Complete procedure",
-    "completeConfirmBody": "Mark this procedure as completed and post consumables?"
+    "completeConfirmBody": "Mark this procedure as completed and post consumables?",
+    "qrScanTitle": "Scan guest QR",
+    "qrTokenPlaceholder": "Paste QR token",
+    "qrScan": "Verify QR",
+    "qrSuccess": "Guest verified — today's procedures loaded",
+    "qrFailed": "QR verification failed",
+    "qrPatient": "Patient",
+    "todayList": "Today's queue",
+    "completeFailed": "Complete failed"
+  },
+  "sanatoriumResources": {
+    "title": "Resource calendar",
+    "subtitle": "Read-only cabinet occupancy (5-min buckets)",
+    "date": "Date",
+    "free": "Free",
+    "empty": "No resources configured"
   },
   "queue": {
     "title": "Reception queue",
@@ -209,7 +228,8 @@
     "fiscalLabel": "Fiscal ID",
     "qrLabel": "QR payload",
     "settlementOnly": "Settlement-only mode (no real NBC)",
-    "paymentFailed": "Payment failed"
+    "paymentFailed": "Payment failed",
+    "hubBanner": "Walk-in payments are collected at hotel Front Cash. Complete the visit — reception will settle the pending charge."
   },
   "booking": {
     "title": "Book an appointment",
@@ -267,6 +287,15 @@
     "programQuota": "Procedure quota",
     "quotaUsed": "{used} / {total}",
     "startProgram": "Start program",
+    "completeCheckupSchedule": "Complete checkup & schedule program",
+    "checkupPendingHint": "Add complaint or ICD diagnosis, then schedule the treatment program.",
+    "registerWalkIn": "Register walk-in",
+    "walkInName": "Full name",
+    "walkInFin": "FIN / passport",
+    "walkInRegistered": "Walk-in episode created",
+    "resourceCalendar": "Resource calendar",
+    "reschedule": "Reschedule",
+    "rescheduled": "Procedure rescheduled",
     "startsOn": "Starts on",
     "programStarted": "Program started",
     "alreadyHasProgram": "Program already assigned",
@@ -377,11 +406,16 @@
     "capacity": "Capacity",
     "durationMin": "Duration (min)",
     "resourceCode": "Resource code",
-    "finCode": "FIN (optional)",
+    "finCode": "FIN",
     "passportNumber": "Passport",
     "issuingCountry": "Issuing country",
+    "identifierTypes": "Identifier types",
     "phone": "Phone",
-    "nameRequired": "Enter full name for MDM lookup"
+    "nameRequired": "Enter full name for MDM lookup",
+    "workforceHireViaFinance": "Hire practitioners in Finance HR (Employees → Clinic provisioning). Here you can edit specialty and default slot duration only.",
+    "workforceHireViaCp": "Hire practitioners in Control Plane Workforce (/workspace/workforce). Here you can edit specialty and default slot duration only.",
+    "financeLinked": "Finance",
+    "financeLinkedYes": "Linked"
   },
   "contraindications": {
     "addTitle": "Add contraindication",
@@ -402,7 +436,8 @@
     "rxQty": "Quantity",
     "rxDescription": "Description (optional)",
     "prescriptionSuccess": "Prescription issued ({count} line(s))",
-    "prescriptionFailed": "Prescription failed"
+    "prescriptionFailed": "Prescription failed",
+    "insuranceFinPrompt": "Patient FIN for insurance eligibility check"
   },
   "patientRegistry": {
     "title": "Patient registry",

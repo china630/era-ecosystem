@@ -239,7 +239,10 @@ export class IndustryHandoffsService {
     };
   }
 
-  /** Operational FX preview for industry satellites (hub via finance; not for GL posting). */
+  /**
+   * Operational FX preview for finance-core UI and legacy callers.
+   * Industry satellites (W2+): use orchestrator `GET /platform/v1/catalog/fx/convert` via satellite-kit.
+   */
   async fxPreview(params: {
     from: string;
     to?: string;
@@ -284,7 +287,7 @@ export class IndustryHandoffsService {
     }
 
     throw new BadRequestException(
-      "FX preview unavailable (enable ERA_DATA_HUB_ENABLED and DATA_HUB_SERVICE_TOKEN)",
+      "FX preview unavailable (enable ERA_DATA_HUB on finance-core; industry satellites use orchestrator catalog gateway)",
     );
   }
 

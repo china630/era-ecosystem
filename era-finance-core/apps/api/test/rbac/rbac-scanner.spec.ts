@@ -60,7 +60,14 @@ describe("RBAC Mutation Auto-Scanner", () => {
     const violations: string[] = [];
 
     for (const file of files) {
-      const mod = await import(file);
+      let mod: Record<string, unknown>;
+      try {
+        mod = (await import(file)) as Record<string, unknown>;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        violations.push(`IMPORT_FAILED ${relative(srcRoot, file)}: ${message}`);
+        continue;
+      }
       for (const v of Object.values(mod)) {
         if (typeof v !== "function") continue;
         const klass = v as ControllerClass;
@@ -115,11 +122,12 @@ describe("RBAC Mutation Auto-Scanner", () => {
       }
     }
 
-    // eslint-disable-next-line no-console
-    console.table(rows);
     if (violations.length > 0) {
+      // Prefer a plain multi-line message (console.table is noisy in CI logs).
+      // eslint-disable-next-line no-console
+      console.error("RBAC scanner violations:\n" + violations.join("\n"));
       throw new Error(
-        `RBAC mutation endpoints missing guard metadata:\n${violations.join("\n")}`,
+        `RBAC mutation endpoints missing guard metadata (${violations.length}): ${violations.slice(0, 20).join(" | ")}`,
       );
     }
     expect(violations).toEqual([]);

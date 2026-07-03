@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -52,7 +53,12 @@ export default function ConstructionSettingsPage() {
         </tbody>
       </table>
       <ModalShell open={open} title={t("editSite")} onClose={() => setOpen(false)}>
-        <input className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm" value={draft} onChange={(e) => setDraft(e.target.value)} />
+        <Field
+          label={t("siteName")}
+          preset="shortText"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
         <ModalFooter onCancel={() => setOpen(false)} onSubmit={() => { setSiteName(draft.trim() || siteName); setOpen(false); }} submitLabel={tc("save")} />
       </ModalShell>
     </div>

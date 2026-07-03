@@ -29,6 +29,8 @@ import {
   parsePayrollTaxSettings,
 } from "../payroll/tax-calculator";
 import { BankingGatewayService } from "../banking/banking-gateway.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { batchEmployeePersonMap } from "./employee-person.util";
 import { assertMayAccessPayrollFinance } from "../auth/policies/hr-payroll.policy";
 import { NotificationService } from "../notifications/notification.service";
 import {
@@ -49,6 +51,7 @@ export class PayrollService {
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
     private readonly notifications: NotificationService,
     private readonly posting: PostingAccountResolver,
+    private readonly mdm: OrchestratorMdmClientService,
   ) {}
 
   listRuns(organizationId: string) {
@@ -74,7 +77,26 @@ export class PayrollService {
       },
     });
     if (!run) throw new NotFoundException("Payroll run not found");
-    return run;
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      run.slips.map((s) => s.employee.globalPersonId),
+    );
+    return {
+      ...run,
+      slips: run.slips.map((s) => {
+        const p = personMap.get(s.employee.globalPersonId);
+        return {
+          ...s,
+          employee: {
+            ...s.employee,
+            firstName: p?.firstName ?? "—",
+            lastName: p?.lastName ?? "—",
+            finCode: p?.finCode ?? null,
+          },
+        };
+      }),
+    };
   }
 
   /**
@@ -101,6 +123,11 @@ export class PayrollService {
     if (employees.length === 0) {
       throw new BadRequestException("No employees to pay");
     }
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      employees.map((e) => e.globalPersonId),
+    );
     const taxSettings = parsePayrollTaxSettings(org?.settings);
     const templateGroup = this.resolveTemplateGroup(org?.settings);
 
@@ -158,8 +185,9 @@ export class PayrollService {
                 taxSettings,
               );
         if (b.net.isNegative()) {
+          const p = personMap.get(emp.globalPersonId);
           throw new BadRequestException(
-            `Отрицательная сумма к выплате для сотрудника ${emp.lastName}: проверьте оклад и фикс. соц. удержания`,
+            `Отрицательная сумма к выплате для сотрудника ${p?.lastName ?? emp.id}: проверьте оклад и фикс. соц. удержания`,
           );
         }
         const ts = tsSummary?.byEmployeeId[emp.id];

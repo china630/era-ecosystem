@@ -14,6 +14,11 @@ import { isClinicPreset } from "@/domain/presets/clinic-presets";
 const patchSchema = z.object({
   clinicName: z.string().min(1).optional(),
   enabledPresets: z.array(z.string()).min(1).optional(),
+  programSchedulingMode: z.enum(["ON_CHECKIN", "AFTER_CHECKUP"]).optional(),
+  schedulingSlotMinutes: z.number().int().min(1).max(60).optional(),
+  procedureOverQuotaPolicy: z
+    .enum(["CHARGE_FOLIO", "BLOCK", "WARN_ONLY"])
+    .optional(),
 });
 
 export async function GET() {

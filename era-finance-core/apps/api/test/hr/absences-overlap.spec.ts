@@ -20,7 +20,7 @@ describe("Absences overlap guard", () => {
         nameAz: "Məzuniyyət",
       }),
     } as any;
-    return new AbsencesService(prisma, absenceTypes);
+    return new AbsencesService(prisma, absenceTypes, {} as any);
   }
 
   it("returns user-friendly conflict payload for overlap", async () => {

@@ -1,7 +1,8 @@
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { getImportAdapter } from '@/lib/import/adapters';
-import { assertPlatformSuperAdminImport } from '@/lib/import/auth';
+import { assertHotelImportAccess } from '@/lib/import/auth';
 import { runImport, runFilelessImport } from '@/lib/import/run-import';
+import { recordHotelAudit } from '@/lib/satellite-audit';
 
 export async function POST(
   request: Request,
@@ -14,13 +15,22 @@ export async function POST(
       return jsonError(`Unknown import entity: ${entity}`, 404);
     }
 
-    await assertPlatformSuperAdminImport();
+    const access = await assertHotelImportAccess();
 
     const url = new URL(request.url);
     const dryRun = url.searchParams.get('dryRun') === '1';
 
     if (adapter.fileless) {
       const result = await runFilelessImport(adapter, dryRun);
+      if (!dryRun) {
+        await recordHotelAudit(
+          { userId: access.userId, request },
+          'ImportRun',
+          entity,
+          'IMPORT_FILELESS',
+          { via: access.via, ...result },
+        );
+      }
       return jsonOk(result);
     }
 
@@ -43,6 +53,15 @@ export async function POST(
     }
 
     const result = await runImport(adapter, buffer, dryRun);
+    if (!dryRun) {
+      await recordHotelAudit(
+        { userId: access.userId, request },
+        'ImportRun',
+        entity,
+        'IMPORT_UPLOAD',
+        { via: access.via, ...result },
+      );
+    }
     return jsonOk(result);
   } catch (err) {
     return handleRouteError(err);

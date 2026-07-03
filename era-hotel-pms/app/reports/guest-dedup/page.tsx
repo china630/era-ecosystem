@@ -10,7 +10,7 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 type Summary = {
   totalGuests: number;
   withoutGlobalPersonId: number;
-  withoutIdentifier: number;
+  withoutMdmLink: number;
   suspectedDuplicateGroups: number;
   suspectedDuplicateGuests: number;
 };
@@ -58,7 +58,7 @@ export default function GuestDedupReportPage() {
         <PageSection className="mb-4 grid grid-cols-2 gap-3 text-[13px] md:grid-cols-3">
           <div>Total guests: <strong>{summary.totalGuests}</strong></div>
           <div>Without globalPersonId: <strong>{summary.withoutGlobalPersonId}</strong></div>
-          <div>Without FIN/passport: <strong>{summary.withoutIdentifier}</strong></div>
+          <div>Without MDM link: <strong>{summary.withoutMdmLink}</strong></div>
           <div>Duplicate groups: <strong>{summary.suspectedDuplicateGroups}</strong></div>
           <div>Guests in dup groups: <strong>{summary.suspectedDuplicateGuests}</strong></div>
         </PageSection>

@@ -30,7 +30,9 @@
     "leads": "Pipeline",
     "visits": "Visits",
     "inbox": "Inbox",
-    "settings": "Settings"
+    "settings": "Settings",
+    "import": "Import",
+    "logout": "Logout"
   },
   "login": {
     "title": "ERA CRM Field",
@@ -87,7 +89,9 @@
     "failed": "Failed",
     "error": "Error",
     "loadingFailed": "Load failed",
-    "saveFailed": "Save failed"
+    "saveFailed": "Save failed",
+    "check": "Check",
+    "cancel": "Cancel"
   },
   "leads": {
     "title": "ERA CRM Field",
@@ -109,7 +113,26 @@
     "companyVoen": "Company VÖEN",
     "companyFound": "Company found",
     "companyNotFound": "Company not found",
-    "companyVoenInvalid": "VÖEN must be 10 digits"
+    "companyVoenInvalid": "VÖEN must be 10 digits",
+    "createLead": "Create lead",
+    "leadCreated": "Lead created {id}",
+    "partyKind": "Party type",
+    "legalEntity": "Legal entity",
+    "individual": "Individual",
+    "companyName": "Company name",
+    "contactPhone": "Phone",
+    "contactEmail": "Email",
+    "prospectType": "Prospect type",
+    "prospectCustomer": "Customer",
+    "prospectPartner": "Partner",
+    "prospectOther": "Other",
+    "prospectFilter": "Filter",
+    "activitySector": "Activity sector",
+    "estimatedAmount": "Estimated amount (AZN)",
+    "finLookup": "Lookup FIN",
+    "finLinked": "Person linked via MDM",
+    "pipelineBack": "Back to pipeline",
+    "businessDays": "biz days"
   },
   "visits": {
     "title": "Field visits",
@@ -142,6 +165,31 @@
     "empty": "Inbox is empty.",
     "linked": "linked",
     "createLead": "Create lead"
+  },
+  "leadCard": {
+    "subtitle": "Stage: {stage}",
+    "partyBlock": "Party profile",
+    "actions": "Actions",
+    "stageHistory": "Stage history",
+    "visits": "Visits",
+    "noVisits": "No visits yet",
+    "stageUpdated": "Stage updated"
+  },
+  "import": {
+    "title": "Prospect import",
+    "subtitle": "CSV/XLSX from e-taxes enriched registry",
+    "hint": "Upload azerbaijan-legal-entities.csv or compatible export. Max 5000 rows.",
+    "fileLabel": "File",
+    "fileRequired": "Select a file",
+    "mode": "Import mode",
+    "modeUpsert": "Upsert (update existing by VÖEN/phone)",
+    "modeCreateOnly": "Create only (skip duplicates)",
+    "runImport": "Run import",
+    "importDone": "Import batch {batchId} completed",
+    "reportCreated": "Created",
+    "reportUpdated": "Updated",
+    "reportSkipped": "Skipped",
+    "viewBatch": "Batch id saved in report"
   },
   "adminSettings": {
     "title": "CRM settings",

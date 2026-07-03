@@ -20,6 +20,7 @@ const ROLE_CODES: Record<string, string> = {
 };
 
 export async function handleStaffProvisionEvent(event: unknown) {
+  /** T3 ops cache: fullName from STAFF_PROVISIONED is display-only; MDM is identity SoR. */
   if (isSatelliteStaffProvisioned(event)) {
     const parsed = satelliteStaffProvisionedSchema.parse(event);
     const p = parsed.payload;
@@ -29,6 +30,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
 
     const pin = p.pin ?? "0000";
     const login = p.login ?? `emp-${p.staffCode.toLowerCase()}`;
+    const cpEmploymentId = p.cpEmploymentId;
 
     await prisma.staffRoster.upsert({
       where: { staffCode: p.staffCode },
@@ -37,26 +39,28 @@ export async function handleStaffProvisionEvent(event: unknown) {
         fullName: p.fullName,
         pinHash: hashPin(pin),
         globalPersonId: parsed.globalPersonId ?? null,
-        financeEmployeeId: p.financeEmployeeId,
+        cpEmploymentId,
+        ...(p.financeEmployeeId ? { financeEmployeeId: p.financeEmployeeId } : {}),
         active: true,
       },
       update: {
         fullName: p.fullName,
         pinHash: hashPin(pin),
         globalPersonId: parsed.globalPersonId ?? null,
-        financeEmployeeId: p.financeEmployeeId,
+        cpEmploymentId,
         active: true,
       },
     });
 
-    const existingUser = await prisma.user.findUnique({ where: { login } });
+    const byCp = await prisma.user.findFirst({ where: { cpEmploymentId } });
+    const existingUser = byCp ?? (await prisma.user.findUnique({ where: { login } }));
     if (existingUser) {
       await prisma.user.update({
         where: { id: existingUser.id },
         data: {
           fullName: p.fullName,
           globalPersonId: parsed.globalPersonId ?? null,
-          financeEmployeeId: p.financeEmployeeId,
+          cpEmploymentId,
           status: "ACTIVE",
         },
       });
@@ -70,7 +74,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
         passwordHash: hashPin(pin),
         roleId: role.id,
         globalPersonId: parsed.globalPersonId ?? null,
-        financeEmployeeId: p.financeEmployeeId,
+        cpEmploymentId,
         isCrossSystem: true,
       },
     });
@@ -81,7 +85,7 @@ export async function handleStaffProvisionEvent(event: unknown) {
     const parsed = satelliteStaffDeactivatedSchema.parse(event);
     const p = parsed.payload;
     await prisma.staffRoster.updateMany({
-      where: { staffCode: p.staffCode },
+      where: { cpEmploymentId: p.cpEmploymentId },
       data: { active: false },
     });
     if (p.satelliteUserId) {
@@ -90,6 +94,10 @@ export async function handleStaffProvisionEvent(event: unknown) {
         data: { status: "INACTIVE" },
       });
     }
+    await prisma.user.updateMany({
+      where: { cpEmploymentId: p.cpEmploymentId },
+      data: { status: "INACTIVE" },
+    });
     return { ok: true };
   }
 

@@ -11,6 +11,7 @@ export interface AuthUser {
   organizationName?: string | null;
   organizationId?: string | null;
   isPlatformSuperAdmin?: boolean;
+  canRunElektrawebImport?: boolean;
 }
 
 export function useAuth() {
@@ -42,6 +43,7 @@ export function useAuth() {
   );
 
   const isPlatformSuperAdmin = user?.isPlatformSuperAdmin === true;
+  const canRunElektrawebImport = user?.canRunElektrawebImport === true;
 
-  return { user, loading, can, isPlatformSuperAdmin, refresh };
+  return { user, loading, can, isPlatformSuperAdmin, canRunElektrawebImport, refresh };
 }

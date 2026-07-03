@@ -5,12 +5,15 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
+  FieldRow,
+  FieldTextarea,
   FORM_FIELD_GROUP_CLASS,
   FORM_STACK_CLASS,
   MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
@@ -168,26 +171,41 @@ export default function FieldOpsPage() {
         }
       >
         <form id={logFormId} onSubmit={addDailyLog} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("dailyLog")}</label>
-            <input name="logDate" type="date" required className={MODAL_INPUT_CLASS} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("weather")}</label>
-            <input name="weather" placeholder={t("weather")} className={MODAL_INPUT_CLASS} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("crewCount")}</label>
-            <input name="crewCount" type="number" min={0} placeholder={t("crewCount")} className={MODAL_INPUT_CLASS} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("notes")}</label>
-            <textarea name="notes" rows={2} placeholder={t("notes")} className={MODAL_INPUT_CLASS} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("reportedBy")}</label>
-            <input name="reportedBy" placeholder={t("reportedBy")} className={MODAL_INPUT_CLASS} />
-          </div>
+          <Field
+            label={t("dailyLog")}
+            preset="date"
+            name="logDate"
+            type="date"
+            required
+          />
+          <FieldRow cols={2}>
+            <Field
+              label={t("weather")}
+              preset="shortText"
+              name="weather"
+              placeholder={t("weather")}
+            />
+            <Field
+              label={t("crewCount")}
+              preset="count"
+              name="crewCount"
+              type="number"
+              min={0}
+              placeholder={t("crewCount")}
+            />
+          </FieldRow>
+          <FieldTextarea
+            label={t("notes")}
+            name="notes"
+            rows={2}
+            placeholder={t("notes")}
+          />
+          <Field
+            label={t("reportedBy")}
+            preset="shortText"
+            name="reportedBy"
+            placeholder={t("reportedBy")}
+          />
         </form>
       </ModalShell>
     </>

@@ -1,6 +1,12 @@
 /**
  * Industry ↔ Finance handoff HTTP client (Finance API :4100, prefix /api).
+ * FX display convert and VÖEN directory delegate to orchestrator platform catalog (W2).
  */
+
+import {
+  platformFxConvert,
+  platformVoenLookup,
+} from "./platform-catalog.client";
 
 export type FinanceHandoffOptions = {
   authHeader?: string | null;
@@ -152,15 +158,16 @@ export function financeEligibilityCheck<T extends Record<string, unknown>>(
 
 export function financeFxPreview(
   params: { from: string; to?: string; amount: number; date?: string },
-  opts?: FinanceHandoffOptions,
+  _opts?: FinanceHandoffOptions,
 ) {
-  const q = new URLSearchParams({
-    from: params.from.trim().toUpperCase(),
-    amount: String(params.amount),
+  return platformFxConvert(params).then((preview) => {
+    if (!preview) {
+      throw new Error(
+        "FX preview unavailable (orchestrator platform catalog — check ORCHESTRATOR_URL and SATELLITE_EVENT_SERVICE_TOKEN)",
+      );
+    }
+    return preview;
   });
-  if (params.to?.trim()) q.set("to", params.to.trim().toUpperCase());
-  if (params.date?.trim()) q.set("date", params.date.trim());
-  return getJson<FinanceFxPreviewResult>(`/logistics/fx-preview?${q}`, opts);
 }
 
 export type FinanceHsPreviewResult = {
@@ -191,7 +198,7 @@ export function financeHsTariffPreview(
   return getJson<FinanceHsPreviewResult>(`/logistics/hs-preview?${q}`, opts);
 }
 
-export function financeVoenLookup(voen: string, opts?: FinanceHandoffOptions) {
-  const q = new URLSearchParams({ voen: voen.replace(/\D/g, "") });
-  return getJson<FinanceVoenLookupResult>(`/counterparties/voen-preview?${q}`, opts);
+/** @deprecated Industry satellites: use platformVoenLookup; Finance UI may still use finance-core route. */
+export function financeVoenLookup(voen: string, _opts?: FinanceHandoffOptions) {
+  return platformVoenLookup(voen);
 }

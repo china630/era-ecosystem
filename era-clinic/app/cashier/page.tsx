@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CARD_CONTAINER_CLASS, PRIMARY_BUTTON_CLASS, PageHeader } from "@era/satellite-kit/ui";
@@ -31,6 +31,16 @@ export default function CashierPage() {
   const [shiftId, setShiftId] = useState("");
   const [result, setResult] = useState<PayResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hubActive, setHubActive] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/billing/context")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setHubActive(Boolean(data.deferWalkInToHub));
+      })
+      .catch(() => setHubActive(false));
+  }, []);
 
   async function openShift() {
     const res = await fetch("/api/cashier/shifts/open", { method: "POST" });
@@ -62,12 +72,17 @@ export default function CashierPage() {
     <>
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-4`}>
+        {hubActive && (
+          <div className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+            {t("hubBanner")}
+          </div>
+        )}
         <p className="text-sm">{t("visitLabel")}: {visitId || "—"}</p>
         <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void openShift()}>
           {t("openShift")}
         </button>
         <p className="text-xs">{t("shiftLabel")}: {shiftId || "—"}</p>
-        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void pay()}>
+        <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => void pay()} disabled={hubActive}>
           {t("pay")}
         </button>
         {error && <p className="text-sm text-red-600">{error}</p>}

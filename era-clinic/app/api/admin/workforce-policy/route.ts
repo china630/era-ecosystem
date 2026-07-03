@@ -1,0 +1,17 @@
+import { NextResponse } from "next/server";
+import { getClinicWorkforcePolicy } from "@/lib/workforce-policy";
+import { getRouteSession, jsonError, handleRouteError } from "@/lib/api-utils";
+import { assertClinicAdminWrite } from "@/lib/auth/clinic-admin-guard";
+
+export async function GET() {
+  try {
+    const session = await getRouteSession();
+    if (!session) return jsonError("Unauthorized", 401);
+    const guard = await assertClinicAdminWrite();
+    if (guard.error) return guard.error;
+    const policy = await getClinicWorkforcePolicy();
+    return NextResponse.json({ data: policy });
+  } catch (err) {
+    return handleRouteError(err);
+  }
+}

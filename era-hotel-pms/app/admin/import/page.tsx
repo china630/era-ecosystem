@@ -34,7 +34,7 @@ export default function AdminImportPage() {
 
   const t = useTranslations('elektrawebImport');
 
-  const { isPlatformSuperAdmin, loading } = useAuth();
+  const { canRunElektrawebImport, loading } = useAuth();
 
   const [entities, setEntities] = useState<ImportEntity[]>([]);
 
@@ -44,7 +44,7 @@ export default function AdminImportPage() {
 
   useEffect(() => {
 
-    if (!isPlatformSuperAdmin) return;
+    if (!canRunElektrawebImport) return;
 
     fetch('/api/import')
 
@@ -54,7 +54,7 @@ export default function AdminImportPage() {
 
       .catch(() => setMsg(t('loadError')));
 
-  }, [isPlatformSuperAdmin, t]);
+  }, [canRunElektrawebImport, t]);
 
 
 
@@ -74,7 +74,7 @@ export default function AdminImportPage() {
 
 
 
-  if (!isPlatformSuperAdmin) {
+  if (!canRunElektrawebImport) {
 
     return (
 

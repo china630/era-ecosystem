@@ -10,10 +10,11 @@ import {
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
 } from '@era/satellite-kit/ui';
@@ -615,42 +616,53 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rt-code">{tc('code')}</label>
-            <input
+          {!editRoomType ? (
+            <Field
+              label={tc('code')}
+              preset="code"
               id="rt-code"
               name="code"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRoomType?.code ?? ''}
-              readOnly={!!editRoomType}
+              defaultValue=""
               required
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rt-name">{tc('name')}</label>
-            <input id="rt-name" name="name" className={MODAL_INPUT_CLASS} defaultValue={editRoomType?.name ?? ''} required />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rt-quota">{tc('quota')}</label>
-            <input
+          ) : (
+            <Field
+              label={tc('code')}
+              preset="code"
+              id="rt-code"
+              name="code"
+              defaultValue={editRoomType.code}
+              readOnly
+              required
+            />
+          )}
+          <Field
+            label={tc('name')}
+            preset="shortText"
+            id="rt-name"
+            name="name"
+            defaultValue={editRoomType?.name ?? ''}
+            required
+          />
+          <FieldRow cols={2}>
+            <Field
+              label={tc('quota')}
+              preset="count"
               id="rt-quota"
               name="quota"
               type="number"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editRoomType?.baseQuota ?? ''}
               required
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rt-adult">{t('adultCapacity')}</label>
-            <input
+            <Field
+              label={t('adultCapacity')}
+              preset="count"
               id="rt-adult"
               name="adultCapacity"
               type="number"
               defaultValue={editRoomType?.adultCapacity ?? 2}
-              className={MODAL_INPUT_CLASS}
             />
-          </div>
+          </FieldRow>
           {editRoomType && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -721,47 +733,52 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rp-code">{tc('code')}</label>
-            <input
+          {!editRatePlan ? (
+            <Field label={tc('code')} preset="code" id="rp-code" name="code" defaultValue="" required />
+          ) : (
+            <Field
+              label={tc('code')}
+              preset="code"
               id="rp-code"
               name="code"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRatePlan?.code ?? ''}
-              readOnly={!!editRatePlan}
-              required={!editRatePlan}
+              defaultValue={editRatePlan.code}
+              readOnly
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rp-name">{tc('name')}</label>
-            <input id="rp-name" name="name" className={MODAL_INPUT_CLASS} defaultValue={editRatePlan?.name ?? ''} required />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rp-price">{t('pricePerNight')}</label>
-            <input
+          )}
+          <Field
+            label={tc('name')}
+            preset="shortText"
+            id="rp-name"
+            name="name"
+            defaultValue={editRatePlan?.name ?? ''}
+            required
+          />
+          <FieldRow cols={2}>
+            <Field
+              label={t('pricePerNight')}
+              preset="amount"
               id="rp-price"
               name="price"
               type="number"
               step="0.01"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editRatePlan?.pricePerNight ?? ''}
               required
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rp-roomTypeId">{t('type')}</label>
-            <select
+            <FieldSelect
+              label={t('type')}
+              preset="select"
               id="rp-roomTypeId"
               name="roomTypeId"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editRatePlan?.roomTypeId ?? ''}
             >
               <option value="">{t('anyType')}</option>
               {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>{rt.code}</option>
+                <option key={rt.id} value={rt.id}>
+                  {rt.code}
+                </option>
               ))}
-            </select>
-          </div>
+            </FieldSelect>
+          </FieldRow>
           <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
             <input
               name="medical"
@@ -841,45 +858,48 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rc-code">{tc('code')}</label>
-            <input
+          {!editRevenueCode ? (
+            <Field label={tc('code')} preset="code" id="rc-code" name="code" defaultValue="" required />
+          ) : (
+            <Field
+              label={tc('code')}
+              preset="code"
               id="rc-code"
               name="code"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRevenueCode?.code ?? ''}
-              readOnly={!!editRevenueCode}
-              required={!editRevenueCode}
+              defaultValue={editRevenueCode.code}
+              readOnly
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rc-name">{tc('name')}</label>
-            <input id="rc-name" name="name" className={MODAL_INPUT_CLASS} defaultValue={editRevenueCode?.name ?? ''} required />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rc-taxTag">{t('taxTag')}</label>
-            <input
+          )}
+          <Field
+            label={tc('name')}
+            preset="shortText"
+            id="rc-name"
+            name="name"
+            defaultValue={editRevenueCode?.name ?? ''}
+            required
+          />
+          <FieldRow cols={2}>
+            <Field
+              label={t('taxTag')}
+              preset="code"
               id="rc-taxTag"
               name="taxTag"
-              className={MODAL_INPUT_CLASS}
               placeholder="18%"
               defaultValue={editRevenueCode?.taxTag ?? ''}
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rc-folioType">{t('defaultFolio')}</label>
-            <select
+            <FieldSelect
+              label={t('defaultFolio')}
+              preset="select"
               id="rc-folioType"
               name="folioType"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editRevenueCode?.routingRule?.targetFolioType ?? ''}
             >
               <option value="">{t('defaultFolio')}</option>
               <option value="GUEST">GUEST</option>
               <option value="COMPANY">COMPANY</option>
               <option value="AGENCY">AGENCY</option>
-            </select>
-          </div>
+            </FieldSelect>
+          </FieldRow>
           {editRevenueCode && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -945,30 +965,35 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="bt-code">{tc('code')}</label>
-            <input
+          {!editBedType ? (
+            <Field label={tc('code')} preset="code" id="bt-code" name="code" defaultValue="" required />
+          ) : (
+            <Field
+              label={tc('code')}
+              preset="code"
               id="bt-code"
               name="code"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editBedType?.code ?? ''}
-              readOnly={!!editBedType}
-              required={!editBedType}
+              defaultValue={editBedType.code}
+              readOnly
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="bt-name">{tc('name')}</label>
-            <input id="bt-name" name="name" className={MODAL_INPUT_CLASS} defaultValue={editBedType?.name ?? ''} required />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="bt-system">{t('systemType')}</label>
-            <input
+          )}
+          <FieldRow cols={2}>
+            <Field
+              label={tc('name')}
+              preset="shortText"
+              id="bt-name"
+              name="name"
+              defaultValue={editBedType?.name ?? ''}
+              required
+            />
+            <Field
+              label={t('systemType')}
+              preset="code"
               id="bt-system"
               name="systemType"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editBedType?.systemType ?? ''}
             />
-          </div>
+          </FieldRow>
           {editBedType && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -1026,21 +1051,26 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rv-code">{tc('code')}</label>
-            <input
+          {!editRoomView ? (
+            <Field label={tc('code')} preset="code" id="rv-code" name="code" defaultValue="" required />
+          ) : (
+            <Field
+              label={tc('code')}
+              preset="code"
               id="rv-code"
               name="code"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRoomView?.code ?? ''}
-              readOnly={!!editRoomView}
-              required={!editRoomView}
+              defaultValue={editRoomView.code}
+              readOnly
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rv-name">{tc('name')}</label>
-            <input id="rv-name" name="name" className={MODAL_INPUT_CLASS} defaultValue={editRoomView?.name ?? ''} required />
-          </div>
+          )}
+          <Field
+            label={tc('name')}
+            preset="shortText"
+            id="rv-name"
+            name="name"
+            defaultValue={editRoomView?.name ?? ''}
+            required
+          />
           {editRoomView && (
             <label className="flex items-center gap-2 text-[13px] text-[#34495E]">
               <input
@@ -1114,85 +1144,92 @@ export default function MasterDataPage() {
             }
           }}
         >
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-number">{t('room')}</label>
-            <input
+          {!editRoom ? (
+            <Field
+              label={t('room')}
+              preset="code"
               id="rm-number"
               name="roomNumber"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRoom?.roomNumber ?? ''}
-              readOnly={!!editRoom}
-              required={!editRoom}
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-type">{t('type')}</label>
-            <select
-              id="rm-type"
-              name="roomTypeId"
-              className={MODAL_INPUT_CLASS}
-              defaultValue={editRoom?.roomTypeId ?? roomTypes[0]?.id}
+              defaultValue=""
               required
-            >
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>{rt.code}</option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-floor">{t('floor')}</label>
-            <input
+            />
+          ) : (
+            <Field
+              label={t('room')}
+              preset="code"
+              id="rm-number"
+              name="roomNumber"
+              defaultValue={editRoom.roomNumber}
+              readOnly
+            />
+          )}
+          <FieldSelect
+            label={t('type')}
+            preset="selectWide"
+            id="rm-type"
+            name="roomTypeId"
+            defaultValue={editRoom?.roomTypeId ?? roomTypes[0]?.id}
+            required
+          >
+            {roomTypes.map((rt) => (
+              <option key={rt.id} value={rt.id}>
+                {rt.code}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldRow cols={3}>
+            <Field
+              label={t('floor')}
+              preset="count"
               id="rm-floor"
               name="floor"
               type="number"
               defaultValue={editRoom?.floor ?? 1}
-              className={MODAL_INPUT_CLASS}
             />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-view">{t('viewCode')}</label>
-            <input
+            <Field
+              label={t('viewCode')}
+              preset="code"
               id="rm-view"
               name="viewCode"
-              className={MODAL_INPUT_CLASS}
               list="room-view-codes"
               defaultValue={editRoom?.viewCode ?? ''}
             />
-            <datalist id="room-view-codes">
-              {roomViews.map((v) => (
-                <option key={v.id} value={v.code} />
-              ))}
-            </datalist>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-bed">{t('bedTypeCode')}</label>
-            <input
+            <Field
+              label={t('bedTypeCode')}
+              preset="code"
               id="rm-bed"
               name="bedTypeCode"
-              className={MODAL_INPUT_CLASS}
               list="bed-type-codes"
               defaultValue={editRoom?.bedTypeCode ?? ''}
             />
-            <datalist id="bed-type-codes">
-              {bedTypes.map((b) => (
-                <option key={b.id} value={b.code} />
-              ))}
-            </datalist>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-loc">{t('location')}</label>
-            <input id="rm-loc" name="location" className={MODAL_INPUT_CLASS} defaultValue={editRoom?.location ?? ''} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS} htmlFor="rm-max">{t('maxBed')}</label>
-            <input
+          </FieldRow>
+          <datalist id="room-view-codes">
+            {roomViews.map((v) => (
+              <option key={v.id} value={v.code} />
+            ))}
+          </datalist>
+          <datalist id="bed-type-codes">
+            {bedTypes.map((b) => (
+              <option key={b.id} value={b.code} />
+            ))}
+          </datalist>
+          <FieldRow cols={2}>
+            <Field
+              label={t('location')}
+              preset="shortText"
+              id="rm-loc"
+              name="location"
+              defaultValue={editRoom?.location ?? ''}
+            />
+            <Field
+              label={t('maxBed')}
+              preset="count"
               id="rm-max"
               name="maxBed"
               type="number"
-              className={MODAL_INPUT_CLASS}
               defaultValue={editRoom?.maxBed ?? ''}
             />
-          </div>
+          </FieldRow>
           {editRoom && (
             <>
               <label className="flex items-center gap-2 text-[13px] text-[#34495E]">

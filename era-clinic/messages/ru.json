@@ -23,7 +23,8 @@
     "masterData": "Справочники",
     "catalog": "Каталог услуг",
     "templates": "Шаблоны",
-    "audit": "Аудит"
+    "audit": "Аудит",
+    "logout": "Выход"
   },
   "login": {
     "title": "ERA Clinic",
@@ -78,6 +79,11 @@
     "subtitle": "Расписание ресепшена и check-in",
     "shellNote": "Выберите приём для управления визитом.",
     "createTitle": "Новый приём",
+    "patientRefCode": "Код пациента",
+    "patientName": "ФИО пациента",
+    "patientPhone": "Телефон",
+    "practitioner": "Врач",
+    "scheduledAt": "Дата и время",
     "cancelVisit": "Отменить визит",
     "cancelTitle": "Отменить визит",
     "cancelReason": "Причина отмены (обязательно)",
@@ -146,9 +152,25 @@
     "title": "Очередь процедур",
     "subtitle": "Запланированные процедуры для медсестёр",
     "done": "Выполнено",
+    "start": "Начать",
     "empty": "Нет запланированных процедур.",
     "completeConfirmTitle": "Завершить процедуру",
-    "completeConfirmBody": "Отметить процедуру выполненной?"
+    "completeConfirmBody": "Отметить процедуру выполненной?",
+    "qrScanTitle": "Скан QR гостя",
+    "qrTokenPlaceholder": "Вставьте QR-токен",
+    "qrScan": "Проверить QR",
+    "qrSuccess": "Гость подтверждён",
+    "qrFailed": "QR не принят",
+    "qrPatient": "Пациент",
+    "todayList": "Очередь на сегодня",
+    "completeFailed": "Ошибка завершения"
+  },
+  "sanatoriumResources": {
+    "title": "Календарь кабинетов",
+    "subtitle": "Занятость ресурсов (5 мин)",
+    "date": "Дата",
+    "free": "Свободно",
+    "empty": "Ресурсы не настроены"
   },
   "queue": {
     "title": "Очередь регистратуры",
@@ -170,7 +192,8 @@
     "fiscalLabel": "Фiscal ID",
     "qrLabel": "QR payload",
     "settlementOnly": "Только settlement (без реального NBC)",
-    "paymentFailed": "Ошибка оплаты"
+    "paymentFailed": "Ошибка оплаты",
+    "hubBanner": "Walk-in оплачивается на фронт-кассе отеля. Завершите визит — ресепшн проведёт оплату."
   },
   "booking": {
     "title": "Запись на приём",
@@ -228,6 +251,15 @@
     "programQuota": "Квота процедур",
     "quotaUsed": "{used} / {total}",
     "startProgram": "Запустить программу",
+    "completeCheckupSchedule": "Завершить чекап и запланировать",
+    "checkupPendingHint": "Добавьте жалобу или диагноз ICD, затем запланируйте программу.",
+    "registerWalkIn": "Walk-in регистрация",
+    "walkInName": "ФИО",
+    "walkInFin": "FIN / паспорт",
+    "walkInRegistered": "Walk-in эпизод создан",
+    "resourceCalendar": "Календарь кабинетов",
+    "reschedule": "Перенести",
+    "rescheduled": "Процедура перенесена",
     "startsOn": "Начало",
     "programStarted": "Программа запущена",
     "alreadyHasProgram": "Программа уже назначена",
@@ -345,8 +377,13 @@
     "finCode": "FIN",
     "passportNumber": "Паспорт",
     "issuingCountry": "Страна выдачи",
+    "identifierTypes": "Типы идентификаторов",
     "phone": "Телефон",
-    "nameRequired": "Введите ФИО для поиска MDM"
+    "nameRequired": "Введите ФИО для поиска MDM",
+    "workforceHireViaFinance": "Нанимайте врачей в Finance HR (Employees → провижининг Clinic). Здесь можно менять только специальность и длительность слота.",
+    "workforceHireViaCp": "Нанимайте врачей в Control Plane Workforce (/workspace/workforce). Здесь можно менять только специальность и длительность слота.",
+    "financeLinked": "Finance",
+    "financeLinkedYes": "Связан"
   },
   "contraindications": {
     "addTitle": "Добавить противопоказание",
@@ -367,7 +404,8 @@
     "rxQty": "Количество",
     "rxDescription": "Описание",
     "prescriptionSuccess": "Рецепт выписан ({count} строк)",
-    "prescriptionFailed": "Ошибка выписки"
+    "prescriptionFailed": "Ошибка выписки",
+    "insuranceFinPrompt": "FIN пациента для проверки страховки"
   },
   "patientRegistry": {
     "title": "Реестр пациентов",

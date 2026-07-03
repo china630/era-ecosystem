@@ -37,6 +37,7 @@ import {
 import { orchFetch } from "../../lib/orch-api";
 import { WorkspaceSatelliteModulesModal } from "../../components/workspace/workspace-satellite-modules-modal";
 import { WorkspaceDepartmentsPanel } from "../../components/workspace/workspace-departments-panel";
+import { WorkforceHubCard } from "../../components/workspace/workforce-hub-card";
 
 function priceForModule(
   pricing: PublicPricingResponse | null,
@@ -292,6 +293,12 @@ export default function WorkspacePage() {
         </div>
       ) : null}
       <WorkspaceDepartmentsPanel />
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("workforceSection")}</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:max-w-md">
+          <WorkforceHubCard snapshot={snapshot} />
+        </div>
+      </section>
       <section>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t("sanatoriumSection")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">{primaryKeys.map(renderSystem)}</div>

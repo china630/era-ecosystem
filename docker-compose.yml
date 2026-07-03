@@ -234,8 +234,11 @@ services:
       HOSTNAME: 0.0.0.0
       POS_BRIDGE_SECRET: ${POS_BRIDGE_SECRET:-dev-pos-bridge-secret}
       FNB_POS_WEBHOOK_URL: http://fnb-pos:3202/api/webhooks/pms/reservation-lifecycle
+      FNB_POS_URL: http://fnb-pos:3202
+      CLINIC_URL: http://clinic:3203
       NEXT_PUBLIC_FNB_POS_URL: ${ERA_FNB_POS_ORIGIN:-https://fnb-pos.era-365.online}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-hotel-pms}
+      ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       ERA_EVENT_GATEWAY_MODE: ${ERA_EVENT_GATEWAY_MODE:-legacy}

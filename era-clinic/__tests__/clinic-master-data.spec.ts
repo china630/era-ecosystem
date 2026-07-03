@@ -1,6 +1,6 @@
 import {
   listPractitioners,
-  createPractitioner,
+  updatePractitionerOpsCatalog,
   deletePractitioner,
 } from "@/domain/master-data/master-data.service";
 
@@ -12,7 +12,7 @@ jest.mock("@/lib/prisma", () => ({
   prisma: {
     practitioner: {
       findMany: jest.fn(),
-      create: jest.fn(),
+      update: jest.fn(),
       delete: jest.fn(),
     },
   },
@@ -27,11 +27,19 @@ describe("clinic-master-data.service", () => {
     expect(prisma.practitioner.findMany).toHaveBeenCalled();
   });
 
-  it("creates practitioner", async () => {
+  it("updates ops catalog fields only", async () => {
     const { prisma } = jest.requireMock("@/lib/prisma");
-    prisma.practitioner.create.mockResolvedValue({ id: "2", code: "DR2", fullName: "Dr Two" });
-    const row = await createPractitioner({ code: "DR2", fullName: "Dr Two" });
-    expect(row.code).toBe("DR2");
+    prisma.practitioner.update.mockResolvedValue({
+      id: "2",
+      code: "DR2",
+      specialty: "Therapist",
+      defaultSlotMinutes: 30,
+    });
+    const row = await updatePractitionerOpsCatalog("2", {
+      specialty: "Therapist",
+      defaultSlotMinutes: 30,
+    });
+    expect(row.specialty).toBe("Therapist");
   });
 
   it("deletes practitioner", async () => {

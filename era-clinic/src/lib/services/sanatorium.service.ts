@@ -1,7 +1,12 @@
 import { prisma } from '@/lib/prisma';
+import { instantiateProgramFromTemplate } from '@/lib/sanatorium-scheduler.service';
 
 function refCodeFromPassport(passport: string): string {
   return `HOTEL-${passport.replace(/\s+/g, '-').slice(0, 24)}`;
+}
+
+function walkInRefCode(finOrPassport: string): string {
+  return `WALKIN-${finOrPassport.replace(/\s+/g, '-').slice(0, 20)}`;
 }
 
 export async function openEpisodeFromStay(input: {
@@ -12,11 +17,25 @@ export async function openEpisodeFromStay(input: {
   phone?: string;
   organizationId: string;
   globalPersonId?: string | null;
+  programCode?: string | null;
+  roomNumber?: string | null;
 }) {
   const existing = await prisma.clinicalEpisode.findFirst({
     where: { reservationId: input.reservationId, status: 'OPEN' },
   });
-  if (existing) return existing;
+  if (existing) {
+    if (input.roomNumber && existing.roomNumber !== input.roomNumber) {
+      return prisma.clinicalEpisode.update({
+        where: { id: existing.id },
+        data: {
+          roomNumber: input.roomNumber,
+          ...(input.programCode ? { programCode: input.programCode } : {}),
+        },
+        include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
+      });
+    }
+    return existing;
+  }
 
   const refCode = refCodeFromPassport(input.passportNumber);
   let patient = await prisma.patientRef.findUnique({ where: { refCode } });
@@ -37,14 +56,92 @@ export async function openEpisodeFromStay(input: {
       globalPersonId: input.globalPersonId ?? patient.globalPersonId,
       hotelStayId: input.hotelStayId ?? null,
       reservationId: input.reservationId,
+      roomNumber: input.roomNumber ?? null,
       organizationId: input.organizationId,
+      patientOrigin: 'IN_HOUSE',
+      programCode: input.programCode ?? null,
       status: 'OPEN',
     },
     include: { patientRef: true, complaints: true, diagnoses: true, labOrders: true },
   });
 }
 
-export async function listInHouseEpisodes(organizationId?: string) {
+export async function registerWalkInEpisode(input: {
+  organizationId: string;
+  fullName: string;
+  fin?: string;
+  passport?: string;
+  phone?: string;
+  globalPersonId?: string | null;
+  programCode?: string;
+}) {
+  const key = input.fin?.trim() || input.passport?.trim();
+  if (!key) throw new Error('FIN or passport required');
+  const refCode = walkInRefCode(key);
+
+  let patient = await prisma.patientRef.findUnique({ where: { refCode } });
+  if (!patient) {
+    patient = await prisma.patientRef.create({
+      data: {
+        refCode,
+        fullName: input.fullName,
+        phone: input.phone ?? null,
+        globalPersonId: input.globalPersonId ?? null,
+      },
+    });
+  }
+
+  const episode = await prisma.clinicalEpisode.create({
+    data: {
+      patientRefId: patient.id,
+      globalPersonId: input.globalPersonId ?? patient.globalPersonId,
+      organizationId: input.organizationId,
+      patientOrigin: 'WALK_IN',
+      programCode: input.programCode ?? null,
+      status: 'OPEN',
+    },
+    include: { patientRef: true },
+  });
+  return episode;
+}
+
+export async function completeCheckupAndSchedule(input: {
+  episodeId: string;
+  programCode?: string;
+  startsOn?: Date;
+}) {
+  const episode = await prisma.clinicalEpisode.findUnique({
+    where: { id: input.episodeId },
+    include: {
+      complaints: true,
+      diagnoses: true,
+      programInstance: true,
+    },
+  });
+  if (!episode) throw new Error('Episode not found');
+  if (episode.programInstance) throw new Error('Program already assigned');
+  if (episode.complaints.length === 0 && episode.diagnoses.length === 0) {
+    throw new Error('Add at least one complaint or diagnosis before scheduling');
+  }
+
+  const programCode = input.programCode ?? episode.programCode;
+  if (!programCode) throw new Error('Program code required');
+
+  await prisma.clinicalEpisode.update({
+    where: { id: episode.id },
+    data: { checkupCompletedAt: new Date(), programCode },
+  });
+
+  const instance = await instantiateProgramFromTemplate({
+    episodeId: episode.id,
+    programCode,
+    reservationId: episode.reservationId ?? undefined,
+    startsOn: input.startsOn ?? new Date(),
+  });
+  return instance;
+}
+
+export async function listOpenEpisodes(organizationId?: string) {
   return prisma.clinicalEpisode.findMany({
     where: {
       status: 'OPEN',
@@ -59,9 +156,17 @@ export async function listInHouseEpisodes(organizationId?: string) {
         include: { icdCode: true },
       },
       labOrders: { orderBy: { createdAt: 'desc' }, take: 5 },
+      programInstance: {
+        include: { procedureLines: { orderBy: { procedureCode: 'asc' } } },
+      },
     },
     orderBy: { openedAt: 'desc' },
   });
+}
+
+/** @deprecated use listOpenEpisodes */
+export async function listInHouseEpisodes(organizationId?: string) {
+  return listOpenEpisodes(organizationId);
 }
 
 export async function addComplaint(episodeId: string, text: string) {

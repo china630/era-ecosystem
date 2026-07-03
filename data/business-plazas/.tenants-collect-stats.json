@@ -1,0 +1,7 @@
+{
+  "plaza_tenants": 76,
+  "plazas_with_tenants": 29,
+  "travel_agencies": 0,
+  "total_rows": 76,
+  "assembly": "plaza_tenants first, then travel_agencies"
+}

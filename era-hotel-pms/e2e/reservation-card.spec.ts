@@ -25,6 +25,8 @@ test.describe('Reservation card FO parity', () => {
     await expect(dialog.getByText(/guests|qonaqlar|гости/i).first()).toBeVisible();
     await expect(dialog.getByText(/pricing|qiymət|цены/i).first()).toBeVisible();
     await expect(dialog.getByText(/folio/i).first()).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /^Stay$|^Qalma$|^Проживание$/i })).toBeVisible();
+    await expect(dialog.getByText(/^Billing$|^Billing$|^Биллинг$/i).first()).toBeVisible();
   });
 
   test('new booking opens create reservation card', async ({ page }) => {
@@ -35,6 +37,10 @@ test.describe('Reservation card FO parity', () => {
     const dialog = page.getByRole('dialog').first();
     await expect(dialog).toBeVisible({ timeout: 15000 });
     await expect(dialog.getByText(/new reservation|yeni rezerv|новая/i).first()).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /^Stay$|^Qalma$|^Проживание$/i })).toBeVisible();
+    await expect(dialog.getByRole('button', { name: /^Commercial$|^Kommersial$|^Коммерция$/i })).toBeVisible();
+    await expect(dialog.locator('[data-testid="field-row"]').first()).toBeVisible();
+    await expect(dialog.getByLabel(/rate plan|tarif|тариф/i).first()).toBeVisible();
   });
 });
 

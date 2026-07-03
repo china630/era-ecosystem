@@ -139,6 +139,8 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | era-construction | `handleConstructionAct` | GL + draft invoice |
 | `SATELLITE_CRM_LEAD_CONVERTED` | era-crm | `handleCrmLead` | GL + draft invoice |
 | `SATELLITE_CRM_VISIT_LOGGED` | era-crm | `handleCrmVisitLogged` | Activity log (meta only) |
+
+**Shipped v3.0 (2026-07-02):** `SATELLITE_CRM_LEAD_CONVERTED` payload includes `partyKind`, `taxId`, `companyName`, contact fields, `activitySector`, `prospectType`; Finance `handleCrmLead` calls `findOrCreateByVoen` / `findOrCreateIndividualForCrm`. ADR [crm-lead-party-model-and-prospect-import.md](./adr/crm-lead-party-model-and-prospect-import.md).
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
 | `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice (inpatient day) |
@@ -150,6 +152,20 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 Idempotency: table `satellite_events_processed` — replay same `correlationId` → skip (no duplicate postings).
 
 Implementation: [`satellite-event-dispatch.service.ts`](../era-finance-core/apps/api/src/integration/satellite-event-dispatch.service.ts).
+
+### Settlement hub HTTP bridge (Nafta unified Front Cash)
+
+When org `settlementPolicy.settlementHub=HOTEL_FRONT_CASH` (see [unified-settlement-hub.md](./adr/unified-settlement-hub.md)):
+
+| Direction | Endpoint | Auth |
+|-----------|----------|------|
+| fb-pos / clinic → hotel | `POST /api/settlement/pending` | `POS_BRIDGE_SECRET` / `x-pos-bridge-secret` |
+| hotel → fb-pos / clinic | `POST /api/integration/settlement-confirmed` | same secret |
+| Front Cash UI | `GET /api/settlement/pending`, `POST …/[id]/pay`, `POST …/[id]/void` | session + `folio:payment` / `folio:void` |
+
+Policy snapshot: orchestrator `GET /v1/subscription/me` → `settlementPolicy` (`deferWalkInToHub`, `pendingSettlementNaPolicy`). Client: `@era/satellite-kit` `resolveSettlementPolicy`, `shouldDeferWalkInToHub`.
+
+Night audit on hotel-pms blocks when open pending count > 0 and `pendingSettlementNaPolicy=BLOCK` (default Nafta).
 
 ### Bank Core events (`industry_banking` / `era-bank-core`)
 
@@ -176,17 +192,26 @@ Internal ERA apps consume **era-data-hub** via service token (`DATA_HUB_SERVICE_
 
 | Data | Hub API | Primary consumers | Industry path |
 |------|---------|-------------------|---------------|
-| CBAR FX | `/registry/v1/fx/*` | finance-core, bank-core | Finance `GET /api/logistics/fx-preview` (`financeFxPreview`) |
-| Production calendar | `/registry/v1/calendar/*` | finance HR, bank EOD | `CalendarClient` (satellite-kit); hotel auto-BAR bulk |
+| CBAR FX | `/registry/v1/fx/*` | finance-core, bank-core | Orchestrator `GET /platform/v1/catalog/fx/convert` via satellite-kit (`platformFxConvert`; legacy alias `financeFxPreview` until W2) |
+| Production calendar | `/registry/v1/calendar/*` | finance HR, bank EOD | Orchestrator `GET /platform/v1/catalog/calendar/*` via satellite-kit; hotel auto-BAR bulk |
 | HS tariffs | `/registry/v1/hs/*` | finance customs | Finance deep link only |
+| VÖEN directory | `/registry/v1/companies/:voen` | finance voen-preview | Orchestrator `GET /platform/v1/catalog/companies/:voen` via satellite-kit |
 
-ADR: [fx-rates-ecosystem.md](./adr/fx-rates-ecosystem.md) · [production-calendar-ecosystem.md](./adr/production-calendar-ecosystem.md) · Consumer guide: [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
+### Workforce policy (platform read — Wave 3)
+
+| Endpoint | Auth | Response |
+|----------|------|----------|
+| `GET /platform/v1/workforce/policy?satelliteKey=` | Bearer `SATELLITE_EVENT_SERVICE_TOKEN` + `X-Organization-Id` | `{ hireMode: "cp_workforce" \| "disabled", workforceModuleActive, hrModuleActive, satelliteEntitled }` |
+
+Client: `@era/satellite-kit` `fetchWorkforcePolicy`. Clinic SatAdmin: `GET /api/admin/workforce-policy` (session BFF).
+
+ADR: [workforce-identity-and-hr-provisioning.md](./adr/workforce-identity-and-hr-provisioning.md). · [fx-rates-ecosystem.md](./adr/fx-rates-ecosystem.md) · [production-calendar-ecosystem.md](./adr/production-calendar-ecosystem.md) · Consumer guide: [era-data-hub/doc/DATA-HUB-CONSUMER.md](../era-data-hub/doc/DATA-HUB-CONSUMER.md).
 
 Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 
 ## MDM natural-person identity (internal API)
 
-**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Satellites store **`globalPersonId` only**; PII in MDM.
+**SoR:** Orchestrator `era_mdm` — `GlobalNaturalPerson` + `PersonIdentifier`. Satellites store **`globalPersonId`** for identity links; identifier values in MDM. Hotel `Guest` retains documented **ops cache** (not plaintext FIN/passport after W4) — [hotel-guest-pii-ops-cache.md](./adr/hotel-guest-pii-ops-cache.md).
 
 **Auth:** `Authorization: Bearer` with `MDM_INTERNAL_SERVICE_TOKEN` (alias `SATELLITE_EVENT_SERVICE_TOKEN` in some apps).
 
@@ -203,5 +228,37 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 **Satellite proxies:** `POST /api/mdm/person-lookup` (hotel, clinic), `POST /api/mdm/person-merge` (SatAdmin).
 
 **HR events:** `STAFF_PROVISIONED` payload includes `globalPersonId` when Finance employee is MDM-linked ([workforce-identity ADR](./adr/workforce-identity-and-hr-provisioning.md)).
+
+**CP workforce absence events (Plan A):** Orchestrator → `era-satellite-events` → Finance worker when `hr_full`:
+
+| Event | Purpose |
+|-------|---------|
+| `WORKFORCE_ABSENCE_APPROVED` | Upsert Finance `Absence` mirror (`cpAbsenceId`) |
+| `WORKFORCE_ABSENCE_UPDATED` | Update mirror dates/kind |
+| `WORKFORCE_ABSENCE_CANCELLED` | Soft-delete mirror + unlock timesheet cells |
+
+Schema: `packages/era-contracts/src/events/workforce.events.ts`. ADR: [cp-workforce-absence-split.md](./adr/cp-workforce-absence-split.md).
+
+**STAFF_PROVISIONED / STAFF_DEACTIVATED (Plan C):** Publisher = **Orchestrator CP** (`WorkforceProvisionService`). Payload v2 requires `cpEmploymentId`; optional `financeEmployeeId` for payroll extension. `fullName` in payload is **T3 ops-cache display stamp only** (from MDM at provision); not authoritative — see [cp-workforce-pii-tiers.md](./adr/cp-workforce-pii-tiers.md). Schema: `packages/era-contracts/src/events/hr.events.ts`. ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md).
+
+**CP workforce org events (Plan B):** Orchestrator → `era-satellite-events` → Finance worker when `hr_full`:
+
+| Event | Purpose |
+|-------|---------|
+| `WORKFORCE_ORG_UNIT_UPSERTED` | Upsert Finance `Department` CostCenter mirror (`cpOrgUnitId`) |
+| `WORKFORCE_ORG_UNIT_ARCHIVED` | Soft-delete Department mirror |
+| `WORKFORCE_POSITION_UPSERTED` | Upsert Finance `JobPosition` mirror (`cpPositionId`, slots) |
+| `WORKFORCE_EMPLOYMENT_TRANSFERRED` | Update Finance `Employee.positionId` when `financeEmployeeId` linked |
+
+**CP workforce timesheet events (Plan F):**
+
+| Event | Direction | Purpose |
+|-------|-----------|---------|
+| `WORKFORCE_TIMESHEET_BATCH_IMPORTED` | construction → orchestrator | CP DRAFT `WorkforceTimesheetEntry` rows |
+| `WORKFORCE_TIMESHEET_APPROVED` | orchestrator → Finance (`hr_full`) | Mirror WORK hours to payroll timesheet |
+
+ADR: [workforce-timesheet-construction-bridge.md](./adr/workforce-timesheet-construction-bridge.md).
+
+ADR: [cp-workforce-org-units.md](./adr/cp-workforce-org-units.md).
 
 ADR: [era-mdm-natural-person-identity.md](./adr/era-mdm-natural-person-identity.md) · [mdm-satellite-integration-contract.md](./adr/mdm-satellite-integration-contract.md).

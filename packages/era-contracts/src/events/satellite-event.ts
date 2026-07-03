@@ -35,6 +35,19 @@ import {
   isSatelliteStaffDeactivated,
   isSatelliteStaffProvisioned,
 } from "./hr.events";
+import {
+  isSatelliteWorkforceAbsenceApproved,
+  isSatelliteWorkforceAbsenceCancelled,
+  isSatelliteWorkforceAbsenceUpdated,
+  isSatelliteWorkforceEmploymentTransferred,
+  isSatelliteWorkforceEmploymentHired,
+  isSatelliteWorkforceEmploymentTerminated,
+  isSatelliteWorkforceOrgUnitArchived,
+  isSatelliteWorkforceOrgUnitUpserted,
+  isSatelliteWorkforcePositionUpserted,
+  isSatelliteWorkforceTimesheetBatchImported,
+  isSatelliteWorkforceTimesheetApproved,
+} from "./workforce.events";
 
 export type KnownSatelliteEvent = { type: string };
 
@@ -67,7 +80,18 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteStaffProvisioned(data) ||
     isSatelliteStaffDeactivated(data) ||
     isSatelliteStaffClockBatch(data) ||
-    isSatelliteBankGlDailySummary(data)
+    isSatelliteBankGlDailySummary(data) ||
+    isSatelliteWorkforceAbsenceApproved(data) ||
+    isSatelliteWorkforceAbsenceCancelled(data) ||
+    isSatelliteWorkforceAbsenceUpdated(data) ||
+    isSatelliteWorkforceOrgUnitUpserted(data) ||
+    isSatelliteWorkforceOrgUnitArchived(data) ||
+    isSatelliteWorkforcePositionUpserted(data) ||
+    isSatelliteWorkforceEmploymentTransferred(data) ||
+    isSatelliteWorkforceEmploymentHired(data) ||
+    isSatelliteWorkforceEmploymentTerminated(data) ||
+    isSatelliteWorkforceTimesheetBatchImported(data) ||
+    isSatelliteWorkforceTimesheetApproved(data)
   );
 }
 

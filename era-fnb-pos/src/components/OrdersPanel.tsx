@@ -69,6 +69,7 @@ export default function OrdersPanel() {
   const [guestResults, setGuestResults] = useState<InHouseGuest[]>([]);
   const [guestSearching, setGuestSearching] = useState(false);
   const [entitlements, setEntitlements] = useState<GuestEntitlements | null>(null);
+  const [deferWalkInToHub, setDeferWalkInToHub] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -81,6 +82,15 @@ export default function OrdersPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void fetch("/api/billing/context")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setDeferWalkInToHub(Boolean(data.deferWalkInToHub));
+      })
+      .catch(() => setDeferWalkInToHub(false));
+  }, []);
 
   const selected = tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0] ?? null;
   const inHouse = selected ? isInHouseTicket(selected) : false;
@@ -140,6 +150,20 @@ export default function OrdersPanel() {
     }
     const label = method === "CARD" ? t("payCard") : t("payCash");
     setMessage(`${label}: ${Number(data.amount).toFixed(2)} ${tc("azn")} (stub fiscal)`);
+    setSelectedId(null);
+    await load();
+  }
+
+  async function deferToHub() {
+    if (!selected) return;
+    setMessage("");
+    const res = await fetch(`/api/tickets/${selected.id}/defer-to-hub`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) {
+      setMessage(data.error ?? t("deferFailed"));
+      return;
+    }
+    setMessage(t("deferSuccess"));
     setSelectedId(null);
     await load();
   }
@@ -477,6 +501,14 @@ export default function OrdersPanel() {
                   onClick={() => void roomCharge()}
                 >
                   {t("roomCharge")}
+                </button>
+              ) : deferWalkInToHub ? (
+                <button
+                  type="button"
+                  className="rounded bg-[#D35400] px-3 py-1.5 text-sm text-white"
+                  onClick={() => void deferToHub()}
+                >
+                  {t("sendToReception")}
                 </button>
               ) : (
                 <>

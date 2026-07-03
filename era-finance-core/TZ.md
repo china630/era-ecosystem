@@ -874,6 +874,10 @@
 
 ### 7.0. Справочник `AbsenceType` и логика отсутствий (ТК AР; məzuniyyət növləri)
 
+**v3 Plan A split (2026-06):** §7.0.1 **workflow** (заявка, согласование) → **Orchestrator CP** `/platform/v1/workforce/absences` + `/workspace/workforce/*`. **§7.0.2 payroll math** (этот раздел, `syncAbsences`, calculators) остаётся в Finance; `Absence` — mirror по `cpAbsenceId` из `WORKFORCE_ABSENCE_*` events. ADR: `docs/adr/cp-workforce-absence-split.md`.
+
+**v3 Plan B split (2026-06):** кадровая **оргструктура** (OrgUnit tree, штатные должности, slots) → **Orchestrator CP** `/platform/v1/workforce/{org-units,positions}` + `/workspace/workforce/org-structure`. Finance **`Department`/`JobPosition`** — CostCenter mirror (`cpOrgUnitId`, `cpPositionId`) из `WORKFORCE_ORG_UNIT_*` / `WORKFORCE_POSITION_*`; POST/PATCH CRUD удалены. ADR: `docs/adr/cp-workforce-org-units.md`.
+
 **Источник требований:** практика бухучёта АР (в т.ч. разбор по **muhasib.az** — «Məzuniyyət haqqı hesablanması»), согласование с заказчиком (отпуска/больничные/без оплаты).
 
 #### Схема БД (Prisma)
@@ -899,8 +903,8 @@
 | Метод | Путь | Описание |
 |-------|------|----------|
 | GET | `/api/hr/absence-types` | Список типов (роли Owner/Admin/Accountant/**User**); пустой справочник → сид. |
-| GET | `/api/hr/absences` | Список **`Absence`**; query: **`dateFrom`**, **`dateTo`** (YYYY-MM-DD, отбор по пересечению с `[startDate, endDate]`), опционально **`departmentId`**. Для **`DEPARTMENT_HEAD`** параметр `departmentId` игнорируется — действует row-level scope (только сотрудники управляемого отдела). Ответ: укороченный **`employee`** (`id`, `firstName`, `lastName`), **`absenceType`** с **`nameAz`**, **`code`**, **`formula`**, **`color`** (hex-тинт для календаря). |
-| POST | `/api/hr/absences` | Тело **`CreateAbsenceDto`**: `employeeId`, **`absenceTypeId`**, `startDate`, `endDate`, `note?`. |
+| GET | `/api/hr/absences` | **Read-only mirror** (CP `WORKFORCE_ABSENCE_*`); query: **`dateFrom`**, **`dateTo`**, опционально **`departmentId`**. |
+| ~~POST/PATCH/DELETE~~ | ~~`/api/hr/absences`~~ | **Removed (Plan A)** — workflow in Orchestrator CP. |
 | POST | `/api/hr/absences/vacation-pay/calculate` | **`VacationPayCalcDto`**: + optional `absenceTypeId` (должен иметь `LABOR_LEAVE_304`). Ответ: суммы с **2** знаками, `calendarDays` — целое, `divisor304`: `30.4`. |
 | POST | `/api/hr/absences/sick-pay/calculate` | **`SickPayCalcDto`**: `employeeId`, `periodStart`, `periodEnd`, `absenceTypeId?` (по умолчанию тип **SICK_LEAVE**). |
 

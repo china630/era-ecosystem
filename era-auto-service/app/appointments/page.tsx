@@ -5,12 +5,11 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  FORM_FIELD_GROUP_CLASS,
+  Field,
+  FieldRow,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
@@ -133,32 +132,26 @@ export default function AppointmentsPage() {
         }
       >
         <form id={bookFormId} onSubmit={book} className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("vehiclePlate")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={vehiclePlate}
-              onChange={(e) => setVehiclePlate(e.target.value)}
-              required
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("customerName")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("book")}</label>
-            <input
-              type="datetime-local"
-              className={MODAL_INPUT_CLASS}
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-            />
-          </div>
+          <Field
+            label={t("vehiclePlate")}
+            preset="code"
+            value={vehiclePlate}
+            onChange={(e) => setVehiclePlate(e.target.value)}
+            required
+          />
+          <Field
+            label={t("customerName")}
+            preset="shortText"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+          />
+          <Field
+            label={t("book")}
+            preset="longText"
+            type="datetime-local"
+            value={scheduledAt}
+            onChange={(e) => setScheduledAt(e.target.value)}
+          />
         </form>
       </ModalShell>
     </>

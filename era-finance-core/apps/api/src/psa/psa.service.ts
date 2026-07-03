@@ -11,6 +11,8 @@ import {
 } from "@erafinance/database";
 import { InvoicesService } from "../invoices/invoices.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
+import { attachEmployeePerson, batchEmployeePersonMap } from "../hr/employee-person.util";
 import { normalizeListPagination } from "../common/list-pagination";
 import {
   dateToIsoYmdUtc,
@@ -36,6 +38,7 @@ export class PsaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly invoices: InvoicesService,
+    private readonly mdm: OrchestratorMdmClientService,
   ) {}
 
   async listProjects(
@@ -152,11 +155,20 @@ export class PsaService {
 
   async listTimeEntries(organizationId: string, projectId: string) {
     await this.getProject(organizationId, projectId);
-    return this.prisma.psaTimeEntry.findMany({
+    const rows = await this.prisma.psaTimeEntry.findMany({
       where: { projectId },
       orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      include: { employee: { select: { id: true, finCode: true, firstName: true, lastName: true } } },
+      include: { employee: { select: { id: true, globalPersonId: true } } },
     });
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      rows.map((r) => r.employee.globalPersonId),
+    );
+    return rows.map((r) => ({
+      ...r,
+      employee: attachEmployeePerson(r.employee, personMap),
+    }));
   }
 
   async createTimeEntry(

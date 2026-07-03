@@ -78,7 +78,7 @@ Client: `@era/satellite-kit`.
 
 Coverage: [COVERAGE_MATRIX CLI-*](../../docs/COVERAGE_MATRIX.md#era-clinic-cli)
 
-- [x] `/admin/master-data` — practitioners (FIN/MDM/defaultSlotMinutes), rooms, resources, procedure types (modal CRUD)
+- [x] `/admin/master-data` — practitioners ops catalog (specialty, slots); hire via CP Workforce when `cp_workforce` (`GET /platform/v1/workforce/policy`); POST practitioners **403** when CP hire active
 - [x] `/admin/wards` — ward/bed create+edit+delete modals
 - [x] `/patients` — registry list + create modal (M1)
 - [x] `/admin/catalog` — service cache + Finance sync (M6)

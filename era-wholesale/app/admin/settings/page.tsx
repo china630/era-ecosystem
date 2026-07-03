@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  Field,
   ModalFooter,
   ModalShell,
   PageHeader,
@@ -51,8 +52,9 @@ export default function WholesaleAdminSettingsPage() {
         </tbody>
       </table>
       <ModalShell open={open} title={t("editWarehouse")} onClose={() => setOpen(false)}>
-        <input
-          className="h-9 w-full rounded-lg border border-[#D5DADF] px-3 text-sm"
+        <Field
+          label={t("warehouse")}
+          preset="shortText"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />

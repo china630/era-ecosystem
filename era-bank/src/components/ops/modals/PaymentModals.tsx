@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import { Field, FieldSelect, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { useEodLock } from "@/components/ops/EodLockProvider";
-import { AmountInput, OpsError, OpsField, StatusBadge, formatAznMinor } from "@/components/ops-ui";
+import { OpsError, StatusBadge, formatAznMinor } from "@/components/ops-ui";
 
 type PaymentDetail = {
   id: string;
@@ -80,20 +80,22 @@ export function PaymentCreateModal({ open, onClose, onCreated }: PaymentCreateMo
       maxWidthClass="max-w-2xl"
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <OpsField name="debtorAccountId" label={t("debitAccount")} defaultValue="demo-retail-acc-1" />
-        <OpsField name="creditorIban" label={t("beneficiaryIban")} defaultValue="AZ00BANK00000000000001" />
-        <AmountInput name="amountMinor" label={t("amount")} defaultMinor={250000} />
-        <label>
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("rail")}</span>
-          <select name="rail" className="w-full rounded border px-3 py-2 text-sm" defaultValue="AZIPS">
-            <option value="AZIPS">AZIPS (stub sandbox)</option>
-            <option value="INTERNAL">INTERNAL</option>
-          </select>
-        </label>
-        <label className="sm:col-span-2">
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("purpose")}</span>
-          <input name="narrative" className="w-full rounded border px-3 py-2 text-sm" />
-        </label>
+        <Field name="debtorAccountId" label={t("debitAccount")} preset="code" defaultValue="demo-retail-acc-1" />
+        <Field name="creditorIban" label={t("beneficiaryIban")} preset="longText" defaultValue="AZ00BANK00000000000001" />
+        <Field
+          name="amountMinor"
+          label={t("amount")}
+          preset="amount"
+          type="number"
+          min={1}
+          defaultValue={250000}
+          placeholder="Amount in qepik (minor units)"
+        />
+        <FieldSelect name="rail" label={t("rail")} preset="selectWide" defaultValue="AZIPS">
+          <option value="AZIPS">AZIPS (stub sandbox)</option>
+          <option value="INTERNAL">INTERNAL</option>
+        </FieldSelect>
+        <Field name="narrative" label={t("purpose")} preset="shortText" className="sm:col-span-2" />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>

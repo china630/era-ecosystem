@@ -225,8 +225,8 @@ export class BankingGatewayService {
     }> = run.slips
       .filter((s: any) => Number(s.net) > 0)
       .map((s: any) => ({
-        employeeName: `${s.employee.lastName} ${s.employee.firstName}`.trim(),
-        employeeFinCode: s.employee.finCode ?? null,
+        employeeName: String(s.employee.globalPersonId ?? s.employee.id ?? "employee"),
+        employeeFinCode: null as string | null,
         recipientAccount: s.employee.accountNumber ?? "",
         amount: String(s.net),
         currency: registry.bankAccount.currency,

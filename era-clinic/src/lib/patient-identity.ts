@@ -23,9 +23,6 @@ export async function linkPatientGlobalPerson(input: {
 
   const persist: Record<string, string | null> = {};
   if (input.nationality?.trim()) persist.nationality = input.nationality.trim();
-  if (input.fin?.trim()) persist.finCode = input.fin.trim();
-  if (input.passport?.trim()) persist.passportNumber = input.passport.trim();
-  if (input.issuingCountry?.trim()) persist.issuingCountry = input.issuingCountry.trim();
   if (linked.globalPersonId) persist.globalPersonId = linked.globalPersonId;
 
   if (Object.keys(persist).length > 0) {

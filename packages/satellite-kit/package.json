@@ -34,6 +34,10 @@
       "types": "./dist/auth/middleware-edge.d.ts",
       "default": "./dist/auth/middleware-edge.js"
     },
+    "./bff/voen-preview": {
+      "types": "./dist/bff/voen-preview-route.d.ts",
+      "default": "./dist/bff/voen-preview-route.js"
+    },
     "./tailwind-content": "./tailwind-content.js"
   },
   "sideEffects": false,

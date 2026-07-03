@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import { createHash } from "node:crypto";
 import * as bcrypt from "bcrypt";
 import { config as loadDotenv } from "dotenv";
 import { Module } from "@nestjs/common";
@@ -346,12 +347,20 @@ async function recreateOrganization(
     for (const emp of config.employees) {
       const positionId = positionMap.get(emp.positionName);
       if (!positionId) throw new Error(`Missing position: ${emp.positionName}`);
+      const personHex = createHash("sha256")
+        .update(`era-local-seed:${organization.id}:${emp.finCode}`)
+        .digest("hex");
+      const globalPersonId = [
+        personHex.slice(0, 8),
+        personHex.slice(8, 12),
+        `4${personHex.slice(13, 16)}`,
+        `a${personHex.slice(17, 20)}`,
+        personHex.slice(20, 32),
+      ].join("-");
       const createdEmployee = await tx.employee.create({
         data: {
           organizationId: organization.id,
-          finCode: emp.finCode,
-          firstName: emp.firstName,
-          lastName: emp.lastName,
+          globalPersonId,
           patronymic: emp.patronymic ?? null,
           startDate: emp.hireDate,
           hireDate: emp.hireDate,

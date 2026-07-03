@@ -4,11 +4,16 @@ import {
 } from "@era/contracts";
 import {
   resolveOperatingMode,
-  satelliteOrganizationId,
+  resolveSettlementPolicy,
+  shouldDeferWalkInToHub,
   shouldRouteRevenueToParent,
+  satelliteOrganizationId,
 } from "@era/satellite-kit";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
 import { prisma } from "@/lib/prisma";
+import { postHotelSettlementPending } from "@/lib/settlement-hub-client";
+
+export type BillingTargetKind = "FINANCE" | "HOTEL_FOLIO" | "SETTLEMENT_HUB";
 
 export async function completeVisitBilling(visitId: string) {
   const visit = await prisma.visit.findUnique({
@@ -18,10 +23,13 @@ export async function completeVisitBilling(visitId: string) {
   if (!visit) throw new Error("Visit not found");
 
   const amountNet = Number(visit.amountNet);
-  const target =
+  const target: BillingTargetKind =
     visit.billingTarget === "HOTEL_FOLIO"
       ? "HOTEL_FOLIO"
-      : await resolveBillingTarget(visit.patientOrigin);
+      : visit.billingTarget === "SETTLEMENT_HUB"
+        ? "SETTLEMENT_HUB"
+        : await resolveBillingTarget(visit.patientOrigin);
+
   if (target === "HOTEL_FOLIO" && visit.reservationId) {
     await postHotelRoomCharge({
       reservationId: visit.reservationId,
@@ -31,6 +39,25 @@ export async function completeVisitBilling(visitId: string) {
       externalTicketId: `clinic-visit-${visit.id}`,
     });
     return { channel: "hotel_folio" as const };
+  }
+
+  if (target === "SETTLEMENT_HUB" && amountNet > 0) {
+    const pending = await postHotelSettlementPending({
+      sourceRef: visit.id,
+      amount: amountNet,
+      description: `Clinic visit ${visit.id}`,
+      payerLabel: visit.patientRef.refCode,
+      globalPersonId: visit.patientRef.globalPersonId ?? undefined,
+      idempotencyKey: `clinic-visit-${visit.id}`,
+    });
+    await prisma.visit.update({
+      where: { id: visit.id },
+      data: {
+        billingTarget: "SETTLEMENT_HUB",
+        settlementPendingId: pending.id as string,
+      },
+    });
+    return { channel: "settlement_hub" as const, pendingId: pending.id as string };
   }
 
   await dispatchSatelliteEvent({
@@ -86,14 +113,23 @@ export async function postHotelRoomCharge(input: {
 
 /**
  * Decide where a visit's revenue settles, honoring the org operating mode.
- * Only in-house guests can route to the hotel folio, and only when this org is
- * configured as a DEPARTMENT whose revenue routes to the parent (hotel).
- * Otherwise revenue is booked under the org's own VOEN via a finance event.
  */
 export async function resolveBillingTarget(
   origin: PatientOrigin,
-): Promise<"FINANCE" | "HOTEL_FOLIO"> {
-  if (origin !== "IN_HOUSE") return "FINANCE";
-  const mode = await resolveOperatingMode(satelliteOrganizationId());
-  return shouldRouteRevenueToParent(mode) ? "HOTEL_FOLIO" : "FINANCE";
+): Promise<BillingTargetKind> {
+  if (origin === "IN_HOUSE") {
+    const mode = await resolveOperatingMode(satelliteOrganizationId());
+    return shouldRouteRevenueToParent(mode) ? "HOTEL_FOLIO" : "FINANCE";
+  }
+  const orgId = satelliteOrganizationId();
+  if (!orgId) return "FINANCE";
+  const policy = await resolveSettlementPolicy(orgId);
+  return shouldDeferWalkInToHub(policy) ? "SETTLEMENT_HUB" : "FINANCE";
+}
+
+export async function isWalkInDeferredToHub(): Promise<boolean> {
+  const orgId = satelliteOrganizationId();
+  if (!orgId) return false;
+  const policy = await resolveSettlementPolicy(orgId);
+  return shouldDeferWalkInToHub(policy);
 }

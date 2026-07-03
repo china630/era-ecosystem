@@ -1,0 +1,90 @@
+id,canonical_name,aliases,district,address,building_type,parent_complex,source_primary,sources,approval_status,notes
+plaza-af-business-house,AF Business House,AF Business House|AF Biznes Evi,Nəsimi,"Nizami küçəsi 203, AZ1010",business_center,,oneclick.az,oneclick.az|gun.az,approved,
+plaza-af-com-center,AF Com Center,AF Com Center|AF Com Plaza,Nəsimi,"Səməd Vurğun küçəsi 58/60, AZ1014",business_center,,oneclick.az,oneclick.az,approved,
+plaza-afen-plaza,Afen Plaza,Afen Plaza|AFEN PLAZA,Nərimanov,"Yusif Vəzir Çəmənzəminli küçəsi 1996",business_plaza,,oneclick.az,oneclick.az|rentechdigital.com,approved,
+plaza-aga-business-center,AGA Business Center,AGA Business Center|Aga Business Center,Xətai,"Xocalı prospekti 55, AZ1025",business_center,,oneclick.az,oneclick.az|azerbaijanyp.com|gun.az,approved,
+plaza-altes-plaza,Altes Plaza,Altes Plaza,Yasamal,"İsmayıl Qutqaşınlı küçəsi 507/511B, AZ1073",business_plaza,,oneclick.az,oneclick.az,approved,
+plaza-amay-ticaret,Amay ticarət mərkəzi,Amay Shopping Center|Amay ticarət mərkəzi,Xətai,"Nobel prospekti 23, AZ1000",trade_center,,oneclick.az,oneclick.az,approved,Borderline: trade-heavy; offices possible
+plaza-azure,Azure Biznes Mərkəzi,Azure|Azure Business Center|Azure Biznes Centre,Xətai,"Nobel prospekti 15, AZ1025",business_center,,oneclick.az,oneclick.az|accountants,approved,Also marketed as Yeni Hayat area
+plaza-babek-plaza,Babək Plaza,Babek Plaza|Babək Plaza,Xətai,"Ələddin Quliyev küçəsi 11/30, AZ1025",business_plaza,,oneclick.az,oneclick.az|accountants,approved,
+plaza-bbm,Bakı Biznes Mərkəzi (BBM),Baku Business Center|BBM,Səbail,"Neftçilər prospekti 32, AZ1000",business_center,,oneclick.az,oneclick.az,approved,
+plaza-bridge-plaza,Bridge Plaza,Bridge Plaza,Nəsimi,"Bakıxanov küçəsi 6, AZ1065",business_plaza,,oneclick.az,oneclick.az,approved,
+plaza-caspian-business-center,Caspian Business Center,Old Caspian Business Center|Caspian BC,Yasamal,"Cəfər Cabbarlı küçəsi 44, AZ1065",business_center,Caspian complex,oneclick.az,oneclick.az|gun.az|2gis,approved,Distinct from Caspian Plaza towers
+plaza-caspian-plaza-i,Caspian Plaza I,Caspian Plaza|Caspian Plaza 1,Yasamal,"Cəfər Cabbarlı küçəsi 44, AZ1065",business_plaza,Caspian complex,oneclick.az,oneclick.az|accountants,approved,Multi-building campus; confirm corp I vs BC
+plaza-caspian-plaza-ii,Caspian Plaza II,Caspian Plaza 2,Yasamal,"Cəfər Cabbarlı küçəsi 44, AZ1065",business_plaza,Caspian complex,oneclick.az,oneclick.az,approved,Same campus address; tower identity TBC
+plaza-caspian-plaza-iii,Caspian Plaza III,Caspian Plaza 3,Yasamal,"Cəfər Cabbarlı küçəsi 44, AZ1065",business_plaza,Caspian complex,oneclick.az,oneclick.az|accountants,approved,
+plaza-chirag-plaza,Çıraq Plaza Hotel & Business Center,Chirag Plaza|Çıraq Plaza,Yasamal,"Tbilisi prospekti 49C",mixed,,oneclick.az,oneclick.az|gun.az,approved,Hotel + offices
+plaza-city-point,City Point Baku,City Point|City Point Biznes Mərkəzi,Yasamal,"Cəlil Məmmədquluzadə küçəsi 102A, AZ1022",business_center,,oneclick.az,oneclick.az|accountants,approved,
+plaza-demirchi-tower,Dəmirçi Tower,Dəmirçi Plaza|Demirchi Tower|Demirchi Plaza,Xətai,"Xocalı prospekti 37, AZ1025",business_center,,oneclick.az,oneclick.az|accountants|2gis,approved,
+plaza-crystal-plaza,Crystal Plaza,Crystal Plaza,Yasamal,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC — add from 2GIS in approval pass
+plaza-dalga-plaza,Dalğa Plaza,Dalga Plaza,Səbail,"Neftçilər prospekti 24, AZ1000",business_plaza,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,
+plaza-esra-plaza,Esra Plaza,Esra Plaza,Nərimanov,"Əhməd Rəcəbli küçəsi (A blok)",business_plaza,,accountants,accountants|oneclick.az orientir,approved,Exact street number TBC
+plaza-globus-center,Globus Center,Globus Plaza|Globus Center,Yasamal,"Cəfər Cabbarlı küçəsi 609",business_center,,accountants,accountants|oneclick.az orientir,approved,
+plaza-hyatt-tower-i,Hyatt Tower I,HYATT TOWER I|Hyatt Tower,Yasamal,"Abbasqulu Ağa Bakıxanov pr. 1 / Bakıxanov küçəsi 1, AZ1065",business_center,Hyatt complex,gun.az,gun.az|azerbaijanyp.com|accountants,approved,
+plaza-hyatt-tower-ii,Hyatt Tower II,Hyatt Tower II,Yasamal,"İzmir küçəsi (tower II)",business_center,Hyatt complex,oneclick.az orientir,oneclick.az|gun.az,approved,Address refine in step 1 approval
+plaza-hyatt-tower-iii,Hyatt Tower III,HYATT TOWER III,Yasamal,"İzmir küçəsi 1033, AZ1065",business_center,Hyatt complex,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,
+plaza-iic-building,IIC Building,IIC Building,Nizami,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-isa-plaza,ISA Plaza,ISA Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-isr-plaza,ISR Plaza,ISR Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-landmark-i,Landmark I,Landmark|Landmark Səbail|Landmark Plaza,Səbail,"Nizami küçəsi 96, AZ1010",business_center,Landmark,gun.az,gun.az|yandex.maps,approved,
+plaza-landmark-ii,Landmark II,Landmark II,Səbail,"Nizami küçəsi 90A, AZ1010",business_center,Landmark,gun.az,gun.az|azerbaijanyp.com|accountants,approved,Neptune JV listing uses 90A
+plaza-landmark-iii,Landmark III,Landmark 3|Landmark Plaza-III,Səbail,"Nizami küçəsi 152",business_center,Landmark,yandex.maps,yandex.maps|accountants,approved,
+plaza-life-center,Life Center,Life Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-maryam-plaza,Maryam Plaza,Məryəm Plaza|Maryam Plaza,Yasamal,"Bəsti Bağırov küçəsi 12A",business_plaza,,accountants,accountants|oneclick.az orientir,approved,
+plaza-mz-plaza,MZ Plaza,MZ Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-natavan-bc,Natavan Business Center,Natavan Business Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-old-caspian,Old Caspian Business Center,Old Caspian,Səbail,"Vəli Məmmədov küçəsi 10/12",business_center,,gun.az,gun.az,approved,
+plaza-piramida-plaza,Piramida Plaza,Piramida Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-port-baku-south,Port Baku Towers — Cənub qüllə,Port Baku South Tower|Port Baku Towers A,Səbail,"Neftçilər prospekti 153, AZ1000",business_center,Port Baku,pashaproperty.az,pashaproperty.az|azerbaijanyp.com|accountants,approved,
+plaza-port-baku-north,Port Baku Towers — Şimal qüllə,Port Baku North Tower|Port Baku Towers B,Səbail,"Neftçilər prospekti 153, AZ1000",business_center,Port Baku,pashaproperty.az,pashaproperty.az,approved,
+plaza-premium-plaza,Premium Plaza,Premium Plaza,Nəsimi,"Dadaşov küçəsi 31, AZ1000",business_plaza,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,
+plaza-safa-plaza,Safa Plaza,Safa Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-sat-plaza,SAT Plaza Biznes Mərkəzi,SAT Plaza|SAT PLAZA,Yasamal,"Bəşir Səfəroğlu küçəsi 133, AZ1000",business_plaza,,oneclick.az,oneclick.az|gun.az|azerbaijanyp.com,approved,
+plaza-seramic-plaza,Seramic Plaza,Seramic Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-sks-plaza,SKS Plaza,SKS Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-wellington-heights,Wellington Heights,Wellington Heights,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-world-business-center,World Business Center,World Business Center,,,business_center,,oneclick.az orientir,oneclick.az|2gis,approved,2GIS: Mehdi Huseyn küç. 1a — confirm match
+plaza-yeni-hayat-plaza,Yeni Hayat Plaza,Yeni Heyat Plaza|YENI HAYAT,Nərimanov,"Zərifə Əliyeva küçəsi 55, AZ1000",business_plaza,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,Related branding to Azure area
+plaza-adore-plaza,Adore Plaza Biznes Mərkəzi,Adore Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-oskar-plaza,Oskar Biznes Mərkəzi,Oskar Plaza|Oskar Biznes Mərkəzi,Yasamal,"Tbilisi prospekti 30 / 3001",business_center,,gun.az,gun.az|accountants|azerbaijanyp.com,approved,Street number varies by source
+plaza-firuze-bc,Firuzə Biznes Mərkəzi,Firuze Business Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-vip-bc,VIP Biznes Mərkəzi,VIP Business Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-karat-bc,Karat Biznes Mərkəzi,Karat Business Centre,Yasamal,"Murtuza Muxtarov küçəsi 201 (blok 607), AZ1065",business_center,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,
+plaza-besmertebeli-bc,Beşmərtəbə Biznes Mərkəzi,5-floor Business Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-mayak-itc,Mayak Beynəlxalq Ticarət Mərkəzi,International Trade Center|ITC,Nizami,"Heydər Əliyev prospekti 95, AZ1033",mixed,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,Large mixed-use ITC
+plaza-xaqani-bc,Xaqani Biznes Mərkəzi,Xaqani Business Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-jale-plaza,Jalə Plaza,Jale Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-aztex-plaza,Aztex Plaza,Aztex Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-luxen-plaza,Luxen Plaza,Luxen Plaza,Xətai,"Xətai prospekti 34, AZ1000",business_plaza,,azerbaijanyp.com,azerbaijanyp.com|oneclick.az orientir,approved,
+plaza-marine-plaza,Marine Plaza,Marine Plaza,Səbail,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-izmir-plaza,Izmir Plaza,Izmir Plaza,Yasamal,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-genceli-plaza,Genceli Plaza,Genceli Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-ritz-plaza,Ritz Plaza,Ritz Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-baku-medical-plaza,Baku Medical Plaza,Baku Medical Plaza,Nərimanov,,mixed,,oneclick.az orientir,oneclick.az,approved,Medical + offices
+plaza-itc-plaza,ITC Plaza,ITC Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC; may overlap Mayak ITC
+plaza-ay-plaza,A.Y. Plaza,A.Y. Plaza,,,business_plaza,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-capital-towers,Capital Towers,Capital Towers,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC
+plaza-crescent-offices,Crescent Offices,Crescent Offices,Səbail,,business_center,Port Baku area,pashaproperty.az,pashaproperty.az,approved,Address TBC — PAŞA portfolio
+plaza-parkview-bc,Parkview Business Center,Parkview Business Center,,,business_center,,pashaproperty.az,pashaproperty.az,approved,Address TBC
+plaza-sapphire-plaza,Sapphire Plaza,Sapphire Plaza,Səbail,"Nizami küçəsi 1/3",business_plaza,,gun.az,gun.az,approved,
+plaza-subhans-s,Subhans-S,Subhans-S,Nərimanov,"Ələsgər Qayıbov küçəsi 10Q",business_center,,gun.az,gun.az,approved,
+plaza-rich-plaza,Rich Plaza,Rich Plaza,Xətai,"Babək prospekti 31H",business_plaza,,accountants,accountants,approved,
+plaza-falez-plaza,Falez Plaza,Falez Plaza,Nəsimi,"Akademik Həsən Əliyev küçəsi 4/189",business_plaza,,accountants,accountants,approved,
+plaza-bms-plaza,BMS Plaza,BMS Plaza,Nizami,"Heydər Əliyev prospekti 115",business_plaza,,accountants,accountants,approved,
+plaza-winter-park-plaza,Winter Park Plaza,Winter Park Plaza,Nəsimi,"Rəsul Rza küçəsi 75",business_plaza,,accountants,accountants,approved,
+plaza-aynali-plaza,Aynalı Plaza,Aynali Plaza,Nərimanov,"Əhməd Rəcəbli küçəsi 156",business_plaza,,accountants,accountants,approved,
+plaza-english-yard,English Yard Biznes Mərkəzi,English Yard,Yasamal,"Məmməd Araz küçəsi 43A",business_center,,accountants,accountants,approved,
+plaza-qafqaz-bc,Qafqaz Business Center,Qafqaz Business Center,Nizami,"Heydər Əliyev prospekti 95B",business_center,,accountants,accountants,approved,
+plaza-bayil-plaza,Bayıl Plaza,Bayil Plaza,Səbail,"Neftçi Qurban Abbasov küçəsi 29",business_plaza,,accountants,accountants|2gis,approved,
+plaza-ap-plaza,AP Plaza,AP Plaza,Xətai,"Xan Şuşinski küçəsi 17",business_plaza,,accountants,accountants,approved,
+plaza-chinar-plaza,Çinar Plaza,Chinar Plaza|Chinar Park,Nizami,"Heydər Əliyev prospekti 152",business_plaza,,accountants,accountants|rentechdigital.com,approved,Distinct from Çinar Park POI if separate
+plaza-sahibtach,Sahibtach,Sahibtach İçərişəhər,Səbail,"Vaqif Mustafayev küçəsi 6/10",business_center,,gun.az,gun.az,approved,
+plaza-baku-expo-center,Baku Expo Center,Baku Expo Center,,,mixed,,oneclick.az orientir,oneclick.az,approved,Exhibition + offices; borderline
+plaza-old-town-plaza,Old Town Plaza,Old Town Plaza,,,business_plaza,,rentechdigital.com,rentechdigital.com,approved,Address TBC
+plaza-montin-plaza,Montin Plaza,Montin Plaza,,,business_plaza,,rentechdigital.com,rentechdigital.com,approved,Address TBC
+plaza-shuvalan-park,Şüvəlan Park,Shuvalan Park,Xəzər,"Almas İldırım küçəsi 68",mixed,,azerbaijanyp.com,azerbaijanyp.com,approved,Peripheral Baku; office park
+plaza-ticaret-merkezi-4,Ticarət Mərkəzi-4,Ticarət Mərkəzi-4 JSC,Nizami,"Cəmşid Naxçıvanski küçəsi 38, AZ1119",trade_center,,azerbaijanyp.com,azerbaijanyp.com,approved,Trade center with office tenants
+plaza-prima-palace,Prima Palace,PRIMA PALACE,Yasamal,"Bəsti Bağırov küçəsi 12, AZ1065",business_plaza,,azerbaijanyp.com,azerbaijanyp.com,approved,Near Maryam Plaza — confirm same/different
+plaza-metropark,Metropark,Metropark,Nərimanov,"Təbriz küçəsi 106A",mixed,,gun.az,gun.az,approved,Retail/entertainment heavy — include?
+plaza-dernegul-ticaret-ofis,Dərnəgül ticarət və ofis mərkəzi,Dərnəgül Ticarət Mərkəzi,Binəqədi,Dərnəgül,,trade_center,,oneclick.az orientir,oneclick.az,approved,Outskirts; address TBC
+plaza-international-press-center,Beynəlxalq Mətbuat Mərkəzi,International Press Center,,,business_center,,oneclick.az orientir,oneclick.az,approved,Address TBC

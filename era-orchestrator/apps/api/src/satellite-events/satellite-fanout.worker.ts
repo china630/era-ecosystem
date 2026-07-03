@@ -6,8 +6,13 @@ import {
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Job, Queue, Worker } from "bullmq";
+import {
+  isSatelliteStaffProvisioned,
+  satelliteStaffProvisionedSchema,
+} from "@era/contracts";
 import { attachWorkerFailureAlert } from "../queue/bullmq-worker-alerts";
 import { connectionFromRedisUrl } from "../queue/bullmq.config";
+import { WorkforceRegistryService } from "../workforce/workforce-registry.service";
 import { forwardToClinic } from "./clinic-bridge.client";
 import { forwardToSatellite } from "./satellite-bridge.client";
 import {
@@ -28,6 +33,7 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly config: ConfigService,
     private readonly registry: SatelliteEndpointRegistryService,
+    private readonly workforce: WorkforceRegistryService,
   ) {}
 
   private getQueue(): Queue {
@@ -149,7 +155,19 @@ export class SatelliteFanoutWorker implements OnModuleInit, OnModuleDestroy {
     }
 
     if (path) {
-      await forwardToSatellite(endpoint, path, event);
+      const result = await forwardToSatellite(endpoint, path, event);
+      if (
+        isSatelliteStaffProvisioned(event) &&
+        result.satelliteUserId?.trim()
+      ) {
+        const parsed = satelliteStaffProvisionedSchema.parse(event);
+        await this.workforce.patchSatelliteUserId(
+          parsed.organizationId,
+          parsed.payload.satelliteKey,
+          parsed.payload.cpEmploymentId,
+          result.satelliteUserId.trim(),
+        );
+      }
       this.logger.log(
         `Forwarded ${String(event.type)} to ${satelliteKey} org=${organizationId}`,
       );

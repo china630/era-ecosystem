@@ -2,6 +2,7 @@
 
 export const POS_BRIDGE_API_PREFIXES = [
   "/api/pos/room-charge",
+  "/api/settlement/pending",
   "/api/pms/",
 ] as const;
 
