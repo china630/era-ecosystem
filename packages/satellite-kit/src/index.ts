@@ -44,6 +44,11 @@ export {
 } from "./auth/middleware-helpers";
 export { hashPassword, verifyPassword } from "./auth/password";
 export {
+  platformSuperAdminEmails,
+  platformSuperAdminBootstrapPassword,
+  isPlatformSuperAdminUser,
+} from "./auth/platform-super-admin";
+export {
   findUserByCredential,
   isSatelliteUserLoginAllowed,
   verifySatelliteUserPassword,

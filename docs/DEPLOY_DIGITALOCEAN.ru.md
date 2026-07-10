@@ -139,7 +139,10 @@ CONTROL_PLANE_SERVICE_TOKEN=<random>
 SATELLITE_EVENT_SERVICE_TOKEN=<random>
 AUTH_JWT_SECRET=<min-32-chars>
 POS_BRIDGE_SECRET=<random>
+# Set once in this droplet .env (never commit). Used by bootstrap-local /
+# prod-init to create Orchestrator + Finance + satellite local logins.
 PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD=<demo-password-for-client>
+PLATFORM_SUPER_ADMIN_EMAILS=inaram84@gmail.com,shirinov.chingiz@gmail.com,chingiz@era.com
 
 ERA_APP_ORIGIN=https://app.era-365.online
 ERA_API_ORIGIN=https://api.era-365.online
