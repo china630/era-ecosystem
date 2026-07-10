@@ -65,6 +65,6 @@ import { EmployeeDocumentsService } from "./employee-documents.service";
     EmployeeDocumentsService,
     RolesGuard,
   ],
-  exports: [OrgStructureService, TimesheetService],
+  exports: [OrgStructureService, TimesheetService, AbsenceTypesService],
 })
 export class HrModule {}
