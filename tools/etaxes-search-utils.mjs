@@ -87,9 +87,25 @@ export function extractTradeName(rawName) {
   return n.replace(/\s+/g, " ").trim();
 }
 
+export const ETAXES_LOCALE = "az-AZ";
+
+/** DVX UI searches in Azerbaijani uppercase: i→İ, ı→I (not default toUpperCase). */
+export function toEtaxesSearchQuery(q) {
+  return String(q ?? "").trim().toLocaleUpperCase(ETAXES_LOCALE);
+}
+
+/** Stable ASCII-folded key for cache dedup (ati / ATİ / ATI → ati). */
+export function cacheKeyForQuery(q) {
+  return normToken(String(q ?? "").trim());
+}
+
+export function cacheFileSlug(q) {
+  return cacheKeyForQuery(q).replace(/[^a-z0-9_-]/g, "_");
+}
+
 export function normToken(t) {
-  return t
-    .toLowerCase()
+  return String(t ?? "")
+    .toLocaleLowerCase(ETAXES_LOCALE)
     .replace(/[ə]/g, "e")
     .replace(/[ı]/g, "i")
     .replace(/[ö]/g, "o")
@@ -184,7 +200,7 @@ export function deriveSearchQuery(rawName) {
 
 export function normalizeNameKey(s) {
   return cleanForSearch(s)
-    .toLowerCase()
+    .toLocaleLowerCase(ETAXES_LOCALE)
     .replace(/[ə]/g, "e")
     .replace(/[ı]/g, "i")
     .replace(/[ö]/g, "o")

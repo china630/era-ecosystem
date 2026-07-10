@@ -1,4 +1,5 @@
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { isPlatformSuperAdminUser } from "@/lib/auth/platform-super-admin";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
@@ -11,13 +12,17 @@ export async function GET(req: Request) {
       select: {
         id: true,
         login: true,
+        email: true,
         fullName: true,
         role: { select: { code: true } },
       },
     });
     if (!user) return jsonError("User not found", 404);
 
-    return jsonOk(user);
+    return jsonOk({
+      ...user,
+      isPlatformSuperAdmin: isPlatformSuperAdminUser(user),
+    });
   } catch (err) {
     return handleRouteError(err);
   }

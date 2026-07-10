@@ -1,8 +1,12 @@
-/** Playwright session + cached e-taxes findTaxpayer calls. */
+/** Playwright session + cached e-taxes findTaxpayer calls. DVX returns at most 50 taxpayers per query. */
 
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import {
+  cacheFileSlug,
+  toEtaxesSearchQuery,
+} from "./etaxes-search-utils.mjs";
 
 export const ETAXES_PAGE =
   "https://new.e-taxes.gov.az/etaxes/services/legal-entity-info";
@@ -30,14 +34,19 @@ export async function refreshEtaxesPage(page) {
 }
 
 function cacheFileForQuery(cacheDir, query) {
-  return path.join(
-    cacheDir,
-    `name_${query.toLowerCase().replace(/[^a-z0-9ƏəİıÖöÜüÇçŞşĞğ_-]/gi, "_")}.json`,
-  );
+  return path.join(cacheDir, `name_${cacheFileSlug(query)}.json`);
 }
 
 function cacheFileForVoen(cacheDir, voen) {
   return path.join(cacheDir, `voen_${voen}.json`);
+}
+
+/** Re-query 404 entries that used wrong case (lower/ASCII I vs Azerbaijani İ). */
+function shouldRetryCached404(cached, rawQuery) {
+  if (!cached?.error || !/404/.test(String(cached.error))) return false;
+  const apiQ = toEtaxesSearchQuery(rawQuery);
+  if (cached.api_query === apiQ) return false;
+  return cached.query !== apiQ;
 }
 
 async function postFind(page, body, timeoutMs = 60_000) {
@@ -74,26 +83,36 @@ async function postFind(page, body, timeoutMs = 60_000) {
 
 export async function searchLegalEntities(page, query, cacheDir) {
   const cacheFile = cacheFileForQuery(cacheDir, query);
+  const apiName = toEtaxesSearchQuery(query);
+
   if (fs.existsSync(cacheFile)) {
     const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
-    return { query, taxpayers: cached.taxpayers ?? [], error: cached.error };
+    if (!shouldRetryCached404(cached, query)) {
+      return { query, taxpayers: cached.taxpayers ?? [], error: cached.error };
+    }
+    fs.unlinkSync(cacheFile);
   }
 
   const result = await postFind(page, {
-    name: query,
+    name: apiName,
     type: "legalEntity",
     serviceCode: "checkLegalName",
     isStateRegistry: true,
   });
 
   if (result.status !== 200) {
-    const payload = { query, taxpayers: [], error: `HTTP ${result.status}` };
+    const payload = {
+      query,
+      api_query: apiName,
+      taxpayers: [],
+      error: `HTTP ${result.status}`,
+    };
     fs.mkdirSync(cacheDir, { recursive: true });
     fs.writeFileSync(cacheFile, JSON.stringify(payload, null, 2), "utf8");
     return payload;
   }
 
-  const payload = { query, taxpayers: result.json?.taxpayers ?? [] };
+  const payload = { query, api_query: apiName, taxpayers: result.json?.taxpayers ?? [] };
   fs.mkdirSync(cacheDir, { recursive: true });
   fs.writeFileSync(cacheFile, JSON.stringify(payload, null, 2), "utf8");
   return payload;

@@ -16,6 +16,8 @@ import {
   deriveSearchQueries,
   donorMatchesTaxpayer,
   normalizeNameKey,
+  cacheFileSlug,
+  toEtaxesSearchQuery,
 } from "./etaxes-search-utils.mjs";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -679,12 +681,18 @@ async function ensureSession(page) {
 }
 
 async function searchLegalEntities(page, query) {
-  const cacheFile = path.join(
-    CACHE_DIR,
-    `name_${query.toLowerCase().replace(/[^a-z0-9ƏəİıÖöÜüÇçŞşĞğ_-]/gi, "_")}.json`,
-  );
+  const cacheFile = path.join(CACHE_DIR, `name_${cacheFileSlug(query)}.json`);
+  const apiName = toEtaxesSearchQuery(query);
+
   if (fs.existsSync(cacheFile)) {
-    return JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+    const cached = JSON.parse(fs.readFileSync(cacheFile, "utf8"));
+    const retry =
+      cached?.error &&
+      /404/.test(String(cached.error)) &&
+      cached.api_query !== apiName &&
+      cached.query !== apiName;
+    if (!retry) return cached;
+    fs.unlinkSync(cacheFile);
   }
 
   const result = await page.evaluate(
@@ -708,11 +716,16 @@ async function searchLegalEntities(page, query) {
       }
       return { status: res.status, json };
     },
-    { url: FIND_URL, name: query },
+    { url: FIND_URL, name: apiName },
   );
 
   if (result.status !== 200) {
-    const payload = { query, taxpayers: [], error: `HTTP ${result.status}` };
+    const payload = {
+      query,
+      api_query: apiName,
+      taxpayers: [],
+      error: `HTTP ${result.status}`,
+    };
     fs.mkdirSync(CACHE_DIR, { recursive: true });
     fs.writeFileSync(cacheFile, JSON.stringify(payload, null, 2), "utf8");
     return payload;
@@ -720,8 +733,12 @@ async function searchLegalEntities(page, query) {
 
   const taxpayers = result.json?.taxpayers ?? [];
   fs.mkdirSync(CACHE_DIR, { recursive: true });
-  fs.writeFileSync(cacheFile, JSON.stringify({ query, taxpayers }, null, 2), "utf8");
-  return { query, taxpayers };
+  fs.writeFileSync(
+    cacheFile,
+    JSON.stringify({ query, api_query: apiName, taxpayers }, null, 2),
+    "utf8",
+  );
+  return { query, api_query: apiName, taxpayers };
 }
 
 async function searchByVoen(page, voen) {
