@@ -5,6 +5,10 @@ import {
   serializePermissions,
 } from '../src/lib/auth/permissions';
 import { hashPassword } from '../src/lib/auth/password';
+import {
+  platformSuperAdminBootstrapPassword,
+  platformSuperAdminEmails,
+} from '../src/lib/auth/platform-super-admin';
 import { seedFoDemo } from './seed-fo-demo';
 
 const prisma = new PrismaClient();
@@ -123,27 +127,27 @@ async function main() {
     },
   });
 
-  const demoHash = await hashPassword(
-    process.env.ECOSYSTEM_DEMO_PASSWORD ?? '12345678',
-  );
-  await prisma.user.upsert({
-    where: { login: 'chingiz@era.com' },
-    create: {
-      login: 'chingiz@era.com',
-      email: 'chingiz@era.com',
-      fullName: 'Chingiz Demo',
-      passwordHash: demoHash,
-      roleId: roles[ROLE_CODES.HOTEL_ADMIN],
-      department: 'Management',
-      isCrossSystem: true,
-    },
-    update: {
-      email: 'chingiz@era.com',
-      passwordHash: demoHash,
-      roleId: roles[ROLE_CODES.HOTEL_ADMIN],
-      isCrossSystem: true,
-    },
-  });
+  const demoHash = await hashPassword(platformSuperAdminBootstrapPassword());
+  for (const email of platformSuperAdminEmails()) {
+    await prisma.user.upsert({
+      where: { login: email },
+      create: {
+        login: email,
+        email,
+        fullName: 'Platform Super Admin',
+        passwordHash: demoHash,
+        roleId: roles[ROLE_CODES.HOTEL_ADMIN],
+        department: 'Management',
+        isCrossSystem: true,
+      },
+      update: {
+        email,
+        passwordHash: demoHash,
+        roleId: roles[ROLE_CODES.HOTEL_ADMIN],
+        isCrossSystem: true,
+      },
+    });
+  }
 
   const deptAcc = await prisma.department.create({
     data: { code: 'ACC', name: 'Accommodation' },

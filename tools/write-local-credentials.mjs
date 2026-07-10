@@ -70,11 +70,19 @@ API login: \`POST http://localhost:4000/auth/login\` body \`{"email","password"}
 
 Super-admin emails above also work in Finance DB after bootstrap.
 
-### Universal demo ops account (all satellites)
+### Platform super-admin (Orchestrator + Finance + every satellite local login)
 
-| Email | Password | Notes |
-|-------|----------|-------|
-| chingiz@era.com | ${password} | Orchestrator super-admin + Finance + local login on every satellite |
+After \`bootstrap-local\` / satellite upsert, these emails log in locally on each satellite with max admin role:
+
+| Email | Password |
+|-------|----------|
+${emails
+  .split(/[,;\s]+/)
+  .filter((e) => e.includes("@"))
+  .map((e) => `| ${e.trim()} | ${password} |`)
+  .join("\n")}
+
+Password source: \`PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD\` in root \`.env\` (default \`12345678\`).
 
 Legacy hotel-only logins (seed): \`admin\` / \`admin123\`, etc.
 
@@ -82,6 +90,7 @@ Legacy hotel-only logins (seed): \`admin\` / \`admin123\`, etc.
 
 | Login | Password | Role |
 |-------|----------|------|
+| shirinov.chingiz@gmail.com | ${password} | Hotel_Admin (platform) |
 | chingiz@era.com | ${password} | Hotel_Admin |
 | admin | admin123 | Hotel_Admin |
 | reception | reception123 | Receptionist |

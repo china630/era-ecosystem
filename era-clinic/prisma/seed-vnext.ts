@@ -1,12 +1,18 @@
 import { PrismaClient } from "@prisma/client";
-import { hashPassword } from "@era/satellite-kit";
+import {
+  hashPassword,
+  platformSuperAdminBootstrapPassword,
+  platformSuperAdminEmails,
+} from "@era/satellite-kit";
 
 const prisma = new PrismaClient();
 
 async function seedDemoAdmin() {
-  const login = (process.env.ECOSYSTEM_DEMO_LOGIN ?? "chingiz@era.com").toLowerCase();
-  const password = process.env.ECOSYSTEM_DEMO_PASSWORD ?? "12345678";
+  const password = platformSuperAdminBootstrapPassword();
   const roleCode = process.env.ECOSYSTEM_DEMO_ADMIN_ROLE ?? "CLINIC_ADMIN";
+  const logins = [...platformSuperAdminEmails()];
+  const extra = process.env.ECOSYSTEM_DEMO_LOGIN?.trim().toLowerCase();
+  if (extra?.includes("@") && !logins.includes(extra)) logins.push(extra);
 
   const role = await prisma.role.upsert({
     where: { code: roleCode },
@@ -19,25 +25,27 @@ async function seedDemoAdmin() {
   });
 
   const passwordHash = await hashPassword(password);
-  await prisma.user.upsert({
-    where: { login },
-    create: {
-      login,
-      email: login,
-      fullName: "Chingiz Demo",
-      passwordHash,
-      roleId: role.id,
-      status: "ACTIVE",
-      isCrossSystem: true,
-    },
-    update: {
-      email: login,
-      passwordHash,
-      roleId: role.id,
-      status: "ACTIVE",
-      isCrossSystem: true,
-    },
-  });
+  for (const login of logins) {
+    await prisma.user.upsert({
+      where: { login },
+      create: {
+        login,
+        email: login,
+        fullName: "Platform Super Admin",
+        passwordHash,
+        roleId: role.id,
+        status: "ACTIVE",
+        isCrossSystem: true,
+      },
+      update: {
+        email: login,
+        passwordHash,
+        roleId: role.id,
+        status: "ACTIVE",
+        isCrossSystem: true,
+      },
+    });
+  }
 }
 
 async function main() {
