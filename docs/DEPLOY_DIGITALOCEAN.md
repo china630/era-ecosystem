@@ -56,12 +56,15 @@ node scripts/ecosystem-smoke-all.mjs
 
 ## 6. GitHub Actions deploy
 
-Configure environment **staging** secrets, then:
+Configure environment **staging** secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `ENV_FILE`, `GHCR_PULL_TOKEN`), then:
 
-1. Run **Build and push images** on `dev`
-2. Run **Deploy staging** with `image_tag` = `dev-<sha>` or `dev`
+1. Merge to **`dev`** → **Build and push images** runs automatically  
+2. On success → **Deploy staging** auto-runs (`workflow_run`): SSH → `pull` → migrate → `up -d` with `IMAGE_TAG=dev-<sha>`  
 
-Auto-deploy via `workflow_run` is **disabled** until droplet SSH (`:22`) is reachable from GitHub Actions. Use manual **Deploy staging** after opening the firewall.
+Manual override: Actions → **Deploy staging** → `workflow_dispatch` (tag default `dev`).  
+Production: **Deploy production** remains manual only.
+
+Droplet UFW must allow SSH `:22` from GitHub Actions (currently OpenSSH ALLOW Anywhere is fine for staging).
 
 ## 7. Operations
 
@@ -80,5 +83,6 @@ Auto-deploy via `workflow_run` is **disabled** until droplet SSH (`:22`) is reac
 | OOM on pull | Droplet RAM, prune images, deploy fewer services temporarily |
 | TLS fails | Port 80 reachable for ACME, DNS propagated |
 | Deploy SSH timeout | `dial tcp :22: i/o timeout` — open UFW/DO firewall port 22; verify `SSH_HOST` secret; optional `SSH_PORT` secret |
+| Auto-deploy never fires | `workflow_run` only works from the **default branch** workflow file — ensure `deploy-staging.yml` is on `master` |
 
 See [CI_CD.md](./CI_CD.md) for workflow matrix and branch policy.
