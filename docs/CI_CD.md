@@ -28,7 +28,7 @@ git push -u origin feature/my-change
 | [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
 | [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
-| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After build on `dev`, manual | SSH pull-only on droplet |
+| [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev`, or manual | SSH pull + migrate + `up -d` on staging droplet |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | Manual only | Prod deploy + environment approval |
 
 Deprecated: [`ecosystem-smoke.yml`](../.github/workflows/ecosystem-smoke.yml) (noop). Finance-only CI moved from `era-finance-core/.github/workflows/ci.yml` to root `ci.yml`.
@@ -71,13 +71,29 @@ node scripts/quartet-smoke.mjs          # Orch + Finance + Hotel + F&B
 node scripts/ecosystem-smoke-all.mjs    # Full stack (ports per ECOSYSTEM_URLS)
 ```
 
+## Staging auto-deploy
+
+After each successful [`build-images.yml`](../.github/workflows/build-images.yml) run on **`dev`**, [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) SSHs to the droplet and:
+
+1. Checks out the build commit  
+2. Writes `.env` from Environment secret `ENV_FILE` + `IMAGE_TAG=dev-<sha>`  
+3. `docker login` GHCR → `compose pull` → `migrate-all.sh` → `up -d`  
+
+Manual: Actions → **Deploy staging** → `workflow_dispatch` (default tag `dev`).  
+Production stays **manual** (`deploy-production.yml`).
+
+`workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master`.
+
 ## GitHub secrets (staging / production)
+
+Environment **`staging`** (and **`production`** for prod):
 
 | Secret | Purpose |
 |--------|---------|
 | `SSH_HOST` | Droplet IP/hostname |
-| `SSH_USER` | e.g. `deploy` |
+| `SSH_USER` | e.g. `root` / `deploy` |
 | `SSH_PRIVATE_KEY` | Deploy key |
+| `SSH_PORT` | Optional; default `22` |
 | `ENV_FILE` | Full production `.env` body |
 | `GHCR_PULL_TOKEN` | PAT with `read:packages` for droplet `docker login` |
 
