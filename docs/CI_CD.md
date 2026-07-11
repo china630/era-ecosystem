@@ -38,6 +38,7 @@ Deprecated: [`ecosystem-smoke.yml`](../.github/workflows/ecosystem-smoke.yml) (n
 - Registry: `ghcr.io/<github-owner>/era-ecosystem/<service>:<tag>`
 - Tags: `dev`, `dev-<short-sha>`, `master`, `master-<short-sha>` (moving branch tags + immutable sha)
 - Workspace packages image: `.../workspace-packages:dev-<sha>` (satellite Docker builds)
+- **Client bake-ins** (`NEXT_PUBLIC_*` in `build-images.yml`): orch → `https://api.era-365.online` / `https://finance-core.era-365.online`; finance-web → `https://app.era-365.online` for orch links. Local `docker compose build` can override via compose build-args (`ERA_API_ORIGIN`, etc.).
 
 **Never run `docker compose build` on the droplet** — only `pull` + `up`.
 

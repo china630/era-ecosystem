@@ -165,11 +165,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PACKAGE_IMAGE=${{ needs.build-packages-base.outputs.package_image }}
-            NEXT_PUBLIC_ORCH_API_URL=http://127.0.0.1:4000
-            NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100
+            NEXT_PUBLIC_ORCH_API_URL=https://api.era-365.online
+            NEXT_PUBLIC_FINANCE_WEB_URL=https://finance-core.era-365.online
             NEXT_PUBLIC_API_URL=http://finance-core:4100
             NEXT_PUBLIC_CONTROL_PLANE_URL=http://orchestrator:4000
-            NEXT_PUBLIC_ORCH_WEB_URL=http://127.0.0.1:3000
+            NEXT_PUBLIC_ORCH_WEB_URL=https://app.era-365.online
             SATELLITE_DIR=${{ matrix.satellite_dir }}
             SATELLITE_PORT=${{ matrix.satellite_port }}
           cache-from: type=gha,scope=${{ matrix.service }}
