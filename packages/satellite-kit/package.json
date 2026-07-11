@@ -34,6 +34,11 @@
       "types": "./dist/auth/middleware-edge.d.ts",
       "default": "./dist/auth/middleware-edge.js"
     },
+    "./auth/platform-super-admin": {
+      "types": "./dist/auth/platform-super-admin.d.ts",
+      "default": "./dist/auth/platform-super-admin.js"
+    },
+
     "./bff/voen-preview": {
       "types": "./dist/bff/voen-preview-route.d.ts",
       "default": "./dist/bff/voen-preview-route.js"
