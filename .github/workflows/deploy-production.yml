@@ -11,32 +11,53 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pack remote .env (base64)
+        id: envpack
+        env:
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: |
+          set -euo pipefail
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          {
+            printf '%s\n' "$ENV_FILE"
+            echo "IMAGE_TAG=${{ inputs.image_tag }}"
+            echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
+          } | base64 -w0 > /tmp/era-env.b64
+          echo "b64=$(cat /tmp/era-env.b64)" >> "$GITHUB_OUTPUT"
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
+        env:
+          ERA_ENV_B64: ${{ steps.envpack.outputs.b64 }}
+          GHCR_PULL_TOKEN: ${{ secrets.GHCR_PULL_TOKEN }}
+          GIT_SHA: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
           timeout: 60s
-          command_timeout: 20m
+          command_timeout: 30m
           script_stop: true
+          envs: ERA_ENV_B64,GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
             git fetch origin
-            git checkout "${{ github.sha }}"
-            cat > .env <<'ENVEOF'
-            ${{ secrets.ENV_FILE }}
-            ENVEOF
-            echo "IMAGE_TAG=${{ inputs.image_tag }}" >> .env
-            owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem" >> .env
-            echo "${{ secrets.GHCR_PULL_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            git checkout "$GIT_SHA"
+            printf '%s' "$ERA_ENV_B64" | base64 -d > .env
+            awk -F= '
+              /^IMAGE_TAG=/ { k=$0; next }
+              /^GHCR_IMAGE_PREFIX=/ { g=$0; next }
+              { print }
+              END { if (k!="") print k; if (g!="") print g }
+            ' .env > .env.tmp && mv .env.tmp .env
+            echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
             chmod +x docker/scripts/migrate-all.sh
             COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
