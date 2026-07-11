@@ -82,6 +82,8 @@ After each successful [`build-images.yml`](../.github/workflows/build-images.yml
 Manual: Actions → **Deploy staging** → `workflow_dispatch` (default tag `dev`).  
 Production stays **manual** (`deploy-production.yml`).
 
+`ENV_FILE` is base64-packed on the runner and decoded on the droplet — do **not** expand a multi-line secret into the SSH `script:` body when `script_stop: true` (appleboy injects exit checks between lines and corrupts `.env`).
+
 `workflow_run` workflows must live on the **default branch** (`master`) to fire — merge this wiring via PR → `dev` → `master`.
 
 ## GitHub secrets (staging / production)
