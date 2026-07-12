@@ -400,13 +400,29 @@ exports.Prisma.WorkforceAbsenceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforceTimesheetEntryScalarFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  employmentId: 'employmentId',
+  workDate: 'workDate',
+  hours: 'hours',
+  source: 'source',
+  sourceRef: 'sourceRef',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceAuditLogScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
+  workforceScopeId: 'workforceScopeId',
   actorUserId: 'actorUserId',
   action: 'action',
   entityType: 'entityType',
   entityId: 'entityId',
+  globalPersonId: 'globalPersonId',
+  cpEmploymentId: 'cpEmploymentId',
   payloadJson: 'payloadJson',
   createdAt: 'createdAt'
 };
@@ -495,6 +511,7 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   billingStatus: 'billingStatus',
   operatingMode: 'operatingMode',
   parentOrgId: 'parentOrgId',
+  holdingId: 'holdingId',
   fiscalRouting: 'fiscalRouting',
   revenueRouting: 'revenueRouting',
   activeModules: 'activeModules',
@@ -521,6 +538,24 @@ exports.Prisma.UserScalarFieldEnum = {
   lastNameCipher: 'lastNameCipher',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.HoldingScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  ownerId: 'ownerId',
+  baseCurrency: 'baseCurrency',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.HoldingMembershipScalarFieldEnum = {
+  userId: 'userId',
+  holdingId: 'holdingId',
+  role: 'role',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.OrganizationMembershipScalarFieldEnum = {
@@ -951,6 +986,11 @@ exports.WorkforceAbsenceStatus = exports.$Enums.WorkforceAbsenceStatus = {
   CANCELLED: 'CANCELLED'
 };
 
+exports.WorkforceTimesheetEntryStatus = exports.$Enums.WorkforceTimesheetEntryStatus = {
+  DRAFT: 'DRAFT',
+  APPROVED: 'APPROVED'
+};
+
 exports.PaymentOrderStatus = exports.$Enums.PaymentOrderStatus = {
   PENDING: 'PENDING',
   PAID: 'PAID',
@@ -996,6 +1036,13 @@ exports.OrgOperatingMode = exports.$Enums.OrgOperatingMode = {
 exports.OrgRouting = exports.$Enums.OrgRouting = {
   OWN: 'OWN',
   PARENT: 'PARENT'
+};
+
+exports.HoldingAccessRole = exports.$Enums.HoldingAccessRole = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  ACCOUNTANT: 'ACCOUNTANT',
+  VIEWER: 'VIEWER'
 };
 
 exports.AccessRequestStatus = exports.$Enums.AccessRequestStatus = {
@@ -1147,6 +1194,7 @@ exports.Prisma.ModelName = {
   WorkforceSeatAllocation: 'WorkforceSeatAllocation',
   WorkforceEmployment: 'WorkforceEmployment',
   WorkforceAbsence: 'WorkforceAbsence',
+  WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
   WorkforceAuditLog: 'WorkforceAuditLog',
   PricingBundle: 'PricingBundle',
   LandingModuleMarketing: 'LandingModuleMarketing',
@@ -1157,6 +1205,8 @@ exports.Prisma.ModelName = {
   RolePermission: 'RolePermission',
   Organization: 'Organization',
   User: 'User',
+  Holding: 'Holding',
+  HoldingMembership: 'HoldingMembership',
   OrganizationMembership: 'OrganizationMembership',
   AccessRequest: 'AccessRequest',
   OrganizationInvite: 'OrganizationInvite',

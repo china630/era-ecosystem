@@ -1,0 +1,17 @@
+---
+description: ERA Orchestrator web — UI patterns for apps/web
+globs:
+  - apps/web/**/*.tsx
+  - apps/web/**/*.ts
+alwaysApply: false
+---
+
+# Orchestrator UI
+
+Before editing `apps/web` screens:
+
+1. Match existing launcher / auth / pricing patterns in sibling pages.
+2. Industry satellites use `docs/UI_PLAYBOOK_SATELLITES.md`; orchestrator is the **platform shell** — keep marketing/auth flows consistent with `docs/ECOSYSTEM_URLS.md` public hub routes.
+3. If a change contradicts established platform UX, ask the user before diverging.
+
+i18n: `apps/web/messages/{az,ru,en}.json` — add **ru** and **az** (and **en**) for new user-visible keys.

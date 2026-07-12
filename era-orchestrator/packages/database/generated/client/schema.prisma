@@ -435,6 +435,11 @@ enum WorkforceAbsenceStatus {
   CANCELLED
 }
 
+enum WorkforceTimesheetEntryStatus {
+  DRAFT
+  APPROVED
+}
+
 enum OrgUnitStatus {
   ACTIVE
   ARCHIVED
@@ -617,6 +622,7 @@ model WorkforceEmployment {
   roleBindings             WorkforceRoleBinding[]
   manualGrants             WorkforceManualGrant[]
   seatAllocation           WorkforceSeatAllocation?
+  timesheetEntries         WorkforceTimesheetEntry[]
 
   @@index([organizationId, status])
   @@index([workforceScopeId, orgUnitId])
@@ -652,18 +658,41 @@ model WorkforceAbsence {
   @@map("workforce_absences")
 }
 
+model WorkforceTimesheetEntry {
+  id             String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                        @map("organization_id") @db.Uuid
+  employmentId   String                        @map("employment_id") @db.Uuid
+  workDate       DateTime                      @map("work_date") @db.Date
+  hours          Decimal                       @db.Decimal(10, 2)
+  source         String                        @default("construction_csv")
+  sourceRef      String?                       @map("source_ref")
+  status         WorkforceTimesheetEntryStatus @default(DRAFT)
+  createdAt      DateTime                      @default(now()) @map("created_at")
+  updatedAt      DateTime                      @updatedAt @map("updated_at")
+  employment     WorkforceEmployment           @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, employmentId, workDate])
+  @@index([organizationId, status])
+  @@map("workforce_timesheet_entries")
+}
+
 model WorkforceAuditLog {
-  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String   @map("organization_id") @db.Uuid
-  actorUserId    String   @map("actor_user_id") @db.Uuid
-  action         String
-  entityType     String   @map("entity_type")
-  entityId       String   @map("entity_id")
-  payloadJson    Json     @default("{}") @map("payload_json")
-  createdAt      DateTime @default(now()) @map("created_at")
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String   @map("organization_id") @db.Uuid
+  workforceScopeId String?  @map("workforce_scope_id") @db.Uuid
+  actorUserId      String   @map("actor_user_id") @db.Uuid
+  action           String
+  entityType       String   @map("entity_type")
+  entityId         String   @map("entity_id")
+  globalPersonId   String?  @map("global_person_id") @db.Uuid
+  cpEmploymentId   String?  @map("cp_employment_id") @db.Uuid
+  payloadJson      Json     @default("{}") @map("payload_json")
+  createdAt        DateTime @default(now()) @map("created_at")
 
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
+  @@index([globalPersonId])
+  @@index([cpEmploymentId])
   @@map("workforce_audit_logs")
 }
 
@@ -785,6 +814,14 @@ enum OrgRouting {
   PARENT
 }
 
+/// Holding report-access roles (distinct from OrganizationMembership UserRole).
+enum HoldingAccessRole {
+  OWNER
+  ADMIN
+  ACCOUNTANT
+  VIEWER
+}
+
 model Organization {
   id                         String                             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name                       String
@@ -795,6 +832,8 @@ model Organization {
   billingStatus              BillingStatus                      @default(ACTIVE) @map("billing_status")
   operatingMode              OrgOperatingMode                   @default(STANDALONE) @map("operating_mode")
   parentOrgId                String?                            @map("parent_org_id") @db.Uuid
+  /// Holding grouping for multi-entity consolidation — distinct from parentOrgId/DEPARTMENT money routing.
+  holdingId                  String?                            @map("holding_id") @db.Uuid
   fiscalRouting              OrgRouting                         @default(OWN) @map("fiscal_routing")
   revenueRouting             OrgRouting                         @default(OWN) @map("revenue_routing")
   activeModules              String[]                           @default([]) @map("active_modules")
@@ -840,9 +879,11 @@ model Organization {
   owner                      User?                              @relation("OrganizationOwner", fields: [ownerId], references: [id])
   parentOrg                  Organization?                      @relation("OrgParent", fields: [parentOrgId], references: [id])
   departments                Organization[]                     @relation("OrgParent")
+  holding                    Holding?                           @relation(fields: [holdingId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
   @@index([parentOrgId])
+  @@index([holdingId])
   @@map("organizations")
 }
 
@@ -861,8 +902,43 @@ model User {
   earlyAccessSignups EarlyAccessSignup[]
   auditLogs          AuditLog[]
   ownedOrganizations Organization[]           @relation("OrganizationOwner")
+  holdings           Holding[]
+  holdingMemberships HoldingMembership[]
 
   @@map("users")
+}
+
+/// Multi-entity holding group (control-plane SoT). Distinct from DEPARTMENT parentOrgId routing.
+model Holding {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String    @unique
+  ownerId      String    @map("owner_id") @db.Uuid
+  baseCurrency String    @default("AZN") @map("base_currency") @db.VarChar(3)
+  isDeleted    Boolean   @default(false) @map("is_deleted")
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  memberships   HoldingMembership[]
+  owner         User                @relation(fields: [ownerId], references: [id])
+  organizations Organization[]
+
+  @@index([ownerId])
+  @@map("holdings")
+}
+
+model HoldingMembership {
+  userId    String            @map("user_id") @db.Uuid
+  holdingId String            @map("holding_id") @db.Uuid
+  role      HoldingAccessRole @default(VIEWER)
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  holding Holding @relation(fields: [holdingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, holdingId])
+  @@index([holdingId])
+  @@map("holding_memberships")
 }
 
 model OrganizationMembership {
