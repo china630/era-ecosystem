@@ -23,7 +23,7 @@
     "db:migrate:clear-squash-row": "prisma db execute --file prisma/scripts/ops/delete-squashed-migration-row.sql",
     "db:migrate:reset-public-dev": "prisma db execute --file prisma/scripts/ops/reset-public-schema-dev.sql",
     "db:migrate:dev": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "npx prisma migrate deploy",
     "db:migrate:reset": "prisma migrate reset",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",

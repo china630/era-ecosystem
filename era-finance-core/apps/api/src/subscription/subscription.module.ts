@@ -1,4 +1,4 @@
-import { Global, Module } from "@nestjs/common";
+import { forwardRef, Global, Module } from "@nestjs/common";
 import { AccessControlModule } from "../access/access-control.module";
 import { AdminModule } from "../admin/admin.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -8,7 +8,12 @@ import { SubscriptionGuard } from "./subscription.guard";
 
 @Global()
 @Module({
-  imports: [PrismaModule, QuotaModule, AccessControlModule, AdminModule],
+  imports: [
+    PrismaModule,
+    QuotaModule,
+    AccessControlModule,
+    forwardRef(() => AdminModule),
+  ],
   controllers: [],
   providers: [SubscriptionAccessService, SubscriptionGuard],
   exports: [SubscriptionAccessService, SubscriptionGuard],

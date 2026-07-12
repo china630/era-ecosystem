@@ -19,7 +19,7 @@ import { OrganizationSettingsService } from "./organization-settings.service";
 @Module({
   imports: [
     PrismaModule,
-    AccountingModule,
+    forwardRef(() => AccountingModule),
     AccountsModule,
     AccessControlModule,
     BankingModule,
