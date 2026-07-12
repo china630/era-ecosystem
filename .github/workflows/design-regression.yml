@@ -19,6 +19,14 @@ jobs:
       - name: Install orchestrator workspace (prisma migrate needs local bins)
         run: npm ci
         working-directory: era-orchestrator
+      - name: Prepare local env and start Postgres/Redis
+        run: |
+          if [ ! -f .env ]; then cp .env.ci.example .env || cp .env.example .env; fi
+          docker compose up -d postgres redis
+          for i in $(seq 1 60); do
+            docker compose exec -T postgres pg_isready -U era && break
+            sleep 2
+          done
       - name: Build shared packages image
         run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
       - name: Bootstrap local demo
