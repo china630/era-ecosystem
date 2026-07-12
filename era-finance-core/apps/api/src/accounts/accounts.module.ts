@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { AccountMappingsController } from "./account-mappings.controller";
@@ -7,7 +7,7 @@ import { AccountsService } from "./accounts.service";
 import { IfrsMappingRulesController } from "./ifrs-mapping-rules.controller";
 
 @Module({
-  imports: [PrismaModule, AccountingModule],
+  imports: [PrismaModule, forwardRef(() => AccountingModule)],
   controllers: [
     AccountsController,
     AccountMappingsController,
