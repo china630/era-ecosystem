@@ -4,8 +4,11 @@ import { SubscriptionTrialModule } from "../subscription/subscription-trial.modu
 import { SystemConfigModule } from "../system-config/system-config.module";
 import { AdminBillingController } from "./admin-billing.controller";
 import { AdminBillingService } from "./admin-billing.service";
+import { AdminLandingController } from "./admin-landing.controller";
 import { PublicPricingController } from "./public-pricing.controller";
+import { PublicLandingController } from "./public-landing.controller";
 import { PricingService } from "./pricing.service";
+import { LandingMarketingService } from "./landing-marketing.service";
 import { OrgOperatingModeController } from "./org-operating-mode.controller";
 import { OrgOperatingModeService } from "./org-operating-mode.service";
 import { OrgDepartmentsController } from "./org-departments.controller";
@@ -16,17 +19,26 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
   imports: [PrismaModule, SystemConfigModule, SubscriptionTrialModule],
   controllers: [
     AdminBillingController,
+    AdminLandingController,
     PublicPricingController,
+    PublicLandingController,
     OrgOperatingModeController,
     OrgDepartmentsController,
   ],
   providers: [
     AdminBillingService,
+    LandingMarketingService,
     PricingService,
     OrgOperatingModeService,
     OrgDepartmentsService,
     PermissionsGuard,
   ],
-  exports: [AdminBillingService, PricingService, OrgOperatingModeService, OrgDepartmentsService],
+  exports: [
+    AdminBillingService,
+    LandingMarketingService,
+    PricingService,
+    OrgOperatingModeService,
+    OrgDepartmentsService,
+  ],
 })
 export class AdminModule {}
