@@ -60,7 +60,7 @@ jobs:
           docker compose build clinic
           docker compose up -d clinic
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3203/login && break; sleep 2; done
-      - name: Design regression smoke (no snapshot compare)
+      - name: Design regression smoke (structure; no snapshot compare)
         run: npm run test:design-regression:smoke
         env:
           PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
@@ -69,12 +69,5 @@ jobs:
           PLAYWRIGHT_PASSWORD: '12345678'
           PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
           PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
-      - name: Run design regression
-        run: npm run test:design-regression
-        env:
-          PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
-          PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
-          PLAYWRIGHT_LOGIN: chingiz@era.com
-          PLAYWRIGHT_PASSWORD: '12345678'
-          PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
-          PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
+      # Pixel snapshots are Windows/Chrome locals (see e2e/design-regression/snapshots/README.md).
+      # Re-enable on Linux only after regenerating PNGs with: npm run test:design-regression:update
