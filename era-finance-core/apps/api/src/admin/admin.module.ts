@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AuthModule } from "../auth/auth.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
@@ -11,7 +11,7 @@ import { PricingService } from "./pricing.service";
 import { PublicTranslationsController } from "./public-translations.controller";
 
 @Module({
-  imports: [PrismaModule, SystemConfigModule, AuthModule],
+  imports: [PrismaModule, SystemConfigModule, forwardRef(() => AuthModule)],
   controllers: [
     AdminController,
     AdminAuditLogsController,

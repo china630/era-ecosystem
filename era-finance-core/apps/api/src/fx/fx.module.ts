@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { DataHubModule } from "../data-hub/data-hub.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -10,7 +10,12 @@ import { FxRevaluationService } from "./fx-revaluation.service";
 import { CurrencyConverterService } from "./currency-converter.service";
 
 @Module({
-  imports: [PrismaModule, DataHubModule, AccountingModule, SystemConfigModule],
+  imports: [
+    PrismaModule,
+    DataHubModule,
+    forwardRef(() => AccountingModule),
+    SystemConfigModule,
+  ],
   controllers: [FxController],
   providers: [
     CbarRateSyncService,
