@@ -16,10 +16,6 @@ jobs:
           node-version: '22'
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
-      - name: Install orchestrator + finance workspaces (prisma migrate needs local bins)
-        run: |
-          npm ci --prefix era-orchestrator
-          npm ci --prefix era-finance-core
       - name: Prepare local env and start Postgres/Redis
         run: |
           if [ ! -f .env ]; then cp .env.ci.example .env || cp .env.example .env; fi
@@ -28,6 +24,13 @@ jobs:
             docker compose exec -T postgres pg_isready -U era && break
             sleep 2
           done
+      - name: Install orchestrator + finance workspaces (prisma migrate needs local bins)
+        env:
+          # postinstall prisma generate requires DATABASE_URL (DB need not be reachable)
+          DATABASE_URL: postgresql://era:era@127.0.0.1:5432/era?schema=public
+        run: |
+          npm ci --prefix era-orchestrator
+          npm ci --prefix era-finance-core
       - name: Build shared packages image
         run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
       - name: Bootstrap local demo
