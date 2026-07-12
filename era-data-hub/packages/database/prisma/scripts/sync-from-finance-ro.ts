@@ -264,6 +264,33 @@ async function main() {
     }
   });
 
+  await copyTable("currencies", () => finance.currency.findMany(), async (rows) => {
+    for (const r of rows) {
+      await hub.currency.upsert({
+        where: { code: r.code },
+        create: {
+          code: r.code,
+          symbol: r.symbol,
+          decimals: r.decimals,
+          nameAz: r.nameAz,
+          nameRu: r.nameRu,
+          nameEn: r.nameEn,
+          sortOrder: r.sortOrder,
+          isActive: r.isActive,
+        },
+        update: {
+          symbol: r.symbol,
+          decimals: r.decimals,
+          nameAz: r.nameAz,
+          nameRu: r.nameRu,
+          nameEn: r.nameEn,
+          sortOrder: r.sortOrder,
+          isActive: r.isActive,
+        },
+      });
+    }
+  });
+
   console.info("[sync] done");
 }
 

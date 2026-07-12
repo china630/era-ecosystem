@@ -11,6 +11,8 @@ import { GeoController } from "./geo/geo.controller";
 import { GeoService } from "./geo/geo.service";
 import { UomController } from "./uom/uom.controller";
 import { UomService } from "./uom/uom.service";
+import { CurrenciesController } from "./currencies/currencies.controller";
+import { CurrenciesService } from "./currencies/currencies.service";
 import { TaxRatesController } from "./tax-rates/tax-rates.controller";
 import { TaxRatesService } from "./tax-rates/tax-rates.service";
 import { ChartOfAccountsController } from "./chart-of-accounts/chart-of-accounts.controller";
@@ -31,6 +33,7 @@ import { IngestModule } from "../ingest/ingest.module";
     HsController,
     GeoController,
     UomController,
+    CurrenciesController,
     TaxRatesController,
     ChartOfAccountsController,
     CalendarController,
@@ -43,6 +46,7 @@ import { IngestModule } from "../ingest/ingest.module";
     HsService,
     GeoService,
     UomService,
+    CurrenciesService,
     TaxRatesService,
     ChartOfAccountsService,
     CalendarService,

@@ -52,6 +52,18 @@ export type HubUom = {
   nameEn?: string;
 };
 
+/** ISO 4217 currency catalog (hub SoR; distinct from FX rates). */
+export type HubCurrency = {
+  code: string;
+  symbol: string;
+  decimals: number;
+  nameAz: string;
+  nameRu?: string;
+  nameEn?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
 export type HubTaxRate = {
   code: string;
   percent: number;

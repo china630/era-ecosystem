@@ -59,6 +59,7 @@ Accepted — **Pass 2** 2026-06-02 (Phase 1 cutover path, CBAR ingest, S8 cache)
 | 8 | Валидация/декодинг IBAN | 🟠 | M | `banking/iban.util.ts`, `iban-validation.service.ts` |
 | 9 | Адресный классификатор | 🟢 | M | `seeds/geo/countries.ts`, `cities.ts` |
 | 10 | Единицы измерения + маппинг таможни | 🟢 | M | `UnitOfMeasure`, `customs-law-uom-mapping.json` |
+| 10a | ISO 4217 currency catalog (коды/символы; не курсы) | 🟢 | M | Hub `Currency` + sync-from-finance; Finance FK-кэш |
 | 11 | Налоговые ставки на дату | 🟡 | M | `TaxRate`, `seeds/national/tax-rates.ts` |
 | 12 | Единый план счетов БУ АР | 🟢 | M | `catalog/national/chart-of-accounts-*.json` |
 | 13 | Ставка рефинансирования ЦБА | 🔴 | M | — |
@@ -124,6 +125,7 @@ Accepted — **Pass 2** 2026-06-02 (Phase 1 cutover path, CBAR ingest, S8 cache)
 | 7 | `GET /banks` · `GET /banks/branches/{code}` | банки/филиалы (FK по VÖEN) |
 | 8 | `GET /iban/validate?iban=` | контроль + резолв банка/филиала |
 | 12 | `GET /chart-of-accounts?profile=commercial` | план счетов (3 языка) |
+| 10a | `GET /currencies` | ISO 4217 currency catalog (SoR; ≠ FX rates) |
 
 ## Части, которые нужно отделить от ядра (детально)
 
@@ -221,7 +223,7 @@ Accepted — **Pass 2** 2026-06-02 (Phase 1 cutover path, CBAR ingest, S8 cache)
 
 1. **Фаза 0 — фасад:** `era-data-hub` поднимается и читает справочные модели финядра **только через RO-реплику (read-only)** — см. решение **D1** ниже. Прямые запросы в основную транзакционную БД финядра **запрещены**. Новые таблицы (`calendar_day`, классификаторы) хаб держит в собственной БД. Внешний API `/registry/v1/*` уже публикуется. Ingest-логику (CBAR-cron, кастомс-сиды, bank-seed) переиспользуем как есть.
 2. **Фаза 1 — вынос владения (Pass 2 implemented):** `npm run db:sync-from-finance`, `ERA_DATA_HUB_DATA_SOURCE=hub`, CBAR cron writes `era_data_hub`; Redis `ETag`/`Cache-Control` (S8); finance `DataHubClientService` + customs tariff resolve; orchestrator `validate-key`. Финядро: `ERA_DATA_HUB_ENABLED`, `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED`.
-3. **Фаза 2 — сжатие:** из финядра удаляются ingest-cron и (где безопасно) дублирующие таблицы; остаются только локальные кэши.
+3. **Фаза 2 — сжатие (contract) — complete 2026-07-12:** из `era-finance-core` удалены standalone SoR-таблицы без входящих FK (`CbarOfficialRate`, `CustomsTariffRate`, `GlobalCompanyDirectory`) + CBAR ingest/cron, customs tariff seeds/admin, bank/geo/UoM/tax seeds. Таблицы с входящими FK (`UnitOfMeasure`, `TaxRate`, `BankGlossary`, `BankBranch`, `Country`, `City`, **`Currency`**) оставлены как hub-sync read-through кэш. `/admin/data` hub-каталоги — read-only (включая ISO currency catalog). **FX rates** (`CbarOfficialRate`) и **ISO currency master** (`Currency`) — разные сущности: курсы уже в hub; каталог кодов ISO вынесен в hub SoR с `GET /registry/v1/currencies` + sync-from-finance. Prod flags: `ERA_DATA_HUB_ENABLED=true`, `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED=true`.
 
 ## Полка C (S10) — отдельный режим
 
