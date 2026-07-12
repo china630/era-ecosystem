@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { LedgerType, Prisma } from "@erafinance/database";
+import type { SubcontoService } from "./subconto.service";
 
 type Decimal = Prisma.Decimal;
 
@@ -9,9 +10,16 @@ export class IfrsAutoMappingService {
     tx: Prisma.TransactionClient;
     organizationId: string;
     transactionId: string;
-    nasLines: Array<{ accountCode: string; debit: Decimal; credit: Decimal }>;
+    nasLines: Array<{
+      accountCode: string;
+      debit: Decimal;
+      credit: Decimal;
+      journalEntryId: string;
+    }>;
+    subcontoService?: SubcontoService;
   }): Promise<void> {
-    const { tx, organizationId, transactionId, nasLines } = params;
+    const { tx, organizationId, transactionId, nasLines, subcontoService } =
+      params;
     if (nasLines.length === 0) return;
 
     const sourceCodes = [...new Set(nasLines.map((l) => l.accountCode))];
@@ -43,13 +51,23 @@ export class IfrsAutoMappingService {
       }
     }
 
-    const staged: Array<{ accountId: string; debit: Decimal; credit: Decimal }> = [];
+    const staged: Array<{
+      accountId: string;
+      debit: Decimal;
+      credit: Decimal;
+      sourceJournalEntryId: string;
+    }> = [];
     for (const line of nasLines) {
       const targetCode = ruleBySource.get(line.accountCode);
       if (!targetCode) return;
       const accountId = ifrsByCode.get(targetCode);
       if (!accountId) return;
-      staged.push({ accountId, debit: line.debit, credit: line.credit });
+      staged.push({
+        accountId,
+        debit: line.debit,
+        credit: line.credit,
+        sourceJournalEntryId: line.journalEntryId,
+      });
     }
 
     let sumDr = new Prisma.Decimal(0);
@@ -61,7 +79,7 @@ export class IfrsAutoMappingService {
     if (!sumDr.equals(sumCr)) return;
 
     for (const line of staged) {
-      await tx.journalEntry.create({
+      const ifrsEntry = await tx.journalEntry.create({
         data: {
           organizationId,
           transactionId,
@@ -71,6 +89,13 @@ export class IfrsAutoMappingService {
           ledgerType: LedgerType.IFRS,
         },
       });
+      if (subcontoService) {
+        await subcontoService.copyDimensionsToMirroredEntry(
+          tx,
+          line.sourceJournalEntryId,
+          ifrsEntry.id,
+        );
+      }
     }
   }
 }

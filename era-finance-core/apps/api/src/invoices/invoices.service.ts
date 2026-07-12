@@ -7,12 +7,13 @@ import {
   Optional,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { InvoiceStatus, Prisma, type UserRole } from "@erafinance/database";
+import { InvoiceStatus, Prisma, TradeContext, type UserRole } from "@erafinance/database";
 import { InvoicePrefillSchema, type InvoicePrefill } from "@erafinance/api-contracts";
 import { assertUserMayMutateInvoiceInPaidStatus } from "../auth/policies/invoice-finance.policy";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
+import { VatDepositService } from "../accounting/vat-deposit.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { InventoryService } from "../inventory/inventory.service";
 import {
@@ -20,6 +21,7 @@ import {
   type StorageService,
 } from "../storage/storage.interface";
 import { CreateInvoiceDto } from "./dto/create-invoice.dto";
+import { PatchInvoiceDto } from "./dto/patch-invoice.dto";
 import { AllocatePaymentDto } from "./dto/allocate-payment.dto";
 import { InvoicePdfQueueService } from "./invoice-pdf.queue";
 import {
@@ -42,6 +44,7 @@ import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
 import { NetworkDocumentService } from "../network/network-document.service";
+import { PriceListsService } from "../products/price-lists.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -52,6 +55,8 @@ const MULTI_CURRENCY_ROUNDING_TOLERANCE = new Decimal("0.01");
 @Injectable()
 export class InvoicesService {
   private readonly logger = new Logger(InvoicesService.name);
+  /** FX override from create/patch until revenue recognition (no invoice.fx column yet). */
+  private readonly pendingFxByInvoiceId = new Map<string, number>();
 
   private decodeCounterparty(cp: {
     nameCipher: string | null;
@@ -68,12 +73,14 @@ export class InvoicesService {
     private readonly accounting: AccountingService,
     private readonly posting: PostingAccountResolver,
     private readonly postingJournal: PostingJournalBuilder,
+    private readonly vatDeposit: VatDepositService,
     private readonly pdfQueue: InvoicePdfQueueService,
     private readonly inventory: InventoryService,
     private readonly mail: MailService,
     private readonly config: ConfigService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
     private readonly cashOrders: CashOrderService,
+    private readonly priceLists: PriceListsService,
     private readonly syncRuns: IntegrationSyncRunService,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
     @Optional() private readonly networkDocs?: NetworkDocumentService,
@@ -250,7 +257,7 @@ export class InvoicesService {
       },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
-    if ((invoice as { isInternational?: boolean }).isInternational) {
+    if ((invoice as { isInternational?: boolean }).isInternational || invoice.tradeContext === TradeContext.EXPORT) {
       throw new BadRequestException({
         code: "INVOICE_NOT_INTERNATIONAL_PREFILL",
         message: "International invoices are excluded from DVX prefill",
@@ -428,7 +435,11 @@ export class InvoicesService {
     const { items: builtItems, total } = await this.buildItems(
       organizationId,
       dto.items,
-      { vatInclusive },
+      {
+        vatInclusive,
+        counterpartyId: dto.counterpartyId,
+        asOfDate: dto.dueDate,
+      },
     );
 
     const warehouseId =
@@ -436,6 +447,9 @@ export class InvoicesService {
       (await this.inventory.resolveDefaultWarehouseId(organizationId));
 
     const number = await this.nextInvoiceNumber(organizationId);
+    const trade = this.resolveTradeFields(dto);
+    const fxOverride =
+      dto.fxRateToAzn != null && dto.currency !== "AZN" ? dto.fxRateToAzn : undefined;
 
     const invoice = await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const inv = await tx.invoice.create({
@@ -448,7 +462,11 @@ export class InvoicesService {
           debitAccountCode,
           totalAmount: total,
           currency,
-          isInternational: dto.isInternational ?? false,
+          isInternational: trade.isInternational,
+          tradeContext: trade.tradeContext,
+          incoterms: trade.incoterms,
+          exportDeclarationRef: trade.exportDeclarationRef,
+          countryOfDestination: trade.countryOfDestination,
           warehouseId: warehouseId ?? null,
           projectId: dto.projectId ?? null,
         },
@@ -470,6 +488,10 @@ export class InvoicesService {
       }
       return inv;
     });
+
+    if (fxOverride != null) {
+      this.pendingFxByInvoiceId.set(invoice.id, fxOverride);
+    }
 
     await this.pdfQueue.enqueue({ invoiceId: invoice.id, organizationId });
 
@@ -1216,6 +1238,15 @@ export class InvoicesService {
       });
     }
 
+    await this.vatDeposit.maybeRouteFromInvoicePayment(tx, organizationId, {
+      invoiceId: inv.id,
+      paymentAmount: amount,
+      debitAccountCode,
+      counterpartyId: inv.counterpartyId,
+      paymentDate,
+      invoiceNumber: inv.number,
+    });
+
     return { transactionId };
   }
 
@@ -1330,23 +1361,127 @@ export class InvoicesService {
     return { ok: true, sentTo: email };
   }
 
+  private resolveTradeFields(dto: {
+    tradeContext?: "DOMESTIC" | "EXPORT" | "IMPORT";
+    isInternational?: boolean;
+    incoterms?: string;
+    exportDeclarationRef?: string;
+    countryOfDestination?: string;
+  }): {
+    tradeContext: TradeContext;
+    isInternational: boolean;
+    incoterms: string | null;
+    exportDeclarationRef: string | null;
+    countryOfDestination: string | null;
+  } {
+    const tradeContext =
+      dto.tradeContext != null
+        ? (dto.tradeContext as TradeContext)
+        : dto.isInternational
+          ? TradeContext.EXPORT
+          : TradeContext.DOMESTIC;
+    return {
+      tradeContext,
+      isInternational: tradeContext !== TradeContext.DOMESTIC,
+      incoterms: dto.incoterms?.trim() || null,
+      exportDeclarationRef: dto.exportDeclarationRef?.trim() || null,
+      countryOfDestination: dto.countryOfDestination?.trim() || null,
+    };
+  }
+
+  async patch(organizationId: string, id: string, dto: PatchInvoiceDto) {
+    const existing = await this.prisma.invoice.findFirst({
+      where: { id, organizationId },
+      select: { id: true, status: true, revenueRecognized: true },
+    });
+    if (!existing) throw new NotFoundException("Invoice not found");
+    if (existing.status === InvoiceStatus.CANCELLED) {
+      throw new BadRequestException("Cancelled invoice cannot be edited");
+    }
+    if (existing.status === InvoiceStatus.LOCKED_BY_SIGNATURE) {
+      throw new BadRequestException("Invoice is locked by digital signature");
+    }
+
+    const tradePatch =
+      dto.tradeContext != null
+        ? this.resolveTradeFields({
+            tradeContext: dto.tradeContext,
+            incoterms: dto.incoterms,
+            exportDeclarationRef: dto.exportDeclarationRef,
+            countryOfDestination: dto.countryOfDestination,
+          })
+        : null;
+
+    if (dto.fxRateToAzn != null && dto.fxRateToAzn > 0) {
+      this.pendingFxByInvoiceId.set(id, dto.fxRateToAzn);
+    }
+
+    const updated = await this.prisma.invoice.update({
+      where: { id, organizationId },
+      data: {
+        ...(tradePatch
+          ? {
+              tradeContext: tradePatch.tradeContext,
+              isInternational: tradePatch.isInternational,
+              incoterms: dto.incoterms !== undefined ? tradePatch.incoterms : undefined,
+              exportDeclarationRef:
+                dto.exportDeclarationRef !== undefined
+                  ? tradePatch.exportDeclarationRef
+                  : undefined,
+              countryOfDestination:
+                dto.countryOfDestination !== undefined
+                  ? tradePatch.countryOfDestination
+                  : undefined,
+            }
+          : {
+              ...(dto.incoterms !== undefined
+                ? { incoterms: dto.incoterms.trim() || null }
+                : {}),
+              ...(dto.exportDeclarationRef !== undefined
+                ? { exportDeclarationRef: dto.exportDeclarationRef.trim() || null }
+                : {}),
+              ...(dto.countryOfDestination !== undefined
+                ? { countryOfDestination: dto.countryOfDestination.trim() || null }
+                : {}),
+            }),
+      },
+    });
+
+    await this.pdfQueue.enqueue({ invoiceId: id, organizationId });
+    return this.getOne(organizationId, updated.id);
+  }
+
   private async postRevenueRecognition(
     tx: Prisma.TransactionClient,
     organizationId: string,
     inv: { id: string; number: string; totalAmount: Decimal },
+    fxRateOverride?: number,
   ): Promise<{ transactionId: string }> {
-    return this.inventory.applyRevenueRecognitionWithSalesSnapshot(
+    const fx =
+      fxRateOverride ??
+      this.pendingFxByInvoiceId.get(inv.id);
+    const result = await this.inventory.applyRevenueRecognitionWithSalesSnapshot(
       tx,
       organizationId,
       inv.id,
       inv.totalAmount,
+      fx,
     );
+    if (this.pendingFxByInvoiceId.has(inv.id)) {
+      this.pendingFxByInvoiceId.delete(inv.id);
+    }
+    return result;
   }
 
   private async buildItems(
     organizationId: string,
     items: CreateInvoiceDto["items"],
-    opts?: { vatInclusive?: boolean },
+    opts?: {
+      vatInclusive?: boolean;
+      counterpartyId?: string;
+      asOfDate?: string;
+      channel?: string;
+    },
   ): Promise<{
     items: Array<{
       productId: string | null;
@@ -1374,7 +1509,7 @@ export class InvoicesService {
     for (const row of items) {
       let productId: string | null = null;
       let description: string | null = row.description ?? null;
-      let unitPriceInput = new Decimal(row.unitPrice);
+      let unitPriceInput: Decimal;
       let vatRate = new Decimal(row.vatRate);
 
       let unitOfMeasureCode: string | null = null;
@@ -1384,10 +1519,26 @@ export class InvoicesService {
         });
         if (!p) throw new NotFoundException(`Product ${row.productId} not found`);
         productId = p.id;
-        unitPriceInput = new Decimal(row.unitPrice);
+        if (row.unitPrice != null) {
+          unitPriceInput = new Decimal(row.unitPrice);
+        } else {
+          const resolved = await this.priceLists.resolvePrice(organizationId, {
+            productId: p.id,
+            counterpartyId: opts?.counterpartyId,
+            channel: opts?.channel,
+            qty: row.quantity,
+            asOfDate: opts?.asOfDate,
+          });
+          unitPriceInput = resolved.unitPrice;
+        }
         vatRate = new Decimal(row.vatRate);
         description = description ?? p.name;
         unitOfMeasureCode = p.unitOfMeasureCode;
+      } else {
+        if (row.unitPrice == null) {
+          throw new BadRequestException("unitPrice is required when productId is omitted");
+        }
+        unitPriceInput = new Decimal(row.unitPrice);
       }
 
       const uomFromDto = row.unitOfMeasureCode?.trim();

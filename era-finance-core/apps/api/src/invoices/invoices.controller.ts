@@ -35,14 +35,19 @@ import { RecordInvoicePaymentDto } from "./dto/record-invoice-payment.dto";
 import { UpdateInvoiceStatusDto } from "./dto/update-invoice-status.dto";
 import { BulkPrefillInvoicesDto } from "./dto/bulk-prefill-invoices.dto";
 import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
+import { PatchInvoiceDto } from "./dto/patch-invoice.dto";
 import { InvoicesService } from "./invoices.service";
+import { EqaimeSubmissionService } from "./eqaime-submission.service";
 
 @ApiTags("invoices")
 @ApiBearerAuth("bearer")
 @Controller("invoices")
 @UseGuards(RolesGuard)
 export class InvoicesController {
-  constructor(private readonly invoices: InvoicesService) {}
+  constructor(
+    private readonly invoices: InvoicesService,
+    private readonly eqaime: EqaimeSubmissionService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "Список инвойсов организации" })
@@ -133,6 +138,25 @@ export class InvoicesController {
     return this.invoices.saveBulkSyncResult(orgId, dto, user.userId);
   }
 
+  @Get(":id/eqaime/status")
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "e-Qaimə S2S status for sales invoice" })
+  eqaimeStatus(@OrganizationId() orgId: string, @Param("id") id: string) {
+    return this.eqaime.getStatus(orgId, id);
+  }
+
+  @Post(":id/eqaime/submit")
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Submit sales invoice to DVX e-Qaimə S2S (ERA_EQAIME_S2S_ENABLED=1; 503 when disabled)",
+  })
+  submitEqaime(@OrganizationId() orgId: string, @Param("id") id: string) {
+    return this.eqaime.submit(orgId, id);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Инвойс с позициями" })
   getOne(@OrganizationId() orgId: string, @Param("id") id: string) {
@@ -146,6 +170,19 @@ export class InvoicesController {
   @ApiOperation({ summary: "Создать инвойс (DRAFT), поставить PDF в очередь" })
   create(@OrganizationId() orgId: string, @Body() dto: CreateInvoiceDto) {
     return this.invoices.create(orgId, dto);
+  }
+
+  @Patch(":id")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.TRADE_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Update trade context / Incoterms / export fields (trade_pro)" })
+  patch(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Body() dto: PatchInvoiceDto,
+  ) {
+    return this.invoices.patch(orgId, id, dto);
   }
 
   @Patch(":id/status")

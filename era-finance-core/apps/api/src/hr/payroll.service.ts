@@ -441,22 +441,26 @@ export class PayrollService {
         type EmpBucket = {
           gross: Decimal;
           net: Decimal;
-          workerTaxes: Decimal;
-          employer: Decimal;
+          pit521: Decimal;
+          social523: Decimal;
+          employerExpense: Decimal;
         };
         type ContrBucket = {
           gross: Decimal;
-          withholding521: Decimal;
+          pit521: Decimal;
+          social523: Decimal;
         };
         const emptyEmp = (): EmpBucket => ({
           gross: new Decimal(0),
           net: new Decimal(0),
-          workerTaxes: new Decimal(0),
-          employer: new Decimal(0),
+          pit521: new Decimal(0),
+          social523: new Decimal(0),
+          employerExpense: new Decimal(0),
         });
         const emptyContr = (): ContrBucket => ({
           gross: new Decimal(0),
-          withholding521: new Decimal(0),
+          pit521: new Decimal(0),
+          social523: new Decimal(0),
         });
 
         const buckets = new Map<
@@ -480,19 +484,20 @@ export class PayrollService {
 
           if (s.employee.kind === EmployeeKind.CONTRACTOR) {
             cur.contr.gross = cur.contr.gross.add(s.gross);
-            cur.contr.withholding521 = cur.contr.withholding521
-              .add(s.incomeTax)
-              .add(s.contractorSocialWithheld);
+            cur.contr.pit521 = cur.contr.pit521.add(s.incomeTax);
+            cur.contr.social523 = cur.contr.social523.add(s.contractorSocialWithheld);
           } else {
             cur.emp.gross = cur.emp.gross.add(s.gross);
             cur.emp.net = cur.emp.net.add(s.net);
-            cur.emp.workerTaxes = cur.emp.workerTaxes
-              .add(s.incomeTax)
+            cur.emp.pit521 = cur.emp.pit521.add(s.incomeTax);
+            cur.emp.social523 = cur.emp.social523
               .add(s.dsmfWorker)
+              .add(s.dsmfEmployer)
               .add(s.itsWorker)
+              .add(s.itsEmployer)
               .add(s.unemploymentWorker)
-              .add(s.contractorSocialWithheld);
-            cur.emp.employer = cur.emp.employer
+              .add(s.unemploymentEmployer);
+            cur.emp.employerExpense = cur.emp.employerExpense
               .add(s.dsmfEmployer)
               .add(s.itsEmployer)
               .add(s.unemploymentEmployer);
@@ -538,20 +543,21 @@ export class PayrollService {
           }
           payrollExpenseCode = budgetLine.accountCode.trim();
         }
-        const [payrollPayableCode, supplierPayableCode, payrollTaxPayableCode] =
+        const [payrollPayableCode, supplierPayableCode, payrollTaxPayableCode, socialPayableCode] =
           await Promise.all([
             this.posting.resolveAccountCode(organizationId, "PAYROLL_PAYABLE", tx),
             this.posting.resolveAccountCode(organizationId, "SUPPLIER_PAYABLE", tx),
             this.posting.resolveAccountCode(organizationId, "PAYROLL_TAX_PAYABLE", tx),
+            this.posting.resolveAccountCode(organizationId, "PAYROLL_SOCIAL_PAYABLE", tx),
           ]);
 
         for (const [idx, b] of ordered.entries()) {
           const { emp, contr } = b;
-          const cr521 = emp.workerTaxes
-            .add(emp.employer)
-            .add(contr.withholding521);
-          const debit721 = emp.gross.add(emp.employer).add(contr.gross);
-          if (debit721.isZero()) {
+          const cr521 = emp.pit521.add(contr.pit521);
+          const cr523 = emp.social523.add(contr.social523);
+          const contrWithholding = contr.pit521.add(contr.social523);
+          const debit721 = emp.gross.add(emp.employerExpense).add(contr.gross);
+          if (debit721.isZero() && cr521.isZero() && cr523.isZero()) {
             continue;
           }
           const deptLabel = b.departmentId
@@ -571,10 +577,10 @@ export class PayrollService {
               credit: 0,
             });
           }
-          if (emp.employer.gt(0)) {
+          if (emp.employerExpense.gt(0)) {
             lines.push({
               accountCode: payrollExpenseCode,
-              debit: emp.employer.toString(),
+              debit: emp.employerExpense.toString(),
               credit: 0,
             });
           }
@@ -599,10 +605,10 @@ export class PayrollService {
               credit: contr.gross.toString(),
             });
           }
-          if (contr.withholding521.gt(0)) {
+          if (contrWithholding.gt(0)) {
             lines.push({
               accountCode: supplierPayableCode,
-              debit: contr.withholding521.toString(),
+              debit: contrWithholding.toString(),
               credit: 0,
             });
           }
@@ -611,6 +617,13 @@ export class PayrollService {
               accountCode: payrollTaxPayableCode,
               debit: 0,
               credit: cr521.toString(),
+            });
+          }
+          if (cr523.gt(0)) {
+            lines.push({
+              accountCode: socialPayableCode,
+              debit: 0,
+              credit: cr523.toString(),
             });
           }
 

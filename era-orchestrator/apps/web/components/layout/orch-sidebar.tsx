@@ -60,6 +60,7 @@ export function OrchSidebar({
     () => ({
       organization:
         pathname.startsWith("/organizations") ||
+        pathname.startsWith("/holdings") ||
         pathname === "/settings" ||
         pathname.startsWith("/settings/"),
       resources: pathname === "/pricing" || pathname.startsWith("/help"),
@@ -124,6 +125,14 @@ export function OrchSidebar({
             isActive={
               pathname === "/organizations" || pathname.startsWith("/organizations/")
             }
+            icon={Building2}
+            nested
+            onNavClick={onNavClick}
+          />
+          <SideNavItem
+            href="/holdings"
+            label={t("holdings")}
+            isActive={pathname === "/holdings" || pathname.startsWith("/holdings/")}
             icon={Building2}
             nested
             onNavClick={onNavClick}

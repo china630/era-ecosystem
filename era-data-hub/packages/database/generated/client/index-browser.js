@@ -216,6 +216,20 @@ exports.Prisma.UnitOfMeasureScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.CurrencyScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  symbol: 'symbol',
+  decimals: 'decimals',
+  nameAz: 'nameAz',
+  nameRu: 'nameRu',
+  nameEn: 'nameEn',
+  isActive: 'isActive',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.CountryScalarFieldEnum = {
   id: 'id',
   iso2: 'iso2',
@@ -314,6 +328,7 @@ exports.Prisma.ModelName = {
   BankBranch: 'BankBranch',
   CustomsTariffRate: 'CustomsTariffRate',
   UnitOfMeasure: 'UnitOfMeasure',
+  Currency: 'Currency',
   Country: 'Country',
   City: 'City',
   TaxRate: 'TaxRate'

@@ -16,7 +16,6 @@ const API_SRC = join(
 const WHITELIST_SUFFIXES = [
   "common/cash-account-code.util.ts",
   "banking/banking.service.ts",
-  "reporting/reporting.service.ts",
   "reports/financial-report.service.ts",
   "scripts/local-mock-seed.ts",
 ];

@@ -14,7 +14,7 @@ export class FxController {
   @Get("rates")
   @ApiOperation({
     summary:
-      "Курсы к AZN (USD, EUR, GBP, RUB, CNY, TRY, JPY); из БД, при отсутствии — один запрос к ЦБА на весь набор",
+      "Курсы к AZN (USD, EUR, GBP, RUB, CNY, TRY, JPY) via era-data-hub (official CBAR)",
   })
   async rates(): Promise<{
     rates: FxDashboardRateRow[];

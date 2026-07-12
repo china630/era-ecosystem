@@ -40,6 +40,16 @@ Customs: `CustomsTaxCalculatorService` resolves tariffs from hub when enabled. `
 
 See [docs/adr/fx-rates-ecosystem.md](../../docs/adr/fx-rates-ecosystem.md).
 
+## Currency catalog API (`/registry/v1/currencies`)
+
+ISO 4217 **codes** (symbol, decimals, names) — **not** CBAR FX rates.
+
+| Endpoint | Notes |
+|----------|-------|
+| `GET /currencies` | Active rows ordered by `sortOrder`, `code` |
+
+Fill hub via `npm run db:sync-from-finance` (upsert by `code` from Finance seed). Finance: `DataHubClientService.getCurrencies()` → hub-first `GET /system/currencies`; local `currencies` table remains FK cache; `/admin/data/currencies` read-only (POST/PATCH → 410).
+
 ## Calendar API (`/registry/v1/calendar/*`)
 
 | Endpoint | Mode | Notes |

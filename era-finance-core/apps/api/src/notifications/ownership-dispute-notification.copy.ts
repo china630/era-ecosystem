@@ -1,6 +1,6 @@
 /**
  * Copy for ownership dispute alerts (in-app + email). AZ/RU primary; EN short line for mixed teams.
- * Align with `platform-recovery/dispute/legal-templates/dispute-notice-*.md` for legal wording.
+ * Dispute arbitration SoT lives on Orchestrator.
  */
 
 export const OWNERSHIP_DISPUTE_IN_APP_TITLE =

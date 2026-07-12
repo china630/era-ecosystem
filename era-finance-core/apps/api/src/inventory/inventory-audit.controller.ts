@@ -13,10 +13,14 @@ import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
 import { CreateInventoryAuditDto } from "./dto/create-inventory-audit.dto";
 import { InventoryAuditService } from "./inventory-audit.service";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
 
 @ApiTags("inventory-audits")
 @ApiBearerAuth("bearer")
 @Controller("inventory/audits")
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule("inventory")
 export class InventoryAuditController {
   constructor(private readonly audits: InventoryAuditService) {}
 

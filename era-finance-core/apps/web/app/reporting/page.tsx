@@ -282,6 +282,15 @@ export default function ReportingPage() {
               <Link href="/reporting/receivables" className="text-action hover:text-primary">
                 {t("reporting.receivablesLink")}
               </Link>
+              <Link href="/reporting/account-card" className="text-action hover:text-primary">
+                {t("reporting.accountCard.link")}
+              </Link>
+              <Link href="/reporting/turnovers" className="text-action hover:text-primary">
+                {t("reporting.turnovers.link")}
+              </Link>
+              <Link href="/reporting/journal" className="text-action hover:text-primary">
+                {t("reporting.journal.link")}
+              </Link>
               <Link href="/sales/reconciliation" className="text-action hover:text-primary">
                 {t("reporting.reconciliationLink")}
               </Link>

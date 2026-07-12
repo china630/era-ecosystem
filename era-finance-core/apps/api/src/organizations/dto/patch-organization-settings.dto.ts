@@ -109,4 +109,10 @@ export class PatchOrganizationSettingsDto {
   @IsOptional()
   @IsDateString()
   lockedPeriodUntil?: string | null;
+
+  /** ASAN İmza / HSM subscriber id stored at Organization.settings.tax.asanUserId */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  asanUserId?: string | null;
 }

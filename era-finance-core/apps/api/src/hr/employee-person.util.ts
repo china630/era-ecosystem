@@ -51,6 +51,30 @@ export function personDisplayFromOpsProfile(
   };
 }
 
+export async function batchComplianceFinMap(
+  mdm: OrchestratorMdmClientService,
+  organizationId: string,
+  personIds: string[],
+): Promise<Map<string, { fin: string | null; note: string | null }>> {
+  const unique = [...new Set(personIds.filter(Boolean))];
+  const entries = await Promise.all(
+    unique.map(async (globalPersonId) => {
+      const ci = await mdm.complianceIdentity(globalPersonId, organizationId);
+      if (!ci) {
+        return { globalPersonId, fin: null, note: "MDM unavailable — FIN omitted" };
+      }
+      if (ci.accessDenied) {
+        return { globalPersonId, fin: null, note: "FIN access denied — omitted" };
+      }
+      if (!ci.fin?.trim()) {
+        return { globalPersonId, fin: null, note: "FIN not on file — omitted" };
+      }
+      return { globalPersonId, fin: ci.fin.trim(), note: null };
+    }),
+  );
+  return new Map(entries.map((e) => [e.globalPersonId, { fin: e.fin, note: e.note }]));
+}
+
 export async function batchEmployeePersonMap(
   mdm: OrchestratorMdmClientService,
   organizationId: string,

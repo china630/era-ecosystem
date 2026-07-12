@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../lib/auth-context";
 import { useOrgPermissions } from "../lib/use-org-permissions";
@@ -250,28 +250,22 @@ function LedgerToggle() {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useTranslation();
   const { token, user, ready, logout, organizations } = useAuth();
   const { canPostAccounting, canViewHoldingReports } = useOrgPermissions();
   const { ready: subReady, effectiveSnapshot: snapshot } = useSubscription();
 
-  /** Без организации доступны только «Мои компании» (и Super-Admin для супер-админа). */
-  useEffect(() => {
-    if (!ready || !token || !user) return;
-    if (user.organizationId) return;
-    if (pathname === "/companies" || pathname.startsWith("/companies/")) return;
-    if (pathname.startsWith("/partner")) return;
-    if (user.isSuperAdmin && pathname.startsWith("/admin/data")) return;
-    router.replace("/companies");
-  }, [ready, token, user, pathname, router]);
-
+  /**
+   * No active organization -> blocking modal: pick an existing org, or (when the
+   * user has none) go to the control plane to create/join one. Super-Admin can
+   * still browse the reference hub (`/admin/data`) without an active org.
+   */
   const mustBlockCompanySelect =
     ready &&
     !!token &&
     !!user &&
     !user.organizationId &&
-    organizations.length >= 2;
+    !(user.isSuperAdmin && pathname.startsWith("/admin/data"));
 
   /**
    * Замки только после загрузки снимка подписки. Пока snapshot === null,
@@ -345,7 +339,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       pathname.startsWith("/sales/invoices") ||
       pathname.startsWith("/sales/reconciliation");
     const purchasesActive =
-      pathname.startsWith("/purchases") || pathname.startsWith("/finance/payables");
+      pathname.startsWith("/purchases") ||
+      pathname.startsWith("/finance/payables") ||
+      pathname.startsWith("/customs");
     const manufacturingNavActive = pathname.startsWith("/manufacturing");
     const warehouseActive = pathname.startsWith("/inventory");
     const catalogCrmActive =

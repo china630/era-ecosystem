@@ -86,6 +86,8 @@ type OrgBankAccount = {
   currency: string;
 };
 
+type TradeContextValue = "DOMESTIC" | "EXPORT" | "IMPORT";
+
 type InvoiceFormValues = {
   counterpartyId: string;
   dueDate: string;
@@ -94,7 +96,10 @@ type InvoiceFormValues = {
   currency: SupportedCurrency;
   fxRateToAzn: string;
   vatInclusive: boolean;
-  isInternational: boolean;
+  tradeContext: TradeContextValue;
+  incoterms: string;
+  countryOfDestination: string;
+  exportDeclarationRef: string;
   goods: InvoiceGoodsLineForm[];
   services: InvoiceServiceLineForm[];
 };
@@ -209,7 +214,10 @@ export function CreateInvoiceModal({
       currency: "AZN",
       fxRateToAzn: "1.0000",
       vatInclusive: false,
-      isInternational: false,
+      tradeContext: "DOMESTIC",
+      incoterms: "",
+      countryOfDestination: "",
+      exportDeclarationRef: "",
       goods: [blankGoodsLine()],
       services: [blankServiceLine()],
     },
@@ -230,6 +238,7 @@ export function CreateInvoiceModal({
   const watchedCounterpartyId = useWatch({ control, name: "counterpartyId" });
   const watchedCurrency = useWatch({ control, name: "currency" });
   const watchedFx = useWatch({ control, name: "fxRateToAzn" });
+  const watchedTradeContext = useWatch({ control, name: "tradeContext" });
 
   /** Last committed (currency, fx) used for repricing lines when either changes. */
   const invoiceFxPrevRef = useRef<{ currency: SupportedCurrency; fxStr: string } | null>(null);
@@ -283,7 +292,10 @@ export function CreateInvoiceModal({
       currency: "AZN",
       fxRateToAzn: "1.0000",
       vatInclusive: false,
-      isInternational: false,
+      tradeContext: "DOMESTIC",
+      incoterms: "",
+      countryOfDestination: "",
+      exportDeclarationRef: "",
       goods: [blankGoodsLine()],
       services: [blankServiceLine()],
     });
@@ -558,7 +570,11 @@ export function CreateInvoiceModal({
         currency: data.currency,
         fxRateToAzn: data.currency === "AZN" ? 1 : fx,
         vatInclusive: data.vatInclusive,
-        isInternational: data.isInternational,
+        tradeContext: data.tradeContext,
+        isInternational: data.tradeContext !== "DOMESTIC",
+        incoterms: data.incoterms.trim() || undefined,
+        countryOfDestination: data.countryOfDestination.trim() || undefined,
+        exportDeclarationRef: data.exportDeclarationRef.trim() || undefined,
         items,
       }),
     });
@@ -940,19 +956,71 @@ export function CreateInvoiceModal({
                 />
                 <Controller
                   control={control}
-                  name="isInternational"
+                  name="tradeContext"
                   render={({ field }) => (
-                    <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[#34495E]">
-                      <input
-                        type="checkbox"
-                        className={MODAL_CHECKBOX_CLASS}
-                        checked={field.value}
-                        onChange={(e) => field.onChange(e.target.checked)}
-                      />
-                      {t("trade.export.toggle")}
+                    <label className="flex flex-col gap-1 text-[13px] text-[#34495E]">
+                      <span>{t("trade.context.label")}</span>
+                      <select
+                        className={MODAL_INPUT_CLASS}
+                        value={field.value}
+                        onChange={(e) =>
+                          field.onChange(e.target.value as TradeContextValue)
+                        }
+                      >
+                        <option value="DOMESTIC">{t("trade.context.domestic")}</option>
+                        <option value="EXPORT">{t("trade.context.export")}</option>
+                        <option value="IMPORT">{t("trade.context.import")}</option>
+                      </select>
                     </label>
                   )}
                 />
+                {watchedTradeContext === "EXPORT" ? (
+                  <>
+                    <Controller
+                      control={control}
+                      name="incoterms"
+                      render={({ field }) => (
+                        <label className="flex flex-col gap-1 text-[13px] text-[#34495E]">
+                          <span>{t("trade.incoterms")}</span>
+                          <input
+                            className={MODAL_INPUT_CLASS}
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            placeholder="FOB"
+                          />
+                        </label>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="countryOfDestination"
+                      render={({ field }) => (
+                        <label className="flex flex-col gap-1 text-[13px] text-[#34495E]">
+                          <span>{t("trade.countryOfDestination")}</span>
+                          <input
+                            className={MODAL_INPUT_CLASS}
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        </label>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name="exportDeclarationRef"
+                      render={({ field }) => (
+                        <label className="flex flex-col gap-1 text-[13px] text-[#34495E]">
+                          <span>{t("trade.exportDeclarationRef")}</span>
+                          <input
+                            className={MODAL_INPUT_CLASS}
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        </label>
+                      )}
+                    />
+                  </>
+                ) : null}
               </div>
               <div className="flex flex-wrap items-center justify-end gap-x-6 gap-y-1 text-[13px] text-[#34495E]">
                 <span>

@@ -1,11 +1,7 @@
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Injectable,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import axios from "axios";
 import { LedgerType } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
@@ -16,6 +12,7 @@ import {
   type VatQuarterSalesRow,
   VatQuarterDataService,
 } from "./vat-quarter-data.service";
+import { EtaxesSubmissionAdapterFactory } from "./etaxes-submission.adapters";
 
 /** Нормализованный VÖEN: ровно 10 цифр */
 function normalizeVoenDigits(raw: string | null | undefined): string | null {
@@ -111,6 +108,17 @@ export type ETaxesVatDeclarationPackage = {
   };
   appendixSales: ETaxesVatSalesLineJson[];
   appendixPurchases: ETaxesVatPurchaseLineJson[];
+  totals: {
+    salesNet: string;
+    salesVat: string;
+    salesGross: string;
+    purchasesNet: string;
+    purchasesVat: string;
+    purchasesGross: string;
+    outputVat: string;
+    inputVat: string;
+    vatPayable: string;
+  };
   ledgerReference?: {
     nasRevenue601CreditQuarterAzn?: string | null;
   };
@@ -121,9 +129,17 @@ export class ETaxesIntegrationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly vatQuarter: VatQuarterDataService,
-    private readonly config: ConfigService,
     private readonly posting: PostingAccountResolver,
+    private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
   ) {}
+
+  private resolveAsanUserId(settingsJson: unknown): string | null {
+    if (!settingsJson || typeof settingsJson !== "object") return null;
+    const tax = (settingsJson as Record<string, unknown>).tax;
+    if (!tax || typeof tax !== "object") return null;
+    const id = (tax as Record<string, unknown>).asanUserId;
+    return typeof id === "string" && id.trim() ? id.trim() : null;
+  }
 
   private validateRows(
     orgVoen: string,
@@ -176,13 +192,10 @@ export class ETaxesIntegrationService {
           },
         });
       }
-      if (
-        row.supplierVoen?.trim() &&
-        !isValidVoen10(row.supplierVoen)
-      ) {
+      if (!isValidVoen10(row.supplierVoen)) {
         issues.push({
           code: "PURCHASE_SUPPLIER_VOEN_INVALID",
-          message: `Alış sətri ${i + 1}: təchizatçı VÖEN-i səhvdir.`,
+          message: `Alış sətri ${i + 1} (${row.documentNumber}): təchizatçı VÖEN-i yoxdur və ya səhvdir.`,
           context: { stockMovementId: row.stockMovementId },
         });
       }
@@ -286,7 +299,7 @@ export class ETaxesIntegrationService {
     if (!org) throw new BadRequestException("Organization not found");
     const orgTaxId = decodeOrganizationTaxId(org);
 
-    const { fromStr, toStr, sales, purchases } =
+    const { fromStr, toStr, sales, purchases, totals } =
       await this.vatQuarter.loadQuarterVatRows(organizationId, year, quarter);
 
     const errors = this.validateRows(orgTaxId, sales, purchases);
@@ -315,6 +328,7 @@ export class ETaxesIntegrationService {
       },
       appendixSales: this.mapSalesToBtp(sales),
       appendixPurchases: this.mapPurchasesToBtp(purchases),
+      totals,
       ledgerReference: {
         nasRevenue601CreditQuarterAzn: nas601,
       },
@@ -337,6 +351,7 @@ export class ETaxesIntegrationService {
     submitted: boolean;
     gatewayStatus?: number;
     gatewayMessage?: string;
+    signedPayloadHash?: string;
   }> {
     const { package: pkg, validation } = await this.buildDeclarationPackage(
       organizationId,
@@ -350,57 +365,15 @@ export class ETaxesIntegrationService {
       });
     }
 
-    const url = this.config.get<string>("E_TAXES_VAT_SUBMIT_URL")?.trim();
-    if (!url) {
-      throw new HttpException(
-        {
-          code: "E_TAXES_GATEWAY_NOT_CONFIGURED",
-          message:
-            "E_TAXES_VAT_SUBMIT_URL təyin edilməyib. Birbaşa API inteqrasiyası üçün URL konfiqurasiya edin.",
-        },
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
-    }
-
-    try {
-      const res = await axios.post(url, pkg, {
-        timeout: 25_000,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        validateStatus: () => true,
-      });
-      if (res.status >= 200 && res.status < 300) {
-        return { submitted: true, gatewayStatus: res.status };
-      }
-      const bodySnippet =
-        typeof res.data === "string"
-          ? res.data.slice(0, 500)
-          : JSON.stringify(res.data).slice(0, 500);
-      throw new HttpException(
-        {
-          code: "E_TAXES_GATEWAY_REJECTED",
-          message: `Portal cavabı: HTTP ${res.status}`,
-          body: bodySnippet,
-        },
-        HttpStatus.BAD_GATEWAY,
-      );
-    } catch (e) {
-      if (e instanceof HttpException) throw e;
-      if (axios.isAxiosError(e)) {
-        throw new HttpException(
-          {
-            code: "E_TAXES_GATEWAY_UNREACHABLE",
-            message:
-              e.code === "ECONNABORTED"
-                ? "Gateway timeout"
-                : e.message || "Network error",
-          },
-          HttpStatus.SERVICE_UNAVAILABLE,
-        );
-      }
-      throw e;
-    }
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const adapter = this.submissionFactory.get();
+    return adapter.submit(pkg, {
+      organizationId,
+      asanUserId: this.resolveAsanUserId(org?.settings),
+      destination: "VAT",
+    });
   }
 }

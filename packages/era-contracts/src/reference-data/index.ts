@@ -21,6 +21,7 @@ export type {
   HubBankBranch,
   HubIbanValidation,
   HubUom,
+  HubCurrency,
   HubTaxRate,
   HubGeoCountry,
   HubGeoCity,

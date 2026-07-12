@@ -17,6 +17,7 @@ import {
 } from "../../lib/design-system";
 import { EntityAuditHistory } from "../../components/admin/entity-audit-history";
 import { Button } from "../../components/ui/button";
+import { EmasS2sPanel } from "./emas-s2s-panel";
 
 type JobPositionOpt = {
   id: string;
@@ -377,6 +378,7 @@ export function EditEmployeeModal({
                   </div>
                 ) : null}
               </div>
+              <EmasS2sPanel employeeId={employeeId} open={open} />
             </div>
 
             <div className={MODAL_FOOTER_ACTIONS_CLASS}>

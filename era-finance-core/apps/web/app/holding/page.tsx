@@ -36,6 +36,9 @@ type HoldingSummary = {
   consolidationNote: string | null;
 };
 
+const ORCH_WEB =
+  process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000";
+
 export default function HoldingDashboardPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
@@ -251,9 +254,12 @@ export default function HoldingDashboardPage() {
             })}
           />
           <p className="text-center text-sm text-[#7F8C8D]">
-            <Link href="/companies" className={LINK_ACCENT_CLASS}>
+            <a
+              href={`${ORCH_WEB.replace(/\/$/, "")}/holdings`}
+              className={LINK_ACCENT_CLASS}
+            >
               {t("companiesPage.title")}
-            </Link>
+            </a>
           </p>
         </div>
       ) : null}

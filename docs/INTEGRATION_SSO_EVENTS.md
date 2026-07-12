@@ -225,7 +225,20 @@ Readiness snapshot: [READINESS_MATRIX.md](./READINESS_MATRIX.md).
 | POST | `/internal/v1/mdm/persons/merge` | Foreigner → citizen (explicit workflow) |
 | POST | `/internal/v1/mdm/organizations/register` | VÖEN → `GlobalLegalEntity` |
 
-**Satellite proxies:** `POST /api/mdm/person-lookup` (hotel, clinic), `POST /api/mdm/person-merge` (SatAdmin).
+### Holdings (S2S)
+
+**Auth:** `Authorization: Bearer` + optional `x-service-token` (`ORCHESTRATOR_INTERNAL_SERVICE_TOKEN` / `SATELLITE_EVENT_SERVICE_TOKEN`).
+
+User JWT composition API: `v1/holdings/*` (create, attach org, members). Web: Orchestrator `/holdings`. ADR: [holdings-control-plane.md](./adr/holdings-control-plane.md).
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/internal/v1/holdings?userId=` | Holdings where user may view consolidated reports |
+| GET | `/internal/v1/holdings/:id?userId=` | Composition + `canViewReports` for Finance consolidation |
+
+**Finance consumer:** `GET /api/holdings`, reporting under `/api/holdings/:id/*` — live-lookup CP, no local holding SoT.
+
+**MDM satellite proxies:** `POST /api/mdm/person-lookup` (hotel, clinic), `POST /api/mdm/person-merge` (SatAdmin).
 
 **HR events:** `STAFF_PROVISIONED` payload includes `globalPersonId` when Finance employee is MDM-linked ([workforce-identity ADR](./adr/workforce-identity-and-hr-provisioning.md)).
 

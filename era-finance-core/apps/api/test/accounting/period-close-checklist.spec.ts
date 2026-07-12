@@ -22,7 +22,12 @@ describe("AccountingService period-close checklist hardening", () => {
           { count: BigInt(overrides?.brokenJournalLinks ?? 0) },
         ]),
     };
-    const svc = new AccountingService(prisma as any, {} as any, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma as any,
+      {} as any,
+      createMockPostingResolver(),
+      {} as never,
+    );
     return { svc, prisma };
   }
 

@@ -18,6 +18,7 @@ import { AccountsService } from "../accounts/accounts.service";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { AccessControlService } from "../access/access-control.service";
+import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
 
 @Injectable()
@@ -27,6 +28,7 @@ export class OrganizationsService {
     private readonly access: AccessControlService,
     private readonly accounts: AccountsService,
     private readonly dataHub: DataHubClientService,
+    private readonly holdingsCp: OrchestratorHoldingsClientService,
   ) {}
 
   private chartRemoteLoader(): ChartJsonRemoteLoader | undefined {
@@ -129,68 +131,47 @@ export class OrganizationsService {
             id: true,
             name: true,
             taxIdCipher: true,
+            taxIdBlindIndex: true,
             currency: true,
-            holdingId: true,
-            holding: { select: { id: true, name: true, baseCurrency: true } },
           },
         },
       },
       orderBy: { joinedAt: "asc" },
     });
 
-    const free: Array<{
-      id: string;
-      name: string;
-      taxId: string;
-      currency: string;
-    }> = [];
-
-    const byHolding = new Map<
-      string,
-      {
-        holdingId: string;
-        holdingName: string;
-        baseCurrency: string;
-        organizations: typeof free;
-      }
-    >();
-
-    for (const m of memberships) {
-      const o = m.organization;
-      if (!o.holdingId || !o.holding) {
-        free.push({
-          id: o.id,
-          name: o.name,
-          taxId: decodeOrganizationTaxId(o),
-          currency: o.currency,
-        });
-        continue;
-      }
-      const h = o.holding;
-      const key = h.id;
-      const cur =
-        byHolding.get(key) ??
+    const orgById = new Map(
+      memberships.map((m) => [
+        m.organization.id,
         {
-          holdingId: h.id,
-          holdingName: h.name,
-          baseCurrency: (h.baseCurrency ?? "AZN").toUpperCase(),
-          organizations: [],
-        };
-      cur.organizations.push({
-        id: o.id,
-        name: o.name,
-        taxId: decodeOrganizationTaxId(o),
-        currency: o.currency,
-      });
-      byHolding.set(key, cur);
-    }
-
-    const holdings = [...byHolding.values()].sort((a, b) =>
-      a.holdingName.localeCompare(b.holdingName),
+          id: m.organization.id,
+          name: m.organization.name,
+          taxId: decodeOrganizationTaxId(m.organization),
+          currency: m.organization.currency,
+        },
+      ]),
     );
 
-    free.sort((a, b) => a.name.localeCompare(b.name));
+    const cpHoldings = await this.holdingsCp.listHoldingsForUser(userId);
+    const holdingOrgIds = new Set<string>();
+    const holdings = cpHoldings.map((h) => {
+      const organizations = h.organizationIds
+        .map((id) => orgById.get(id))
+        .filter((o): o is NonNullable<typeof o> => o != null);
+      for (const o of organizations) holdingOrgIds.add(o.id);
+      return {
+        holdingId: h.id,
+        holdingName: h.name,
+        baseCurrency: (h.baseCurrency ?? "AZN").toUpperCase(),
+        organizations,
+      };
+    });
 
-    return { holdings, freeOrganizations: free };
+    const freeOrganizations = [...orgById.values()]
+      .filter((o) => !holdingOrgIds.has(o.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    holdings.sort((a, b) => a.holdingName.localeCompare(b.holdingName));
+
+    return { holdings, freeOrganizations };
   }
 }

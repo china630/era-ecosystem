@@ -23,38 +23,11 @@ export class AuditHubCalculationService {
       });
     }
     if (t === "fx_snapshot") {
-      const rate = await this.prisma.cbarOfficialRate.findUnique({
-        where: { id },
-        select: {
-          id: true,
-          rateDate: true,
-          currencyCode: true,
-          value: true,
-          nominal: true,
-          rate: true,
-          status: true,
-        },
+      throw new NotFoundException({
+        code: "FX_SNAPSHOT_MOVED_TO_HUB",
+        message:
+          "Local CbarOfficialRate removed (Data-Hub Phase 2). Official FX lives in era-data-hub; use GET /registry/v1/fx/rates.",
       });
-      if (!rate) {
-        throw new NotFoundException();
-      }
-      return {
-        schemaVersion: 1,
-        type: "fx_snapshot",
-        id: rate.id,
-        summary: {
-          implemented: true,
-          scope: "platform",
-          rateDate: rate.rateDate.toISOString().slice(0, 10),
-          currencyCode: rate.currencyCode,
-          value: rate.value.toString(),
-          nominal: rate.nominal,
-          rate: rate.rate.toString(),
-          status: rate.status,
-        },
-        rationale:
-          "CBAR official FX row (global catalog, not tenant-scoped). Used for AZN conversion and regulatory reference; compare with invoice/transaction dates when reviewing foreign-currency postings.",
-      };
     }
     if (t === "fixed_asset_depreciation") {
       const row = await this.prisma.fixedAssetDepreciationMonth.findFirst({

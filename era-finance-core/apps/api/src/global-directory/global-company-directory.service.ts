@@ -2,7 +2,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import { CounterpartyLegalForm } from "@erafinance/database";
 import { DataHubClientService } from "../data-hub/data-hub-client.service";
 import { mapHubCompanyToDirectory } from "../data-hub/hub-company-map";
-import { PrismaService } from "../prisma/prisma.service";
 
 export type DirectoryUpsertInput = {
   taxId: string;
@@ -13,71 +12,24 @@ export type DirectoryUpsertInput = {
   legalForm?: CounterpartyLegalForm | null;
 };
 
+/**
+ * Company directory by VÖEN — read-through to era-data-hub (Phase 2).
+ * Local GlobalCompanyDirectory table and upserts removed.
+ */
 @Injectable()
 export class GlobalCompanyDirectoryService {
   private readonly logger = new Logger(GlobalCompanyDirectoryService.name);
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly dataHub: DataHubClientService,
-  ) {}
+  constructor(private readonly dataHub: DataHubClientService) {}
 
-  /**
-   * Fire-and-forget: does not block HTTP response.
-   */
-  scheduleUpsert(input: DirectoryUpsertInput): void {
-    void this.upsert(input).catch((e) => {
-      this.logger.warn(
-        `GlobalCompanyDirectory upsert failed: ${e instanceof Error ? e.message : String(e)}`,
-      );
-    });
+  /** No-op: company registry writes belong to data-hub. */
+  scheduleUpsert(_input: DirectoryUpsertInput): void {
+    // Intentionally empty — Finance no longer owns global company SoR.
   }
 
-  async upsert(input: DirectoryUpsertInput): Promise<void> {
-    const taxId = input.taxId.trim();
-    if (!/^\d{10}$/.test(taxId)) {
-      return;
-    }
-    const name = input.name.trim() || taxId;
-    const legalAddress = input.legalAddress?.trim() || null;
-    const phone = input.phone?.trim() || null;
-    const directorName = input.directorName?.trim() || null;
-    const legalForm = input.legalForm ?? null;
-
-    const prev = await this.prisma.globalCompanyDirectory.findUnique({
-      where: { taxId },
-    });
-    const mergedName = name || prev?.name || taxId;
-    const mergedLegal =
-      legalAddress != null && legalAddress !== ""
-        ? legalAddress
-        : (prev?.legalAddress ?? null);
-    const mergedPhone =
-      phone != null && phone !== "" ? phone : (prev?.phone ?? null);
-    const mergedDirector =
-      directorName != null && directorName !== ""
-        ? directorName
-        : (prev?.directorName ?? null);
-    const mergedLegalForm = legalForm ?? prev?.legalForm ?? null;
-
-    await this.prisma.globalCompanyDirectory.upsert({
-      where: { taxId },
-      create: {
-        taxId,
-        name: mergedName,
-        legalAddress: legalAddress ?? null,
-        phone: phone ?? null,
-        directorName: directorName ?? null,
-        legalForm,
-      },
-      update: {
-        name: mergedName,
-        legalAddress: mergedLegal,
-        phone: mergedPhone,
-        directorName: mergedDirector,
-        legalForm: mergedLegalForm,
-      },
-    });
+  /** @deprecated Local upsert removed; kept as no-op for call-site compatibility. */
+  async upsert(_input: DirectoryUpsertInput): Promise<void> {
+    this.logger.debug("GlobalCompanyDirectory upsert skipped (data-hub SoR)");
   }
 
   async findByTaxId(taxId: string) {
@@ -85,26 +37,22 @@ export class GlobalCompanyDirectoryService {
     if (!/^\d{10}$/.test(id)) {
       return null;
     }
-    if (this.dataHub.isEnabled()) {
-      const remote = await this.dataHub.getCompanyByVoen(id);
-      if (remote) {
-        const mapped = mapHubCompanyToDirectory(remote);
-        if (mapped.taxId) {
-          return {
-            taxId: mapped.taxId,
-            name: mapped.name,
-            legalAddress: mapped.legalAddress,
-            phone: mapped.phone,
-            directorName: mapped.directorName,
-            legalForm: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        }
-      }
+    if (!this.dataHub.isEnabled()) {
+      return null;
     }
-    return this.prisma.globalCompanyDirectory.findUnique({
-      where: { taxId: id },
-    });
+    const remote = await this.dataHub.getCompanyByVoen(id);
+    if (!remote) return null;
+    const mapped = mapHubCompanyToDirectory(remote);
+    if (!mapped.taxId) return null;
+    return {
+      taxId: mapped.taxId,
+      name: mapped.name,
+      legalAddress: mapped.legalAddress,
+      phone: mapped.phone,
+      directorName: mapped.directorName,
+      legalForm: null as CounterpartyLegalForm | null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
   }
 }

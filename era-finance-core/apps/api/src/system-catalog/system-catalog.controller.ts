@@ -55,7 +55,20 @@ export class SystemCatalogController {
 
   @Get("currencies")
   @ApiOperation({ summary: "Active ISO 4217 currencies (global catalog)" })
-  listCurrencies() {
+  async listCurrencies() {
+    if (this.dataHub.isEnabled()) {
+      const remote = await this.dataHub.getCurrencies();
+      if (remote?.currencies?.length) {
+        return remote.currencies.map((c) => ({
+          code: c.code,
+          symbol: c.symbol,
+          decimals: c.decimals,
+          nameAz: c.nameAz,
+          nameRu: c.nameRu,
+          nameEn: c.nameEn,
+        }));
+      }
+    }
     return this.prisma.currency.findMany({
       where: { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],

@@ -25,6 +25,7 @@ import { EarlyAccessModule } from "./early-access/early-access.module";
 import { QuotaModule } from "./quota/quota.module";
 import { PlatformModule } from "./platform/platform.module";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
+import { HoldingsModule } from "./holdings/holdings.module";
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
     AuthModule,
     MembershipModule,
     OrganizationModule,
+    HoldingsModule,
     DisputeModule,
     EntitlementsModule,
     SatelliteEventsModule,

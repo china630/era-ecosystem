@@ -23,6 +23,7 @@ import {
 } from "../reporting/reporting-period.util";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
+import { SubcontoService } from "./subconto.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
 
 type Decimal = Prisma.Decimal;
@@ -47,6 +48,11 @@ export type PostTransactionLine = {
   accountCode: string;
   debit: string | number;
   credit: string | number;
+  dimensions?: Array<{
+    subcontoTypeId: string;
+    valueId?: string | null;
+    valueRef?: string | null;
+  }>;
 };
 
 @Injectable()
@@ -55,6 +61,7 @@ export class AccountingService {
     private readonly prisma: PrismaService,
     private readonly ifrsAutoMapping: IfrsAutoMappingService,
     private readonly posting: PostingAccountResolver,
+    private readonly subconto: SubcontoService,
   ) {}
 
   validateBalance(lines: PostTransactionLine[]): void {
@@ -99,6 +106,8 @@ export class AccountingService {
       departmentId?: string | null;
       ledgerType?: LedgerType;
       lines: PostTransactionLine[];
+      /** System year-end close may post into an already closed calendar month. */
+      skipClosedPeriodGuard?: boolean;
     },
   ): Promise<{ transactionId: string }> {
     const {
@@ -111,6 +120,7 @@ export class AccountingService {
       departmentId,
       ledgerType = LedgerType.NAS,
       lines,
+      skipClosedPeriodGuard = false,
     } = params;
     this.validateBalance(lines);
 
@@ -125,12 +135,14 @@ export class AccountingService {
       org.kind,
       lines.map((l) => l.accountCode),
     );
-    const closed = getClosedPeriodKeys(org?.settings);
-    const key = monthKeyUtc(date);
-    if (closed.includes(key)) {
-      throw new BadRequestException(
-        `Период ${key} закрыт: новые проводки на эту дату недоступны`,
-      );
+    if (!skipClosedPeriodGuard) {
+      const closed = getClosedPeriodKeys(org?.settings);
+      const key = monthKeyUtc(date);
+      if (closed.includes(key)) {
+        throw new BadRequestException(
+          `Период ${key} закрыт: новые проводки на эту дату недоступны`,
+        );
+      }
     }
     const lockedPeriodUntil = getLockedPeriodUntil(org?.settings);
     if (lockedPeriodUntil && date.getTime() <= lockedPeriodUntil.getTime()) {
@@ -183,6 +195,12 @@ export class AccountingService {
       accountId: string;
       debit: Decimal;
       credit: Decimal;
+      journalEntryId: string;
+    }> = [];
+    const dimensionTargets: Array<{
+      journalEntryId: string;
+      accountId: string;
+      line: PostTransactionLine;
     }> = [];
 
     for (const line of lines) {
@@ -192,7 +210,7 @@ export class AccountingService {
       }
       const debit = new Decimal(line.debit ?? 0);
       const credit = new Decimal(line.credit ?? 0);
-      await tx.journalEntry.create({
+      const journalEntry = await tx.journalEntry.create({
         data: {
           organizationId,
           transactionId: transaction.id,
@@ -207,8 +225,21 @@ export class AccountingService {
         accountId: account.id,
         debit,
         credit,
+        journalEntryId: journalEntry.id,
+      });
+      dimensionTargets.push({
+        journalEntryId: journalEntry.id,
+        accountId: account.id,
+        line,
       });
     }
+
+    await this.subconto.applyDimensionsToJournalEntries(tx, {
+      organizationId,
+      journalEntries: dimensionTargets,
+      counterpartyId,
+      departmentId,
+    });
 
     if (ledgerType === LedgerType.NAS) {
       await this.ifrsAutoMapping.mirrorFromNas({
@@ -216,6 +247,7 @@ export class AccountingService {
         organizationId,
         transactionId: transaction.id,
         nasLines,
+        subcontoService: this.subconto,
       });
     }
 

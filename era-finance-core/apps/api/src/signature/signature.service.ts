@@ -14,6 +14,9 @@ import {
 import { parseSignerDisplayName } from "../common/certificate-subject.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { reconciliationDocumentUuid } from "./reconciliation-document-id";
+import type { GovSignaturePurpose } from "./gov-signature.adapter";
+import { GovSignatureAdapterFactory } from "./gov-signature.adapters";
 
 const MOCK_DELAY_MS = 2000;
 
@@ -32,11 +35,198 @@ export class SignatureService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly govSignatureFactory: GovSignatureAdapterFactory,
   ) {}
 
   /** 1 — имитация Mobile ID (по умолчанию); 0 — только ожидание внешнего шлюза (без авто-завершения). */
   isGatewayMock(): boolean {
     return this.config.get<string>("SIGNATURE_GATEWAY_MOCK", "1") !== "0";
+  }
+
+  /**
+   * Signs a gov-submit payload (tax declaration, e-qaimə, reconciliation package).
+   * Uses MockGovSignatureAdapter when SIGNATURE_GATEWAY_MOCK=1 and ERA_ASAN_SIMA_LIVE=0.
+   */
+  async signGovPayload(
+    payload: Buffer | string,
+    opts: {
+      organizationId: string;
+      asanUserId?: string | null;
+      purpose: GovSignaturePurpose;
+      provider?: SignatureProvider;
+    },
+  ) {
+    const adapter = this.govSignatureFactory.get();
+    return adapter.signPayload(payload, opts);
+  }
+
+  async initiateReconciliationSignature(
+    organizationId: string,
+    counterpartyId: string,
+    dateFrom: string,
+    dateTo: string,
+    provider: SignatureProvider,
+  ) {
+    const cp = await this.prisma.counterparty.findFirst({
+      where: { id: counterpartyId, organizationId },
+      select: { id: true },
+    });
+    if (!cp) throw new NotFoundException("Counterparty not found");
+
+    const documentId = reconciliationDocumentUuid(
+      organizationId,
+      counterpartyId,
+      dateFrom,
+      dateTo,
+    );
+
+    const completed = await this.prisma.digitalSignatureLog.findFirst({
+      where: {
+        organizationId,
+        documentId,
+        documentKind: SignedDocumentKind.RECONCILIATION_ACT,
+        status: DigitalSignatureStatus.COMPLETED,
+      },
+    });
+    if (completed) {
+      throw new BadRequestException(
+        "Reconciliation act already has a completed signature for this period",
+      );
+    }
+
+    await this.prisma.digitalSignatureLog.deleteMany({
+      where: {
+        organizationId,
+        documentId,
+        documentKind: SignedDocumentKind.RECONCILIATION_ACT,
+        status: DigitalSignatureStatus.PENDING_MOBILE,
+      },
+    });
+
+    const started = new Date();
+    const log = await this.prisma.digitalSignatureLog.create({
+      data: {
+        organizationId,
+        documentId,
+        documentKind: SignedDocumentKind.RECONCILIATION_ACT,
+        provider,
+        status: DigitalSignatureStatus.PENDING_MOBILE,
+        pendingStartedAt: started,
+      },
+    });
+
+    const message =
+      provider === SignatureProvider.ASAN_IMZA
+        ? "Mobil telefonunuzda ASAN İmza təsdiqi gözlənilir (akt hesablaşma)."
+        : "SİMA tətbiqi ilə QR kodu skan edin (akt hesablaşma).";
+
+    const base = {
+      signatureLogId: log.id,
+      status: "AWAITING_MOBILE_CONFIRMATION" as const,
+      message,
+      provider,
+      documentId,
+    };
+
+    if (provider === SignatureProvider.SIMA) {
+      const gatewayUrl = this.config.get<string>("SIMA_QR_PAYLOAD_URL")?.trim();
+      return {
+        ...base,
+        simQrPayload: gatewayUrl ?? buildSimQrPayload(log.id),
+        simQrHintAz:
+          "SİMA mobil tətbiqini açın və bu QR kodu skan edin (biometrik imza).",
+      };
+    }
+
+    return base;
+  }
+
+  async getReconciliationSignatureStatus(
+    organizationId: string,
+    counterpartyId: string,
+    dateFrom: string,
+    dateTo: string,
+    logId: string,
+  ) {
+    const documentId = reconciliationDocumentUuid(
+      organizationId,
+      counterpartyId,
+      dateFrom,
+      dateTo,
+    );
+    const log = await this.prisma.digitalSignatureLog.findFirst({
+      where: {
+        id: logId,
+        organizationId,
+        documentId,
+        documentKind: SignedDocumentKind.RECONCILIATION_ACT,
+      },
+    });
+    if (!log) throw new NotFoundException("Signature session not found");
+
+    if (
+      log.status === DigitalSignatureStatus.PENDING_MOBILE &&
+      this.isGatewayMock()
+    ) {
+      const t0 = log.pendingStartedAt?.getTime() ?? log.createdAt.getTime();
+      if (Date.now() - t0 >= MOCK_DELAY_MS) {
+        await this.tryFinalizeMockReconciliationSignature(
+          organizationId,
+          documentId,
+          log.id,
+          log.provider,
+        );
+        const refreshed = await this.prisma.digitalSignatureLog.findFirst({
+          where: { id: logId },
+        });
+        if (!refreshed) throw new NotFoundException("Signature session not found");
+        return this.toStatusPayload(refreshed);
+      }
+    }
+
+    const rest = this.toStatusPayload(log);
+    if (
+      log.status === DigitalSignatureStatus.PENDING_MOBILE &&
+      log.provider === SignatureProvider.SIMA
+    ) {
+      const gatewayUrl = this.config.get<string>("SIMA_QR_PAYLOAD_URL")?.trim();
+      return {
+        ...rest,
+        simQrPayload: gatewayUrl ?? buildSimQrPayload(log.id),
+        simQrHintAz:
+          "SİMA mobil tətbiqini açın və bu QR kodu skan edin (biometrik imza).",
+      };
+    }
+    return rest;
+  }
+
+  private async tryFinalizeMockReconciliationSignature(
+    organizationId: string,
+    documentId: string,
+    logId: string,
+    provider: SignatureProvider,
+  ): Promise<void> {
+    const thumb = `MOCK-${randomBytes(16).toString("hex")}`;
+    const issuer =
+      provider === SignatureProvider.ASAN_IMZA
+        ? "CN=ERA Mock ASAN İmza CA"
+        : "CN=ERA Mock SİMA Biometric CA";
+    await this.prisma.digitalSignatureLog.updateMany({
+      where: {
+        id: logId,
+        organizationId,
+        documentId,
+        documentKind: SignedDocumentKind.RECONCILIATION_ACT,
+        status: DigitalSignatureStatus.PENDING_MOBILE,
+      },
+      data: {
+        status: DigitalSignatureStatus.COMPLETED,
+        signedAt: new Date(),
+        certificateThumbprint: thumb,
+        certificateSubject: "CN=Demo İmzalayan (MOCK)",
+        certificateIssuer: issuer,
+      },
+    });
   }
 
   /**

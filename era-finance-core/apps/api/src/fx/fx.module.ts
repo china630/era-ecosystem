@@ -3,8 +3,6 @@ import { AccountingModule } from "../accounting/accounting.module";
 import { DataHubModule } from "../data-hub/data-hub.module";
 import { PrismaModule } from "../prisma/prisma.module";
 import { SystemConfigModule } from "../system-config/system-config.module";
-import { CbarFxService } from "./cbar-fx.service";
-import { CbarRateSyncCron } from "./cbar-rate-sync.cron";
 import { CbarRateSyncService } from "./cbar-rate-sync.service";
 import { FxController } from "./fx.controller";
 import { FxRevaluationCron } from "./fx-revaluation.cron";
@@ -15,18 +13,11 @@ import { CurrencyConverterService } from "./currency-converter.service";
   imports: [PrismaModule, DataHubModule, AccountingModule, SystemConfigModule],
   controllers: [FxController],
   providers: [
-    CbarFxService,
     CbarRateSyncService,
-    CbarRateSyncCron,
     FxRevaluationService,
     FxRevaluationCron,
     CurrencyConverterService,
   ],
-  exports: [
-    CbarFxService,
-    CbarRateSyncService,
-    FxRevaluationService,
-    CurrencyConverterService,
-  ],
+  exports: [CbarRateSyncService, FxRevaluationService, CurrencyConverterService],
 })
 export class FxModule {}

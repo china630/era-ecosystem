@@ -34,7 +34,7 @@ export function RpaUpsellModal(props: {
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={props.onClose}>
             {t("common.cancel")}
           </button>
-          <a href="/settings/subscription" className={PRIMARY_BUTTON_CLASS} onClick={props.onClose}>
+          <a href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`} className={PRIMARY_BUTTON_CLASS} onClick={props.onClose}>
             {t("bulk.upsell.cta")}
           </a>
         </div>

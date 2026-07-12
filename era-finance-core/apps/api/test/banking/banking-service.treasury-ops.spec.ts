@@ -13,10 +13,6 @@ describe("BankingService treasury operations", () => {
         findMany: jest.fn(),
         ...overrides?.account,
       },
-      cbarOfficialRate: {
-        findUnique: jest.fn(),
-        ...overrides?.cbarOfficialRate,
-      },
       bankStatement: {
         create: jest.fn().mockResolvedValue({ id: "stmt-1" }),
         ...overrides?.bankStatement,
@@ -37,6 +33,13 @@ describe("BankingService treasury operations", () => {
       postJournalInTransaction: jest.fn().mockResolvedValue({ transactionId: "tx-1" }),
       ...accountingOverride,
     } as any;
+    const cbarRates = {
+      getFinalOfficialAznPerUnit: jest.fn(async (code: string) => {
+        if (code === "USD") return 1.7;
+        if (code === "EUR") return 1.8;
+        return 1;
+      }),
+    } as any;
     const service = new BankingService(
       prisma,
       {} as any,
@@ -44,8 +47,9 @@ describe("BankingService treasury operations", () => {
       {} as any,
       {} as any,
       createMockPostingResolver(),
+      cbarRates,
     );
-    return { service, accounting, prisma };
+    return { service, accounting, prisma, cbarRates };
   }
 
   it("createInternalTransfer rejects frozen source account", async () => {
@@ -171,9 +175,6 @@ describe("BankingService treasury operations", () => {
       { code: "762" },
       { code: "731" },
     ]);
-    tx.cbarOfficialRate.findUnique
-      .mockResolvedValueOnce({ rate: new Decimal("1.7") }) // USD
-      .mockResolvedValueOnce({ rate: new Decimal("1.8") }); // EUR
 
     const { service, accounting } = makeService(tx);
     await service.createBankConversion("org-1", {
@@ -227,9 +228,6 @@ describe("BankingService treasury operations", () => {
       { code: "762" },
       { code: "731" },
     ]);
-    tx.cbarOfficialRate.findUnique
-      .mockResolvedValueOnce({ rate: new Decimal("1.7") })
-      .mockResolvedValueOnce({ rate: new Decimal("1.8") });
 
     const { service } = makeService(tx);
     await expect(
