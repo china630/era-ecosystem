@@ -27,6 +27,7 @@ function makeServiceWithInvoice(invoice: unknown) {
     noop,
     noop,
     noop,
+    noop, // syncRuns
   );
   return { service, prisma };
 }

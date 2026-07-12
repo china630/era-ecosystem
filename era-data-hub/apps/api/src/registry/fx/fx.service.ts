@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { CbarRateStatus, Prisma } from "@erafinance/database";
+import { CbarRateStatus, Prisma } from "@era/data-hub-database";
 import { DataSourceService } from "../../prisma/data-source.service";
 import { registryMeta } from "../../common/registry-meta";
 

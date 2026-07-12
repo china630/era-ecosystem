@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { seedLandingModuleMarketing } from "@era365/database";
+import { Prisma, seedLandingModuleMarketing } from "@era365/database";
 import { PrismaService } from "../prisma/prisma.service";
 import type { PatchLandingModuleMarketingDto } from "./dto/patch-landing-module-marketing.dto";
 
@@ -57,9 +57,15 @@ export class LandingMarketingService {
       where: { moduleSlug },
       data: {
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
-        names: dto.names,
-        descriptions: dto.descriptions,
-        tasks: dto.tasks,
+        ...(dto.names !== undefined
+          ? { names: dto.names as Prisma.InputJsonValue }
+          : {}),
+        ...(dto.descriptions !== undefined
+          ? { descriptions: dto.descriptions as Prisma.InputJsonValue }
+          : {}),
+        ...(dto.tasks !== undefined
+          ? { tasks: dto.tasks as Prisma.InputJsonValue }
+          : {}),
       },
     });
     return serializeLandingModule(row);
