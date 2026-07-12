@@ -29,7 +29,7 @@ describe("posting role profiles", () => {
 
   it("invoice revenue schema defines debit/credit roles", () => {
     const schema = getPostingSchema("INVOICE_REVENUE_RECOGNITION");
-    expect(schema.lines).toHaveLength(2);
+    expect(schema.lines).toHaveLength(3);
     expect(BUDGET_FORBIDDEN_COMMERCIAL_INVOICE_CODES.has("211")).toBe(true);
     expect(BUDGET_FORBIDDEN_COMMERCIAL_INVOICE_CODES.has("601")).toBe(true);
   });

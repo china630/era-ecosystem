@@ -9,6 +9,9 @@ describe("AccountingService", () => {
   const ifrsAutoMappingStub = {
     mirrorFromNas: jest.fn().mockResolvedValue(undefined),
   } as unknown as IfrsAutoMappingService;
+  const subcontoStub = {
+    applyDimensionsToJournalEntries: jest.fn().mockResolvedValue(undefined),
+  } as never;
 
   const orgId = "00000000-0000-0000-0000-000000000001";
   const acc101 = {
@@ -57,7 +60,12 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma,
+      ifrsAutoMappingStub,
+      createMockPostingResolver(),
+      subcontoStub,
+    );
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
     const out = await svc.postTransaction({
@@ -82,7 +90,12 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma,
+      ifrsAutoMappingStub,
+      createMockPostingResolver(),
+      subcontoStub,
+    );
     const date = new Date(Date.UTC(2025, 5, 10, 12, 0, 0, 0));
 
     await expect(
@@ -111,7 +124,12 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma,
+      ifrsAutoMappingStub,
+      createMockPostingResolver(),
+      subcontoStub,
+    );
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
     await expect(
@@ -138,7 +156,12 @@ describe("AccountingService", () => {
       ),
     } as unknown as PrismaService;
 
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma,
+      ifrsAutoMappingStub,
+      createMockPostingResolver(),
+      subcontoStub,
+    );
     const date = new Date(Date.UTC(2025, 5, 15, 12, 0, 0, 0));
 
     await expect(
@@ -163,7 +186,12 @@ describe("AccountingService", () => {
         fn(tx),
       ),
     } as unknown as PrismaService;
-    const svc = new AccountingService(prisma, ifrsAutoMappingStub, createMockPostingResolver());
+    const svc = new AccountingService(
+      prisma,
+      ifrsAutoMappingStub,
+      createMockPostingResolver(),
+      subcontoStub,
+    );
 
     await expect(
       svc.postTransaction({

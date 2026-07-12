@@ -58,13 +58,13 @@ export class LandingMarketingService {
       data: {
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
         ...(dto.names !== undefined
-          ? { names: dto.names as Prisma.InputJsonValue }
+          ? { names: dto.names as unknown as Prisma.InputJsonValue }
           : {}),
         ...(dto.descriptions !== undefined
-          ? { descriptions: dto.descriptions as Prisma.InputJsonValue }
+          ? { descriptions: dto.descriptions as unknown as Prisma.InputJsonValue }
           : {}),
         ...(dto.tasks !== undefined
-          ? { tasks: dto.tasks as Prisma.InputJsonValue }
+          ? { tasks: dto.tasks as unknown as Prisma.InputJsonValue }
           : {}),
       },
     });
