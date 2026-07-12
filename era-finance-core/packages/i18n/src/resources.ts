@@ -1179,6 +1179,10 @@ export const resources = {
         title: "Мои компании",
         selectCompanyTitle: "Выберите компанию",
         selectCompanyHint: "Для продолжения необходимо выбрать активную компанию.",
+        noCompanyTitle: "Нет компании",
+        noCompanyHint:
+          "Чтобы продолжить, создайте компанию в ERA или присоединитесь к существующей.",
+        manageOnHub: "Перейти в ERA Hub",
         subtitle:
           "Выберите компанию для работы или запросите доступ к уже зарегистрированной по VÖEN.",
         yourCompanies: "Ваши компании",
