@@ -17,9 +17,9 @@
   },
   "scripts": {
     "build": "npx prisma generate && tsc -p tsconfig.runtime.json && node -e \"const fs=require('fs'),p=require('path');for(const f of fs.readdirSync('runtime-cjs/core').filter(x=>x.endsWith('.js'))){const fp=p.join('runtime-cjs/core',f);fs.writeFileSync(fp,fs.readFileSync(fp,'utf8').replaceAll('../../../generated/client','../../generated/client'));}\"",
-    "db:generate": "npx --yes -p prisma@7.0.0 -p dotenv@16 prisma generate",
-    "db:migrate:dev": "npx --yes -p prisma@7.0.0 -p dotenv@16 prisma migrate dev",
-    "db:migrate:deploy": "npx --yes -p prisma@7.0.0 -p dotenv@16 prisma migrate deploy"
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.0.0",
