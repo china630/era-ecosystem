@@ -14,7 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Playwright
+      - name: Install root Playwright deps
+        run: npm ci
+      - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
       - name: Prepare local env and start Postgres/Redis
         run: |
