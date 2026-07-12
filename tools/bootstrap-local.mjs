@@ -108,7 +108,22 @@ function runOptional(label, cmd, cwd, extraEnv = {}) {
   }
 }
 
-const satelliteDirs = [
+/** Prefer local prisma bin; otherwise pin Prisma 6 (npx latest is Prisma 7 and rejects schema `url`). */
+const PRISMA_CLI_PIN = "prisma@6.9.0";
+function prismaCli(satRoot, prismaArgs) {
+  const localBin = path.join(
+    satRoot,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "prisma.cmd" : "prisma",
+  );
+  if (fs.existsSync(localBin)) {
+    return `"${localBin}" ${prismaArgs}`;
+  }
+  return `npx --yes ${PRISMA_CLI_PIN} ${prismaArgs}`;
+}
+
+const allSatelliteDirs = [
   { dir: "era-hotel-pms", db: "era_hotel_pms", mode: "migrate", adminRole: "Hotel_Admin" },
   { dir: "era-fnb-pos", db: "era_fnb_pos", mode: "push", adminRole: "FB_MANAGER" },
   { dir: "era-retail-pos", db: "era_retail_pos", mode: "push", adminRole: "OUTLET_ADMIN" },
@@ -122,6 +137,12 @@ const satelliteDirs = [
   { dir: "era-bank", db: "era_bank", mode: "push", adminRole: "TELLER" },
   { dir: "era-bank-dbo", db: "era_bank_dbo", mode: "push", adminRole: null },
 ];
+
+/** Design / smoke: only hotel + clinic (see SKIP_HEAVY in design-regression.yml). */
+const skipHeavy = process.env.SKIP_HEAVY === "1" || process.env.SKIP_HEAVY === "true";
+const satelliteDirs = skipHeavy
+  ? allSatelliteDirs.filter((s) => s.dir === "era-hotel-pms" || s.dir === "era-clinic")
+  : allSatelliteDirs;
 
 async function main() {
   if (!skipOrch) {
@@ -192,6 +213,11 @@ async function main() {
   }
 
   if (migrateSatellites) {
+    if (skipHeavy) {
+      process.stdout.write(
+        "\n[bootstrap] SKIP_HEAVY=1 — migrating only era-hotel-pms + era-clinic\n",
+      );
+    }
     const demoPassword =
       process.env.PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD ?? "12345678";
     const demoUserScript = "prisma/scripts/upsert-ecosystem-demo-user.ts";
@@ -202,10 +228,14 @@ async function main() {
       if (mode === "migrate") {
         run(
           `${dir} migrate deploy`,
-          "npx prisma migrate deploy",
+          prismaCli(satRoot, "migrate deploy"),
           satRoot,
           env,
         );
+        // Hotel FO smoke needs roles with permissions + master data (not empty demo-user role).
+        if (dir === "era-hotel-pms") {
+          run(`${dir} db seed`, "npm run db:seed", satRoot, env);
+        }
       } else if (mode === "migrate-core") {
         run(
           `${dir} migrate deploy`,
@@ -218,20 +248,23 @@ async function main() {
           ERA_BANK_ORGANIZATION_ID: process.env.ERA_BANK_ORGANIZATION_ID ?? "demo-bank-org-001",
         });
       } else {
-        runOptional(`${dir} db push`, "npx prisma db push", satRoot, env);
+        runOptional(`${dir} db push`, prismaCli(satRoot, "db push"), satRoot, env);
       }
       if (adminRole) {
-        runOptional(
-          `${dir} ecosystem demo user`,
-          `npx tsx ${demoUserScript}`,
-          satRoot,
-          {
-            ...env,
-            ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
-            ECOSYSTEM_DEMO_PASSWORD: demoPassword,
-            ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
-          },
-        );
+        const demoEnv = {
+          ...env,
+          ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
+          ECOSYSTEM_DEMO_PASSWORD: demoPassword,
+          ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
+        };
+        const demoLabel = `${dir} ecosystem demo user`;
+        const demoCmd = `npx tsx ${demoUserScript}`;
+        // Design (SKIP_HEAVY) must have login users; other sats stay best-effort.
+        if (skipHeavy || dir === "era-hotel-pms" || dir === "era-clinic") {
+          run(demoLabel, demoCmd, satRoot, demoEnv);
+        } else {
+          runOptional(demoLabel, demoCmd, satRoot, demoEnv);
+        }
       }
       if (dir === "era-clinic") {
         runOptional(`${dir} db seed`, "npm run db:seed", satRoot, env);

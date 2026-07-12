@@ -14,11 +14,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install Playwright
-        run: npx playwright install chromium --with-deps
-      - name: Install orchestrator workspace (prisma migrate needs local bins)
+      - name: Install root Playwright deps
         run: npm ci
-        working-directory: era-orchestrator
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
       - name: Prepare local env and start Postgres/Redis
         run: |
           if [ ! -f .env ]; then cp .env.ci.example .env || cp .env.example .env; fi
@@ -27,12 +26,30 @@ jobs:
             docker compose exec -T postgres pg_isready -U era && break
             sleep 2
           done
+      - name: Install orchestrator + finance workspaces (prisma migrate needs local bins)
+        env:
+          # postinstall prisma generate requires DATABASE_URL (DB need not be reachable)
+          DATABASE_URL: postgresql://era:era@127.0.0.1:5432/era?schema=public
+        run: |
+          npm ci --prefix era-orchestrator
+          npm ci --prefix era-finance-core
+      - name: Build shared packages + install hotel/clinic (demo user upsert needs local deps)
+        env:
+          DATABASE_URL: postgresql://era:era@127.0.0.1:5432/era?schema=public
+        run: |
+          chmod +x scripts/ci-build-packages.sh
+          ./scripts/ci-build-packages.sh
+          npm ci --prefix era-hotel-pms
+          npm ci --prefix era-clinic
       - name: Build shared packages image
         run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
       - name: Bootstrap local demo
         run: node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites
         env:
           SKIP_HEAVY: '1'
+          ECOSYSTEM_DEMO_LOGIN: chingiz@era.com
+          ECOSYSTEM_DEMO_PASSWORD: '12345678'
+          PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: '12345678'
       - name: Start hotel PMS
         run: |
           docker compose build hotel-pms
@@ -43,13 +60,14 @@ jobs:
           docker compose build clinic
           docker compose up -d clinic
           for i in $(seq 1 60); do curl -sf http://127.0.0.1:3203/login && break; sleep 2; done
-      - name: Design regression smoke (no snapshot compare)
+      - name: Design regression smoke (structure; no snapshot compare)
         run: npm run test:design-regression:smoke
         env:
           PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
           PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
-      - name: Run design regression
-        run: npm run test:design-regression
-        env:
-          PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
-          PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
+          PLAYWRIGHT_LOGIN: chingiz@era.com
+          PLAYWRIGHT_PASSWORD: '12345678'
+          PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
+          PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
+      # Pixel snapshots are Windows/Chrome locals (see e2e/design-regression/snapshots/README.md).
+      # Re-enable on Linux only after regenerating PNGs with: npm run test:design-regression:update

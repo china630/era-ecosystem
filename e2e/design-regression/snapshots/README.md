@@ -11,7 +11,7 @@ npm run test:design-regression:update
 
 **Credentials (clinic):** `chingiz@era.com` / `12345678` (see `e2e/design-regression/auth/helpers.ts`).
 
-**Browser:** uses system Chrome (`channel: 'chrome'`) — no `playwright install chromium` required on Windows.
+**CI:** GitHub Actions `Design regression` runs smoke specs only (login + modal structure). Pixel compare is local — Linux CI fonts/Chrome differ from Windows goldens.
 
 Expected files:
 
