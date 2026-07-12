@@ -9,7 +9,7 @@ on:
         default: dev
   workflow_run:
     workflows: ["Build and push images"]
-    branches: [dev]
+    branches: [dev, master]
     types: [completed]
 
 jobs:
@@ -39,7 +39,8 @@ jobs:
             echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
           else
             short=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
-            echo "value=dev-${short}" >> "$GITHUB_OUTPUT"
+            branch="${{ github.event.workflow_run.head_branch }}"
+            echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
           fi
 
       # Pack ENV_FILE as one base64 line — never expand multi-line secrets into SSH script.

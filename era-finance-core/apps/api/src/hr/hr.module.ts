@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { BankingModule } from "../banking/banking.module";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -40,7 +40,7 @@ import { SystemConfigModule } from "../system-config/system-config.module";
 @Module({
   imports: [
     PrismaModule,
-    AccountingModule,
+    forwardRef(() => AccountingModule),
     BankingModule,
     NotificationModule,
     IntegrationsModule,

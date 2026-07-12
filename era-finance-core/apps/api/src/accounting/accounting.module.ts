@@ -1,6 +1,5 @@
-import { Module, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { RolesGuard } from "../auth/guards/roles.guard";
-import { SubscriptionModule } from "../subscription/subscription.module";
 import { AccountingController } from "./accounting.controller";
 import { AccountingService } from "./accounting.service";
 import { BankSubaccountService } from "./bank-subaccount.service";
@@ -18,7 +17,7 @@ import { VatDepositController } from "./vat-deposit.controller";
 import { VatDepositService } from "./vat-deposit.service";
 
 @Module({
-  imports: [forwardRef(() => SubscriptionModule)],
+  imports: [],
   controllers: [
     AccountingController,
     PostingRolesController,
