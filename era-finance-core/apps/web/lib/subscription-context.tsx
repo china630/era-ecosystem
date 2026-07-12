@@ -187,7 +187,8 @@ export type PaywallModuleKey =
   | "fixedAssets"
   | "ifrsMapping"
   | "bankingPro"
-  | "kassaPro";
+  | "kassaPro"
+  | "taxPro";
 
 /**
  * Доступ к модулю по снимку подписки.
@@ -214,6 +215,8 @@ export function hasSubscriptionModuleAccess(
     case "bankingPro":
     case "kassaPro":
       return snap.modules.bankingPro;
+    case "taxPro":
+      return snap.modules.taxPro;
     default:
       return false;
   }

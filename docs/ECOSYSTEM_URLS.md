@@ -69,10 +69,10 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 | `/help` | Canonical FAQ (az \| ru \| en) | — |
 | `/terms` | User agreement (az \| ru \| en) | — |
 | `/partner` | Referral / partner dashboard | `GET /v1/partner/dashboard` |
-| `/` | Redirect: guest → `/login`; authed without org → `/organizations`; authed with org → `/workspace` | — |
+| `/` | **Marketing landing** (guest) / auth redirect (authed → workspace/orgs) | `GET /v1/public/landing-modules` |
 | `/industry/[vertical]` | SSO deep link for a vertical (entitlement-gated) | SSO launch |
 
-**Redirects to Orchestrator:** Finance `/register`, `/register-org`, `/pricing`, `/super-admin/*`, `/industry/*`; unauthenticated Finance `/login` → `{ORCH_WEB}/login?next=finance` when CP handoff is enabled.
+**Redirects to Orchestrator:** Finance `/` (marketing), `/register`, `/register-org`, `/pricing`, `/partner`, `/companies` → `/organizations`, `/settings/subscription`, `/settings/team`, `/dispute/*`, `/super-admin/*`, `/industry/*`; unauthenticated Finance `/login` → `{ORCH_WEB}/login?next=finance` when CP handoff is enabled.
 
 ---
 
@@ -169,8 +169,9 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Storage add-on gate | `PLATFORM_STORAGE_ENABLED` | `true` — enables upload API routes |
 | S3 driver | `STORAGE_DRIVER`, `S3_*`, `AWS_*` | See [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) § platform_storage |
 | Data Hub (internal) | `ERA_DATA_HUB_URL` | `http://data-hub:4200` |
-| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** only |
+| Data Hub consumer | `ERA_DATA_HUB_ENABLED` | `true` on **finance-core** and **bank-core** (Phase 2 contract default) |
 | Data Hub service token | `DATA_HUB_SERVICE_TOKEN` | Required when hub consumer enabled |
+| Finance CBAR ingest | `ERA_DATA_HUB_FINANCE_CBAR_INGEST_DISABLED` | `true` — finance no longer runs CBAR HTTP/cron (hub SoR) |
 | Industry reference data | `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SATELLITE_ORGANIZATION_ID` | Industry sync reads via orchestrator `GET /platform/v1/catalog/*` ([ADR](./adr/orchestrator-platform-integration-gateway.md)). Orchestrator backend: `ERA_DATA_HUB_URL`, `DATA_HUB_SERVICE_TOKEN`. HS tariff preview remains Finance-only. |
 | Data Hub RO (Phase 0) | `FINANCE_RO_DATABASE_URL` | Read-only `era_finance` (D1) |
 | Data Hub auth | `DATA_HUB_SERVICE_TOKEN`, `DATA_HUB_DEV_API_KEYS` | Internal / MVP external keys |

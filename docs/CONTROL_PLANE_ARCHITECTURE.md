@@ -146,7 +146,10 @@ Orchestrator CP schema (`era-orchestrator/packages/database`) already mirrors bi
 
 1. **Dual-write / read fallback** — CP and Finance both visible; orchestrator entitlements service already falls back to `organizations.billing_status`.
 2. **Cutover** — registration and module toggles only on CP APIs.
-3. **Finance slimming** — remove duplicate billing modules from Finance API; Finance web calls orchestrator for `/settings/subscription`.
+3. **Finance slimming** — **DONE (2026-07):** marketing landing + landing CMS moved to Orchestrator; control-plane pages deleted from Finance web (`/`, `/pricing`, `/register*`, `/partner`, `/companies`, `/settings/subscription|team`, `/dispute/*`); Finance API billing HTTP SoT / referrals / platform-recovery removed (kept slim consumer: meter, entitlement helpers, `BillingAccessGuard`, `DisputeFreezeGuard`).
+4. **Finance auth as satellite** — **DONE (2026-07):** control-plane broken-link redirects removed from Finance middleware (honest 404 at point-zero — no legacy shims); local `/login` form (satellite pattern) + `/auth/cp-handoff` SSO ingress; guest `/` → local `/login`, authed `/` → `/home`; org-less session → CP `/organizations` onboarding via blocking modal; multi-org pick stays local (`switchOrganization`).
+5. **Holdings SoT on Orchestrator** — **DONE (2026-07-12):** CP owns `Holding` / `HoldingMembership` / `Organization.holdingId` and UI `/holdings`; Finance is live consumer via `internal/v1/holdings/*` for consolidation only (local holdings tables dropped). See [ADR holdings-control-plane](adr/holdings-control-plane.md).
+6. **Data-Hub Phase 2 contract** — **DONE (2026-07-12):** Finance dropped standalone SoR tables (`CbarOfficialRate`, `CustomsTariffRate`, `GlobalCompanyDirectory`) and catalog ingest/seeds; FK caches kept; `/admin/data` hub catalogs read-only. See [ADR era-data-hub](adr/era-data-hub.md).
 
 ---
 

@@ -20,7 +20,9 @@ export type PostingSchemaId =
   | "MANUFACTURING_WIP"
   | "MANUFACTURING_OVERHEAD"
   | "CASH_IN_TRANSIT"
-  | "VAT_NETTING";
+  | "VAT_NETTING"
+  | "VAT_DEPOSIT_ROUTE"
+  | "VAT_DEPOSIT_REMITTANCE";
 
 export type PostingLineSide = "DEBIT" | "CREDIT";
 
@@ -50,7 +52,8 @@ export const POSTING_SCHEMAS: Record<PostingSchemaId, PostingSchemaDefinition> =
     kinds: [...ALL_KINDS],
     lines: [
       { role: "TRADE_RECEIVABLE", side: "DEBIT", amountKey: "main" },
-      { role: "SALES_REVENUE", side: "CREDIT", amountKey: "main" },
+      { role: "SALES_REVENUE", side: "CREDIT", amountKey: "net" },
+      { role: "VAT_OUTPUT", side: "CREDIT", amountKey: "vat" },
     ],
   },
   INVOICE_PAYMENT: {
@@ -216,6 +219,37 @@ export const POSTING_SCHEMAS: Record<PostingSchemaId, PostingSchemaDefinition> =
     lines: [
       { role: "VAT_OUTPUT", side: "DEBIT", amountKey: "main" },
       { role: "VAT_INPUT", side: "CREDIT", amountKey: "main" },
+    ],
+  },
+  VAT_DEPOSIT_ROUTE: {
+    id: "VAT_DEPOSIT_ROUTE",
+    kinds: [...ALL_KINDS],
+    lines: [
+      {
+        role: "VAT_DEPOSIT_ACCOUNT",
+        side: "DEBIT",
+        amountKey: "main",
+        useDynamicAccountKey: "debitAccountCode",
+      },
+      {
+        role: "MAIN_BANK",
+        side: "CREDIT",
+        amountKey: "main",
+        useDynamicAccountKey: "creditAccountCode",
+      },
+    ],
+  },
+  VAT_DEPOSIT_REMITTANCE: {
+    id: "VAT_DEPOSIT_REMITTANCE",
+    kinds: [...ALL_KINDS],
+    lines: [
+      { role: "VAT_OUTPUT", side: "DEBIT", amountKey: "main" },
+      {
+        role: "VAT_DEPOSIT_ACCOUNT",
+        side: "CREDIT",
+        amountKey: "main",
+        useDynamicAccountKey: "creditAccountCode",
+      },
     ],
   },
 };

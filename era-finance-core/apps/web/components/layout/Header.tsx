@@ -68,7 +68,7 @@ export function MainHeader({
           {t("nav.login")}
         </Link>
         <Link
-          href="/register"
+          href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/register`}
           className="rounded-lg border border-[#D5DADF] bg-white px-2.5 py-2 text-[13px] font-medium text-[#34495E] transition hover:border-[#34495E]/5 sm:px-3"
         >
           {t("nav.register")}

@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiBaseUrl, apiFetch } from "../../../lib/api-client";
+import { formatMoneyAzn } from "../../../lib/format-money";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -24,6 +26,7 @@ import {
 import { CircleArrowUp, Download, Loader2, Upload } from "lucide-react";
 
 type ExportStatus = "GENERATED" | "UPLOADED" | "CONFIRMED_BY_TAX";
+type TaxType = "SIMPLIFIED_TAX" | "VAT" | "PROFIT_TAX" | "PAYROLL_WITHHOLDING";
 
 type TaxDeclarationExport = {
   id: string;
@@ -33,6 +36,25 @@ type TaxDeclarationExport = {
   receiptFileUrl: string | null;
   status: ExportStatus;
   createdAt: string;
+};
+
+type PayrollWithholdingLine = {
+  employeeId: string;
+  kind: string;
+  displayName: string;
+  fin: string | null;
+  pitTotal: unknown;
+  socialTotal: unknown;
+};
+
+type PayrollWithholdingPreview = {
+  period: string;
+  employees: PayrollWithholdingLine[];
+  contractors: PayrollWithholdingLine[];
+  totals: {
+    pitTotal: string;
+    socialTotal: string;
+  };
 };
 
 function parseApiErrorBody(data: unknown): string {
@@ -54,14 +76,26 @@ function parseApiErrorBody(data: unknown): string {
 export default function TaxExportPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
-  const [taxType, setTaxType] = useState("SIMPLIFIED_TAX");
+  const now = new Date();
+  const [monthPeriod, setMonthPeriod] = useState(now.toISOString().slice(0, 7));
+  const [year, setYear] = useState(now.getUTCFullYear());
+  const [quarter, setQuarter] = useState(Math.floor(now.getUTCMonth() / 3) + 1);
+  const [taxType, setTaxType] = useState<TaxType>("SIMPLIFIED_TAX");
   const [items, setItems] = useState<TaxDeclarationExport[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [loadingList, setLoadingList] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [receiptFiles, setReceiptFiles] = useState<Record<string, File | null>>({});
+  const [payrollPreview, setPayrollPreview] = useState<PayrollWithholdingPreview | null>(null);
+  const [showPayrollPreview, setShowPayrollPreview] = useState(false);
+  const [loadingPayrollPreview, setLoadingPayrollPreview] = useState(false);
+
+  const period = useMemo(() => {
+    if (taxType === "VAT") return `${year}-Q${quarter}`;
+    if (taxType === "PROFIT_TAX") return String(year);
+    return monthPeriod;
+  }, [taxType, year, quarter, monthPeriod]);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -102,12 +136,47 @@ export default function TaxExportPage() {
         setGenerating(false);
         return;
       }
+      setShowPayrollPreview(false);
+      setPayrollPreview(null);
       await load();
     } catch {
       setErr(t("reporting.taxExportErr"));
     }
     setGenerating(false);
   }, [taxType, period, load, t]);
+
+  const loadPayrollPreview = useCallback(async () => {
+    setLoadingPayrollPreview(true);
+    setErr(null);
+    try {
+      const res = await apiFetch(
+        `/api/reporting/payroll-withholding/preview?period=${encodeURIComponent(period)}`,
+      );
+      const data = (await res.json()) as unknown;
+      if (!res.ok) {
+        setErr(parseApiErrorBody(data));
+        setPayrollPreview(null);
+        setLoadingPayrollPreview(false);
+        return false;
+      }
+      setPayrollPreview(data as PayrollWithholdingPreview);
+      setLoadingPayrollPreview(false);
+      return true;
+    } catch {
+      setErr(t("reporting.payrollWithholding.loadErr"));
+      setLoadingPayrollPreview(false);
+      return false;
+    }
+  }, [period, t]);
+
+  const handleGenerateClick = useCallback(async () => {
+    if (taxType === "PAYROLL_WITHHOLDING") {
+      const ok = await loadPayrollPreview();
+      if (ok) setShowPayrollPreview(true);
+      return;
+    }
+    await generate();
+  }, [taxType, loadPayrollPreview, generate]);
 
   const statusLabel = useMemo(
     () => ({
@@ -119,11 +188,11 @@ export default function TaxExportPage() {
   );
 
   const downloadDeclaration = useCallback(
-    async (id: string, periodValue: string) => {
+    async (item: TaxDeclarationExport) => {
       if (!token) return;
-      setBusyId(id);
+      setBusyId(item.id);
       setErr(null);
-      const path = `/api/reporting/tax-declarations/${id}/download`;
+      const path = `/api/reporting/tax-declarations/${item.id}/download`;
       const url = `${apiBaseUrl()}${path}`;
       const headers = new Headers();
       headers.set("Authorization", `Bearer ${token}`);
@@ -142,7 +211,7 @@ export default function TaxExportPage() {
         const blob = await res.blob();
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
-        a.download = `SIMPLIFIED_TAX-${periodValue}.xml`;
+        a.download = `${item.taxType}-${item.period}.xml`;
         a.click();
         URL.revokeObjectURL(a.href);
         await load();
@@ -186,6 +255,11 @@ export default function TaxExportPage() {
     [receiptFiles, load, t],
   );
 
+  const payrollLines = useMemo(() => {
+    if (!payrollPreview) return [];
+    return [...payrollPreview.employees, ...payrollPreview.contractors];
+  }, [payrollPreview]);
+
   if (!ready) {
     return (
       <div className="text-gray-600">
@@ -203,35 +277,81 @@ export default function TaxExportPage() {
         leading={
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-              <span>{t("reporting.taxExportPeriod")}</span>
-              <input
-                type="month"
-                className={`${MODAL_INPUT_CLASS} !w-40`}
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.taxExportType")}</span>
               <select
                 className={`${MODAL_INPUT_CLASS} !min-w-[14rem]`}
                 value={taxType}
-                onChange={(e) => setTaxType(e.target.value)}
+                onChange={(e) => setTaxType(e.target.value as TaxType)}
               >
-                <option value="SIMPLIFIED_TAX">Sadələşdirilmiş vergi / Simplified Tax</option>
+                <option value="SIMPLIFIED_TAX">{t("reporting.taxExportTypeSimplified")}</option>
+                <option value="VAT">{t("reporting.taxExportTypeVat")}</option>
+                <option value="PROFIT_TAX">{t("reporting.taxExportTypeProfitTax")}</option>
+                <option value="PAYROLL_WITHHOLDING">{t("reporting.taxExportTypePayroll")}</option>
               </select>
             </label>
+            {taxType === "SIMPLIFIED_TAX" || taxType === "PAYROLL_WITHHOLDING" ? (
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+                <span>{t("reporting.taxExportPeriod")}</span>
+                <input
+                  type="month"
+                  className={`${MODAL_INPUT_CLASS} !w-40`}
+                  value={monthPeriod}
+                  onChange={(e) => setMonthPeriod(e.target.value)}
+                />
+              </label>
+            ) : null}
+            {taxType === "VAT" ? (
+              <>
+                <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+                  <span>{t("reporting.vat.year")}</span>
+                  <input
+                    type="number"
+                    className={`${MODAL_INPUT_CLASS} !w-28`}
+                    value={year}
+                    min={2000}
+                    max={2100}
+                    onChange={(e) => setYear(Number(e.target.value))}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+                  <span>{t("reporting.vat.quarter")}</span>
+                  <select
+                    className={`${MODAL_INPUT_CLASS} !w-24`}
+                    value={quarter}
+                    onChange={(e) => setQuarter(Number(e.target.value))}
+                  >
+                    <option value={1}>Q1</option>
+                    <option value={2}>Q2</option>
+                    <option value={3}>Q3</option>
+                    <option value={4}>Q4</option>
+                  </select>
+                </label>
+              </>
+            ) : null}
+            {taxType === "PROFIT_TAX" ? (
+              <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
+                <span>{t("reporting.profitTax.year")}</span>
+                <input
+                  type="number"
+                  className={`${MODAL_INPUT_CLASS} !w-28`}
+                  value={year}
+                  min={2000}
+                  max={2100}
+                  onChange={(e) => setYear(Number(e.target.value))}
+                />
+              </label>
+            ) : null}
           </div>
         }
         actions={
           <div className="flex flex-wrap items-end justify-end gap-2">
             <button
               type="button"
-              disabled={generating}
-              onClick={() => void generate()}
+              disabled={generating || loadingPayrollPreview}
+              onClick={() => void handleGenerateClick()}
               className={`${PRIMARY_BUTTON_CLASS} disabled:opacity-50`}
             >
-              {generating ? "…" : t("reporting.taxExportGenerate")}
+              {generating || loadingPayrollPreview ? "…" : t("reporting.taxExportGenerate")}
             </button>
             <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
               {loadingList ? "…" : t("common.refresh")}
@@ -239,6 +359,15 @@ export default function TaxExportPage() {
           </div>
         }
       />
+
+      {taxType === "PROFIT_TAX" ? (
+        <p className="text-sm text-[#34495E]">
+          {t("reporting.taxExportProfitTaxHint")}{" "}
+          <Link href="/reporting/profit-tax" className="text-action hover:text-primary">
+            {t("reporting.profitTax.link")}
+          </Link>
+        </p>
+      ) : null}
 
       {err && <p className="text-red-600 text-sm">{err}</p>}
       <section className="bg-white p-6 shadow-sm rounded-xl border border-slate-100">
@@ -268,7 +397,7 @@ export default function TaxExportPage() {
                         className={TABLE_ROW_ICON_BTN_CLASS}
                         title={t("reporting.taxExportDownload")}
                         disabled={busyId === item.id}
-                        onClick={() => void downloadDeclaration(item.id, item.period)}
+                        onClick={() => void downloadDeclaration(item)}
                       >
                         {busyId === item.id ? (
                           <Loader2 className="h-4 w-4 animate-spin text-[#2980B9]" aria-hidden />
@@ -337,6 +466,63 @@ export default function TaxExportPage() {
           <li>{t("reporting.taxExportStepReceipt")}</li>
         </ol>
       </section>
+
+      {showPayrollPreview && payrollPreview ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-[#2C3E50] m-0 mb-3">
+              {t("reporting.payrollWithholding.previewTitle", { period: payrollPreview.period })}
+            </h2>
+            <p className="text-sm text-[#34495E] m-0 mb-3">
+              {t("reporting.payrollWithholding.totalsSummary", {
+                pit: formatMoneyAzn(payrollPreview.totals.pitTotal),
+                social: formatMoneyAzn(payrollPreview.totals.socialTotal),
+              })}
+            </p>
+            <div className={DATA_TABLE_VIEWPORT_CLASS}>
+              <table className={`${DATA_TABLE_CLASS} min-w-full`}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.payrollWithholding.thName")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.payrollWithholding.thFin")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("reporting.payrollWithholding.thKind")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.payrollWithholding.thPit")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("reporting.payrollWithholding.thSocial")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payrollLines.map((line) => (
+                    <tr key={line.employeeId} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>{line.displayName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{line.fin ?? "—"}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{line.kind}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(line.pitTotal)}</td>
+                      <td className={DATA_TABLE_TD_RIGHT_CLASS}>{formatMoneyAzn(line.socialTotal)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={PRIMARY_BUTTON_CLASS}
+                disabled={generating}
+                onClick={() => void generate()}
+              >
+                {generating ? t("common.loading") : t("reporting.payrollWithholding.confirmGenerate")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setShowPayrollPreview(false)}
+              >
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

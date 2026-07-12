@@ -39,11 +39,14 @@ import { SurplusStockDocumentDto } from "./dto/surplus-stock-document.dto";
 import { TransferStockDto } from "./dto/transfer-stock.dto";
 import { WriteOffStockDocumentDto } from "./dto/write-off-stock-document.dto";
 import { InventoryService } from "./inventory.service";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
 
 @ApiTags("inventory")
 @ApiBearerAuth("bearer")
 @Controller("inventory")
-@UseGuards(RolesGuard)
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule("inventory")
 export class InventoryController {
   constructor(private readonly inventory: InventoryService) {}
 

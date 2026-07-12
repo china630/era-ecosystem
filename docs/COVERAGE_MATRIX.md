@@ -4,7 +4,7 @@ Living matrix for **honest readiness**. Replaces optimistic DELIVERY-only summar
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-06-16
+**Last updated:** 2026-07-12
 
 ---
 
@@ -127,10 +127,51 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 |----|------------|----------|--------|---------|
 | FIN-01 | GL / documents ERP | Y web | SHIPPED | — |
 | FIN-02 | Satellite event worker | — | HEADLESS | by design |
-| FIN-03 | e-qaimé | stub modal | STUB | prod cert |
+| FIN-HOLD-01 | Holding composition SoT (create/attach/members) | Orch `/holdings` OrgOwner | SHIPPED | CP `v1/holdings/*` |
+| FIN-HOLD-02 | Holding consolidated P&L / summary / balances | Y `/reporting/holding`, `/holding` | SHIPPED | live-lookup `internal/v1/holdings` |
+| FIN-03 | e-qaimé | stub modal | STUB | superseded by FIN-EQAIME-*; S2S behind flag |
 | FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | — |
+| FIN-REP-01 | Account card / analysis / turnovers | Y `/reporting/account-card`, `/reporting/turnovers` | SHIPPED | Wave 1 E1 |
+| FIN-REP-02 | Chessboard + general ledger journal | Y `/reporting/turnovers`, `/reporting/journal` | SHIPPED | Wave 1 G5 |
+| FIN-SUBCONTO-01 | Subconto types + account config CRUD | Y `GET/POST accounting/subconto/*` | SHIPPED | Wave 3 C; posting gated by `ERA_SUBCONTO_ENABLED` |
+| FIN-SUBCONTO-02 | OSV / card / analysis by journal dimension | Y `/reporting/subconto-analysis`, filters on account-card & turnovers | SHIPPED | Wave 3 D; [ADR](./adr/subconto-analytical-dimensions.md) |
+| FIN-REFORM-01 | Fiscal year close reformation (6x/7x→801→802) | Y `/reporting` close-fiscal-year + protocol | SHIPPED | Wave 3 B; OWNER/ADMIN |
+| FIN-FA-LIFE-01 | Fixed asset lifecycle (acquire/modernize/revalue/dispose) | Y `/fixed-assets` lifecycle panel | SHIPPED | Wave 3 E5 |
+| FIN-IA-01 | Intangible assets register + amortization | Y `/intangible-assets` | SHIPPED | Wave 3 G8; accounts 131/132 |
+| FIN-VAT-01 | ƏDV book (Satış/Alış) + declaration UI + submit | Y `/reporting/vat` | SHIPPED | Wave 1 E2; `@RequiresModule(tax_pro)` |
+| FIN-VAT-02 | ASAN ID + HSM submission seam | Y org settings `tax.asanUserId` | API | Live HSM client pending — [ADR](./adr/etaxes-hsm-asan-submission.md) |
+| FIN-VAT-ROLE | NAS VAT posting roles (191 / 545 / 223) + output VAT on SENT | — | SHIPPED | Wave 4 A; preset + `PostingAccountResolver` — [ADR](./adr/vat-deposit-routing.md) |
+| FIN-VAT-DEP-01 | ƏDV deposit GL balance + linked VAT_DEPOSIT bank | Y `/reporting/vat-deposit` | SHIPPED | Wave 4 G6; role `VAT_DEPOSIT_ACCOUNT→223` |
+| FIN-VAT-DEP-02 | Deposit route / remit / reconcile + movements | Y `/reporting/vat-deposit` | SHIPPED | `@RequiresModule(tax_pro)` |
+| FIN-EQAIME-01 | e-Qaimə S2S submit + invoice eqaime status | Y `/sales/invoices` | STUB/API | `ERA_EQAIME_S2S_ENABLED`; 503 + RPA fallback — [ADR](./adr/eqaime-s2s-submission.md) |
+| FIN-EQAIME-02 | e-Qaimé RPA prefill (extension + network inbox) | Y invoice actions / bulk RPA | SHIPPED | Phase 2; FIN-03 legacy row |
+| FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing (declarations, e-Qaimə) | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
+| FIN-ASAN-02 | Invoice PDF signature gateway | Y invoice PDF actions | API | `SIGNATURE_GATEWAY_MOCK=1` dev default |
+| FIN-MHBS-01 | Statutory balance sheet (MoF line codes) | Y `/reports/statements` | SHIPPED | Wave 4 G2; catalog `mhbs-statement-lines.v1.json` |
+| FIN-MHBS-02 | Statutory P&L + cash flow + equity + notes + export | Y `/reports/statements` | SHIPPED | XLSX/PDF; `@RequiresModule(tax_pro)` — [ADR](./adr/mhbs-statement-mapping.md) |
+| FIN-PROFIT-01 | Profit tax preview + book-to-tax adjustments CRUD | Y `/reporting/profit-tax` | SHIPPED | Wave 2 G1; OrgOwner/Accountant; `@RequiresModule(tax_pro)` |
+| FIN-PROFIT-02 | PROFIT_TAX declaration generate/download | Y `/reporting/tax-export` | SHIPPED | Links to adjustment register |
+| FIN-PAYROLL-WH-01 | Payroll withholding aggregate preview | Y tax-export modal | SHIPPED | POSTED payroll run required |
+| FIN-PAYROLL-WH-02 | PAYROLL_WITHHOLDING declaration generate | Y `/reporting/tax-export` | SHIPPED | PIT + social totals |
+| FIN-EMAS-01 | ƏMAS S2S hire/transfer/terminate | Y `/employees` edit modal | STUB/API | 503 without `ERA_EMAS_S2S_ENABLED`; Excel/RPA fallback |
+| FIN-EMAS-02 | ƏMAS contract event history | Y employee modal | API | `GET …/emas/events` |
 | FC-FX-01 | Converter + revaluation on hub CBAR | Y | SHIPPED | `ERA_DATA_HUB_ENABLED` |
 | FC-FX-02 | Customs auto CBAR on bgdDate | Y | SHIPPED | Finance Trade Pro |
+| FIN-ADV-01 | Advance reports registry (list/detail/post/print) | Y `/expenses/advance-reports` | SHIPPED | Wave 5 E7; `@RequiresModule(kassa_pro)` |
+| FIN-ADV-02 | Advance report expense lines (cost account, VAT, receipt) + MXO link | Y advance report modal | SHIPPED | Wave 5 E7 |
+| FIN-PRICE-01 | Price list CRUD + lines | Y `/catalog/price-lists` | SHIPPED | Wave 5 E7 |
+| FIN-PRICE-02 | Discount rules + invoice price resolution | Y invoice create modal | SHIPPED | `PriceListsService.resolvePrice` |
+| FIN-LANDED-01 | BGD landed cost allocation to SKU | Y `/customs/[id]` | SHIPPED | Wave 5 E7; `@RequiresModule(trade_pro)` — [ADR](./adr/landed-cost-allocation.md) |
+| FIN-LANDED-02 | Product link on BGD line + batch cost update | Y customs detail | SHIPPED | `STAT_VALUE|WEIGHT|QUANTITY` methods |
+| FIN-TRADE-01 | TradeContext DOMESTIC/EXPORT/IMPORT on invoices | Y `/sales/invoices` | SHIPPED | Wave 5 G9 — [ADR](./adr/trade-context-daxili-xarici.md) |
+| FIN-TRADE-02 | Incoterms + export decl ref + Commercial Invoice PDF | Y invoice PDF | SHIPPED | Multilingual blocks |
+| FIN-TRADE-03 | Import pipeline OCR→purchase→BGD→landed cost | Y `/customs`, `/purchases` | SHIPPED | `POST customs/import-pipeline` |
+| FIN-WMS-01 | Bin-level balances (`BinBalance`) | Y `/inventory/wms-mobile` | SHIPPED | Wave 5 E6 — [ADR](./adr/bin-level-wms.md) |
+| FIN-WMS-02 | Mobile scan receive/issue/transfer/adjust | Y `/inventory/wms-mobile` | SHIPPED | `@RequiresModule(inventory)` |
+| FIN-WMS-03 | Warehouse zones + pick lists | Y WMS mobile + API | SHIPPED | put-away/picking |
+| FIN-STAT-01 | Stat form definition catalog + generator | Y `/reporting/statforms` | SHIPPED | Wave 5 G3 — [ADR](./adr/statform-engine.md) |
+| FIN-STAT-02 | Standard placeholder set (1-müəssisə, labor, production, prices) | Y statforms generate | SHIPPED | Verify official Goskomstat blanks before filing |
+| FIN-STAT-03 | Stat form XLSX export + download history | Y `/reporting/statforms` | SHIPPED | `compliance_pro` or `tax_pro` |
 
 ---
 
@@ -140,10 +181,12 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 |----|------------|-----|-----|--------|---------|
 | DH-REGISTRY | Hub `/registry/v1` health + auth | ADR | Y | HEADLESS | service token |
 | DH-FX-01 | Hub FX ingest + `/fx/*` API | TZ §FX | Y | SHIPPED | `ERA_DATA_HUB_DATA_SOURCE=hub` prod |
+| DH-CUR-01 | Hub ISO currency catalog `/currencies` | ADR | Y | SHIPPED | sync-from-finance; ≠ FX |
 | FC-DH-001 | Finance FX consumer | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-002 | Finance HS/customs tariffs | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-003 | Finance calendar consumer | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-004…010 | Banks/IBAN/VÖEN/geo/UoM/tax/CoA | PRD §4.18 | Y | SHIPPED | hub + fallback |
+| FC-DH-011 | ISO currency catalog (hub SoR) | ADR hub | Y `/system/currencies` | SHIPPED | FK cache; admin read-only |
 | FC-DH-COA | PostingRole de-hardcode CI | TZ §28.3 | — | HEADLESS | `lint-nas-literals.mjs` |
 | LOG-REF-01 | Logistics HS/FX preview via Finance | Y `/customs` | Y | SHIPPED | — |
 | BANK-REF-01 | Bank multi-catalog hub + snapshot | — | Y | API | on-prem snapshot |

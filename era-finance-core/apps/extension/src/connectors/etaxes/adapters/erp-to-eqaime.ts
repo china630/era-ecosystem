@@ -24,6 +24,52 @@ function trySetBySelectors(
   }
 }
 
+function fillLineItemRow(
+  doc: Document,
+  rowIndex: number,
+  line: InvoicePrefill["items"][number],
+  applied: HTMLElement[],
+): void {
+  const rowSuffix = `[data-row-index="${rowIndex}"], tr:nth-child(${rowIndex + 1})`;
+  const scoped = (selectors: string[]) =>
+    selectors.flatMap((sel) => [
+      `${rowSuffix} ${sel}`,
+      `${sel}[data-row-index="${rowIndex}"]`,
+      `${sel}[name*="${rowIndex}"]`,
+    ]);
+
+  trySetBySelectors(
+    doc,
+    scoped(EtaxesSelectors.eqaimeFields.lineDescription),
+    line.name,
+    applied,
+  );
+  trySetBySelectors(
+    doc,
+    scoped(EtaxesSelectors.eqaimeFields.lineQuantity),
+    String(line.quantity),
+    applied,
+  );
+  trySetBySelectors(
+    doc,
+    scoped(EtaxesSelectors.eqaimeFields.lineUnitPrice),
+    String(line.unitPriceAzn),
+    applied,
+  );
+  trySetBySelectors(
+    doc,
+    scoped(EtaxesSelectors.eqaimeFields.lineVatRate),
+    line.vatExempt ? "0" : String(line.vatRatePct),
+    applied,
+  );
+  trySetBySelectors(
+    doc,
+    scoped(EtaxesSelectors.eqaimeFields.lineTotal),
+    String(line.totalGrossAzn),
+    applied,
+  );
+}
+
 export function mapInvoicePrefillToFields(
   prefill: InvoicePrefill,
   doc: Document,
@@ -41,6 +87,9 @@ export function mapInvoicePrefillToFields(
   trySetBySelectors(doc, fields.totalVat, String(prefill.totals.vatAzn), applied);
   trySetBySelectors(doc, fields.totalGross, String(prefill.totals.grossAzn), applied);
 
-  // TODO: implement robust line-items grid fill once real DVX table DOM is verified.
+  prefill.items.forEach((line, index) => {
+    fillLineItemRow(doc, index, line, applied);
+  });
+
   return { applied };
 }

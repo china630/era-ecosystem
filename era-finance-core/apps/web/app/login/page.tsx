@@ -58,10 +58,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!ready || !token || !user) return;
-    if (!user.organizationId) {
-      router.replace("/companies");
-      return;
-    }
+    // Org selection / onboarding is gated by AppShell (multi-org modal or CP onboarding).
     router.replace("/home");
   }, [ready, token, user, router]);
 
@@ -88,8 +85,7 @@ export default function LoginPage() {
       const orgs = data.organizations ?? [];
       rememberLoginEmail(email);
       login(data.accessToken, data.user, orgs);
-      const target = orgs.length === 0 ? "/companies" : orgs.length > 1 ? "/companies" : "/";
-      window.location.assign(target);
+      window.location.assign("/home");
     } catch {
       emitClientApiError(503, t("auth.apiUnreachable", { url: apiBaseUrl() }));
     } finally {

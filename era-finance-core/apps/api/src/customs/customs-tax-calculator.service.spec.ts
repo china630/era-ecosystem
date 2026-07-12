@@ -1,46 +1,22 @@
+import { BadRequestException } from "@nestjs/common";
 import { Prisma } from "@erafinance/database";
 import { CustomsTaxCalculatorService } from "./customs-tax-calculator.service";
 
 describe("CustomsTaxCalculatorService", () => {
-  it("applies duty on statistical value then VAT on duty-inclusive base", async () => {
-    const rows = [
-      {
-        hsCode: "85",
-        dutyRatePercent: new Prisma.Decimal(10),
-        vatRatePercent: new Prisma.Decimal(18),
-        excisePercent: new Prisma.Decimal(0),
-      },
-      {
-        hsCode: "00",
-        dutyRatePercent: new Prisma.Decimal(0),
-        vatRatePercent: new Prisma.Decimal(18),
-        excisePercent: new Prisma.Decimal(0),
-      },
-    ];
-    const tariffs = {
-      loadActiveRates: jest.fn().mockResolvedValue(rows),
-      findBestMatchFromRows: jest.fn((r: typeof rows, hs: string) => {
-        const sorted = [...r].sort((a, b) => b.hsCode.length - a.hsCode.length);
-        const digits = hs.replace(/\D/g, "");
-        for (const row of sorted) {
-          if (row.hsCode === "00") continue;
-          if (digits.startsWith(row.hsCode)) return { hsCode: row.hsCode, dutyRatePercent: row.dutyRatePercent, vatRatePercent: row.vatRatePercent, excisePercent: row.excisePercent };
-        }
-        return {
-          hsCode: "00",
-          dutyRatePercent: sorted.find((x) => x.hsCode === "00")!.dutyRatePercent,
-          vatRatePercent: sorted.find((x) => x.hsCode === "00")!.vatRatePercent,
-          excisePercent: sorted.find((x) => x.hsCode === "00")!.excisePercent,
-        };
-      }),
-    };
-
+  it("applies duty on statistical value then VAT on duty-inclusive base via hub", async () => {
     const dataHub = {
-      isEnabled: jest.fn().mockReturnValue(false),
-      getTariff: jest.fn(),
+      isEnabled: jest.fn().mockReturnValue(true),
+      isoDateBaku: jest.fn().mockReturnValue("2025-06-01"),
+      getTariff: jest.fn().mockResolvedValue({
+        hsCode: "85",
+        dutyRatePercent: 10,
+        vatRatePercent: 18,
+        excisePercent: 0,
+      }),
+      getHsMeta: jest.fn(),
     };
 
-    const calc = new CustomsTaxCalculatorService(tariffs as never, dataHub as never);
+    const calc = new CustomsTaxCalculatorService(dataHub as never);
     const out = await calc.computeLines(
       [
         {
@@ -61,8 +37,21 @@ describe("CustomsTaxCalculatorService", () => {
       new Date("2025-06-01T00:00:00.000Z"),
     );
 
-    expect(tariffs.loadActiveRates).toHaveBeenCalledTimes(1);
+    expect(dataHub.getTariff).toHaveBeenCalledWith("8501400000", "2025-06-01");
     expect(Number(out.totalDuty.toString())).toBeCloseTo(100, 4);
     expect(Number(out.totalVat.toString())).toBeCloseTo(198, 4);
+  });
+
+  it("rejects when data-hub is disabled", async () => {
+    const dataHub = {
+      isEnabled: jest.fn().mockReturnValue(false),
+      isoDateBaku: jest.fn(),
+      getTariff: jest.fn(),
+      getHsMeta: jest.fn(),
+    };
+    const calc = new CustomsTaxCalculatorService(dataHub as never);
+    await expect(
+      calc.computeLines([], new Date("2025-06-01T00:00:00.000Z")),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });

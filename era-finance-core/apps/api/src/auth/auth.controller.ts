@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -231,19 +232,18 @@ export class AuthController {
     @CurrentUser() user: AuthUser,
     @Headers("authorization") authorization?: string,
   ) {
-    if (this.controlPlane.rbacProxyEnabled && authorization) {
-      return this.controlPlane.forward({
-        method: "POST",
-        path: "/auth/join-org",
-        body: dto,
-        authorization,
+    if (!this.controlPlane.rbacProxyEnabled || !authorization) {
+      throw new BadRequestException({
+        message: "Join-org is handled by ERA Orchestrator (control plane).",
+        code: "CONTROL_PLANE_REQUIRED",
       });
     }
-    return this.auth.requestJoinByTaxId(
-      user.userId,
-      dto.taxId,
-      dto.message,
-    );
+    return this.controlPlane.forward({
+      method: "POST",
+      path: "/auth/join-org",
+      body: dto,
+      authorization,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

@@ -33,7 +33,7 @@ export type OrgSummary = {
 export type AuthUser = {
   id: string;
   email: string;
-  /** null — сессия без выбранной организации (создание компании на /companies). */
+  /** null — сессия без выбранной организации (выбор в модалке; онбординг новой org — на Orchestrator). */
   role: string | null;
   organizationId: string | null;
   firstName: string | null;

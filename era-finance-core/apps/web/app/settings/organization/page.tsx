@@ -30,6 +30,9 @@ type OrgSettings = {
     ledger?: {
       lockedPeriodUntil?: string | null;
     };
+    tax?: {
+      asanUserId?: string | null;
+    };
   };
 };
 
@@ -54,6 +57,7 @@ export default function OrganizationSettingsPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [taxId, setTaxId] = useState("");
   const [lockedPeriodUntil, setLockedPeriodUntil] = useState("");
+  const [asanUserId, setAsanUserId] = useState("");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -74,6 +78,7 @@ export default function OrganizationSettingsPage() {
     setValuationMethod(o.valuationMethod === "FIFO" ? "FIFO" : "AVCO");
     setLogoUrl(o.logoUrl ?? null);
     setLockedPeriodUntil(o.settings?.ledger?.lockedPeriodUntil ?? "");
+    setAsanUserId(o.settings?.tax?.asanUserId ?? "");
     setLoading(false);
   }, [token]);
 
@@ -97,6 +102,7 @@ export default function OrganizationSettingsPage() {
         directorName: directorName.trim() || null,
         logoUrl: logoUrl || null,
         valuationMethod,
+        asanUserId: asanUserId.trim() || null,
       }),
     });
     setSaving(false);
@@ -305,6 +311,19 @@ export default function OrganizationSettingsPage() {
                     className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS}`}
                     disabled={!canEditGeneral}
                   />
+                </label>
+                <label className="block text-[#34495E] text-sm">
+                  {t("orgSettings.asanUserId")}
+                  <input
+                    value={asanUserId}
+                    onChange={(e) => setAsanUserId(e.target.value)}
+                    className={`block mt-1 w-full max-w-md ${INPUT_BORDERED_CLASS}`}
+                    disabled={!canEditGeneral}
+                    placeholder={t("orgSettings.asanUserIdPlaceholder")}
+                  />
+                  <span className="mt-1 block text-xs text-[#7F8C8D]">
+                    {t("orgSettings.asanUserIdHelp")}
+                  </span>
                 </label>
               </section>
 

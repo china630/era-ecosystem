@@ -27,10 +27,14 @@ import { CancelReconciliationDto } from "./dto/cancel-reconciliation.dto";
 import { CreateReconciliationDraftDto } from "./dto/create-reconciliation-draft.dto";
 import { SetReconciliationLineFactDto } from "./dto/set-reconciliation-line-fact.dto";
 import { InventoryAuditService } from "./inventory-audit.service";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
 
 @ApiTags("inventory-reconciliations")
 @ApiBearerAuth("bearer")
 @Controller("inventory/reconciliations")
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule("inventory")
 export class InventoryReconciliationController {
   constructor(private readonly audits: InventoryAuditService) {}
 

@@ -25,6 +25,7 @@ import { CounterpartiesModule } from "./counterparties/counterparties.module";
 import { FinanceModule } from "./finance/finance.module";
 import { FxModule } from "./fx/fx.module";
 import { FixedAssetsModule } from "./fixed-assets/fixed-assets.module";
+import { IntangibleAssetsModule } from "./intangible-assets/intangible-assets.module";
 import { MigrationModule } from "./migration/migration.module";
 import { HrModule } from "./hr/hr.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
@@ -58,8 +59,8 @@ import { SystemCatalogModule } from "./system-catalog/system-catalog.module";
 import { PurchasesModule } from "./purchases/purchases.module";
 import { NetworkModule } from "./network/network.module";
 import { OrchestratorModule } from "./orchestrator/orchestrator.module";
-import { PlatformRecoveryModule } from "./platform-recovery/platform-recovery.module";
-import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.guard";
+import { DisputeFreezeGuard } from "./access/dispute-freeze.guard";
+import { AccessControlModule } from "./access/access-control.module";
 import { SatelliteIntegrationModule } from "./integration/integration.module";
 import { IndustryHandoffsModule } from "./industry-handoffs/industry-handoffs.module";
 import { BillingModule } from "./billing/billing.module";
@@ -97,6 +98,7 @@ const useControlPlaneAuth =
     ProcurementModule,
     InventoryModule,
     FixedAssetsModule,
+    IntangibleAssetsModule,
     MigrationModule,
     ManufacturingModule,
     PsaModule,
@@ -124,7 +126,7 @@ const useControlPlaneAuth =
     PurchasesModule,
     NetworkModule,
     OrchestratorModule,
-    PlatformRecoveryModule,
+    AccessControlModule,
     SatelliteIntegrationModule,
     IndustryHandoffsModule,
     BillingModule,
@@ -133,6 +135,7 @@ const useControlPlaneAuth =
   providers: [
     VoenIntegrityGuard,
     ControlPlaneAuthGuard,
+    DisputeFreezeGuard,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

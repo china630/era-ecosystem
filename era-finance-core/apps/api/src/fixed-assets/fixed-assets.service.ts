@@ -26,12 +26,14 @@ export class FixedAssetsService {
     return this.prisma.fixedAsset.findMany({
       where: { organizationId },
       orderBy: [{ inventoryNumber: "asc" }],
+      include: { taxProfile: true },
     });
   }
 
   async getOne(organizationId: string, id: string) {
     const row = await this.prisma.fixedAsset.findFirst({
       where: { id, organizationId },
+      include: { taxProfile: true },
     });
     if (!row) throw new NotFoundException("Fixed asset not found");
     return row;

@@ -12,6 +12,10 @@ import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { monthRangeUtc } from "../reporting/reporting-period.util";
 import { roundMoney2 } from "./decimal-round";
+import {
+  DEFAULT_TAX_DEPRECIATION_GROUP,
+  resolveTaxDepreciationRateFraction,
+} from "./tax-depreciation-catalog.util";
 
 const Decimal = Prisma.Decimal;
 
@@ -34,9 +38,17 @@ export class DepreciationService {
     uopTransactionId: string | null;
     uopTotalAmount: string;
     uopAssetsCount: number;
+    taxTotalAmount: string;
+    taxAssetsCount: number;
   }> {
     const slRb = await this.applySlRbForClosedMonth(tx, organizationId, year, month);
     const uop = await this.applyUopForClosedMonth(tx, organizationId, year, month);
+    const tax = await this.applyTaxDepreciationForClosedMonth(
+      tx,
+      organizationId,
+      year,
+      month,
+    );
     return {
       transactionId: slRb.transactionId,
       totalAmount: new Decimal(slRb.totalAmount).add(uop.totalAmount).toString(),
@@ -44,6 +56,8 @@ export class DepreciationService {
       uopTransactionId: uop.transactionId,
       uopTotalAmount: uop.totalAmount,
       uopAssetsCount: uop.assetsCount,
+      taxTotalAmount: tax.totalAmount,
+      taxAssetsCount: tax.assetsCount,
     };
   }
 
@@ -285,6 +299,100 @@ export class DepreciationService {
       transactionId,
       totalAmount: roundMoney2(total).toString(),
       assetsCount: rows.length,
+    };
+  }
+
+  /**
+   * Tax depreciation (NK Art. 114 declining balance on tax NBV).
+   * Runs in parallel to book depreciation; idempotent per asset/month.
+   */
+  async applyTaxDepreciationForClosedMonth(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    year: number,
+    month: number,
+  ): Promise<{ totalAmount: string; assetsCount: number }> {
+    const { end } = monthRangeUtc(year, month);
+    const monthEnd = end;
+
+    const assets = await tx.fixedAsset.findMany({
+      where: { organizationId, status: FixedAssetStatus.ACTIVE },
+      include: { taxProfile: true },
+    });
+
+    let total = new Decimal(0);
+    let assetsCount = 0;
+
+    for (const asset of assets) {
+      if (asset.purchaseDate.getTime() > monthEnd.getTime()) continue;
+
+      const exists = await tx.fixedAssetTaxDepreciationMonth.findUnique({
+        where: {
+          fixedAssetId_year_month: {
+            fixedAssetId: asset.id,
+            year,
+            month,
+          },
+        },
+      });
+      if (exists) continue;
+
+      let profile = asset.taxProfile;
+      if (!profile) {
+        const rateFraction = await resolveTaxDepreciationRateFraction(
+          DEFAULT_TAX_DEPRECIATION_GROUP,
+        );
+        profile = await tx.fixedAssetTaxProfile.create({
+          data: {
+            organizationId,
+            fixedAssetId: asset.id,
+            taxGroupCode: DEFAULT_TAX_DEPRECIATION_GROUP,
+            taxRatePercent: new Decimal(rateFraction),
+            taxNbv: new Decimal(asset.purchasePrice),
+            taxAccumulated: new Decimal(0),
+          },
+        });
+      }
+
+      const taxNbv = new Decimal(profile.taxNbv);
+      if (taxNbv.lte(0)) continue;
+
+      const rate = new Decimal(profile.taxRatePercent);
+      if (rate.lte(0)) continue;
+
+      let amount = roundMoney2(taxNbv.mul(rate).div(12));
+      if (amount.gt(taxNbv)) {
+        amount = roundMoney2(taxNbv);
+      }
+      if (amount.lte(0)) continue;
+
+      const taxNbvAfter = roundMoney2(taxNbv.sub(amount));
+
+      await tx.fixedAssetTaxDepreciationMonth.create({
+        data: {
+          organizationId,
+          fixedAssetId: asset.id,
+          year,
+          month,
+          amount,
+          taxNbvAfter,
+        },
+      });
+      await tx.fixedAssetTaxProfile.update({
+        where: { id: profile.id },
+        data: {
+          taxNbv: taxNbvAfter,
+          taxAccumulated: { increment: amount },
+        },
+      });
+
+      total = total.add(amount);
+      assetsCount += 1;
+    }
+
+    return {
+      totalAmount: roundMoney2(total).toString(),
+      assetsCount,
     };
   }
 

@@ -1076,39 +1076,6 @@ export class AdminService {
       },
     });
   }
-
-  async listPublicLandingModules() {
-    const rows = await this.prisma.landingModuleMarketing.findMany({
-      orderBy: [{ sortOrder: "asc" }, { moduleSlug: "asc" }],
-    });
-    return { items: rows.map(serializeLandingModule) };
-  }
-
-  async listLandingModulesAdmin() {
-    return this.listPublicLandingModules();
-  }
-
-  async patchLandingModuleMarketing(
-    moduleSlug: string,
-    dto: import("./dto/patch-landing-module-marketing.dto").PatchLandingModuleMarketingDto,
-  ) {
-    const existing = await this.prisma.landingModuleMarketing.findUnique({
-      where: { moduleSlug },
-    });
-    if (!existing) {
-      throw new NotFoundException("Landing module not found");
-    }
-    const row = await this.prisma.landingModuleMarketing.update({
-      where: { moduleSlug },
-      data: {
-        ...(dto.sortOrder != null ? { sortOrder: dto.sortOrder } : {}),
-        names: dto.names as object,
-        descriptions: dto.descriptions as object,
-        tasks: dto.tasks as object,
-      },
-    });
-    return serializeLandingModule(row);
-  }
 }
 
 function serializePricingModule(m: {
@@ -1153,23 +1120,5 @@ function serializePricingBundle(b: {
   };
 }
 
-function serializeLandingModule(row: {
-  moduleSlug: string;
-  sortOrder: number;
-  names: unknown;
-  descriptions: unknown;
-  tasks: unknown;
-}) {
-  return {
-    moduleSlug: row.moduleSlug,
-    sortOrder: row.sortOrder,
-    names: row.names,
-    descriptions: row.descriptions,
-    tasks: row.tasks,
-  };
-}
-
-export type AdminLandingModuleMarketingRow = ReturnType<
-  typeof serializeLandingModule
->;
+export type AdminPricingBundleRow = ReturnType<typeof serializePricingBundle>;
 

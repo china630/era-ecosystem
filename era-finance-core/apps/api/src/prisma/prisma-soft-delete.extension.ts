@@ -75,6 +75,7 @@ export const SOFT_DELETE_DELETED_AT_MODELS = new Set<string>([
   "CustomsDeclaration",
   "TaxDeclarationExport",
   "AdvanceReport",
+  "AdvanceReportLine",
   "OrganizationBankAccount",
 ]);
 
@@ -94,23 +95,6 @@ export const prismaSoftDeleteExtension = Prisma.defineExtension(
     name: "softDelete",
     query: {
       organization: {
-        findMany({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
-          return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
-        },
-        findFirst({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
-          return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
-        },
-        count({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
-          return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
-        },
-        aggregate({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
-          return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
-        },
-        groupBy({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
-          return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
-        },
-      },
-      holding: {
         findMany({ args, query }: { args: { where?: unknown }; query: (a: unknown) => Promise<unknown> }) {
           return query({ ...args, where: aliveOrgHoldingWhere(args.where) });
         },

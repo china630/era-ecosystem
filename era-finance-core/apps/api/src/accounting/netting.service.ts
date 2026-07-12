@@ -318,7 +318,7 @@ export class NettingService {
       : new Decimal(0);
     const vatStr = vatPortion.toFixed(4);
 
-    const acc241 = vatOnNetting
+    const accVatInput = vatOnNetting
       ? await this.prisma.account.findFirst({
           where: {
             organizationId,
@@ -327,7 +327,7 @@ export class NettingService {
           },
         })
       : null;
-    const acc541 = vatOnNetting
+    const accVatOutput = vatOnNetting
       ? await this.prisma.account.findFirst({
           where: {
             organizationId,
@@ -336,7 +336,7 @@ export class NettingService {
           },
         })
       : null;
-    const canPostVat = Boolean(acc241 && acc541);
+    const canPostVat = Boolean(accVatInput && accVatOutput);
 
     const payDate = new Date();
 
@@ -397,7 +397,7 @@ export class NettingService {
         vatAmount: vatOnNetting ? vatStr : null,
         vatSkippedReason:
           vatOnNetting && !canPostVat
-            ? "Счета 241/541 не найдены в плане счетов — создайте e-qaimə вручную."
+            ? `Счета ${vatInputCode}/${vatOutputCode} не найдены в плане счетов — создайте e-qaimə вручную.`
             : null,
       };
     });

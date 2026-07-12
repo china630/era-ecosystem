@@ -182,13 +182,13 @@ export function HeaderOrganizationSwitcher({ onNavigate }: { onNavigate?: () => 
             ) : null}
 
             <li className="mt-1 border-t border-gray-100 pt-1">
-              <Link
-                href="/companies"
+              <a
+                href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/organizations`}
                 className="block px-3 py-2 text-sm text-action hover:bg-action/10"
                 onClick={pickDone}
               >
                 {t("orgSwitcher.manageCompanies")}
-              </Link>
+              </a>
             </li>
           </ul>
         ) : null}

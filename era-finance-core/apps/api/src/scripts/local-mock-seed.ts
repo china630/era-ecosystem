@@ -23,6 +23,7 @@ import {
 } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
 import { IfrsAutoMappingService } from "../accounting/ifrs-auto-mapping.service";
+import { SubcontoService } from "../accounting/subconto.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { apiEnvFilePaths } from "../load-env-paths";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -82,14 +83,21 @@ const OWNER_EMAIL = "shirinov.chingiz@gmail.com";
   providers: [
     IfrsAutoMappingService,
     PostingAccountResolver,
+    SubcontoService,
     {
       provide: AccountingService,
       useFactory: (
         prisma: PrismaService,
         ifrs: IfrsAutoMappingService,
         posting: PostingAccountResolver,
-      ) => new AccountingService(prisma, ifrs, posting),
-      inject: [PrismaService, IfrsAutoMappingService, PostingAccountResolver],
+        subconto: SubcontoService,
+      ) => new AccountingService(prisma, ifrs, posting, subconto),
+      inject: [
+        PrismaService,
+        IfrsAutoMappingService,
+        PostingAccountResolver,
+        SubcontoService,
+      ],
     },
   ],
 })

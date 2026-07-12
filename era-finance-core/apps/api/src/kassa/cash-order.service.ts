@@ -30,6 +30,7 @@ import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.uti
 import { TreasuryService } from "../treasury/treasury.service";
 import { ApprovalsService } from "../approvals/approvals.service";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
+import { AdvanceReportService } from "./advance-report.service";
 
 type Tx = Prisma.TransactionClient;
 
@@ -61,6 +62,7 @@ export class CashOrderService {
     private readonly posting: PostingAccountResolver,
     private readonly mdm: OrchestratorMdmClientService,
     @Optional() private readonly councilTriggers?: CouncilTriggerService,
+    @Optional() private readonly advanceReports?: AdvanceReportService,
   ) {}
 
   async nextOrderNumberTx(
@@ -812,6 +814,9 @@ export class CashOrderService {
       purpose?: string;
     },
   ) {
+    if (this.advanceReports) {
+      return this.advanceReports.createAdvanceReportDraft(organizationId, dto);
+    }
     const emp = await this.prisma.employee.findFirst({
       where: { id: dto.employeeId, organizationId },
     });
@@ -839,6 +844,9 @@ export class CashOrderService {
   }
 
   async postAdvanceReport(organizationId: string, reportId: string) {
+    if (this.advanceReports) {
+      return this.advanceReports.postAdvanceReport(organizationId, reportId);
+    }
     const rep = await this.prisma.advanceReport.findFirst({
       where: { id: reportId, organizationId },
       include: { employee: true },

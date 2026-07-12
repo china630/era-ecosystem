@@ -85,7 +85,7 @@ export default function GovBudgetPage() {
         title="Gov budget"
         subtitle="Annual budget plan and execution (B2G)"
         actions={
-          <Link href="/settings/subscription" className={SECONDARY_BUTTON_CLASS}>
+          <Link href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`} className={SECONDARY_BUTTON_CLASS}>
             Subscription
           </Link>
         }
@@ -96,7 +96,7 @@ export default function GovBudgetPage() {
           title="Gov Budget is not enabled"
           description="Enable the gov_budget_pro module for budget-year planning and limit checks."
           action={
-            <Link href="/settings/subscription" className={PRIMARY_BUTTON_CLASS}>
+            <Link href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`} className={PRIMARY_BUTTON_CLASS}>
               Manage subscription
             </Link>
           }
