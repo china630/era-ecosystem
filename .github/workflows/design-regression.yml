@@ -16,6 +16,9 @@ jobs:
           node-version: '22'
       - name: Install Playwright
         run: npx playwright install chromium --with-deps
+      - name: Install orchestrator workspace (prisma migrate needs local bins)
+        run: npm ci
+        working-directory: era-orchestrator
       - name: Build shared packages image
         run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
       - name: Bootstrap local demo

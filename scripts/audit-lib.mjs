@@ -15,6 +15,9 @@ export const WALK_SKIP_DIRS = new Set([
   "generated",
   ".next",
   "coverage",
+  "docker-data",
+  "tmp",
+  "test-results",
 ]);
 
 export const WALK_SKIP_FILE = /\.(spec|test)\.(ts|tsx|js|mjs)$/;
@@ -31,7 +34,13 @@ export function walkRepo(dir, acc = [], opts = {}) {
   for (const name of readdirSync(dir)) {
     const p = join(dir, name);
     if (WALK_SKIP_DIRS.has(name)) continue;
-    const st = statSync(p);
+    let st;
+    try {
+      st = statSync(p);
+    } catch (err) {
+      if (err && (err.code === "EACCES" || err.code === "EPERM")) continue;
+      throw err;
+    }
     if (st.isDirectory()) {
       walkRepo(p, acc, opts);
     } else if (extensions.test(name)) {
