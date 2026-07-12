@@ -247,17 +247,20 @@ async function main() {
         runOptional(`${dir} db push`, prismaCli(satRoot, "db push"), satRoot, env);
       }
       if (adminRole) {
-        runOptional(
-          `${dir} ecosystem demo user`,
-          `npx tsx ${demoUserScript}`,
-          satRoot,
-          {
-            ...env,
-            ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
-            ECOSYSTEM_DEMO_PASSWORD: demoPassword,
-            ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
-          },
-        );
+        const demoEnv = {
+          ...env,
+          ECOSYSTEM_DEMO_LOGIN: "chingiz@era.com",
+          ECOSYSTEM_DEMO_PASSWORD: demoPassword,
+          ECOSYSTEM_DEMO_ADMIN_ROLE: adminRole,
+        };
+        const demoLabel = `${dir} ecosystem demo user`;
+        const demoCmd = `npx tsx ${demoUserScript}`;
+        // Design (SKIP_HEAVY) must have login users; other sats stay best-effort.
+        if (skipHeavy || dir === "era-hotel-pms" || dir === "era-clinic") {
+          run(demoLabel, demoCmd, satRoot, demoEnv);
+        } else {
+          runOptional(demoLabel, demoCmd, satRoot, demoEnv);
+        }
       }
       if (dir === "era-clinic") {
         runOptional(`${dir} db seed`, "npm run db:seed", satRoot, env);
