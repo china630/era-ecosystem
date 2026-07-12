@@ -5304,6 +5304,10 @@ export const resources = {
         title: "Mənim Şirkətlərim",
         selectCompanyTitle: "Şirkət seçin",
         selectCompanyHint: "Davam etmək üçün aktiv şirkəti seçməlisiniz.",
+        noCompanyTitle: "Şirkət yoxdur",
+        noCompanyHint:
+          "Davam etmək üçün ERA hesabınızda şirkət yaradın və ya qoşulun.",
+        manageOnHub: "ERA hesabına keç",
         subtitle:
           "İş üçün şirkət seçin və ya VÖEN ilə mövcud təşkilata giriş üçün sorğu göndərin.",
         yourCompanies: "Şirkətləriniz",
