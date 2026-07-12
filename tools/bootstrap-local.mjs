@@ -232,6 +232,10 @@ async function main() {
           satRoot,
           env,
         );
+        // Hotel FO smoke needs roles with permissions + master data (not empty demo-user role).
+        if (dir === "era-hotel-pms") {
+          run(`${dir} db seed`, "npm run db:seed", satRoot, env);
+        }
       } else if (mode === "migrate-core") {
         run(
           `${dir} migrate deploy`,
