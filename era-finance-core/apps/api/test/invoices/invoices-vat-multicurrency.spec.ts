@@ -8,6 +8,9 @@ import {
 describe("Invoices VAT and multi-currency rounding", () => {
   const noop = {} as any;
   const posting = createMockPostingResolver();
+  const vatDeposit = {
+    maybeRouteFromInvoicePayment: jest.fn().mockResolvedValue({ routed: false }),
+  } as any;
 
   it("VAT inclusive math stays stable for non-AZN invoice rows", async () => {
     const service = new InvoicesService(
@@ -15,6 +18,8 @@ describe("Invoices VAT and multi-currency rounding", () => {
       noop,
       posting,
       createMockPostingJournalBuilder(undefined, posting),
+      vatDeposit,
+      noop,
       noop,
       noop,
       noop,
@@ -44,12 +49,14 @@ describe("Invoices VAT and multi-currency rounding", () => {
       accounting as any,
       posting,
       createMockPostingJournalBuilder(accounting as any, posting),
+      vatDeposit,
       noop,
       noop,
       noop,
       noop,
       noop,
       { createAutoFromInvoicePayment: jest.fn().mockResolvedValue({}) } as any,
+      noop,
       noop,
     );
     const tx = {
@@ -94,12 +101,14 @@ describe("Invoices VAT and multi-currency rounding", () => {
       accounting as any,
       posting,
       createMockPostingJournalBuilder(accounting as any, posting),
+      vatDeposit,
       noop,
       noop,
       noop,
       noop,
       noop,
       { createAutoFromInvoicePayment: jest.fn().mockResolvedValue({}) } as any,
+      noop,
       noop,
     );
     const tx = {

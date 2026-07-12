@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { PrismaModule } from "../prisma/prisma.module";
+import { DataHubModule } from "../data-hub/data-hub.module";
 import { GlobalCompanyDirectoryService } from "./global-company-directory.service";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [DataHubModule],
   providers: [GlobalCompanyDirectoryService],
   exports: [GlobalCompanyDirectoryService],
 })

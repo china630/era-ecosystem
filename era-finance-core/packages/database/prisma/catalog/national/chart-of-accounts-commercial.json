@@ -374,6 +374,14 @@
       "parentCode": "500"
     },
     {
+      "code": "523",
+      "nameAz": "DSMF və digər sosial ayırmalar üzrə öhdəliklər",
+      "nameRu": "Обязательства по DSMF и прочим соц. взносам",
+      "nameEn": "Social contribution payables (DSMF)",
+      "type": "LIABILITY",
+      "parentCode": "500"
+    },
+    {
       "code": "531",
       "nameAz": "Təchizatçılar və podratçılar qarşısında öhdəliklər",
       "nameRu": "Обязательства перед поставщиками и подрядчиками",
@@ -410,6 +418,14 @@
       "nameAz": "İcarə üzrə öhdəliklər",
       "nameRu": "Обязательства по аренде",
       "nameEn": "Lease liabilities",
+      "type": "LIABILITY",
+      "parentCode": "500"
+    },
+    {
+      "code": "545",
+      "nameAz": "ƏDV üzrə öhdəliklər",
+      "nameRu": "Обязательства по НДС",
+      "nameEn": "VAT payables",
       "type": "LIABILITY",
       "parentCode": "500"
     },

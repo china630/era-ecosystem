@@ -69,19 +69,37 @@ export class OrganizationSettingsService {
       org.settings && typeof org.settings === "object" && !Array.isArray(org.settings)
         ? (org.settings as Record<string, unknown>)
         : {};
+
+    let mergedSettings: Record<string, unknown> | undefined;
+    if (valuation !== undefined || dto.asanUserId !== undefined) {
+      mergedSettings = { ...baseSettings };
+      if (valuation !== undefined) {
+        mergedSettings.inventory = {
+          ...(baseSettings.inventory &&
+          typeof baseSettings.inventory === "object" &&
+          !Array.isArray(baseSettings.inventory)
+            ? (baseSettings.inventory as Record<string, unknown>)
+            : {}),
+          inventoryValuation: valuation,
+        };
+      }
+      if (dto.asanUserId !== undefined) {
+        const prevTax =
+          baseSettings.tax &&
+          typeof baseSettings.tax === "object" &&
+          !Array.isArray(baseSettings.tax)
+            ? (baseSettings.tax as Record<string, unknown>)
+            : {};
+        const trimmed = dto.asanUserId?.trim() || null;
+        mergedSettings.tax = {
+          ...prevTax,
+          asanUserId: trimmed,
+        };
+      }
+    }
     const nextSettings =
-      valuation !== undefined
-        ? ({
-            ...baseSettings,
-            inventory: {
-              ...(baseSettings.inventory &&
-              typeof baseSettings.inventory === "object" &&
-              !Array.isArray(baseSettings.inventory)
-                ? (baseSettings.inventory as Record<string, unknown>)
-                : {}),
-              inventoryValuation: valuation,
-            },
-          } as Prisma.InputJsonValue)
+      mergedSettings !== undefined
+        ? (mergedSettings as Prisma.InputJsonValue)
         : undefined;
 
     const defaultBankLedger =

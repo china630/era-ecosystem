@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { AccountType, LedgerType, Prisma } from "@erafinance/database";
+import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportsCacheService } from "./reports-cache.service";
@@ -22,6 +23,7 @@ export class FinancialReportService {
     private readonly prisma: PrismaService,
     private readonly reporting: ReportingService,
     private readonly cache: ReportsCacheService,
+    private readonly posting: PostingAccountResolver,
   ) {}
 
   async generateBalanceSheet(
@@ -70,7 +72,6 @@ export class FinancialReportService {
       for (const r of tb.rows) {
         if (!prefixes.some((p) => r.accountCode.startsWith(p))) continue;
         const net = d(r.closingDebit).sub(d(r.closingCredit));
-        // assets are positive as net; for liability/equity codes this might be negative; keep sign and normalize later.
         sum = sum.add(net);
       }
       return sum;
@@ -83,12 +84,10 @@ export class FinancialReportService {
     ];
 
     const liabilitiesRows = [
-      // liabilities have credit balances → represent as positive
       { code: "AP", name: "Payables (531)", amount: sumByPrefix(["531"]).neg() },
       { code: "PAY_TAX", name: "Payroll & Taxes (521/523)", amount: sumByPrefix(["521", "523"]).neg() },
     ];
 
-    // Equity: use TB equity accounts if present, else compute as Assets - Liabilities.
     let eqTotal = new Decimal(0);
     for (const r of tb.rows) {
       if (r.accountType !== AccountType.EQUITY) continue;
@@ -102,22 +101,40 @@ export class FinancialReportService {
       eqTotal = assetsTotal.sub(liabilitiesTotal);
     }
 
-    const charterCapital = (() => {
-      // common equity codes in AR chart: 301.*
+    const [charterCode, retainedCode, periodResultCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "CHARTER_CAPITAL"),
+      this.posting.resolveAccountCode(organizationId, "RETAINED_EARNINGS"),
+      this.posting.resolveAccountCode(organizationId, "PERIOD_RESULT"),
+    ]);
+
+    const sumByCodePrefix = (code: string): Prisma.Decimal => {
       let sum = new Decimal(0);
       for (const r of tb.rows) {
-        if (!r.accountCode.startsWith("301")) continue;
+        if (!r.accountCode.startsWith(code)) continue;
         const net = d(r.closingDebit).sub(d(r.closingCredit));
         sum = sum.add(net.neg());
       }
       return sum;
-    })();
+    };
 
-    const retained = eqTotal.sub(charterCapital);
+    const charterCapital = sumByCodePrefix(charterCode);
+    const retainedBooked = sumByCodePrefix(retainedCode).add(
+      sumByCodePrefix(periodResultCode),
+    );
+    const retained =
+      retainedBooked.abs().gt(0) ? retainedBooked : eqTotal.sub(charterCapital);
 
     const equityRows = [
-      { code: "CAP", name: "Charter capital (301)", amount: charterCapital },
-      { code: "RE", name: "Retained earnings / result", amount: retained },
+      {
+        code: "CAP",
+        name: `Charter capital (${charterCode})`,
+        amount: charterCapital,
+      },
+      {
+        code: "RE",
+        name: `Retained earnings / result (${retainedCode}/${periodResultCode})`,
+        amount: retained,
+      },
     ];
 
     const result = {

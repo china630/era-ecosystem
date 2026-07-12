@@ -2,7 +2,8 @@ import {
   ForbiddenException,
   Injectable,
 } from "@nestjs/common";
-import { HoldingAccessRole, UserRole } from "@erafinance/database";
+import { UserRole } from "@erafinance/database";
+import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 /**
@@ -10,7 +11,10 @@ import { PrismaService } from "../prisma/prisma.service";
  */
 @Injectable()
 export class AccessControlService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly holdingsCp: OrchestratorHoldingsClientService,
+  ) {}
 
   /**
    * Раздел биллинга / подписки (оплата, смена плана, модули) — только OWNER.
@@ -69,41 +73,19 @@ export class AccessControlService {
   }
 
   /**
-   * Просмотр отчётности по холдингу — владелец холдинга или участник с ролью не ниже ACCOUNTANT.
+   * Просмотр отчётности по холдингу — grant из control plane
+   * (владелец холдинга или участник OWNER/ADMIN/ACCOUNTANT).
    */
   async assertMayViewHoldingReports(
     userId: string,
     holdingId: string,
   ): Promise<void> {
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      select: { ownerId: true },
-    });
-    if (!holding) {
+    const holding = await this.holdingsCp.getHoldingForUser(userId, holdingId);
+    if (!holding.canViewReports) {
       throw new ForbiddenException({
-        code: "HOLDING_NOT_FOUND",
-        message: "Holding not found.",
+        code: "HOLDING_ACCESS_DENIED",
+        message: "No access to this holding.",
       });
     }
-    if (holding.ownerId === userId) {
-      return;
-    }
-    const m = await this.prisma.holdingMembership.findUnique({
-      where: {
-        userId_holdingId: { userId, holdingId },
-      },
-    });
-    if (
-      m &&
-      (m.role === HoldingAccessRole.OWNER ||
-        m.role === HoldingAccessRole.ADMIN ||
-        m.role === HoldingAccessRole.ACCOUNTANT)
-    ) {
-      return;
-    }
-    throw new ForbiddenException({
-      code: "HOLDING_ACCESS_DENIED",
-      message: "No access to this holding.",
-    });
   }
 }

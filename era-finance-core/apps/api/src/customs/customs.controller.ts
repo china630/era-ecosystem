@@ -25,14 +25,25 @@ import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { AttachCustomsDeclarationDto, UpsertCustomsDeclarationDto } from "./dto/customs-declaration.dto";
+import {
+  AllocateLandedCostDto,
+  PatchCustomsDeclarationItemDto,
+  RunImportPipelineDto,
+} from "./dto/landed-cost.dto";
 import { CustomsService } from "./customs.service";
+import { LandedCostService } from "./landed-cost.service";
+import { ImportPipelineService } from "./import-pipeline.service";
 
 @ApiTags("customs")
 @ApiBearerAuth("bearer")
 @Controller("customs/declarations")
 @UseGuards(RolesGuard, VoenIntegrityGuard)
 export class CustomsController {
-  constructor(private readonly customs: CustomsService) {}
+  constructor(
+    private readonly customs: CustomsService,
+    private readonly landedCost: LandedCostService,
+    private readonly importPipeline: ImportPipelineService,
+  ) {}
 
   @Get()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
@@ -44,6 +55,25 @@ export class CustomsController {
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   create(@OrganizationId() organizationId: string, @Body() dto: UpsertCustomsDeclarationDto) {
     return this.customs.create(organizationId, dto);
+  }
+
+  @Post("import-pipeline")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.TRADE_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary: "Stub import pipeline: OCR → purchase draft → BGD link → landed cost (trade_pro)",
+  })
+  runImportPipeline(
+    @OrganizationId() organizationId: string,
+    @Body() dto: RunImportPipelineDto,
+  ) {
+    return this.importPipeline.run(
+      organizationId,
+      dto.ocrJobId,
+      dto.customsDeclarationId,
+      dto.landedCostMethod ?? "STAT_VALUE",
+    );
   }
 
   @Get(":id")
@@ -78,6 +108,33 @@ export class CustomsController {
       });
     }
     return this.customs.createDraftFromCapture(organizationId, flat.data, user.userId);
+  }
+
+  @Post(":id/allocate-landed-cost")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.TRADE_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Allocate BGD duty/fees/excise to linked products (trade_pro)" })
+  allocateLandedCost(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AllocateLandedCostDto,
+  ) {
+    return this.landedCost.allocate(organizationId, id, dto.method ?? "STAT_VALUE");
+  }
+
+  @Patch(":id/items/:itemId/product")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.TRADE_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Link catalog product to BGD line item (trade_pro)" })
+  patchItemProduct(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("itemId", ParseUUIDPipe) itemId: string,
+    @Body() dto: PatchCustomsDeclarationItemDto,
+  ) {
+    return this.customs.patchItemProduct(organizationId, id, itemId, dto.productId);
   }
 
   @Patch(":id/attach")

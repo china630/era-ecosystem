@@ -4,7 +4,11 @@ import { AccessControlService } from "../access/access-control.service";
 import { BankBalancesSyncQueueService } from "../banking/bank-balances-sync.queue";
 import { BankingGatewayService } from "../banking/banking-gateway.service";
 import { CurrencyConverterService } from "../fx/currency-converter.service";
-import { CbarExternalFetchDisabledError } from "../fx/cbar-fx.service";
+import { CbarExternalFetchDisabledError } from "../fx/cbar-errors";
+import {
+  OrchestratorHoldingsClientService,
+  type ControlPlaneHolding,
+} from "../orchestrator/orchestrator-holdings-client.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { TaxpayerIntegrationService } from "../tax/taxpayer-integration.service";
@@ -18,6 +22,14 @@ import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.uti
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
 
+type HoldingOrgRow = {
+  id: string;
+  name: string;
+  currency: string;
+  taxIdCipher: string | null;
+  taxIdBlindIndex: string | null;
+};
+
 @Injectable()
 export class HoldingsReportingService {
   private readonly logger = new Logger(HoldingsReportingService.name);
@@ -29,14 +41,50 @@ export class HoldingsReportingService {
     private readonly bankingGateway: BankingGatewayService,
     private readonly bankSyncQueue: BankBalancesSyncQueueService,
     private readonly taxpayerIntegration: TaxpayerIntegrationService,
+    private readonly holdingsCp: OrchestratorHoldingsClientService,
   ) {}
 
-  async getHoldingBalancesSummaryForUser(userId: string, holdingId: string) {
-    await this.access.assertMayViewHoldingReports(userId, holdingId);
-    return this.getHoldingBalancesSummary(holdingId);
+  private async loadHoldingOrgs(
+    holding: ControlPlaneHolding,
+  ): Promise<HoldingOrgRow[]> {
+    if (holding.organizationIds.length === 0) return [];
+    const orgs = await this.prisma.organization.findMany({
+      where: {
+        id: { in: holding.organizationIds },
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        currency: true,
+        taxIdCipher: true,
+        taxIdBlindIndex: true,
+      },
+    });
+    const byId = new Map(orgs.map((o) => [o.id, o]));
+    return holding.organizationIds
+      .map((id) => byId.get(id))
+      .filter((o): o is HoldingOrgRow => o != null);
   }
 
-  async getHoldingBalancesSummary(holdingId: string): Promise<{
+  private async resolveHolding(
+    userId: string,
+    holdingId: string,
+  ): Promise<{ holding: ControlPlaneHolding; organizations: HoldingOrgRow[] }> {
+    await this.access.assertMayViewHoldingReports(userId, holdingId);
+    const holding = await this.holdingsCp.getHoldingForUser(userId, holdingId);
+    if (!holding.canViewReports) {
+      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
+    }
+    const organizations = await this.loadHoldingOrgs(holding);
+    return { holding, organizations };
+  }
+
+  async getHoldingBalancesSummaryForUser(userId: string, holdingId: string) {
+    return this.getHoldingBalancesSummary(userId, holdingId);
+  }
+
+  async getHoldingBalancesSummary(userId: string, holdingId: string): Promise<{
     holdingId: string;
     holdingName: string;
     holdingBaseCurrency: string;
@@ -53,13 +101,10 @@ export class HoldingsReportingService {
     }>;
     consolidationNote: string | null;
   }> {
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      include: { organizations: { where: { isDeleted: false } } },
-    });
-    if (!holding) {
-      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
-    }
+    const { holding, organizations: orgs } = await this.resolveHolding(
+      userId,
+      holdingId,
+    );
 
     const baseCur = (holding.baseCurrency ?? "AZN").toUpperCase();
     const asOfDate = new Date();
@@ -67,7 +112,7 @@ export class HoldingsReportingService {
     let totalInBase = new Decimal(0);
 
     const organizations = [];
-    for (const org of holding.organizations) {
+    for (const org of orgs) {
       const cur = (org.currency ?? "AZN").toUpperCase();
       const balances = await this.bankingGateway.getBalances(org.id);
       const amount = balances.balances.reduce(
@@ -87,7 +132,12 @@ export class HoldingsReportingService {
         accountsCount: balances.balances.length,
       };
       try {
-        const converted = await this.currency.convert(amount, cur, baseCur, asOfDate);
+        const converted = await this.currency.convert(
+          amount,
+          cur,
+          baseCur,
+          asOfDate,
+        );
         const rounded = new Decimal(converted.toFixed(4));
         totalInBase = totalInBase.plus(rounded);
         row.amountInHoldingBase = rounded.toFixed(4);
@@ -130,16 +180,9 @@ export class HoldingsReportingService {
       isRiskyTaxpayer: boolean | null;
     }>;
   }> {
-    await this.access.assertMayViewHoldingReports(userId, holdingId);
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      include: { organizations: { where: { isDeleted: false } } },
-    });
-    if (!holding) {
-      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
-    }
-    const orgNameById = new Map(holding.organizations.map((o) => [o.id, o.name]));
-    const orgIds = holding.organizations.map((o) => o.id);
+    const { organizations: orgs } = await this.resolveHolding(userId, holdingId);
+    const orgNameById = new Map(orgs.map((o) => [o.id, o.name]));
+    const orgIds = orgs.map((o) => o.id);
     const counterparties = await this.prisma.counterparty.findMany({
       where: { organizationId: { in: orgIds } },
       select: {
@@ -186,40 +229,24 @@ export class HoldingsReportingService {
     queued: number;
     holdingId: string;
   }> {
-    await this.access.assertMayViewHoldingReports(userId, holdingId);
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      include: { organizations: { where: { isDeleted: false } } },
-    });
-    if (!holding) {
-      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
-    }
+    const { organizations: orgs } = await this.resolveHolding(userId, holdingId);
     const queued = await this.bankSyncQueue.enqueueManualSync({
-      organizationIds: holding.organizations.map((o) => o.id),
+      organizationIds: orgs.map((o) => o.id),
       triggeredByUserId: userId,
       source: "holding-dashboard",
     });
     return { queued: queued.queued, holdingId };
   }
 
-  /**
-   * Holding dashboard summary:
-   * - aggregated Cash/Bank (101+221) in holding base currency (default AZN)
-   * - per-organization cash/bank in org currency + converted value
-   */
   async getHoldingSummary(
     userId: string,
     holdingId: string,
     params?: { asOf?: string; ledgerType?: LedgerType },
   ) {
-    await this.access.assertMayViewHoldingReports(userId, holdingId);
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      include: { organizations: { where: { isDeleted: false } } },
-    });
-    if (!holding) {
-      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
-    }
+    const { holding, organizations: orgs } = await this.resolveHolding(
+      userId,
+      holdingId,
+    );
 
     const baseCur = (holding.baseCurrency ?? "AZN").toUpperCase();
     const ledgerType = params?.ledgerType ?? LedgerType.NAS;
@@ -241,7 +268,7 @@ export class HoldingsReportingService {
       cashBankInHoldingBase: string | null;
     }> = [];
 
-    for (const org of holding.organizations) {
+    for (const org of orgs) {
       const cur = (org.currency ?? "AZN").toUpperCase();
       const dash = await runWithTenantContextAsync(
         { organizationId: org.id, skipTenantFilter: false },
@@ -257,8 +284,12 @@ export class HoldingsReportingService {
         cashBankInHoldingBase: null as string | null,
       };
       try {
-        const inBaseRaw = await this.currency.convert(cash, cur, baseCur, asOfDate);
-        // Round per-row before summing to keep widget total equal to SUM(table rows).
+        const inBaseRaw = await this.currency.convert(
+          cash,
+          cur,
+          baseCur,
+          asOfDate,
+        );
         const inBaseRounded = new Decimal(inBaseRaw.toFixed(4));
         totalCashBankInBase = totalCashBankInBase.add(inBaseRounded);
         row.cashBankInHoldingBase = inBaseRounded.toFixed(4);
@@ -271,7 +302,6 @@ export class HoldingsReportingService {
             `Holding summary FX disabled: org=${org.id} ${cur}->${baseCur} asOf=${asOfDate.toISOString().slice(0, 10)}`,
           );
         } else {
-          // Do not zero out the company; keep raw org currency amount and log the conversion failure.
           this.logger.warn(
             `Holding summary FX failed: org=${org.id} ${cur}->${baseCur} asOf=${asOfDate.toISOString().slice(0, 10)}: ${
               e instanceof Error ? e.message : String(e)
@@ -294,10 +324,6 @@ export class HoldingsReportingService {
     };
   }
 
-  /**
-   * Сводный отчёт: P&L по каждой организации холдинга + суммы чистой прибыли по валютам
-   * и в **базовой валюте холдинга** (`Holding.baseCurrency`) по курсу ЦБА на `dateTo` (PRD §1.1).
-   */
   async consolidatedProfitAndLoss(
     userId: string,
     holdingId: string,
@@ -305,14 +331,10 @@ export class HoldingsReportingService {
     dateTo: string,
     ledgerType: LedgerType = LedgerType.NAS,
   ) {
-    await this.access.assertMayViewHoldingReports(userId, holdingId);
-    const holding = await this.prisma.holding.findFirst({
-      where: { id: holdingId, isDeleted: false },
-      include: { organizations: { where: { isDeleted: false } } },
-    });
-    if (!holding) {
-      throw new NotFoundException(`Holding with ID ${holdingId} not found`);
-    }
+    const { holding, organizations: orgs } = await this.resolveHolding(
+      userId,
+      holdingId,
+    );
 
     const baseCur = (holding.baseCurrency ?? "AZN").toUpperCase();
     let dateFromD: Date;
@@ -334,7 +356,7 @@ export class HoldingsReportingService {
     let consolidatedNetProfitInBase = new Decimal(0);
     let fxNote: string | null = null;
 
-    for (const org of holding.organizations) {
+    for (const org of orgs) {
       const pnl = await this.reporting.profitAndLoss(
         org.id,
         dateFrom,
@@ -379,25 +401,25 @@ export class HoldingsReportingService {
         consolidatedNetProfitInBase = consolidatedNetProfitInBase.add(inBaseSum);
         const last = organizations[organizations.length - 1]!;
         last.netProfitInHoldingBase = inBaseSum.toFixed(4);
-        } catch (e) {
-          if (e instanceof CbarExternalFetchDisabledError) {
-            fxNote =
-              "Курсы ЦБА недоступны (TAX_LOOKUP_MOCK / офлайн): консолидация в базовую валюту не выполнена.";
-            const last = organizations[organizations.length - 1]!;
-            last.netProfitInHoldingBase = null;
-          } else {
-            this.logger.warn(
-              `Holding consolidated P&L FX failed: org=${org.id} ${cur}->${baseCur}: ${
-                e instanceof Error ? e.message : String(e)
-              }`,
-            );
-            fxNote =
-              fxNote ??
-              "Конвертация в валюту холдинга не выполнена для одной или нескольких организаций; итог в базовой валюте опущен.";
-            const last = organizations[organizations.length - 1]!;
-            last.netProfitInHoldingBase = null;
-          }
+      } catch (e) {
+        if (e instanceof CbarExternalFetchDisabledError) {
+          fxNote =
+            "Курсы ЦБА недоступны (TAX_LOOKUP_MOCK / офлайн): консолидация в базовую валюту не выполнена.";
+          const last = organizations[organizations.length - 1]!;
+          last.netProfitInHoldingBase = null;
+        } else {
+          this.logger.warn(
+            `Holding consolidated P&L FX failed: org=${org.id} ${cur}->${baseCur}: ${
+              e instanceof Error ? e.message : String(e)
+            }`,
+          );
+          fxNote =
+            fxNote ??
+            "Конвертация в валюту холдинга не выполнена для одной или нескольких организаций; итог в базовой валюте опущен.";
+          const last = organizations[organizations.length - 1]!;
+          last.netProfitInHoldingBase = null;
         }
+      }
     }
 
     const consolidatedNetProfitByCurrency: Record<string, string> = {};
@@ -409,7 +431,6 @@ export class HoldingsReportingService {
       holdingId: holding.id,
       holdingName: holding.name,
       holdingBaseCurrency: baseCur,
-      /** Помесячные фрагменты периода: курс ЦБА на конец каждого фрагмента (UTC). */
       consolidationFxMode: "monthly_slice_end_rate" as const,
       consolidationFxSlices: fxSlices.length,
       dateFrom,

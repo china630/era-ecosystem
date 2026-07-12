@@ -170,6 +170,7 @@ export default function CustomsPage() {
           </div>
         </div>
         <p className="text-xs text-slate-600">{t("trade.customs.bulkHint")}</p>
+        <p className="text-xs text-slate-500">{t("trade.customs.landedCostHint")}</p>
       </div>
 
       <div className={DATA_TABLE_VIEWPORT_CLASS}>

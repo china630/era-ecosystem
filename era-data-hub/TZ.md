@@ -85,6 +85,7 @@ GET responses include `ETag`, `Cache-Control: public, max-age=…` (Redis-backed
 | GET | `/geo/countries` | — |
 | GET | `/geo/cities` | `country` |
 | GET | `/uom` | — |
+| GET | `/currencies` | ISO 4217 catalog (active) |
 | GET | `/tax-rates` | `type`, `date?` |
 | GET | `/chart-of-accounts` | `profile` = `commercial` \| `budget` \| `ngo` |
 

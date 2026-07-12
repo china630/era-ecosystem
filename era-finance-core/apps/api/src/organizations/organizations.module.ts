@@ -13,7 +13,6 @@ import { OrganizationsController } from "./organizations.controller";
 import { OrganizationsService } from "./organizations.service";
 import { HoldingsController } from "./holdings.controller";
 import { HoldingsReportingService } from "./holdings-reporting.service";
-import { HoldingsService } from "./holdings.service";
 import { OrganizationSettingsController } from "./organization-settings.controller";
 import { OrganizationSettingsService } from "./organization-settings.service";
 
@@ -37,7 +36,6 @@ import { OrganizationSettingsService } from "./organization-settings.service";
   ],
   providers: [
     OrganizationsService,
-    HoldingsService,
     HoldingsReportingService,
     OrganizationSettingsService,
   ],

@@ -172,19 +172,28 @@ async function main() {
     last_query: null,
   };
 
-  if (checkpoint && !checkpoint.complete) {
-    startIndex = checkpoint.index ?? 0;
-    if (checkpoint.stats) {
-      Object.assign(stats, checkpoint.stats);
-      stats.known_voen_wave_start =
-        checkpoint.stats.known_voen_wave_start ??
-        (checkpoint.stats.known_voen_at_start < 110000
-          ? checkpoint.stats.known_voen_at_start
-          : knownVoens.size);
-    }
+  if (checkpoint && !checkpoint.complete && checkpoint.stats) {
+    Object.assign(stats, checkpoint.stats);
+    stats.known_voen_wave_start =
+      checkpoint.stats.known_voen_wave_start ??
+      (checkpoint.stats.known_voen_at_start < 110000
+        ? checkpoint.stats.known_voen_at_start
+        : knownVoens.size);
     stats.new_voen = Math.max(0, knownVoens.size - stats.known_voen_wave_start);
-    stats.processed = startIndex;
     syncKnownDisplay(stats);
+
+    const samePlan = checkpoint.plan_generated_at === plan.generated_at;
+    const cpIndex = checkpoint.index ?? 0;
+    if (samePlan && cpIndex < plan.total_queries) {
+      startIndex = cpIndex;
+    } else {
+      // Plan rebuilt (cache changed): re-run remaining uncached queries from start.
+      startIndex = 0;
+      console.log(
+        `Plan changed or checkpoint past end (${cpIndex}/${plan.total_queries}) — scanning remaining uncached queries`,
+      );
+    }
+    stats.processed = startIndex;
     console.log(
       `Resume from index ${startIndex} | cumulative new_voen=${stats.new_voen} | known~${stats.known_voen_now}`,
     );
@@ -193,7 +202,17 @@ async function main() {
   const queue = plan.queries.slice(startIndex);
   const toRun = LIMIT > 0 ? queue.slice(0, LIMIT) : queue;
   if (!toRun.length) {
-    console.log("Nothing to run.");
+    console.log("Nothing to run — marking complete and rebuilding master.");
+    stats.finished_at = new Date().toISOString();
+    syncKnownDisplay(stats);
+    saveStats({ ...stats, updated_at: stats.finished_at });
+    saveCheckpoint({
+      index: plan.total_queries,
+      plan_generated_at: plan.generated_at,
+      complete: true,
+      stats,
+    });
+    rebuildMaster();
     return;
   }
 

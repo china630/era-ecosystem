@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { apiFetch } from "../../lib/api-client";
+import { formatMoneyAzn } from "../../lib/format-money";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
@@ -15,6 +16,7 @@ import {
   MODAL_INPUT_NUMERIC_CLASS,
 } from "../../lib/design-system";
 import { Button } from "../ui/button";
+import { FixedAssetLifecyclePanel } from "./fixed-asset-lifecycle-panel";
 
 type DepreciationMethod =
   | "STRAIGHT_LINE"
@@ -56,6 +58,12 @@ export function FixedAssetModal({
   const [usageUnits, setUsageUnits] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [taxProfile, setTaxProfile] = useState<{
+    taxGroupCode: string;
+    taxNbv: unknown;
+    taxRatePercent: unknown;
+    taxAccumulated: unknown;
+  } | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -71,6 +79,7 @@ export function FixedAssetModal({
       setTotalExpectedUnits("");
       setDecliningBalanceRate("");
       setUsageUnits("");
+      setTaxProfile(null);
       setLoading(false);
       return;
     }
@@ -93,6 +102,12 @@ export function FixedAssetModal({
         depreciationMethod?: DepreciationMethod;
         totalExpectedUnits?: unknown;
         decliningBalanceRate?: unknown;
+        taxProfile?: {
+          taxGroupCode: string;
+          taxNbv: unknown;
+          taxRatePercent: unknown;
+          taxAccumulated: unknown;
+        } | null;
       };
       if (cancelled) return;
       setName(row.name);
@@ -105,6 +120,7 @@ export function FixedAssetModal({
       setTotalExpectedUnits(decToInput(row.totalExpectedUnits));
       setDecliningBalanceRate(decToInput(row.decliningBalanceRate));
       setUsageUnits("");
+      setTaxProfile(row.taxProfile ?? null);
       setLoading(false);
     });
     return () => {
@@ -237,7 +253,7 @@ export function FixedAssetModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className={`${MODAL_DIALOG_CONTENT_CLASS} max-w-lg`} role="dialog" aria-modal="true">
+      <div className={`${MODAL_DIALOG_CONTENT_CLASS} ${mode === "edit" ? "max-w-2xl" : "max-w-lg"}`} role="dialog" aria-modal="true">
         <header className="flex shrink-0 items-start justify-between gap-3">
           <h3 className="m-0 min-w-0 flex-1 pr-2 text-lg font-semibold leading-snug text-[#34495E]">{title}</h3>
           <Button type="button" variant="ghost" className={MODAL_CLOSE_BUTTON_CLASS} onClick={onClose} aria-label={t("common.close")}>
@@ -378,6 +394,33 @@ export function FixedAssetModal({
                     {t("fixedAssets.recordUsageSubmit")}
                   </Button>
                 </div>
+              ) : null}
+              {mode === "edit" && assetId ? (
+                <FixedAssetLifecyclePanel
+                  assetId={assetId}
+                  assetName={name}
+                  onChanged={onSaved}
+                />
+              ) : null}
+              {mode === "edit" && taxProfile ? (
+                <div className="rounded-lg border border-[#D5DADF] bg-[#F8F9FA] p-3 space-y-1 text-sm text-[#34495E]">
+                  <div className="font-semibold">{t("fixedAssets.taxDepreciationTitle")}</div>
+                  <div>
+                    {t("fixedAssets.taxGroupCode")}: {taxProfile.taxGroupCode}
+                  </div>
+                  <div>
+                    {t("fixedAssets.taxNbv")}: {formatMoneyAzn(taxProfile.taxNbv)}
+                  </div>
+                  <div>
+                    {t("fixedAssets.taxRatePercent")}: {String(taxProfile.taxRatePercent)}%
+                  </div>
+                  <div>
+                    {t("fixedAssets.taxAccumulated")}: {formatMoneyAzn(taxProfile.taxAccumulated)}
+                  </div>
+                </div>
+              ) : null}
+              {mode === "edit" && !taxProfile && !loading ? (
+                <p className="text-xs text-[#7F8C8D] m-0">{t("fixedAssets.taxDepreciationNote")}</p>
               ) : null}
             </form>
           )}

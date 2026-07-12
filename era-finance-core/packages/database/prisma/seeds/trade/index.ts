@@ -1,10 +1,11 @@
 import type { SeedContext } from "../_engine/upsert";
-import { seedUnitsOfMeasure } from "./units-of-measure";
-import { seedHsCodes } from "./hs-codes";
-import { seedCustomsTariffs } from "./customs-tariffs";
 
+/**
+ * Trade catalogs (UoM, HS, customs tariffs) owned by era-data-hub (Phase 2).
+ * UnitOfMeasure table kept as hub-sync FK cache — not seeded here.
+ */
 export async function seedTrade(ctx: SeedContext): Promise<void> {
-  await seedUnitsOfMeasure(ctx);
-  await seedHsCodes(ctx);
-  await seedCustomsTariffs(ctx);
+  console.info(
+    `[seed] trade layer skipped (hub SoR; dryRun=${ctx.dryRun}) — sync UoM via data-hub`,
+  );
 }

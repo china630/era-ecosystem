@@ -9,6 +9,13 @@ import { AbsencesController } from "./absences.controller";
 import { AbsencesService } from "./absences.service";
 import { EmployeesController } from "./employees.controller";
 import { EmployeesService } from "./employees.service";
+import { EmasController } from "./emas.controller";
+import { EmasContractService } from "./emas-contract.service";
+import {
+  EmasSubmissionAdapterFactory,
+  HttpEmasSubmissionAdapter,
+  HsmEmasSubmissionAdapter,
+} from "./emas-submission.adapters";
 import { OrgStructureController } from "./org-structure.controller";
 import { OrgStructureService } from "./org-structure.service";
 import { TimesheetController } from "./timesheet.controller";
@@ -28,6 +35,7 @@ import { HrStaffProvisioningService } from "../integration/hr-staff-provisioning
 import { HrRemindersService } from "./hr-reminders.service";
 import { EmployeeDocumentsController } from "./employee-documents.controller";
 import { EmployeeDocumentsService } from "./employee-documents.service";
+import { SystemConfigModule } from "../system-config/system-config.module";
 
 @Module({
   imports: [
@@ -37,9 +45,11 @@ import { EmployeeDocumentsService } from "./employee-documents.service";
     NotificationModule,
     IntegrationsModule,
     OrchestratorModule,
+    SystemConfigModule,
   ],
   controllers: [
     EmployeesController,
+    EmasController,
     PayrollController,
     AbsencesController,
     AbsenceTypesController,
@@ -49,6 +59,10 @@ import { EmployeeDocumentsService } from "./employee-documents.service";
   ],
   providers: [
     EmployeesService,
+    EmasContractService,
+    HttpEmasSubmissionAdapter,
+    HsmEmasSubmissionAdapter,
+    EmasSubmissionAdapterFactory,
     PayrollHeavyQueueService,
     PayrollHeavyWorker,
     PayrollService,

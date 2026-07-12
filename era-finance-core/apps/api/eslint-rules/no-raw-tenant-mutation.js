@@ -1,13 +1,14 @@
 /**
  * Forbid prisma.$executeRaw / $executeRawUnsafe in tenant domain modules (tenant mutations must go through Prisma client + extensions).
- * Whitelist: platform-recovery, audit, migration tooling, prisma layer, scripts.
+ * Whitelist: access/, audit, migration tooling, prisma layer, scripts.
+ * (platform-recovery removed — dispute SoT on Orchestrator)
  */
 const RAW_METHODS = new Set(["$executeRaw", "$executeRawUnsafe"]);
 
 function isWhitelisted(filePath) {
   const p = filePath.replace(/\\/g, "/");
   return (
-    p.includes("/src/platform-recovery/") ||
+    p.includes("/src/access/") ||
     p.includes("/src/audit/") ||
     p.includes("/src/prisma/") ||
     p.includes("/src/migration/") ||

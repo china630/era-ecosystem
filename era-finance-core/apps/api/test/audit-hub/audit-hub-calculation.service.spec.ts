@@ -1,3 +1,4 @@
+import { NotFoundException } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { AuditHubCalculationService } from "../../src/audit-hub/audit-hub-calculation.service";
 import { PrismaService } from "../../src/prisma/prisma.service";
@@ -5,32 +6,18 @@ import { PrismaService } from "../../src/prisma/prisma.service";
 describe("AuditHubCalculationService", () => {
   const org = "00000000-0000-0000-0000-000000000099";
 
-  it("returns CBAR row for fx_snapshot", async () => {
+  it("rejects fx_snapshot after local CbarOfficialRate drop", async () => {
     const rateId = "00000000-0000-0000-0000-0000000000aa";
-    const prisma = {
-      cbarOfficialRate: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: rateId,
-          rateDate: new Date("2024-03-01"),
-          currencyCode: "USD",
-          value: { toString: () => "1.7" },
-          nominal: 1,
-          rate: { toString: () => "1.70000000" },
-          status: "PRELIMINARY",
-        }),
-      },
-    };
     const mod = await Test.createTestingModule({
       providers: [
         AuditHubCalculationService,
-        { provide: PrismaService, useValue: prisma },
+        { provide: PrismaService, useValue: {} },
       ],
     }).compile();
     const svc = mod.get(AuditHubCalculationService);
-    const out = await svc.explain(org, "fx_snapshot", rateId);
-    expect(out.type).toBe("fx_snapshot");
-    expect((out.summary as { implemented?: boolean }).implemented).toBe(true);
-    expect((out.summary as { currencyCode?: string }).currencyCode).toBe("USD");
+    await expect(svc.explain(org, "fx_snapshot", rateId)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it("returns depreciation month for fixed_asset_depreciation", async () => {

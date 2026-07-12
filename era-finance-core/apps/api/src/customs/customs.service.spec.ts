@@ -28,6 +28,7 @@ describe("CustomsService", () => {
       taxCalculator as never,
       createMockPostingResolver(),
       {} as never,
+      {} as never,
     );
     const out = await service.createDraftFromCapture(
       "00000000-0000-0000-0000-000000000099",
@@ -92,6 +93,7 @@ describe("CustomsService", () => {
       counterparties as never,
       taxCalc as never,
       createMockPostingResolver(),
+      {} as never,
       {} as never,
     );
     const out = await service.createDraftFromCapture(

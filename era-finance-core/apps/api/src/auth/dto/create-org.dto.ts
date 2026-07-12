@@ -3,7 +3,6 @@ import {
   IsEnum,
   IsOptional,
   IsString,
-  IsUUID,
   Length,
   Matches,
   MaxLength,
@@ -35,11 +34,6 @@ export class CreateOrgDto {
   })
   @IsEnum(CounterpartyLegalForm)
   legalForm!: CounterpartyLegalForm;
-
-  @ApiPropertyOptional({ description: "Optional holding to attach the org to" })
-  @IsOptional()
-  @IsUUID()
-  holdingId?: string;
 
   @ApiPropertyOptional({
     description: "Referral partner code (from /register?ref=)",

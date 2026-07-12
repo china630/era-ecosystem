@@ -4,6 +4,7 @@ import {
   Get,
   Header,
   Param,
+  Patch,
   Post,
   Query,
   Res,
@@ -14,14 +15,18 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
-import { UserRole } from "@erafinance/database";
+import { AdvanceReportStatus, UserRole } from "@erafinance/database";
 import { Response } from "express";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { CashOrderService } from "./cash-order.service";
-import { CreateAdvanceReportDto } from "./dto/advance-report.dto";
+import { AdvanceReportService } from "./advance-report.service";
+import {
+  CreateAdvanceReportDto,
+  UpdateAdvanceReportDto,
+} from "./dto/advance-report.dto";
 import { CreatePkoDraftDto } from "./dto/create-pko.dto";
 import { CreateRkoDraftDto } from "./dto/create-rko.dto";
 import { RequiresModule } from "../subscription/requires-module.decorator";
@@ -34,7 +39,10 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 @RequiresModule(ModuleEntitlement.KASSA_PRO)
 @Controller("banking/cash")
 export class CashDeskController {
-  constructor(private readonly cash: CashOrderService) {}
+  constructor(
+    private readonly cash: CashOrderService,
+    private readonly advanceReports: AdvanceReportService,
+  ) {}
 
   @Get("balances")
   @ApiOperation({ summary: "Остаток кассы (101*) по валютам" })
@@ -178,25 +186,83 @@ export class CashDeskController {
     return this.cash.listAccountablePersons(organizationId, lt);
   }
 
+  @Get("advance-reports")
+  @ApiOperation({ summary: "Registry of advance reports (avans hesabatı)" })
+  listAdvanceReports(
+    @OrganizationId() organizationId: string,
+    @Query("status") status?: string,
+    @Query("employeeId") employeeId?: string,
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
+    @Query("page") pageStr?: string,
+    @Query("pageSize") pageSizeStr?: string,
+  ) {
+    const statusFilter =
+      status === AdvanceReportStatus.DRAFT || status === AdvanceReportStatus.POSTED
+        ? status
+        : undefined;
+    return this.advanceReports.list(organizationId, {
+      status: statusFilter,
+      employeeId: employeeId?.trim() || undefined,
+      dateFrom: dateFrom?.trim() || undefined,
+      dateTo: dateTo?.trim() || undefined,
+      page: Math.trunc(Number(pageStr) || 1),
+      pageSize: Math.trunc(Number(pageSizeStr) || 25),
+    });
+  }
+
+  @Get("advance-reports/:id")
+  @ApiOperation({ summary: "Advance report detail with lines" })
+  getAdvanceReport(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    return this.advanceReports.getOne(organizationId, id);
+  }
+
+  @Get("advance-reports/:id/print")
+  @ApiOperation({ summary: "Printable HTML for advance report" })
+  @Header("Content-Type", "text/html; charset=utf-8")
+  async printAdvanceReport(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @Res() res: Response,
+  ) {
+    const html = await this.advanceReports.getPrintHtml(organizationId, id);
+    res.send(html);
+  }
+
   @Post("advance-reports")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Черновик авансового отчёта" })
+  @ApiOperation({ summary: "Create draft advance report" })
   createAdvance(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateAdvanceReportDto,
   ) {
-    return this.cash.createAdvanceReportDraft(organizationId, dto);
+    return this.advanceReports.createDraft(organizationId, dto);
+  }
+
+  @Patch("advance-reports/:id")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Update draft advance report" })
+  updateAdvance(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+    @Body() dto: UpdateAdvanceReportDto,
+  ) {
+    return this.advanceReports.updateDraft(organizationId, id, dto);
   }
 
   @Post("advance-reports/:id/post")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Провести авансовый отчёт" })
+  @ApiOperation({ summary: "Post advance report to GL (Dr expense / Cr 244)" })
   postAdvance(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
   ) {
-    return this.cash.postAdvanceReport(organizationId, id);
+    return this.advanceReports.post(organizationId, id);
   }
 }

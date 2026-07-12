@@ -1,14 +1,11 @@
-import { randomUUID } from "node:crypto";
 import {
-  BadRequestException,
-  Body,
   Controller,
   Get,
-  NotFoundException,
   Param,
   Patch,
   Post,
   Query,
+  Body,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -16,16 +13,16 @@ import { UserRole } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
-import { PrismaService } from "../prisma/prisma.service";
 import { CreateProductDto } from "./dto/create-product.dto";
 import { UpdateProductDto } from "./dto/update-product.dto";
+import { ProductsService } from "./products.service";
 
 @ApiTags("products")
 @ApiBearerAuth("bearer")
 @Controller("products")
 @UseGuards(RolesGuard)
 export class ProductsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly products: ProductsService) {}
 
   @Get("units-of-measure")
   @ApiOperation({
@@ -33,16 +30,7 @@ export class ProductsController {
     description: "Предпочтительно: GET /api/system/units-of-measure",
   })
   listUnitsOfMeasure() {
-    return this.prisma.unitOfMeasure.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
-      select: {
-        code: true,
-        nameAz: true,
-        nameRu: true,
-        nameEn: true,
-      },
-    });
+    return this.products.listUnitsOfMeasure();
   }
 
   @Get()
@@ -53,120 +41,32 @@ export class ProductsController {
     @Query("search") search?: string,
     @Query("limit") limitRaw?: string,
   ) {
-    const searchTrim = search?.trim() ?? "";
     const parsedLimit = limitRaw ? Number.parseInt(limitRaw, 10) : NaN;
-    const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 50) : undefined;
-    const take =
-      searchTrim.length > 0 ? (limit ?? 20) : limit !== undefined ? limit : undefined;
-
-    return this.prisma.product.findMany({
-      where: {
-        organizationId: orgId,
-        ...(isService === "false" ? { isService: false } : {}),
-        ...(isService === "true" ? { isService: true } : {}),
-        ...(searchTrim.length > 0
-          ? {
-              OR: [
-                { name: { contains: searchTrim, mode: "insensitive" } },
-                { sku: { contains: searchTrim, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { name: "asc" },
-      ...(take !== undefined ? { take } : {}),
-    });
+    const limit = Number.isFinite(parsedLimit) ? parsedLimit : undefined;
+    return this.products.list(orgId, { isService, search, limit });
   }
 
   @Get(":id")
   @ApiOperation({ summary: "Товар по id" })
-  async getOne(@OrganizationId() orgId: string, @Param("id") id: string) {
-    const row = await this.prisma.product.findFirst({
-      where: { id, organizationId: orgId },
-    });
-    if (!row) {
-      throw new NotFoundException("Product not found");
-    }
-    return row;
+  getOne(@OrganizationId() orgId: string, @Param("id") id: string) {
+    return this.products.getOne(orgId, id);
   }
 
   @Post()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({ summary: "Создать товар или услугу" })
-  async create(@OrganizationId() orgId: string, @Body() dto: CreateProductDto) {
-    const isService = dto.isService ?? false;
-    let sku = (dto.sku ?? "").trim();
-    if (!isService) {
-      if (!sku) {
-        throw new BadRequestException("sku is required for goods");
-      }
-    } else if (!sku) {
-      for (let attempt = 0; attempt < 12; attempt++) {
-        const candidate = `SVC-${randomUUID().replace(/-/g, "").slice(0, 16)}`;
-        const clash = await this.prisma.product.findFirst({
-          where: { organizationId: orgId, sku: candidate },
-          select: { id: true },
-        });
-        if (!clash) {
-          sku = candidate;
-          break;
-        }
-      }
-      if (!sku) {
-        throw new BadRequestException("Could not allocate internal SKU for service");
-      }
-    }
-
-    const unitOfMeasureCode = dto.unitOfMeasureCode?.trim() || null;
-    if (unitOfMeasureCode) {
-      const uom = await this.prisma.unitOfMeasure.findUnique({
-        where: { code: unitOfMeasureCode },
-        select: { code: true },
-      });
-      if (!uom) {
-        throw new BadRequestException("Unknown unitOfMeasureCode");
-      }
-    }
-
-    return this.prisma.product.create({
-      data: {
-        organizationId: orgId,
-        name: dto.name.trim(),
-        sku,
-        price: dto.price,
-        vatRate: dto.vatRate,
-        isService,
-        unitOfMeasureCode,
-      },
-    });
+  create(@OrganizationId() orgId: string, @Body() dto: CreateProductDto) {
+    return this.products.create(orgId, dto);
   }
 
   @Patch(":id")
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({ summary: "Обновить товар" })
-  async update(
+  update(
     @OrganizationId() orgId: string,
     @Param("id") id: string,
     @Body() dto: UpdateProductDto,
   ) {
-    const existing = await this.prisma.product.findFirst({
-      where: { id, organizationId: orgId },
-    });
-    if (!existing) {
-      throw new NotFoundException("Product not found");
-    }
-    return this.prisma.product.update({
-      where: { id },
-      data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.sku !== undefined && { sku: dto.sku }),
-        ...(dto.price !== undefined && { price: dto.price }),
-        ...(dto.vatRate !== undefined && { vatRate: dto.vatRate }),
-        ...(dto.isService !== undefined && { isService: dto.isService }),
-        ...(dto.unitOfMeasureCode !== undefined
-          ? { unitOfMeasureCode: dto.unitOfMeasureCode?.trim() || null }
-          : {}),
-      },
-    });
+    return this.products.update(orgId, id, dto);
   }
 }

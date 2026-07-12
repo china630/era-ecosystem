@@ -1,12 +1,9 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
-  Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from "@nestjs/common";
@@ -15,14 +12,8 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { AuthUser } from "../auth/types/auth-user";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
-import { CreateHoldingDto } from "./dto/create-holding.dto";
-import {
-  AddHoldingMemberDto,
-  UpdateHoldingMemberDto,
-} from "./dto/holding-member.dto";
-import { UpdateHoldingDto } from "./dto/update-holding.dto";
+import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import { HoldingsReportingService } from "./holdings-reporting.service";
-import { HoldingsService } from "./holdings.service";
 
 @ApiTags("holdings")
 @ApiBearerAuth("bearer")
@@ -30,25 +21,17 @@ import { HoldingsService } from "./holdings.service";
 @Controller("holdings")
 export class HoldingsController {
   constructor(
-    private readonly holdingsService: HoldingsService,
+    private readonly holdingsCp: OrchestratorHoldingsClientService,
     private readonly holdingsReporting: HoldingsReportingService,
   ) {}
 
-  @Post()
-  @ApiOperation({ summary: "Создать холдинг (владелец = текущий пользователь)" })
-  async create(
-    @CurrentUser() user: AuthUser,
-    @Body() dto: CreateHoldingDto,
-  ) {
-    return this.holdingsService.createHolding(user.userId, dto);
-  }
-
   @Get()
   @ApiOperation({
-    summary: "Список холдингов (владелец или участник по HoldingMembership)",
+    summary:
+      "List holdings from control plane (owner or report-access member)",
   })
   async findAll(@CurrentUser() user: AuthUser) {
-    return this.holdingsService.findAllHoldingsForUser(user.userId);
+    return this.holdingsCp.listHoldingsForUser(user.userId);
   }
 
   @Get(":id/consolidated-pnl")
@@ -95,7 +78,10 @@ export class HoldingsController {
       "Holding cash & bank balances summary (bank sync data consolidated to holding base currency)",
   })
   async balancesSummary(@CurrentUser() user: AuthUser, @Param("id") id: string) {
-    return this.holdingsReporting.getHoldingBalancesSummaryForUser(user.userId, id);
+    return this.holdingsReporting.getHoldingBalancesSummaryForUser(
+      user.userId,
+      id,
+    );
   }
 
   @Get(":id/tax-risk-monitor")
@@ -119,107 +105,9 @@ export class HoldingsController {
     return this.holdingsReporting.triggerManualBankSync(user.userId, id);
   }
 
-  @Get(":id/members")
-  @ApiOperation({ summary: "Участники холдинга (только владелец холдинга)" })
-  async listMembers(
-    @CurrentUser() user: AuthUser,
-    @Param("id") id: string,
-  ) {
-    return this.holdingsService.listMembers(user.userId, id);
-  }
-
-  @Post(":id/members")
-  @ApiOperation({ summary: "Добавить участника холдинга" })
-  async addMember(
-    @CurrentUser() user: AuthUser,
-    @Param("id") id: string,
-    @Body() dto: AddHoldingMemberDto,
-  ) {
-    return this.holdingsService.addMember(
-      user.userId,
-      id,
-      dto.userId,
-      dto.role,
-    );
-  }
-
-  @Patch(":id/members/:userId")
-  @ApiOperation({ summary: "Изменить роль участника холдинга" })
-  async updateMember(
-    @CurrentUser() user: AuthUser,
-    @Param("id") id: string,
-    @Param("userId") memberUserId: string,
-    @Body() dto: UpdateHoldingMemberDto,
-  ) {
-    return this.holdingsService.updateMemberRole(
-      user.userId,
-      id,
-      memberUserId,
-      dto.role,
-    );
-  }
-
-  @Delete(":id/members/:userId")
-  @ApiOperation({ summary: "Удалить участника холдинга" })
-  async removeMember(
-    @CurrentUser() user: AuthUser,
-    @Param("id") id: string,
-    @Param("userId") memberUserId: string,
-  ) {
-    return this.holdingsService.removeMember(
-      user.userId,
-      id,
-      memberUserId,
-    );
-  }
-
   @Get(":id")
-  @ApiOperation({ summary: "Холдинг по ID (владелец или участник)" })
+  @ApiOperation({ summary: "Holding detail from control plane" })
   async findOne(@CurrentUser() user: AuthUser, @Param("id") id: string) {
-    return this.holdingsService.findOneHoldingForAccess(user.userId, id);
-  }
-
-  @Put(":id")
-  @ApiOperation({ summary: "Обновить холдинг (только владелец)" })
-  async update(
-    @CurrentUser() user: AuthUser,
-    @Param("id") id: string,
-    @Body() dto: UpdateHoldingDto,
-  ) {
-    return this.holdingsService.updateHolding(user.userId, id, dto);
-  }
-
-  @Delete(":id")
-  @ApiOperation({ summary: "Удалить холдинг (только владелец)" })
-  async delete(@CurrentUser() user: AuthUser, @Param("id") id: string) {
-    return this.holdingsService.deleteHolding(user.userId, id);
-  }
-
-  @Post(":holdingId/organizations/:organizationId")
-  @ApiOperation({ summary: "Привязать организацию к холдингу" })
-  async addOrganization(
-    @CurrentUser() user: AuthUser,
-    @Param("holdingId") holdingId: string,
-    @Param("organizationId") organizationId: string,
-  ) {
-    return this.holdingsService.addOrganizationToHolding(
-      user.userId,
-      holdingId,
-      organizationId,
-    );
-  }
-
-  @Delete(":holdingId/organizations/:organizationId")
-  @ApiOperation({ summary: "Отвязать организацию от холдинга" })
-  async removeOrganization(
-    @CurrentUser() user: AuthUser,
-    @Param("holdingId") holdingId: string,
-    @Param("organizationId") organizationId: string,
-  ) {
-    return this.holdingsService.removeOrganizationFromHolding(
-      user.userId,
-      holdingId,
-      organizationId,
-    );
+    return this.holdingsCp.getHoldingForUser(user.userId, id);
   }
 }
