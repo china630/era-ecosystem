@@ -28,6 +28,7 @@ git push -u origin feature/my-change
 | [`ci.yml`](../.github/workflows/ci.yml) | PR/push `dev`, `master` | Packages build, orchestrator/finance tests, satellite build+jest |
 | [`build-images.yml`](../.github/workflows/build-images.yml) | Push `dev`/`master`, manual | Matrix build 16 app images → GHCR |
 | [`nightly-smoke.yml`](../.github/workflows/nightly-smoke.yml) | Cron 02:00 UTC, manual | `docker-compose.prod.yml` pull + migrate + health |
+| [`design-regression.yml`](../.github/workflows/design-regression.yml) | Cron 02:00 UTC, manual | Bootstrap hotel+clinic; Playwright **smoke** (structure only). Pixel snapshots are local (`npm run test:design-regression:update`) |
 | [`deploy-staging.yml`](../.github/workflows/deploy-staging.yml) | After successful **Build and push images** on `dev`, or manual | SSH pull + migrate + `up -d` on staging droplet |
 | [`deploy-production.yml`](../.github/workflows/deploy-production.yml) | Manual only | Prod deploy + environment approval |
 
