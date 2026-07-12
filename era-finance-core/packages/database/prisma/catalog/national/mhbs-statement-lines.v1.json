@@ -1,0 +1,351 @@
+{
+  "meta": {
+    "version": 1,
+    "forms": ["BALANCE", "PL", "CASH_FLOW", "EQUITY_CHANGES", "NOTES"],
+    "source": "MoF MHBS statutory line mapping (NAS commercial preset; verify against current MoF forms before production filing)"
+  },
+  "lines": [
+    {
+      "form": "BALANCE",
+      "lineCode": "010",
+      "labelAz": "Uzunmüddətli aktivlər — torpaq, tikili və avadanlıqlar (xalis dəyər)",
+      "labelEn": "Non-current assets — PPE (net book value)",
+      "nasPrefixes": ["111"],
+      "sign": "debit",
+      "offsetPrefixes": ["112"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "020",
+      "labelAz": "Qeyri-maddi aktivlər (xalis dəyər)",
+      "labelEn": "Intangible assets (net book value)",
+      "nasPrefixes": ["131"],
+      "sign": "debit",
+      "offsetPrefixes": ["132"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "030",
+      "labelAz": "Daşınmaz əmlaka investisiyalar",
+      "labelEn": "Investment property",
+      "nasPrefixes": ["113", "121", "122"],
+      "sign": "debit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "040",
+      "labelAz": "Təxirə salınmış vergi aktivləri",
+      "labelEn": "Deferred tax assets",
+      "nasPrefixes": ["161", "162"],
+      "sign": "debit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "050",
+      "labelAz": "Uzunmüddətli debitor borcları",
+      "labelEn": "Long-term receivables",
+      "nasPrefixes": ["171", "172", "173", "174", "175", "176", "177"],
+      "sign": "debit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "110",
+      "labelAz": "Ehtiyatlar",
+      "labelEn": "Inventories",
+      "nasPrefixes": ["201", "202", "203", "204", "205", "206", "207"],
+      "sign": "debit",
+      "offsetPrefixes": ["208"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "120",
+      "labelAz": "Qısamüddətli debitor borcları",
+      "labelEn": "Trade and other receivables",
+      "nasPrefixes": ["211", "212", "213", "214", "215", "216", "217"],
+      "sign": "debit",
+      "offsetPrefixes": ["218", "291"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "130",
+      "labelAz": "Pul vəsaitləri və ekvivalentləri",
+      "labelEn": "Cash and cash equivalents",
+      "nasPrefixes": ["101", "102", "103", "221", "222", "223", "224", "225"],
+      "sign": "debit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "140",
+      "labelAz": "Alınmış dəyərlər üzrə ƏDV və digər qısamüddətli aktivlər",
+      "labelEn": "Input VAT and other current assets",
+      "nasPrefixes": ["191", "241", "242", "243", "244", "245"],
+      "sign": "debit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "200",
+      "labelAz": "Cəmi aktivlər",
+      "labelEn": "Total assets",
+      "nasPrefixes": [],
+      "sign": "debit",
+      "isTotal": true,
+      "sumLineCodes": ["010", "020", "030", "040", "050", "110", "120", "130", "140"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "310",
+      "labelAz": "Təchizatçılar və podratçılar üzrə kreditor borcları",
+      "labelEn": "Trade payables",
+      "nasPrefixes": ["531", "532"],
+      "sign": "credit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "320",
+      "labelAz": "Əmək haqqı və vergi öhdəlikləri",
+      "labelEn": "Payroll and tax payables",
+      "nasPrefixes": ["521", "522", "523"],
+      "sign": "credit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "330",
+      "labelAz": "Qısamüddətli bank kreditləri",
+      "labelEn": "Short-term borrowings",
+      "nasPrefixes": ["511", "512", "513"],
+      "sign": "credit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "340",
+      "labelAz": "Uzunmüddətli öhdəliklər",
+      "labelEn": "Long-term liabilities",
+      "nasPrefixes": ["501", "502", "503", "541", "542"],
+      "sign": "credit"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "410",
+      "labelAz": "Nizamnamə kapitalı",
+      "labelEn": "Charter (share) capital",
+      "nasPrefixes": ["821"],
+      "sign": "credit",
+      "postingRole": "CHARTER_CAPITAL"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "420",
+      "labelAz": "Kapital ehtiyatları (yenidən qiymətləndirmə)",
+      "labelEn": "Revaluation reserve",
+      "nasPrefixes": ["811"],
+      "sign": "credit",
+      "postingRole": "REVALUATION_RESERVE"
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "430",
+      "labelAz": "Bölüşdürülməmiş mənfəət (ödənilməmiş zərər)",
+      "labelEn": "Retained earnings / accumulated result",
+      "nasPrefixes": ["802", "801"],
+      "sign": "credit",
+      "postingRoles": ["RETAINED_EARNINGS", "PERIOD_RESULT"]
+    },
+    {
+      "form": "BALANCE",
+      "lineCode": "500",
+      "labelAz": "Cəmi öhdəliklər və kapital",
+      "labelEn": "Total liabilities and equity",
+      "nasPrefixes": [],
+      "sign": "credit",
+      "isTotal": true,
+      "sumLineCodes": ["310", "320", "330", "340", "410", "420", "430"]
+    },
+    {
+      "form": "PL",
+      "lineCode": "610",
+      "labelAz": "Satış gəliri",
+      "labelEn": "Revenue from sales",
+      "nasPrefixes": ["601", "602", "603", "604"],
+      "sign": "credit"
+    },
+    {
+      "form": "PL",
+      "lineCode": "620",
+      "labelAz": "Digər gəlirlər (6x)",
+      "labelEn": "Other operating income (class 6)",
+      "nasPrefixes": ["6"],
+      "sign": "credit",
+      "excludePrefixes": ["601", "602", "603", "604"]
+    },
+    {
+      "form": "PL",
+      "lineCode": "630",
+      "labelAz": "Ümumi gəlir",
+      "labelEn": "Total revenue",
+      "nasPrefixes": [],
+      "sign": "credit",
+      "isTotal": true,
+      "sumLineCodes": ["610", "620"]
+    },
+    {
+      "form": "PL",
+      "lineCode": "710",
+      "labelAz": "Satılan malların maya dəyəri",
+      "labelEn": "Cost of goods sold",
+      "nasPrefixes": ["701", "702", "703", "704"],
+      "sign": "debit"
+    },
+    {
+      "form": "PL",
+      "lineCode": "720",
+      "labelAz": "Əməliyyat xərcləri (7x)",
+      "labelEn": "Operating expenses (class 7)",
+      "nasPrefixes": ["7"],
+      "sign": "debit",
+      "excludePrefixes": ["701", "702", "703", "704"]
+    },
+    {
+      "form": "PL",
+      "lineCode": "730",
+      "labelAz": "Ümumi xərclər",
+      "labelEn": "Total expenses",
+      "nasPrefixes": [],
+      "sign": "debit",
+      "isTotal": true,
+      "sumLineCodes": ["710", "720"]
+    },
+    {
+      "form": "PL",
+      "lineCode": "740",
+      "labelAz": "Hesabat dövrünün xalis mənfəəti (zərəri)",
+      "labelEn": "Net profit (loss) for the period",
+      "nasPrefixes": [],
+      "sign": "credit",
+      "isTotal": true,
+      "netOfLineCodes": { "credit": ["630"], "debit": ["730"] }
+    },
+    {
+      "form": "CASH_FLOW",
+      "lineCode": "810",
+      "labelAz": "Əməliyyat fəaliyyəti üzrə xalis pul axını",
+      "labelEn": "Net cash from operating activities",
+      "section": "OPERATING",
+      "sign": "debit"
+    },
+    {
+      "form": "CASH_FLOW",
+      "lineCode": "820",
+      "labelAz": "İnvestisiya fəaliyyəti üzrə xalis pul axını",
+      "labelEn": "Net cash from investing activities",
+      "section": "INVESTING",
+      "sign": "debit"
+    },
+    {
+      "form": "CASH_FLOW",
+      "lineCode": "830",
+      "labelAz": "Maliyyə fəaliyyəti üzrə xalis pul axını",
+      "labelEn": "Net cash from financing activities",
+      "section": "FINANCING",
+      "sign": "debit"
+    },
+    {
+      "form": "CASH_FLOW",
+      "lineCode": "840",
+      "labelAz": "Pul vəsaitlərində xalis artım (azalma)",
+      "labelEn": "Net increase (decrease) in cash",
+      "nasPrefixes": [],
+      "sign": "debit",
+      "isTotal": true,
+      "sumLineCodes": ["810", "820", "830"]
+    },
+    {
+      "form": "EQUITY_CHANGES",
+      "lineCode": "910",
+      "labelAz": "Nizamnamə kapitalı",
+      "labelEn": "Charter capital",
+      "nasPrefixes": ["821"],
+      "sign": "credit",
+      "postingRole": "CHARTER_CAPITAL"
+    },
+    {
+      "form": "EQUITY_CHANGES",
+      "lineCode": "920",
+      "labelAz": "Kapital ehtiyatları (yenidən qiymətləndirmə)",
+      "labelEn": "Revaluation reserve",
+      "nasPrefixes": ["811"],
+      "sign": "credit",
+      "postingRole": "REVALUATION_RESERVE"
+    },
+    {
+      "form": "EQUITY_CHANGES",
+      "lineCode": "930",
+      "labelAz": "Keçmiş illər mənfəəti (zərəri)",
+      "labelEn": "Retained earnings",
+      "nasPrefixes": ["802"],
+      "sign": "credit",
+      "postingRole": "RETAINED_EARNINGS"
+    },
+    {
+      "form": "EQUITY_CHANGES",
+      "lineCode": "940",
+      "labelAz": "Hesabat dövrünün nəticəsi",
+      "labelEn": "Period result",
+      "nasPrefixes": ["801"],
+      "sign": "credit",
+      "postingRole": "PERIOD_RESULT"
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N01",
+      "labelAz": "Əsas vəsaitlərin xalis dəyəri (111−112)",
+      "labelEn": "Fixed assets net book value (111−112)",
+      "nasPrefixes": ["111"],
+      "sign": "debit",
+      "offsetPrefixes": ["112"]
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N02",
+      "labelAz": "Ehtiyatların dəyəri",
+      "labelEn": "Inventory carrying amount",
+      "nasPrefixes": ["201", "202", "203", "204", "205", "206", "207"],
+      "sign": "debit",
+      "offsetPrefixes": ["208"]
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N03",
+      "labelAz": "Debitor borcları (211)",
+      "labelEn": "Trade receivables (211)",
+      "nasPrefixes": ["211"],
+      "sign": "debit"
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N04",
+      "labelAz": "Debitor borcları — 0–30 gün (stub)",
+      "labelEn": "Receivables aging 0–30 days (stub)",
+      "nasPrefixes": ["211"],
+      "sign": "debit",
+      "agingBucket": "0_30"
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N05",
+      "labelAz": "Debitor borcları — 31–90 gün (stub)",
+      "labelEn": "Receivables aging 31–90 days (stub)",
+      "nasPrefixes": ["211"],
+      "sign": "debit",
+      "agingBucket": "31_90"
+    },
+    {
+      "form": "NOTES",
+      "lineCode": "N06",
+      "labelAz": "Debitor borcları — 90+ gün (stub)",
+      "labelEn": "Receivables aging 90+ days (stub)",
+      "nasPrefixes": ["211"],
+      "sign": "debit",
+      "agingBucket": "90_plus"
+    }
+  ]
+}

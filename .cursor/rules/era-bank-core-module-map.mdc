@@ -1,0 +1,72 @@
+---
+description: era-bank-core (engine) + era-bank (industry_banking satellite) — module & route map, boundaries
+globs: era-bank-core/**,era-bank/**
+alwaysApply: false
+---
+
+# era-bank-core (engine) + era-bank (satellite) — module map
+
+Core Banking System (CBS) for AZ banks. Two apps (ADR D9):
+- **`era-bank-core`** — headless regulated engine (ledger, posting, CIF, EOD, product engines). API `:4300`, DB `era_bank_core`. No UI.
+- **`era-bank`** — operational satellite (`industry_banking` gate): UI/workflow client of the engine. Web+`/api` `:3210`, DB `era_bank` (ops/UI state only).
+- (future) `era-bank-dbo` — customer channels (`banking_dbo`).
+
+Canonical: engine [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md) · satellite [era-bank/PRD.md](../../era-bank/PRD.md) · [era-bank/TZ.md](../../era-bank/TZ.md) · ADR [docs/adr/era-bank-core.md](../../docs/adr/era-bank-core.md).
+
+## Hard boundaries (do not violate)
+
+- **Two ledgers:** customer accounts/deposits/loans/cards/interbank → `era-bank-core`. Bank's own opex/payroll/FA/procurement/VAT → `finance-core`. Never merge (ADR D1/D7).
+- **Money is ACID:** all postings go through engine `kernel/posting-engine` in one DB transaction; Σ Dr = Σ Cr; idempotency-keyed. **No money over the BullMQ event bus** (ADR D6).
+- **Engine is headless, satellite holds no money:** `era-bank` (and channels) call the engine API; `era_bank` DB has **no** ledger/balance/posting tables — only ops/UI state (ADR D9).
+- **Thin kernel:** engine `kernel/*` must not import `modules/*`. No bank/product-specific logic in L1 (ADR D2).
+- **Branches are a dimension**, not orgs/DEPARTMENTs. One deployment = one bank (one VÖEN/license/consolidated balance). Inter-branch = branch-tagged double-entry (МФР), not cross-org routing (ADR D5).
+- **MDM is shared:** engine stores only `globalPersonId` + KYC; never duplicate PII (ADR D4).
+
+## Layers (a `banking_*` module spans both apps)
+
+| Layer | Where | Customized per bank? |
+|-------|-------|----------------------|
+| L1 kernel | `era-bank-core/apps/api/src/kernel/{ledger,posting-engine,cif,branch,eod,product-factory,audit}` | Never |
+| L2 engine | `era-bank-core/apps/api/src/modules/{deposits,loans,cards,payments,aml,treasury,regreporting}` (regulated math + API) | Toggled |
+| L2 UI | `era-bank/app/{cif,accounts,postings,deposits,loans,cards,payments,aml,treasury,reports,...}` (screens/workflow) | Toggled |
+| L3 config | Product Factory `ProductTemplate.paramsJson` (authored in `era-bank` UI, stored/enforced in engine) | Fully (no code) |
+
+## Commercial keys
+
+`industry_banking` (SATELLITE, carried by `era-bank`) · modules `banking_core` (mandatory), `banking_deposits`, `banking_loans`, `banking_cards`, `banking_payments`, `banking_aml`, `banking_treasury`, `banking_dbo`, `banking_regreporting` · bundles `banking_bundle_retail|universal` · quota `active_branches`.
+
+## Engine route map (`era-bank-core` `/api/v1`) — consumed by satellite BFF
+
+| Area | Key routes |
+|------|------------|
+| CIF | `POST /cif/customers`, `GET /cif/customers/:id` |
+| Accounts | `POST /accounts`, `GET /accounts/:id`, `GET /accounts/:id/statement`, `POST /accounts/:id/holds` |
+| Postings | `POST /postings` (maker), `POST /postings/:id/approve` (checker), `POST /postings/:id/reverse` |
+| GL | `GET /gl/accounts`, `GET /gl/trial-balance` |
+| Branch | `POST /branches`, `GET /branches` |
+| Product Factory | `POST /product-templates` |
+| EOD | `POST /eod/run`, `GET /eod/:date` |
+| deposits | `POST /deposits`, `/:id/close`, `/:id/rollover` |
+| loans | `POST /loans`, `/:id/disburse`, `/:id/repay`, `/:id/restructure`, `GET /:id/schedule` |
+| cards | `GET/POST /cards`, `PATCH /cards/:id/limits`, block/unblock/close, `POST /card-txns/authorize|capture|reverse`, `POST /cards/acquiring/inbound/*` |
+| treasury | `GET/POST /treasury/nostro-vostro`, `POST /treasury/fx-deals`, `POST /treasury/interbank`, `POST /treasury/gov-securities`, `GET /treasury/liquidity-gap` |
+| payments | `POST /payments/orders`, `/:id/submit`, `POST /payments/inbound` |
+| aml | `GET /aml/alerts`, `GET /aml/alerts/:id`, `PATCH /aml/alerts/:id`, `POST /aml/alerts/:id/escalate`, `GET/PUT /aml/rules/:code`, `POST /aml/screen`, `POST /aml/reports/fmn`, `GET /aml/reports/fmn/:id/export` |
+| treasury | `POST /treasury/fx-deals`, `/treasury/interbank`, `GET /treasury/liquidity-gap` |
+| regreporting | `GET/POST /reports/cbar/:template`, `GET /reports/cbar/runs/:id/export`, `GET/PUT /reports/fatca-crs` |
+| dbo | `POST /dbo/auth/otp/*`, `POST /dbo/auth/asan/*`, `GET /dbo/auth/me`, `GET /dbo/accounts`, `GET /dbo/cards`, `POST /dbo/cards/:id/temporary-block`, `POST /dbo/transfers/internal`, `POST /dbo/payments/orders/*`, `POST /dbo/open/payments/orders/*` |
+| internal | `POST /internal/v1/staff-provisioning`, `POST /internal/v1/finance-bridge/summary` |
+
+`era-bank/app/api/*` is a **BFF proxy** to these routes (auth + entitlement + branch scope; no business postings locally).
+
+## Integrations
+
+orchestrator (SSO/RBAC/MDM/entitlements) · data-hub (FX/banks/IBAN/COA/calendar, on-prem mode) · finance-core (summarized corporate journals, staff provisioning) · CBAR rails AZIPS/XÖHKS/AÖS/SWIFT (ISO 20022) · AzeriCard/MilliKart · AKB/Mərkəzi Kredit Reyestri/ƏMDK · ADİF · FMN · ASAN İmza/SİMA.
+
+## Contracts
+
+`packages/era-contracts/src/events/banking.events.ts` — non-money events only (`SATELLITE_BANK_*`). Register guards in `events/satellite-event.ts`.
+
+## Ports / DB
+
+engine `era-bank-core` API `:4300`, DB `era_bank_core` · satellite `era-bank` `:3210`, DB `era_bank`. Env `ERA_BANK_ORGANIZATION_ID`, `ERA_BANK_CORE_URL`, `BANK_CORE_SERVICE_TOKEN`. See [ECOSYSTEM_URLS.md](../../docs/ECOSYSTEM_URLS.md).

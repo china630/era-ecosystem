@@ -1,0 +1,11 @@
+---
+description: Logistics — UI per satellite playbook
+globs:
+  - app/**/*.tsx
+  - src/**
+alwaysApply: false
+---
+
+# Logistics UI
+
+Follow **`docs/UI_PLAYBOOK_SATELLITES.md`**. Driver and dispatcher flows: trip board, scan, POD capture.

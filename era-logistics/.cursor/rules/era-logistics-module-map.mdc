@@ -1,0 +1,22 @@
+---
+description: Logistics — trips, fleet, hub scan, COD
+globs:
+  - app/**
+  - src/**
+  - prisma/**
+alwaysApply: false
+---
+
+# Logistics module map
+
+| Domain | API prefix | Notes |
+|--------|------------|-------|
+| Auth / SSO | `app/api/auth/` | local + SSO |
+| Trips / waybill | `app/api/trips/` | points, POD, fuel, complete |
+| Driver | `app/api/driver/` | driver trip list |
+| Hub / scan | `app/api/hub/scan` | warehouse scan |
+| Tracking | `app/api/tracking/` | public token tracking |
+| COD | `app/api/cod/settle` | cash on delivery |
+| Fleet | `app/api/fleet/alerts` | alerts |
+| Reports | `app/api/reports/fuel` | fuel reporting |
+| Events | `events/dispatch` | orchestrator |

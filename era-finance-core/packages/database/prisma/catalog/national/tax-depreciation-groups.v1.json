@@ -1,0 +1,39 @@
+{
+  "templateKey": "taxDepreciation.az",
+  "version": 1,
+  "region": "AZ",
+  "meta": {
+    "source": "NK Art. 114 (verify against current Tax Code before production use)",
+    "note": "Declining-balance annual rates applied to tax NBV; consumed by fixed-asset tax depreciation register."
+  },
+  "groups": [
+    {
+      "code": "BUILDINGS",
+      "ratePercent": 7,
+      "nameAz": "Binalar və tikililər",
+      "nameRu": "Здания и сооружения",
+      "nameEn": "Buildings and structures"
+    },
+    {
+      "code": "EQUIPMENT_TRANSPORT",
+      "ratePercent": 25,
+      "nameAz": "Avadanlıq və nəqliyyat vasitələri",
+      "nameRu": "Оборудование и транспорт",
+      "nameEn": "Equipment and transport"
+    },
+    {
+      "code": "OTHER",
+      "ratePercent": 20,
+      "nameAz": "Digər əsas vəsaitlər",
+      "nameRu": "Прочие основные средства",
+      "nameEn": "Other fixed assets"
+    },
+    {
+      "code": "INTANGIBLES",
+      "ratePercent": 10,
+      "nameAz": "Qeyri-maddi aktivlər",
+      "nameRu": "Немaterialные активы",
+      "nameEn": "Intangible assets"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+---
+description: ERA Finance — finance-specific agent personas, PRD/TZ anchors, module quick reference
+alwaysApply: true
+---
+
+# ERA Finance — agent roles (finance-specific)
+
+**Inherits:** monorepo root `.cursor/rules/era-common-laws.mdc`, `era-architecture-boundaries.mdc`, `documentation-upkeep.mdc`.
+
+**Docs:** `PRD.md` and `TZ.md` may be in `.cursorignore` — attach `@PRD.md`, `@TZ.md` for nontrivial tasks. UI: `erafinance-ui-design.mdc` + `DESIGN.md`. Code map: `erafinance-module-map.mdc`. Local dev: `erafinance-local-dev.mdc`.
+
+| Agent | Finance-specific focus |
+|-------|------------------------|
+| [Product Owner] | B2B SaaS only; modules 1–9 (PRD §4); one tenant = one VÖEN; subscription gating (PRD §7) |
+| [System Architect] | `apps/web` + `apps/api` + `packages/database`; DTO → service → controller |
+| [DB Architect] | Prisma tenant extension, `organizationId` on tenant models (TZ §16) |
+| [Compliance] | PRD §12 / TZ §1 field formats for finance screens |
+| [Security Auditor] | `AuditMutationInterceptor` on mutations (TZ §9) |
+| [Infra Expert] | `D:\DockerData\erafinance_erp`, Docker, BullMQ payroll/import queues |
+
+## Source of truth (finance)
+
+Before nontrivial work, check PRD §4 (modules), §7 (SaaS/billing/tenancy); TZ §1–2, §9–11, §14, §16–17 as relevant.
+
+## Financial integrity (finance)
+
+Postings, stock+ledger, payroll POSTED, invoice payment/netting — **`prisma.$transaction`** (PRD §7.7–7.11, TZ §17).
+
+## Quick reference
+
+| Topic | Document |
+|-------|----------|
+| Modules 1–9, SaaS, billing | PRD §4, §7 |
+| IAM, validation, audit, Prisma extension | TZ §2, §9, §16–17 |
+| Subscription, gating, billing API | TZ §14, PRD §7.12 |
+| Browser extension RPA (ƏMAS, e-taxes) | TZ §13.6, §20; `apps/extension/` |
+
+**Code navigation:** `erafinance-module-map.mdc`.

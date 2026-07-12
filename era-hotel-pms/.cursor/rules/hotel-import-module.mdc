@@ -1,0 +1,94 @@
+---
+description: Elektraweb Excel import — migration wizard (era-hotel-pms)
+globs: era-hotel-pms/src/lib/import/**,era-hotel-pms/app/api/import/**,era-hotel-pms/app/admin/import/**,era-hotel-pms/src/components/import/**
+---
+
+# Hotel PMS — Elektraweb import module
+
+**Operator guide:** [doc/ELEKTRAWEB-IMPORT.md](../../doc/ELEKTRAWEB-IMPORT.md)  
+**Nafta greenfield pricing map:** [doc/nafta/IMPORT-PRICING-MAP.md](../../doc/nafta/IMPORT-PRICING-MAP.md) (BAR, DERIVED, SalesContract — no legacy CPR)  
+**ADR:** [docs/adr/hotel-elektraweb-import.md](../../../docs/adr/hotel-elektraweb-import.md) · T-room / deferred checkout: [hotel-deferred-corporate-checkout.md](../../../docs/adr/hotel-deferred-corporate-checkout.md)
+
+## Purpose
+
+Reusable **Elektraweb → ERA** bootstrap for master data + historical guests/reservations/folio charges.  
+v1: **platform super-admin only**. Future: organization owners via Orchestrator entitlement.
+
+## Access
+
+| Check | Location |
+|-------|----------|
+| `PLATFORM_SUPER_ADMIN_EMAILS` | root `.env` |
+| `isPlatformSuperAdminUser()` | `src/lib/auth/platform-super-admin.ts` |
+| `assertPlatformSuperAdminImport()` | `src/lib/import/auth.ts` |
+| UI flag `isPlatformSuperAdmin` | `GET /api/auth/me` |
+
+## API
+
+| Method | Route | Auth |
+|--------|-------|------|
+| GET | `/api/import` | platform super-admin |
+| POST | `/api/import/[entity]?dryRun=1` | platform super-admin |
+
+Entity slugs (v1): `revenue-codes`, … `folios`. **Planned (Nafta):** `bar-bootstrap`, `bar-rates`, `sales-contracts`, `meal-add-ons` — see IMPORT-PRICING-MAP.
+
+## Phases (`src/lib/import/phases.ts`)
+
+1. **dictionaries** — flexible order  
+2. **master** — strict top→bottom  
+3. **transactional** — guests → reservations → folios  
+
+## Core files
+
+| File | Role |
+|------|------|
+| `excel.ts` | xlsx → rows |
+| `run-import.ts` | header map, zod, per-row upsert |
+| `adapters/*.ts` | entity-specific idempotent upsert |
+| `upload.ts` | HTTP client for import POST |
+| `step-status-storage.ts` | browser progress (`era-hotel-import-wizard-v1`) |
+
+## UI (single entry)
+
+- `/admin/import` — `ImportWizard` + `ImportStepRow`
+- **No** Import buttons on master-data, stock, travel-agencies, guests
+
+## Verify-after-import CRUD
+
+Post-import fixes use standard admin screens (not re-upload):
+
+| Screen | PATCH routes |
+|--------|--------------|
+| `/admin/master-data` | `/api/master/{room-types,rate-plans,revenue-codes,bed-types,room-views}/[id]`, `/api/rooms/[id]` |
+| `/admin/stock` | `/api/stock/products/[id]` |
+| `/admin/travel-agencies` | POST upsert with `id` |
+| `/guests` | `/api/guests/[id]/full` |
+
+Audit matrix: [doc/ELEKTRAWEB-IMPORT-UI-AUDIT.md](../../doc/ELEKTRAWEB-IMPORT-UI-AUDIT.md)  
+Retire policy (no hard delete): [docs/adr/hotel-master-data-retire-policy.md](../../../docs/adr/hotel-master-data-retire-policy.md)
+
+## Seed
+
+`prisma/seed-reference.ts` — `npm run db:seed:reference` (RevenueCode, BedType, RoomView; no wipe).
+
+## Pre-merge (Elektraweb ~1000 row cap)
+
+Before wizard upload, merge overlapping chunk exports:
+
+| Script | Key |
+|--------|-----|
+| `scripts/merge-guest-cards.js` | `Guest Id` |
+| `scripts/merge-reservations.js` | `Res Id` |
+| `scripts/merge-folio-transactions.js` | Folio `Id` |
+
+Operator notes: [doc/ELEKTRAWEB-IMPORT.md](../../doc/ELEKTRAWEB-IMPORT.md) §15.
+
+## Excluded
+
+Chart of Accounts → finance-core. Do not add GL import here.
+
+System FOCP rows (`999 FB`, `Sanal Folyo`, …) and deferred corporate `T{ResId}` — see deferred-checkout ADR; do not map to physical `Room`.
+
+## Extending
+
+New hotel / new columns → edit adapter `headerAliases` + schema; register in `adapters/index.ts` and `phases.ts`. Do not fork the engine.

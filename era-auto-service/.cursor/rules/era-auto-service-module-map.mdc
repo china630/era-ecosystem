@@ -1,0 +1,23 @@
+---
+description: Auto STO — work orders, vehicles, parts, shop floor
+globs:
+  - app/**
+  - src/**
+  - prisma/**
+alwaysApply: false
+---
+
+# Auto Service module map
+
+| Domain | API prefix | Notes |
+|--------|------------|-------|
+| Auth / SSO | `app/api/auth/` | local + SSO |
+| Work orders | `app/api/work-orders/` | intake, labor, parts, pay, complete, shop-floor |
+| Vehicles | `app/api/vehicles/` | history |
+| Appointments | `app/api/appointments/` | scheduling |
+| Parts | `parts/catalog` | catalog |
+| Tools | `app/api/tools/` | checkout |
+| Calendar | `app/api/calendar/` | bay calendar |
+| MDM | `mdm/voen-lookup` | counterparty |
+| Cron | `cron/service-due` | reminders |
+| Events | `events/dispatch` | orchestrator |

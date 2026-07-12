@@ -1,7 +1,5 @@
-import { Prisma, SystemProductKind } from "@prisma/client";
+import { Prisma, SystemProductKind, TaxRateKind, UnitOfMeasureKind } from "@prisma/client";
 import type { SeedContext } from "../_engine/upsert";
-import { seedTaxRates } from "../national/tax-rates";
-import { seedUnitsOfMeasure } from "../trade/units-of-measure";
 
 const SYSTEM_PRODUCTS = [
   {
@@ -28,12 +26,54 @@ const SYSTEM_PRODUCTS = [
   },
 ] as const;
 
+/**
+ * Ensure FK cache rows exist for system product templates.
+ * Full UoM / tax catalogs are owned by era-data-hub (Phase 2) — this is not a catalog seed.
+ */
+async function ensureFkCacheForSystemProducts(ctx: SeedContext): Promise<void> {
+  const uoms = [
+    {
+      code: "pcs",
+      kind: UnitOfMeasureKind.COUNT,
+      nameAz: "əd",
+      nameRu: "шт",
+      nameEn: "pcs",
+    },
+    {
+      code: "hour",
+      kind: UnitOfMeasureKind.TIME,
+      nameAz: "saat",
+      nameRu: "час",
+      nameEn: "hour",
+    },
+  ];
+  for (const u of uoms) {
+    await ctx.prisma.unitOfMeasure.upsert({
+      where: { code: u.code },
+      create: { ...u, isActive: true, sortOrder: 0 },
+      update: {},
+    });
+  }
+  await ctx.prisma.taxRate.upsert({
+    where: { code: "EDV_18" },
+    create: {
+      code: "EDV_18",
+      kind: TaxRateKind.VAT,
+      percent: new Prisma.Decimal(18),
+      effectiveFrom: new Date("2000-01-01T00:00:00.000Z"),
+      nameAz: "ƏDV 18%",
+      nameRu: "НДС 18%",
+      nameEn: "VAT 18%",
+      isActive: true,
+      sortOrder: 0,
+    },
+    update: {},
+  });
+}
+
 export async function seedSystemProductTemplates(ctx: SeedContext): Promise<void> {
   if (ctx.dryRun) return;
-  await seedUnitsOfMeasure(ctx);
-  if (ctx.region === "AZ") {
-    await seedTaxRates(ctx);
-  }
+  await ensureFkCacheForSystemProducts(ctx);
   for (const row of SYSTEM_PRODUCTS) {
     await ctx.prisma.systemProductTemplate.upsert({
       where: { code: row.code },

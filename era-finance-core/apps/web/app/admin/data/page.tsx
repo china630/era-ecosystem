@@ -34,13 +34,6 @@ const SECTIONS: {
     links: [{ href: "/admin/data/translations", labelKey: "superAdmin.dataHubTranslations" }],
   },
   {
-    titleKey: "superAdmin.dataHubNavMdm",
-    links: [
-      { href: "/admin/data/mdm/companies", labelKey: "superAdmin.dataHubMdmCompanies" },
-      { href: "/admin/data/mdm/counterparties", labelKey: "superAdmin.dataHubMdmCp" },
-    ],
-  },
-  {
     titleKey: "superAdmin.dataHubNavReference",
     links: [{ href: "/admin/data/reference", labelKey: "superAdmin.dataHubReference" }],
   },
