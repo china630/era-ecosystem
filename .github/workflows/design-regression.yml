@@ -33,12 +33,23 @@ jobs:
         run: |
           npm ci --prefix era-orchestrator
           npm ci --prefix era-finance-core
+      - name: Build shared packages + install hotel/clinic (demo user upsert needs local deps)
+        env:
+          DATABASE_URL: postgresql://era:era@127.0.0.1:5432/era?schema=public
+        run: |
+          chmod +x scripts/ci-build-packages.sh
+          ./scripts/ci-build-packages.sh
+          npm ci --prefix era-hotel-pms
+          npm ci --prefix era-clinic
       - name: Build shared packages image
         run: docker build -f docker/Dockerfile.packages -t era-ecosystem/packages:local .
       - name: Bootstrap local demo
         run: node tools/bootstrap-local.mjs --reset-password --demo --migrate-satellites
         env:
           SKIP_HEAVY: '1'
+          ECOSYSTEM_DEMO_LOGIN: chingiz@era.com
+          ECOSYSTEM_DEMO_PASSWORD: '12345678'
+          PLATFORM_SUPER_ADMIN_BOOTSTRAP_PASSWORD: '12345678'
       - name: Start hotel PMS
         run: |
           docker compose build hotel-pms
@@ -54,8 +65,16 @@ jobs:
         env:
           PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
           PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
+          PLAYWRIGHT_LOGIN: chingiz@era.com
+          PLAYWRIGHT_PASSWORD: '12345678'
+          PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
+          PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
       - name: Run design regression
         run: npm run test:design-regression
         env:
           PLAYWRIGHT_HOTEL_URL: http://127.0.0.1:3201
           PLAYWRIGHT_CLINIC_URL: http://127.0.0.1:3203
+          PLAYWRIGHT_LOGIN: chingiz@era.com
+          PLAYWRIGHT_PASSWORD: '12345678'
+          PLAYWRIGHT_CLINIC_LOGIN: chingiz@era.com
+          PLAYWRIGHT_CLINIC_PASSWORD: '12345678'
