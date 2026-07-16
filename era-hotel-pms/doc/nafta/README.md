@@ -2,6 +2,9 @@
 
 Elektraweb analysis (NotebookLM, ~1000 screens) mapped to ERA satellites. Full screen dump omitted; see clone-spec and reference catalogs.
 
+**Import file checklist (hotel wizard + clinic/FnB data packs):** [IMPORT_FILE_CHECKLIST.md](./IMPORT_FILE_CHECKLIST.md)  
+**Live dual-run (post-Excel mirror via browser plugin):** [ELEKTRAWEB-LIVE-BRIDGE.md](../ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](../../../docs/adr/hotel-elektraweb-live-bridge.md)
+
 ## P0 modules → implementation
 
 | Module | Elektraweb analogue | ERA owner | Wave 3 step | User stories |

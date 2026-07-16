@@ -17,6 +17,8 @@ This document is the **single source of truth** for migrating a hotel from Elekt
 
 This is a **migration / bootstrap** tool, not day-to-day operational import for reception staff.
 
+**After bootstrap (Nafta dual-run):** live delta via browser extension — [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](../../docs/adr/hotel-elektraweb-live-bridge.md). Same `externalRef` keys; not a second Excel loop.
+
 ---
 
 ## 2. Access control
@@ -348,7 +350,7 @@ Elektraweb UI exports **at most ~1000 rows per download** unless the operator sc
 |--------|------------|--------|
 | `merge-guest-cards.js` | `Guest Id` | `Guest Cards.merged.*.xlsx` |
 | `merge-reservations.js` | `Res Id` (prefers InHouse > Reservation > CheckOut) | `Front Office Control Panel.merged.*.xlsx` |
-| `merge-folio-transactions.js` | Folio transaction `Id` | `Folio Transactions.merged.xlsx` + `.summary.json` |
+| `merge-folio-transactions.js` | Folio transaction `Id` | `Folio Transactions.merged.xlsx` + `FnB Transactions.merged.xlsx` (+ `.summary.json`) |
 
 ```bash
 # Guest cards (all chunks in Downloads)
@@ -357,11 +359,16 @@ node era-hotel-pms/scripts/merge-guest-cards.js "C:/Users/.../Downloads"
 # Reservations (explicit files or folder glob)
 node era-hotel-pms/scripts/merge-reservations.js --files chunk1.xlsx chunk2.xlsx --out merged.xlsx
 
-# Folio transactions (folder of chunks)
+# Folio transactions (single folder of chunks — legacy)
 node era-hotel-pms/scripts/merge-folio-transactions.js "C:/Users/.../Folio 01 jan - 14 jun 2026"
+
+# Nafta EW pack: multi-root (Folio 2024/, Folio 2025/, consolidated xlsx, Jul chunks) + hotel/FnB split
+node era-hotel-pms/scripts/merge-folio-transactions.js --ew "C:/Users/.../Downloads/EW"
 ```
 
 When the last chunk has **< ~850 rows**, the export is likely complete for that filter. Chunks with **900–1000 rows** usually need another date slice.
+
+**Hotel vs FnB split (`--ew`):** house-ledger `999 FB` / `FB999` and walk-in restaurant cash (`CASH FOLIO` + F&B dept / `RESTORAN*` without `Res Id`) go to **`FnB Transactions.merged.xlsx`** (archive for future `era-fnb-pos` import — not hotel wizard). F&B **room charges on a real guest/`Res Id`** stay in **`Folio Transactions.merged.xlsx`** for hotel-pms `folios` import. Do not upload `Folios.xlsx` / `ProFolio Transactions.xlsx` as substitutes for Folio Transactions.
 
 ### 15.2 Report types (do not confuse)
 
@@ -369,7 +376,7 @@ When the last chunk has **< ~850 rows**, the export is likely complete for that 
 |-------------------|----------|---------|
 | **Guest Cards** | Full guest registry | `Guest.externalRef`, MDM link, loyalty `visitCount` seed |
 | **Front Office Control Panel** | Reservations / room states | `Reservation.externalRef`; see T-room ADR |
-| **Folio Transactions** | All POS/folio movements (room, SPA, F&B, cash) | `FolioCharge.externalRef`; stay reconstruction |
+| **Folio Transactions** | All POS/folio movements (room, SPA, F&B, cash) | Split via `--ew`: hotel `FolioCharge` vs FnB house archive |
 | **ProFolio Transactions** | Accommodation / ROOM lines only | Cross-check; not a substitute for full Folio Transactions |
 
 Early 2024 Folio Transactions exports may be **F&B-heavy** (`999 FB` POS account) before room/SPA posting matured. From 2026, Folio Transactions includes real guest names, `ACCOMMODATION`, and `SPA MEDIKAL` rows.
@@ -394,6 +401,23 @@ Not a physical room. See [hotel-deferred-corporate-checkout ADR](../../docs/adr/
 
 Phase 1 UAT does **not** require full historical folio replay — see [NAFTA_SANATORIUM_UAT.md](../../docs/NAFTA_SANATORIUM_UAT.md).
 
+### 15.5 Guest ↔ reservation name linking (Nafta EW audit, locked)
+
+FOCP / Folio Transactions exports have **`Guest Name` only** (no Elektraweb `Guest Id`). Linking to Guest Cards is therefore string-based.
+
+**Cancelled / future without stay:** do **not** chase missing Guest Cards. If a Guest Card already exists and is **complete**, import/link it; if the card has gaps, **skip**. Complete = `Guest Id` + Name + Last Name + at least one of Passport / National Id / Phone.
+
+**Focus for linkage pressure:** `CheckOut` (and `InHouse`) rows.
+
+| Step | Rule |
+|------|------|
+| 1. Strict | Exact normalized `Name + Last Name` (and reverse) vs split parts of `Guest Name` (`A / B / C`) |
+| 2. Safe auto | Diacritic / AZ–Latin fold (`ə→e`, `ü→u`, …), compact (drop spaces), prefix truncation of EW-clipped names |
+| 3. **Do not auto-link** | `initials` / weak token-avg (same surname, different given name — high false-positive rate) |
+| 4. Accept residual gap | Walk-in nicknames (`… bəy` / `xanım`), staff/group labels, foreigners never stored on Guest Cards |
+
+Nafta snapshot (2026-07-13 merged packs): ~80% reservations strict-match a Guest Card; of ~307 named `CheckOut` without strict match, **safe fold recovers ~12%**; the rest stay unmatched or need **manual** review. Scripts: `scripts/audit-reservation-guest-folio.js`, `scripts/audit-unmatched-guests.js`, `scripts/audit-checkout-fuzzy-guests.js`.
+
 ---
 
 ## 16. Version history
@@ -404,3 +428,6 @@ Phase 1 UAT does **not** require full historical folio replay — see [NAFTA_SAN
 | 2026-06-12 | UI consolidated to phased wizard; removed Import from master-data / stock / agencies |
 | 2026-06-12 | Guest import MDM `globalPersonId` resolve; super-admin-only gate |
 | 2026-06-15 | Pre-merge scripts; Folio vs ProFolio; T-room ADR; loyalty bootstrap notes (Nafta) |
+| 2026-07-13 | Folio `--ew` multi-root merge + hotel vs `999 FB` FnB house split |
+| 2026-07-13 | §15.5 locked guest↔reservation name-linking policy (safe fold only; no initials auto) |
+| 2026-07-13 | §15.5 Cancelled/future: import complete cards only; skip incomplete; Nafta [IMPORT_FILE_CHECKLIST.md](./nafta/IMPORT_FILE_CHECKLIST.md) |

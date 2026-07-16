@@ -30,7 +30,7 @@ export default function NewBookingModal({
   const tc = useTranslations('common');
   const tPay = useTranslations('paymentMethod');
   const [roomTypes, setRoomTypes] = useState<Option[]>([]);
-  const [ratePlans, setRatePlans] = useState<Option[]>([]);
+  const [ratePlans, setRatePlans] = useState<Array<Option & { medical?: boolean }>>([]);
   const [agencies, setAgencies] = useState<Option[]>([]);
   const [guests, setGuests] = useState<Option[]>([]);
   const [roomTypeId, setRoomTypeId] = useState('');
@@ -44,6 +44,7 @@ export default function NewBookingModal({
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [guestCardOpen, setGuestCardOpen] = useState(false);
+  const [clinicCapWarn, setClinicCapWarn] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -58,6 +59,7 @@ export default function NewBookingModal({
         rp.map((x: { id: string; code: string; medicalFlag: boolean }) => ({
           id: x.id,
           label: `${x.code}${x.medicalFlag ? tc('medicalSuffix') : ''}`,
+          medical: x.medicalFlag,
         })),
       );
       setGuests(g.map((x: { id: string; fullName: string }) => ({ id: x.id, label: x.fullName })));
@@ -69,7 +71,34 @@ export default function NewBookingModal({
     if (open) return;
     setGuestCardOpen(false);
     setMsg(null);
+    setClinicCapWarn(null);
   }, [open]);
+
+  useEffect(() => {
+    const plan = ratePlans.find((p) => p.id === ratePlanId);
+    if (!open || !plan?.medical || !checkIn) {
+      setClinicCapWarn(null);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/clinic/capacity?date=${encodeURIComponent(checkIn)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        const cap = d.data ?? d;
+        if (!cap?.riskLevel || cap.riskLevel === 'ok') {
+          setClinicCapWarn(null);
+          return;
+        }
+        setClinicCapWarn(cap.message ?? t('clinicCapacityWarn'));
+      })
+      .catch(() => {
+        if (!cancelled) setClinicCapWarn(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, ratePlanId, checkIn, ratePlans, t]);
 
   useEffect(() => {
     if (!ratePlanId || !checkIn || !checkOut) {
@@ -153,6 +182,11 @@ export default function NewBookingModal({
         }
       >
         {msg ? <p className="mb-4 text-[13px] text-[#7F8C8D]">{msg}</p> : null}
+        {clinicCapWarn ? (
+          <p className="mb-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] text-amber-950">
+            {clinicCapWarn}
+          </p>
+        ) : null}
         <form id={formId} onSubmit={submit} className={FORM_STACK_CLASS}>
           <FieldSelect
             label={t('roomType')}

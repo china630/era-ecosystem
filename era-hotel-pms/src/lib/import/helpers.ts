@@ -75,10 +75,11 @@ export function mapRoomStatus(state: string | null | undefined): 'AVAILABLE' | '
 }
 
 export function mapReservationStatus(state: string | null | undefined): 'CONFIRMED' | 'IN_HOUSE' | 'CHECKED_OUT' | 'CANCELLED' | 'OPTION' {
-  const s = (state ?? '').toLowerCase();
+  const s = (state ?? '').toLowerCase().replace(/[\s_-]+/g, '');
   if (s.includes('cancel')) return 'CANCELLED';
-  if (s.includes('check') && s.includes('out')) return 'CHECKED_OUT';
-  if (s.includes('in house') || s.includes('in_house')) return 'IN_HOUSE';
+  if (s.includes('checkout')) return 'CHECKED_OUT';
+  if (s.includes('inhouse') || s === 'checkin' || s.includes('checkedin')) return 'IN_HOUSE';
   if (s.includes('option')) return 'OPTION';
+  if (s.includes('reservation') || s.includes('definite') || s.includes('confirm')) return 'CONFIRMED';
   return 'CONFIRMED';
 }

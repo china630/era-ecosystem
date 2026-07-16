@@ -1,7 +1,16 @@
 export type ClinicCapacitySummary = {
   bookingAllowed: boolean;
-  riskLevel: string;
+  riskLevel: 'ok' | 'warning' | 'critical' | string;
   guestEquivalent: number;
+  remainingPct?: number;
+  remainingSlots?: number;
+  totalSlots?: number;
+  occupiedSlots?: number;
+  warnPct?: number;
+  criticalPct?: number;
+  from?: string;
+  to?: string;
+  message?: string;
 };
 
 export async function fetchClinicCapacitySummary(
@@ -20,7 +29,8 @@ export async function fetchClinicCapacitySummary(
       cache: 'no-store',
     });
     if (!res.ok) return null;
-    return (await res.json()) as ClinicCapacitySummary;
+    const raw = (await res.json()) as ClinicCapacitySummary;
+    return raw;
   } catch {
     return null;
   }
@@ -29,8 +39,9 @@ export async function fetchClinicCapacitySummary(
 export async function assertSanatoriumBookingAllowed(refDate = new Date()): Promise<void> {
   const cap = await fetchClinicCapacitySummary(refDate);
   if (cap && !cap.bookingAllowed) {
-    throw new Error(
-      `Clinic capacity critical (~${cap.guestEquivalent} guest-equiv/week); sanatorium booking blocked`,
-    );
+    const detail =
+      cap.message ??
+      `Clinic capacity critical (~${cap.guestEquivalent} guest-equiv/week; ${cap.remainingPct ?? '?'}% slots left)`;
+    throw new Error(detail);
   }
 }
