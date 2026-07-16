@@ -1,0 +1,5040 @@
+﻿model IntangibleAsset {
+  id                   String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                       @map("organization_id") @db.Uuid
+  name                 String
+  inventoryNumber      String                       @map("inventory_number")
+  purchaseDate         DateTime                     @map("purchase_date") @db.Date
+  purchasePrice        Decimal                      @map("purchase_price") @db.Decimal(19, 4)
+  usefulLifeMonths     Int                          @map("useful_life_months")
+  salvageValue         Decimal                      @default(0) @map("salvage_value") @db.Decimal(19, 4)
+  depreciationMethod   FixedAssetDepreciationMethod @default(STRAIGHT_LINE) @map("depreciation_method")
+  status               FixedAssetStatus             @default(ACTIVE)
+  bookedAmortization   Decimal                      @default(0) @map("booked_amortization") @db.Decimal(19, 4)
+  createdAt            DateTime                     @default(now()) @map("created_at")
+  updatedAt            DateTime                     @updatedAt @map("updated_at")
+  amortizationMonths   IntangibleAmortizationMonth[]
+  organization         Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deletedAt            DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId      String?                      @map("deleted_by_user_id") @db.Uuid
+  deletedReason        String?                      @map("deleted_reason")
+
+  @@unique([organizationId, inventoryNumber])
+  @@index([organizationId, purchaseDate])
+  @@index([organizationId, deletedAt], map: "intangible_assets_org_deleted_at_idx")
+  @@map("intangible_assets")
+}
+
+/// Posted intangible amortization per calendar month (idempotent close).
+model IntangibleAmortizationMonth {
+  id                String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String          @map("organization_id") @db.Uuid
+  intangibleAssetId String          @map("intangible_asset_id") @db.Uuid
+  year              Int
+  month             Int
+  amount            Decimal         @db.Decimal(19, 4)
+  transactionId     String?         @map("transaction_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at")
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  intangibleAsset   IntangibleAsset @relation(fields: [intangibleAssetId], references: [id], onDelete: Cascade)
+  transaction       Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId   String?         @map("deleted_by_user_id") @db.Uuid
+  deletedReason     String?         @map("deleted_reason")
+
+  @@unique([intangibleAssetId, year, month])
+  @@index([organizationId, year, month])
+  @@index([organizationId, deletedAt], map: "intangible_amortization_months_org_deleted_at_idx")
+  @@map("intangible_amortization_months")
+}
+
+/// *
+///  * Planned production units for UNITS_OF_PRODUCTION before monthly depreciation close.
+model FixedAssetMonthlyUsage {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  fixedAssetId   String       @map("fixed_asset_id") @db.Uuid
+  year           Int
+  month          Int
+  periodUnits    Decimal      @map("period_units") @db.Decimal(19, 4)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fixedAsset     FixedAsset   @relation(fields: [fixedAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([fixedAssetId, year, month], map: "fixed_asset_monthly_usage_asset_period_uidx")
+  @@index([organizationId, year, month], map: "fixed_asset_monthly_usage_org_period_idx")
+  @@map("fixed_asset_monthly_usage")
+}
+
+/// *
+///  * ╨д╨░╨║╤В ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╕╤П ╨░╨╝╨╛╤А╤В╨╕╨╖╨░╤Ж╨╕╨╕ ╨┐╨╛ ╨Ю╨б ╨╖╨░ ╨║╨░╨╗╨╡╨╜╨┤╨░╤А╨╜╤Л╨╣ ╨╝╨╡╤Б╤П╤Ж (╨╕╨┤╨╡╨╝╨┐╨╛╤В╨╡╨╜╤В╨╜╨╛╤Б╤В╤М ╨┐╤А╨╕ ╨╖╨░╨║╤А╤Л╤В╨╕╨╕).
+model FixedAssetDepreciationMonth {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  fixedAssetId    String       @map("fixed_asset_id") @db.Uuid
+  year            Int
+  month           Int
+  amount          Decimal      @db.Decimal(19, 4)
+  transactionId   String?      @map("transaction_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at")
+  fixedAsset      FixedAsset   @relation(fields: [fixedAssetId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
+  deletedReason   String?      @map("deleted_reason")
+
+  @@unique([fixedAssetId, year, month])
+  @@index([organizationId, year, month])
+  @@index([organizationId, deletedAt], map: "fixed_asset_depreciation_months_org_deleted_at_idx")
+  @@map("fixed_asset_depreciation_months")
+}
+
+/// Tax depreciation register (NK Art. 114) тАФ parallel to accounting depreciation.
+model FixedAssetTaxProfile {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  fixedAssetId   String       @unique @map("fixed_asset_id") @db.Uuid
+  taxGroupCode   String       @map("tax_group_code")
+  taxRatePercent Decimal      @map("tax_rate_percent") @db.Decimal(5, 4)
+  taxNbv         Decimal      @map("tax_nbv") @db.Decimal(19, 4)
+  taxAccumulated Decimal      @default(0) @map("tax_accumulated") @db.Decimal(19, 4)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fixedAsset     FixedAsset   @relation(fields: [fixedAssetId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("fixed_asset_tax_profiles")
+}
+
+/// Tax depreciation posted per calendar month (idempotent close).
+model FixedAssetTaxDepreciationMonth {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  fixedAssetId   String       @map("fixed_asset_id") @db.Uuid
+  year           Int
+  month          Int
+  amount         Decimal      @db.Decimal(19, 4)
+  taxNbvAfter    Decimal      @map("tax_nbv_after") @db.Decimal(19, 4)
+  createdAt      DateTime     @default(now()) @map("created_at")
+model ProfitTaxAdjustment {
+  id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                    @map("organization_id") @db.Uuid
+  year           Int
+  kind           ProfitTaxAdjustmentKind
+  code           String
+  description    String
+  amount         Decimal                   @db.Decimal(19, 4)
+  source         ProfitTaxAdjustmentSource
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+  deletedAt      DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, year])
+  @@index([organizationId, deletedAt], map: "profit_tax_adjustments_org_deleted_at_idx")
+  @@map("profit_tax_adjustments")
+}
+
+enum EmasContractEventType {
+  HIRE
+  TRANSFER
+  TERMINATE
+}
+
+enum EmasContractEventStatus {
+  PENDING
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  FAILED
+}
+
+/// ╞ПMAS contract lifecycle event (hire / transfer / terminate).
+model EmasContractEvent {
+  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  employeeId     String                  @map("employee_id") @db.Uuid
+  eventType      EmasContractEventType   @map("event_type")
+  status         EmasContractEventStatus @default(PENDING)
+  correlationId  String                  @unique @map("correlation_id")
+  emasExternalId String?                 @map("emas_external_id")
+  payloadJson    Json                    @map("payload_json")
+  mappingVersion Int                     @default(1) @map("mapping_version")
+  errorMessage   String?                 @map("error_message")
+  submittedAt    DateTime?               @map("submitted_at") @db.Timestamptz(6)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee       Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, employeeId])
+  @@index([organizationId, status])
+  @@map("emas_contract_events")
+}
+
+/// Fiscal year close: transfer period result (801) to retained earnings (802).
+model FiscalYearClose {
+  id                     String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId         String       @map("organization_id") @db.Uuid
+  year                   Int
+  closedAt               DateTime     @map("closed_at") @db.Timestamptz(6)
+  closedByUserId         String?      @map("closed_by_user_id") @db.Uuid
+  resultAmount           Decimal      @map("result_amount") @db.Decimal(19, 4)
+  transactionId          String?      @map("transaction_id") @db.Uuid
+  protocolJson           Json?        @map("protocol_json")
+  reversedAt             DateTime?    @map("reversed_at") @db.Timestamptz(6)
+  reversalTransactionId  String?      @map("reversal_transaction_id") @db.Uuid
+  organization           Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction            Transaction? @relation(fields: [transactionId], references: [id])
+  reversalTransaction    Transaction? @relation("FiscalYearCloseReversal", fields: [reversalTransactionId], references: [id], onDelete: SetNull)
+
+  @@unique([organizationId, year])
+  @@map("fiscal_year_closes")
+}
+
+/// Configurable subconto (analytical dimension) type per organization.
+model SubcontoType {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  code           String
+  name           String
+  kind           SubcontoKind
+  isSystem       Boolean      @default(false) @map("is_system")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountConfigs AccountSubcontoConfig[]
+  dimensions     JournalEntryDimension[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, kind])
+  @@map("subconto_types")
+}
+
+/// Up to three subconto types bound to a NAS account.
+model AccountSubcontoConfig {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  accountId      String       @map("account_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  sortOrder      Int          @map("sort_order")
+  required       Boolean      @default(false)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, sortOrder])
+  @@unique([accountId, subcontoTypeId])
+  @@index([organizationId, accountId])
+  @@map("account_subconto_configs")
+}
+
+/// Analytical dimension value on a journal entry line.
+model JournalEntryDimension {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  journalEntryId String       @map("journal_entry_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  valueId        String?      @map("value_id") @db.Uuid
+  valueRef       String?      @map("value_ref")
+model SubcontoType {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  code           String
+  name           String
+  kind           SubcontoKind
+  isSystem       Boolean      @default(false) @map("is_system")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountConfigs AccountSubcontoConfig[]
+  dimensions     JournalEntryDimension[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, kind])
+  @@map("subconto_types")
+}
+
+/// Up to three subconto types bound to a NAS account.
+model AccountSubcontoConfig {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  accountId      String       @map("account_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  sortOrder      Int          @map("sort_order")
+  required       Boolean      @default(false)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, sortOrder])
+  @@unique([accountId, subcontoTypeId])
+  @@index([organizationId, accountId])
+  @@map("account_subconto_configs")
+}
+
+/// Analytical dimension value on a journal entry line.
+model JournalEntryDimension {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  journalEntryId String       @map("journal_entry_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  valueId        String?      @map("value_id") @db.Uuid
+  valueRef       String?      @map("value_ref")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([subcontoTypeId, valueId])
+  @@map("journal_entry_dimensions")
+}
+
+enum NetworkDocumentStatus {
+  PENDING_REVIEW
+  ACCEPTED
+  REJECTED
+  POSTED
+  SUPERSEDED
+}
+
+model NetworkDocument {
+  id                      String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  correlationId           String                @map("correlation_id") @db.Uuid
+  issuerOrganizationId    String                @map("issuer_organization_id") @db.Uuid
+  recipientOrganizationId String                @map("recipient_organization_id") @db.Uuid
+  sourceInvoiceId         String                @map("source_invoice_id") @db.Uuid
+  status                  NetworkDocumentStatus @default(PENDING_REVIEW)
+  currency                String                @default("AZN")
+  totalNet                Decimal               @map("total_net") @db.Decimal(19, 4)
+  vatAmount               Decimal               @default(0) @map("vat_amount") @db.Decimal(19, 4)
+  totalGross              Decimal               @map("total_gross") @db.Decimal(19, 4)
+  lines                   Json                  @default("[]")
+  issuerInvoiceNumber     String?               @map("issuer_invoice_number")
+  issuerTaxIdBlindIndex   String?               @map("issuer_tax_id_blind_index")
+  recipientDebitRole      String?               @map("recipient_debit_role")
+  recipientClaimsVat      Boolean               @default(true) @map("recipient_claims_vat")
+  recipientTransactionId  String?               @map("recipient_transaction_id") @db.Uuid
+  rejectReason            String?               @map("reject_reason")
+  eQaimeRef               String?               @map("e_qaime_ref")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  issuerOrganization    Organization @relation("NetworkDocIssuer", fields: [issuerOrganizationId], references: [id])
+  recipientOrganization Organization @relation("NetworkDocRecipient", fields: [recipientOrganizationId], references: [id])
+  sourceInvoice         Invoice      @relation(fields: [sourceInvoiceId], references: [id])
+
+  @@unique([correlationId, recipientOrganizationId])
+  @@index([recipientOrganizationId, status, createdAt(sort: Desc)])
+  @@index([issuerOrganizationId, createdAt(sort: Desc)])
+  @@map("network_documents")
+}
+
+model Invoice {
+  id                         String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId             String                @map("organization_id") @db.Uuid
+  number                     String
+  status                     InvoiceStatus         @default(DRAFT)
+  dueDate                    DateTime              @map("due_date") @db.Date
+  counterpartyId             String                @map("counterparty_id") @db.Uuid
+  /// *
+  ///    * ╨Ф╤В ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡: 101 ╨║╨░╤Б╤Б╨░ / 221 ╨▒╨░╨╜╨║ (╤Б╨╝. ╨в╨Ч)
+  debitAccountCode           String                @default("101") @map("debit_account_code")
+  totalAmount                Decimal               @default(0) @map("total_amount") @db.Decimal(19, 4)
+  paidAmount                 Decimal               @default(0) @map("paid_amount") @db.Decimal(19, 4)
+  currency                   String                @default("AZN")
+  isInternational            Boolean               @default(false) @map("is_international")
+  tradeContext               TradeContext          @default(DOMESTIC) @map("trade_context")
+  incoterms                  String?
+  exportDeclarationRef       String?               @map("export_declaration_ref")
+  countryOfDestination       String?               @map("country_of_destination")
+  createdAt                  DateTime              @default(now()) @map("created_at")
+  updatedAt                  DateTime              @updatedAt @map("updated_at")
+  warehouseId                String?               @map("warehouse_id") @db.Uuid
+  /// *
+  ///    * ╨б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╤Б╨║╨╗╨░╨┤╨░ ╨╕ ╨┐╤А╨╛╨▓╨╛╨┤╨║╨░ 701/201 ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╤Л (╨╛╨▒╤Л╤З╨╜╨╛ ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡)
+  inventorySettled           Boolean               @default(false) @map("inventory_settled")
+  /// *
+  ///    * ╨Ф╤В 211 / ╨Ъ╤В 601 ╨╛╤В╤А╨░╨╢╨╡╨╜╤Л (╨╛╤В╨│╤А╤Г╨╖╨║╨░ / ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╕╨╡ ╨▓╤Л╤А╤Г╤З╨║╨╕)
+  revenueRecognized          Boolean               @default(false) @map("revenue_recognized")
+  /// *
+model AccountSubcontoConfig {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  accountId      String       @map("account_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  sortOrder      Int          @map("sort_order")
+  required       Boolean      @default(false)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, sortOrder])
+  @@unique([accountId, subcontoTypeId])
+  @@index([organizationId, accountId])
+  @@map("account_subconto_configs")
+}
+
+/// Analytical dimension value on a journal entry line.
+model JournalEntryDimension {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  journalEntryId String       @map("journal_entry_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  valueId        String?      @map("value_id") @db.Uuid
+  valueRef       String?      @map("value_ref")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([subcontoTypeId, valueId])
+  @@map("journal_entry_dimensions")
+}
+
+enum NetworkDocumentStatus {
+  PENDING_REVIEW
+  ACCEPTED
+  REJECTED
+  POSTED
+  SUPERSEDED
+}
+
+model NetworkDocument {
+  id                      String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  correlationId           String                @map("correlation_id") @db.Uuid
+  issuerOrganizationId    String                @map("issuer_organization_id") @db.Uuid
+  recipientOrganizationId String                @map("recipient_organization_id") @db.Uuid
+  sourceInvoiceId         String                @map("source_invoice_id") @db.Uuid
+  status                  NetworkDocumentStatus @default(PENDING_REVIEW)
+  currency                String                @default("AZN")
+  totalNet                Decimal               @map("total_net") @db.Decimal(19, 4)
+  vatAmount               Decimal               @default(0) @map("vat_amount") @db.Decimal(19, 4)
+  totalGross              Decimal               @map("total_gross") @db.Decimal(19, 4)
+  lines                   Json                  @default("[]")
+  issuerInvoiceNumber     String?               @map("issuer_invoice_number")
+  issuerTaxIdBlindIndex   String?               @map("issuer_tax_id_blind_index")
+  recipientDebitRole      String?               @map("recipient_debit_role")
+  recipientClaimsVat      Boolean               @default(true) @map("recipient_claims_vat")
+  recipientTransactionId  String?               @map("recipient_transaction_id") @db.Uuid
+  rejectReason            String?               @map("reject_reason")
+  eQaimeRef               String?               @map("e_qaime_ref")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  issuerOrganization    Organization @relation("NetworkDocIssuer", fields: [issuerOrganizationId], references: [id])
+  recipientOrganization Organization @relation("NetworkDocRecipient", fields: [recipientOrganizationId], references: [id])
+  sourceInvoice         Invoice      @relation(fields: [sourceInvoiceId], references: [id])
+
+  @@unique([correlationId, recipientOrganizationId])
+  @@index([recipientOrganizationId, status, createdAt(sort: Desc)])
+  @@index([issuerOrganizationId, createdAt(sort: Desc)])
+  @@map("network_documents")
+}
+
+model Invoice {
+  id                         String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId             String                @map("organization_id") @db.Uuid
+  number                     String
+  status                     InvoiceStatus         @default(DRAFT)
+  dueDate                    DateTime              @map("due_date") @db.Date
+  counterpartyId             String                @map("counterparty_id") @db.Uuid
+  /// *
+  ///    * ╨Ф╤В ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡: 101 ╨║╨░╤Б╤Б╨░ / 221 ╨▒╨░╨╜╨║ (╤Б╨╝. ╨в╨Ч)
+  debitAccountCode           String                @default("101") @map("debit_account_code")
+  totalAmount                Decimal               @default(0) @map("total_amount") @db.Decimal(19, 4)
+  paidAmount                 Decimal               @default(0) @map("paid_amount") @db.Decimal(19, 4)
+  currency                   String                @default("AZN")
+  isInternational            Boolean               @default(false) @map("is_international")
+  tradeContext               TradeContext          @default(DOMESTIC) @map("trade_context")
+  incoterms                  String?
+  exportDeclarationRef       String?               @map("export_declaration_ref")
+  countryOfDestination       String?               @map("country_of_destination")
+  createdAt                  DateTime              @default(now()) @map("created_at")
+  updatedAt                  DateTime              @updatedAt @map("updated_at")
+  warehouseId                String?               @map("warehouse_id") @db.Uuid
+  /// *
+  ///    * ╨б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╤Б╨║╨╗╨░╨┤╨░ ╨╕ ╨┐╤А╨╛╨▓╨╛╨┤╨║╨░ 701/201 ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╤Л (╨╛╨▒╤Л╤З╨╜╨╛ ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡)
+  inventorySettled           Boolean               @default(false) @map("inventory_settled")
+  /// *
+  ///    * ╨Ф╤В 211 / ╨Ъ╤В 601 ╨╛╤В╤А╨░╨╢╨╡╨╜╤Л (╨╛╤В╨│╤А╤Г╨╖╨║╨░ / ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╕╨╡ ╨▓╤Л╤А╤Г╤З╨║╨╕)
+  revenueRecognized          Boolean               @default(false) @map("revenue_recognized")
+  /// *
+  ///    * ╨Ф╤В 101|221 / ╨Ъ╤В 211 ╨╛╤В╤А╨░╨╢╨╡╨╜╤Л (╨╛╨┐╨╗╨░╤В╨░ ╨╛╤В ╨┤╨╡╨▒╨╕╤В╨╛╤А╨░)
+  paymentReceived            Boolean               @default(false) @map("payment_received")
+  /// *
+  ///    * ╨Ь╨╛╨╝╨╡╨╜╤В ╨┐╨╡╤А╨▓╨╛╨│╨╛ ╨┐╤А╨╛╨▓╨╡╨┤╨╡╨╜╨╕╤П ╨Ф╤В 211 тАФ ╨Ъ╤В 601 (╨┤╨╗╤П ╨░╨║╤В╨░ ╤Б╨▓╨╡╤А╨║╨╕ ╨╕ ╤Б╨░╨╗╤М╨┤╨╛)
+  recognizedAt               DateTime?             @map("recognized_at")
+  /// Linked revenue recognition transaction id (Dr 211 / Cr 601) for idempotent posting.
+  revenuePostedTransactionId String?               @map("revenue_posted_transaction_id") @db.Uuid
+  /// *
+  ///    * ╨У╨╛╤Б╤В╨╡╨▓╨░╤П ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨┐╨╛╤А╤В╨░╨╗ ╤Б╤З╤С╤В╨░ (opaque token); ╨▓╤Л╨┤╨░╤С╤В╤Б╤П ╨╝╨╡╨╜╨╡╨┤╨╢╨╡╤А╤Г, ╨▒╨╡╨╖ JWT.
+  publicToken                String?               @unique @map("public_token") @db.VarChar(200)
+  dvxSyncStatus              IntegrationSyncStatus @default(NOT_SYNCED) @map("dvx_sync_status")
+  dvxSyncedAt                DateTime?             @map("dvx_synced_at") @db.Timestamptz(6)
+  dvxSyncError               String?               @map("dvx_sync_error")
+  dvxExternalId              String?               @map("dvx_external_id")
+  eqaimeNumber               String?               @map("eqaime_number")
+  eqaimeStatus               EqaimeStatus?         @map("eqaime_status")
+  eqaimeSubmittedAt          DateTime?             @map("eqaime_submitted_at") @db.Timestamptz(6)
+  projectId                  String?               @map("project_id") @db.Uuid
+  matchedBankLines           BankStatementLine[]   @relation("InvoiceBankMatch")
+model JournalEntryDimension {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  journalEntryId String       @map("journal_entry_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  valueId        String?      @map("value_id") @db.Uuid
+  valueRef       String?      @map("value_ref")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([subcontoTypeId, valueId])
+  @@map("journal_entry_dimensions")
+}
+
+enum NetworkDocumentStatus {
+  PENDING_REVIEW
+  ACCEPTED
+  REJECTED
+  POSTED
+  SUPERSEDED
+}
+
+model NetworkDocument {
+  id                      String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  correlationId           String                @map("correlation_id") @db.Uuid
+  issuerOrganizationId    String                @map("issuer_organization_id") @db.Uuid
+  recipientOrganizationId String                @map("recipient_organization_id") @db.Uuid
+  sourceInvoiceId         String                @map("source_invoice_id") @db.Uuid
+  status                  NetworkDocumentStatus @default(PENDING_REVIEW)
+  currency                String                @default("AZN")
+  totalNet                Decimal               @map("total_net") @db.Decimal(19, 4)
+  vatAmount               Decimal               @default(0) @map("vat_amount") @db.Decimal(19, 4)
+  totalGross              Decimal               @map("total_gross") @db.Decimal(19, 4)
+  lines                   Json                  @default("[]")
+  issuerInvoiceNumber     String?               @map("issuer_invoice_number")
+  issuerTaxIdBlindIndex   String?               @map("issuer_tax_id_blind_index")
+  recipientDebitRole      String?               @map("recipient_debit_role")
+  recipientClaimsVat      Boolean               @default(true) @map("recipient_claims_vat")
+  recipientTransactionId  String?               @map("recipient_transaction_id") @db.Uuid
+  rejectReason            String?               @map("reject_reason")
+  eQaimeRef               String?               @map("e_qaime_ref")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  issuerOrganization    Organization @relation("NetworkDocIssuer", fields: [issuerOrganizationId], references: [id])
+  recipientOrganization Organization @relation("NetworkDocRecipient", fields: [recipientOrganizationId], references: [id])
+  sourceInvoice         Invoice      @relation(fields: [sourceInvoiceId], references: [id])
+
+  @@unique([correlationId, recipientOrganizationId])
+  @@index([recipientOrganizationId, status, createdAt(sort: Desc)])
+  @@index([issuerOrganizationId, createdAt(sort: Desc)])
+  @@map("network_documents")
+}
+
+model Invoice {
+  id                         String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId             String                @map("organization_id") @db.Uuid
+  number                     String
+  status                     InvoiceStatus         @default(DRAFT)
+  dueDate                    DateTime              @map("due_date") @db.Date
+  counterpartyId             String                @map("counterparty_id") @db.Uuid
+  /// *
+  ///    * ╨Ф╤В ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡: 101 ╨║╨░╤Б╤Б╨░ / 221 ╨▒╨░╨╜╨║ (╤Б╨╝. ╨в╨Ч)
+  debitAccountCode           String                @default("101") @map("debit_account_code")
+  totalAmount                Decimal               @default(0) @map("total_amount") @db.Decimal(19, 4)
+  paidAmount                 Decimal               @default(0) @map("paid_amount") @db.Decimal(19, 4)
+  currency                   String                @default("AZN")
+  isInternational            Boolean               @default(false) @map("is_international")
+  tradeContext               TradeContext          @default(DOMESTIC) @map("trade_context")
+  incoterms                  String?
+  exportDeclarationRef       String?               @map("export_declaration_ref")
+  countryOfDestination       String?               @map("country_of_destination")
+  createdAt                  DateTime              @default(now()) @map("created_at")
+  updatedAt                  DateTime              @updatedAt @map("updated_at")
+  warehouseId                String?               @map("warehouse_id") @db.Uuid
+  /// *
+  ///    * ╨б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╤Б╨║╨╗╨░╨┤╨░ ╨╕ ╨┐╤А╨╛╨▓╨╛╨┤╨║╨░ 701/201 ╨▓╤Л╨┐╨╛╨╗╨╜╨╡╨╜╤Л (╨╛╨▒╤Л╤З╨╜╨╛ ╨┐╤А╨╕ ╨╛╨┐╨╗╨░╤В╨╡)
+  inventorySettled           Boolean               @default(false) @map("inventory_settled")
+  /// *
+  ///    * ╨Ф╤В 211 / ╨Ъ╤В 601 ╨╛╤В╤А╨░╨╢╨╡╨╜╤Л (╨╛╤В╨│╤А╤Г╨╖╨║╨░ / ╨╜╨░╤З╨╕╤Б╨╗╨╡╨╜╨╕╨╡ ╨▓╤Л╤А╤Г╤З╨║╨╕)
+  revenueRecognized          Boolean               @default(false) @map("revenue_recognized")
+  /// *
+  ///    * ╨Ф╤В 101|221 / ╨Ъ╤В 211 ╨╛╤В╤А╨░╨╢╨╡╨╜╤Л (╨╛╨┐╨╗╨░╤В╨░ ╨╛╤В ╨┤╨╡╨▒╨╕╤В╨╛╤А╨░)
+  paymentReceived            Boolean               @default(false) @map("payment_received")
+  /// *
+  ///    * ╨Ь╨╛╨╝╨╡╨╜╤В ╨┐╨╡╤А╨▓╨╛╨│╨╛ ╨┐╤А╨╛╨▓╨╡╨┤╨╡╨╜╨╕╤П ╨Ф╤В 211 тАФ ╨Ъ╤В 601 (╨┤╨╗╤П ╨░╨║╤В╨░ ╤Б╨▓╨╡╤А╨║╨╕ ╨╕ ╤Б╨░╨╗╤М╨┤╨╛)
+  recognizedAt               DateTime?             @map("recognized_at")
+  /// Linked revenue recognition transaction id (Dr 211 / Cr 601) for idempotent posting.
+  revenuePostedTransactionId String?               @map("revenue_posted_transaction_id") @db.Uuid
+  /// *
+  ///    * ╨У╨╛╤Б╤В╨╡╨▓╨░╤П ╤Б╤Б╤Л╨╗╨║╨░ ╨╜╨░ ╨┐╨╛╤А╤В╨░╨╗ ╤Б╤З╤С╤В╨░ (opaque token); ╨▓╤Л╨┤╨░╤С╤В╤Б╤П ╨╝╨╡╨╜╨╡╨┤╨╢╨╡╤А╤Г, ╨▒╨╡╨╖ JWT.
+  publicToken                String?               @unique @map("public_token") @db.VarChar(200)
+  dvxSyncStatus              IntegrationSyncStatus @default(NOT_SYNCED) @map("dvx_sync_status")
+  dvxSyncedAt                DateTime?             @map("dvx_synced_at") @db.Timestamptz(6)
+  dvxSyncError               String?               @map("dvx_sync_error")
+  dvxExternalId              String?               @map("dvx_external_id")
+  eqaimeNumber               String?               @map("eqaime_number")
+  eqaimeStatus               EqaimeStatus?         @map("eqaime_status")
+  eqaimeSubmittedAt          DateTime?             @map("eqaime_submitted_at") @db.Timestamptz(6)
+  projectId                  String?               @map("project_id") @db.Uuid
+  matchedBankLines           BankStatementLine[]   @relation("InvoiceBankMatch")
+  cashOrders                 CashOrder[]
+  items                      InvoiceItem[]
+  paymentAllocations         PaymentAllocation[]
+  payments                   InvoicePayment[]
+  counterparty               Counterparty          @relation(fields: [counterpartyId], references: [id])
+  organization               Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  currencyRef                Currency              @relation("InvoiceCurrency", fields: [currency], references: [code], onUpdate: Cascade)
+  warehouse                  Warehouse?            @relation(fields: [warehouseId], references: [id])
+  psaProject                 PsaProject?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  stockMovements             StockMovement[]
+  psaTimeEntriesBilled       PsaTimeEntry[]        @relation("PsaTimeEntryBillingInvoice")
+  networkDocuments           NetworkDocument[]
+  pickLists                  PickList[]
+  deletedAt                  DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId            String?               @map("deleted_by_user_id") @db.Uuid
+  deletedReason              String?               @map("deleted_reason")
+
+  @@unique([organizationId, number])
+model StatReportDefinition {
+  id          String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code        String               @unique
+  name        String
+  periodKind  StatReportPeriodKind @map("period_kind")
+  version     Int                  @default(1)
+  mappingJson Json                 @default("{}") @map("mapping_json")
+  isActive    Boolean              @default(true) @map("is_active")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  exports     StatReportExport[]
+
+  @@index([isActive, code])
+  @@map("stat_report_definitions")
+}
+
+model StatReportExport {
+  id             String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  definitionId   String                 @map("definition_id") @db.Uuid
+  period         String
+  status         StatReportExportStatus @default(GENERATED)
+  fileUrl        String                 @map("file_url")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  definition     StatReportDefinition   @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, definitionId, period])
+  @@index([organizationId, status, createdAt(sort: Desc)])
+  @@map("stat_report_exports")
+}
+
+/// *
+///  * ╨Ю╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░ (╤З╨░╤Б╤В╨╕╤З╨╜╨░╤П ╨╕╨╗╨╕ ╨┐╨╛╨╗╨╜╨░╤П); ╤Б╤Г╨╝╨╝╨░ ╨┐╤А╨╛╨▓╨╛╨┤╨╛╨║ ╨Ф╤В ╨║╨░╤Б╤Б╨░/╨▒╨░╨╜╨║ тАФ ╨Ъ╤В 211 = amount.
+model InvoicePayment {
+  id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  invoiceId       String       @map("invoice_id") @db.Uuid
+  amount          Decimal      @db.Decimal(19, 4)
+  date            DateTime     @db.Date
+  transactionId   String?      @map("transaction_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at")
+  invoice         Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction     Transaction? @relation(fields: [transactionId], references: [id])
+  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId String?      @map("deleted_by_user_id") @db.Uuid
+  deletedReason   String?      @map("deleted_reason")
+
+  @@index([organizationId, invoiceId])
+  @@index([organizationId, date])
+  @@index([organizationId, deletedAt], map: "invoice_payments_org_deleted_at_idx")
+  @@map("invoice_payments")
+}
+
+model BankStatement {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  date           DateTime             @db.Date
+  totalAmount    Decimal              @map("total_amount") @db.Decimal(19, 4)
+  bankName       String               @map("bank_name")
+  sourceFileName String?              @map("source_file_name")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  channel        BankStatementChannel @default(BANK) @map("channel")
+  lines          BankStatementLine[]
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, date])
+  @@index([organizationId, createdAt])
+  @@map("bank_statements")
+}
+
+model BankStatementLine {
+  id                String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String                  @map("organization_id") @db.Uuid
+  bankStatementId   String                  @map("bank_statement_id") @db.Uuid
+  description       String?
+  /// *
+  ///    * ╨б╤Г╨╝╨╝╨░ ╨▓╤Б╨╡╨│╨┤╨░ > 0; ╨╜╨░╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨╖╨░╨┤╨░╤С╤В type
+  amount            Decimal                 @db.Decimal(19, 4)
+  type              BankStatementLineType
+  isMatched         Boolean                 @default(false) @map("is_matched")
+  /// *
+  ///    * V├ЦEN ╨║╨╛╨╜╤В╤А╨░╨│╨╡╨╜╤В╨░ (╨╕╨╖ ╨▓╤Л╨┐╨╕╤Б╨║╨╕ / ╨┐╨░╤А╤Б╨╕╨╜╨│╨░) ╨┤╨╗╤П Match ╤Б ╨╕╨╜╨▓╨╛╨╣╤Б╨╛╨╝
+  counterpartyTaxId String?                 @map("counterparty_tax_id")
+  valueDate         DateTime?               @map("value_date") @db.Date
+  matchedInvoiceId  String?                 @map("matched_invoice_id") @db.Uuid
+  rawRow            Json?                   @map("raw_row")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
+  /// *
+  ///    * ╨Ш╨┤╨╡╨╝╨┐╨╛╤В╨╡╨╜╤В╨╜╨╛╤Б╤В╤М API/╨▓╨╡╨▒╤Е╤Г╨║╨░: pasha:tx-тАж, abb:тАж
+  integrationKey    String?                 @map("integration_key")
+  origin            BankStatementLineOrigin @default(FILE_IMPORT) @map("origin")
+  cashFlowItemId    String?                 @map("cash_flow_item_id") @db.Uuid
+  bankStatement     BankStatement           @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  cashFlowItem      CashFlowItem?           @relation(fields: [cashFlowItemId], references: [id])
+  matchedInvoice    Invoice?                @relation("InvoiceBankMatch", fields: [matchedInvoiceId], references: [id])
+  organization      Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vatDepositEntries VatDepositLedgerEntry[]
+
+  @@unique([organizationId, integrationKey])
+  @@index([organizationId, isMatched])
+  @@index([organizationId, counterpartyTaxId])
+  @@index([organizationId, bankStatementId])
+  @@index([cashFlowItemId])
+  @@map("bank_statement_lines")
+}
+
+model VatDepositLedgerEntry {
+  id                  String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId      String                @map("organization_id") @db.Uuid
+  kind                VatDepositLedgerKind  @map("kind")
+  amount              Decimal               @db.Decimal(19, 4)
+  transactionId       String?               @map("transaction_id") @db.Uuid
+  bankStatementLineId String?               @map("bank_statement_line_id") @db.Uuid
+  note                String?
+  createdAt           DateTime              @default(now()) @map("created_at")
+  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum EqaimeStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum VatDepositLedgerKind {
+  INCOMING_ROUTE
+  REMITTANCE
+  ADJUSTMENT
+}
+
+enum BankStatementLineType {
+  INFLOW
+  OUTFLOW
+}
+
+/// *
+///  * ╨а╨╡╨╡╤Б╤В╤А: ╨▒╨░╨╜╨║ vs ╨║╨░╤Б╤Б╨░ (╤Д╨╕╨╗╤М╤В╤А ╨▓ UI).
+enum BankStatementChannel {
+  BANK
+  CASH
+}
+
+/// *
+///  * ╨Ш╤Б╤В╨╛╤З╨╜╨╕╨║ ╤Б╤В╤А╨╛╨║╨╕: ╨╕╨╝╨┐╨╛╤А╤В, ╤Б╨╕╨╜╤Е╤А╨╛╨╜╨╕╨╖╨░╤Ж╨╕╤П, ╨╛╨┐╨╗╨░╤В╨░ ╨╕╨╜╨▓╨╛╨╣╤Б╨░, ╤А╤Г╤З╨╜╨░╤П ╨║╨░╤Б╤Б╨░.
+enum BankStatementLineOrigin {
+  FILE_IMPORT
+  DIRECT_SYNC
+  WEBHOOK
+  INVOICE_PAYMENT_SYSTEM
+  MANUAL_CASH_OUT
+  MANUAL_BANK_ENTRY
+}
+
+/// *
+///  * CBAR rate status lived with CbarOfficialRate (dropped тАФ rates in era-data-hub).
+
+enum PayrollRunStatus {
+  DRAFT
+  POSTED
+}
+
+enum SalaryRegistryStatus {
+  DRAFT
+  SENT
+  PAID
+}
+
+enum BankPaymentDraftStatus {
+  PENDING
+  SENT
+  REJECTED
+  COMPLETED
+}
+
+enum SalaryPayoutFormat {
+  ABB_XML
+  UNIVERSAL_XLSX
+}
+
+/// *
+///  * ╨и╤В╨░╤В╨╜╤Л╨╣ ╤Б╨╛╤В╤А╤Г╨┤╨╜╨╕╨║ ╨╕╨╗╨╕ ╨У╨Я╨е (xidm╔Щt m├╝qavil╔Щsi, ╤Д╨╕╨╖╨╗╨╕╤Ж╨╛ ╤Б V├ЦEN).
+enum EmployeeKind {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum TaxResidencyStatus {
+  RESIDENT
+  NON_RESIDENT
+}
+
+enum EmployeeEmploymentStatus {
+  ACTIVE
+  TERMINATED
+}
+
+enum TimesheetStatus {
+  DRAFT
+  APPROVED
+}
+
+/// *
+///  * ╨п╤З╨╡╨╣╨║╨░ ╤В╨░╨▒╨╡╨╗╤П: ╤А╨░╨▒╨╛╤З╨╕╨╣ ╨┤╨╡╨╜╤М, ╨╛╤В╨┐╤Г╤Б╨║, ╨▒╨╛╨╗╤М╨╜╨╕╤З╨╜╤Л╨╣, ╨▓╤Л╤Е╨╛╨┤╨╜╨╛╨╣, ╤Б╨╗╤Г╨╢╨╡╨▒╨╜╨░╤П ╨┐╨╛╨╡╨╖╨┤╨║╨░ (ezamiyy╔Щt).
+enum TimesheetEntryType {
+  WORK
+  VACATION
+  SICK
+  OFF
+  BUSINESS_TRIP
+}
+
+enum StockMovementType {
+  IN
+  OUT
+  TRANSFER
+}
+
+enum StockMovementReason {
+  SALE
+  PURCHASE
+  ADJUSTMENT
+  RECEIPT
+  SHIPMENT
+  TRANSFER
+  /// *
+  ///    * ╨Т╤Л╨┐╤Г╤Б╨║ ╨│╨╛╤В╨╛╨▓╨╛╨╣ ╨┐╤А╨╛╨┤╤Г╨║╤Ж╨╕╨╕ (╤Б╨┐╨╕╤Б╨░╨╜╨╕╨╡ ╨║╨╛╨╝╨┐╨╛╨╜╨╡╨╜╤В╨╛╨▓ / ╨┐╤А╨╕╤Е╨╛╨┤ ╨У╨Я)
+  MANUFACTURING
+}
+
+/// *
+///  * ╨б╨╗╨╕╤З╨╕╤В╨╡╨╗╤М╨╜╨░╤П ╨▓╨╡╨┤╨╛╨╝╨╛╤Б╤В╤М: ╨╢╨╕╨╖╨╜╨╡╨╜╨╜╤Л╨╣ ╤Ж╨╕╨║╨╗ DRAFT тЖТ COUNTING тЖТ REVIEW тЖТ COMPLETED (+ CANCELLED).
+enum InventoryAuditStatus {
+  DRAFT
+  COUNTING
+  REVIEW
+  COMPLETED
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+enum FixedAssetLifecycleEventType {
+  ACQUISITION
+  MODERNIZATION
+  REVALUATION
+  DISPOSAL
+}
+
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+enum TaxDeclarationType {
+  SIMPLIFIED_TAX
+  VAT
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+}
+
+enum TaxDeclarationExportStatus {
+  GENERATED
+  UPLOADED
+  CONFIRMED_BY_TAX
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+}
+
+/// *
+///  * ╨Я╤А╨╕╤Е╨╛╨┤╨╜╤Л╨╣ / ╤А╨░╤Б╤Е╨╛╨┤╨╜╤Л╨╣ ╨║╨░╤Б╤Б╨╛╨▓╤Л╨╣ ╨╛╤А╨┤╨╡╤А (PKO / RKO), ╤Б╨╝. PRD ┬з4.5тАУ4.6.
+enum CashOrderKind {
+  KMO
+  KXO
+}
+
+enum CashOrderStatus {
+  DRAFT
+  POSTED
+  CANCELLED
+}
+
+enum CashOrderPkoSubtype {
+  INCOME_FROM_CUSTOMER
+  RETURN_FROM_ACCOUNTABLE
+  WITHDRAWAL_FROM_BANK
+  OTHER
+}
+
+enum CashOrderRkoSubtype {
+  SALARY
+  SUPPLIER_PAYMENT
+  ACCOUNTABLE_ISSUE
+  BANK_DEPOSIT
+  OTHER
+}
+
+enum AdvanceReportStatus {
+  DRAFT
+  POSTED
+}
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
+}
+
+enum PickListStatus {
+  DRAFT
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+enum AbsencePayFormula {
+  LABOR_LEAVE_304
+  SICK_LEAVE_STAJ
+  UNPAID_RECORD
+}
+
+enum AbsenceSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+enum DepartmentSource {
+  CP_EVENT
+  LEGACY_MANUAL
+}
+
+/// v1.1 industry satellite handoffs (retail, logistics, clinic, auto)
+model IndustryStockCheckLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  systemQty      Decimal  @map("system_qty") @db.Decimal(19, 4)
+  actualQty      Decimal  @map("actual_qty") @db.Decimal(19, 4)
+  variance       Decimal  @db.Decimal(19, 4)
+  checkedAt      DateTime @default(now()) @map("checked_at") @db.Timestamptz(6)
+
+  @@index([organizationId, checkedAt])
+  @@map("industry_stock_check_logs")
+}
+
+model IndustryReplenishmentSuggestion {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  productId      String   @map("product_id") @db.Uuid
+  sku            String
+  warehouseId    String?  @map("warehouse_id") @db.Uuid
+  currentQty     Decimal  @map("current_qty") @db.Decimal(19, 4)
+  suggestedQty   Decimal  @map("suggested_qty") @db.Decimal(19, 4)
+  status         String   @default("OPEN")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")

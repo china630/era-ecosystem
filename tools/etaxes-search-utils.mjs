@@ -60,13 +60,78 @@ const GENERIC_STOPWORDS = new Set([
   "müalicə",
   "mualice",
   "net",
+  // retail / plaza brand noise — wastes alt rounds, causes weak matches
+  "kids",
+  "store",
+  "stores",
+  "beauty",
+  "accessories",
+  "accessory",
+  "cafe",
+  "coffee",
+  "tea",
+  "home",
+  "plaza",
+  "mall",
+  "studio",
+  "bookstore",
+  "pharm",
+  "pharma",
+  "pharmacy",
+  "diner",
+  "restaurant",
+  "bar",
+  "shop",
+  "shops",
+  "art",
+  "brand",
+  "brands",
+  "fashion",
+  "wear",
+  "house",
+  "life",
+  "world",
+  "park",
+  "point",
+  "city",
+  "burger",
+  "pizza",
+  "grill",
+  "market",
+  "express",
+  "premium",
+  "official",
+  "holding",
+  "construction",
+  "telecom",
+  "therapy",
+  "solutions",
+  "consulting",
+  "zone",
 ]);
+
+export const ETAXES_LOCALE = "az-AZ";
 
 export function cleanForSearch(name) {
   return (name ?? "")
-    .replace(/[“”«»"]/g, "")
+    .replace(/[\u201C\u201D\u00AB\u00BB\u201E\u201F"″‟]/g, "")
+    .replace(/\|/g, " ")
+    .replace(/&/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** FIO-like strings are poor legalEntity queries (alt-round noise). */
+export function isPersonLikeQuery(q) {
+  const s = String(q ?? "");
+  if (/\b(OĞLU|OGLU|QIZI|QIZIYI)\b/i.test(s)) return true;
+  // 3+ Capitalized tokens with hyphens: SALMANOV-ZABIT-SAKIT-OGLU style
+  const parts = s.split(/[\s\-]+/).filter(Boolean);
+  if (parts.length >= 3 && parts.every((p) => /^[\p{L}]{3,}$/u.test(p))) {
+    const upperish = parts.filter((p) => p === p.toLocaleUpperCase(ETAXES_LOCALE)).length;
+    if (upperish >= parts.length - 1) return true;
+  }
+  return false;
 }
 
 /** Quoted trade name, e.g. "AKK-NET AUDİT" from full legal title. */
@@ -87,11 +152,17 @@ export function extractTradeName(rawName) {
   return n.replace(/\s+/g, " ").trim();
 }
 
-export const ETAXES_LOCALE = "az-AZ";
-
 /** DVX UI searches in Azerbaijani uppercase: i→İ, ı→I (not default toUpperCase). */
 export function toEtaxesSearchQuery(q) {
   return String(q ?? "").trim().toLocaleUpperCase(ETAXES_LOCALE);
+}
+
+/**
+ * ASCII-I variant (İ→I). Live A/B 2026-07-16: 0 wins vs az-İ on 404 —
+ * DVX treats them equivalently. Kept for experiments only.
+ */
+export function toEtaxesAsciiIQuery(q) {
+  return toEtaxesSearchQuery(q).replace(/\u0130/g, "I");
 }
 
 /** Stable ASCII-folded key for cache dedup (ati / ATİ / ATI → ati). */
@@ -140,9 +211,13 @@ export function deriveSearchQueries(rawName) {
   const seen = new Set();
 
   const add = (q) => {
-    const trimmed = String(q ?? "").trim();
+    let trimmed = String(q ?? "").trim();
+    trimmed = cleanForSearch(trimmed);
+    if (trimmed.length < 3 || !/[A-Za-zƏəİıÖöÜüÇçŞşĞğ]/.test(trimmed)) return;
+    if (isPersonLikeQuery(trimmed)) return;
+    if (/[|]/.test(trimmed)) return;
     const k = normToken(trimmed);
-    if (trimmed.length < 3 || !/[A-Za-zƏəİıÖöÜüÇçŞşĞğ]/.test(trimmed) || seen.has(k)) return;
+    if (!k || seen.has(k)) return;
     seen.add(k);
     queries.push(trimmed);
   };
@@ -151,8 +226,11 @@ export function deriveSearchQueries(rawName) {
   if (trade) {
     add(trade.slice(0, 48));
     add(trade.replace(/-/g, " ").replace(/\s+/g, " ").trim().slice(0, 48));
-    const hyphenated = trade.replace(/\s+/g, "-");
-    if (hyphenated !== trade) add(hyphenated.slice(0, 48));
+    // Hyphenate only short trade names (long hyphen-soup burns alt rounds).
+    if (trade.length <= 28) {
+      const hyphenated = trade.replace(/\s+/g, "-");
+      if (hyphenated !== trade) add(hyphenated.slice(0, 48));
+    }
   }
 
   const distinctive = parts.filter((p) => !isGenericToken(p));
@@ -169,29 +247,33 @@ export function deriveSearchQueries(rawName) {
 
   if (distinctive.length >= 2) {
     add(`${distinctive[0]} ${distinctive[1]}`.slice(0, 48));
-    add(`${distinctive[0]}-${distinctive[1]}`.slice(0, 48));
+    if (`${distinctive[0]}-${distinctive[1]}`.length <= 28) {
+      add(`${distinctive[0]}-${distinctive[1]}`.slice(0, 48));
+    }
     if (distinctive.length >= 3) {
       add(`${distinctive[0]} ${distinctive[2]}`.slice(0, 48));
     }
   }
 
   // Compound hyphen tokens: AKK-NET → also AKK NET AUDİT when trade has more words.
-  if (trade.includes("-")) {
+  if (trade.includes("-") && trade.length <= 40) {
     const segs = trade.split(/\s+/).map((w) => w.replace(/-/g, " ")).join(" ");
     add(segs.slice(0, 48));
   }
 
-  for (const p of parts) add(p);
+  for (const p of parts) {
+    if (!isGenericToken(p)) add(p);
+  }
 
   if (!queries.length) {
     const fallback = cleanForSearch(rawName)
       .replace(LEGAL_SUFFIX_RE, " ")
       .replace(/[^0-9A-Za-zƏəİıÖöÜüÇçŞşĞğ\s\-]/g, "")
       .trim();
-    if (fallback.length >= 3) add(fallback.slice(0, 48));
+    if (fallback.length >= 3 && !isPersonLikeQuery(fallback)) add(fallback.slice(0, 48));
   }
 
-  return queries.slice(0, 8);
+  return queries.slice(0, 6);
 }
 
 export function deriveSearchQuery(rawName) {

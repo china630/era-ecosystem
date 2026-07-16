@@ -5,8 +5,10 @@
  *   node tools/enrich-etaxes-legal-entities.mjs --force
  *   node tools/enrich-etaxes-legal-entities.mjs --limit 20
  *   node tools/enrich-etaxes-legal-entities.mjs --count-queries
+ *   node tools/enrich-etaxes-legal-entities.mjs --sectors top-taxpayers,trade-green-corridor,plaza-tenants
  *
  * Output: data/legal-entities/azerbaijan-legal-entities.csv
+ * With --sectors: also rebuilds companies master at the end.
  */
 
 import fs from "node:fs";
@@ -36,9 +38,19 @@ const FIND_URL =
 const args = process.argv.slice(2);
 const limitIdx = args.indexOf("--limit");
 const LIMIT = limitIdx >= 0 ? Number(args[limitIdx + 1]) : 0;
+const sectorIdx = args.indexOf("--sectors");
+const SECTOR_FILTER = sectorIdx >= 0
+  ? new Set(
+      String(args[sectorIdx + 1] || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    )
+  : null;
 const HEADFUL = args.includes("--headful");
 const COUNT_ONLY = args.includes("--count-queries");
 const FORCE = args.includes("--force");
+const REBUILD_MASTER = args.includes("--rebuild-master") || Boolean(SECTOR_FILTER?.size);
 const MIN_DELAY_MS = Number(process.env.ETAXES_DELAY_MS ?? 2500);
 const MAX_DELAY_MS = Number(process.env.ETAXES_MAX_DELAY_MS ?? 4500);
 
@@ -592,6 +604,125 @@ function loadDonorsRaw() {
     });
   }
 
+  // --- Wave: Top-100 taxpayers (taxes.gov.az) ---
+  for (const row of safeReadCsv("top-taxpayers/azerbaijan-top100-taxpayers-2025.csv")) {
+    const name = row.name || "";
+    if (!name) continue;
+    donors.push({
+      donor_id: `top100-${++id}`,
+      donor_sector: "top-taxpayers",
+      donor_search_name: name,
+      donor_name: name,
+      donor_legal_name: name,
+      donor_city: "",
+      donor_address: "",
+      donor_phone: "",
+      donor_email: "",
+      donor_website: "",
+      donor_voen: "",
+      donor_category: "top100-2025",
+      donor_extra: {
+        rank_paid: row.rank_paid,
+        rank_calculated: row.rank_calculated,
+        amount_paid_mln: row.amount_paid_mln,
+        amount_calculated_mln: row.amount_calculated_mln,
+        year: row.year || "2025",
+        source: row.source,
+      },
+    });
+  }
+
+  // --- Wave: Green Corridor importers/exporters (customs.gov.az) ---
+  for (const row of safeReadCsv(
+    "trade-participants/azerbaijan-green-corridor-trade-participants.csv",
+  )) {
+    const name = row.name || "";
+    if (!name) continue;
+    const dirs = [
+      row.is_importer === "yes" ? "import" : "",
+      row.is_exporter === "yes" ? "export" : "",
+    ]
+      .filter(Boolean)
+      .join("|");
+    donors.push({
+      donor_id: `green-${++id}`,
+      donor_sector: "trade-green-corridor",
+      donor_search_name: name,
+      donor_name: name,
+      donor_legal_name: name,
+      donor_city: "",
+      donor_address: "",
+      donor_phone: "",
+      donor_email: "",
+      donor_website: "",
+      donor_voen: "",
+      donor_category: dirs || "green-corridor",
+      donor_extra: {
+        is_importer: row.is_importer,
+        is_exporter: row.is_exporter,
+        source: row.source,
+      },
+    });
+  }
+
+  // --- Wave: 2GIS plaza tenants (Binada tab) ---
+  for (const row of safeReadCsv("business-plazas/baku-plaza-tenants-2gis.csv")) {
+    const name = row.company_name || row.name || "";
+    if (!name) continue;
+    donors.push({
+      donor_id: row.firm_id ? `2gis-${row.firm_id}` : `2gis-${++id}`,
+      donor_sector: "plaza-tenants",
+      donor_search_name: name,
+      donor_name: name,
+      donor_legal_name: name,
+      donor_city: "Bakı",
+      donor_address: row.address || "",
+      donor_phone: "",
+      donor_email: "",
+      donor_website: row.website || "",
+      donor_voen: "",
+      donor_category: row.plaza_name || "plaza-tenant",
+      donor_extra: {
+        plaza_id: row.plaza_id,
+        plaza_name: row.plaza_name,
+        firm_id: row.firm_id,
+        source: row.source || "2gis-binada",
+      },
+    });
+  }
+
+  // --- Wave: official plaza/mall tenant & brand catalogs (+ curated seeds) ---
+  // Deduped against 2GIS (and other sectors) via normalizeNameKey in loadDonors().
+  for (const row of safeReadCsv("business-plazas/baku-plaza-tenants-official.csv")) {
+    const name = row.company_name || row.name || "";
+    if (!name) continue;
+    const src = row.source || "official-catalog";
+    donors.push({
+      donor_id: `official-${++id}`,
+      donor_sector: "plaza-tenants",
+      donor_search_name: name,
+      donor_name: name,
+      donor_legal_name: name,
+      donor_city: "Bakı",
+      donor_address: "",
+      donor_phone: "",
+      donor_email: "",
+      donor_website: row.source_url || "",
+      donor_voen: "",
+      donor_category: row.plaza_name || row.category || "plaza-tenant-official",
+      donor_extra: {
+        plaza_id: row.plaza_id,
+        plaza_name: row.plaza_name,
+        source: src,
+        category: row.category || "",
+        notes: row.notes || "",
+      },
+    });
+  }
+
+  if (SECTOR_FILTER?.size) {
+    return donors.filter((d) => SECTOR_FILTER.has(d.donor_sector));
+  }
   return donors;
 }
 
@@ -845,7 +976,8 @@ async function runQueryBatch(page, queries, byVoen, searchResultsByQuery, label)
   for (let i = 0; i < queries.length; i++) {
     const q = queries[i];
     if (searchResultsByQuery.has(q)) continue;
-    process.stdout.write(`[${label} ${i + 1}/${queries.length}] ${q} ... `);
+    const apiQ = toEtaxesSearchQuery(q);
+    process.stdout.write(`[${label} ${i + 1}/${queries.length}] ${q} → ${apiQ} ... `);
     try {
       const { taxpayers, error } = await searchLegalEntities(page, q);
       searchResultsByQuery.set(q, taxpayers);
@@ -874,13 +1006,16 @@ async function main() {
     console.log(`Unique primary queries: ${primary.size}`);
     return;
   }
-  if (fs.existsSync(COMPLETE_MARKER) && !FORCE) {
+  if (fs.existsSync(COMPLETE_MARKER) && !FORCE && !SECTOR_FILTER?.size) {
     const done = JSON.parse(fs.readFileSync(COMPLETE_MARKER, "utf8"));
-    console.log(`Already complete (${done.finishedAt}). Use --force to re-run.`);
+    console.log(`Already complete (${done.finishedAt}). Use --force or --sectors to re-run.`);
     return;
   }
-  if (FORCE && fs.existsSync(COMPLETE_MARKER)) {
+  if (FORCE && fs.existsSync(COMPLETE_MARKER) && !SECTOR_FILTER?.size) {
     fs.unlinkSync(COMPLETE_MARKER);
+  }
+  if (SECTOR_FILTER?.size) {
+    console.log(`Sector wave: ${[...SECTOR_FILTER].join(", ")}`);
   }
   acquireLock();
   try {
@@ -1094,7 +1229,6 @@ async function runEnrichment() {
   const csv = [header.join(","), ...rows.map((r) => header.map((h) => csvEscape(r[h])).join(","))].join(
     "\n",
   );
-  fs.writeFileSync(OUT_CSV, csv, "utf8");
 
   const stats = {
     donor_raw: rawCount,
@@ -1103,14 +1237,42 @@ async function runEnrichment() {
     output_rows: rows.length,
     tax_matched: rows.filter((r) => r.match_status === "tax_matched").length,
     no_tax_match: rows.filter((r) => r.match_status === "no_tax_match").length,
+    sectors: SECTOR_FILTER?.size ? [...SECTOR_FILTER] : null,
   };
-  console.log("\nDone:", stats);
-  console.log(`Output: ${OUT_CSV}`);
-  fs.writeFileSync(
-    COMPLETE_MARKER,
-    JSON.stringify({ finishedAt: new Date().toISOString(), ...stats }),
-    "utf8",
-  );
+
+  if (SECTOR_FILTER?.size) {
+    const waveName = [...SECTOR_FILTER].join("-").replace(/[^a-z0-9-]/gi, "").slice(0, 80);
+    const waveCsv = path.join(OUT_DIR, `azerbaijan-donor-wave-${waveName || "sectors"}.csv`);
+    fs.writeFileSync(waveCsv, csv, "utf8");
+    console.log("\nDone (sector wave):", stats);
+    console.log(`Wave output: ${waveCsv}`);
+    fs.writeFileSync(
+      path.join(OUT_DIR, `.enrich-wave-${waveName || "sectors"}.json`),
+      JSON.stringify({ finishedAt: new Date().toISOString(), ...stats }),
+      "utf8",
+    );
+  } else {
+    fs.writeFileSync(OUT_CSV, csv, "utf8");
+    console.log("\nDone:", stats);
+    console.log(`Output: ${OUT_CSV}`);
+    fs.writeFileSync(
+      COMPLETE_MARKER,
+      JSON.stringify({ finishedAt: new Date().toISOString(), ...stats }),
+      "utf8",
+    );
+  }
+
+  if (REBUILD_MASTER) {
+    console.log("\nRebuilding companies master from cache...");
+    const { spawnSync } = await import("node:child_process");
+    const r = spawnSync(process.execPath, [path.join(ROOT, "tools", "build-azerbaijan-companies-master.mjs")], {
+      cwd: ROOT,
+      stdio: "inherit",
+    });
+    if (r.status !== 0) {
+      console.warn("Master rebuild exited with", r.status);
+    }
+  }
 }
 
 main().catch((e) => {
