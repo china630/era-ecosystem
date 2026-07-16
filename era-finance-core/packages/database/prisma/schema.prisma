@@ -137,6 +137,12 @@ model Organization {
   paymentOrders                PaymentOrder[]
   taxDeclarationExports        TaxDeclarationExport[]
   payrollRuns                  PayrollRun[]
+  procurementProtocols         ProcurementProtocol[]
+  businessTrips                BusinessTrip[]
+  perDiemNorms                 PerDiemNorm[]
+  vacationSeniorityRules       VacationSeniorityRule[]
+  payrollComponents            PayrollComponent[]
+  workSchedules                WorkSchedule[]
   salaryRegistries             SalaryRegistry[]
   bankPaymentDrafts            BankPaymentDraft[]
   ifrsMappingRules             IfrsMappingRule[]
@@ -1514,6 +1520,12 @@ model Timesheet {
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
   payrollRuns     PayrollRun[]
+  procurementProtocols         ProcurementProtocol[]
+  businessTrips                BusinessTrip[]
+  perDiemNorms                 PerDiemNorm[]
+  vacationSeniorityRules       VacationSeniorityRule[]
+  payrollComponents            PayrollComponent[]
+  workSchedules                WorkSchedule[]
   entries         TimesheetEntry[]
   organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
@@ -2612,6 +2624,12 @@ model Transaction {
   paymentAllocations           PaymentAllocation[]
   journalEntries               JournalEntry[]
   payrollRuns                  PayrollRun[]
+  procurementProtocols         ProcurementProtocol[]
+  businessTrips                BusinessTrip[]
+  perDiemNorms                 PerDiemNorm[]
+  vacationSeniorityRules       VacationSeniorityRule[]
+  payrollComponents            PayrollComponent[]
+  workSchedules                WorkSchedule[]
   counterparty                 Counterparty?                 @relation(fields: [counterpartyId], references: [id])
   department                   Department?                   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   organization                 Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
