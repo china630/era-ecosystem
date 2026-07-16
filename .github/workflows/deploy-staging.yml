@@ -79,6 +79,8 @@ jobs:
           script: |
             set -euo pipefail
             cd /opt/era-ecosystem
+            # Free unused images before git fetch/pull — full disk breaks both (No space left on device).
+            docker image prune -af || true
             git fetch origin
             git checkout "$GIT_SHA"
             printf '%s' "$ERA_ENV_B64" | base64 -d > .env
@@ -87,5 +89,5 @@ jobs:
             chmod +x docker/scripts/migrate-all.sh
             COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
             docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
-            docker image prune -f
+            docker image prune -af || true
             node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"
