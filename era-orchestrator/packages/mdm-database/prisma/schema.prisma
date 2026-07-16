@@ -35,6 +35,38 @@ enum PersonSegment {
   UNVERIFIED
 }
 
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+  UNKNOWN
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  OTHER
+}
+
+enum PersonAddressKind {
+  REGISTRATION
+  ACTUAL
+}
+
+enum StatisticalCategory {
+  REFUGEE
+  IDP
+  MARTYR_FAMILY
+  VETERAN
+}
+
 model GlobalNaturalPerson {
   id                String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   /// Legacy FIN blind index — kept for back-compat; canonical identifiers live in PersonIdentifier.
@@ -51,11 +83,47 @@ model GlobalNaturalPerson {
   accessRequests    PersonAccessRequest[]
   accessGrants      PersonAccessGrant[]
   accessLogs        PersonAccessLog[]
+  hrProfile         PersonHrProfile?
+  addresses         PersonAddress[]
   mergedInto        GlobalNaturalPerson?  @relation("PersonMerge", fields: [mergedIntoPersonId], references: [id], onDelete: SetNull)
   mergedFrom        GlobalNaturalPerson[] @relation("PersonMerge")
 
   @@index([mergedIntoPersonId])
   @@map("global_natural_persons")
+}
+
+/// HR-only PII attributes (blood, marital, education, stats, photo). Finance reads via MDM API only.
+model PersonHrProfile {
+  id                      String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId                String                @unique @map("person_id") @db.Uuid
+  bloodGroup              BloodGroup            @default(UNKNOWN) @map("blood_group")
+  maritalStatus           MaritalStatus?        @map("marital_status")
+  educationCipher         String?               @map("education_cipher")
+  specialtyCipher         String?               @map("specialty_cipher")
+  statisticalCategories   StatisticalCategory[] @default([]) @map("statistical_categories")
+  photoStorageKey         String?               @map("photo_storage_key")
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+  person                  GlobalNaturalPerson   @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@map("person_hr_profiles")
+}
+
+model PersonAddress {
+  id            String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  personId      String              @map("person_id") @db.Uuid
+  kind          PersonAddressKind
+  lineCipher    String              @map("line_cipher")
+  cityCipher    String?             @map("city_cipher")
+  regionCipher  String?             @map("region_cipher")
+  postalCipher  String?             @map("postal_cipher")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  person        GlobalNaturalPerson @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, kind])
+  @@index([personId])
+  @@map("person_addresses")
 }
 
 model PersonIdentifier {

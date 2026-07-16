@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+
+<html data-lang="en" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>ERA 365 × Pasha — Partnership Proposal (Executive)</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --ink: #1E2A35;
+      --slate: #34495E;
+      --muted: #536472;
+      --faint: #6E7C86;
+      --line: #C5CED6;
+      --fog: #DCE3EA;
+      --paper: #E4EAF0;
+      --white: #F4F7FA;
+      --panel: #EEF3F7;
+      --action: #2980B9;
+      --action-deep: #1B6FA3;
+      --teal: #1F8A70;
+      --warm: #C47A3A;
+      --w: 1280px; --h: 720px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #152029; color: var(--ink); font-family: "Noto Sans", Manrope, sans-serif; }
+    .toolbar {
+      position: sticky; top: 0; z-index: 40; display: flex; gap: 8px; justify-content: center; align-items: center;
+      padding: 10px; background: rgba(21,32,41,.94); color: #fff; font-size: 12px;
+    }
+    .toolbar button, .toolbar a {
+      border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; border-radius: 8px;
+      padding: 7px 12px; font: inherit; cursor: pointer; text-decoration: none;
+    }
+    .toolbar .active, .toolbar .primary { background: var(--action); border-color: var(--action); }
+    .toolbar .hint { opacity: .55; margin-left: 6px; }
+    .deck { padding: 24px 12px 48px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .slide {
+      width: var(--w); height: var(--h); position: relative; overflow: hidden;
+      background: linear-gradient(165deg, #EAF0F5 0%, #D7E1EA 48%, #CDD8E4 100%);
+      box-shadow: 0 16px 40px rgba(0,0,0,.35); page-break-after: always; break-after: page;
+    }
+    .slide::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(780px 360px at 110% -5%, rgba(41,128,185,.28), transparent 60%),
+        radial-gradient(620px 320px at -15% 105%, rgba(31,138,112,.14), transparent 55%),
+        linear-gradient(90deg, rgba(41,128,185,.16), transparent 18%);
+      pointer-events: none;
+    }
+    .slide::after {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
+      background: linear-gradient(180deg, var(--action), #1F8A70);
+    }
+    .slide > * { position: relative; z-index: 1; }
+    .slide.ink {
+      background: linear-gradient(145deg, #243442 0%, #2F4558 50%, #1F6A9A 125%);
+      color: #F0F5F9;
+    }
+    .slide.ink::after { background: linear-gradient(180deg, #5DB0E0, #2980B9); }
+    .slide.ink h1, .slide.ink h2, .slide.ink h3 { color: #fff; }
+    .slide.ink .lead, .slide.ink .footer, .slide.ink p { color: rgba(240,245,249,.82); }
+    .slide.ink .footer { border-top-color: rgba(255,255,255,.18); }
+    .slide.ink .footer strong { color: #fff; }
+    .frame { height: 100%; padding: 44px 52px 46px; display: flex; flex-direction: column; }
+    .kicker {
+      margin: 0 0 10px; font: 700 11px/1 Manrope, sans-serif; letter-spacing: .16em;
+      text-transform: uppercase; color: var(--action-deep);
+    }
+    .slide.ink .kicker { color: #9ACAE8; }
+    h1, h2, h3 { font-family: Manrope, sans-serif; margin: 0; letter-spacing: -.02em; color: var(--slate); }
+    h1 { font-size: 48px; font-weight: 800; line-height: 1.05; }
+    h2 { font-size: 32px; font-weight: 800; line-height: 1.12; max-width: 20ch; }
+    h3 { font-size: 16px; font-weight: 700; }
+    .lead { margin: 12px 0 0; font-size: 17px; line-height: 1.4; color: var(--muted); max-width: 48ch; }
+    .body { margin-top: 18px; flex: 1; font-size: 15px; }
+    .footer {
+      display: flex; justify-content: space-between; gap: 12px; padding-top: 12px;
+      border-top: 1px solid var(--line); font-size: 11px; color: var(--faint);
+    }
+    .footer strong { color: var(--slate); }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .panel {
+      background: linear-gradient(180deg, #F7FAFC, #E7EEF5);
+      border: 1px solid rgba(52,73,94,.14);
+      border-radius: 14px; padding: 14px 15px;
+      box-shadow: 0 8px 18px rgba(36,52,66,.06);
+    }
+    .panel.hero {
+      background: linear-gradient(145deg, #1F6A9A 0%, #2980B9 45%, #2A9B7A 140%);
+      color: #fff; border: 0;
+    }
+    .panel.hero h3, .panel.hero .mini { color: #fff; }
+    .panel.hero p { color: rgba(255,255,255,.9); }
+    .panel.slate {
+      background: linear-gradient(160deg, #2D3E4E, #34495E);
+      color: #EAF1F6; border: 0;
+    }
+    .panel.slate h3, .panel.slate .mini { color: #fff; }
+    .panel.slate p { color: rgba(234,241,246,.85); }
+    .panel.teal {
+      background: linear-gradient(160deg, #177860, #1F8A70);
+      color: #fff; border: 0;
+    }
+    .panel.teal h3, .panel.teal .mini { color: #fff; }
+    .panel.teal p { color: rgba(255,255,255,.9); }
+    .mini {
+      font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+      color: var(--faint); margin-bottom: 7px;
+    }
+    .panel p { margin: 7px 0 0; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    ul.clean { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    ul.clean li { position: relative; padding-left: 16px; color: var(--ink); font-size: 14px; line-height: 1.35; }
+    ul.clean li::before {
+      content: ""; position: absolute; left: 0; top: .55em; width: 7px; height: 7px;
+      border-radius: 2px; background: var(--action);
+    }
+    table.data {
+      width: 100%; border-collapse: collapse; background: rgba(247,250,252,.92);
+      border: 1px solid rgba(52,73,94,.14); border-radius: 12px; overflow: hidden; font-size: 13px;
+    }
+    table.data th, table.data td { text-align: left; padding: 10px 11px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    table.data th { background: #D7E4EF; color: var(--slate); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+    table.data tr:last-child td { border-bottom: 0; }
+    .arch { display: grid; gap: 8px; }
+    .arch-row { display: grid; gap: 8px; }
+    .arch-row.c2 { grid-template-columns: 1.45fr .9fr; }
+    .arch-row.c3 { grid-template-columns: 1.4fr .9fr .9fr; }
+    .arch-box {
+      background: rgba(247,250,252,.95); border: 1px solid rgba(52,73,94,.14);
+      border-radius: 12px; padding: 11px 13px;
+    }
+    .arch-box .t { font-weight: 700; font-size: 14px; color: var(--slate); }
+    .arch-box .d { margin-top: 4px; font-size: 12px; color: var(--muted); line-height: 1.3; }
+    .arch-box.cp { background: linear-gradient(90deg, #243442, #34495E); border: 0; color: #fff; }
+    .arch-box.cp .t { color: #fff; }
+    .arch-box.cp .d { color: rgba(255,255,255,.78); }
+    .arch-box.fin {
+      background: linear-gradient(135deg, #1B6FA3, #2980B9 55%, #2E9B7C);
+      border: 0; color: #fff; min-height: 92px;
+    }
+    .arch-box.fin .t { color: #fff; font-size: 17px; }
+    .arch-box.fin .d { color: rgba(255,255,255,.9); font-size: 13px; }
+    .arch-box.bank {
+      background: linear-gradient(160deg, #3E5163, #4A6073); border: 0; color: #fff;
+    }
+    .arch-box.bank .t, .arch-box.bank .d { color: rgba(255,255,255,.92); }
+    .note {
+      margin-top: 12px; padding: 11px 13px; border-radius: 0 10px 10px 0;
+      border-left: 4px solid var(--action); background: rgba(41,128,185,.12);
+      color: var(--slate); font-size: 13px;
+    }
+    .chip {
+      display: inline-block; margin: 0 6px 6px 0; padding: 6px 10px; border-radius: 999px;
+      background: rgba(41,128,185,.14); color: var(--action-deep); font-size: 12px; font-weight: 700;
+    }
+    .sat {
+      background: linear-gradient(180deg, #F7FAFC, #E3ECF4); border: 1px solid rgba(52,73,94,.12);
+      border-radius: 12px; padding: 11px; min-height: 88px;
+    }
+    .sat .v { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+    .sat .p { margin-top: 3px; font-weight: 700; color: var(--slate); font-size: 13px; }
+    .sat .c { margin-top: 5px; font-size: 11px; color: var(--muted); line-height: 1.3; }
+    .brand { font: 800 16px/1 Manrope, sans-serif; letter-spacing: .16em; color: #8FCBEC; }
+    .rule { width: 68px; height: 4px; background: #5DB0E0; border-radius: 2px; margin: 18px 0 14px; }
+    .sign .name { font: 800 22px/1.1 Manrope, sans-serif; color: var(--slate); }
+    .slide.ink .sign .name { color: #fff; }
+    .sign .role { margin-top: 4px; font-size: 13px; color: var(--muted); }
+    .slide.ink .sign .role { color: rgba(240,245,249,.8); }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .step {
+      background: linear-gradient(180deg, #F7FAFC, #E3ECF4); border: 1px solid rgba(52,73,94,.12);
+      border-radius: 14px; padding: 14px; min-height: 148px;
+    }
+    .step .n { font: 800 28px/1 Manrope, sans-serif; color: var(--action); margin-bottom: 8px; }
+    /* Never use display:revert — it leaks sibling language blocks in Chrome print/PDF */
+    .lang-az { display: none !important; }
+    html[data-lang="en"] .lang-en { display: block !important; }
+    html[data-lang="en"] span.lang-en,
+    html[data-lang="en"] a.lang-en,
+    html[data-lang="en"] strong.lang-en { display: inline !important; }
+    html[data-lang="en"] table.lang-en { display: table !important; }
+    html[data-lang="en"] thead.lang-en,
+    html[data-lang="en"] tbody.lang-en { display: table-row-group !important; }
+    html[data-lang="en"] tr.lang-en { display: table-row !important; }
+    html[data-lang="en"] th.lang-en,
+    html[data-lang="en"] td.lang-en { display: table-cell !important; }
+    html[data-lang="en"] ul.lang-en,
+    html[data-lang="en"] ol.lang-en { display: grid !important; }
+    html[data-lang="en"] li.lang-en { display: list-item !important; }
+    html[data-lang="en"] h1.lang-en,
+    html[data-lang="en"] h2.lang-en,
+    html[data-lang="en"] h3.lang-en,
+    html[data-lang="en"] p.lang-en,
+    html[data-lang="en"] div.lang-en { display: block !important; }
+
+    html[data-lang="az"] .lang-en { display: none !important; }
+    html[data-lang="az"] .lang-az { display: block !important; }
+    html[data-lang="az"] span.lang-az,
+    html[data-lang="az"] a.lang-az,
+    html[data-lang="az"] strong.lang-az { display: inline !important; }
+    html[data-lang="az"] table.lang-az { display: table !important; }
+    html[data-lang="az"] thead.lang-az,
+    html[data-lang="az"] tbody.lang-az { display: table-row-group !important; }
+    html[data-lang="az"] tr.lang-az { display: table-row !important; }
+    html[data-lang="az"] th.lang-az,
+    html[data-lang="az"] td.lang-az { display: table-cell !important; }
+    html[data-lang="az"] ul.lang-az,
+    html[data-lang="az"] ol.lang-az { display: grid !important; }
+    html[data-lang="az"] li.lang-az { display: list-item !important; }
+    html[data-lang="az"] h1.lang-az,
+    html[data-lang="az"] h2.lang-az,
+    html[data-lang="az"] h3.lang-az,
+    html[data-lang="az"] p.lang-az,
+    html[data-lang="az"] div.lang-az { display: block !important; }
+
+    .part-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px;
+      padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      background: rgba(41,128,185,.16); color: var(--action-deep); letter-spacing: .04em;
+    }
+    .slide.ink .part-badge { background: rgba(255,255,255,.12); color: #B7D9F0; }
+    .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 8px; }
+    .sign-grid .name { font: 800 18px/1.15 Manrope, sans-serif; color: var(--slate); }
+    .slide.ink .sign-grid .name { color: #fff; }
+    .slide.ink .sign-grid .role { color: rgba(240,245,249,.82); }
+    .az-flag {
+      margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+      background: linear-gradient(90deg, rgba(31,138,112,.16), rgba(41,128,185,.14));
+      border: 1px solid rgba(31,138,112,.28); color: var(--slate); font-size: 13px; line-height: 1.35;
+    }
+
+    @media print {
+      .toolbar { display: none !important; }
+      body { background: #fff; }
+      .deck { padding: 0; gap: 0; }
+      .slide { width: 297mm; height: 167mm; box-shadow: none; }
+      @page { size: 297mm 167mm; margin: 0; }
+    }
+  
+    /* Final readability (monolingual — keep blocks roomy) */
+    .panel {
+      padding: 16px 16px 14px !important;
+      min-height: 118px;
+    }
+    .panel.slate {
+      background: linear-gradient(160deg, #243442 0%, #34495E 55%, #2A4054 100%) !important;
+      color: #F2F6FA !important;
+      border: 0 !important;
+    }
+    .panel.slate .mini { color: #9EB6C8 !important; }
+    .panel.slate h3 { color: #FFFFFF !important; }
+    .panel.slate p,
+    .panel.slate li,
+    .panel.slate ul.mods li { color: #E4EEF6 !important; }
+    .panel.slate ul.mods li::before { background: #5DB0E0 !important; }
+    .panel.hero ul.mods li { color: rgba(255,255,255,.95) !important; }
+    .why, .az-flag {
+      margin-top: 12px !important;
+      padding: 14px 16px !important;
+      min-height: 64px;
+      font-size: 13px !important;
+      line-height: 1.45 !important;
+      border-width: 1px !important;
+      border-left-width: 5px !important;
+      display: block !important;
+    }
+    .az-flag {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why-label {
+      white-space: nowrap !important;
+      display: inline !important;
+    }
+    ul.clean li, ul.mods li { font-size: 13px !important; line-height: 1.4 !important; }
+    .arch-box { padding: 14px 15px !important; min-height: 72px; }
+    .arch-box .d { font-size: 13px !important; line-height: 1.4 !important; }
+    .sat { min-height: 102px; padding: 13px !important; }
+    .note { padding: 12px 14px !important; font-size: 13px !important; }
+
+  </style>
+<style>
+          .toolbar,script{display:none!important}
+          .panel.slate,.panel.slate *{color:inherit}
+          .panel.slate{color:#F2F6FA!important}
+          .panel.slate .mini{color:#9EB6C8!important}
+          .panel.slate h3{color:#fff!important}
+          .panel.slate li{color:#E4EEF6!important}
+        </style></head>
+<body>
+
+<div class="deck">
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+<div class="part-badge">Presentation pack · Part 1 of 2 · Executive</div>
+
+<div class="brand">ERA 365</div>
+<div class="rule"></div>
+<h1>Partnership proposal<br/>for Pasha Technologies</h1>
+
+<p class="lead">Enterprise SaaS for multi-industry operations. Killer product: <strong style="color:#fff">Finance Core</strong> — built for Azerbaijan legislation. Hosting &amp; marketplace (Pasha) × SaaS delivery (ERA 365).</p>
+
+</div>
+<div>
+<div><a href="https://www.era-365.online" style="color:#9ACAE8;font-weight:700;text-decoration:none">www.era-365.online</a></div>
+<div style="margin-top:6px;opacity:.8">Confidential · Part 1 of 2 · 2026</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Executive</span><span>01 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Context</p>
+<h2>Why this conversation</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel">
+<div class="mini">Pain</div>
+<ul class="clean">
+<li>Industry ops on different vendors</li>
+<li>Accounting / tax aside or in legacy ERP</li>
+<li>Identity &amp; subscriptions duplicated</li>
+<li>No coherent marketplace stack</li>
+</ul>
+
+</div>
+<div class="panel hero">
+<div class="mini">ERA 365</div>
+<h3>One operating fabric</h3>
+
+<p><strong>Finance Core</strong> as the accounting truth for every vertical. Orchestrator for identity &amp; billing. Industry satellites for operations. Built for Azerbaijan (VÖEN, AZN, tax).</p>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · www.era-365.online</span><span>02 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Partnership</p>
+<h2>Clear split of roles</h2>
+
+<div class="body">
+<table class="data">
+<thead><tr><th></th><th>Pasha Technologies</th><th>ERA 365</th></tr></thead>
+<tbody>
+<tr><td><strong>Infra</strong></td><td>Hosting, SLAs, enterprise support</td><td>Architecture ready for managed hosting</td></tr>
+<tr><td><strong>GTM</strong></td><td>Marketplace / Holding access</td><td>Packaged SKUs &amp; vertical solutions</td></tr>
+<tr><td><strong>Success</strong></td><td>L1/L2 ops support (as agreed)</td><td>L2/L3 product + SaaS delivery</td></tr>
+<tr><td><strong>Commercial</strong></td><td>Referral / partner economics</td><td>SaaS · partner commission <strong>up to 20%</strong>, progressive</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>Principle:</strong> complementary, not competitive.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Confidential</span><span>03 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Architecture</p>
+<h2>Platform at a glance</h2>
+
+<div class="body">
+<div class="arch">
+<div class="arch-box cp">
+<div class="t">ERA 365 Orchestrator — Control Plane</div>
+<div class="d">Identity · SSO · Billing · Entitlements · MDM API · Event bus</div>
+
+</div>
+<div class="arch-row c3">
+<div class="arch-box fin">
+<div class="t">★ ERA 365 Finance Core — killer product</div>
+<div class="d">GL · documents · inventory · tax · HR · satellite GL dispatch — the accounting truth for the whole ecosystem</div>
+
+</div>
+<div class="arch-box">
+<div class="t">MDM</div>
+<div class="d">People identity · globalPersonId</div>
+
+</div>
+<div class="arch-box">
+<div class="t">Data Hub</div>
+<div class="d">Reference DaaS (FX, VÖEN…)</div>
+
+</div>
+</div>
+<div class="arch-row c2">
+<div class="arch-box">
+<div class="t">Industry satellites</div>
+
+<div class="d">Hotel · Clinic · F&amp;B · Retail · CRM · Logistics · Auto · Wholesale · Construction</div>
+</div>
+<div class="arch-box bank">
+<div class="t">Bank line (strategic)</div>
+
+<div class="d">Bank Core + satellite · certification track</div>
+
+</div>
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Finance-first</span><span>04 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Finance Core</p>
+<h2>The killer product</h2>
+
+<p class="lead">Every vertical posts into one enterprise ledger. Ops apps never invent a second set of books.</p>
+
+<div class="body">
+<div class="g3">
+<div class="panel hero">
+<div class="mini">Accounting truth</div>
+<h3>GL / NAS journals</h3>
+<p>Chart of accounts, journals, satellite event → GL worker</p>
+
+</div>
+<div class="panel">
+<div class="mini">Documents</div>
+<h3>Sales &amp; purchases</h3>
+
+<p>Invoices as source of truth · PO · receipts</p>
+
+</div>
+<div class="panel">
+<div class="mini">Ops</div>
+<h3>Inventory · cash · FA</h3>
+
+<p>Warehouses, bank &amp; kassa, fixed assets</p>
+
+</div>
+<div class="panel">
+<div class="mini">AZ</div>
+<h3>Tax &amp; compliance</h3>
+
+<p>Azerbaijan legislation: VÖEN, NAS chart orientation, local tax / trade modules</p>
+
+</div>
+<div class="panel">
+<div class="mini">People</div>
+<h3>HR &amp; payroll</h3>
+<p>Workforce payroll for the legal entity</p>
+
+</div>
+<div class="panel teal">
+<div class="mini">Bridge</div>
+<h3>Satellite → Finance</h3>
+
+<p>Hotel folio, POS sales, clinic visits post into Finance — not parallel ledgers</p>
+
+</div>
+</div>
+<div class="az-flag"><strong class="why-label">Why ERA 365:</strong> Finance Core and the ecosystem are designed for Azerbaijan — VÖEN, AZN, FIN rules, Asia/Baku time, local tax &amp; accounting practice — not a generic global ERP adapted later.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Killer product</span><span>05 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Platform services</p>
+<h2>Control plane around Finance</h2>
+
+<div class="body">
+<div class="g3">
+<div class="panel slate">
+<div class="mini">Orchestrator</div>
+<h3>Identity &amp; commercial backbone</h3>
+
+<p>SSO, local staff login, subscriptions, entitlements, event bus</p>
+
+</div>
+<div class="panel">
+<div class="mini">MDM</div>
+<h3>One person identity</h3>
+
+<p>globalPersonId in satellites · PII in MDM · FIN + passport</p>
+
+</div>
+<div class="panel">
+<div class="mini">Data Hub</div>
+<h3>Reference DaaS</h3>
+
+<p>CBAR FX, VÖEN directory, banks, geo, tax reference</p>
+
+</div>
+</div>
+<div class="note">These services exist so Finance Core and industry apps scale under one commercial + identity model for marketplace clients.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Platform</span><span>06 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Industry</p>
+<h2>Satellites feed Finance</h2>
+
+<div class="body">
+<div class="g4">
+<div class="sat"><div class="v">Hospitality</div><div class="p">Hotel PMS</div><div class="c">FO, folio → Finance</div></div>
+<div class="sat"><div class="v">F&amp;B</div><div class="p">FnB POS</div><div class="c">Floor / KDS / recipes</div></div>
+<div class="sat"><div class="v">Healthcare</div><div class="p">Clinic</div><div class="c">Visits, sanatorium day</div></div>
+<div class="sat"><div class="v">Retail</div><div class="p">Retail POS</div><div class="c">POS, stock, fiscal</div></div>
+<div class="sat"><div class="v">CRM</div><div class="p">CRM</div><div class="c">Leads → Finance CP</div></div>
+<div class="sat"><div class="v">Logistics</div><div class="p">Logistics</div><div class="c">Waybill, POD, COD</div></div>
+<div class="sat"><div class="v">Auto</div><div class="p">Auto service</div><div class="c">WO, parts → PO</div></div>
+<div class="sat"><div class="v">Wholesale</div><div class="p">Wholesale</div><div class="c">TTN / B2B</div></div>
+<div class="sat"><div class="v">Construction</div><div class="p">Construction</div><div class="c">Acts, claims</div></div>
+<div class="sat" style="opacity:.9"><div class="v">Strategic</div><div class="p">Bank line</div><div class="c">Separate CBS · cert track</div></div>
+<div class="sat" style="grid-column: span 2; background:linear-gradient(135deg,#1B6FA3,#2980B9);border:0;color:#fff">
+<div class="v" style="color:rgba(255,255,255,.75)">Detail</div>
+<div class="p" style="color:#fff">Full modules per product → separate Product Catalog deck</div>
+
+<div class="c" style="color:rgba(255,255,255,.85)">Part 2 PDF for technical / marketplace packaging review</div>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Satellites</span><span>07 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Integration</p>
+<h2>How the system works</h2>
+
+<div class="body">
+<div class="g2">
+<ol style="margin:0;padding-left:18px;display:grid;gap:9px;line-height:1.35">
+<li>Access via Orchestrator entitlements (SSO / local staff)</li>
+<li>Ops run in industry satellites</li>
+<li>Accounting events land in <strong>Finance Core</strong></li>
+<li>MDM resolves people once across apps</li>
+<li>Org modes: standalone VÖEN vs department under parent</li>
+</ol>
+
+<div class="panel hero">
+<h3>Nafta pattern</h3>
+<p>One VÖEN parent + Hotel / F&amp;B / Clinic / Pharmacy departments — same Finance Core books.</p>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Design</span><span>08 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Proof</p>
+<h2>Active real-data pilot: Nafta</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel">
+<div class="mini">Stack</div>
+<ul class="clean">
+<li>Hotel PMS (Elektraweb migration path)</li>
+<li>Clinic + F&amp;B as departments</li>
+<li><strong>Finance Core</strong> as accounting path</li>
+<li>Holding-style org / workforce</li>
+</ul>
+
+</div>
+<div class="panel slate">
+<h3>Why it matters to Pasha</h3>
+
+<p>Multi-vertical ops + shared identity + <strong>Finance Core</strong> boundary on a real Azerbaijan property — active real-data pilot.</p>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Nafta</span><span>09 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Marketplace</p>
+<h2>What Pasha Technologies can sell</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero"><div class="mini">01 · Core</div><h3>Finance Core + Foundation</h3><p>Hero SKU · Orchestrator + MDM + Finance</p></div>
+<div class="panel"><div class="mini">02</div><h3>Vertical packs</h3><p>e.g. Hospitality = Hotel + F&amp;B + Finance bridge</p></div>
+<div class="panel"><div class="mini">03</div><h3>Platform add-ons</h3><p>Notifications, booking, portal, payments, loyalty, Data Hub</p></div>
+<div class="panel"><div class="mini">04</div><h3>Hosting SKU + Bank (strategic)</h3><p>Pasha-managed runtime · Banking pack as later enterprise line</p></div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · GTM</span><span>10 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Commercial</p>
+<h2>Partner economics</h2>
+
+<div class="body">
+<div class="g3">
+<div class="panel hero" style="text-align:left">
+<div class="mini">Cap</div>
+<div style="font:800 56px/1 Manrope,sans-serif">20%</div>
+<p>Max partner / agency / referral commission</p>
+
+</div>
+<div class="panel">
+<div class="mini">Structure</div>
+<h3>Progressive</h3>
+<p>Details &amp; calculation base in term sheet — not locked here.</p>
+
+</div>
+<div class="panel teal">
+<div class="mini">Joint</div>
+<h3>Hosting + SaaS</h3>
+
+<p>Pasha hosting fee + ERA 365 subscription + optional upside</p>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Up to 20%</span><span>11 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Trust</p>
+<h2>Security &amp; compliance</h2>
+
+<div class="body">
+<div class="g2">
+<ul class="clean">
+<li>Org-scoped tenancy</li>
+<li>Service-token boundaries on internal APIs</li>
+<li>Audit on Finance mutations</li>
+<li>AZN · VÖEN · FIN · Asia/Baku display</li>
+<li>Ready for Pasha-managed enterprise hosting</li>
+</ul>
+
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Enterprise</span><span>12 / 14</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">30 / 60 / 90</p>
+<h2>Engagement plan</h2>
+
+<div class="body">
+<div class="steps">
+<div class="step"><div class="n">30</div><h3>Days</h3><p style="margin:8px 0 0;color:var(--muted);font-size:13px">NDA · tech workshop · hosting topology · SKU list</p></div>
+<div class="step"><div class="n">60</div><h3>Days</h3><p style="margin:8px 0 0;color:var(--muted);font-size:13px">Pilot on 1 vertical (+ Finance) · RACI · metrics</p></div>
+<div class="step"><div class="n">90</div><h3>Days</h3><p style="margin:8px 0 0;color:var(--muted);font-size:13px">Live on Pasha hosting · case review · term sheet</p></div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Path</span><span>13 / 14</span></div>
+</div>
+</section>
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+<div class="part-badge">Presentation pack · Part 1 of 2 · Executive</div>
+
+<div class="brand">ERA 365</div>
+<div class="rule"></div>
+<h1>Ready for a structured<br/>partnership path</h1>
+
+<p class="lead">Next 90 min: RACI · marketplace SKUs · pilot candidate · commercial annex (20% cap).</p>
+
+<p class="lead" style="opacity:.85">Product modules detail → <strong style="color:#fff">Part 2 of 2 · Product Catalog</strong></p>
+
+</div>
+<div class="sign-grid">
+<div>
+<div class="name">Chingiz Shirinov</div>
+
+<div class="role">Founder / CEO · ERA 365</div>
+
+</div>
+<div>
+<div class="name">Oksana Stepenko</div>
+
+<div class="role">Director · Axoft Azerbaijan (distributor)</div>
+
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 1 of 2 · Confidential · 2026</span><span>14 / 14</span></div>
+</div>
+</section>
+</div>
+
+</body>
+</html>

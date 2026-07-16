@@ -19,6 +19,8 @@
 | **Пробелы для Азербайджана** | [reference/elektraweb-gap-analysis-az-global.md](reference/elektraweb-gap-analysis-az-global.md) |
 | **Маркетинговый каталог модулей** | [reference/elektraweb-modules-catalog.md](reference/elektraweb-modules-catalog.md) |
 | **Front Office (ElectraWeb parity)** | [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) · [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) |
+| **Elektraweb Excel import (bootstrap)** | [ELEKTRAWEB-IMPORT.md](ELEKTRAWEB-IMPORT.md) |
+| **Elektraweb live bridge (dual-run plugin)** | [ELEKTRAWEB-LIVE-BRIDGE.md](ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](../../docs/adr/hotel-elektraweb-live-bridge.md) |
 | **Guest Card CRM** | [GUEST-CRM-ELECTRAWEB.md](GUEST-CRM-ELECTRAWEB.md) · индекс после удаления `Electraweb/`: [reference/ELECTRAWEB-SOURCE-INDEX.md](reference/ELECTRAWEB-SOURCE-INDEX.md) |
 
 ## Структура папок

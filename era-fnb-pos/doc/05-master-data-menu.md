@@ -29,9 +29,11 @@ Revenue codes `FOOD`, `BAR` — те же коды, что в PMS master ([09-ma
 
 | Экран | Функции |
 |-------|---------|
-| Categories | CRUD, sort order |
-| Items | price, station, tax, recipeSku, barcode |
-| Modifiers | groups, min/max select |
+| Categories | Modal CRUD, sort order (`/admin/menu`) |
+| Items | Modal CRUD: price, recipeSku, imageUrl, active; price history journal |
+| Tables | Modal CRUD `/admin/tables` — static codes per outlet |
+| Recipes / BOM | Finance Manufacturing — FnB stores `recipeSku` + deep-link only |
+| Modifiers | groups, min/max select (later) |
 | Combos | Фаза 2 |
 | Happy hour | Фаза 2 — price rules by time |
 

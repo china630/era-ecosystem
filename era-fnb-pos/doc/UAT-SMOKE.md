@@ -24,14 +24,22 @@
 - [x] Prisma Ticket model + `POST /api/tickets`
 - [x] Room charge bridge: `POST /api/tickets/{id}/room-charge`
 
-## FB-0 â€” Auth & menu
+## FB-0 — Auth & menu
 
-1. `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` â€” session cookie
-2. `GET /api/menu` â€” seeded items
-3. Manager: `POST /api/menu` create item; `/admin/menu` UI
-4. RBAC: waiter can fire/pay; manager required for void line and Z-close
+1. `POST /api/auth/login` `{ "login": "waiter", "password": "waiter" }` — session cookie
+2. `GET /api/menu` — seeded items
+3. Manager: `/admin/menu` — modal CRUD category + dish; price history; optional recipe SKU + image URL
+4. Manager: `/admin/tables` — create/edit/delete static tables
+5. RBAC: waiter can fire/pay; manager required for void line and Z-close
 
-## FB-1 â€” MVP Nafta
+## FB-3 — Standalone GL (no hotel)
+
+1. Org STANDALONE / settlement not hub — walk-in ticket → **Pay cash**
+2. Expect Finance ingest `SATELLITE_FB_SALE_COMPLETED` (journal ref `fb-sale:{receiptId}`)
+3. Manager Z-close → `SATELLITE_FB_SHIFT_CLOSED`
+4. In-house room-charge path must **not** emit `SATELLITE_FB_SALE_COMPLETED`
+
+## FB-1 — MVP Nafta
 
 1. UI: `/orders` → **POS shift** panel → Open shift — or `POST /api/shifts/open`
 2. `GET /api/tables` â€” pick a table id

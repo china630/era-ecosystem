@@ -1,0 +1,22 @@
+season,room_type,rate_kind,occupancy_note,amount_azn,currency,source_method,notes
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_BB,room/night up to TBD adults,70,AZN,accounting_anchor,Simplest room BB — accounting 2026-07-14
+high (May-Oct),Standart DBL/Twin (22kv),BAR_BB,room/night up to TBD adults,80,AZN,anchor_plus_pkg_single_delta,70+(139-129)
+low (Nov-Apr),Junior Suite (30kv),BAR_BB,room/night up to TBD adults,80,AZN,anchor_plus_pkg_single_delta,70+(139-129)
+high (May-Oct),Junior Suite (30kv),BAR_BB,room/night up to TBD adults,96,AZN,anchor_plus_pkg_single_delta,70+(155-129)
+low (Nov-Apr),Deluxe Room (42kv),BAR_BB,room/night up to TBD adults,92,AZN,anchor_plus_pkg_single_delta,70+(151-129)
+high (May-Oct),Deluxe Room (42kv),BAR_BB,room/night up to TBD adults,102,AZN,anchor_plus_pkg_single_delta,70+(161-129)
+low (Nov-Apr),Triple Room (24kv),BAR_BB,room/night (3 pax capacity),91,AZN,scale_std_bb_by_pkg_triple_over_double,round(70*285/219)
+high (May-Oct),Triple Room (24kv),BAR_BB,room/night (3 pax capacity),115,AZN,scale_high_std_bb_by_pkg_triple_over_double,round(80*343/239)
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_FB_1pax,1 adult room+FB no medical,120,AZN,bar_bb_plus_lunch_dinner,70+25+25
+high (May-Oct),Standart DBL/Twin (22kv),BAR_FB_1pax,1 adult room+FB no medical,130,AZN,bar_bb_plus_lunch_dinner,80+25+25
+low (Nov-Apr),Junior Suite (30kv),BAR_FB_1pax,1 adult room+FB no medical,130,AZN,bar_bb_plus_lunch_dinner,80+25+25
+high (May-Oct),Junior Suite (30kv),BAR_FB_1pax,1 adult room+FB no medical,146,AZN,bar_bb_plus_lunch_dinner,96+25+25
+low (Nov-Apr),Deluxe Room (42kv),BAR_FB_1pax,1 adult room+FB no medical,142,AZN,bar_bb_plus_lunch_dinner,92+25+25
+high (May-Oct),Deluxe Room (42kv),BAR_FB_1pax,1 adult room+FB no medical,152,AZN,bar_bb_plus_lunch_dinner,102+25+25
+low (Nov-Apr),Triple Room (24kv),BAR_FB_1pax,1 adult room+FB no medical,141,AZN,bar_bb_plus_lunch_dinner,91+25+25
+high (May-Oct),Triple Room (24kv),BAR_FB_1pax,1 adult room+FB no medical,165,AZN,bar_bb_plus_lunch_dinner,115+25+25
+any,Junior or Deluxe,BAR_BB_premium_packages,Premium/Dermo/Detoks assigned room,see Junior/Deluxe rows,AZN,policy_A2,Hotel assigns JR/DLX; use matching BAR_BB; package tariff is medical product
+n/a,COGS,FB_food_cost,per package night,16,AZN,accounting,Not a sell rate
+n/a,COGS,room_cleaning_cost,per room night,5,AZN,accounting,Not a sell rate
+n/a,COGS,base_medical_package_cost,per package night,20,AZN,accounting,Not a sell rate
+n/a,SELL_ref,canteen_lunch_or_dinner,per meal,25,AZN,accounting,Used to build BAR_FB

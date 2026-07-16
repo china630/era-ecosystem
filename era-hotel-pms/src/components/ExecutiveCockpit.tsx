@@ -53,6 +53,17 @@ export type CockpitData = {
   arrivalsToday: number;
   departuresToday: number;
   guestsInHouse: number;
+  clinicCapacity?: {
+    bookingAllowed: boolean;
+    riskLevel: string;
+    guestEquivalent: number;
+    remainingPct?: number;
+    remainingSlots?: number;
+    totalSlots?: number;
+    message?: string;
+    from?: string;
+    to?: string;
+  } | null;
 };
 
 const STATUS_STYLES = {
@@ -197,6 +208,37 @@ export default function ExecutiveCockpit({ data }: { data: CockpitData }) {
         </div>
         <p className="max-w-md text-[12px] leading-snug opacity-90">{t(`statusHint.${data.hotelStatus}`)}</p>
       </div>
+
+      {data.clinicCapacity && data.clinicCapacity.riskLevel !== 'ok' ? (
+        <div
+          className={`flex flex-wrap items-start gap-3 rounded-2xl border px-4 py-3 ${
+            data.clinicCapacity.riskLevel === 'critical'
+              ? 'border-red-300 bg-red-50 text-red-900'
+              : 'border-amber-300 bg-amber-50 text-amber-950'
+          }`}
+        >
+          <Stethoscope className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-[12px] font-semibold uppercase tracking-wide">
+              {t('clinicCapacity.title')} · {data.clinicCapacity.riskLevel}
+              {data.clinicCapacity.remainingPct != null
+                ? ` · ${data.clinicCapacity.remainingPct}% ${t('clinicCapacity.remaining')}`
+                : ''}
+            </p>
+            <p className="text-[13px] leading-snug">
+              {data.clinicCapacity.message ??
+                t('clinicCapacity.fallback', {
+                  pct: data.clinicCapacity.remainingPct ?? '—',
+                })}
+            </p>
+            {!data.clinicCapacity.bookingAllowed ? (
+              <p className="text-[12px] font-medium">{t('clinicCapacity.blocked')}</p>
+            ) : (
+              <p className="text-[12px]">{t('clinicCapacity.warnSoft')}</p>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       <SectionPanel title={t('section.flash')} icon={CalendarClock}>
         <div className="grid gap-4 lg:grid-cols-3">

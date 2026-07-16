@@ -1,0 +1,41 @@
+---
+description: Documentation upkeep — docs in sync with code as part of definition of done
+alwaysApply: true
+---
+
+# Documentation is part of "done"
+
+Any change that adds or alters a **feature**, **behavior**, **API/event contract**, or **architecture** is NOT complete until relevant docs are updated in the **same change**.
+
+**Exempt:** typos, formatting, internal refactors with zero behavior change.
+
+## What to update (pick what applies)
+
+| Change type | Update |
+|-------------|--------|
+| Architectural / cross-cutting decision | New or updated ADR in `docs/adr/` |
+| Product scope or module behavior | Owning app `PRD.md` and/or `TZ.md` |
+| API, SSO, or event contract | `docs/INTEGRATION_SSO_EVENTS.md` + app docs |
+| New satellite capability / readiness | `docs/SATELLITE_DOCUMENTATION.md`, `docs/READINESS_MATRIX.md`, `docs/COVERAGE_MATRIX.md` |
+| Feature SHIPPED vs API-only / STUB | `docs/COVERAGE_MATRIX.md` + DELIVERY tag `[x]`/`[~]`/`[s]`/`[h]` — see `era-coverage-definition.mdc` |
+| Control-plane / billing | `docs/CONTROL_PLANE_ARCHITECTURE.md` or matching `docs/*.md` |
+| New API route or domain area | App `<app>-module-map.mdc` in `.cursor/rules/` |
+| Dev ports / env vars | `docs/ECOSYSTEM_URLS.md` and app `*-local-dev.mdc` |
+| Schema / integration boundary (MDM, hub, workforce) | `npm run audit:integration:strict`; shrink baseline if wave complete — [INTEGRATION_AUDIT_CI.md](../docs/INTEGRATION_AUDIT_CI.md) |
+
+## Workflow
+
+1. Before finishing: "What did this change make true or false in the docs?"
+2. Update docs together with code (same commit/PR).
+3. After a delivery wave: refresh readiness via `.cursor/skills/era-readiness-matrix/SKILL.md` when applicable; update `docs/COVERAGE_MATRIX.md` actor columns for touched capabilities.
+4. SHIPPED requires UAT-SMOKE **UI** path (not curl-only for ops/admin flows).
+4. If unsure which doc fits — prefer an ADR over leaving it undocumented.
+
+## Self-check
+
+- [ ] Feature/behavior/contract/architecture changed? → A doc was updated.
+- [ ] New decision with trade-offs? → ADR exists.
+- [ ] New route/module? → Module map rule updated.
+- [ ] No silent drift between code and docs.
+- [ ] COVERAGE_MATRIX row updated with Ops / SatAdmin / OrgOwner / SuperAdmin where applicable.
+- [ ] DELIVERY `[x]` only for SHIPPED or documented HEADLESS.

@@ -4,7 +4,7 @@ Living matrix for **honest readiness**. Replaces optimistic DELIVERY-only summar
 
 **Related:** [READINESS_MATRIX.md](./READINESS_MATRIX.md) · [NAFTA_DOC_API_UI_AUDIT.md](./NAFTA_DOC_API_UI_AUDIT.md) · [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md)
 
-**Last updated:** 2026-07-12
+**Last updated:** 2026-07-13
 
 ---
 
@@ -68,6 +68,10 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | CLI-22 | Insurance eligibility M12 | PRD | Y | Y visit panel | — | — | — | SHIPPED | Finance proxy |
 | CLI-23 | HL7 LIS prod | PRD deferred | STUB | — | — | — | — | STUB | vendor |
 | CLI-24 | Real NBC fiscal | ADR | STUB | Y cashier mock | — | — | — | STUB | external |
+| CLI-25 | Patient card clinical sections (now/next, results, plan) | PRD M1/M5 | Y `/api/patients/:id/card-summary`, `…/card-feed` | Y `/patients/[id]` | Y settings limits | — | — | SHIPPED | Pending labs (ORDERED…) in Now/next; results preview = with results only; history filter pending |
+| CLI-26 | Procedure day-ops (reception matrix + nurse attendance) | ADR clinic-procedure-day-ops | Y check-in/no-show/cancel/reschedule/available-slots | Y `/nurse`, `/sanatorium/resources` | — | — | — | SHIPPED | RECEPTION matrix; NURSE QR check-in; CHECKED_IN/NO_SHOW |
+| CLI-27 | Clinic→hotel capacity foresight | ADR clinic-hotel-capacity-foresight | Y `/api/capacity/summary` (+ remaining%) | — | — | Y executive banner | — | SHIPPED | Soft warn ≤15% remaining; critical blocks medical booking; bus CAPACITY_CHANGED |
+| CLI-28 | Patient clinical demographics (sex, age, blood, emergency) | ADR clinic-patient-clinical-demographics | Y patients CRUD fields + `ageYears` | Y `/patients`, `/patients/[id]` | — | — | — | SHIPPED | Ops cache on PatientRef; identifiers stay MDM |
 
 ### MDM natural-person identity
 
@@ -78,6 +82,19 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | HOT-MDM-01 | Guest create/edit MDM link + masked ops-profile | ADR | Y | Y GuestCardModal | Y | — | — | SHIPPED | — |
 | FIN-CIT-01 | Natural person via MDM (HR/CP) | TZ §28.2 | Y | — | Y | Y | — | SHIPPED | — |
 | FIN-HR-MDM-01 | Employee payroll mirror + MDM person read-through | ADR | Y | — | Y | Y | — | SHIPPED | Plan D — no local FIN/name |
+| ORCH-MDM-HR-01 | PersonHrProfile + PersonAddress (blood/stats/addr/edu) grant-gated | ADR | Y | — | — | — | HEADLESS | API | internal `/hr-profile`; ops-profile batch expands |
+| FIN-HR-AL-01 | Aktiv list report (JSON + Excel) MDM HR read-through | TZ | Y | Y `/employees` export | Y | Y | — | SHIPPED | no PII persist on Employee |
+| FIN-HR-PAY-01 | Payroll depth: slip lines, tariff/supplement, night/OT, seniority leave, email payslips, per-diem trips | TZ tender | Y | Y `/payroll` | Y | Y | — | API | WS1; UAT-SMOKE pending |
+| FIN-FA-LC-01 | Fixed asset lifecycle events + card history | TZ | Y | Y `/fixed-assets` | Y | Y | — | API | WS3 |
+| FIN-IA-01 | Intangible assets + amortization | TZ | Y | Y `/intangible-assets` | Y | Y | — | API | WS3 |
+| FIN-STAT-01 | Goskomstat statforms engine (1-müəssisə, 1/4-əmək, 1-İKT) | TZ | Y | Y `/reporting/statforms` | — | Y | — | API | compliance_pro\|tax_pro |
+| FIN-CONTRACT-01 | Contract ACTIVE/expiry/amount hard-block + cron EXPIRED | TZ | Y | — | Y | Y | — | API | WS6 |
+| FIN-WH-FORM-01 | Forma-5 / Forma-2 statutory warehouse prints | TZ | Y | Y inventory | Y | — | — | API | WS6 |
+| FIN-PROC-01 | ProcurementProtocol + Bid + AP aging + creditor plan | TZ | Y | Y `/procurement/protocols`, `/reporting/ap-aging` | Y | Y | — | API | WS6 |
+| FIN-SUBCONTO-01 | Subconto + BRANCH multi-branch valueRef | ADR | Y | — | Y | Y | — | API | `ERA_SUBCONTO_ENABLED`; [ADR](./adr/subconto-branch-dimension.md) |
+| CP-WF-ORD-01 | Personnel orders PDF (hire/transfer/terminate) | ADR | Y | — | — | Y workspace | — | API | [ADR](./adr/cp-personnel-orders.md) |
+| CP-WF-STAT-01 | Staff schedule revision (ştat) approve + PDF | ADR | Y | — | — | Y workspace | — | API | occupied/vacant slots |
+| CP-WF-VAC-01 | Vacation plan submit/approve + event | TZ | Y | — | — | Y | — | API | Finance mirror HEADLESS |
 | CP-WF-PII-01 | Workforce employments/absences MDM batch display + hire resolve | ADR | Y | — | — | Y `/workspace/workforce/*` | Y | SHIPPED | masked FIN default |
 | FIN-CP-MDM-01 | Counterparty ИП FIN → globalPersonId | ADR | Y | — | Y modal | Y | — | SHIPPED | — |
 | BANK-MDM-01 | CIF natural + UBO resolve | ADR D4 | Y | Y CIF modal | Y API | — | — | SHIPPED | — |
@@ -106,6 +123,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | HOT-03 | Guest notify H-BL-06 | Y | send pages | STUB | Twilio/SendGrid |
 | HOT-04 | e-qaimé H-BL-24 | stub | folio read-only | STUB | prod cert |
 | HOT-05 | Elektraweb import | Y | — | SHIPPED | SuperAdmin only `/admin/import` |
+| HOT-06 | Elektraweb live bridge (browser extension dual-run) | Y | — | API | Login+ingest+MV3 ext; tenant=`ERA_SATELLITE_ORGANIZATION_ID`+`ELEKTRAWEB_HOTEL_ID`; [ADR](./adr/hotel-elektraweb-live-bridge.md) · [guide](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) |
 | HOT-MDM-01 | Guest MDM link (create/edit/merge) | Y | Y GuestCardModal | SHIPPED | — |
 | HOT-MDM-02 | Guest MDM ops-profile masked display | Y `/api/mdm/person-ops-profile` | Y GuestCardModal | SHIPPED | — |
 
@@ -117,7 +135,11 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 |----|------------|-------|--------|---------|
 | FNB-01 | CARD pay + shift | Y `/orders` | SHIPPED | — |
 | FNB-02 | Real KKM NBC | mock | STUB | external |
-| FNB-03 | Admin modal CRUD | Partial | API | P06 UI program |
+| FNB-03 | Admin modal CRUD (menu categories/items, tables) | Y `/admin/menu`, `/admin/tables` | SHIPPED | — |
+| FNB-04 | Menu price history | Y `/admin/menu` history modal | SHIPPED | — |
+| FNB-05 | Standalone sale/shift → Finance GL | Y pay + Z-close events | SHIPPED | LOCAL_CASHIER only; hotel paths via NA |
+| FNB-06 | Recipe SKU + Finance deep-link | Y menu admin | SHIPPED | BOM SoT Finance |
+| FNB-07 | Dish image URL | Y menu + floor strip | SHIPPED | URL only, no upload |
 
 ---
 
@@ -127,34 +149,19 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 |----|------------|----------|--------|---------|
 | FIN-01 | GL / documents ERP | Y web | SHIPPED | — |
 | FIN-02 | Satellite event worker | — | HEADLESS | by design |
-| FIN-HOLD-01 | Holding composition SoT (create/attach/members) | Orch `/holdings` OrgOwner | SHIPPED | CP `v1/holdings/*` |
-| FIN-HOLD-02 | Holding consolidated P&L / summary / balances | Y `/reporting/holding`, `/holding` | SHIPPED | live-lookup `internal/v1/holdings` |
-| FIN-03 | e-qaimé | stub modal | STUB | superseded by FIN-EQAIME-*; S2S behind flag |
+| FIN-03 | e-qaimé | stub modal | STUB | prod cert |
+| FIN-EQAIME-01 | e-Qaimə S2S submit + invoice eqaime status | Y `/sales/invoices` | STUB/API | `ERA_EQAIME_S2S_ENABLED`; 503 `RPA_FALLBACK` — [ADR](./adr/eqaime-s2s-submission.md) |
+| FIN-EQAIME-02 | EQF registry by debtor | Y `/reporting/eqf-registry` | API | tax/reporting |
+| FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
+| FIN-EQAIME-IN-01 | Incoming e-qaimə compare + ingest | Y network-inbox | API | amount/VÖEN MATCH/MISMATCH |
 | FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | — |
-| FIN-REP-01 | Account card / analysis / turnovers | Y `/reporting/account-card`, `/reporting/turnovers` | SHIPPED | Wave 1 E1 |
-| FIN-REP-02 | Chessboard + general ledger journal | Y `/reporting/turnovers`, `/reporting/journal` | SHIPPED | Wave 1 G5 |
-| FIN-SUBCONTO-01 | Subconto types + account config CRUD | Y `GET/POST accounting/subconto/*` | SHIPPED | Wave 3 C; posting gated by `ERA_SUBCONTO_ENABLED` |
-| FIN-SUBCONTO-02 | OSV / card / analysis by journal dimension | Y `/reporting/subconto-analysis`, filters on account-card & turnovers | SHIPPED | Wave 3 D; [ADR](./adr/subconto-analytical-dimensions.md) |
-| FIN-REFORM-01 | Fiscal year close reformation (6x/7x→801→802) | Y `/reporting` close-fiscal-year + protocol | SHIPPED | Wave 3 B; OWNER/ADMIN |
-| FIN-FA-LIFE-01 | Fixed asset lifecycle (acquire/modernize/revalue/dispose) | Y `/fixed-assets` lifecycle panel | SHIPPED | Wave 3 E5 |
-| FIN-IA-01 | Intangible assets register + amortization | Y `/intangible-assets` | SHIPPED | Wave 3 G8; accounts 131/132 |
-| FIN-VAT-01 | ƏDV book (Satış/Alış) + declaration UI + submit | Y `/reporting/vat` | SHIPPED | Wave 1 E2; `@RequiresModule(tax_pro)` |
-| FIN-VAT-02 | ASAN ID + HSM submission seam | Y org settings `tax.asanUserId` | API | Live HSM client pending — [ADR](./adr/etaxes-hsm-asan-submission.md) |
-| FIN-VAT-ROLE | NAS VAT posting roles (191 / 545 / 223) + output VAT on SENT | — | SHIPPED | Wave 4 A; preset + `PostingAccountResolver` — [ADR](./adr/vat-deposit-routing.md) |
-| FIN-VAT-DEP-01 | ƏDV deposit GL balance + linked VAT_DEPOSIT bank | Y `/reporting/vat-deposit` | SHIPPED | Wave 4 G6; role `VAT_DEPOSIT_ACCOUNT→223` |
-| FIN-VAT-DEP-02 | Deposit route / remit / reconcile + movements | Y `/reporting/vat-deposit` | SHIPPED | `@RequiresModule(tax_pro)` |
-| FIN-EQAIME-01 | e-Qaimə S2S submit + invoice eqaime status | Y `/sales/invoices` | STUB/API | `ERA_EQAIME_S2S_ENABLED`; 503 + RPA fallback — [ADR](./adr/eqaime-s2s-submission.md) |
-| FIN-EQAIME-02 | e-Qaimé RPA prefill (extension + network inbox) | Y invoice actions / bulk RPA | SHIPPED | Phase 2; FIN-03 legacy row |
-| FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing (declarations, e-Qaimə) | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
-| FIN-ASAN-02 | Invoice PDF signature gateway | Y invoice PDF actions | API | `SIGNATURE_GATEWAY_MOCK=1` dev default |
-| FIN-MHBS-01 | Statutory balance sheet (MoF line codes) | Y `/reports/statements` | SHIPPED | Wave 4 G2; catalog `mhbs-statement-lines.v1.json` |
-| FIN-MHBS-02 | Statutory P&L + cash flow + equity + notes + export | Y `/reports/statements` | SHIPPED | XLSX/PDF; `@RequiresModule(tax_pro)` — [ADR](./adr/mhbs-statement-mapping.md) |
-| FIN-PROFIT-01 | Profit tax preview + book-to-tax adjustments CRUD | Y `/reporting/profit-tax` | SHIPPED | Wave 2 G1; OrgOwner/Accountant; `@RequiresModule(tax_pro)` |
-| FIN-PROFIT-02 | PROFIT_TAX declaration generate/download | Y `/reporting/tax-export` | SHIPPED | Links to adjustment register |
-| FIN-PAYROLL-WH-01 | Payroll withholding aggregate preview | Y tax-export modal | SHIPPED | POSTED payroll run required |
-| FIN-PAYROLL-WH-02 | PAYROLL_WITHHOLDING declaration generate | Y `/reporting/tax-export` | SHIPPED | PIT + social totals |
-| FIN-EMAS-01 | ƏMAS S2S hire/transfer/terminate | Y `/employees` edit modal | STUB/API | 503 without `ERA_EMAS_S2S_ENABLED`; Excel/RPA fallback |
-| FIN-EMAS-02 | ƏMAS contract event history | Y employee modal | API | `GET …/emas/events` |
+| FIN-TAX-01 | Tax declarations (simplified / profit / payroll / property) | Y `/reporting/tax-export` | API | tax_pro; UAT-SMOKE pending |
+| FIN-TAX-02 | Profit tax adjustments + preview | Y API + tax-export | API | tax_pro |
+| FIN-STAT-01 | Goskomstat engine (1-müəssisə, 1/4-əmək, 1-İKT) | Y `/reporting/statforms` | API | compliance_pro or tax_pro |
+| FIN-CTR-01 | Contract hard-block limit + expire cron | Y `/contracts` check-limit | API | contract_management_pro |
+| FIN-INV-F5 | Forma-5 / Forma-2 statutory PDF | Y inventory shipments/adjustments | API | pdfkit |
+| FIN-PRC-01 | Procurement protocols + Bid | Y `/procurement/protocols` | API | — |
+| FIN-AP-01 | AP aging + creditor payment plan | Y `/reporting/ap-aging` | API | — |
 | FC-FX-01 | Converter + revaluation on hub CBAR | Y | SHIPPED | `ERA_DATA_HUB_ENABLED` |
 | FC-FX-02 | Customs auto CBAR on bgdDate | Y | SHIPPED | Finance Trade Pro |
 | FIN-ADV-01 | Advance reports registry (list/detail/post/print) | Y `/expenses/advance-reports` | SHIPPED | Wave 5 E7; `@RequiresModule(kassa_pro)` |
@@ -284,6 +291,7 @@ ADR: [crm-lead-party-model-and-prospect-import](./adr/crm-lead-party-model-and-p
 |----|------------|-----|-----|-------|----------|----------|------------|-----------|
 | CP-WF-EMP-01 | Minimal employment (MDM hire) | ADR cp-workforce-absence-split | `POST /platform/v1/workforce/employments` | — | — | Y | — | Workspace → employments → hire by globalPersonId + orgUnit + position |
 | CP-WF-ABS-01 | Absence workflow | ADR cp-workforce-absence-split | `/platform/v1/workforce/absences/*` | — | — | Y | — | create → submit → approve on `/workspace/workforce/absences` |
+| CP-WF-VAC-01 | Vacation plan (dept submit → HR approve) | ADR | `/platform/v1/workforce/vacation-plans/*` | — | — | Y API | — | UI deferred; emits `WORKFORCE_VACATION_PLAN_APPROVED` |
 | CP-WF-ORG-01 | Org structure (OrgUnit tree) | ADR cp-workforce-org-units | `/platform/v1/workforce/org-units/*` | — | — | Y | — | bootstrap scope → create tree on `/workspace/workforce/org-structure` |
 | CP-WF-POS-01 | Cadre positions (slots) | ADR cp-workforce-org-units | `/platform/v1/workforce/positions/*` | — | — | Y | — | create position on `/workspace/workforce/positions` |
 | CP-WF-SEC-01 | Security Admin (matrix, grants, bindings, seats, audit) | ADR cp-workforce-role-templates-and-security-admin | `/platform/v1/workforce/security/*`, `/role-templates`, `/manual-grants` | — | — | Y | — | `/workspace/workforce/security` matrix + manual grants |
@@ -330,3 +338,7 @@ Manual rows in this file are authoritative for **actor UI** until `readiness-ui-
 | 2026-06-15 | DH-FX / FC-FX / BK-FX / LG-FX coverage rows (CBAR ecosystem refactor) |
 | 2026-06-15 | Re-audit pass 2: HT-FX/WS-FX/WS-CAL/CN/AS/CRM-CAL/LG-CAL SHIPPED; IND-VOEN; BANK-MDM UI |
 | 2026-07-02 | CRM v3.0 SHIPPED: CRM-PARTY-*, CRM-IMPORT-*, CRM-CONV-01; CRM-VOEN-01 persist |
+| 2026-07-14 | CLI-25 patient card: now/next + pending labs + results/plan previews (card-summary/feed) |
+| 2026-07-14 | CLI-26 procedure day-ops: CHECKED_IN/NO_SHOW, reception matrix DnD, nurse QR anti-fraud |
+| 2026-07-14 | CLI-27 clinic→hotel capacity foresight (remaining% warn/critical + CAPACITY_CHANGED) |
+| 2026-07-14 | CLI-28 patient clinical demographics (sex, DOB→age, blood, emergency contact) |

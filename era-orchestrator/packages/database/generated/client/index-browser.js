@@ -413,6 +413,66 @@ exports.Prisma.WorkforceTimesheetEntryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.WorkforceVacationPlanScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  year: 'year',
+  orgUnitId: 'orgUnitId',
+  status: 'status',
+  submittedByUserId: 'submittedByUserId',
+  approvedByUserId: 'approvedByUserId',
+  submittedAt: 'submittedAt',
+  approvedAt: 'approvedAt',
+  rejectedAt: 'rejectedAt',
+  rejectionReason: 'rejectionReason',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforceVacationPlanLineScalarFieldEnum = {
+  id: 'id',
+  planId: 'planId',
+  employmentId: 'employmentId',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  days: 'days',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkforcePersonnelOrderScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  employmentId: 'employmentId',
+  organizationId: 'organizationId',
+  type: 'type',
+  status: 'status',
+  orderNumber: 'orderNumber',
+  effectiveDate: 'effectiveDate',
+  note: 'note',
+  personDisplayName: 'personDisplayName',
+  documentStorageKey: 'documentStorageKey',
+  issuedByUserId: 'issuedByUserId',
+  issuedAt: 'issuedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.StaffScheduleRevisionScalarFieldEnum = {
+  id: 'id',
+  workforceScopeId: 'workforceScopeId',
+  title: 'title',
+  status: 'status',
+  snapshotJson: 'snapshotJson',
+  submittedByUserId: 'submittedByUserId',
+  approvedByUserId: 'approvedByUserId',
+  submittedAt: 'submittedAt',
+  approvedAt: 'approvedAt',
+  documentStorageKey: 'documentStorageKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.WorkforceAuditLogScalarFieldEnum = {
   id: 'id',
   organizationId: 'organizationId',
@@ -991,6 +1051,32 @@ exports.WorkforceTimesheetEntryStatus = exports.$Enums.WorkforceTimesheetEntrySt
   APPROVED: 'APPROVED'
 };
 
+exports.WorkforceVacationPlanStatus = exports.$Enums.WorkforceVacationPlanStatus = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+};
+
+exports.WorkforcePersonnelOrderType = exports.$Enums.WorkforcePersonnelOrderType = {
+  HIRE: 'HIRE',
+  TRANSFER: 'TRANSFER',
+  TERMINATE: 'TERMINATE'
+};
+
+exports.WorkforcePersonnelOrderStatus = exports.$Enums.WorkforcePersonnelOrderStatus = {
+  DRAFT: 'DRAFT',
+  ISSUED: 'ISSUED',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.StaffScheduleRevisionStatus = exports.$Enums.StaffScheduleRevisionStatus = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+};
+
 exports.PaymentOrderStatus = exports.$Enums.PaymentOrderStatus = {
   PENDING: 'PENDING',
   PAID: 'PAID',
@@ -1195,6 +1281,10 @@ exports.Prisma.ModelName = {
   WorkforceEmployment: 'WorkforceEmployment',
   WorkforceAbsence: 'WorkforceAbsence',
   WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
+  WorkforceVacationPlan: 'WorkforceVacationPlan',
+  WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
+  WorkforcePersonnelOrder: 'WorkforcePersonnelOrder',
+  StaffScheduleRevision: 'StaffScheduleRevision',
   WorkforceAuditLog: 'WorkforceAuditLog',
   PricingBundle: 'PricingBundle',
   LandingModuleMarketing: 'LandingModuleMarketing',

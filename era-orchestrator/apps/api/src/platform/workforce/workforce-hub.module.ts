@@ -60,6 +60,16 @@ import { WorkforceTimesheetsService } from "./workforce-timesheets.service";
 
 import { WorkforceTimesheetSubscriberService } from "./workforce-timesheet-subscriber.service";
 
+import { WorkforceVacationPlansController } from "./workforce-vacation-plans.controller";
+
+import { WorkforceVacationPlansService } from "./workforce-vacation-plans.service";
+
+import { WorkforcePersonnelOrdersController, StaffScheduleRevisionsController } from "./workforce-personnel-docs.controller";
+
+import { WorkforcePersonnelOrdersService } from "./workforce-personnel-orders.service";
+
+import { StaffScheduleRevisionsService } from "./staff-schedule-revisions.service";
+
 import { LicensingSeatsController } from "./licensing-seats.controller";
 
 import { WorkforceSeatsController } from "./workforce-seats.controller";
@@ -102,6 +112,12 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
 
     WorkforceTimesheetsController,
 
+    WorkforceVacationPlansController,
+
+    WorkforcePersonnelOrdersController,
+
+    StaffScheduleRevisionsController,
+
     LicensingSeatsController,
 
     WorkforceSeatsController,
@@ -141,6 +157,12 @@ import { WorkforceSeatsController } from "./workforce-seats.controller";
     WorkforceTimesheetsService,
 
     WorkforceTimesheetSubscriberService,
+
+    WorkforceVacationPlansService,
+
+    WorkforcePersonnelOrdersService,
+
+    StaffScheduleRevisionsService,
 
   ],
 

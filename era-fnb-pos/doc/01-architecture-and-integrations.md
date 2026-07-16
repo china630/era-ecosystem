@@ -78,12 +78,14 @@ flowchart TB
 
 | Событие | Когда | Payload (кратко) |
 |---------|-------|------------------|
-| **E3** `payment_received` | Оплата cash/card на кассе POS | amount, method, outlet, ticketId |
-| **E7** `payment_fiscalized` | После KKM | receiptId, qrPayload |
-| **E8** `stock_consumption` | Закрытие чека (если включено) | lines[]: sku, qty — **ERP списывает** |
+| `SATELLITE_FB_SALE_COMPLETED` | Pay при settlement **LOCAL_CASHIER** (standalone / own cashier) | ticketId, receiptId, amountNet, paymentMethod — **GL journal** in Finance |
+| `SATELLITE_FB_SHIFT_CLOSED` | Z-close PosShift | totalSales, ticketCount — cash recon stub (retail parity) |
+| **E8** `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` | Закрытие чека (если `STOCK_CONSUMPTION_ENABLED`) | lines[]: sku, qty — **ERP списывает** |
 | **E2** `invoice_issued` | B2B счёт на юрлицо (редко в зале) | через Finance, не блокер v1 |
 
-Night audit **E1** — только из PMS после агрегации folio.
+**Не эмитить SALE** при `HOTEL_FOLIO` / `HOTEL_HUB` — выручка идёт через hotel folio / Front Cash → night audit.
+
+Night audit **E1** — только из PMS после агрегации folio (hotel-attached path).
 
 Outbound policy: [22-outbound-integration-policy.md](../clone-spec/22-outbound-integration-policy.md), каталог [erp-outbound-catalog.yaml](../openapi/erp-outbound-catalog.yaml).
 

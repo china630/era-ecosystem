@@ -45,11 +45,12 @@ Property
 | Уровень | Описание |
 |---------|----------|
 | MenuCategory | Закуски, Основные, Напитки |
-| MenuItem | plu, name, price, taxTag, recipeSku (ERP) |
+| MenuItem | plu, name, price, taxTag, recipeSku (ERP), imageUrl (optional) |
+| MenuItemPrice | journal: priceAzn, effectiveFrom, effectiveTo — catalog price history |
 | ModifierGroup | Соус, размер |
 | Modifier | +2 AZN, без лука |
 
-**Цены:** базовая валюта AZN; смена цен — effective date (фаза 2).
+**Цены:** базовая валюта AZN. Текущая цена на `MenuItem.priceAzn`; история в `MenuItemPrice` (смена через PATCH меню закрывает предыдущую открытую запись). Продажи отчитываются по snapshot `TicketLine.unitPriceAzn`.
 
 ### Ticket (чек)
 

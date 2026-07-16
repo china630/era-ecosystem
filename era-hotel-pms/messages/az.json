@@ -236,6 +236,13 @@
       "RISK": "Doluluq və ya gecikmiş borclara diqqət.",
       "CRITICAL": "Dərhal idarəetmə tədbiri lazımdır."
     },
+    "clinicCapacity": {
+      "title": "Klinika tutumu",
+      "remaining": "boş slot",
+      "blocked": "Yeni medical paketlər bloklanıb — tutum boşalana qədər.",
+      "warnSoft": "Bron hələ icazəlidir — mümkün olsa paketlərdə məhdudiyyət.",
+      "fallback": "Klinika inventarının qalanı: {pct}% bu həftə."
+    },
     "section": {
       "flash": "Günün flash hesabatı",
       "revenue": "Gəlir",
@@ -492,6 +499,7 @@
     "tabFolio": "Folio",
     "tabNotes": "Qeydlər",
     "quotePending": "Qiymət üçün tarix və tarif seçin.",
+    "clinicCapacityWarn": "Bu tarixlərdə klinika tutumu aşağıdır — medical paketlər tezliklə bloklana bilər.",
     "folioTabHint": "Folio sətirləri rezervasiya saxlanılandan sonra görünür.",
     "notesTabHint": "Daxili qeydlər.",
     "roomType": "Room type",

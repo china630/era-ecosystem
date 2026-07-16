@@ -149,8 +149,11 @@ export default function SanatoriumPage() {
     switch (status) {
       case "SCHEDULED":
         return t("statusScheduled");
+      case "CHECKED_IN":
       case "IN_PROGRESS":
-        return t("statusInProgress");
+        return t("statusCheckedIn");
+      case "NO_SHOW":
+        return t("statusNoShow");
       case "COMPLETED":
         return t("statusCompleted");
       case "CANCELLED":
@@ -250,17 +253,16 @@ export default function SanatoriumPage() {
     if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
 
-  async function completeProcedure(orderId: string) {
+  async function cancelProcedure(orderId: string) {
     setBusy(true);
-    await fetch(`/api/procedures/${orderId}/complete`, {
+    const res = await fetch(`/api/procedures/${orderId}/cancel`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        consumableLines: [{ sku: "CONS-1", qty: 1 }],
-        amountNet: 0,
-      }),
+      body: JSON.stringify({ reason: "reception_episode_chart" }),
     });
+    const data = await res.json();
     setBusy(false);
+    setMsg(res.ok ? t("procedureCancelled") : (data.error ?? t("failed")));
     await reloadEpisode();
   }
 
@@ -477,16 +479,14 @@ export default function SanatoriumPage() {
                       <td className="px-3 py-2">{o.procedureName}</td>
                       <td className="px-3 py-2">{statusLabel(o.status)}</td>
                       <td className="px-3 py-2 text-right space-x-2">
-                        {o.status === "SCHEDULED" || o.status === "IN_PROGRESS" ? (
+                        {o.status === "SCHEDULED" ? (
                           <>
-                            <button
-                              type="button"
-                              className={PRIMARY_BUTTON_CLASS}
-                              disabled={busy}
-                              onClick={() => void completeProcedure(o.id)}
+                            <Link
+                              href={`/sanatorium/resources?date=${chartDate}&highlight=${o.id}`}
+                              className="rounded border px-2 py-1 text-xs"
                             >
-                              {t("complete")}
-                            </button>
+                              {t("openMatrix")}
+                            </Link>
                             <button
                               type="button"
                               className="rounded border px-2 py-1 text-xs"
@@ -498,6 +498,14 @@ export default function SanatoriumPage() {
                               }}
                             >
                               {t("reschedule")}
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded border px-2 py-1 text-xs text-red-700"
+                              disabled={busy}
+                              onClick={() => void cancelProcedure(o.id)}
+                            >
+                              {t("cancelProcedure")}
                             </button>
                           </>
                         ) : null}

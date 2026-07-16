@@ -113,7 +113,12 @@ async function main() {
         kind: ProductKind.LOAN_ANNUITY,
         name: "LOAN_ANNUITY_24M",
         currency: "AZN",
-        paramsJson: { termMonths: 24, rateAnnual: 0.18, glAssetCode: "1300101" },
+        paramsJson: {
+          termMonths: 24,
+          rateAnnual: 0.18,
+          glAssetCode: "1300101",
+          glInterestIncomeCode: "4100101",
+        },
       },
       {
         moduleKey: "banking_cards",
@@ -142,7 +147,31 @@ async function main() {
             effectiveFrom: now,
           },
         });
+      } else {
+        await prisma.productTemplate.update({
+          where: { id: existing.id },
+          data: { paramsJson: t.paramsJson },
+        });
       }
+    }
+
+    const systemGlMappings: Array<{ key: string; glCode: string }> = [
+      { key: "CASH_VAULT", glCode: "1000101" },
+      { key: "MFR_SETTLEMENT", glCode: "2990101" },
+      { key: "INTERBANK_PLACEMENT", glCode: "1610101" },
+      { key: "FX_TRANSIT", glCode: "1620101" },
+      { key: "NOSTRO", glCode: "2550201" },
+      { key: "VOSTRO", glCode: "2550301" },
+      { key: "GOV_SECURITIES", glCode: "1620201" },
+      { key: "INTEREST_INCOME", glCode: "4100101" },
+      { key: "INTEREST_EXPENSE", glCode: "5100101" },
+    ];
+    for (const mapping of systemGlMappings) {
+      await prisma.systemGlConfig.upsert({
+        where: { bankOrgId_key: { bankOrgId, key: mapping.key } },
+        create: { bankOrgId, key: mapping.key, glCode: mapping.glCode },
+        update: { glCode: mapping.glCode },
+      });
     }
 
     const amlRules = [

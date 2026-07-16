@@ -150,6 +150,8 @@ Pre-merge: `era-hotel-pms/scripts/merge-*.js` — see [ELEKTRAWEB-IMPORT.md](../
 
 After go-live, ERA is source of truth; Elektraweb read-only until decommission.
 
+**Dual-run (optional, ≤ ~2 weeks before hour X):** after Excel bootstrap, keep FO on Elektraweb while mirroring guests / reservations / open folio into ERA via browser extension so clinic can run on ERA. Runbook: [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md) · [ADR](./adr/hotel-elektraweb-live-bridge.md). During dual-run do not dual-write stays in ERA FO or night-audit-post mirrored medical folios.
+
 Product traceability: [era-hotel-pms/doc/nafta/README.md](../era-hotel-pms/doc/nafta/README.md)
 
 ---

@@ -308,6 +308,20 @@ model GlAccount {
   @@map("gl_accounts")
 }
 
+/// Bank-wide system GL mapping (nostro, FX transit, MFR, etc.). Product GL lives in ProductTemplate.paramsJson.
+model SystemGlConfig {
+  id        String   @id @default(cuid())
+  bankOrgId String   @map("bank_org_id")
+  key       String
+  glCode    String   @map("gl_code")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([bankOrgId, key])
+  @@index([bankOrgId])
+  @@map("system_gl_configs")
+}
+
 model Branch {
   id           String       @id @default(cuid())
   bankOrgId    String       @map("bank_org_id")

@@ -8,10 +8,12 @@ import {
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
+import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../../kernel/ledger/system-gl-config.service";
 import { InternalRailAdapter } from "./internal-rail.adapter";
 import { StubRailAdapter } from "./stub-rail.adapter";
-
-const NOSTRO_GL_CODE = "2550201";
 
 @Injectable()
 export class PaymentsService {
@@ -19,6 +21,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly postingEngine: PostingEngineService,
+    private readonly systemGl: SystemGlConfigService,
     private readonly internalRail: InternalRailAdapter,
     private readonly stubRail: StubRailAdapter,
   ) {}
@@ -61,14 +64,6 @@ export class PaymentsService {
         narrative: input.narrative,
       },
     });
-  }
-
-  private async glByCode(code: string) {
-    const gl = await this.prisma.glAccount.findFirst({
-      where: { bankOrgId: this.bankOrg.bankOrgId, code },
-    });
-    if (!gl) throw new NotFoundException(`GL ${code} not seeded`);
-    return gl;
   }
 
   private async settleToLedger(
@@ -126,7 +121,7 @@ export class PaymentsService {
         currency: order.currency,
       });
     } else {
-      const nostro = await this.glByCode(NOSTRO_GL_CODE);
+      const nostro = await this.systemGl.resolve(SystemGlKey.NOSTRO);
       legs.push({
         glAccountId: nostro.id,
         branchId: debtor.branchId,

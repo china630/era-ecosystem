@@ -236,6 +236,13 @@
       "RISK": "Watch occupancy deviation or overdue balances.",
       "CRITICAL": "Immediate management attention required."
     },
+    "clinicCapacity": {
+      "title": "Clinic capacity",
+      "remaining": "slots remaining",
+      "blocked": "New medical package bookings are blocked until capacity frees.",
+      "warnSoft": "Medical bookings still allowed — prefer delaying optional packages.",
+      "fallback": "Clinic inventory at {pct}% remaining this week."
+    },
     "section": {
       "flash": "Daily flash",
       "revenue": "Revenue",
@@ -491,6 +498,7 @@
     "tabFolio": "Folio",
     "tabNotes": "Notes",
     "quotePending": "Select dates and rate plan for a quote.",
+    "clinicCapacityWarn": "Clinic capacity is low for these dates — medical packages may be blocked soon.",
     "folioTabHint": "Folio lines appear after the reservation is saved.",
     "notesTabHint": "Internal notes — Wave B.",
     "roomType": "Room type",

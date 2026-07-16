@@ -2,9 +2,8 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DepositStatus, TxnType } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { getProductGlCode } from "../../common/product-gl";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
-
-const TERM_DEPOSIT_GL = "2200201";
 
 @Injectable()
 export class DepositsService {
@@ -35,6 +34,15 @@ export class DepositsService {
     return gl;
   }
 
+  private async termLiabilityGl(productTemplateId: string) {
+    const template = await this.prisma.productTemplate.findFirst({
+      where: { id: productTemplateId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!template) throw new NotFoundException("Product template not found");
+    const code = getProductGlCode(template.paramsJson, "glLiabilityCode");
+    return this.glByCode(code);
+  }
+
   async open(input: {
     accountId: string;
     customerId: string;
@@ -50,7 +58,7 @@ export class DepositsService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const termGl = await this.glByCode(TERM_DEPOSIT_GL);
+    const termGl = await this.termLiabilityGl(input.productTemplateId);
     const idempotencyKey = input.idempotencyKey ?? `dep-open-${Date.now()}`;
 
     await this.postingEngine.post({
@@ -107,7 +115,7 @@ export class DepositsService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const termGl = await this.glByCode(TERM_DEPOSIT_GL);
+    const termGl = await this.termLiabilityGl(dep.productTemplateId);
 
     await this.postingEngine.post({
       reference: `DEP-CLOSE-${id}`,

@@ -1,0 +1,12 @@
+---
+description: ERA Wholesale — local dev port 3209, Prisma, satellite env
+alwaysApply: true
+---
+
+# Wholesale — local development
+
+**Inherits:** monorepo root `.cursor/rules/`. Port **3209** — `npm run dev`.
+
+Prisma: `prisma/schema.prisma`. **Env:** standard satellite vars.
+
+**i18n:** `messages/{az,ru,en}.json` + `@era/i18n-common`.

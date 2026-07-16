@@ -1,0 +1,32 @@
+---
+description: Trigger ERA ordered git commit + PR workflow (полный коммит, per-core/satellite commits)
+alwaysApply: false
+---
+
+# ERA git-ship triggers
+
+When the user asks for **git commit + PR workflow**, read and follow:
+
+`.cursor/skills/era-git-ship/SKILL.md`
+
+## Command phrases → scope
+
+| Phrase | Skill action |
+|--------|----------------|
+| **полный коммит**, **коммит всех сателлит**, **full commit** | Full wave: orchestrator → data-hub → mdm → rest; then PR dev → merge → PR master → merge |
+| **коммит оркестратор** | Scope `orchestrator` only |
+| **коммит data-hub**, **коммит дата-хаб** | Scope `data-hub` |
+| **коммит mdm**, **коммит мдм** | Scope `mdm` |
+| **коммит finance**, **коммит bank**, **коммит bank-core** | Matching core scope |
+| **коммит hotel**, **clinic**, **wholesale**, **logistics**, **construction**, **crm**, **auto**, **fnb**, **retail** | Matching satellite scope |
+| **pr на dev**, **merge dev** | PublishDev step only |
+| **pr на master**, **promote master** | PublishMaster step only |
+
+## Hard rules
+
+- Never commit `docker-data/`, `.env`, `.cursor/plans/` (unless user edits plans explicitly).
+- Never push directly to `dev` or `master` — branch protection requires PR.
+- Require `gh auth` before PR/merge. If `gh auth status` fails, bootstrap `GH_TOKEN` from git credential (see `docs/GH_CLI_SETUP.md`) — same token as `git push`, not a new login.
+- PowerShell: use `era-ship.ps1` from `.cursor/skills/era-git-ship/scripts/`.
+
+Path buckets: `.cursor/skills/era-git-ship/manifests.yaml`

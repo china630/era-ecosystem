@@ -440,6 +440,32 @@ enum WorkforceTimesheetEntryStatus {
   APPROVED
 }
 
+enum WorkforceVacationPlanStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum WorkforcePersonnelOrderType {
+  HIRE
+  TRANSFER
+  TERMINATE
+}
+
+enum WorkforcePersonnelOrderStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+}
+
+enum StaffScheduleRevisionStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
 enum OrgUnitStatus {
   ACTIVE
   ARCHIVED
@@ -463,15 +489,18 @@ enum RoleBindingStatus {
 
 /// Anchor for HR org tree (usually parent STANDALONE commercial org).
 model WorkforceScope {
-  id                   String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  anchorOrganizationId String                    @unique @map("anchor_organization_id") @db.Uuid
-  name                 String
-  createdAt            DateTime                  @default(now()) @map("created_at")
-  updatedAt            DateTime                  @updatedAt @map("updated_at")
-  orgUnits             OrgUnit[]
-  employments          WorkforceEmployment[]
-  commercialLinks      OrgUnitCommercialLink[]
-  seatAllocations      WorkforceSeatAllocation[]
+  id                     String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  anchorOrganizationId   String                    @unique @map("anchor_organization_id") @db.Uuid
+  name                   String
+  createdAt              DateTime                  @default(now()) @map("created_at")
+  updatedAt              DateTime                  @updatedAt @map("updated_at")
+  orgUnits               OrgUnit[]
+  employments            WorkforceEmployment[]
+  commercialLinks        OrgUnitCommercialLink[]
+  seatAllocations        WorkforceSeatAllocation[]
+  vacationPlans          WorkforceVacationPlan[]
+  personnelOrders        WorkforcePersonnelOrder[]
+  staffScheduleRevisions StaffScheduleRevision[]
 
   @@map("workforce_scopes")
 }
@@ -495,6 +524,7 @@ model OrgUnit {
   positions           WorkforcePosition[]
   employments         WorkforceEmployment[]   @relation("EmploymentOrgUnit")
   commercialLinks     OrgUnitCommercialLink[]
+  vacationPlans       WorkforceVacationPlan[]
 
   @@unique([workforceScopeId, parentId, name])
   @@index([workforceScopeId, parentId])
@@ -600,29 +630,31 @@ model WorkforceSeatAllocation {
 
 /// CP workforce employment — no PII; person via MDM globalPersonId.
 model WorkforceEmployment {
-  id                       String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId           String                    @map("organization_id") @db.Uuid
-  workforceScopeId         String                    @map("workforce_scope_id") @db.Uuid
-  orgUnitId                String                    @map("org_unit_id") @db.Uuid
-  positionId               String                    @map("position_id") @db.Uuid
-  globalPersonId           String                    @map("global_person_id") @db.Uuid
-  status                   WorkforceEmploymentStatus @default(ACTIVE)
-  hireDate                 DateTime                  @map("hire_date") @db.Date
-  financeEmployeeId        String?                   @map("finance_employee_id") @db.Uuid
-  commercialOrganizationId String?                   @map("commercial_organization_id") @db.Uuid
-  platformUserId           String?                   @map("platform_user_id") @db.Uuid
-  createdAt                DateTime                  @default(now()) @map("created_at")
-  updatedAt                DateTime                  @updatedAt @map("updated_at")
-  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workforceScope           WorkforceScope            @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
-  orgUnit                  OrgUnit                   @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
-  position                 WorkforcePosition         @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  id                       String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId           String                      @map("organization_id") @db.Uuid
+  workforceScopeId         String                      @map("workforce_scope_id") @db.Uuid
+  orgUnitId                String                      @map("org_unit_id") @db.Uuid
+  positionId               String                      @map("position_id") @db.Uuid
+  globalPersonId           String                      @map("global_person_id") @db.Uuid
+  status                   WorkforceEmploymentStatus   @default(ACTIVE)
+  hireDate                 DateTime                    @map("hire_date") @db.Date
+  financeEmployeeId        String?                     @map("finance_employee_id") @db.Uuid
+  commercialOrganizationId String?                     @map("commercial_organization_id") @db.Uuid
+  platformUserId           String?                     @map("platform_user_id") @db.Uuid
+  createdAt                DateTime                    @default(now()) @map("created_at")
+  updatedAt                DateTime                    @updatedAt @map("updated_at")
+  organization             Organization                @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workforceScope           WorkforceScope              @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  orgUnit                  OrgUnit                     @relation("EmploymentOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+  position                 WorkforcePosition           @relation(fields: [positionId], references: [id], onDelete: Restrict)
   absences                 WorkforceAbsence[]
-  managedOrgUnits          OrgUnit[]                 @relation("OrgUnitManager")
+  managedOrgUnits          OrgUnit[]                   @relation("OrgUnitManager")
   roleBindings             WorkforceRoleBinding[]
   manualGrants             WorkforceManualGrant[]
   seatAllocation           WorkforceSeatAllocation?
   timesheetEntries         WorkforceTimesheetEntry[]
+  vacationPlanLines        WorkforceVacationPlanLine[]
+  personnelOrders          WorkforcePersonnelOrder[]
 
   @@index([organizationId, status])
   @@index([workforceScopeId, orgUnitId])
@@ -674,6 +706,95 @@ model WorkforceTimesheetEntry {
   @@index([organizationId, employmentId, workDate])
   @@index([organizationId, status])
   @@map("workforce_timesheet_entries")
+}
+
+/// Department (or scope) annual vacation plan — master in CP; Finance mirror is HEADLESS (event only).
+model WorkforceVacationPlan {
+  id                String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId  String                      @map("workforce_scope_id") @db.Uuid
+  year              Int
+  orgUnitId         String?                     @map("org_unit_id") @db.Uuid
+  status            WorkforceVacationPlanStatus @default(DRAFT)
+  submittedByUserId String?                     @map("submitted_by_user_id") @db.Uuid
+  approvedByUserId  String?                     @map("approved_by_user_id") @db.Uuid
+  submittedAt       DateTime?                   @map("submitted_at") @db.Timestamptz(6)
+  approvedAt        DateTime?                   @map("approved_at") @db.Timestamptz(6)
+  rejectedAt        DateTime?                   @map("rejected_at") @db.Timestamptz(6)
+  rejectionReason   String?                     @map("rejection_reason")
+  createdAt         DateTime                    @default(now()) @map("created_at")
+  updatedAt         DateTime                    @updatedAt @map("updated_at")
+  workforceScope    WorkforceScope              @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  orgUnit           OrgUnit?                    @relation(fields: [orgUnitId], references: [id], onDelete: SetNull)
+  lines             WorkforceVacationPlanLine[]
+
+  @@unique([workforceScopeId, year, orgUnitId])
+  @@index([workforceScopeId, year, status])
+  @@map("workforce_vacation_plans")
+}
+
+model WorkforceVacationPlanLine {
+  id           String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  planId       String                @map("plan_id") @db.Uuid
+  employmentId String                @map("employment_id") @db.Uuid
+  startDate    DateTime              @map("start_date") @db.Date
+  endDate      DateTime              @map("end_date") @db.Date
+  days         Int
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+  plan         WorkforceVacationPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  employment   WorkforceEmployment   @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@index([planId])
+  @@index([employmentId])
+  @@map("workforce_vacation_plan_lines")
+}
+
+/// Printable kadr order (hire/transfer/terminate) — document workflow over operational employment changes.
+model WorkforcePersonnelOrder {
+  id                 String                        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId   String                        @map("workforce_scope_id") @db.Uuid
+  employmentId       String                        @map("employment_id") @db.Uuid
+  organizationId     String                        @map("organization_id") @db.Uuid
+  type               WorkforcePersonnelOrderType
+  status             WorkforcePersonnelOrderStatus @default(DRAFT)
+  orderNumber        String                        @map("order_number")
+  effectiveDate      DateTime                      @map("effective_date") @db.Date
+  note               String                        @default("")
+  /// Snapshot of person display name at issue time (not vault PII — display only).
+  personDisplayName  String?                       @map("person_display_name")
+  documentStorageKey String?                       @map("document_storage_key")
+  issuedByUserId     String?                       @map("issued_by_user_id") @db.Uuid
+  issuedAt           DateTime?                     @map("issued_at") @db.Timestamptz(6)
+  createdAt          DateTime                      @default(now()) @map("created_at")
+  updatedAt          DateTime                      @updatedAt @map("updated_at")
+  workforceScope     WorkforceScope                @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+  employment         WorkforceEmployment           @relation(fields: [employmentId], references: [id], onDelete: Cascade)
+
+  @@unique([workforceScopeId, orderNumber])
+  @@index([workforceScopeId, type, status])
+  @@index([employmentId])
+  @@map("workforce_personnel_orders")
+}
+
+/// Approved snapshot of ştat cədvəli (positions × occupied/vacant slots).
+model StaffScheduleRevision {
+  id                 String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workforceScopeId   String                      @map("workforce_scope_id") @db.Uuid
+  title              String
+  status             StaffScheduleRevisionStatus @default(DRAFT)
+  /// Snapshot: [{ positionId, name, orgUnitId, totalSlots, occupied, vacant }]
+  snapshotJson       Json                        @default("[]") @map("snapshot_json")
+  submittedByUserId  String?                     @map("submitted_by_user_id") @db.Uuid
+  approvedByUserId   String?                     @map("approved_by_user_id") @db.Uuid
+  submittedAt        DateTime?                   @map("submitted_at") @db.Timestamptz(6)
+  approvedAt         DateTime?                   @map("approved_at") @db.Timestamptz(6)
+  documentStorageKey String?                     @map("document_storage_key")
+  createdAt          DateTime                    @default(now()) @map("created_at")
+  updatedAt          DateTime                    @updatedAt @map("updated_at")
+  workforceScope     WorkforceScope              @relation(fields: [workforceScopeId], references: [id], onDelete: Cascade)
+
+  @@index([workforceScopeId, status])
+  @@map("staff_schedule_revisions")
 }
 
 model WorkforceAuditLog {

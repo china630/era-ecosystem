@@ -19,6 +19,16 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type GlobalNaturalPerson = $Result.DefaultSelection<Prisma.$GlobalNaturalPersonPayload>
 /**
+ * Model PersonHrProfile
+ * HR-only PII attributes (blood, marital, education, stats, photo). Finance reads via MDM API only.
+ */
+export type PersonHrProfile = $Result.DefaultSelection<Prisma.$PersonHrProfilePayload>
+/**
+ * Model PersonAddress
+ * 
+ */
+export type PersonAddress = $Result.DefaultSelection<Prisma.$PersonAddressPayload>
+/**
  * Model PersonIdentifier
  * 
  */
@@ -85,6 +95,50 @@ export const PersonSegment: {
 
 export type PersonSegment = (typeof PersonSegment)[keyof typeof PersonSegment]
 
+
+export const BloodGroup: {
+  A_POS: 'A_POS',
+  A_NEG: 'A_NEG',
+  B_POS: 'B_POS',
+  B_NEG: 'B_NEG',
+  AB_POS: 'AB_POS',
+  AB_NEG: 'AB_NEG',
+  O_POS: 'O_POS',
+  O_NEG: 'O_NEG',
+  UNKNOWN: 'UNKNOWN'
+};
+
+export type BloodGroup = (typeof BloodGroup)[keyof typeof BloodGroup]
+
+
+export const MaritalStatus: {
+  SINGLE: 'SINGLE',
+  MARRIED: 'MARRIED',
+  DIVORCED: 'DIVORCED',
+  WIDOWED: 'WIDOWED',
+  OTHER: 'OTHER'
+};
+
+export type MaritalStatus = (typeof MaritalStatus)[keyof typeof MaritalStatus]
+
+
+export const PersonAddressKind: {
+  REGISTRATION: 'REGISTRATION',
+  ACTUAL: 'ACTUAL'
+};
+
+export type PersonAddressKind = (typeof PersonAddressKind)[keyof typeof PersonAddressKind]
+
+
+export const StatisticalCategory: {
+  REFUGEE: 'REFUGEE',
+  IDP: 'IDP',
+  MARTYR_FAMILY: 'MARTYR_FAMILY',
+  VETERAN: 'VETERAN'
+};
+
+export type StatisticalCategory = (typeof StatisticalCategory)[keyof typeof StatisticalCategory]
+
 }
 
 export type PersonAccessRequestStatus = $Enums.PersonAccessRequestStatus
@@ -102,6 +156,22 @@ export const IdentifierTrust: typeof $Enums.IdentifierTrust
 export type PersonSegment = $Enums.PersonSegment
 
 export const PersonSegment: typeof $Enums.PersonSegment
+
+export type BloodGroup = $Enums.BloodGroup
+
+export const BloodGroup: typeof $Enums.BloodGroup
+
+export type MaritalStatus = $Enums.MaritalStatus
+
+export const MaritalStatus: typeof $Enums.MaritalStatus
+
+export type PersonAddressKind = $Enums.PersonAddressKind
+
+export const PersonAddressKind: typeof $Enums.PersonAddressKind
+
+export type StatisticalCategory = $Enums.StatisticalCategory
+
+export const StatisticalCategory: typeof $Enums.StatisticalCategory
 
 /**
  * ##  Prisma Client ʲˢ
@@ -233,6 +303,26 @@ export class PrismaClient<
     * ```
     */
   get globalNaturalPerson(): Prisma.GlobalNaturalPersonDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.personHrProfile`: Exposes CRUD operations for the **PersonHrProfile** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PersonHrProfiles
+    * const personHrProfiles = await prisma.personHrProfile.findMany()
+    * ```
+    */
+  get personHrProfile(): Prisma.PersonHrProfileDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.personAddress`: Exposes CRUD operations for the **PersonAddress** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PersonAddresses
+    * const personAddresses = await prisma.personAddress.findMany()
+    * ```
+    */
+  get personAddress(): Prisma.PersonAddressDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.personIdentifier`: Exposes CRUD operations for the **PersonIdentifier** model.
@@ -718,6 +808,8 @@ export namespace Prisma {
 
   export const ModelName: {
     GlobalNaturalPerson: 'GlobalNaturalPerson',
+    PersonHrProfile: 'PersonHrProfile',
+    PersonAddress: 'PersonAddress',
     PersonIdentifier: 'PersonIdentifier',
     GlobalLegalEntity: 'GlobalLegalEntity',
     PersonAccessRequest: 'PersonAccessRequest',
@@ -738,7 +830,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "globalNaturalPerson" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
+      modelProps: "globalNaturalPerson" | "personHrProfile" | "personAddress" | "personIdentifier" | "globalLegalEntity" | "personAccessRequest" | "personAccessGrant" | "personAccessLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -813,6 +905,154 @@ export namespace Prisma {
           count: {
             args: Prisma.GlobalNaturalPersonCountArgs<ExtArgs>
             result: $Utils.Optional<GlobalNaturalPersonCountAggregateOutputType> | number
+          }
+        }
+      }
+      PersonHrProfile: {
+        payload: Prisma.$PersonHrProfilePayload<ExtArgs>
+        fields: Prisma.PersonHrProfileFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PersonHrProfileFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PersonHrProfileFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          findFirst: {
+            args: Prisma.PersonHrProfileFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PersonHrProfileFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          findMany: {
+            args: Prisma.PersonHrProfileFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>[]
+          }
+          create: {
+            args: Prisma.PersonHrProfileCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          createMany: {
+            args: Prisma.PersonHrProfileCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PersonHrProfileCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>[]
+          }
+          delete: {
+            args: Prisma.PersonHrProfileDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          update: {
+            args: Prisma.PersonHrProfileUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          deleteMany: {
+            args: Prisma.PersonHrProfileDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PersonHrProfileUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PersonHrProfileUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>[]
+          }
+          upsert: {
+            args: Prisma.PersonHrProfileUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonHrProfilePayload>
+          }
+          aggregate: {
+            args: Prisma.PersonHrProfileAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePersonHrProfile>
+          }
+          groupBy: {
+            args: Prisma.PersonHrProfileGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PersonHrProfileGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PersonHrProfileCountArgs<ExtArgs>
+            result: $Utils.Optional<PersonHrProfileCountAggregateOutputType> | number
+          }
+        }
+      }
+      PersonAddress: {
+        payload: Prisma.$PersonAddressPayload<ExtArgs>
+        fields: Prisma.PersonAddressFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PersonAddressFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PersonAddressFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          findFirst: {
+            args: Prisma.PersonAddressFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PersonAddressFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          findMany: {
+            args: Prisma.PersonAddressFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>[]
+          }
+          create: {
+            args: Prisma.PersonAddressCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          createMany: {
+            args: Prisma.PersonAddressCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PersonAddressCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>[]
+          }
+          delete: {
+            args: Prisma.PersonAddressDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          update: {
+            args: Prisma.PersonAddressUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          deleteMany: {
+            args: Prisma.PersonAddressDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PersonAddressUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PersonAddressUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>[]
+          }
+          upsert: {
+            args: Prisma.PersonAddressUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PersonAddressPayload>
+          }
+          aggregate: {
+            args: Prisma.PersonAddressAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePersonAddress>
+          }
+          groupBy: {
+            args: Prisma.PersonAddressGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PersonAddressGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PersonAddressCountArgs<ExtArgs>
+            result: $Utils.Optional<PersonAddressCountAggregateOutputType> | number
           }
         }
       }
@@ -1295,6 +1535,8 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     globalNaturalPerson?: GlobalNaturalPersonOmit
+    personHrProfile?: PersonHrProfileOmit
+    personAddress?: PersonAddressOmit
     personIdentifier?: PersonIdentifierOmit
     globalLegalEntity?: GlobalLegalEntityOmit
     personAccessRequest?: PersonAccessRequestOmit
@@ -1384,6 +1626,7 @@ export namespace Prisma {
     accessRequests: number
     accessGrants: number
     accessLogs: number
+    addresses: number
     mergedFrom: number
   }
 
@@ -1392,6 +1635,7 @@ export namespace Prisma {
     accessRequests?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessRequestsArgs
     accessGrants?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessGrantsArgs
     accessLogs?: boolean | GlobalNaturalPersonCountOutputTypeCountAccessLogsArgs
+    addresses?: boolean | GlobalNaturalPersonCountOutputTypeCountAddressesArgs
     mergedFrom?: boolean | GlobalNaturalPersonCountOutputTypeCountMergedFromArgs
   }
 
@@ -1432,6 +1676,13 @@ export namespace Prisma {
    */
   export type GlobalNaturalPersonCountOutputTypeCountAccessLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PersonAccessLogWhereInput
+  }
+
+  /**
+   * GlobalNaturalPersonCountOutputType without action
+   */
+  export type GlobalNaturalPersonCountOutputTypeCountAddressesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonAddressWhereInput
   }
 
   /**
@@ -1654,6 +1905,8 @@ export namespace Prisma {
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
     accessGrants?: boolean | GlobalNaturalPerson$accessGrantsArgs<ExtArgs>
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
+    hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
+    addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -1706,6 +1959,8 @@ export namespace Prisma {
     accessRequests?: boolean | GlobalNaturalPerson$accessRequestsArgs<ExtArgs>
     accessGrants?: boolean | GlobalNaturalPerson$accessGrantsArgs<ExtArgs>
     accessLogs?: boolean | GlobalNaturalPerson$accessLogsArgs<ExtArgs>
+    hrProfile?: boolean | GlobalNaturalPerson$hrProfileArgs<ExtArgs>
+    addresses?: boolean | GlobalNaturalPerson$addressesArgs<ExtArgs>
     mergedInto?: boolean | GlobalNaturalPerson$mergedIntoArgs<ExtArgs>
     mergedFrom?: boolean | GlobalNaturalPerson$mergedFromArgs<ExtArgs>
     _count?: boolean | GlobalNaturalPersonCountOutputTypeDefaultArgs<ExtArgs>
@@ -1724,6 +1979,8 @@ export namespace Prisma {
       accessRequests: Prisma.$PersonAccessRequestPayload<ExtArgs>[]
       accessGrants: Prisma.$PersonAccessGrantPayload<ExtArgs>[]
       accessLogs: Prisma.$PersonAccessLogPayload<ExtArgs>[]
+      hrProfile: Prisma.$PersonHrProfilePayload<ExtArgs> | null
+      addresses: Prisma.$PersonAddressPayload<ExtArgs>[]
       mergedInto: Prisma.$GlobalNaturalPersonPayload<ExtArgs> | null
       mergedFrom: Prisma.$GlobalNaturalPersonPayload<ExtArgs>[]
     }
@@ -2139,6 +2396,8 @@ export namespace Prisma {
     accessRequests<T extends GlobalNaturalPerson$accessRequestsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     accessGrants<T extends GlobalNaturalPerson$accessGrantsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     accessLogs<T extends GlobalNaturalPerson$accessLogsArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$accessLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAccessLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    hrProfile<T extends GlobalNaturalPerson$hrProfileArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$hrProfileArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    addresses<T extends GlobalNaturalPerson$addressesArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$addressesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mergedInto<T extends GlobalNaturalPerson$mergedIntoArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedIntoArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     mergedFrom<T extends GlobalNaturalPerson$mergedFromArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPerson$mergedFromArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -2677,6 +2936,49 @@ export namespace Prisma {
   }
 
   /**
+   * GlobalNaturalPerson.hrProfile
+   */
+  export type GlobalNaturalPerson$hrProfileArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    where?: PersonHrProfileWhereInput
+  }
+
+  /**
+   * GlobalNaturalPerson.addresses
+   */
+  export type GlobalNaturalPerson$addressesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    where?: PersonAddressWhereInput
+    orderBy?: PersonAddressOrderByWithRelationInput | PersonAddressOrderByWithRelationInput[]
+    cursor?: PersonAddressWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PersonAddressScalarFieldEnum | PersonAddressScalarFieldEnum[]
+  }
+
+  /**
    * GlobalNaturalPerson.mergedInto
    */
   export type GlobalNaturalPerson$mergedIntoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2735,6 +3037,2245 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: GlobalNaturalPersonInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PersonHrProfile
+   */
+
+  export type AggregatePersonHrProfile = {
+    _count: PersonHrProfileCountAggregateOutputType | null
+    _min: PersonHrProfileMinAggregateOutputType | null
+    _max: PersonHrProfileMaxAggregateOutputType | null
+  }
+
+  export type PersonHrProfileMinAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    bloodGroup: $Enums.BloodGroup | null
+    maritalStatus: $Enums.MaritalStatus | null
+    educationCipher: string | null
+    specialtyCipher: string | null
+    photoStorageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonHrProfileMaxAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    bloodGroup: $Enums.BloodGroup | null
+    maritalStatus: $Enums.MaritalStatus | null
+    educationCipher: string | null
+    specialtyCipher: string | null
+    photoStorageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonHrProfileCountAggregateOutputType = {
+    id: number
+    personId: number
+    bloodGroup: number
+    maritalStatus: number
+    educationCipher: number
+    specialtyCipher: number
+    statisticalCategories: number
+    photoStorageKey: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PersonHrProfileMinAggregateInputType = {
+    id?: true
+    personId?: true
+    bloodGroup?: true
+    maritalStatus?: true
+    educationCipher?: true
+    specialtyCipher?: true
+    photoStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonHrProfileMaxAggregateInputType = {
+    id?: true
+    personId?: true
+    bloodGroup?: true
+    maritalStatus?: true
+    educationCipher?: true
+    specialtyCipher?: true
+    photoStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonHrProfileCountAggregateInputType = {
+    id?: true
+    personId?: true
+    bloodGroup?: true
+    maritalStatus?: true
+    educationCipher?: true
+    specialtyCipher?: true
+    statisticalCategories?: true
+    photoStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PersonHrProfileAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonHrProfile to aggregate.
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonHrProfiles to fetch.
+     */
+    orderBy?: PersonHrProfileOrderByWithRelationInput | PersonHrProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PersonHrProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonHrProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonHrProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PersonHrProfiles
+    **/
+    _count?: true | PersonHrProfileCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PersonHrProfileMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PersonHrProfileMaxAggregateInputType
+  }
+
+  export type GetPersonHrProfileAggregateType<T extends PersonHrProfileAggregateArgs> = {
+        [P in keyof T & keyof AggregatePersonHrProfile]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePersonHrProfile[P]>
+      : GetScalarType<T[P], AggregatePersonHrProfile[P]>
+  }
+
+
+
+
+  export type PersonHrProfileGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonHrProfileWhereInput
+    orderBy?: PersonHrProfileOrderByWithAggregationInput | PersonHrProfileOrderByWithAggregationInput[]
+    by: PersonHrProfileScalarFieldEnum[] | PersonHrProfileScalarFieldEnum
+    having?: PersonHrProfileScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PersonHrProfileCountAggregateInputType | true
+    _min?: PersonHrProfileMinAggregateInputType
+    _max?: PersonHrProfileMaxAggregateInputType
+  }
+
+  export type PersonHrProfileGroupByOutputType = {
+    id: string
+    personId: string
+    bloodGroup: $Enums.BloodGroup
+    maritalStatus: $Enums.MaritalStatus | null
+    educationCipher: string | null
+    specialtyCipher: string | null
+    statisticalCategories: $Enums.StatisticalCategory[]
+    photoStorageKey: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PersonHrProfileCountAggregateOutputType | null
+    _min: PersonHrProfileMinAggregateOutputType | null
+    _max: PersonHrProfileMaxAggregateOutputType | null
+  }
+
+  type GetPersonHrProfileGroupByPayload<T extends PersonHrProfileGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PersonHrProfileGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PersonHrProfileGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PersonHrProfileGroupByOutputType[P]>
+            : GetScalarType<T[P], PersonHrProfileGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PersonHrProfileSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    bloodGroup?: boolean
+    maritalStatus?: boolean
+    educationCipher?: boolean
+    specialtyCipher?: boolean
+    statisticalCategories?: boolean
+    photoStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personHrProfile"]>
+
+  export type PersonHrProfileSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    bloodGroup?: boolean
+    maritalStatus?: boolean
+    educationCipher?: boolean
+    specialtyCipher?: boolean
+    statisticalCategories?: boolean
+    photoStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personHrProfile"]>
+
+  export type PersonHrProfileSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    bloodGroup?: boolean
+    maritalStatus?: boolean
+    educationCipher?: boolean
+    specialtyCipher?: boolean
+    statisticalCategories?: boolean
+    photoStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personHrProfile"]>
+
+  export type PersonHrProfileSelectScalar = {
+    id?: boolean
+    personId?: boolean
+    bloodGroup?: boolean
+    maritalStatus?: boolean
+    educationCipher?: boolean
+    specialtyCipher?: boolean
+    statisticalCategories?: boolean
+    photoStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PersonHrProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "personId" | "bloodGroup" | "maritalStatus" | "educationCipher" | "specialtyCipher" | "statisticalCategories" | "photoStorageKey" | "createdAt" | "updatedAt", ExtArgs["result"]["personHrProfile"]>
+  export type PersonHrProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonHrProfileIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonHrProfileIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+
+  export type $PersonHrProfilePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PersonHrProfile"
+    objects: {
+      person: Prisma.$GlobalNaturalPersonPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      personId: string
+      bloodGroup: $Enums.BloodGroup
+      maritalStatus: $Enums.MaritalStatus | null
+      educationCipher: string | null
+      specialtyCipher: string | null
+      statisticalCategories: $Enums.StatisticalCategory[]
+      photoStorageKey: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["personHrProfile"]>
+    composites: {}
+  }
+
+  type PersonHrProfileGetPayload<S extends boolean | null | undefined | PersonHrProfileDefaultArgs> = $Result.GetResult<Prisma.$PersonHrProfilePayload, S>
+
+  type PersonHrProfileCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PersonHrProfileFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PersonHrProfileCountAggregateInputType | true
+    }
+
+  export interface PersonHrProfileDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PersonHrProfile'], meta: { name: 'PersonHrProfile' } }
+    /**
+     * Find zero or one PersonHrProfile that matches the filter.
+     * @param {PersonHrProfileFindUniqueArgs} args - Arguments to find a PersonHrProfile
+     * @example
+     * // Get one PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PersonHrProfileFindUniqueArgs>(args: SelectSubset<T, PersonHrProfileFindUniqueArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PersonHrProfile that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PersonHrProfileFindUniqueOrThrowArgs} args - Arguments to find a PersonHrProfile
+     * @example
+     * // Get one PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PersonHrProfileFindUniqueOrThrowArgs>(args: SelectSubset<T, PersonHrProfileFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonHrProfile that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileFindFirstArgs} args - Arguments to find a PersonHrProfile
+     * @example
+     * // Get one PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PersonHrProfileFindFirstArgs>(args?: SelectSubset<T, PersonHrProfileFindFirstArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonHrProfile that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileFindFirstOrThrowArgs} args - Arguments to find a PersonHrProfile
+     * @example
+     * // Get one PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PersonHrProfileFindFirstOrThrowArgs>(args?: SelectSubset<T, PersonHrProfileFindFirstOrThrowArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PersonHrProfiles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PersonHrProfiles
+     * const personHrProfiles = await prisma.personHrProfile.findMany()
+     * 
+     * // Get first 10 PersonHrProfiles
+     * const personHrProfiles = await prisma.personHrProfile.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const personHrProfileWithIdOnly = await prisma.personHrProfile.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PersonHrProfileFindManyArgs>(args?: SelectSubset<T, PersonHrProfileFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PersonHrProfile.
+     * @param {PersonHrProfileCreateArgs} args - Arguments to create a PersonHrProfile.
+     * @example
+     * // Create one PersonHrProfile
+     * const PersonHrProfile = await prisma.personHrProfile.create({
+     *   data: {
+     *     // ... data to create a PersonHrProfile
+     *   }
+     * })
+     * 
+     */
+    create<T extends PersonHrProfileCreateArgs>(args: SelectSubset<T, PersonHrProfileCreateArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PersonHrProfiles.
+     * @param {PersonHrProfileCreateManyArgs} args - Arguments to create many PersonHrProfiles.
+     * @example
+     * // Create many PersonHrProfiles
+     * const personHrProfile = await prisma.personHrProfile.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PersonHrProfileCreateManyArgs>(args?: SelectSubset<T, PersonHrProfileCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PersonHrProfiles and returns the data saved in the database.
+     * @param {PersonHrProfileCreateManyAndReturnArgs} args - Arguments to create many PersonHrProfiles.
+     * @example
+     * // Create many PersonHrProfiles
+     * const personHrProfile = await prisma.personHrProfile.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PersonHrProfiles and only return the `id`
+     * const personHrProfileWithIdOnly = await prisma.personHrProfile.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PersonHrProfileCreateManyAndReturnArgs>(args?: SelectSubset<T, PersonHrProfileCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PersonHrProfile.
+     * @param {PersonHrProfileDeleteArgs} args - Arguments to delete one PersonHrProfile.
+     * @example
+     * // Delete one PersonHrProfile
+     * const PersonHrProfile = await prisma.personHrProfile.delete({
+     *   where: {
+     *     // ... filter to delete one PersonHrProfile
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PersonHrProfileDeleteArgs>(args: SelectSubset<T, PersonHrProfileDeleteArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PersonHrProfile.
+     * @param {PersonHrProfileUpdateArgs} args - Arguments to update one PersonHrProfile.
+     * @example
+     * // Update one PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PersonHrProfileUpdateArgs>(args: SelectSubset<T, PersonHrProfileUpdateArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PersonHrProfiles.
+     * @param {PersonHrProfileDeleteManyArgs} args - Arguments to filter PersonHrProfiles to delete.
+     * @example
+     * // Delete a few PersonHrProfiles
+     * const { count } = await prisma.personHrProfile.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PersonHrProfileDeleteManyArgs>(args?: SelectSubset<T, PersonHrProfileDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonHrProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PersonHrProfiles
+     * const personHrProfile = await prisma.personHrProfile.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PersonHrProfileUpdateManyArgs>(args: SelectSubset<T, PersonHrProfileUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonHrProfiles and returns the data updated in the database.
+     * @param {PersonHrProfileUpdateManyAndReturnArgs} args - Arguments to update many PersonHrProfiles.
+     * @example
+     * // Update many PersonHrProfiles
+     * const personHrProfile = await prisma.personHrProfile.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PersonHrProfiles and only return the `id`
+     * const personHrProfileWithIdOnly = await prisma.personHrProfile.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PersonHrProfileUpdateManyAndReturnArgs>(args: SelectSubset<T, PersonHrProfileUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PersonHrProfile.
+     * @param {PersonHrProfileUpsertArgs} args - Arguments to update or create a PersonHrProfile.
+     * @example
+     * // Update or create a PersonHrProfile
+     * const personHrProfile = await prisma.personHrProfile.upsert({
+     *   create: {
+     *     // ... data to create a PersonHrProfile
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PersonHrProfile we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PersonHrProfileUpsertArgs>(args: SelectSubset<T, PersonHrProfileUpsertArgs<ExtArgs>>): Prisma__PersonHrProfileClient<$Result.GetResult<Prisma.$PersonHrProfilePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PersonHrProfiles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileCountArgs} args - Arguments to filter PersonHrProfiles to count.
+     * @example
+     * // Count the number of PersonHrProfiles
+     * const count = await prisma.personHrProfile.count({
+     *   where: {
+     *     // ... the filter for the PersonHrProfiles we want to count
+     *   }
+     * })
+    **/
+    count<T extends PersonHrProfileCountArgs>(
+      args?: Subset<T, PersonHrProfileCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PersonHrProfileCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PersonHrProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PersonHrProfileAggregateArgs>(args: Subset<T, PersonHrProfileAggregateArgs>): Prisma.PrismaPromise<GetPersonHrProfileAggregateType<T>>
+
+    /**
+     * Group by PersonHrProfile.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonHrProfileGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PersonHrProfileGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PersonHrProfileGroupByArgs['orderBy'] }
+        : { orderBy?: PersonHrProfileGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PersonHrProfileGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPersonHrProfileGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PersonHrProfile model
+   */
+  readonly fields: PersonHrProfileFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PersonHrProfile.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PersonHrProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    person<T extends GlobalNaturalPersonDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPersonDefaultArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PersonHrProfile model
+   */
+  interface PersonHrProfileFieldRefs {
+    readonly id: FieldRef<"PersonHrProfile", 'String'>
+    readonly personId: FieldRef<"PersonHrProfile", 'String'>
+    readonly bloodGroup: FieldRef<"PersonHrProfile", 'BloodGroup'>
+    readonly maritalStatus: FieldRef<"PersonHrProfile", 'MaritalStatus'>
+    readonly educationCipher: FieldRef<"PersonHrProfile", 'String'>
+    readonly specialtyCipher: FieldRef<"PersonHrProfile", 'String'>
+    readonly statisticalCategories: FieldRef<"PersonHrProfile", 'StatisticalCategory[]'>
+    readonly photoStorageKey: FieldRef<"PersonHrProfile", 'String'>
+    readonly createdAt: FieldRef<"PersonHrProfile", 'DateTime'>
+    readonly updatedAt: FieldRef<"PersonHrProfile", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PersonHrProfile findUnique
+   */
+  export type PersonHrProfileFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonHrProfile to fetch.
+     */
+    where: PersonHrProfileWhereUniqueInput
+  }
+
+  /**
+   * PersonHrProfile findUniqueOrThrow
+   */
+  export type PersonHrProfileFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonHrProfile to fetch.
+     */
+    where: PersonHrProfileWhereUniqueInput
+  }
+
+  /**
+   * PersonHrProfile findFirst
+   */
+  export type PersonHrProfileFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonHrProfile to fetch.
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonHrProfiles to fetch.
+     */
+    orderBy?: PersonHrProfileOrderByWithRelationInput | PersonHrProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonHrProfiles.
+     */
+    cursor?: PersonHrProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonHrProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonHrProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonHrProfiles.
+     */
+    distinct?: PersonHrProfileScalarFieldEnum | PersonHrProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PersonHrProfile findFirstOrThrow
+   */
+  export type PersonHrProfileFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonHrProfile to fetch.
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonHrProfiles to fetch.
+     */
+    orderBy?: PersonHrProfileOrderByWithRelationInput | PersonHrProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonHrProfiles.
+     */
+    cursor?: PersonHrProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonHrProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonHrProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonHrProfiles.
+     */
+    distinct?: PersonHrProfileScalarFieldEnum | PersonHrProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PersonHrProfile findMany
+   */
+  export type PersonHrProfileFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonHrProfiles to fetch.
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonHrProfiles to fetch.
+     */
+    orderBy?: PersonHrProfileOrderByWithRelationInput | PersonHrProfileOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PersonHrProfiles.
+     */
+    cursor?: PersonHrProfileWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonHrProfiles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonHrProfiles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonHrProfiles.
+     */
+    distinct?: PersonHrProfileScalarFieldEnum | PersonHrProfileScalarFieldEnum[]
+  }
+
+  /**
+   * PersonHrProfile create
+   */
+  export type PersonHrProfileCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PersonHrProfile.
+     */
+    data: XOR<PersonHrProfileCreateInput, PersonHrProfileUncheckedCreateInput>
+  }
+
+  /**
+   * PersonHrProfile createMany
+   */
+  export type PersonHrProfileCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PersonHrProfiles.
+     */
+    data: PersonHrProfileCreateManyInput | PersonHrProfileCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PersonHrProfile createManyAndReturn
+   */
+  export type PersonHrProfileCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * The data used to create many PersonHrProfiles.
+     */
+    data: PersonHrProfileCreateManyInput | PersonHrProfileCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonHrProfile update
+   */
+  export type PersonHrProfileUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PersonHrProfile.
+     */
+    data: XOR<PersonHrProfileUpdateInput, PersonHrProfileUncheckedUpdateInput>
+    /**
+     * Choose, which PersonHrProfile to update.
+     */
+    where: PersonHrProfileWhereUniqueInput
+  }
+
+  /**
+   * PersonHrProfile updateMany
+   */
+  export type PersonHrProfileUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PersonHrProfiles.
+     */
+    data: XOR<PersonHrProfileUpdateManyMutationInput, PersonHrProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonHrProfiles to update
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * Limit how many PersonHrProfiles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonHrProfile updateManyAndReturn
+   */
+  export type PersonHrProfileUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * The data used to update PersonHrProfiles.
+     */
+    data: XOR<PersonHrProfileUpdateManyMutationInput, PersonHrProfileUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonHrProfiles to update
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * Limit how many PersonHrProfiles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonHrProfile upsert
+   */
+  export type PersonHrProfileUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PersonHrProfile to update in case it exists.
+     */
+    where: PersonHrProfileWhereUniqueInput
+    /**
+     * In case the PersonHrProfile found by the `where` argument doesn't exist, create a new PersonHrProfile with this data.
+     */
+    create: XOR<PersonHrProfileCreateInput, PersonHrProfileUncheckedCreateInput>
+    /**
+     * In case the PersonHrProfile was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PersonHrProfileUpdateInput, PersonHrProfileUncheckedUpdateInput>
+  }
+
+  /**
+   * PersonHrProfile delete
+   */
+  export type PersonHrProfileDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+    /**
+     * Filter which PersonHrProfile to delete.
+     */
+    where: PersonHrProfileWhereUniqueInput
+  }
+
+  /**
+   * PersonHrProfile deleteMany
+   */
+  export type PersonHrProfileDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonHrProfiles to delete
+     */
+    where?: PersonHrProfileWhereInput
+    /**
+     * Limit how many PersonHrProfiles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonHrProfile without action
+   */
+  export type PersonHrProfileDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonHrProfile
+     */
+    select?: PersonHrProfileSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonHrProfile
+     */
+    omit?: PersonHrProfileOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonHrProfileInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PersonAddress
+   */
+
+  export type AggregatePersonAddress = {
+    _count: PersonAddressCountAggregateOutputType | null
+    _min: PersonAddressMinAggregateOutputType | null
+    _max: PersonAddressMaxAggregateOutputType | null
+  }
+
+  export type PersonAddressMinAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kind: $Enums.PersonAddressKind | null
+    lineCipher: string | null
+    cityCipher: string | null
+    regionCipher: string | null
+    postalCipher: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonAddressMaxAggregateOutputType = {
+    id: string | null
+    personId: string | null
+    kind: $Enums.PersonAddressKind | null
+    lineCipher: string | null
+    cityCipher: string | null
+    regionCipher: string | null
+    postalCipher: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PersonAddressCountAggregateOutputType = {
+    id: number
+    personId: number
+    kind: number
+    lineCipher: number
+    cityCipher: number
+    regionCipher: number
+    postalCipher: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PersonAddressMinAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    lineCipher?: true
+    cityCipher?: true
+    regionCipher?: true
+    postalCipher?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonAddressMaxAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    lineCipher?: true
+    cityCipher?: true
+    regionCipher?: true
+    postalCipher?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PersonAddressCountAggregateInputType = {
+    id?: true
+    personId?: true
+    kind?: true
+    lineCipher?: true
+    cityCipher?: true
+    regionCipher?: true
+    postalCipher?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PersonAddressAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonAddress to aggregate.
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonAddresses to fetch.
+     */
+    orderBy?: PersonAddressOrderByWithRelationInput | PersonAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PersonAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PersonAddresses
+    **/
+    _count?: true | PersonAddressCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PersonAddressMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PersonAddressMaxAggregateInputType
+  }
+
+  export type GetPersonAddressAggregateType<T extends PersonAddressAggregateArgs> = {
+        [P in keyof T & keyof AggregatePersonAddress]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePersonAddress[P]>
+      : GetScalarType<T[P], AggregatePersonAddress[P]>
+  }
+
+
+
+
+  export type PersonAddressGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PersonAddressWhereInput
+    orderBy?: PersonAddressOrderByWithAggregationInput | PersonAddressOrderByWithAggregationInput[]
+    by: PersonAddressScalarFieldEnum[] | PersonAddressScalarFieldEnum
+    having?: PersonAddressScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PersonAddressCountAggregateInputType | true
+    _min?: PersonAddressMinAggregateInputType
+    _max?: PersonAddressMaxAggregateInputType
+  }
+
+  export type PersonAddressGroupByOutputType = {
+    id: string
+    personId: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher: string | null
+    regionCipher: string | null
+    postalCipher: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PersonAddressCountAggregateOutputType | null
+    _min: PersonAddressMinAggregateOutputType | null
+    _max: PersonAddressMaxAggregateOutputType | null
+  }
+
+  type GetPersonAddressGroupByPayload<T extends PersonAddressGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PersonAddressGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PersonAddressGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PersonAddressGroupByOutputType[P]>
+            : GetScalarType<T[P], PersonAddressGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PersonAddressSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    lineCipher?: boolean
+    cityCipher?: boolean
+    regionCipher?: boolean
+    postalCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personAddress"]>
+
+  export type PersonAddressSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    lineCipher?: boolean
+    cityCipher?: boolean
+    regionCipher?: boolean
+    postalCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personAddress"]>
+
+  export type PersonAddressSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    lineCipher?: boolean
+    cityCipher?: boolean
+    regionCipher?: boolean
+    postalCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["personAddress"]>
+
+  export type PersonAddressSelectScalar = {
+    id?: boolean
+    personId?: boolean
+    kind?: boolean
+    lineCipher?: boolean
+    cityCipher?: boolean
+    regionCipher?: boolean
+    postalCipher?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PersonAddressOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "personId" | "kind" | "lineCipher" | "cityCipher" | "regionCipher" | "postalCipher" | "createdAt" | "updatedAt", ExtArgs["result"]["personAddress"]>
+  export type PersonAddressInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonAddressIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+  export type PersonAddressIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    person?: boolean | GlobalNaturalPersonDefaultArgs<ExtArgs>
+  }
+
+  export type $PersonAddressPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PersonAddress"
+    objects: {
+      person: Prisma.$GlobalNaturalPersonPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      personId: string
+      kind: $Enums.PersonAddressKind
+      lineCipher: string
+      cityCipher: string | null
+      regionCipher: string | null
+      postalCipher: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["personAddress"]>
+    composites: {}
+  }
+
+  type PersonAddressGetPayload<S extends boolean | null | undefined | PersonAddressDefaultArgs> = $Result.GetResult<Prisma.$PersonAddressPayload, S>
+
+  type PersonAddressCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PersonAddressFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PersonAddressCountAggregateInputType | true
+    }
+
+  export interface PersonAddressDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PersonAddress'], meta: { name: 'PersonAddress' } }
+    /**
+     * Find zero or one PersonAddress that matches the filter.
+     * @param {PersonAddressFindUniqueArgs} args - Arguments to find a PersonAddress
+     * @example
+     * // Get one PersonAddress
+     * const personAddress = await prisma.personAddress.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PersonAddressFindUniqueArgs>(args: SelectSubset<T, PersonAddressFindUniqueArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PersonAddress that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PersonAddressFindUniqueOrThrowArgs} args - Arguments to find a PersonAddress
+     * @example
+     * // Get one PersonAddress
+     * const personAddress = await prisma.personAddress.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PersonAddressFindUniqueOrThrowArgs>(args: SelectSubset<T, PersonAddressFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonAddress that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressFindFirstArgs} args - Arguments to find a PersonAddress
+     * @example
+     * // Get one PersonAddress
+     * const personAddress = await prisma.personAddress.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PersonAddressFindFirstArgs>(args?: SelectSubset<T, PersonAddressFindFirstArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PersonAddress that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressFindFirstOrThrowArgs} args - Arguments to find a PersonAddress
+     * @example
+     * // Get one PersonAddress
+     * const personAddress = await prisma.personAddress.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PersonAddressFindFirstOrThrowArgs>(args?: SelectSubset<T, PersonAddressFindFirstOrThrowArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PersonAddresses that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PersonAddresses
+     * const personAddresses = await prisma.personAddress.findMany()
+     * 
+     * // Get first 10 PersonAddresses
+     * const personAddresses = await prisma.personAddress.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const personAddressWithIdOnly = await prisma.personAddress.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PersonAddressFindManyArgs>(args?: SelectSubset<T, PersonAddressFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PersonAddress.
+     * @param {PersonAddressCreateArgs} args - Arguments to create a PersonAddress.
+     * @example
+     * // Create one PersonAddress
+     * const PersonAddress = await prisma.personAddress.create({
+     *   data: {
+     *     // ... data to create a PersonAddress
+     *   }
+     * })
+     * 
+     */
+    create<T extends PersonAddressCreateArgs>(args: SelectSubset<T, PersonAddressCreateArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PersonAddresses.
+     * @param {PersonAddressCreateManyArgs} args - Arguments to create many PersonAddresses.
+     * @example
+     * // Create many PersonAddresses
+     * const personAddress = await prisma.personAddress.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PersonAddressCreateManyArgs>(args?: SelectSubset<T, PersonAddressCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PersonAddresses and returns the data saved in the database.
+     * @param {PersonAddressCreateManyAndReturnArgs} args - Arguments to create many PersonAddresses.
+     * @example
+     * // Create many PersonAddresses
+     * const personAddress = await prisma.personAddress.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PersonAddresses and only return the `id`
+     * const personAddressWithIdOnly = await prisma.personAddress.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PersonAddressCreateManyAndReturnArgs>(args?: SelectSubset<T, PersonAddressCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PersonAddress.
+     * @param {PersonAddressDeleteArgs} args - Arguments to delete one PersonAddress.
+     * @example
+     * // Delete one PersonAddress
+     * const PersonAddress = await prisma.personAddress.delete({
+     *   where: {
+     *     // ... filter to delete one PersonAddress
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PersonAddressDeleteArgs>(args: SelectSubset<T, PersonAddressDeleteArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PersonAddress.
+     * @param {PersonAddressUpdateArgs} args - Arguments to update one PersonAddress.
+     * @example
+     * // Update one PersonAddress
+     * const personAddress = await prisma.personAddress.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PersonAddressUpdateArgs>(args: SelectSubset<T, PersonAddressUpdateArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PersonAddresses.
+     * @param {PersonAddressDeleteManyArgs} args - Arguments to filter PersonAddresses to delete.
+     * @example
+     * // Delete a few PersonAddresses
+     * const { count } = await prisma.personAddress.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PersonAddressDeleteManyArgs>(args?: SelectSubset<T, PersonAddressDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonAddresses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PersonAddresses
+     * const personAddress = await prisma.personAddress.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PersonAddressUpdateManyArgs>(args: SelectSubset<T, PersonAddressUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PersonAddresses and returns the data updated in the database.
+     * @param {PersonAddressUpdateManyAndReturnArgs} args - Arguments to update many PersonAddresses.
+     * @example
+     * // Update many PersonAddresses
+     * const personAddress = await prisma.personAddress.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PersonAddresses and only return the `id`
+     * const personAddressWithIdOnly = await prisma.personAddress.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PersonAddressUpdateManyAndReturnArgs>(args: SelectSubset<T, PersonAddressUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PersonAddress.
+     * @param {PersonAddressUpsertArgs} args - Arguments to update or create a PersonAddress.
+     * @example
+     * // Update or create a PersonAddress
+     * const personAddress = await prisma.personAddress.upsert({
+     *   create: {
+     *     // ... data to create a PersonAddress
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PersonAddress we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PersonAddressUpsertArgs>(args: SelectSubset<T, PersonAddressUpsertArgs<ExtArgs>>): Prisma__PersonAddressClient<$Result.GetResult<Prisma.$PersonAddressPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PersonAddresses.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressCountArgs} args - Arguments to filter PersonAddresses to count.
+     * @example
+     * // Count the number of PersonAddresses
+     * const count = await prisma.personAddress.count({
+     *   where: {
+     *     // ... the filter for the PersonAddresses we want to count
+     *   }
+     * })
+    **/
+    count<T extends PersonAddressCountArgs>(
+      args?: Subset<T, PersonAddressCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PersonAddressCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PersonAddress.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PersonAddressAggregateArgs>(args: Subset<T, PersonAddressAggregateArgs>): Prisma.PrismaPromise<GetPersonAddressAggregateType<T>>
+
+    /**
+     * Group by PersonAddress.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PersonAddressGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PersonAddressGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PersonAddressGroupByArgs['orderBy'] }
+        : { orderBy?: PersonAddressGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PersonAddressGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPersonAddressGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PersonAddress model
+   */
+  readonly fields: PersonAddressFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PersonAddress.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PersonAddressClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    person<T extends GlobalNaturalPersonDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GlobalNaturalPersonDefaultArgs<ExtArgs>>): Prisma__GlobalNaturalPersonClient<$Result.GetResult<Prisma.$GlobalNaturalPersonPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PersonAddress model
+   */
+  interface PersonAddressFieldRefs {
+    readonly id: FieldRef<"PersonAddress", 'String'>
+    readonly personId: FieldRef<"PersonAddress", 'String'>
+    readonly kind: FieldRef<"PersonAddress", 'PersonAddressKind'>
+    readonly lineCipher: FieldRef<"PersonAddress", 'String'>
+    readonly cityCipher: FieldRef<"PersonAddress", 'String'>
+    readonly regionCipher: FieldRef<"PersonAddress", 'String'>
+    readonly postalCipher: FieldRef<"PersonAddress", 'String'>
+    readonly createdAt: FieldRef<"PersonAddress", 'DateTime'>
+    readonly updatedAt: FieldRef<"PersonAddress", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PersonAddress findUnique
+   */
+  export type PersonAddressFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonAddress to fetch.
+     */
+    where: PersonAddressWhereUniqueInput
+  }
+
+  /**
+   * PersonAddress findUniqueOrThrow
+   */
+  export type PersonAddressFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonAddress to fetch.
+     */
+    where: PersonAddressWhereUniqueInput
+  }
+
+  /**
+   * PersonAddress findFirst
+   */
+  export type PersonAddressFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonAddress to fetch.
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonAddresses to fetch.
+     */
+    orderBy?: PersonAddressOrderByWithRelationInput | PersonAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonAddresses.
+     */
+    cursor?: PersonAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonAddresses.
+     */
+    distinct?: PersonAddressScalarFieldEnum | PersonAddressScalarFieldEnum[]
+  }
+
+  /**
+   * PersonAddress findFirstOrThrow
+   */
+  export type PersonAddressFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonAddress to fetch.
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonAddresses to fetch.
+     */
+    orderBy?: PersonAddressOrderByWithRelationInput | PersonAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PersonAddresses.
+     */
+    cursor?: PersonAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonAddresses.
+     */
+    distinct?: PersonAddressScalarFieldEnum | PersonAddressScalarFieldEnum[]
+  }
+
+  /**
+   * PersonAddress findMany
+   */
+  export type PersonAddressFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter, which PersonAddresses to fetch.
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PersonAddresses to fetch.
+     */
+    orderBy?: PersonAddressOrderByWithRelationInput | PersonAddressOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PersonAddresses.
+     */
+    cursor?: PersonAddressWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PersonAddresses from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PersonAddresses.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PersonAddresses.
+     */
+    distinct?: PersonAddressScalarFieldEnum | PersonAddressScalarFieldEnum[]
+  }
+
+  /**
+   * PersonAddress create
+   */
+  export type PersonAddressCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PersonAddress.
+     */
+    data: XOR<PersonAddressCreateInput, PersonAddressUncheckedCreateInput>
+  }
+
+  /**
+   * PersonAddress createMany
+   */
+  export type PersonAddressCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PersonAddresses.
+     */
+    data: PersonAddressCreateManyInput | PersonAddressCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PersonAddress createManyAndReturn
+   */
+  export type PersonAddressCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * The data used to create many PersonAddresses.
+     */
+    data: PersonAddressCreateManyInput | PersonAddressCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonAddress update
+   */
+  export type PersonAddressUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PersonAddress.
+     */
+    data: XOR<PersonAddressUpdateInput, PersonAddressUncheckedUpdateInput>
+    /**
+     * Choose, which PersonAddress to update.
+     */
+    where: PersonAddressWhereUniqueInput
+  }
+
+  /**
+   * PersonAddress updateMany
+   */
+  export type PersonAddressUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PersonAddresses.
+     */
+    data: XOR<PersonAddressUpdateManyMutationInput, PersonAddressUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonAddresses to update
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * Limit how many PersonAddresses to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonAddress updateManyAndReturn
+   */
+  export type PersonAddressUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * The data used to update PersonAddresses.
+     */
+    data: XOR<PersonAddressUpdateManyMutationInput, PersonAddressUncheckedUpdateManyInput>
+    /**
+     * Filter which PersonAddresses to update
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * Limit how many PersonAddresses to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PersonAddress upsert
+   */
+  export type PersonAddressUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PersonAddress to update in case it exists.
+     */
+    where: PersonAddressWhereUniqueInput
+    /**
+     * In case the PersonAddress found by the `where` argument doesn't exist, create a new PersonAddress with this data.
+     */
+    create: XOR<PersonAddressCreateInput, PersonAddressUncheckedCreateInput>
+    /**
+     * In case the PersonAddress was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PersonAddressUpdateInput, PersonAddressUncheckedUpdateInput>
+  }
+
+  /**
+   * PersonAddress delete
+   */
+  export type PersonAddressDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
+    /**
+     * Filter which PersonAddress to delete.
+     */
+    where: PersonAddressWhereUniqueInput
+  }
+
+  /**
+   * PersonAddress deleteMany
+   */
+  export type PersonAddressDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PersonAddresses to delete
+     */
+    where?: PersonAddressWhereInput
+    /**
+     * Limit how many PersonAddresses to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PersonAddress without action
+   */
+  export type PersonAddressDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PersonAddress
+     */
+    select?: PersonAddressSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PersonAddress
+     */
+    omit?: PersonAddressOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PersonAddressInclude<ExtArgs> | null
   }
 
 
@@ -8137,6 +10678,37 @@ export namespace Prisma {
   export type GlobalNaturalPersonScalarFieldEnum = (typeof GlobalNaturalPersonScalarFieldEnum)[keyof typeof GlobalNaturalPersonScalarFieldEnum]
 
 
+  export const PersonHrProfileScalarFieldEnum: {
+    id: 'id',
+    personId: 'personId',
+    bloodGroup: 'bloodGroup',
+    maritalStatus: 'maritalStatus',
+    educationCipher: 'educationCipher',
+    specialtyCipher: 'specialtyCipher',
+    statisticalCategories: 'statisticalCategories',
+    photoStorageKey: 'photoStorageKey',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PersonHrProfileScalarFieldEnum = (typeof PersonHrProfileScalarFieldEnum)[keyof typeof PersonHrProfileScalarFieldEnum]
+
+
+  export const PersonAddressScalarFieldEnum: {
+    id: 'id',
+    personId: 'personId',
+    kind: 'kind',
+    lineCipher: 'lineCipher',
+    cityCipher: 'cityCipher',
+    regionCipher: 'regionCipher',
+    postalCipher: 'postalCipher',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PersonAddressScalarFieldEnum = (typeof PersonAddressScalarFieldEnum)[keyof typeof PersonAddressScalarFieldEnum]
+
+
   export const PersonIdentifierScalarFieldEnum: {
     id: 'id',
     personId: 'personId',
@@ -8273,6 +10845,62 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'BloodGroup'
+   */
+  export type EnumBloodGroupFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BloodGroup'>
+    
+
+
+  /**
+   * Reference to a field of type 'BloodGroup[]'
+   */
+  export type ListEnumBloodGroupFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BloodGroup[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'MaritalStatus'
+   */
+  export type EnumMaritalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaritalStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'MaritalStatus[]'
+   */
+  export type ListEnumMaritalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MaritalStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'StatisticalCategory[]'
+   */
+  export type ListEnumStatisticalCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StatisticalCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'StatisticalCategory'
+   */
+  export type EnumStatisticalCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StatisticalCategory'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonAddressKind'
+   */
+  export type EnumPersonAddressKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonAddressKind'>
+    
+
+
+  /**
+   * Reference to a field of type 'PersonAddressKind[]'
+   */
+  export type ListEnumPersonAddressKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonAddressKind[]'>
+    
+
+
+  /**
    * Reference to a field of type 'PersonIdentifierType'
    */
   export type EnumPersonIdentifierTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PersonIdentifierType'>
@@ -8356,6 +10984,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestListRelationFilter
     accessGrants?: PersonAccessGrantListRelationFilter
     accessLogs?: PersonAccessLogListRelationFilter
+    hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
+    addresses?: PersonAddressListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }
@@ -8375,6 +11005,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestOrderByRelationAggregateInput
     accessGrants?: PersonAccessGrantOrderByRelationAggregateInput
     accessLogs?: PersonAccessLogOrderByRelationAggregateInput
+    hrProfile?: PersonHrProfileOrderByWithRelationInput
+    addresses?: PersonAddressOrderByRelationAggregateInput
     mergedInto?: GlobalNaturalPersonOrderByWithRelationInput
     mergedFrom?: GlobalNaturalPersonOrderByRelationAggregateInput
   }
@@ -8397,6 +11029,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestListRelationFilter
     accessGrants?: PersonAccessGrantListRelationFilter
     accessLogs?: PersonAccessLogListRelationFilter
+    hrProfile?: XOR<PersonHrProfileNullableScalarRelationFilter, PersonHrProfileWhereInput> | null
+    addresses?: PersonAddressListRelationFilter
     mergedInto?: XOR<GlobalNaturalPersonNullableScalarRelationFilter, GlobalNaturalPersonWhereInput> | null
     mergedFrom?: GlobalNaturalPersonListRelationFilter
   }, "id" | "finBlindIndex">
@@ -8431,6 +11065,162 @@ export namespace Prisma {
     mergedIntoPersonId?: UuidNullableWithAggregatesFilter<"GlobalNaturalPerson"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GlobalNaturalPerson"> | Date | string
+  }
+
+  export type PersonHrProfileWhereInput = {
+    AND?: PersonHrProfileWhereInput | PersonHrProfileWhereInput[]
+    OR?: PersonHrProfileWhereInput[]
+    NOT?: PersonHrProfileWhereInput | PersonHrProfileWhereInput[]
+    id?: UuidFilter<"PersonHrProfile"> | string
+    personId?: UuidFilter<"PersonHrProfile"> | string
+    bloodGroup?: EnumBloodGroupFilter<"PersonHrProfile"> | $Enums.BloodGroup
+    maritalStatus?: EnumMaritalStatusNullableFilter<"PersonHrProfile"> | $Enums.MaritalStatus | null
+    educationCipher?: StringNullableFilter<"PersonHrProfile"> | string | null
+    specialtyCipher?: StringNullableFilter<"PersonHrProfile"> | string | null
+    statisticalCategories?: EnumStatisticalCategoryNullableListFilter<"PersonHrProfile">
+    photoStorageKey?: StringNullableFilter<"PersonHrProfile"> | string | null
+    createdAt?: DateTimeFilter<"PersonHrProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonHrProfile"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }
+
+  export type PersonHrProfileOrderByWithRelationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    bloodGroup?: SortOrder
+    maritalStatus?: SortOrderInput | SortOrder
+    educationCipher?: SortOrderInput | SortOrder
+    specialtyCipher?: SortOrderInput | SortOrder
+    statisticalCategories?: SortOrder
+    photoStorageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    person?: GlobalNaturalPersonOrderByWithRelationInput
+  }
+
+  export type PersonHrProfileWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    personId?: string
+    AND?: PersonHrProfileWhereInput | PersonHrProfileWhereInput[]
+    OR?: PersonHrProfileWhereInput[]
+    NOT?: PersonHrProfileWhereInput | PersonHrProfileWhereInput[]
+    bloodGroup?: EnumBloodGroupFilter<"PersonHrProfile"> | $Enums.BloodGroup
+    maritalStatus?: EnumMaritalStatusNullableFilter<"PersonHrProfile"> | $Enums.MaritalStatus | null
+    educationCipher?: StringNullableFilter<"PersonHrProfile"> | string | null
+    specialtyCipher?: StringNullableFilter<"PersonHrProfile"> | string | null
+    statisticalCategories?: EnumStatisticalCategoryNullableListFilter<"PersonHrProfile">
+    photoStorageKey?: StringNullableFilter<"PersonHrProfile"> | string | null
+    createdAt?: DateTimeFilter<"PersonHrProfile"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonHrProfile"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }, "id" | "personId">
+
+  export type PersonHrProfileOrderByWithAggregationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    bloodGroup?: SortOrder
+    maritalStatus?: SortOrderInput | SortOrder
+    educationCipher?: SortOrderInput | SortOrder
+    specialtyCipher?: SortOrderInput | SortOrder
+    statisticalCategories?: SortOrder
+    photoStorageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PersonHrProfileCountOrderByAggregateInput
+    _max?: PersonHrProfileMaxOrderByAggregateInput
+    _min?: PersonHrProfileMinOrderByAggregateInput
+  }
+
+  export type PersonHrProfileScalarWhereWithAggregatesInput = {
+    AND?: PersonHrProfileScalarWhereWithAggregatesInput | PersonHrProfileScalarWhereWithAggregatesInput[]
+    OR?: PersonHrProfileScalarWhereWithAggregatesInput[]
+    NOT?: PersonHrProfileScalarWhereWithAggregatesInput | PersonHrProfileScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PersonHrProfile"> | string
+    personId?: UuidWithAggregatesFilter<"PersonHrProfile"> | string
+    bloodGroup?: EnumBloodGroupWithAggregatesFilter<"PersonHrProfile"> | $Enums.BloodGroup
+    maritalStatus?: EnumMaritalStatusNullableWithAggregatesFilter<"PersonHrProfile"> | $Enums.MaritalStatus | null
+    educationCipher?: StringNullableWithAggregatesFilter<"PersonHrProfile"> | string | null
+    specialtyCipher?: StringNullableWithAggregatesFilter<"PersonHrProfile"> | string | null
+    statisticalCategories?: EnumStatisticalCategoryNullableListFilter<"PersonHrProfile">
+    photoStorageKey?: StringNullableWithAggregatesFilter<"PersonHrProfile"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PersonHrProfile"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PersonHrProfile"> | Date | string
+  }
+
+  export type PersonAddressWhereInput = {
+    AND?: PersonAddressWhereInput | PersonAddressWhereInput[]
+    OR?: PersonAddressWhereInput[]
+    NOT?: PersonAddressWhereInput | PersonAddressWhereInput[]
+    id?: UuidFilter<"PersonAddress"> | string
+    personId?: UuidFilter<"PersonAddress"> | string
+    kind?: EnumPersonAddressKindFilter<"PersonAddress"> | $Enums.PersonAddressKind
+    lineCipher?: StringFilter<"PersonAddress"> | string
+    cityCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    regionCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    postalCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    createdAt?: DateTimeFilter<"PersonAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonAddress"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }
+
+  export type PersonAddressOrderByWithRelationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    lineCipher?: SortOrder
+    cityCipher?: SortOrderInput | SortOrder
+    regionCipher?: SortOrderInput | SortOrder
+    postalCipher?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    person?: GlobalNaturalPersonOrderByWithRelationInput
+  }
+
+  export type PersonAddressWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    personId_kind?: PersonAddressPersonIdKindCompoundUniqueInput
+    AND?: PersonAddressWhereInput | PersonAddressWhereInput[]
+    OR?: PersonAddressWhereInput[]
+    NOT?: PersonAddressWhereInput | PersonAddressWhereInput[]
+    personId?: UuidFilter<"PersonAddress"> | string
+    kind?: EnumPersonAddressKindFilter<"PersonAddress"> | $Enums.PersonAddressKind
+    lineCipher?: StringFilter<"PersonAddress"> | string
+    cityCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    regionCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    postalCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    createdAt?: DateTimeFilter<"PersonAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonAddress"> | Date | string
+    person?: XOR<GlobalNaturalPersonScalarRelationFilter, GlobalNaturalPersonWhereInput>
+  }, "id" | "personId_kind">
+
+  export type PersonAddressOrderByWithAggregationInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    lineCipher?: SortOrder
+    cityCipher?: SortOrderInput | SortOrder
+    regionCipher?: SortOrderInput | SortOrder
+    postalCipher?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PersonAddressCountOrderByAggregateInput
+    _max?: PersonAddressMaxOrderByAggregateInput
+    _min?: PersonAddressMinOrderByAggregateInput
+  }
+
+  export type PersonAddressScalarWhereWithAggregatesInput = {
+    AND?: PersonAddressScalarWhereWithAggregatesInput | PersonAddressScalarWhereWithAggregatesInput[]
+    OR?: PersonAddressScalarWhereWithAggregatesInput[]
+    NOT?: PersonAddressScalarWhereWithAggregatesInput | PersonAddressScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"PersonAddress"> | string
+    personId?: UuidWithAggregatesFilter<"PersonAddress"> | string
+    kind?: EnumPersonAddressKindWithAggregatesFilter<"PersonAddress"> | $Enums.PersonAddressKind
+    lineCipher?: StringWithAggregatesFilter<"PersonAddress"> | string
+    cityCipher?: StringNullableWithAggregatesFilter<"PersonAddress"> | string | null
+    regionCipher?: StringNullableWithAggregatesFilter<"PersonAddress"> | string | null
+    postalCipher?: StringNullableWithAggregatesFilter<"PersonAddress"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PersonAddress"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PersonAddress"> | Date | string
   }
 
   export type PersonIdentifierWhereInput = {
@@ -8766,6 +11556,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -8785,6 +11577,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -8802,6 +11596,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -8821,6 +11617,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -8858,6 +11656,179 @@ export namespace Prisma {
     nationality?: NullableStringFieldUpdateOperationsInput | string | null
     personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
     mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonHrProfileCreateInput = {
+    id?: string
+    bloodGroup?: $Enums.BloodGroup
+    maritalStatus?: $Enums.MaritalStatus | null
+    educationCipher?: string | null
+    specialtyCipher?: string | null
+    statisticalCategories?: PersonHrProfileCreatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    person: GlobalNaturalPersonCreateNestedOneWithoutHrProfileInput
+  }
+
+  export type PersonHrProfileUncheckedCreateInput = {
+    id?: string
+    personId: string
+    bloodGroup?: $Enums.BloodGroup
+    maritalStatus?: $Enums.MaritalStatus | null
+    educationCipher?: string | null
+    specialtyCipher?: string | null
+    statisticalCategories?: PersonHrProfileCreatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonHrProfileUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    person?: GlobalNaturalPersonUpdateOneRequiredWithoutHrProfileNestedInput
+  }
+
+  export type PersonHrProfileUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonHrProfileCreateManyInput = {
+    id?: string
+    personId: string
+    bloodGroup?: $Enums.BloodGroup
+    maritalStatus?: $Enums.MaritalStatus | null
+    educationCipher?: string | null
+    specialtyCipher?: string | null
+    statisticalCategories?: PersonHrProfileCreatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonHrProfileUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonHrProfileUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressCreateInput = {
+    id?: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    person: GlobalNaturalPersonCreateNestedOneWithoutAddressesInput
+  }
+
+  export type PersonAddressUncheckedCreateInput = {
+    id?: string
+    personId: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonAddressUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    person?: GlobalNaturalPersonUpdateOneRequiredWithoutAddressesNestedInput
+  }
+
+  export type PersonAddressUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressCreateManyInput = {
+    id?: string
+    personId: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonAddressUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    personId?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -9282,6 +12253,17 @@ export namespace Prisma {
     none?: PersonAccessLogWhereInput
   }
 
+  export type PersonHrProfileNullableScalarRelationFilter = {
+    is?: PersonHrProfileWhereInput | null
+    isNot?: PersonHrProfileWhereInput | null
+  }
+
+  export type PersonAddressListRelationFilter = {
+    every?: PersonAddressWhereInput
+    some?: PersonAddressWhereInput
+    none?: PersonAddressWhereInput
+  }
+
   export type GlobalNaturalPersonNullableScalarRelationFilter = {
     is?: GlobalNaturalPersonWhereInput | null
     isNot?: GlobalNaturalPersonWhereInput | null
@@ -9311,6 +12293,10 @@ export namespace Prisma {
   }
 
   export type PersonAccessLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PersonAddressOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9429,11 +12415,95 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type EnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
-    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
-    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
-    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
-    not?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel> | $Enums.PersonIdentifierType
+  export type EnumBloodGroupFilter<$PrismaModel = never> = {
+    equals?: $Enums.BloodGroup | EnumBloodGroupFieldRefInput<$PrismaModel>
+    in?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    not?: NestedEnumBloodGroupFilter<$PrismaModel> | $Enums.BloodGroup
+  }
+
+  export type EnumMaritalStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MaritalStatus | EnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMaritalStatusNullableFilter<$PrismaModel> | $Enums.MaritalStatus | null
+  }
+
+  export type EnumStatisticalCategoryNullableListFilter<$PrismaModel = never> = {
+    equals?: $Enums.StatisticalCategory[] | ListEnumStatisticalCategoryFieldRefInput<$PrismaModel> | null
+    has?: $Enums.StatisticalCategory | EnumStatisticalCategoryFieldRefInput<$PrismaModel> | null
+    hasEvery?: $Enums.StatisticalCategory[] | ListEnumStatisticalCategoryFieldRefInput<$PrismaModel>
+    hasSome?: $Enums.StatisticalCategory[] | ListEnumStatisticalCategoryFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type GlobalNaturalPersonScalarRelationFilter = {
+    is?: GlobalNaturalPersonWhereInput
+    isNot?: GlobalNaturalPersonWhereInput
+  }
+
+  export type PersonHrProfileCountOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    bloodGroup?: SortOrder
+    maritalStatus?: SortOrder
+    educationCipher?: SortOrder
+    specialtyCipher?: SortOrder
+    statisticalCategories?: SortOrder
+    photoStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonHrProfileMaxOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    bloodGroup?: SortOrder
+    maritalStatus?: SortOrder
+    educationCipher?: SortOrder
+    specialtyCipher?: SortOrder
+    photoStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonHrProfileMinOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    bloodGroup?: SortOrder
+    maritalStatus?: SortOrder
+    educationCipher?: SortOrder
+    specialtyCipher?: SortOrder
+    photoStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumBloodGroupWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BloodGroup | EnumBloodGroupFieldRefInput<$PrismaModel>
+    in?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    not?: NestedEnumBloodGroupWithAggregatesFilter<$PrismaModel> | $Enums.BloodGroup
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBloodGroupFilter<$PrismaModel>
+    _max?: NestedEnumBloodGroupFilter<$PrismaModel>
+  }
+
+  export type EnumMaritalStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MaritalStatus | EnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMaritalStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.MaritalStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumMaritalStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumMaritalStatusNullableFilter<$PrismaModel>
+  }
+
+  export type EnumPersonAddressKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonAddressKind | EnumPersonAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonAddressKindFilter<$PrismaModel> | $Enums.PersonAddressKind
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -9451,6 +12521,82 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type PersonAddressPersonIdKindCompoundUniqueInput = {
+    personId: string
+    kind: $Enums.PersonAddressKind
+  }
+
+  export type PersonAddressCountOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    lineCipher?: SortOrder
+    cityCipher?: SortOrder
+    regionCipher?: SortOrder
+    postalCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonAddressMaxOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    lineCipher?: SortOrder
+    cityCipher?: SortOrder
+    regionCipher?: SortOrder
+    postalCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PersonAddressMinOrderByAggregateInput = {
+    id?: SortOrder
+    personId?: SortOrder
+    kind?: SortOrder
+    lineCipher?: SortOrder
+    cityCipher?: SortOrder
+    regionCipher?: SortOrder
+    postalCipher?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumPersonAddressKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonAddressKind | EnumPersonAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonAddressKindWithAggregatesFilter<$PrismaModel> | $Enums.PersonAddressKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonAddressKindFilter<$PrismaModel>
+    _max?: NestedEnumPersonAddressKindFilter<$PrismaModel>
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type EnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel> | $Enums.PersonIdentifierType
+  }
+
   export type EnumIdentifierTrustFilter<$PrismaModel = never> = {
     equals?: $Enums.IdentifierTrust | EnumIdentifierTrustFieldRefInput<$PrismaModel>
     in?: $Enums.IdentifierTrust[] | ListEnumIdentifierTrustFieldRefInput<$PrismaModel>
@@ -9461,11 +12607,6 @@ export namespace Prisma {
   export type BoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type GlobalNaturalPersonScalarRelationFilter = {
-    is?: GlobalNaturalPersonWhereInput
-    isNot?: GlobalNaturalPersonWhereInput
   }
 
   export type PersonIdentifierTypeIssuingCountryBlindIndexCompoundUniqueInput = {
@@ -9518,24 +12659,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
     _max?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
-  }
-
-  export type StringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
   }
 
   export type EnumIdentifierTrustWithAggregatesFilter<$PrismaModel = never> = {
@@ -9742,6 +12865,19 @@ export namespace Prisma {
     connect?: PersonAccessLogWhereUniqueInput | PersonAccessLogWhereUniqueInput[]
   }
 
+  export type PersonHrProfileCreateNestedOneWithoutPersonInput = {
+    create?: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+    connectOrCreate?: PersonHrProfileCreateOrConnectWithoutPersonInput
+    connect?: PersonHrProfileWhereUniqueInput
+  }
+
+  export type PersonAddressCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput> | PersonAddressCreateWithoutPersonInput[] | PersonAddressUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonAddressCreateOrConnectWithoutPersonInput | PersonAddressCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonAddressCreateManyPersonInputEnvelope
+    connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+  }
+
   export type GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput
@@ -9781,6 +12917,19 @@ export namespace Prisma {
     connectOrCreate?: PersonAccessLogCreateOrConnectWithoutPersonInput | PersonAccessLogCreateOrConnectWithoutPersonInput[]
     createMany?: PersonAccessLogCreateManyPersonInputEnvelope
     connect?: PersonAccessLogWhereUniqueInput | PersonAccessLogWhereUniqueInput[]
+  }
+
+  export type PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput = {
+    create?: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+    connectOrCreate?: PersonHrProfileCreateOrConnectWithoutPersonInput
+    connect?: PersonHrProfileWhereUniqueInput
+  }
+
+  export type PersonAddressUncheckedCreateNestedManyWithoutPersonInput = {
+    create?: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput> | PersonAddressCreateWithoutPersonInput[] | PersonAddressUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonAddressCreateOrConnectWithoutPersonInput | PersonAddressCreateOrConnectWithoutPersonInput[]
+    createMany?: PersonAddressCreateManyPersonInputEnvelope
+    connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
   }
 
   export type GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput = {
@@ -9860,6 +13009,30 @@ export namespace Prisma {
     update?: PersonAccessLogUpdateWithWhereUniqueWithoutPersonInput | PersonAccessLogUpdateWithWhereUniqueWithoutPersonInput[]
     updateMany?: PersonAccessLogUpdateManyWithWhereWithoutPersonInput | PersonAccessLogUpdateManyWithWhereWithoutPersonInput[]
     deleteMany?: PersonAccessLogScalarWhereInput | PersonAccessLogScalarWhereInput[]
+  }
+
+  export type PersonHrProfileUpdateOneWithoutPersonNestedInput = {
+    create?: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+    connectOrCreate?: PersonHrProfileCreateOrConnectWithoutPersonInput
+    upsert?: PersonHrProfileUpsertWithoutPersonInput
+    disconnect?: PersonHrProfileWhereInput | boolean
+    delete?: PersonHrProfileWhereInput | boolean
+    connect?: PersonHrProfileWhereUniqueInput
+    update?: XOR<XOR<PersonHrProfileUpdateToOneWithWhereWithoutPersonInput, PersonHrProfileUpdateWithoutPersonInput>, PersonHrProfileUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonAddressUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput> | PersonAddressCreateWithoutPersonInput[] | PersonAddressUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonAddressCreateOrConnectWithoutPersonInput | PersonAddressCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonAddressUpsertWithWhereUniqueWithoutPersonInput | PersonAddressUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonAddressCreateManyPersonInputEnvelope
+    set?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    disconnect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    delete?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    update?: PersonAddressUpdateWithWhereUniqueWithoutPersonInput | PersonAddressUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonAddressUpdateManyWithWhereWithoutPersonInput | PersonAddressUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
   }
 
   export type GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput = {
@@ -9942,6 +13115,30 @@ export namespace Prisma {
     deleteMany?: PersonAccessLogScalarWhereInput | PersonAccessLogScalarWhereInput[]
   }
 
+  export type PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput = {
+    create?: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+    connectOrCreate?: PersonHrProfileCreateOrConnectWithoutPersonInput
+    upsert?: PersonHrProfileUpsertWithoutPersonInput
+    disconnect?: PersonHrProfileWhereInput | boolean
+    delete?: PersonHrProfileWhereInput | boolean
+    connect?: PersonHrProfileWhereUniqueInput
+    update?: XOR<XOR<PersonHrProfileUpdateToOneWithWhereWithoutPersonInput, PersonHrProfileUpdateWithoutPersonInput>, PersonHrProfileUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonAddressUncheckedUpdateManyWithoutPersonNestedInput = {
+    create?: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput> | PersonAddressCreateWithoutPersonInput[] | PersonAddressUncheckedCreateWithoutPersonInput[]
+    connectOrCreate?: PersonAddressCreateOrConnectWithoutPersonInput | PersonAddressCreateOrConnectWithoutPersonInput[]
+    upsert?: PersonAddressUpsertWithWhereUniqueWithoutPersonInput | PersonAddressUpsertWithWhereUniqueWithoutPersonInput[]
+    createMany?: PersonAddressCreateManyPersonInputEnvelope
+    set?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    disconnect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    delete?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    connect?: PersonAddressWhereUniqueInput | PersonAddressWhereUniqueInput[]
+    update?: PersonAddressUpdateWithWhereUniqueWithoutPersonInput | PersonAddressUpdateWithWhereUniqueWithoutPersonInput[]
+    updateMany?: PersonAddressUpdateManyWithWhereWithoutPersonInput | PersonAddressUpdateManyWithWhereWithoutPersonInput[]
+    deleteMany?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
+  }
+
   export type GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput = {
     create?: XOR<GlobalNaturalPersonCreateWithoutMergedIntoInput, GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput> | GlobalNaturalPersonCreateWithoutMergedIntoInput[] | GlobalNaturalPersonUncheckedCreateWithoutMergedIntoInput[]
     connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput | GlobalNaturalPersonCreateOrConnectWithoutMergedIntoInput[]
@@ -9954,6 +13151,55 @@ export namespace Prisma {
     update?: GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput | GlobalNaturalPersonUpdateWithWhereUniqueWithoutMergedIntoInput[]
     updateMany?: GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput | GlobalNaturalPersonUpdateManyWithWhereWithoutMergedIntoInput[]
     deleteMany?: GlobalNaturalPersonScalarWhereInput | GlobalNaturalPersonScalarWhereInput[]
+  }
+
+  export type PersonHrProfileCreatestatisticalCategoriesInput = {
+    set: $Enums.StatisticalCategory[]
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutHrProfileInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutHrProfileInput, GlobalNaturalPersonUncheckedCreateWithoutHrProfileInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutHrProfileInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type EnumBloodGroupFieldUpdateOperationsInput = {
+    set?: $Enums.BloodGroup
+  }
+
+  export type NullableEnumMaritalStatusFieldUpdateOperationsInput = {
+    set?: $Enums.MaritalStatus | null
+  }
+
+  export type PersonHrProfileUpdatestatisticalCategoriesInput = {
+    set?: $Enums.StatisticalCategory[]
+    push?: $Enums.StatisticalCategory | $Enums.StatisticalCategory[]
+  }
+
+  export type GlobalNaturalPersonUpdateOneRequiredWithoutHrProfileNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutHrProfileInput, GlobalNaturalPersonUncheckedCreateWithoutHrProfileInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutHrProfileInput
+    upsert?: GlobalNaturalPersonUpsertWithoutHrProfileInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutHrProfileInput, GlobalNaturalPersonUpdateWithoutHrProfileInput>, GlobalNaturalPersonUncheckedUpdateWithoutHrProfileInput>
+  }
+
+  export type GlobalNaturalPersonCreateNestedOneWithoutAddressesInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutAddressesInput, GlobalNaturalPersonUncheckedCreateWithoutAddressesInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutAddressesInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+  }
+
+  export type EnumPersonAddressKindFieldUpdateOperationsInput = {
+    set?: $Enums.PersonAddressKind
+  }
+
+  export type GlobalNaturalPersonUpdateOneRequiredWithoutAddressesNestedInput = {
+    create?: XOR<GlobalNaturalPersonCreateWithoutAddressesInput, GlobalNaturalPersonUncheckedCreateWithoutAddressesInput>
+    connectOrCreate?: GlobalNaturalPersonCreateOrConnectWithoutAddressesInput
+    upsert?: GlobalNaturalPersonUpsertWithoutAddressesInput
+    connect?: GlobalNaturalPersonWhereUniqueInput
+    update?: XOR<XOR<GlobalNaturalPersonUpdateToOneWithWhereWithoutAddressesInput, GlobalNaturalPersonUpdateWithoutAddressesInput>, GlobalNaturalPersonUncheckedUpdateWithoutAddressesInput>
   }
 
   export type GlobalNaturalPersonCreateNestedOneWithoutIdentifiersInput = {
@@ -10191,6 +13437,74 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
+  export type NestedEnumBloodGroupFilter<$PrismaModel = never> = {
+    equals?: $Enums.BloodGroup | EnumBloodGroupFieldRefInput<$PrismaModel>
+    in?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    not?: NestedEnumBloodGroupFilter<$PrismaModel> | $Enums.BloodGroup
+  }
+
+  export type NestedEnumMaritalStatusNullableFilter<$PrismaModel = never> = {
+    equals?: $Enums.MaritalStatus | EnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMaritalStatusNullableFilter<$PrismaModel> | $Enums.MaritalStatus | null
+  }
+
+  export type NestedEnumBloodGroupWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BloodGroup | EnumBloodGroupFieldRefInput<$PrismaModel>
+    in?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BloodGroup[] | ListEnumBloodGroupFieldRefInput<$PrismaModel>
+    not?: NestedEnumBloodGroupWithAggregatesFilter<$PrismaModel> | $Enums.BloodGroup
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBloodGroupFilter<$PrismaModel>
+    _max?: NestedEnumBloodGroupFilter<$PrismaModel>
+  }
+
+  export type NestedEnumMaritalStatusNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MaritalStatus | EnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    in?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    notIn?: $Enums.MaritalStatus[] | ListEnumMaritalStatusFieldRefInput<$PrismaModel> | null
+    not?: NestedEnumMaritalStatusNullableWithAggregatesFilter<$PrismaModel> | $Enums.MaritalStatus | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedEnumMaritalStatusNullableFilter<$PrismaModel>
+    _max?: NestedEnumMaritalStatusNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumPersonAddressKindFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonAddressKind | EnumPersonAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonAddressKindFilter<$PrismaModel> | $Enums.PersonAddressKind
+  }
+
+  export type NestedEnumPersonAddressKindWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PersonAddressKind | EnumPersonAddressKindFieldRefInput<$PrismaModel>
+    in?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    notIn?: $Enums.PersonAddressKind[] | ListEnumPersonAddressKindFieldRefInput<$PrismaModel>
+    not?: NestedEnumPersonAddressKindWithAggregatesFilter<$PrismaModel> | $Enums.PersonAddressKind
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumPersonAddressKindFilter<$PrismaModel>
+    _max?: NestedEnumPersonAddressKindFilter<$PrismaModel>
+  }
+
+  export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
   export type NestedEnumPersonIdentifierTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.PersonIdentifierType | EnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
     in?: $Enums.PersonIdentifierType[] | ListEnumPersonIdentifierTypeFieldRefInput<$PrismaModel>
@@ -10218,23 +13532,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
     _max?: NestedEnumPersonIdentifierTypeFilter<$PrismaModel>
-  }
-
-  export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel>
-    in?: string[] | ListStringFieldRefInput<$PrismaModel>
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedStringFilter<$PrismaModel>
-    _max?: NestedStringFilter<$PrismaModel>
   }
 
   export type NestedEnumIdentifierTrustWithAggregatesFilter<$PrismaModel = never> = {
@@ -10407,6 +13704,67 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PersonHrProfileCreateWithoutPersonInput = {
+    id?: string
+    bloodGroup?: $Enums.BloodGroup
+    maritalStatus?: $Enums.MaritalStatus | null
+    educationCipher?: string | null
+    specialtyCipher?: string | null
+    statisticalCategories?: PersonHrProfileCreatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonHrProfileUncheckedCreateWithoutPersonInput = {
+    id?: string
+    bloodGroup?: $Enums.BloodGroup
+    maritalStatus?: $Enums.MaritalStatus | null
+    educationCipher?: string | null
+    specialtyCipher?: string | null
+    statisticalCategories?: PersonHrProfileCreatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonHrProfileCreateOrConnectWithoutPersonInput = {
+    where: PersonHrProfileWhereUniqueInput
+    create: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonAddressCreateWithoutPersonInput = {
+    id?: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonAddressUncheckedCreateWithoutPersonInput = {
+    id?: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PersonAddressCreateOrConnectWithoutPersonInput = {
+    where: PersonAddressWhereUniqueInput
+    create: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonAddressCreateManyPersonInputEnvelope = {
+    data: PersonAddressCreateManyPersonInput | PersonAddressCreateManyPersonInput[]
+    skipDuplicates?: boolean
+  }
+
   export type GlobalNaturalPersonCreateWithoutMergedFromInput = {
     id?: string
     finBlindIndex?: string | null
@@ -10421,6 +13779,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
   }
 
@@ -10439,6 +13799,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
   }
 
   export type GlobalNaturalPersonCreateOrConnectWithoutMergedFromInput = {
@@ -10460,6 +13822,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10477,6 +13841,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10605,6 +13971,72 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"PersonAccessLog"> | Date | string
   }
 
+  export type PersonHrProfileUpsertWithoutPersonInput = {
+    update: XOR<PersonHrProfileUpdateWithoutPersonInput, PersonHrProfileUncheckedUpdateWithoutPersonInput>
+    create: XOR<PersonHrProfileCreateWithoutPersonInput, PersonHrProfileUncheckedCreateWithoutPersonInput>
+    where?: PersonHrProfileWhereInput
+  }
+
+  export type PersonHrProfileUpdateToOneWithWhereWithoutPersonInput = {
+    where?: PersonHrProfileWhereInput
+    data: XOR<PersonHrProfileUpdateWithoutPersonInput, PersonHrProfileUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonHrProfileUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonHrProfileUncheckedUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bloodGroup?: EnumBloodGroupFieldUpdateOperationsInput | $Enums.BloodGroup
+    maritalStatus?: NullableEnumMaritalStatusFieldUpdateOperationsInput | $Enums.MaritalStatus | null
+    educationCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    specialtyCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    statisticalCategories?: PersonHrProfileUpdatestatisticalCategoriesInput | $Enums.StatisticalCategory[]
+    photoStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressUpsertWithWhereUniqueWithoutPersonInput = {
+    where: PersonAddressWhereUniqueInput
+    update: XOR<PersonAddressUpdateWithoutPersonInput, PersonAddressUncheckedUpdateWithoutPersonInput>
+    create: XOR<PersonAddressCreateWithoutPersonInput, PersonAddressUncheckedCreateWithoutPersonInput>
+  }
+
+  export type PersonAddressUpdateWithWhereUniqueWithoutPersonInput = {
+    where: PersonAddressWhereUniqueInput
+    data: XOR<PersonAddressUpdateWithoutPersonInput, PersonAddressUncheckedUpdateWithoutPersonInput>
+  }
+
+  export type PersonAddressUpdateManyWithWhereWithoutPersonInput = {
+    where: PersonAddressScalarWhereInput
+    data: XOR<PersonAddressUpdateManyMutationInput, PersonAddressUncheckedUpdateManyWithoutPersonInput>
+  }
+
+  export type PersonAddressScalarWhereInput = {
+    AND?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
+    OR?: PersonAddressScalarWhereInput[]
+    NOT?: PersonAddressScalarWhereInput | PersonAddressScalarWhereInput[]
+    id?: UuidFilter<"PersonAddress"> | string
+    personId?: UuidFilter<"PersonAddress"> | string
+    kind?: EnumPersonAddressKindFilter<"PersonAddress"> | $Enums.PersonAddressKind
+    lineCipher?: StringFilter<"PersonAddress"> | string
+    cityCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    regionCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    postalCipher?: StringNullableFilter<"PersonAddress"> | string | null
+    createdAt?: DateTimeFilter<"PersonAddress"> | Date | string
+    updatedAt?: DateTimeFilter<"PersonAddress"> | Date | string
+  }
+
   export type GlobalNaturalPersonUpsertWithoutMergedFromInput = {
     update: XOR<GlobalNaturalPersonUpdateWithoutMergedFromInput, GlobalNaturalPersonUncheckedUpdateWithoutMergedFromInput>
     create: XOR<GlobalNaturalPersonCreateWithoutMergedFromInput, GlobalNaturalPersonUncheckedCreateWithoutMergedFromInput>
@@ -10630,6 +14062,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
   }
 
@@ -10648,6 +14082,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
   }
 
   export type GlobalNaturalPersonUpsertWithWhereUniqueWithoutMergedIntoInput = {
@@ -10682,6 +14118,190 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"GlobalNaturalPerson"> | Date | string
   }
 
+  export type GlobalNaturalPersonCreateWithoutHrProfileInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutHrProfileInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutHrProfileInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutHrProfileInput, GlobalNaturalPersonUncheckedCreateWithoutHrProfileInput>
+  }
+
+  export type GlobalNaturalPersonUpsertWithoutHrProfileInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutHrProfileInput, GlobalNaturalPersonUncheckedUpdateWithoutHrProfileInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutHrProfileInput, GlobalNaturalPersonUncheckedCreateWithoutHrProfileInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutHrProfileInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutHrProfileInput, GlobalNaturalPersonUncheckedUpdateWithoutHrProfileInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutHrProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutHrProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonCreateWithoutAddressesInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
+    mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonUncheckedCreateWithoutAddressesInput = {
+    id?: string
+    finBlindIndex?: string | null
+    finCipher?: string | null
+    fullNameCipher?: string | null
+    phoneCipher?: string | null
+    nationality?: string | null
+    personSegment?: $Enums.PersonSegment
+    mergedIntoPersonId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
+    accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
+    accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
+  }
+
+  export type GlobalNaturalPersonCreateOrConnectWithoutAddressesInput = {
+    where: GlobalNaturalPersonWhereUniqueInput
+    create: XOR<GlobalNaturalPersonCreateWithoutAddressesInput, GlobalNaturalPersonUncheckedCreateWithoutAddressesInput>
+  }
+
+  export type GlobalNaturalPersonUpsertWithoutAddressesInput = {
+    update: XOR<GlobalNaturalPersonUpdateWithoutAddressesInput, GlobalNaturalPersonUncheckedUpdateWithoutAddressesInput>
+    create: XOR<GlobalNaturalPersonCreateWithoutAddressesInput, GlobalNaturalPersonUncheckedCreateWithoutAddressesInput>
+    where?: GlobalNaturalPersonWhereInput
+  }
+
+  export type GlobalNaturalPersonUpdateToOneWithWhereWithoutAddressesInput = {
+    where?: GlobalNaturalPersonWhereInput
+    data: XOR<GlobalNaturalPersonUpdateWithoutAddressesInput, GlobalNaturalPersonUncheckedUpdateWithoutAddressesInput>
+  }
+
+  export type GlobalNaturalPersonUpdateWithoutAddressesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
+    mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
+  }
+
+  export type GlobalNaturalPersonUncheckedUpdateWithoutAddressesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    finCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    fullNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    nationality?: NullableStringFieldUpdateOperationsInput | string | null
+    personSegment?: EnumPersonSegmentFieldUpdateOperationsInput | $Enums.PersonSegment
+    mergedIntoPersonId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
+    accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
+    accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
+  }
+
   export type GlobalNaturalPersonCreateWithoutIdentifiersInput = {
     id?: string
     finBlindIndex?: string | null
@@ -10695,6 +14315,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -10713,6 +14335,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10745,6 +14369,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -10763,6 +14389,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -10779,6 +14407,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -10797,6 +14427,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10829,6 +14461,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -10847,6 +14481,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -10863,6 +14499,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -10881,6 +14519,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessLogs?: PersonAccessLogUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10913,6 +14553,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -10931,6 +14573,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -10947,6 +14591,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressCreateNestedManyWithoutPersonInput
     mergedInto?: GlobalNaturalPersonCreateNestedOneWithoutMergedFromInput
     mergedFrom?: GlobalNaturalPersonCreateNestedManyWithoutMergedIntoInput
   }
@@ -10965,6 +14611,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedCreateNestedManyWithoutPersonInput
     accessRequests?: PersonAccessRequestUncheckedCreateNestedManyWithoutPersonInput
     accessGrants?: PersonAccessGrantUncheckedCreateNestedManyWithoutPersonInput
+    hrProfile?: PersonHrProfileUncheckedCreateNestedOneWithoutPersonInput
+    addresses?: PersonAddressUncheckedCreateNestedManyWithoutPersonInput
     mergedFrom?: GlobalNaturalPersonUncheckedCreateNestedManyWithoutMergedIntoInput
   }
 
@@ -10997,6 +14645,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedInto?: GlobalNaturalPersonUpdateOneWithoutMergedFromNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
@@ -11015,6 +14665,8 @@ export namespace Prisma {
     identifiers?: PersonIdentifierUncheckedUpdateManyWithoutPersonNestedInput
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -11051,6 +14703,17 @@ export namespace Prisma {
     action: string
     metaJson?: string | null
     createdAt?: Date | string
+  }
+
+  export type PersonAddressCreateManyPersonInput = {
+    id?: string
+    kind: $Enums.PersonAddressKind
+    lineCipher: string
+    cityCipher?: string | null
+    regionCipher?: string | null
+    postalCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type GlobalNaturalPersonCreateManyMergedIntoInput = {
@@ -11170,6 +14833,39 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type PersonAddressUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressUncheckedUpdateWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PersonAddressUncheckedUpdateManyWithoutPersonInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: EnumPersonAddressKindFieldUpdateOperationsInput | $Enums.PersonAddressKind
+    lineCipher?: StringFieldUpdateOperationsInput | string
+    cityCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    regionCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    postalCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type GlobalNaturalPersonUpdateWithoutMergedIntoInput = {
     id?: StringFieldUpdateOperationsInput | string
     finBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
@@ -11184,6 +14880,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUpdateManyWithoutMergedIntoNestedInput
   }
 
@@ -11201,6 +14899,8 @@ export namespace Prisma {
     accessRequests?: PersonAccessRequestUncheckedUpdateManyWithoutPersonNestedInput
     accessGrants?: PersonAccessGrantUncheckedUpdateManyWithoutPersonNestedInput
     accessLogs?: PersonAccessLogUncheckedUpdateManyWithoutPersonNestedInput
+    hrProfile?: PersonHrProfileUncheckedUpdateOneWithoutPersonNestedInput
+    addresses?: PersonAddressUncheckedUpdateManyWithoutPersonNestedInput
     mergedFrom?: GlobalNaturalPersonUncheckedUpdateManyWithoutMergedIntoNestedInput
   }
 

@@ -285,6 +285,20 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 
 **Templates:** Revenue Code Definitions, Bed Type, Room Views, Room Types, Rate Codes, Rooms, Travel Agencies, Product Cards, Stock Cards, Guests, Reservations, Folios (.xlsx from Elektraweb)
 
+### Stage 27 — ELEKTRAWEB-LIVE-BRIDGE (planned)
+
+Nafta dual-run (≤ ~2 weeks): MV3 browser extension intercepts Elektraweb XHR → hotel ingest → mirror guests / reservations / open folio; status-diff emits clinic lifecycle. Docs-first; not SHIPPED product.
+
+- [x] ADR + operator guide (2026-07-15)
+- [x] Discovery HAR (reservations + in-house + guests + folio) → URL allowlist + field maps documented in ELEKTRAWEB-LIVE-BRIDGE §6
+- [x] `POST /api/integrations/elektraweb-bridge` + login + kill switch `ELEKTRAWEB_BRIDGE_ENABLED`
+- [x] Extension package `extensions/elektraweb-bridge/` (unpacked load; Options login form)
+- [x] Status-diff → check-in/out / room-change / sanatorium booking events
+- [x] Health endpoint + FO dual-run checklist (docs)
+- [ ] Hour-X: disable bridge, revoke token, uninstall
+
+**Guide:** [ELEKTRAWEB-LIVE-BRIDGE.md](./ELEKTRAWEB-LIVE-BRIDGE.md) · **ADR:** [docs/adr/hotel-elektraweb-live-bridge.md](../../docs/adr/hotel-elektraweb-live-bridge.md) · **Coverage:** `HOT-06` API
+
 
 ## Platform add-ons (v1.0)
 
@@ -391,7 +405,7 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] Sanatorium booking event → orchestrator → clinic early planning
 - [x] `MigrationRegistration` + `GET/POST /api/migration/registrations`, prefill skeleton
 - [x] CP module `hotel_migration_pro` (all hotel types; alias `migration_pro`) — catalog seed, all hotel bundles, nav `/migration`, API gate
-- [x] Executive dashboard pulls clinic capacity when `CLINIC_URL` + `CLINIC_BRIDGE_SECRET` set
+- [x] Executive dashboard pulls clinic capacity when `CLINIC_URL` + `CLINIC_BRIDGE_SECRET` set; soft/critical banner (remaining%); medical booking soft warn in NewBookingModal; hard block on critical
 - [x] Apply migration `20260604180000_hotel_service_migration` on `era_hotel_pms` (via `scripts/docker-migrate-deploy.mjs` / compose entrypoint)
 
 ## Nafta W0 gap closure (2026-06-13)

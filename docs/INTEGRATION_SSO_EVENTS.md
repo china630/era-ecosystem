@@ -131,10 +131,15 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | era-hotel-pms | `handleHotelNightAudit` | Multi-line NAS journal from `revenueLines` + GL map |
 
 **Hotel revenue split (room vs add-on):** PMS folio charges carry a `RevenueCode` (`ROOM`, `FOOD`, `MEDICAL`, …). The dynamic pricing engine (`quoteStay` in `era-hotel-pms`) emits quotes with separate **Room Revenue** and **Add-on Revenue** lines so each posts to the correct code. Night audit aggregates charges by `revenueCodeId`, enriches each line with `glAccountCode` (e.g. ROOM→601, FOOD→602), and sends `revenueLines[]` on `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` — enabling Finance/Orchestrator to route food revenue to the F&B org/satellite without merging it into accommodation revenue. See ADR [hotel-dynamic-rate-plans.md](./adr/hotel-dynamic-rate-plans.md).
+
+**Elektraweb live bridge (Nafta dual-run, planned):** temporary browser extension mirrors guests/reservations/open folio into `era-hotel-pms` while FO SoT remains Elektraweb. Ingest must emit the same hotel→clinic lifecycle events as native check-in (`SATELLITE_HOTEL_GUEST_CHECKED_IN` / `OUT`, `ROOM_CHANGED`, `SANATORIUM_BOOKING_CREATED`) — not Prisma-only upsert. During dual-run do **not** emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` from ERA for mirrored stays. Docs: [ADR](./adr/hotel-elektraweb-live-bridge.md) · [ELEKTRAWEB-LIVE-BRIDGE.md](../era-hotel-pms/doc/ELEKTRAWEB-LIVE-BRIDGE.md).
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | era-hotel-pms | `handleHotelInvoiceIssued` | Draft sales invoice in Finance |
 | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | era-hotel-pms | `handleHotelCityLedgerSnapshot` | Agency city-ledger snapshot persisted (`AgencyCityLedgerSnapshot`); read on Finance counterparty |
 | `SATELLITE_RETAIL_SALE_COMPLETED` | era-retail-pos | `handleRetailSale` | GL + draft invoice |
 | `SATELLITE_RETAIL_SHIFT_CLOSED` | era-retail-pos | `handleRetailShiftClosed` | Cash recon log (meta only) |
+| `SATELLITE_FB_SALE_COMPLETED` | era-fnb-pos | `handleFbSale` | GL journal (LOCAL_CASHIER only; not room-charge/hub) |
+| `SATELLITE_FB_SHIFT_CLOSED` | era-fnb-pos | `handleFbShiftClosed` | Cash recon log (meta only) |
+| `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` | era-fnb-pos | `handleFbStockConsumption` | WIP/COGS journal |
 | `SATELLITE_LOGISTICS_TRIP_COMPLETED` | era-logistics | `handleLogisticsTrip` | GL posting |
 | `SATELLITE_CONSTRUCTION_PROGRESS_ACT_APPROVED` | era-construction | `handleConstructionAct` | GL + draft invoice |
 | `SATELLITE_CRM_LEAD_CONVERTED` | era-crm | `handleCrmLead` | GL + draft invoice |
@@ -249,8 +254,13 @@ User JWT composition API: `v1/holdings/*` (create, attach org, members). Web: Or
 | `WORKFORCE_ABSENCE_APPROVED` | Upsert Finance `Absence` mirror (`cpAbsenceId`) |
 | `WORKFORCE_ABSENCE_UPDATED` | Update mirror dates/kind |
 | `WORKFORCE_ABSENCE_CANCELLED` | Soft-delete mirror + unlock timesheet cells |
+| `WORKFORCE_VACATION_PLAN_APPROVED` | Annual vacation plan approved (CP master). Finance mirror **HEADLESS** for now (event published; no local table/consumer yet) |
+| `WORKFORCE_PERSONNEL_ORDER_ISSUED` | (audit/log in CP; optional future satellite event) Printable kadr order issued — see ADR cp-personnel-orders |
+| `WORKFORCE_STAFF_SCHEDULE_APPROVED` | (audit in CP) Approved ştat cədvəli revision snapshot |
 
 Schema: `packages/era-contracts/src/events/workforce.events.ts`. ADR: [cp-workforce-absence-split.md](./adr/cp-workforce-absence-split.md).
+
+**MDM HR profile (WS2):** `GET/PATCH /internal/v1/mdm/persons/:personId/hr-profile?organizationId=` (PersonAccessGrant). Ops-profile + batch include decrypted `hrProfile` when grant allows. Finance reads via `OrchestratorMdmClientService.getHrProfile` / `batchHrProfiles` — never persists blood/address/education/marital/stats/photo on `Employee`.
 
 **STAFF_PROVISIONED / STAFF_DEACTIVATED (Plan C):** Publisher = **Orchestrator CP** (`WorkforceProvisionService`). Payload v2 requires `cpEmploymentId`; optional `financeEmployeeId` for payroll extension. `fullName` in payload is **T3 ops-cache display stamp only** (from MDM at provision); not authoritative — see [cp-workforce-pii-tiers.md](./adr/cp-workforce-pii-tiers.md). Schema: `packages/era-contracts/src/events/hr.events.ts`. ADR: [cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md).
 

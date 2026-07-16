@@ -6,10 +6,28 @@ import {
   PatientMdmRequiredError,
 } from "@/domain/patient/patient.service";
 
+const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
+const patientBloodGroup = z.enum([
+  "A_POS",
+  "A_NEG",
+  "B_POS",
+  "B_NEG",
+  "AB_POS",
+  "AB_NEG",
+  "O_POS",
+  "O_NEG",
+  "UNKNOWN",
+]);
+
 const updateSchema = z.object({
   fullName: z.string().min(1).optional(),
   phone: z.string().nullable().optional(),
   nationality: z.string().nullable().optional(),
+  sex: patientSex.optional(),
+  birthDate: z.string().nullable().optional(),
+  bloodGroup: patientBloodGroup.optional(),
+  emergencyContactName: z.string().nullable().optional(),
+  emergencyContactPhone: z.string().nullable().optional(),
   finCode: z.string().nullable().optional(),
   passportNumber: z.string().nullable().optional(),
   issuingCountry: z.string().nullable().optional(),

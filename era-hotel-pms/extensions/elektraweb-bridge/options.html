@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ERA Elektraweb Bridge — Setup</title>
+    <style>
+      :root {
+        font-family: Segoe UI, system-ui, sans-serif;
+        color: #1a1a1a;
+      }
+      body {
+        max-width: 440px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin-bottom: 0.25rem;
+      }
+      .muted {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 1.25rem;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        margin: 0.75rem 0 0.25rem;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.5rem 0.6rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 0.55rem 1rem;
+        border: 0;
+        border-radius: 6px;
+        background: #0b5fff;
+        color: #fff;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.secondary {
+        background: #555;
+        margin-left: 0.5rem;
+      }
+      .ok {
+        color: #0a7a2f;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+      .err {
+        color: #b00020;
+        margin-top: 0.75rem;
+        font-size: 0.9rem;
+      }
+      .box {
+        background: #f5f7fa;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+      }
+      code {
+        font-size: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ERA Elektraweb Bridge</h1>
+    <p class="muted">
+      Log in to <strong>your</strong> ERA Hotel PMS. The token is bound to that
+      deployment’s organization and Elektraweb hotel id — data cannot cross tenants.
+    </p>
+
+    <label for="hotelBaseUrl">ERA Hotel PMS URL</label>
+    <input id="hotelBaseUrl" placeholder="http://127.0.0.1:3201" />
+
+    <label for="login">ERA login</label>
+    <input id="login" autocomplete="username" />
+
+    <label for="password">ERA password</label>
+    <input id="password" type="password" autocomplete="current-password" />
+
+    <div>
+      <button id="btnLogin" type="button">Log in &amp; save</button>
+      <button id="btnLogout" class="secondary" type="button">Log out</button>
+    </div>
+
+    <div id="msg"></div>
+    <div class="box" id="session">Not logged in</div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

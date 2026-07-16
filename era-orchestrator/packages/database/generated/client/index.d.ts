@@ -134,6 +134,26 @@ export type WorkforceAbsence = $Result.DefaultSelection<Prisma.$WorkforceAbsence
  */
 export type WorkforceTimesheetEntry = $Result.DefaultSelection<Prisma.$WorkforceTimesheetEntryPayload>
 /**
+ * Model WorkforceVacationPlan
+ * Department (or scope) annual vacation plan — master in CP; Finance mirror is HEADLESS (event only).
+ */
+export type WorkforceVacationPlan = $Result.DefaultSelection<Prisma.$WorkforceVacationPlanPayload>
+/**
+ * Model WorkforceVacationPlanLine
+ * 
+ */
+export type WorkforceVacationPlanLine = $Result.DefaultSelection<Prisma.$WorkforceVacationPlanLinePayload>
+/**
+ * Model WorkforcePersonnelOrder
+ * Printable kadr order (hire/transfer/terminate) — document workflow over operational employment changes.
+ */
+export type WorkforcePersonnelOrder = $Result.DefaultSelection<Prisma.$WorkforcePersonnelOrderPayload>
+/**
+ * Model StaffScheduleRevision
+ * Approved snapshot of ştat cədvəli (positions × occupied/vacant slots).
+ */
+export type StaffScheduleRevision = $Result.DefaultSelection<Prisma.$StaffScheduleRevisionPayload>
+/**
  * Model WorkforceAuditLog
  * 
  */
@@ -619,6 +639,44 @@ export const WorkforceTimesheetEntryStatus: {
 export type WorkforceTimesheetEntryStatus = (typeof WorkforceTimesheetEntryStatus)[keyof typeof WorkforceTimesheetEntryStatus]
 
 
+export const WorkforceVacationPlanStatus: {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+};
+
+export type WorkforceVacationPlanStatus = (typeof WorkforceVacationPlanStatus)[keyof typeof WorkforceVacationPlanStatus]
+
+
+export const WorkforcePersonnelOrderType: {
+  HIRE: 'HIRE',
+  TRANSFER: 'TRANSFER',
+  TERMINATE: 'TERMINATE'
+};
+
+export type WorkforcePersonnelOrderType = (typeof WorkforcePersonnelOrderType)[keyof typeof WorkforcePersonnelOrderType]
+
+
+export const WorkforcePersonnelOrderStatus: {
+  DRAFT: 'DRAFT',
+  ISSUED: 'ISSUED',
+  CANCELLED: 'CANCELLED'
+};
+
+export type WorkforcePersonnelOrderStatus = (typeof WorkforcePersonnelOrderStatus)[keyof typeof WorkforcePersonnelOrderStatus]
+
+
+export const StaffScheduleRevisionStatus: {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+};
+
+export type StaffScheduleRevisionStatus = (typeof StaffScheduleRevisionStatus)[keyof typeof StaffScheduleRevisionStatus]
+
+
 export const OrgUnitStatus: {
   ACTIVE: 'ACTIVE',
   ARCHIVED: 'ARCHIVED'
@@ -820,6 +878,22 @@ export const WorkforceAbsenceStatus: typeof $Enums.WorkforceAbsenceStatus
 export type WorkforceTimesheetEntryStatus = $Enums.WorkforceTimesheetEntryStatus
 
 export const WorkforceTimesheetEntryStatus: typeof $Enums.WorkforceTimesheetEntryStatus
+
+export type WorkforceVacationPlanStatus = $Enums.WorkforceVacationPlanStatus
+
+export const WorkforceVacationPlanStatus: typeof $Enums.WorkforceVacationPlanStatus
+
+export type WorkforcePersonnelOrderType = $Enums.WorkforcePersonnelOrderType
+
+export const WorkforcePersonnelOrderType: typeof $Enums.WorkforcePersonnelOrderType
+
+export type WorkforcePersonnelOrderStatus = $Enums.WorkforcePersonnelOrderStatus
+
+export const WorkforcePersonnelOrderStatus: typeof $Enums.WorkforcePersonnelOrderStatus
+
+export type StaffScheduleRevisionStatus = $Enums.StaffScheduleRevisionStatus
+
+export const StaffScheduleRevisionStatus: typeof $Enums.StaffScheduleRevisionStatus
 
 export type OrgUnitStatus = $Enums.OrgUnitStatus
 
@@ -1217,6 +1291,46 @@ export class PrismaClient<
     * ```
     */
   get workforceTimesheetEntry(): Prisma.WorkforceTimesheetEntryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceVacationPlan`: Exposes CRUD operations for the **WorkforceVacationPlan** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceVacationPlans
+    * const workforceVacationPlans = await prisma.workforceVacationPlan.findMany()
+    * ```
+    */
+  get workforceVacationPlan(): Prisma.WorkforceVacationPlanDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforceVacationPlanLine`: Exposes CRUD operations for the **WorkforceVacationPlanLine** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforceVacationPlanLines
+    * const workforceVacationPlanLines = await prisma.workforceVacationPlanLine.findMany()
+    * ```
+    */
+  get workforceVacationPlanLine(): Prisma.WorkforceVacationPlanLineDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.workforcePersonnelOrder`: Exposes CRUD operations for the **WorkforcePersonnelOrder** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more WorkforcePersonnelOrders
+    * const workforcePersonnelOrders = await prisma.workforcePersonnelOrder.findMany()
+    * ```
+    */
+  get workforcePersonnelOrder(): Prisma.WorkforcePersonnelOrderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.staffScheduleRevision`: Exposes CRUD operations for the **StaffScheduleRevision** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StaffScheduleRevisions
+    * const staffScheduleRevisions = await prisma.staffScheduleRevision.findMany()
+    * ```
+    */
+  get staffScheduleRevision(): Prisma.StaffScheduleRevisionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.workforceAuditLog`: Exposes CRUD operations for the **WorkforceAuditLog** model.
@@ -2055,6 +2169,10 @@ export namespace Prisma {
     WorkforceEmployment: 'WorkforceEmployment',
     WorkforceAbsence: 'WorkforceAbsence',
     WorkforceTimesheetEntry: 'WorkforceTimesheetEntry',
+    WorkforceVacationPlan: 'WorkforceVacationPlan',
+    WorkforceVacationPlanLine: 'WorkforceVacationPlanLine',
+    WorkforcePersonnelOrder: 'WorkforcePersonnelOrder',
+    StaffScheduleRevision: 'StaffScheduleRevision',
     WorkforceAuditLog: 'WorkforceAuditLog',
     PricingBundle: 'PricingBundle',
     LandingModuleMarketing: 'LandingModuleMarketing',
@@ -2108,7 +2226,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "holding" | "holdingMembership" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
+      modelProps: "tenantBilling" | "organizationSubscription" | "subscriptionInvoice" | "billingInvoiceItem" | "usageMeterEvent" | "organizationModule" | "organizationBundle" | "pricing" | "pricingModule" | "satellite" | "organizationSatelliteEntitlement" | "satelliteEndpoint" | "workforceAssignment" | "workforceScope" | "orgUnit" | "orgUnitCommercialLink" | "workforcePosition" | "satelliteRoleTemplate" | "workforceRoleBinding" | "workforceManualGrant" | "workforceSeatAllocation" | "workforceEmployment" | "workforceAbsence" | "workforceTimesheetEntry" | "workforceVacationPlan" | "workforceVacationPlanLine" | "workforcePersonnelOrder" | "staffScheduleRevision" | "workforceAuditLog" | "pricingBundle" | "landingModuleMarketing" | "paymentOrder" | "systemConfig" | "role" | "permission" | "rolePermission" | "organization" | "user" | "organizationMembership" | "accessRequest" | "organizationInvite" | "partner" | "referral" | "referralCommission" | "ownershipDispute" | "organizationSecurityState" | "earlyAccessEvent" | "earlyAccessSignup" | "earlyAccessThresholdAlert" | "auditLog" | "notificationTemplate" | "notificationOutbox" | "notificationDeliveryLog" | "platformPaymentLink" | "platformPortalLink" | "bookableResource" | "bookingSlot" | "bookingAppointment" | "platformPromotion" | "platformCustomDomain" | "platformShipment" | "platformAuditLog" | "platformIdempotencyRecord" | "platformLoyaltyLedger"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3885,6 +4003,302 @@ export namespace Prisma {
           count: {
             args: Prisma.WorkforceTimesheetEntryCountArgs<ExtArgs>
             result: $Utils.Optional<WorkforceTimesheetEntryCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceVacationPlan: {
+        payload: Prisma.$WorkforceVacationPlanPayload<ExtArgs>
+        fields: Prisma.WorkforceVacationPlanFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceVacationPlanFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceVacationPlanFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceVacationPlanFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceVacationPlanFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceVacationPlanFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceVacationPlanCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceVacationPlanCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceVacationPlanDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          update: {
+            args: Prisma.WorkforceVacationPlanUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceVacationPlanDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceVacationPlanUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceVacationPlanUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceVacationPlanAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceVacationPlan>
+          }
+          groupBy: {
+            args: Prisma.WorkforceVacationPlanGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceVacationPlanCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforceVacationPlanLine: {
+        payload: Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>
+        fields: Prisma.WorkforceVacationPlanLineFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforceVacationPlanLineFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforceVacationPlanLineFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforceVacationPlanLineFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforceVacationPlanLineFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          findMany: {
+            args: Prisma.WorkforceVacationPlanLineFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>[]
+          }
+          create: {
+            args: Prisma.WorkforceVacationPlanLineCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          createMany: {
+            args: Prisma.WorkforceVacationPlanLineCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanLineCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforceVacationPlanLineDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          update: {
+            args: Prisma.WorkforceVacationPlanLineUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforceVacationPlanLineDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforceVacationPlanLineUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforceVacationPlanLineUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforceVacationPlanLineUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforceVacationPlanLinePayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforceVacationPlanLineAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforceVacationPlanLine>
+          }
+          groupBy: {
+            args: Prisma.WorkforceVacationPlanLineGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanLineGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforceVacationPlanLineCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforceVacationPlanLineCountAggregateOutputType> | number
+          }
+        }
+      }
+      WorkforcePersonnelOrder: {
+        payload: Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>
+        fields: Prisma.WorkforcePersonnelOrderFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.WorkforcePersonnelOrderFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.WorkforcePersonnelOrderFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          findFirst: {
+            args: Prisma.WorkforcePersonnelOrderFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.WorkforcePersonnelOrderFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          findMany: {
+            args: Prisma.WorkforcePersonnelOrderFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>[]
+          }
+          create: {
+            args: Prisma.WorkforcePersonnelOrderCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          createMany: {
+            args: Prisma.WorkforcePersonnelOrderCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.WorkforcePersonnelOrderCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>[]
+          }
+          delete: {
+            args: Prisma.WorkforcePersonnelOrderDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          update: {
+            args: Prisma.WorkforcePersonnelOrderUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          deleteMany: {
+            args: Prisma.WorkforcePersonnelOrderDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.WorkforcePersonnelOrderUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.WorkforcePersonnelOrderUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>[]
+          }
+          upsert: {
+            args: Prisma.WorkforcePersonnelOrderUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$WorkforcePersonnelOrderPayload>
+          }
+          aggregate: {
+            args: Prisma.WorkforcePersonnelOrderAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateWorkforcePersonnelOrder>
+          }
+          groupBy: {
+            args: Prisma.WorkforcePersonnelOrderGroupByArgs<ExtArgs>
+            result: $Utils.Optional<WorkforcePersonnelOrderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.WorkforcePersonnelOrderCountArgs<ExtArgs>
+            result: $Utils.Optional<WorkforcePersonnelOrderCountAggregateOutputType> | number
+          }
+        }
+      }
+      StaffScheduleRevision: {
+        payload: Prisma.$StaffScheduleRevisionPayload<ExtArgs>
+        fields: Prisma.StaffScheduleRevisionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StaffScheduleRevisionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StaffScheduleRevisionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          findFirst: {
+            args: Prisma.StaffScheduleRevisionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StaffScheduleRevisionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          findMany: {
+            args: Prisma.StaffScheduleRevisionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>[]
+          }
+          create: {
+            args: Prisma.StaffScheduleRevisionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          createMany: {
+            args: Prisma.StaffScheduleRevisionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StaffScheduleRevisionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>[]
+          }
+          delete: {
+            args: Prisma.StaffScheduleRevisionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          update: {
+            args: Prisma.StaffScheduleRevisionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          deleteMany: {
+            args: Prisma.StaffScheduleRevisionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StaffScheduleRevisionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StaffScheduleRevisionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>[]
+          }
+          upsert: {
+            args: Prisma.StaffScheduleRevisionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StaffScheduleRevisionPayload>
+          }
+          aggregate: {
+            args: Prisma.StaffScheduleRevisionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStaffScheduleRevision>
+          }
+          groupBy: {
+            args: Prisma.StaffScheduleRevisionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StaffScheduleRevisionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StaffScheduleRevisionCountArgs<ExtArgs>
+            result: $Utils.Optional<StaffScheduleRevisionCountAggregateOutputType> | number
           }
         }
       }
@@ -6832,6 +7246,10 @@ export namespace Prisma {
     workforceEmployment?: WorkforceEmploymentOmit
     workforceAbsence?: WorkforceAbsenceOmit
     workforceTimesheetEntry?: WorkforceTimesheetEntryOmit
+    workforceVacationPlan?: WorkforceVacationPlanOmit
+    workforceVacationPlanLine?: WorkforceVacationPlanLineOmit
+    workforcePersonnelOrder?: WorkforcePersonnelOrderOmit
+    staffScheduleRevision?: StaffScheduleRevisionOmit
     workforceAuditLog?: WorkforceAuditLogOmit
     pricingBundle?: PricingBundleOmit
     landingModuleMarketing?: LandingModuleMarketingOmit
@@ -7043,6 +7461,9 @@ export namespace Prisma {
     employments: number
     commercialLinks: number
     seatAllocations: number
+    vacationPlans: number
+    personnelOrders: number
+    staffScheduleRevisions: number
   }
 
   export type WorkforceScopeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7050,6 +7471,9 @@ export namespace Prisma {
     employments?: boolean | WorkforceScopeCountOutputTypeCountEmploymentsArgs
     commercialLinks?: boolean | WorkforceScopeCountOutputTypeCountCommercialLinksArgs
     seatAllocations?: boolean | WorkforceScopeCountOutputTypeCountSeatAllocationsArgs
+    vacationPlans?: boolean | WorkforceScopeCountOutputTypeCountVacationPlansArgs
+    personnelOrders?: boolean | WorkforceScopeCountOutputTypeCountPersonnelOrdersArgs
+    staffScheduleRevisions?: boolean | WorkforceScopeCountOutputTypeCountStaffScheduleRevisionsArgs
   }
 
   // Custom InputTypes
@@ -7091,6 +7515,27 @@ export namespace Prisma {
     where?: WorkforceSeatAllocationWhereInput
   }
 
+  /**
+   * WorkforceScopeCountOutputType without action
+   */
+  export type WorkforceScopeCountOutputTypeCountVacationPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanWhereInput
+  }
+
+  /**
+   * WorkforceScopeCountOutputType without action
+   */
+  export type WorkforceScopeCountOutputTypeCountPersonnelOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforcePersonnelOrderWhereInput
+  }
+
+  /**
+   * WorkforceScopeCountOutputType without action
+   */
+  export type WorkforceScopeCountOutputTypeCountStaffScheduleRevisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StaffScheduleRevisionWhereInput
+  }
+
 
   /**
    * Count Type OrgUnitCountOutputType
@@ -7101,6 +7546,7 @@ export namespace Prisma {
     positions: number
     employments: number
     commercialLinks: number
+    vacationPlans: number
   }
 
   export type OrgUnitCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7108,6 +7554,7 @@ export namespace Prisma {
     positions?: boolean | OrgUnitCountOutputTypeCountPositionsArgs
     employments?: boolean | OrgUnitCountOutputTypeCountEmploymentsArgs
     commercialLinks?: boolean | OrgUnitCountOutputTypeCountCommercialLinksArgs
+    vacationPlans?: boolean | OrgUnitCountOutputTypeCountVacationPlansArgs
   }
 
   // Custom InputTypes
@@ -7147,6 +7594,13 @@ export namespace Prisma {
    */
   export type OrgUnitCountOutputTypeCountCommercialLinksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrgUnitCommercialLinkWhereInput
+  }
+
+  /**
+   * OrgUnitCountOutputType without action
+   */
+  export type OrgUnitCountOutputTypeCountVacationPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanWhereInput
   }
 
 
@@ -7231,6 +7685,8 @@ export namespace Prisma {
     roleBindings: number
     manualGrants: number
     timesheetEntries: number
+    vacationPlanLines: number
+    personnelOrders: number
   }
 
   export type WorkforceEmploymentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7239,6 +7695,8 @@ export namespace Prisma {
     roleBindings?: boolean | WorkforceEmploymentCountOutputTypeCountRoleBindingsArgs
     manualGrants?: boolean | WorkforceEmploymentCountOutputTypeCountManualGrantsArgs
     timesheetEntries?: boolean | WorkforceEmploymentCountOutputTypeCountTimesheetEntriesArgs
+    vacationPlanLines?: boolean | WorkforceEmploymentCountOutputTypeCountVacationPlanLinesArgs
+    personnelOrders?: boolean | WorkforceEmploymentCountOutputTypeCountPersonnelOrdersArgs
   }
 
   // Custom InputTypes
@@ -7285,6 +7743,51 @@ export namespace Prisma {
    */
   export type WorkforceEmploymentCountOutputTypeCountTimesheetEntriesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: WorkforceTimesheetEntryWhereInput
+  }
+
+  /**
+   * WorkforceEmploymentCountOutputType without action
+   */
+  export type WorkforceEmploymentCountOutputTypeCountVacationPlanLinesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanLineWhereInput
+  }
+
+  /**
+   * WorkforceEmploymentCountOutputType without action
+   */
+  export type WorkforceEmploymentCountOutputTypeCountPersonnelOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforcePersonnelOrderWhereInput
+  }
+
+
+  /**
+   * Count Type WorkforceVacationPlanCountOutputType
+   */
+
+  export type WorkforceVacationPlanCountOutputType = {
+    lines: number
+  }
+
+  export type WorkforceVacationPlanCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lines?: boolean | WorkforceVacationPlanCountOutputTypeCountLinesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * WorkforceVacationPlanCountOutputType without action
+   */
+  export type WorkforceVacationPlanCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanCountOutputType
+     */
+    select?: WorkforceVacationPlanCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlanCountOutputType without action
+   */
+  export type WorkforceVacationPlanCountOutputTypeCountLinesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanLineWhereInput
   }
 
 
@@ -22970,6 +23473,9 @@ export namespace Prisma {
     employments?: boolean | WorkforceScope$employmentsArgs<ExtArgs>
     commercialLinks?: boolean | WorkforceScope$commercialLinksArgs<ExtArgs>
     seatAllocations?: boolean | WorkforceScope$seatAllocationsArgs<ExtArgs>
+    vacationPlans?: boolean | WorkforceScope$vacationPlansArgs<ExtArgs>
+    personnelOrders?: boolean | WorkforceScope$personnelOrdersArgs<ExtArgs>
+    staffScheduleRevisions?: boolean | WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>
     _count?: boolean | WorkforceScopeCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceScope"]>
 
@@ -23003,6 +23509,9 @@ export namespace Prisma {
     employments?: boolean | WorkforceScope$employmentsArgs<ExtArgs>
     commercialLinks?: boolean | WorkforceScope$commercialLinksArgs<ExtArgs>
     seatAllocations?: boolean | WorkforceScope$seatAllocationsArgs<ExtArgs>
+    vacationPlans?: boolean | WorkforceScope$vacationPlansArgs<ExtArgs>
+    personnelOrders?: boolean | WorkforceScope$personnelOrdersArgs<ExtArgs>
+    staffScheduleRevisions?: boolean | WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>
     _count?: boolean | WorkforceScopeCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkforceScopeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -23015,6 +23524,9 @@ export namespace Prisma {
       employments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       commercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
       seatAllocations: Prisma.$WorkforceSeatAllocationPayload<ExtArgs>[]
+      vacationPlans: Prisma.$WorkforceVacationPlanPayload<ExtArgs>[]
+      personnelOrders: Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>[]
+      staffScheduleRevisions: Prisma.$StaffScheduleRevisionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -23420,6 +23932,9 @@ export namespace Prisma {
     employments<T extends WorkforceScope$employmentsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$employmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     commercialLinks<T extends WorkforceScope$commercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$commercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     seatAllocations<T extends WorkforceScope$seatAllocationsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$seatAllocationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceSeatAllocationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    vacationPlans<T extends WorkforceScope$vacationPlansArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$vacationPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    personnelOrders<T extends WorkforceScope$personnelOrdersArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$personnelOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    staffScheduleRevisions<T extends WorkforceScope$staffScheduleRevisionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScope$staffScheduleRevisionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23943,6 +24458,78 @@ export namespace Prisma {
   }
 
   /**
+   * WorkforceScope.vacationPlans
+   */
+  export type WorkforceScope$vacationPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    where?: WorkforceVacationPlanWhereInput
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceVacationPlanScalarFieldEnum | WorkforceVacationPlanScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceScope.personnelOrders
+   */
+  export type WorkforceScope$personnelOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    where?: WorkforcePersonnelOrderWhereInput
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforcePersonnelOrderScalarFieldEnum | WorkforcePersonnelOrderScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceScope.staffScheduleRevisions
+   */
+  export type WorkforceScope$staffScheduleRevisionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    where?: StaffScheduleRevisionWhereInput
+    orderBy?: StaffScheduleRevisionOrderByWithRelationInput | StaffScheduleRevisionOrderByWithRelationInput[]
+    cursor?: StaffScheduleRevisionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StaffScheduleRevisionScalarFieldEnum | StaffScheduleRevisionScalarFieldEnum[]
+  }
+
+  /**
    * WorkforceScope without action
    */
   export type WorkforceScopeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -24214,6 +24801,7 @@ export namespace Prisma {
     positions?: boolean | OrgUnit$positionsArgs<ExtArgs>
     employments?: boolean | OrgUnit$employmentsArgs<ExtArgs>
     commercialLinks?: boolean | OrgUnit$commercialLinksArgs<ExtArgs>
+    vacationPlans?: boolean | OrgUnit$vacationPlansArgs<ExtArgs>
     _count?: boolean | OrgUnitCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["orgUnit"]>
 
@@ -24274,6 +24862,7 @@ export namespace Prisma {
     positions?: boolean | OrgUnit$positionsArgs<ExtArgs>
     employments?: boolean | OrgUnit$employmentsArgs<ExtArgs>
     commercialLinks?: boolean | OrgUnit$commercialLinksArgs<ExtArgs>
+    vacationPlans?: boolean | OrgUnit$vacationPlansArgs<ExtArgs>
     _count?: boolean | OrgUnitCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrgUnitIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -24297,6 +24886,7 @@ export namespace Prisma {
       positions: Prisma.$WorkforcePositionPayload<ExtArgs>[]
       employments: Prisma.$WorkforceEmploymentPayload<ExtArgs>[]
       commercialLinks: Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>[]
+      vacationPlans: Prisma.$WorkforceVacationPlanPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -24711,6 +25301,7 @@ export namespace Prisma {
     positions<T extends OrgUnit$positionsArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$positionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePositionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     employments<T extends OrgUnit$employmentsArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$employmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     commercialLinks<T extends OrgUnit$commercialLinksArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$commercialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrgUnitCommercialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    vacationPlans<T extends OrgUnit$vacationPlansArgs<ExtArgs> = {}>(args?: Subset<T, OrgUnit$vacationPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -25283,6 +25874,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OrgUnitCommercialLinkScalarFieldEnum | OrgUnitCommercialLinkScalarFieldEnum[]
+  }
+
+  /**
+   * OrgUnit.vacationPlans
+   */
+  export type OrgUnit$vacationPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    where?: WorkforceVacationPlanWhereInput
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceVacationPlanScalarFieldEnum | WorkforceVacationPlanScalarFieldEnum[]
   }
 
   /**
@@ -32346,6 +32961,8 @@ export namespace Prisma {
     manualGrants?: boolean | WorkforceEmployment$manualGrantsArgs<ExtArgs>
     seatAllocation?: boolean | WorkforceEmployment$seatAllocationArgs<ExtArgs>
     timesheetEntries?: boolean | WorkforceEmployment$timesheetEntriesArgs<ExtArgs>
+    vacationPlanLines?: boolean | WorkforceEmployment$vacationPlanLinesArgs<ExtArgs>
+    personnelOrders?: boolean | WorkforceEmployment$personnelOrdersArgs<ExtArgs>
     _count?: boolean | WorkforceEmploymentCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["workforceEmployment"]>
 
@@ -32417,6 +33034,8 @@ export namespace Prisma {
     manualGrants?: boolean | WorkforceEmployment$manualGrantsArgs<ExtArgs>
     seatAllocation?: boolean | WorkforceEmployment$seatAllocationArgs<ExtArgs>
     timesheetEntries?: boolean | WorkforceEmployment$timesheetEntriesArgs<ExtArgs>
+    vacationPlanLines?: boolean | WorkforceEmployment$vacationPlanLinesArgs<ExtArgs>
+    personnelOrders?: boolean | WorkforceEmployment$personnelOrdersArgs<ExtArgs>
     _count?: boolean | WorkforceEmploymentCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type WorkforceEmploymentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -32445,6 +33064,8 @@ export namespace Prisma {
       manualGrants: Prisma.$WorkforceManualGrantPayload<ExtArgs>[]
       seatAllocation: Prisma.$WorkforceSeatAllocationPayload<ExtArgs> | null
       timesheetEntries: Prisma.$WorkforceTimesheetEntryPayload<ExtArgs>[]
+      vacationPlanLines: Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>[]
+      personnelOrders: Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -32864,6 +33485,8 @@ export namespace Prisma {
     manualGrants<T extends WorkforceEmployment$manualGrantsArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$manualGrantsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceManualGrantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     seatAllocation<T extends WorkforceEmployment$seatAllocationArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$seatAllocationArgs<ExtArgs>>): Prisma__WorkforceSeatAllocationClient<$Result.GetResult<Prisma.$WorkforceSeatAllocationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     timesheetEntries<T extends WorkforceEmployment$timesheetEntriesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$timesheetEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceTimesheetEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    vacationPlanLines<T extends WorkforceEmployment$vacationPlanLinesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$vacationPlanLinesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    personnelOrders<T extends WorkforceEmployment$personnelOrdersArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmployment$personnelOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -33443,6 +34066,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: WorkforceTimesheetEntryScalarFieldEnum | WorkforceTimesheetEntryScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceEmployment.vacationPlanLines
+   */
+  export type WorkforceEmployment$vacationPlanLinesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    where?: WorkforceVacationPlanLineWhereInput
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceEmployment.personnelOrders
+   */
+  export type WorkforceEmployment$personnelOrdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    where?: WorkforcePersonnelOrderWhereInput
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforcePersonnelOrderScalarFieldEnum | WorkforcePersonnelOrderScalarFieldEnum[]
   }
 
   /**
@@ -35868,6 +36539,4765 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: WorkforceTimesheetEntryInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceVacationPlan
+   */
+
+  export type AggregateWorkforceVacationPlan = {
+    _count: WorkforceVacationPlanCountAggregateOutputType | null
+    _avg: WorkforceVacationPlanAvgAggregateOutputType | null
+    _sum: WorkforceVacationPlanSumAggregateOutputType | null
+    _min: WorkforceVacationPlanMinAggregateOutputType | null
+    _max: WorkforceVacationPlanMaxAggregateOutputType | null
+  }
+
+  export type WorkforceVacationPlanAvgAggregateOutputType = {
+    year: number | null
+  }
+
+  export type WorkforceVacationPlanSumAggregateOutputType = {
+    year: number | null
+  }
+
+  export type WorkforceVacationPlanMinAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    year: number | null
+    orgUnitId: string | null
+    status: $Enums.WorkforceVacationPlanStatus | null
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceVacationPlanMaxAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    year: number | null
+    orgUnitId: string | null
+    status: $Enums.WorkforceVacationPlanStatus | null
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceVacationPlanCountAggregateOutputType = {
+    id: number
+    workforceScopeId: number
+    year: number
+    orgUnitId: number
+    status: number
+    submittedByUserId: number
+    approvedByUserId: number
+    submittedAt: number
+    approvedAt: number
+    rejectedAt: number
+    rejectionReason: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceVacationPlanAvgAggregateInputType = {
+    year?: true
+  }
+
+  export type WorkforceVacationPlanSumAggregateInputType = {
+    year?: true
+  }
+
+  export type WorkforceVacationPlanMinAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    year?: true
+    orgUnitId?: true
+    status?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceVacationPlanMaxAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    year?: true
+    orgUnitId?: true
+    status?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceVacationPlanCountAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    year?: true
+    orgUnitId?: true
+    status?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceVacationPlanAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlan to aggregate.
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlans to fetch.
+     */
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceVacationPlans
+    **/
+    _count?: true | WorkforceVacationPlanCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceVacationPlanAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceVacationPlanSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceVacationPlanMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceVacationPlanMaxAggregateInputType
+  }
+
+  export type GetWorkforceVacationPlanAggregateType<T extends WorkforceVacationPlanAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceVacationPlan]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceVacationPlan[P]>
+      : GetScalarType<T[P], AggregateWorkforceVacationPlan[P]>
+  }
+
+
+
+
+  export type WorkforceVacationPlanGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanWhereInput
+    orderBy?: WorkforceVacationPlanOrderByWithAggregationInput | WorkforceVacationPlanOrderByWithAggregationInput[]
+    by: WorkforceVacationPlanScalarFieldEnum[] | WorkforceVacationPlanScalarFieldEnum
+    having?: WorkforceVacationPlanScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceVacationPlanCountAggregateInputType | true
+    _avg?: WorkforceVacationPlanAvgAggregateInputType
+    _sum?: WorkforceVacationPlanSumAggregateInputType
+    _min?: WorkforceVacationPlanMinAggregateInputType
+    _max?: WorkforceVacationPlanMaxAggregateInputType
+  }
+
+  export type WorkforceVacationPlanGroupByOutputType = {
+    id: string
+    workforceScopeId: string
+    year: number
+    orgUnitId: string | null
+    status: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceVacationPlanCountAggregateOutputType | null
+    _avg: WorkforceVacationPlanAvgAggregateOutputType | null
+    _sum: WorkforceVacationPlanSumAggregateOutputType | null
+    _min: WorkforceVacationPlanMinAggregateOutputType | null
+    _max: WorkforceVacationPlanMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceVacationPlanGroupByPayload<T extends WorkforceVacationPlanGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceVacationPlanGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceVacationPlanGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceVacationPlanGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceVacationPlanGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceVacationPlanSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    year?: boolean
+    orgUnitId?: boolean
+    status?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+    lines?: boolean | WorkforceVacationPlan$linesArgs<ExtArgs>
+    _count?: boolean | WorkforceVacationPlanCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlan"]>
+
+  export type WorkforceVacationPlanSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    year?: boolean
+    orgUnitId?: boolean
+    status?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlan"]>
+
+  export type WorkforceVacationPlanSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    year?: boolean
+    orgUnitId?: boolean
+    status?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlan"]>
+
+  export type WorkforceVacationPlanSelectScalar = {
+    id?: boolean
+    workforceScopeId?: boolean
+    year?: boolean
+    orgUnitId?: boolean
+    status?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceVacationPlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "year" | "orgUnitId" | "status" | "submittedByUserId" | "approvedByUserId" | "submittedAt" | "approvedAt" | "rejectedAt" | "rejectionReason" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceVacationPlan"]>
+  export type WorkforceVacationPlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+    lines?: boolean | WorkforceVacationPlan$linesArgs<ExtArgs>
+    _count?: boolean | WorkforceVacationPlanCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    orgUnit?: boolean | WorkforceVacationPlan$orgUnitArgs<ExtArgs>
+  }
+
+  export type $WorkforceVacationPlanPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceVacationPlan"
+    objects: {
+      workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
+      orgUnit: Prisma.$OrgUnitPayload<ExtArgs> | null
+      lines: Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workforceScopeId: string
+      year: number
+      orgUnitId: string | null
+      status: $Enums.WorkforceVacationPlanStatus
+      submittedByUserId: string | null
+      approvedByUserId: string | null
+      submittedAt: Date | null
+      approvedAt: Date | null
+      rejectedAt: Date | null
+      rejectionReason: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceVacationPlan"]>
+    composites: {}
+  }
+
+  type WorkforceVacationPlanGetPayload<S extends boolean | null | undefined | WorkforceVacationPlanDefaultArgs> = $Result.GetResult<Prisma.$WorkforceVacationPlanPayload, S>
+
+  type WorkforceVacationPlanCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceVacationPlanFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceVacationPlanCountAggregateInputType | true
+    }
+
+  export interface WorkforceVacationPlanDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceVacationPlan'], meta: { name: 'WorkforceVacationPlan' } }
+    /**
+     * Find zero or one WorkforceVacationPlan that matches the filter.
+     * @param {WorkforceVacationPlanFindUniqueArgs} args - Arguments to find a WorkforceVacationPlan
+     * @example
+     * // Get one WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceVacationPlanFindUniqueArgs>(args: SelectSubset<T, WorkforceVacationPlanFindUniqueArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceVacationPlan that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceVacationPlanFindUniqueOrThrowArgs} args - Arguments to find a WorkforceVacationPlan
+     * @example
+     * // Get one WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceVacationPlanFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceVacationPlanFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlan that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanFindFirstArgs} args - Arguments to find a WorkforceVacationPlan
+     * @example
+     * // Get one WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceVacationPlanFindFirstArgs>(args?: SelectSubset<T, WorkforceVacationPlanFindFirstArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlan that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanFindFirstOrThrowArgs} args - Arguments to find a WorkforceVacationPlan
+     * @example
+     * // Get one WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceVacationPlanFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceVacationPlanFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceVacationPlans that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceVacationPlans
+     * const workforceVacationPlans = await prisma.workforceVacationPlan.findMany()
+     * 
+     * // Get first 10 WorkforceVacationPlans
+     * const workforceVacationPlans = await prisma.workforceVacationPlan.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceVacationPlanWithIdOnly = await prisma.workforceVacationPlan.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceVacationPlanFindManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceVacationPlan.
+     * @param {WorkforceVacationPlanCreateArgs} args - Arguments to create a WorkforceVacationPlan.
+     * @example
+     * // Create one WorkforceVacationPlan
+     * const WorkforceVacationPlan = await prisma.workforceVacationPlan.create({
+     *   data: {
+     *     // ... data to create a WorkforceVacationPlan
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceVacationPlanCreateArgs>(args: SelectSubset<T, WorkforceVacationPlanCreateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceVacationPlans.
+     * @param {WorkforceVacationPlanCreateManyArgs} args - Arguments to create many WorkforceVacationPlans.
+     * @example
+     * // Create many WorkforceVacationPlans
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceVacationPlanCreateManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceVacationPlans and returns the data saved in the database.
+     * @param {WorkforceVacationPlanCreateManyAndReturnArgs} args - Arguments to create many WorkforceVacationPlans.
+     * @example
+     * // Create many WorkforceVacationPlans
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceVacationPlans and only return the `id`
+     * const workforceVacationPlanWithIdOnly = await prisma.workforceVacationPlan.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceVacationPlanCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceVacationPlanCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceVacationPlan.
+     * @param {WorkforceVacationPlanDeleteArgs} args - Arguments to delete one WorkforceVacationPlan.
+     * @example
+     * // Delete one WorkforceVacationPlan
+     * const WorkforceVacationPlan = await prisma.workforceVacationPlan.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceVacationPlan
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceVacationPlanDeleteArgs>(args: SelectSubset<T, WorkforceVacationPlanDeleteArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceVacationPlan.
+     * @param {WorkforceVacationPlanUpdateArgs} args - Arguments to update one WorkforceVacationPlan.
+     * @example
+     * // Update one WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceVacationPlanUpdateArgs>(args: SelectSubset<T, WorkforceVacationPlanUpdateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceVacationPlans.
+     * @param {WorkforceVacationPlanDeleteManyArgs} args - Arguments to filter WorkforceVacationPlans to delete.
+     * @example
+     * // Delete a few WorkforceVacationPlans
+     * const { count } = await prisma.workforceVacationPlan.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceVacationPlanDeleteManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceVacationPlans
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceVacationPlanUpdateManyArgs>(args: SelectSubset<T, WorkforceVacationPlanUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlans and returns the data updated in the database.
+     * @param {WorkforceVacationPlanUpdateManyAndReturnArgs} args - Arguments to update many WorkforceVacationPlans.
+     * @example
+     * // Update many WorkforceVacationPlans
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceVacationPlans and only return the `id`
+     * const workforceVacationPlanWithIdOnly = await prisma.workforceVacationPlan.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceVacationPlanUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceVacationPlanUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceVacationPlan.
+     * @param {WorkforceVacationPlanUpsertArgs} args - Arguments to update or create a WorkforceVacationPlan.
+     * @example
+     * // Update or create a WorkforceVacationPlan
+     * const workforceVacationPlan = await prisma.workforceVacationPlan.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceVacationPlan
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlan we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceVacationPlanUpsertArgs>(args: SelectSubset<T, WorkforceVacationPlanUpsertArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceVacationPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanCountArgs} args - Arguments to filter WorkforceVacationPlans to count.
+     * @example
+     * // Count the number of WorkforceVacationPlans
+     * const count = await prisma.workforceVacationPlan.count({
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlans we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceVacationPlanCountArgs>(
+      args?: Subset<T, WorkforceVacationPlanCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceVacationPlanCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceVacationPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceVacationPlanAggregateArgs>(args: Subset<T, WorkforceVacationPlanAggregateArgs>): Prisma.PrismaPromise<GetWorkforceVacationPlanAggregateType<T>>
+
+    /**
+     * Group by WorkforceVacationPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceVacationPlanGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceVacationPlanGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceVacationPlanGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceVacationPlanGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceVacationPlanGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceVacationPlan model
+   */
+  readonly fields: WorkforceVacationPlanFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceVacationPlan.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceVacationPlanClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    orgUnit<T extends WorkforceVacationPlan$orgUnitArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlan$orgUnitArgs<ExtArgs>>): Prisma__OrgUnitClient<$Result.GetResult<Prisma.$OrgUnitPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    lines<T extends WorkforceVacationPlan$linesArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlan$linesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceVacationPlan model
+   */
+  interface WorkforceVacationPlanFieldRefs {
+    readonly id: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly workforceScopeId: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly year: FieldRef<"WorkforceVacationPlan", 'Int'>
+    readonly orgUnitId: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly status: FieldRef<"WorkforceVacationPlan", 'WorkforceVacationPlanStatus'>
+    readonly submittedByUserId: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly approvedByUserId: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly submittedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+    readonly approvedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+    readonly rejectedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+    readonly rejectionReason: FieldRef<"WorkforceVacationPlan", 'String'>
+    readonly createdAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceVacationPlan", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceVacationPlan findUnique
+   */
+  export type WorkforceVacationPlanFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlan to fetch.
+     */
+    where: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlan findUniqueOrThrow
+   */
+  export type WorkforceVacationPlanFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlan to fetch.
+     */
+    where: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlan findFirst
+   */
+  export type WorkforceVacationPlanFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlan to fetch.
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlans to fetch.
+     */
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlans.
+     */
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlans.
+     */
+    distinct?: WorkforceVacationPlanScalarFieldEnum | WorkforceVacationPlanScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlan findFirstOrThrow
+   */
+  export type WorkforceVacationPlanFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlan to fetch.
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlans to fetch.
+     */
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlans.
+     */
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlans.
+     */
+    distinct?: WorkforceVacationPlanScalarFieldEnum | WorkforceVacationPlanScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlan findMany
+   */
+  export type WorkforceVacationPlanFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlans to fetch.
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlans to fetch.
+     */
+    orderBy?: WorkforceVacationPlanOrderByWithRelationInput | WorkforceVacationPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceVacationPlans.
+     */
+    cursor?: WorkforceVacationPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlans.
+     */
+    distinct?: WorkforceVacationPlanScalarFieldEnum | WorkforceVacationPlanScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlan create
+   */
+  export type WorkforceVacationPlanCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceVacationPlan.
+     */
+    data: XOR<WorkforceVacationPlanCreateInput, WorkforceVacationPlanUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceVacationPlan createMany
+   */
+  export type WorkforceVacationPlanCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceVacationPlans.
+     */
+    data: WorkforceVacationPlanCreateManyInput | WorkforceVacationPlanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceVacationPlan createManyAndReturn
+   */
+  export type WorkforceVacationPlanCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceVacationPlans.
+     */
+    data: WorkforceVacationPlanCreateManyInput | WorkforceVacationPlanCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlan update
+   */
+  export type WorkforceVacationPlanUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceVacationPlan.
+     */
+    data: XOR<WorkforceVacationPlanUpdateInput, WorkforceVacationPlanUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceVacationPlan to update.
+     */
+    where: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlan updateMany
+   */
+  export type WorkforceVacationPlanUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceVacationPlans.
+     */
+    data: XOR<WorkforceVacationPlanUpdateManyMutationInput, WorkforceVacationPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlans to update
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * Limit how many WorkforceVacationPlans to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlan updateManyAndReturn
+   */
+  export type WorkforceVacationPlanUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceVacationPlans.
+     */
+    data: XOR<WorkforceVacationPlanUpdateManyMutationInput, WorkforceVacationPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlans to update
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * Limit how many WorkforceVacationPlans to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlan upsert
+   */
+  export type WorkforceVacationPlanUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceVacationPlan to update in case it exists.
+     */
+    where: WorkforceVacationPlanWhereUniqueInput
+    /**
+     * In case the WorkforceVacationPlan found by the `where` argument doesn't exist, create a new WorkforceVacationPlan with this data.
+     */
+    create: XOR<WorkforceVacationPlanCreateInput, WorkforceVacationPlanUncheckedCreateInput>
+    /**
+     * In case the WorkforceVacationPlan was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceVacationPlanUpdateInput, WorkforceVacationPlanUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceVacationPlan delete
+   */
+  export type WorkforceVacationPlanDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceVacationPlan to delete.
+     */
+    where: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlan deleteMany
+   */
+  export type WorkforceVacationPlanDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlans to delete
+     */
+    where?: WorkforceVacationPlanWhereInput
+    /**
+     * Limit how many WorkforceVacationPlans to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlan.orgUnit
+   */
+  export type WorkforceVacationPlan$orgUnitArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrgUnit
+     */
+    select?: OrgUnitSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrgUnit
+     */
+    omit?: OrgUnitOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrgUnitInclude<ExtArgs> | null
+    where?: OrgUnitWhereInput
+  }
+
+  /**
+   * WorkforceVacationPlan.lines
+   */
+  export type WorkforceVacationPlan$linesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    where?: WorkforceVacationPlanLineWhereInput
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlan without action
+   */
+  export type WorkforceVacationPlanDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlan
+     */
+    select?: WorkforceVacationPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlan
+     */
+    omit?: WorkforceVacationPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforceVacationPlanLine
+   */
+
+  export type AggregateWorkforceVacationPlanLine = {
+    _count: WorkforceVacationPlanLineCountAggregateOutputType | null
+    _avg: WorkforceVacationPlanLineAvgAggregateOutputType | null
+    _sum: WorkforceVacationPlanLineSumAggregateOutputType | null
+    _min: WorkforceVacationPlanLineMinAggregateOutputType | null
+    _max: WorkforceVacationPlanLineMaxAggregateOutputType | null
+  }
+
+  export type WorkforceVacationPlanLineAvgAggregateOutputType = {
+    days: number | null
+  }
+
+  export type WorkforceVacationPlanLineSumAggregateOutputType = {
+    days: number | null
+  }
+
+  export type WorkforceVacationPlanLineMinAggregateOutputType = {
+    id: string | null
+    planId: string | null
+    employmentId: string | null
+    startDate: Date | null
+    endDate: Date | null
+    days: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceVacationPlanLineMaxAggregateOutputType = {
+    id: string | null
+    planId: string | null
+    employmentId: string | null
+    startDate: Date | null
+    endDate: Date | null
+    days: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforceVacationPlanLineCountAggregateOutputType = {
+    id: number
+    planId: number
+    employmentId: number
+    startDate: number
+    endDate: number
+    days: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforceVacationPlanLineAvgAggregateInputType = {
+    days?: true
+  }
+
+  export type WorkforceVacationPlanLineSumAggregateInputType = {
+    days?: true
+  }
+
+  export type WorkforceVacationPlanLineMinAggregateInputType = {
+    id?: true
+    planId?: true
+    employmentId?: true
+    startDate?: true
+    endDate?: true
+    days?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceVacationPlanLineMaxAggregateInputType = {
+    id?: true
+    planId?: true
+    employmentId?: true
+    startDate?: true
+    endDate?: true
+    days?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforceVacationPlanLineCountAggregateInputType = {
+    id?: true
+    planId?: true
+    employmentId?: true
+    startDate?: true
+    endDate?: true
+    days?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforceVacationPlanLineAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlanLine to aggregate.
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanLines to fetch.
+     */
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanLines from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanLines.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforceVacationPlanLines
+    **/
+    _count?: true | WorkforceVacationPlanLineCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: WorkforceVacationPlanLineAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: WorkforceVacationPlanLineSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforceVacationPlanLineMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforceVacationPlanLineMaxAggregateInputType
+  }
+
+  export type GetWorkforceVacationPlanLineAggregateType<T extends WorkforceVacationPlanLineAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforceVacationPlanLine]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforceVacationPlanLine[P]>
+      : GetScalarType<T[P], AggregateWorkforceVacationPlanLine[P]>
+  }
+
+
+
+
+  export type WorkforceVacationPlanLineGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforceVacationPlanLineWhereInput
+    orderBy?: WorkforceVacationPlanLineOrderByWithAggregationInput | WorkforceVacationPlanLineOrderByWithAggregationInput[]
+    by: WorkforceVacationPlanLineScalarFieldEnum[] | WorkforceVacationPlanLineScalarFieldEnum
+    having?: WorkforceVacationPlanLineScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforceVacationPlanLineCountAggregateInputType | true
+    _avg?: WorkforceVacationPlanLineAvgAggregateInputType
+    _sum?: WorkforceVacationPlanLineSumAggregateInputType
+    _min?: WorkforceVacationPlanLineMinAggregateInputType
+    _max?: WorkforceVacationPlanLineMaxAggregateInputType
+  }
+
+  export type WorkforceVacationPlanLineGroupByOutputType = {
+    id: string
+    planId: string
+    employmentId: string
+    startDate: Date
+    endDate: Date
+    days: number
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforceVacationPlanLineCountAggregateOutputType | null
+    _avg: WorkforceVacationPlanLineAvgAggregateOutputType | null
+    _sum: WorkforceVacationPlanLineSumAggregateOutputType | null
+    _min: WorkforceVacationPlanLineMinAggregateOutputType | null
+    _max: WorkforceVacationPlanLineMaxAggregateOutputType | null
+  }
+
+  type GetWorkforceVacationPlanLineGroupByPayload<T extends WorkforceVacationPlanLineGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforceVacationPlanLineGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforceVacationPlanLineGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforceVacationPlanLineGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforceVacationPlanLineGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforceVacationPlanLineSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    employmentId?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    days?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanLine"]>
+
+  export type WorkforceVacationPlanLineSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    employmentId?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    days?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanLine"]>
+
+  export type WorkforceVacationPlanLineSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    planId?: boolean
+    employmentId?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    days?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforceVacationPlanLine"]>
+
+  export type WorkforceVacationPlanLineSelectScalar = {
+    id?: boolean
+    planId?: boolean
+    employmentId?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    days?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforceVacationPlanLineOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "planId" | "employmentId" | "startDate" | "endDate" | "days" | "createdAt" | "updatedAt", ExtArgs["result"]["workforceVacationPlanLine"]>
+  export type WorkforceVacationPlanLineInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanLineIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+  export type WorkforceVacationPlanLineIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    plan?: boolean | WorkforceVacationPlanDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforceVacationPlanLinePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforceVacationPlanLine"
+    objects: {
+      plan: Prisma.$WorkforceVacationPlanPayload<ExtArgs>
+      employment: Prisma.$WorkforceEmploymentPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      planId: string
+      employmentId: string
+      startDate: Date
+      endDate: Date
+      days: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforceVacationPlanLine"]>
+    composites: {}
+  }
+
+  type WorkforceVacationPlanLineGetPayload<S extends boolean | null | undefined | WorkforceVacationPlanLineDefaultArgs> = $Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload, S>
+
+  type WorkforceVacationPlanLineCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforceVacationPlanLineFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforceVacationPlanLineCountAggregateInputType | true
+    }
+
+  export interface WorkforceVacationPlanLineDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforceVacationPlanLine'], meta: { name: 'WorkforceVacationPlanLine' } }
+    /**
+     * Find zero or one WorkforceVacationPlanLine that matches the filter.
+     * @param {WorkforceVacationPlanLineFindUniqueArgs} args - Arguments to find a WorkforceVacationPlanLine
+     * @example
+     * // Get one WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforceVacationPlanLineFindUniqueArgs>(args: SelectSubset<T, WorkforceVacationPlanLineFindUniqueArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforceVacationPlanLine that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforceVacationPlanLineFindUniqueOrThrowArgs} args - Arguments to find a WorkforceVacationPlanLine
+     * @example
+     * // Get one WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforceVacationPlanLineFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforceVacationPlanLineFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlanLine that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineFindFirstArgs} args - Arguments to find a WorkforceVacationPlanLine
+     * @example
+     * // Get one WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforceVacationPlanLineFindFirstArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineFindFirstArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforceVacationPlanLine that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineFindFirstOrThrowArgs} args - Arguments to find a WorkforceVacationPlanLine
+     * @example
+     * // Get one WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforceVacationPlanLineFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforceVacationPlanLines that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforceVacationPlanLines
+     * const workforceVacationPlanLines = await prisma.workforceVacationPlanLine.findMany()
+     * 
+     * // Get first 10 WorkforceVacationPlanLines
+     * const workforceVacationPlanLines = await prisma.workforceVacationPlanLine.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforceVacationPlanLineWithIdOnly = await prisma.workforceVacationPlanLine.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforceVacationPlanLineFindManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforceVacationPlanLine.
+     * @param {WorkforceVacationPlanLineCreateArgs} args - Arguments to create a WorkforceVacationPlanLine.
+     * @example
+     * // Create one WorkforceVacationPlanLine
+     * const WorkforceVacationPlanLine = await prisma.workforceVacationPlanLine.create({
+     *   data: {
+     *     // ... data to create a WorkforceVacationPlanLine
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforceVacationPlanLineCreateArgs>(args: SelectSubset<T, WorkforceVacationPlanLineCreateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforceVacationPlanLines.
+     * @param {WorkforceVacationPlanLineCreateManyArgs} args - Arguments to create many WorkforceVacationPlanLines.
+     * @example
+     * // Create many WorkforceVacationPlanLines
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforceVacationPlanLineCreateManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforceVacationPlanLines and returns the data saved in the database.
+     * @param {WorkforceVacationPlanLineCreateManyAndReturnArgs} args - Arguments to create many WorkforceVacationPlanLines.
+     * @example
+     * // Create many WorkforceVacationPlanLines
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforceVacationPlanLines and only return the `id`
+     * const workforceVacationPlanLineWithIdOnly = await prisma.workforceVacationPlanLine.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforceVacationPlanLineCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforceVacationPlanLine.
+     * @param {WorkforceVacationPlanLineDeleteArgs} args - Arguments to delete one WorkforceVacationPlanLine.
+     * @example
+     * // Delete one WorkforceVacationPlanLine
+     * const WorkforceVacationPlanLine = await prisma.workforceVacationPlanLine.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforceVacationPlanLine
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforceVacationPlanLineDeleteArgs>(args: SelectSubset<T, WorkforceVacationPlanLineDeleteArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforceVacationPlanLine.
+     * @param {WorkforceVacationPlanLineUpdateArgs} args - Arguments to update one WorkforceVacationPlanLine.
+     * @example
+     * // Update one WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforceVacationPlanLineUpdateArgs>(args: SelectSubset<T, WorkforceVacationPlanLineUpdateArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforceVacationPlanLines.
+     * @param {WorkforceVacationPlanLineDeleteManyArgs} args - Arguments to filter WorkforceVacationPlanLines to delete.
+     * @example
+     * // Delete a few WorkforceVacationPlanLines
+     * const { count } = await prisma.workforceVacationPlanLine.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforceVacationPlanLineDeleteManyArgs>(args?: SelectSubset<T, WorkforceVacationPlanLineDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlanLines.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforceVacationPlanLines
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforceVacationPlanLineUpdateManyArgs>(args: SelectSubset<T, WorkforceVacationPlanLineUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforceVacationPlanLines and returns the data updated in the database.
+     * @param {WorkforceVacationPlanLineUpdateManyAndReturnArgs} args - Arguments to update many WorkforceVacationPlanLines.
+     * @example
+     * // Update many WorkforceVacationPlanLines
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforceVacationPlanLines and only return the `id`
+     * const workforceVacationPlanLineWithIdOnly = await prisma.workforceVacationPlanLine.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforceVacationPlanLineUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforceVacationPlanLineUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforceVacationPlanLine.
+     * @param {WorkforceVacationPlanLineUpsertArgs} args - Arguments to update or create a WorkforceVacationPlanLine.
+     * @example
+     * // Update or create a WorkforceVacationPlanLine
+     * const workforceVacationPlanLine = await prisma.workforceVacationPlanLine.upsert({
+     *   create: {
+     *     // ... data to create a WorkforceVacationPlanLine
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlanLine we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforceVacationPlanLineUpsertArgs>(args: SelectSubset<T, WorkforceVacationPlanLineUpsertArgs<ExtArgs>>): Prisma__WorkforceVacationPlanLineClient<$Result.GetResult<Prisma.$WorkforceVacationPlanLinePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforceVacationPlanLines.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineCountArgs} args - Arguments to filter WorkforceVacationPlanLines to count.
+     * @example
+     * // Count the number of WorkforceVacationPlanLines
+     * const count = await prisma.workforceVacationPlanLine.count({
+     *   where: {
+     *     // ... the filter for the WorkforceVacationPlanLines we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforceVacationPlanLineCountArgs>(
+      args?: Subset<T, WorkforceVacationPlanLineCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforceVacationPlanLineCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforceVacationPlanLine.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforceVacationPlanLineAggregateArgs>(args: Subset<T, WorkforceVacationPlanLineAggregateArgs>): Prisma.PrismaPromise<GetWorkforceVacationPlanLineAggregateType<T>>
+
+    /**
+     * Group by WorkforceVacationPlanLine.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforceVacationPlanLineGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforceVacationPlanLineGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforceVacationPlanLineGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforceVacationPlanLineGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforceVacationPlanLineGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforceVacationPlanLineGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforceVacationPlanLine model
+   */
+  readonly fields: WorkforceVacationPlanLineFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforceVacationPlanLine.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforceVacationPlanLineClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    plan<T extends WorkforceVacationPlanDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceVacationPlanDefaultArgs<ExtArgs>>): Prisma__WorkforceVacationPlanClient<$Result.GetResult<Prisma.$WorkforceVacationPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    employment<T extends WorkforceEmploymentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmploymentDefaultArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforceVacationPlanLine model
+   */
+  interface WorkforceVacationPlanLineFieldRefs {
+    readonly id: FieldRef<"WorkforceVacationPlanLine", 'String'>
+    readonly planId: FieldRef<"WorkforceVacationPlanLine", 'String'>
+    readonly employmentId: FieldRef<"WorkforceVacationPlanLine", 'String'>
+    readonly startDate: FieldRef<"WorkforceVacationPlanLine", 'DateTime'>
+    readonly endDate: FieldRef<"WorkforceVacationPlanLine", 'DateTime'>
+    readonly days: FieldRef<"WorkforceVacationPlanLine", 'Int'>
+    readonly createdAt: FieldRef<"WorkforceVacationPlanLine", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforceVacationPlanLine", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforceVacationPlanLine findUnique
+   */
+  export type WorkforceVacationPlanLineFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanLine to fetch.
+     */
+    where: WorkforceVacationPlanLineWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanLine findUniqueOrThrow
+   */
+  export type WorkforceVacationPlanLineFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanLine to fetch.
+     */
+    where: WorkforceVacationPlanLineWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanLine findFirst
+   */
+  export type WorkforceVacationPlanLineFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanLine to fetch.
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanLines to fetch.
+     */
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlanLines.
+     */
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanLines from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanLines.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanLines.
+     */
+    distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanLine findFirstOrThrow
+   */
+  export type WorkforceVacationPlanLineFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanLine to fetch.
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanLines to fetch.
+     */
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforceVacationPlanLines.
+     */
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanLines from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanLines.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanLines.
+     */
+    distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanLine findMany
+   */
+  export type WorkforceVacationPlanLineFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforceVacationPlanLines to fetch.
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforceVacationPlanLines to fetch.
+     */
+    orderBy?: WorkforceVacationPlanLineOrderByWithRelationInput | WorkforceVacationPlanLineOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforceVacationPlanLines.
+     */
+    cursor?: WorkforceVacationPlanLineWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforceVacationPlanLines from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforceVacationPlanLines.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforceVacationPlanLines.
+     */
+    distinct?: WorkforceVacationPlanLineScalarFieldEnum | WorkforceVacationPlanLineScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforceVacationPlanLine create
+   */
+  export type WorkforceVacationPlanLineCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforceVacationPlanLine.
+     */
+    data: XOR<WorkforceVacationPlanLineCreateInput, WorkforceVacationPlanLineUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforceVacationPlanLine createMany
+   */
+  export type WorkforceVacationPlanLineCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforceVacationPlanLines.
+     */
+    data: WorkforceVacationPlanLineCreateManyInput | WorkforceVacationPlanLineCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforceVacationPlanLine createManyAndReturn
+   */
+  export type WorkforceVacationPlanLineCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforceVacationPlanLines.
+     */
+    data: WorkforceVacationPlanLineCreateManyInput | WorkforceVacationPlanLineCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlanLine update
+   */
+  export type WorkforceVacationPlanLineUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforceVacationPlanLine.
+     */
+    data: XOR<WorkforceVacationPlanLineUpdateInput, WorkforceVacationPlanLineUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforceVacationPlanLine to update.
+     */
+    where: WorkforceVacationPlanLineWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanLine updateMany
+   */
+  export type WorkforceVacationPlanLineUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforceVacationPlanLines.
+     */
+    data: XOR<WorkforceVacationPlanLineUpdateManyMutationInput, WorkforceVacationPlanLineUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlanLines to update
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanLines to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlanLine updateManyAndReturn
+   */
+  export type WorkforceVacationPlanLineUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforceVacationPlanLines.
+     */
+    data: XOR<WorkforceVacationPlanLineUpdateManyMutationInput, WorkforceVacationPlanLineUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforceVacationPlanLines to update
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanLines to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforceVacationPlanLine upsert
+   */
+  export type WorkforceVacationPlanLineUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforceVacationPlanLine to update in case it exists.
+     */
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    /**
+     * In case the WorkforceVacationPlanLine found by the `where` argument doesn't exist, create a new WorkforceVacationPlanLine with this data.
+     */
+    create: XOR<WorkforceVacationPlanLineCreateInput, WorkforceVacationPlanLineUncheckedCreateInput>
+    /**
+     * In case the WorkforceVacationPlanLine was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforceVacationPlanLineUpdateInput, WorkforceVacationPlanLineUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforceVacationPlanLine delete
+   */
+  export type WorkforceVacationPlanLineDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforceVacationPlanLine to delete.
+     */
+    where: WorkforceVacationPlanLineWhereUniqueInput
+  }
+
+  /**
+   * WorkforceVacationPlanLine deleteMany
+   */
+  export type WorkforceVacationPlanLineDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforceVacationPlanLines to delete
+     */
+    where?: WorkforceVacationPlanLineWhereInput
+    /**
+     * Limit how many WorkforceVacationPlanLines to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforceVacationPlanLine without action
+   */
+  export type WorkforceVacationPlanLineDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforceVacationPlanLine
+     */
+    select?: WorkforceVacationPlanLineSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforceVacationPlanLine
+     */
+    omit?: WorkforceVacationPlanLineOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforceVacationPlanLineInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model WorkforcePersonnelOrder
+   */
+
+  export type AggregateWorkforcePersonnelOrder = {
+    _count: WorkforcePersonnelOrderCountAggregateOutputType | null
+    _min: WorkforcePersonnelOrderMinAggregateOutputType | null
+    _max: WorkforcePersonnelOrderMaxAggregateOutputType | null
+  }
+
+  export type WorkforcePersonnelOrderMinAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    employmentId: string | null
+    organizationId: string | null
+    type: $Enums.WorkforcePersonnelOrderType | null
+    status: $Enums.WorkforcePersonnelOrderStatus | null
+    orderNumber: string | null
+    effectiveDate: Date | null
+    note: string | null
+    personDisplayName: string | null
+    documentStorageKey: string | null
+    issuedByUserId: string | null
+    issuedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforcePersonnelOrderMaxAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    employmentId: string | null
+    organizationId: string | null
+    type: $Enums.WorkforcePersonnelOrderType | null
+    status: $Enums.WorkforcePersonnelOrderStatus | null
+    orderNumber: string | null
+    effectiveDate: Date | null
+    note: string | null
+    personDisplayName: string | null
+    documentStorageKey: string | null
+    issuedByUserId: string | null
+    issuedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type WorkforcePersonnelOrderCountAggregateOutputType = {
+    id: number
+    workforceScopeId: number
+    employmentId: number
+    organizationId: number
+    type: number
+    status: number
+    orderNumber: number
+    effectiveDate: number
+    note: number
+    personDisplayName: number
+    documentStorageKey: number
+    issuedByUserId: number
+    issuedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type WorkforcePersonnelOrderMinAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    employmentId?: true
+    organizationId?: true
+    type?: true
+    status?: true
+    orderNumber?: true
+    effectiveDate?: true
+    note?: true
+    personDisplayName?: true
+    documentStorageKey?: true
+    issuedByUserId?: true
+    issuedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforcePersonnelOrderMaxAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    employmentId?: true
+    organizationId?: true
+    type?: true
+    status?: true
+    orderNumber?: true
+    effectiveDate?: true
+    note?: true
+    personDisplayName?: true
+    documentStorageKey?: true
+    issuedByUserId?: true
+    issuedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type WorkforcePersonnelOrderCountAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    employmentId?: true
+    organizationId?: true
+    type?: true
+    status?: true
+    orderNumber?: true
+    effectiveDate?: true
+    note?: true
+    personDisplayName?: true
+    documentStorageKey?: true
+    issuedByUserId?: true
+    issuedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type WorkforcePersonnelOrderAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforcePersonnelOrder to aggregate.
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforcePersonnelOrders to fetch.
+     */
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforcePersonnelOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforcePersonnelOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned WorkforcePersonnelOrders
+    **/
+    _count?: true | WorkforcePersonnelOrderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: WorkforcePersonnelOrderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: WorkforcePersonnelOrderMaxAggregateInputType
+  }
+
+  export type GetWorkforcePersonnelOrderAggregateType<T extends WorkforcePersonnelOrderAggregateArgs> = {
+        [P in keyof T & keyof AggregateWorkforcePersonnelOrder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateWorkforcePersonnelOrder[P]>
+      : GetScalarType<T[P], AggregateWorkforcePersonnelOrder[P]>
+  }
+
+
+
+
+  export type WorkforcePersonnelOrderGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: WorkforcePersonnelOrderWhereInput
+    orderBy?: WorkforcePersonnelOrderOrderByWithAggregationInput | WorkforcePersonnelOrderOrderByWithAggregationInput[]
+    by: WorkforcePersonnelOrderScalarFieldEnum[] | WorkforcePersonnelOrderScalarFieldEnum
+    having?: WorkforcePersonnelOrderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: WorkforcePersonnelOrderCountAggregateInputType | true
+    _min?: WorkforcePersonnelOrderMinAggregateInputType
+    _max?: WorkforcePersonnelOrderMaxAggregateInputType
+  }
+
+  export type WorkforcePersonnelOrderGroupByOutputType = {
+    id: string
+    workforceScopeId: string
+    employmentId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date
+    note: string
+    personDisplayName: string | null
+    documentStorageKey: string | null
+    issuedByUserId: string | null
+    issuedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: WorkforcePersonnelOrderCountAggregateOutputType | null
+    _min: WorkforcePersonnelOrderMinAggregateOutputType | null
+    _max: WorkforcePersonnelOrderMaxAggregateOutputType | null
+  }
+
+  type GetWorkforcePersonnelOrderGroupByPayload<T extends WorkforcePersonnelOrderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<WorkforcePersonnelOrderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof WorkforcePersonnelOrderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], WorkforcePersonnelOrderGroupByOutputType[P]>
+            : GetScalarType<T[P], WorkforcePersonnelOrderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type WorkforcePersonnelOrderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    employmentId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    status?: boolean
+    orderNumber?: boolean
+    effectiveDate?: boolean
+    note?: boolean
+    personDisplayName?: boolean
+    documentStorageKey?: boolean
+    issuedByUserId?: boolean
+    issuedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforcePersonnelOrder"]>
+
+  export type WorkforcePersonnelOrderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    employmentId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    status?: boolean
+    orderNumber?: boolean
+    effectiveDate?: boolean
+    note?: boolean
+    personDisplayName?: boolean
+    documentStorageKey?: boolean
+    issuedByUserId?: boolean
+    issuedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforcePersonnelOrder"]>
+
+  export type WorkforcePersonnelOrderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    employmentId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    status?: boolean
+    orderNumber?: boolean
+    effectiveDate?: boolean
+    note?: boolean
+    personDisplayName?: boolean
+    documentStorageKey?: boolean
+    issuedByUserId?: boolean
+    issuedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["workforcePersonnelOrder"]>
+
+  export type WorkforcePersonnelOrderSelectScalar = {
+    id?: boolean
+    workforceScopeId?: boolean
+    employmentId?: boolean
+    organizationId?: boolean
+    type?: boolean
+    status?: boolean
+    orderNumber?: boolean
+    effectiveDate?: boolean
+    note?: boolean
+    personDisplayName?: boolean
+    documentStorageKey?: boolean
+    issuedByUserId?: boolean
+    issuedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type WorkforcePersonnelOrderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "employmentId" | "organizationId" | "type" | "status" | "orderNumber" | "effectiveDate" | "note" | "personDisplayName" | "documentStorageKey" | "issuedByUserId" | "issuedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["workforcePersonnelOrder"]>
+  export type WorkforcePersonnelOrderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+  export type WorkforcePersonnelOrderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+  export type WorkforcePersonnelOrderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+    employment?: boolean | WorkforceEmploymentDefaultArgs<ExtArgs>
+  }
+
+  export type $WorkforcePersonnelOrderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "WorkforcePersonnelOrder"
+    objects: {
+      workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
+      employment: Prisma.$WorkforceEmploymentPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workforceScopeId: string
+      employmentId: string
+      organizationId: string
+      type: $Enums.WorkforcePersonnelOrderType
+      status: $Enums.WorkforcePersonnelOrderStatus
+      orderNumber: string
+      effectiveDate: Date
+      note: string
+      /**
+       * Snapshot of person display name at issue time (not vault PII — display only).
+       */
+      personDisplayName: string | null
+      documentStorageKey: string | null
+      issuedByUserId: string | null
+      issuedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["workforcePersonnelOrder"]>
+    composites: {}
+  }
+
+  type WorkforcePersonnelOrderGetPayload<S extends boolean | null | undefined | WorkforcePersonnelOrderDefaultArgs> = $Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload, S>
+
+  type WorkforcePersonnelOrderCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<WorkforcePersonnelOrderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: WorkforcePersonnelOrderCountAggregateInputType | true
+    }
+
+  export interface WorkforcePersonnelOrderDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['WorkforcePersonnelOrder'], meta: { name: 'WorkforcePersonnelOrder' } }
+    /**
+     * Find zero or one WorkforcePersonnelOrder that matches the filter.
+     * @param {WorkforcePersonnelOrderFindUniqueArgs} args - Arguments to find a WorkforcePersonnelOrder
+     * @example
+     * // Get one WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends WorkforcePersonnelOrderFindUniqueArgs>(args: SelectSubset<T, WorkforcePersonnelOrderFindUniqueArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one WorkforcePersonnelOrder that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {WorkforcePersonnelOrderFindUniqueOrThrowArgs} args - Arguments to find a WorkforcePersonnelOrder
+     * @example
+     * // Get one WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends WorkforcePersonnelOrderFindUniqueOrThrowArgs>(args: SelectSubset<T, WorkforcePersonnelOrderFindUniqueOrThrowArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforcePersonnelOrder that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderFindFirstArgs} args - Arguments to find a WorkforcePersonnelOrder
+     * @example
+     * // Get one WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends WorkforcePersonnelOrderFindFirstArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderFindFirstArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first WorkforcePersonnelOrder that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderFindFirstOrThrowArgs} args - Arguments to find a WorkforcePersonnelOrder
+     * @example
+     * // Get one WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends WorkforcePersonnelOrderFindFirstOrThrowArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderFindFirstOrThrowArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more WorkforcePersonnelOrders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all WorkforcePersonnelOrders
+     * const workforcePersonnelOrders = await prisma.workforcePersonnelOrder.findMany()
+     * 
+     * // Get first 10 WorkforcePersonnelOrders
+     * const workforcePersonnelOrders = await prisma.workforcePersonnelOrder.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const workforcePersonnelOrderWithIdOnly = await prisma.workforcePersonnelOrder.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends WorkforcePersonnelOrderFindManyArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a WorkforcePersonnelOrder.
+     * @param {WorkforcePersonnelOrderCreateArgs} args - Arguments to create a WorkforcePersonnelOrder.
+     * @example
+     * // Create one WorkforcePersonnelOrder
+     * const WorkforcePersonnelOrder = await prisma.workforcePersonnelOrder.create({
+     *   data: {
+     *     // ... data to create a WorkforcePersonnelOrder
+     *   }
+     * })
+     * 
+     */
+    create<T extends WorkforcePersonnelOrderCreateArgs>(args: SelectSubset<T, WorkforcePersonnelOrderCreateArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many WorkforcePersonnelOrders.
+     * @param {WorkforcePersonnelOrderCreateManyArgs} args - Arguments to create many WorkforcePersonnelOrders.
+     * @example
+     * // Create many WorkforcePersonnelOrders
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends WorkforcePersonnelOrderCreateManyArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many WorkforcePersonnelOrders and returns the data saved in the database.
+     * @param {WorkforcePersonnelOrderCreateManyAndReturnArgs} args - Arguments to create many WorkforcePersonnelOrders.
+     * @example
+     * // Create many WorkforcePersonnelOrders
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many WorkforcePersonnelOrders and only return the `id`
+     * const workforcePersonnelOrderWithIdOnly = await prisma.workforcePersonnelOrder.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends WorkforcePersonnelOrderCreateManyAndReturnArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a WorkforcePersonnelOrder.
+     * @param {WorkforcePersonnelOrderDeleteArgs} args - Arguments to delete one WorkforcePersonnelOrder.
+     * @example
+     * // Delete one WorkforcePersonnelOrder
+     * const WorkforcePersonnelOrder = await prisma.workforcePersonnelOrder.delete({
+     *   where: {
+     *     // ... filter to delete one WorkforcePersonnelOrder
+     *   }
+     * })
+     * 
+     */
+    delete<T extends WorkforcePersonnelOrderDeleteArgs>(args: SelectSubset<T, WorkforcePersonnelOrderDeleteArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one WorkforcePersonnelOrder.
+     * @param {WorkforcePersonnelOrderUpdateArgs} args - Arguments to update one WorkforcePersonnelOrder.
+     * @example
+     * // Update one WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends WorkforcePersonnelOrderUpdateArgs>(args: SelectSubset<T, WorkforcePersonnelOrderUpdateArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more WorkforcePersonnelOrders.
+     * @param {WorkforcePersonnelOrderDeleteManyArgs} args - Arguments to filter WorkforcePersonnelOrders to delete.
+     * @example
+     * // Delete a few WorkforcePersonnelOrders
+     * const { count } = await prisma.workforcePersonnelOrder.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends WorkforcePersonnelOrderDeleteManyArgs>(args?: SelectSubset<T, WorkforcePersonnelOrderDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforcePersonnelOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many WorkforcePersonnelOrders
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends WorkforcePersonnelOrderUpdateManyArgs>(args: SelectSubset<T, WorkforcePersonnelOrderUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more WorkforcePersonnelOrders and returns the data updated in the database.
+     * @param {WorkforcePersonnelOrderUpdateManyAndReturnArgs} args - Arguments to update many WorkforcePersonnelOrders.
+     * @example
+     * // Update many WorkforcePersonnelOrders
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more WorkforcePersonnelOrders and only return the `id`
+     * const workforcePersonnelOrderWithIdOnly = await prisma.workforcePersonnelOrder.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends WorkforcePersonnelOrderUpdateManyAndReturnArgs>(args: SelectSubset<T, WorkforcePersonnelOrderUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one WorkforcePersonnelOrder.
+     * @param {WorkforcePersonnelOrderUpsertArgs} args - Arguments to update or create a WorkforcePersonnelOrder.
+     * @example
+     * // Update or create a WorkforcePersonnelOrder
+     * const workforcePersonnelOrder = await prisma.workforcePersonnelOrder.upsert({
+     *   create: {
+     *     // ... data to create a WorkforcePersonnelOrder
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the WorkforcePersonnelOrder we want to update
+     *   }
+     * })
+     */
+    upsert<T extends WorkforcePersonnelOrderUpsertArgs>(args: SelectSubset<T, WorkforcePersonnelOrderUpsertArgs<ExtArgs>>): Prisma__WorkforcePersonnelOrderClient<$Result.GetResult<Prisma.$WorkforcePersonnelOrderPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of WorkforcePersonnelOrders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderCountArgs} args - Arguments to filter WorkforcePersonnelOrders to count.
+     * @example
+     * // Count the number of WorkforcePersonnelOrders
+     * const count = await prisma.workforcePersonnelOrder.count({
+     *   where: {
+     *     // ... the filter for the WorkforcePersonnelOrders we want to count
+     *   }
+     * })
+    **/
+    count<T extends WorkforcePersonnelOrderCountArgs>(
+      args?: Subset<T, WorkforcePersonnelOrderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], WorkforcePersonnelOrderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a WorkforcePersonnelOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends WorkforcePersonnelOrderAggregateArgs>(args: Subset<T, WorkforcePersonnelOrderAggregateArgs>): Prisma.PrismaPromise<GetWorkforcePersonnelOrderAggregateType<T>>
+
+    /**
+     * Group by WorkforcePersonnelOrder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {WorkforcePersonnelOrderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends WorkforcePersonnelOrderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: WorkforcePersonnelOrderGroupByArgs['orderBy'] }
+        : { orderBy?: WorkforcePersonnelOrderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, WorkforcePersonnelOrderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetWorkforcePersonnelOrderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the WorkforcePersonnelOrder model
+   */
+  readonly fields: WorkforcePersonnelOrderFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for WorkforcePersonnelOrder.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__WorkforcePersonnelOrderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    employment<T extends WorkforceEmploymentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceEmploymentDefaultArgs<ExtArgs>>): Prisma__WorkforceEmploymentClient<$Result.GetResult<Prisma.$WorkforceEmploymentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the WorkforcePersonnelOrder model
+   */
+  interface WorkforcePersonnelOrderFieldRefs {
+    readonly id: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly workforceScopeId: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly employmentId: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly organizationId: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly type: FieldRef<"WorkforcePersonnelOrder", 'WorkforcePersonnelOrderType'>
+    readonly status: FieldRef<"WorkforcePersonnelOrder", 'WorkforcePersonnelOrderStatus'>
+    readonly orderNumber: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly effectiveDate: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
+    readonly note: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly personDisplayName: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly documentStorageKey: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly issuedByUserId: FieldRef<"WorkforcePersonnelOrder", 'String'>
+    readonly issuedAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
+    readonly createdAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
+    readonly updatedAt: FieldRef<"WorkforcePersonnelOrder", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * WorkforcePersonnelOrder findUnique
+   */
+  export type WorkforcePersonnelOrderFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforcePersonnelOrder to fetch.
+     */
+    where: WorkforcePersonnelOrderWhereUniqueInput
+  }
+
+  /**
+   * WorkforcePersonnelOrder findUniqueOrThrow
+   */
+  export type WorkforcePersonnelOrderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforcePersonnelOrder to fetch.
+     */
+    where: WorkforcePersonnelOrderWhereUniqueInput
+  }
+
+  /**
+   * WorkforcePersonnelOrder findFirst
+   */
+  export type WorkforcePersonnelOrderFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforcePersonnelOrder to fetch.
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforcePersonnelOrders to fetch.
+     */
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforcePersonnelOrders.
+     */
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforcePersonnelOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforcePersonnelOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforcePersonnelOrders.
+     */
+    distinct?: WorkforcePersonnelOrderScalarFieldEnum | WorkforcePersonnelOrderScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforcePersonnelOrder findFirstOrThrow
+   */
+  export type WorkforcePersonnelOrderFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforcePersonnelOrder to fetch.
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforcePersonnelOrders to fetch.
+     */
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for WorkforcePersonnelOrders.
+     */
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforcePersonnelOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforcePersonnelOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforcePersonnelOrders.
+     */
+    distinct?: WorkforcePersonnelOrderScalarFieldEnum | WorkforcePersonnelOrderScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforcePersonnelOrder findMany
+   */
+  export type WorkforcePersonnelOrderFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter, which WorkforcePersonnelOrders to fetch.
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of WorkforcePersonnelOrders to fetch.
+     */
+    orderBy?: WorkforcePersonnelOrderOrderByWithRelationInput | WorkforcePersonnelOrderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing WorkforcePersonnelOrders.
+     */
+    cursor?: WorkforcePersonnelOrderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` WorkforcePersonnelOrders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` WorkforcePersonnelOrders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkforcePersonnelOrders.
+     */
+    distinct?: WorkforcePersonnelOrderScalarFieldEnum | WorkforcePersonnelOrderScalarFieldEnum[]
+  }
+
+  /**
+   * WorkforcePersonnelOrder create
+   */
+  export type WorkforcePersonnelOrderCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a WorkforcePersonnelOrder.
+     */
+    data: XOR<WorkforcePersonnelOrderCreateInput, WorkforcePersonnelOrderUncheckedCreateInput>
+  }
+
+  /**
+   * WorkforcePersonnelOrder createMany
+   */
+  export type WorkforcePersonnelOrderCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many WorkforcePersonnelOrders.
+     */
+    data: WorkforcePersonnelOrderCreateManyInput | WorkforcePersonnelOrderCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * WorkforcePersonnelOrder createManyAndReturn
+   */
+  export type WorkforcePersonnelOrderCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * The data used to create many WorkforcePersonnelOrders.
+     */
+    data: WorkforcePersonnelOrderCreateManyInput | WorkforcePersonnelOrderCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforcePersonnelOrder update
+   */
+  export type WorkforcePersonnelOrderUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a WorkforcePersonnelOrder.
+     */
+    data: XOR<WorkforcePersonnelOrderUpdateInput, WorkforcePersonnelOrderUncheckedUpdateInput>
+    /**
+     * Choose, which WorkforcePersonnelOrder to update.
+     */
+    where: WorkforcePersonnelOrderWhereUniqueInput
+  }
+
+  /**
+   * WorkforcePersonnelOrder updateMany
+   */
+  export type WorkforcePersonnelOrderUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update WorkforcePersonnelOrders.
+     */
+    data: XOR<WorkforcePersonnelOrderUpdateManyMutationInput, WorkforcePersonnelOrderUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforcePersonnelOrders to update
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * Limit how many WorkforcePersonnelOrders to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforcePersonnelOrder updateManyAndReturn
+   */
+  export type WorkforcePersonnelOrderUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * The data used to update WorkforcePersonnelOrders.
+     */
+    data: XOR<WorkforcePersonnelOrderUpdateManyMutationInput, WorkforcePersonnelOrderUncheckedUpdateManyInput>
+    /**
+     * Filter which WorkforcePersonnelOrders to update
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * Limit how many WorkforcePersonnelOrders to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * WorkforcePersonnelOrder upsert
+   */
+  export type WorkforcePersonnelOrderUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the WorkforcePersonnelOrder to update in case it exists.
+     */
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    /**
+     * In case the WorkforcePersonnelOrder found by the `where` argument doesn't exist, create a new WorkforcePersonnelOrder with this data.
+     */
+    create: XOR<WorkforcePersonnelOrderCreateInput, WorkforcePersonnelOrderUncheckedCreateInput>
+    /**
+     * In case the WorkforcePersonnelOrder was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<WorkforcePersonnelOrderUpdateInput, WorkforcePersonnelOrderUncheckedUpdateInput>
+  }
+
+  /**
+   * WorkforcePersonnelOrder delete
+   */
+  export type WorkforcePersonnelOrderDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+    /**
+     * Filter which WorkforcePersonnelOrder to delete.
+     */
+    where: WorkforcePersonnelOrderWhereUniqueInput
+  }
+
+  /**
+   * WorkforcePersonnelOrder deleteMany
+   */
+  export type WorkforcePersonnelOrderDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which WorkforcePersonnelOrders to delete
+     */
+    where?: WorkforcePersonnelOrderWhereInput
+    /**
+     * Limit how many WorkforcePersonnelOrders to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * WorkforcePersonnelOrder without action
+   */
+  export type WorkforcePersonnelOrderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the WorkforcePersonnelOrder
+     */
+    select?: WorkforcePersonnelOrderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the WorkforcePersonnelOrder
+     */
+    omit?: WorkforcePersonnelOrderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: WorkforcePersonnelOrderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model StaffScheduleRevision
+   */
+
+  export type AggregateStaffScheduleRevision = {
+    _count: StaffScheduleRevisionCountAggregateOutputType | null
+    _min: StaffScheduleRevisionMinAggregateOutputType | null
+    _max: StaffScheduleRevisionMaxAggregateOutputType | null
+  }
+
+  export type StaffScheduleRevisionMinAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    title: string | null
+    status: $Enums.StaffScheduleRevisionStatus | null
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    documentStorageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StaffScheduleRevisionMaxAggregateOutputType = {
+    id: string | null
+    workforceScopeId: string | null
+    title: string | null
+    status: $Enums.StaffScheduleRevisionStatus | null
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    documentStorageKey: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StaffScheduleRevisionCountAggregateOutputType = {
+    id: number
+    workforceScopeId: number
+    title: number
+    status: number
+    snapshotJson: number
+    submittedByUserId: number
+    approvedByUserId: number
+    submittedAt: number
+    approvedAt: number
+    documentStorageKey: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type StaffScheduleRevisionMinAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    title?: true
+    status?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    documentStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StaffScheduleRevisionMaxAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    title?: true
+    status?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    documentStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StaffScheduleRevisionCountAggregateInputType = {
+    id?: true
+    workforceScopeId?: true
+    title?: true
+    status?: true
+    snapshotJson?: true
+    submittedByUserId?: true
+    approvedByUserId?: true
+    submittedAt?: true
+    approvedAt?: true
+    documentStorageKey?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type StaffScheduleRevisionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StaffScheduleRevision to aggregate.
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StaffScheduleRevisions to fetch.
+     */
+    orderBy?: StaffScheduleRevisionOrderByWithRelationInput | StaffScheduleRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StaffScheduleRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StaffScheduleRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StaffScheduleRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StaffScheduleRevisions
+    **/
+    _count?: true | StaffScheduleRevisionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StaffScheduleRevisionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StaffScheduleRevisionMaxAggregateInputType
+  }
+
+  export type GetStaffScheduleRevisionAggregateType<T extends StaffScheduleRevisionAggregateArgs> = {
+        [P in keyof T & keyof AggregateStaffScheduleRevision]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStaffScheduleRevision[P]>
+      : GetScalarType<T[P], AggregateStaffScheduleRevision[P]>
+  }
+
+
+
+
+  export type StaffScheduleRevisionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StaffScheduleRevisionWhereInput
+    orderBy?: StaffScheduleRevisionOrderByWithAggregationInput | StaffScheduleRevisionOrderByWithAggregationInput[]
+    by: StaffScheduleRevisionScalarFieldEnum[] | StaffScheduleRevisionScalarFieldEnum
+    having?: StaffScheduleRevisionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StaffScheduleRevisionCountAggregateInputType | true
+    _min?: StaffScheduleRevisionMinAggregateInputType
+    _max?: StaffScheduleRevisionMaxAggregateInputType
+  }
+
+  export type StaffScheduleRevisionGroupByOutputType = {
+    id: string
+    workforceScopeId: string
+    title: string
+    status: $Enums.StaffScheduleRevisionStatus
+    snapshotJson: JsonValue
+    submittedByUserId: string | null
+    approvedByUserId: string | null
+    submittedAt: Date | null
+    approvedAt: Date | null
+    documentStorageKey: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: StaffScheduleRevisionCountAggregateOutputType | null
+    _min: StaffScheduleRevisionMinAggregateOutputType | null
+    _max: StaffScheduleRevisionMaxAggregateOutputType | null
+  }
+
+  type GetStaffScheduleRevisionGroupByPayload<T extends StaffScheduleRevisionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StaffScheduleRevisionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StaffScheduleRevisionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StaffScheduleRevisionGroupByOutputType[P]>
+            : GetScalarType<T[P], StaffScheduleRevisionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StaffScheduleRevisionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    title?: boolean
+    status?: boolean
+    snapshotJson?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    documentStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["staffScheduleRevision"]>
+
+  export type StaffScheduleRevisionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    title?: boolean
+    status?: boolean
+    snapshotJson?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    documentStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["staffScheduleRevision"]>
+
+  export type StaffScheduleRevisionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workforceScopeId?: boolean
+    title?: boolean
+    status?: boolean
+    snapshotJson?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    documentStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["staffScheduleRevision"]>
+
+  export type StaffScheduleRevisionSelectScalar = {
+    id?: boolean
+    workforceScopeId?: boolean
+    title?: boolean
+    status?: boolean
+    snapshotJson?: boolean
+    submittedByUserId?: boolean
+    approvedByUserId?: boolean
+    submittedAt?: boolean
+    approvedAt?: boolean
+    documentStorageKey?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type StaffScheduleRevisionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workforceScopeId" | "title" | "status" | "snapshotJson" | "submittedByUserId" | "approvedByUserId" | "submittedAt" | "approvedAt" | "documentStorageKey" | "createdAt" | "updatedAt", ExtArgs["result"]["staffScheduleRevision"]>
+  export type StaffScheduleRevisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }
+  export type StaffScheduleRevisionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }
+  export type StaffScheduleRevisionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workforceScope?: boolean | WorkforceScopeDefaultArgs<ExtArgs>
+  }
+
+  export type $StaffScheduleRevisionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StaffScheduleRevision"
+    objects: {
+      workforceScope: Prisma.$WorkforceScopePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workforceScopeId: string
+      title: string
+      status: $Enums.StaffScheduleRevisionStatus
+      /**
+       * Snapshot: [{ positionId, name, orgUnitId, totalSlots, occupied, vacant }]
+       */
+      snapshotJson: Prisma.JsonValue
+      submittedByUserId: string | null
+      approvedByUserId: string | null
+      submittedAt: Date | null
+      approvedAt: Date | null
+      documentStorageKey: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["staffScheduleRevision"]>
+    composites: {}
+  }
+
+  type StaffScheduleRevisionGetPayload<S extends boolean | null | undefined | StaffScheduleRevisionDefaultArgs> = $Result.GetResult<Prisma.$StaffScheduleRevisionPayload, S>
+
+  type StaffScheduleRevisionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StaffScheduleRevisionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StaffScheduleRevisionCountAggregateInputType | true
+    }
+
+  export interface StaffScheduleRevisionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StaffScheduleRevision'], meta: { name: 'StaffScheduleRevision' } }
+    /**
+     * Find zero or one StaffScheduleRevision that matches the filter.
+     * @param {StaffScheduleRevisionFindUniqueArgs} args - Arguments to find a StaffScheduleRevision
+     * @example
+     * // Get one StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StaffScheduleRevisionFindUniqueArgs>(args: SelectSubset<T, StaffScheduleRevisionFindUniqueArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StaffScheduleRevision that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StaffScheduleRevisionFindUniqueOrThrowArgs} args - Arguments to find a StaffScheduleRevision
+     * @example
+     * // Get one StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StaffScheduleRevisionFindUniqueOrThrowArgs>(args: SelectSubset<T, StaffScheduleRevisionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StaffScheduleRevision that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionFindFirstArgs} args - Arguments to find a StaffScheduleRevision
+     * @example
+     * // Get one StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StaffScheduleRevisionFindFirstArgs>(args?: SelectSubset<T, StaffScheduleRevisionFindFirstArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StaffScheduleRevision that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionFindFirstOrThrowArgs} args - Arguments to find a StaffScheduleRevision
+     * @example
+     * // Get one StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StaffScheduleRevisionFindFirstOrThrowArgs>(args?: SelectSubset<T, StaffScheduleRevisionFindFirstOrThrowArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StaffScheduleRevisions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StaffScheduleRevisions
+     * const staffScheduleRevisions = await prisma.staffScheduleRevision.findMany()
+     * 
+     * // Get first 10 StaffScheduleRevisions
+     * const staffScheduleRevisions = await prisma.staffScheduleRevision.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const staffScheduleRevisionWithIdOnly = await prisma.staffScheduleRevision.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StaffScheduleRevisionFindManyArgs>(args?: SelectSubset<T, StaffScheduleRevisionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StaffScheduleRevision.
+     * @param {StaffScheduleRevisionCreateArgs} args - Arguments to create a StaffScheduleRevision.
+     * @example
+     * // Create one StaffScheduleRevision
+     * const StaffScheduleRevision = await prisma.staffScheduleRevision.create({
+     *   data: {
+     *     // ... data to create a StaffScheduleRevision
+     *   }
+     * })
+     * 
+     */
+    create<T extends StaffScheduleRevisionCreateArgs>(args: SelectSubset<T, StaffScheduleRevisionCreateArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StaffScheduleRevisions.
+     * @param {StaffScheduleRevisionCreateManyArgs} args - Arguments to create many StaffScheduleRevisions.
+     * @example
+     * // Create many StaffScheduleRevisions
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StaffScheduleRevisionCreateManyArgs>(args?: SelectSubset<T, StaffScheduleRevisionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StaffScheduleRevisions and returns the data saved in the database.
+     * @param {StaffScheduleRevisionCreateManyAndReturnArgs} args - Arguments to create many StaffScheduleRevisions.
+     * @example
+     * // Create many StaffScheduleRevisions
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StaffScheduleRevisions and only return the `id`
+     * const staffScheduleRevisionWithIdOnly = await prisma.staffScheduleRevision.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StaffScheduleRevisionCreateManyAndReturnArgs>(args?: SelectSubset<T, StaffScheduleRevisionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StaffScheduleRevision.
+     * @param {StaffScheduleRevisionDeleteArgs} args - Arguments to delete one StaffScheduleRevision.
+     * @example
+     * // Delete one StaffScheduleRevision
+     * const StaffScheduleRevision = await prisma.staffScheduleRevision.delete({
+     *   where: {
+     *     // ... filter to delete one StaffScheduleRevision
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StaffScheduleRevisionDeleteArgs>(args: SelectSubset<T, StaffScheduleRevisionDeleteArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StaffScheduleRevision.
+     * @param {StaffScheduleRevisionUpdateArgs} args - Arguments to update one StaffScheduleRevision.
+     * @example
+     * // Update one StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StaffScheduleRevisionUpdateArgs>(args: SelectSubset<T, StaffScheduleRevisionUpdateArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StaffScheduleRevisions.
+     * @param {StaffScheduleRevisionDeleteManyArgs} args - Arguments to filter StaffScheduleRevisions to delete.
+     * @example
+     * // Delete a few StaffScheduleRevisions
+     * const { count } = await prisma.staffScheduleRevision.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StaffScheduleRevisionDeleteManyArgs>(args?: SelectSubset<T, StaffScheduleRevisionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StaffScheduleRevisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StaffScheduleRevisions
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StaffScheduleRevisionUpdateManyArgs>(args: SelectSubset<T, StaffScheduleRevisionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StaffScheduleRevisions and returns the data updated in the database.
+     * @param {StaffScheduleRevisionUpdateManyAndReturnArgs} args - Arguments to update many StaffScheduleRevisions.
+     * @example
+     * // Update many StaffScheduleRevisions
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StaffScheduleRevisions and only return the `id`
+     * const staffScheduleRevisionWithIdOnly = await prisma.staffScheduleRevision.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StaffScheduleRevisionUpdateManyAndReturnArgs>(args: SelectSubset<T, StaffScheduleRevisionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StaffScheduleRevision.
+     * @param {StaffScheduleRevisionUpsertArgs} args - Arguments to update or create a StaffScheduleRevision.
+     * @example
+     * // Update or create a StaffScheduleRevision
+     * const staffScheduleRevision = await prisma.staffScheduleRevision.upsert({
+     *   create: {
+     *     // ... data to create a StaffScheduleRevision
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StaffScheduleRevision we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StaffScheduleRevisionUpsertArgs>(args: SelectSubset<T, StaffScheduleRevisionUpsertArgs<ExtArgs>>): Prisma__StaffScheduleRevisionClient<$Result.GetResult<Prisma.$StaffScheduleRevisionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StaffScheduleRevisions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionCountArgs} args - Arguments to filter StaffScheduleRevisions to count.
+     * @example
+     * // Count the number of StaffScheduleRevisions
+     * const count = await prisma.staffScheduleRevision.count({
+     *   where: {
+     *     // ... the filter for the StaffScheduleRevisions we want to count
+     *   }
+     * })
+    **/
+    count<T extends StaffScheduleRevisionCountArgs>(
+      args?: Subset<T, StaffScheduleRevisionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StaffScheduleRevisionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StaffScheduleRevision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StaffScheduleRevisionAggregateArgs>(args: Subset<T, StaffScheduleRevisionAggregateArgs>): Prisma.PrismaPromise<GetStaffScheduleRevisionAggregateType<T>>
+
+    /**
+     * Group by StaffScheduleRevision.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StaffScheduleRevisionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StaffScheduleRevisionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StaffScheduleRevisionGroupByArgs['orderBy'] }
+        : { orderBy?: StaffScheduleRevisionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StaffScheduleRevisionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStaffScheduleRevisionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StaffScheduleRevision model
+   */
+  readonly fields: StaffScheduleRevisionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StaffScheduleRevision.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StaffScheduleRevisionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workforceScope<T extends WorkforceScopeDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkforceScopeDefaultArgs<ExtArgs>>): Prisma__WorkforceScopeClient<$Result.GetResult<Prisma.$WorkforceScopePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StaffScheduleRevision model
+   */
+  interface StaffScheduleRevisionFieldRefs {
+    readonly id: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly workforceScopeId: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly title: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly status: FieldRef<"StaffScheduleRevision", 'StaffScheduleRevisionStatus'>
+    readonly snapshotJson: FieldRef<"StaffScheduleRevision", 'Json'>
+    readonly submittedByUserId: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly approvedByUserId: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly submittedAt: FieldRef<"StaffScheduleRevision", 'DateTime'>
+    readonly approvedAt: FieldRef<"StaffScheduleRevision", 'DateTime'>
+    readonly documentStorageKey: FieldRef<"StaffScheduleRevision", 'String'>
+    readonly createdAt: FieldRef<"StaffScheduleRevision", 'DateTime'>
+    readonly updatedAt: FieldRef<"StaffScheduleRevision", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StaffScheduleRevision findUnique
+   */
+  export type StaffScheduleRevisionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which StaffScheduleRevision to fetch.
+     */
+    where: StaffScheduleRevisionWhereUniqueInput
+  }
+
+  /**
+   * StaffScheduleRevision findUniqueOrThrow
+   */
+  export type StaffScheduleRevisionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which StaffScheduleRevision to fetch.
+     */
+    where: StaffScheduleRevisionWhereUniqueInput
+  }
+
+  /**
+   * StaffScheduleRevision findFirst
+   */
+  export type StaffScheduleRevisionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which StaffScheduleRevision to fetch.
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StaffScheduleRevisions to fetch.
+     */
+    orderBy?: StaffScheduleRevisionOrderByWithRelationInput | StaffScheduleRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StaffScheduleRevisions.
+     */
+    cursor?: StaffScheduleRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StaffScheduleRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StaffScheduleRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StaffScheduleRevisions.
+     */
+    distinct?: StaffScheduleRevisionScalarFieldEnum | StaffScheduleRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * StaffScheduleRevision findFirstOrThrow
+   */
+  export type StaffScheduleRevisionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which StaffScheduleRevision to fetch.
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StaffScheduleRevisions to fetch.
+     */
+    orderBy?: StaffScheduleRevisionOrderByWithRelationInput | StaffScheduleRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StaffScheduleRevisions.
+     */
+    cursor?: StaffScheduleRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StaffScheduleRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StaffScheduleRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StaffScheduleRevisions.
+     */
+    distinct?: StaffScheduleRevisionScalarFieldEnum | StaffScheduleRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * StaffScheduleRevision findMany
+   */
+  export type StaffScheduleRevisionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter, which StaffScheduleRevisions to fetch.
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StaffScheduleRevisions to fetch.
+     */
+    orderBy?: StaffScheduleRevisionOrderByWithRelationInput | StaffScheduleRevisionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StaffScheduleRevisions.
+     */
+    cursor?: StaffScheduleRevisionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StaffScheduleRevisions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StaffScheduleRevisions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StaffScheduleRevisions.
+     */
+    distinct?: StaffScheduleRevisionScalarFieldEnum | StaffScheduleRevisionScalarFieldEnum[]
+  }
+
+  /**
+   * StaffScheduleRevision create
+   */
+  export type StaffScheduleRevisionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a StaffScheduleRevision.
+     */
+    data: XOR<StaffScheduleRevisionCreateInput, StaffScheduleRevisionUncheckedCreateInput>
+  }
+
+  /**
+   * StaffScheduleRevision createMany
+   */
+  export type StaffScheduleRevisionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StaffScheduleRevisions.
+     */
+    data: StaffScheduleRevisionCreateManyInput | StaffScheduleRevisionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StaffScheduleRevision createManyAndReturn
+   */
+  export type StaffScheduleRevisionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * The data used to create many StaffScheduleRevisions.
+     */
+    data: StaffScheduleRevisionCreateManyInput | StaffScheduleRevisionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StaffScheduleRevision update
+   */
+  export type StaffScheduleRevisionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a StaffScheduleRevision.
+     */
+    data: XOR<StaffScheduleRevisionUpdateInput, StaffScheduleRevisionUncheckedUpdateInput>
+    /**
+     * Choose, which StaffScheduleRevision to update.
+     */
+    where: StaffScheduleRevisionWhereUniqueInput
+  }
+
+  /**
+   * StaffScheduleRevision updateMany
+   */
+  export type StaffScheduleRevisionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StaffScheduleRevisions.
+     */
+    data: XOR<StaffScheduleRevisionUpdateManyMutationInput, StaffScheduleRevisionUncheckedUpdateManyInput>
+    /**
+     * Filter which StaffScheduleRevisions to update
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * Limit how many StaffScheduleRevisions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StaffScheduleRevision updateManyAndReturn
+   */
+  export type StaffScheduleRevisionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * The data used to update StaffScheduleRevisions.
+     */
+    data: XOR<StaffScheduleRevisionUpdateManyMutationInput, StaffScheduleRevisionUncheckedUpdateManyInput>
+    /**
+     * Filter which StaffScheduleRevisions to update
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * Limit how many StaffScheduleRevisions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StaffScheduleRevision upsert
+   */
+  export type StaffScheduleRevisionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the StaffScheduleRevision to update in case it exists.
+     */
+    where: StaffScheduleRevisionWhereUniqueInput
+    /**
+     * In case the StaffScheduleRevision found by the `where` argument doesn't exist, create a new StaffScheduleRevision with this data.
+     */
+    create: XOR<StaffScheduleRevisionCreateInput, StaffScheduleRevisionUncheckedCreateInput>
+    /**
+     * In case the StaffScheduleRevision was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StaffScheduleRevisionUpdateInput, StaffScheduleRevisionUncheckedUpdateInput>
+  }
+
+  /**
+   * StaffScheduleRevision delete
+   */
+  export type StaffScheduleRevisionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
+    /**
+     * Filter which StaffScheduleRevision to delete.
+     */
+    where: StaffScheduleRevisionWhereUniqueInput
+  }
+
+  /**
+   * StaffScheduleRevision deleteMany
+   */
+  export type StaffScheduleRevisionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StaffScheduleRevisions to delete
+     */
+    where?: StaffScheduleRevisionWhereInput
+    /**
+     * Limit how many StaffScheduleRevisions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StaffScheduleRevision without action
+   */
+  export type StaffScheduleRevisionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StaffScheduleRevision
+     */
+    select?: StaffScheduleRevisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StaffScheduleRevision
+     */
+    omit?: StaffScheduleRevisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StaffScheduleRevisionInclude<ExtArgs> | null
   }
 
 
@@ -80258,6 +85688,78 @@ export namespace Prisma {
   export type WorkforceTimesheetEntryScalarFieldEnum = (typeof WorkforceTimesheetEntryScalarFieldEnum)[keyof typeof WorkforceTimesheetEntryScalarFieldEnum]
 
 
+  export const WorkforceVacationPlanScalarFieldEnum: {
+    id: 'id',
+    workforceScopeId: 'workforceScopeId',
+    year: 'year',
+    orgUnitId: 'orgUnitId',
+    status: 'status',
+    submittedByUserId: 'submittedByUserId',
+    approvedByUserId: 'approvedByUserId',
+    submittedAt: 'submittedAt',
+    approvedAt: 'approvedAt',
+    rejectedAt: 'rejectedAt',
+    rejectionReason: 'rejectionReason',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceVacationPlanScalarFieldEnum = (typeof WorkforceVacationPlanScalarFieldEnum)[keyof typeof WorkforceVacationPlanScalarFieldEnum]
+
+
+  export const WorkforceVacationPlanLineScalarFieldEnum: {
+    id: 'id',
+    planId: 'planId',
+    employmentId: 'employmentId',
+    startDate: 'startDate',
+    endDate: 'endDate',
+    days: 'days',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforceVacationPlanLineScalarFieldEnum = (typeof WorkforceVacationPlanLineScalarFieldEnum)[keyof typeof WorkforceVacationPlanLineScalarFieldEnum]
+
+
+  export const WorkforcePersonnelOrderScalarFieldEnum: {
+    id: 'id',
+    workforceScopeId: 'workforceScopeId',
+    employmentId: 'employmentId',
+    organizationId: 'organizationId',
+    type: 'type',
+    status: 'status',
+    orderNumber: 'orderNumber',
+    effectiveDate: 'effectiveDate',
+    note: 'note',
+    personDisplayName: 'personDisplayName',
+    documentStorageKey: 'documentStorageKey',
+    issuedByUserId: 'issuedByUserId',
+    issuedAt: 'issuedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type WorkforcePersonnelOrderScalarFieldEnum = (typeof WorkforcePersonnelOrderScalarFieldEnum)[keyof typeof WorkforcePersonnelOrderScalarFieldEnum]
+
+
+  export const StaffScheduleRevisionScalarFieldEnum: {
+    id: 'id',
+    workforceScopeId: 'workforceScopeId',
+    title: 'title',
+    status: 'status',
+    snapshotJson: 'snapshotJson',
+    submittedByUserId: 'submittedByUserId',
+    approvedByUserId: 'approvedByUserId',
+    submittedAt: 'submittedAt',
+    approvedAt: 'approvedAt',
+    documentStorageKey: 'documentStorageKey',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type StaffScheduleRevisionScalarFieldEnum = (typeof StaffScheduleRevisionScalarFieldEnum)[keyof typeof StaffScheduleRevisionScalarFieldEnum]
+
+
   export const WorkforceAuditLogScalarFieldEnum: {
     id: 'id',
     organizationId: 'organizationId',
@@ -81161,6 +86663,62 @@ export namespace Prisma {
    * Reference to a field of type 'WorkforceTimesheetEntryStatus[]'
    */
   export type ListEnumWorkforceTimesheetEntryStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceTimesheetEntryStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceVacationPlanStatus'
+   */
+  export type EnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceVacationPlanStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforceVacationPlanStatus[]'
+   */
+  export type ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforceVacationPlanStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforcePersonnelOrderType'
+   */
+  export type EnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforcePersonnelOrderType'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforcePersonnelOrderType[]'
+   */
+  export type ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforcePersonnelOrderType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforcePersonnelOrderStatus'
+   */
+  export type EnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforcePersonnelOrderStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'WorkforcePersonnelOrderStatus[]'
+   */
+  export type ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'WorkforcePersonnelOrderStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'StaffScheduleRevisionStatus'
+   */
+  export type EnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffScheduleRevisionStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'StaffScheduleRevisionStatus[]'
+   */
+  export type ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'StaffScheduleRevisionStatus[]'>
     
 
 
@@ -82544,6 +88102,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentListRelationFilter
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
     seatAllocations?: WorkforceSeatAllocationListRelationFilter
+    vacationPlans?: WorkforceVacationPlanListRelationFilter
+    personnelOrders?: WorkforcePersonnelOrderListRelationFilter
+    staffScheduleRevisions?: StaffScheduleRevisionListRelationFilter
   }
 
   export type WorkforceScopeOrderByWithRelationInput = {
@@ -82556,6 +88117,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentOrderByRelationAggregateInput
     commercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
     seatAllocations?: WorkforceSeatAllocationOrderByRelationAggregateInput
+    vacationPlans?: WorkforceVacationPlanOrderByRelationAggregateInput
+    personnelOrders?: WorkforcePersonnelOrderOrderByRelationAggregateInput
+    staffScheduleRevisions?: StaffScheduleRevisionOrderByRelationAggregateInput
   }
 
   export type WorkforceScopeWhereUniqueInput = Prisma.AtLeast<{
@@ -82571,6 +88135,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentListRelationFilter
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
     seatAllocations?: WorkforceSeatAllocationListRelationFilter
+    vacationPlans?: WorkforceVacationPlanListRelationFilter
+    personnelOrders?: WorkforcePersonnelOrderListRelationFilter
+    staffScheduleRevisions?: StaffScheduleRevisionListRelationFilter
   }, "id" | "anchorOrganizationId">
 
   export type WorkforceScopeOrderByWithAggregationInput = {
@@ -82617,6 +88184,7 @@ export namespace Prisma {
     positions?: WorkforcePositionListRelationFilter
     employments?: WorkforceEmploymentListRelationFilter
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
+    vacationPlans?: WorkforceVacationPlanListRelationFilter
   }
 
   export type OrgUnitOrderByWithRelationInput = {
@@ -82638,6 +88206,7 @@ export namespace Prisma {
     positions?: WorkforcePositionOrderByRelationAggregateInput
     employments?: WorkforceEmploymentOrderByRelationAggregateInput
     commercialLinks?: OrgUnitCommercialLinkOrderByRelationAggregateInput
+    vacationPlans?: WorkforceVacationPlanOrderByRelationAggregateInput
   }
 
   export type OrgUnitWhereUniqueInput = Prisma.AtLeast<{
@@ -82663,6 +88232,7 @@ export namespace Prisma {
     positions?: WorkforcePositionListRelationFilter
     employments?: WorkforceEmploymentListRelationFilter
     commercialLinks?: OrgUnitCommercialLinkListRelationFilter
+    vacationPlans?: WorkforceVacationPlanListRelationFilter
   }, "id" | "workforceScopeId_parentId_name">
 
   export type OrgUnitOrderByWithAggregationInput = {
@@ -83175,6 +88745,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantListRelationFilter
     seatAllocation?: XOR<WorkforceSeatAllocationNullableScalarRelationFilter, WorkforceSeatAllocationWhereInput> | null
     timesheetEntries?: WorkforceTimesheetEntryListRelationFilter
+    vacationPlanLines?: WorkforceVacationPlanLineListRelationFilter
+    personnelOrders?: WorkforcePersonnelOrderListRelationFilter
   }
 
   export type WorkforceEmploymentOrderByWithRelationInput = {
@@ -83201,6 +88773,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantOrderByRelationAggregateInput
     seatAllocation?: WorkforceSeatAllocationOrderByWithRelationInput
     timesheetEntries?: WorkforceTimesheetEntryOrderByRelationAggregateInput
+    vacationPlanLines?: WorkforceVacationPlanLineOrderByRelationAggregateInput
+    personnelOrders?: WorkforcePersonnelOrderOrderByRelationAggregateInput
   }
 
   export type WorkforceEmploymentWhereUniqueInput = Prisma.AtLeast<{
@@ -83230,6 +88804,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantListRelationFilter
     seatAllocation?: XOR<WorkforceSeatAllocationNullableScalarRelationFilter, WorkforceSeatAllocationWhereInput> | null
     timesheetEntries?: WorkforceTimesheetEntryListRelationFilter
+    vacationPlanLines?: WorkforceVacationPlanLineListRelationFilter
+    personnelOrders?: WorkforcePersonnelOrderListRelationFilter
   }, "id">
 
   export type WorkforceEmploymentOrderByWithAggregationInput = {
@@ -83475,6 +89051,384 @@ export namespace Prisma {
     status?: EnumWorkforceTimesheetEntryStatusWithAggregatesFilter<"WorkforceTimesheetEntry"> | $Enums.WorkforceTimesheetEntryStatus
     createdAt?: DateTimeWithAggregatesFilter<"WorkforceTimesheetEntry"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkforceTimesheetEntry"> | Date | string
+  }
+
+  export type WorkforceVacationPlanWhereInput = {
+    AND?: WorkforceVacationPlanWhereInput | WorkforceVacationPlanWhereInput[]
+    OR?: WorkforceVacationPlanWhereInput[]
+    NOT?: WorkforceVacationPlanWhereInput | WorkforceVacationPlanWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlan"> | string
+    workforceScopeId?: UuidFilter<"WorkforceVacationPlan"> | string
+    year?: IntFilter<"WorkforceVacationPlan"> | number
+    orgUnitId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    status?: EnumWorkforceVacationPlanStatusFilter<"WorkforceVacationPlan"> | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    approvedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    submittedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
+    lines?: WorkforceVacationPlanLineListRelationFilter
+  }
+
+  export type WorkforceVacationPlanOrderByWithRelationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    year?: SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrderInput | SortOrder
+    approvedByUserId?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectionReason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workforceScope?: WorkforceScopeOrderByWithRelationInput
+    orgUnit?: OrgUnitOrderByWithRelationInput
+    lines?: WorkforceVacationPlanLineOrderByRelationAggregateInput
+  }
+
+  export type WorkforceVacationPlanWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workforceScopeId_year_orgUnitId?: WorkforceVacationPlanWorkforceScopeIdYearOrgUnitIdCompoundUniqueInput
+    AND?: WorkforceVacationPlanWhereInput | WorkforceVacationPlanWhereInput[]
+    OR?: WorkforceVacationPlanWhereInput[]
+    NOT?: WorkforceVacationPlanWhereInput | WorkforceVacationPlanWhereInput[]
+    workforceScopeId?: UuidFilter<"WorkforceVacationPlan"> | string
+    year?: IntFilter<"WorkforceVacationPlan"> | number
+    orgUnitId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    status?: EnumWorkforceVacationPlanStatusFilter<"WorkforceVacationPlan"> | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    approvedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    submittedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    orgUnit?: XOR<OrgUnitNullableScalarRelationFilter, OrgUnitWhereInput> | null
+    lines?: WorkforceVacationPlanLineListRelationFilter
+  }, "id" | "workforceScopeId_year_orgUnitId">
+
+  export type WorkforceVacationPlanOrderByWithAggregationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    year?: SortOrder
+    orgUnitId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrderInput | SortOrder
+    approvedByUserId?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectionReason?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceVacationPlanCountOrderByAggregateInput
+    _avg?: WorkforceVacationPlanAvgOrderByAggregateInput
+    _max?: WorkforceVacationPlanMaxOrderByAggregateInput
+    _min?: WorkforceVacationPlanMinOrderByAggregateInput
+    _sum?: WorkforceVacationPlanSumOrderByAggregateInput
+  }
+
+  export type WorkforceVacationPlanScalarWhereWithAggregatesInput = {
+    AND?: WorkforceVacationPlanScalarWhereWithAggregatesInput | WorkforceVacationPlanScalarWhereWithAggregatesInput[]
+    OR?: WorkforceVacationPlanScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceVacationPlanScalarWhereWithAggregatesInput | WorkforceVacationPlanScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceVacationPlan"> | string
+    workforceScopeId?: UuidWithAggregatesFilter<"WorkforceVacationPlan"> | string
+    year?: IntWithAggregatesFilter<"WorkforceVacationPlan"> | number
+    orgUnitId?: UuidNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    status?: EnumWorkforceVacationPlanStatusWithAggregatesFilter<"WorkforceVacationPlan"> | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: UuidNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    approvedByUserId?: UuidNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    submittedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
+    approvedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectedAt?: DateTimeNullableWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectionReason?: StringNullableWithAggregatesFilter<"WorkforceVacationPlan"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlan"> | Date | string
+  }
+
+  export type WorkforceVacationPlanLineWhereInput = {
+    AND?: WorkforceVacationPlanLineWhereInput | WorkforceVacationPlanLineWhereInput[]
+    OR?: WorkforceVacationPlanLineWhereInput[]
+    NOT?: WorkforceVacationPlanLineWhereInput | WorkforceVacationPlanLineWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    planId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    employmentId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    startDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    endDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    days?: IntFilter<"WorkforceVacationPlanLine"> | number
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    plan?: XOR<WorkforceVacationPlanScalarRelationFilter, WorkforceVacationPlanWhereInput>
+    employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
+  }
+
+  export type WorkforceVacationPlanLineOrderByWithRelationInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    employmentId?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    days?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    plan?: WorkforceVacationPlanOrderByWithRelationInput
+    employment?: WorkforceEmploymentOrderByWithRelationInput
+  }
+
+  export type WorkforceVacationPlanLineWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: WorkforceVacationPlanLineWhereInput | WorkforceVacationPlanLineWhereInput[]
+    OR?: WorkforceVacationPlanLineWhereInput[]
+    NOT?: WorkforceVacationPlanLineWhereInput | WorkforceVacationPlanLineWhereInput[]
+    planId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    employmentId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    startDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    endDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    days?: IntFilter<"WorkforceVacationPlanLine"> | number
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    plan?: XOR<WorkforceVacationPlanScalarRelationFilter, WorkforceVacationPlanWhereInput>
+    employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
+  }, "id">
+
+  export type WorkforceVacationPlanLineOrderByWithAggregationInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    employmentId?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    days?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforceVacationPlanLineCountOrderByAggregateInput
+    _avg?: WorkforceVacationPlanLineAvgOrderByAggregateInput
+    _max?: WorkforceVacationPlanLineMaxOrderByAggregateInput
+    _min?: WorkforceVacationPlanLineMinOrderByAggregateInput
+    _sum?: WorkforceVacationPlanLineSumOrderByAggregateInput
+  }
+
+  export type WorkforceVacationPlanLineScalarWhereWithAggregatesInput = {
+    AND?: WorkforceVacationPlanLineScalarWhereWithAggregatesInput | WorkforceVacationPlanLineScalarWhereWithAggregatesInput[]
+    OR?: WorkforceVacationPlanLineScalarWhereWithAggregatesInput[]
+    NOT?: WorkforceVacationPlanLineScalarWhereWithAggregatesInput | WorkforceVacationPlanLineScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforceVacationPlanLine"> | string
+    planId?: UuidWithAggregatesFilter<"WorkforceVacationPlanLine"> | string
+    employmentId?: UuidWithAggregatesFilter<"WorkforceVacationPlanLine"> | string
+    startDate?: DateTimeWithAggregatesFilter<"WorkforceVacationPlanLine"> | Date | string
+    endDate?: DateTimeWithAggregatesFilter<"WorkforceVacationPlanLine"> | Date | string
+    days?: IntWithAggregatesFilter<"WorkforceVacationPlanLine"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlanLine"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforceVacationPlanLine"> | Date | string
+  }
+
+  export type WorkforcePersonnelOrderWhereInput = {
+    AND?: WorkforcePersonnelOrderWhereInput | WorkforcePersonnelOrderWhereInput[]
+    OR?: WorkforcePersonnelOrderWhereInput[]
+    NOT?: WorkforcePersonnelOrderWhereInput | WorkforcePersonnelOrderWhereInput[]
+    id?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    workforceScopeId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    employmentId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    organizationId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    type?: EnumWorkforcePersonnelOrderTypeFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFilter<"WorkforcePersonnelOrder"> | string
+    effectiveDate?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    note?: StringFilter<"WorkforcePersonnelOrder"> | string
+    personDisplayName?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    documentStorageKey?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
+  }
+
+  export type WorkforcePersonnelOrderOrderByWithRelationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    employmentId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    orderNumber?: SortOrder
+    effectiveDate?: SortOrder
+    note?: SortOrder
+    personDisplayName?: SortOrderInput | SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    issuedByUserId?: SortOrderInput | SortOrder
+    issuedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workforceScope?: WorkforceScopeOrderByWithRelationInput
+    employment?: WorkforceEmploymentOrderByWithRelationInput
+  }
+
+  export type WorkforcePersonnelOrderWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    workforceScopeId_orderNumber?: WorkforcePersonnelOrderWorkforceScopeIdOrderNumberCompoundUniqueInput
+    AND?: WorkforcePersonnelOrderWhereInput | WorkforcePersonnelOrderWhereInput[]
+    OR?: WorkforcePersonnelOrderWhereInput[]
+    NOT?: WorkforcePersonnelOrderWhereInput | WorkforcePersonnelOrderWhereInput[]
+    workforceScopeId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    employmentId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    organizationId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    type?: EnumWorkforcePersonnelOrderTypeFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFilter<"WorkforcePersonnelOrder"> | string
+    effectiveDate?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    note?: StringFilter<"WorkforcePersonnelOrder"> | string
+    personDisplayName?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    documentStorageKey?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+    employment?: XOR<WorkforceEmploymentScalarRelationFilter, WorkforceEmploymentWhereInput>
+  }, "id" | "workforceScopeId_orderNumber">
+
+  export type WorkforcePersonnelOrderOrderByWithAggregationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    employmentId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    orderNumber?: SortOrder
+    effectiveDate?: SortOrder
+    note?: SortOrder
+    personDisplayName?: SortOrderInput | SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    issuedByUserId?: SortOrderInput | SortOrder
+    issuedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: WorkforcePersonnelOrderCountOrderByAggregateInput
+    _max?: WorkforcePersonnelOrderMaxOrderByAggregateInput
+    _min?: WorkforcePersonnelOrderMinOrderByAggregateInput
+  }
+
+  export type WorkforcePersonnelOrderScalarWhereWithAggregatesInput = {
+    AND?: WorkforcePersonnelOrderScalarWhereWithAggregatesInput | WorkforcePersonnelOrderScalarWhereWithAggregatesInput[]
+    OR?: WorkforcePersonnelOrderScalarWhereWithAggregatesInput[]
+    NOT?: WorkforcePersonnelOrderScalarWhereWithAggregatesInput | WorkforcePersonnelOrderScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    workforceScopeId?: UuidWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    employmentId?: UuidWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    organizationId?: UuidWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    type?: EnumWorkforcePersonnelOrderTypeWithAggregatesFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusWithAggregatesFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    effectiveDate?: DateTimeWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string
+    note?: StringWithAggregatesFilter<"WorkforcePersonnelOrder"> | string
+    personDisplayName?: StringNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | string | null
+    documentStorageKey?: StringNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedByUserId?: UuidNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedAt?: DateTimeNullableWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"WorkforcePersonnelOrder"> | Date | string
+  }
+
+  export type StaffScheduleRevisionWhereInput = {
+    AND?: StaffScheduleRevisionWhereInput | StaffScheduleRevisionWhereInput[]
+    OR?: StaffScheduleRevisionWhereInput[]
+    NOT?: StaffScheduleRevisionWhereInput | StaffScheduleRevisionWhereInput[]
+    id?: UuidFilter<"StaffScheduleRevision"> | string
+    workforceScopeId?: UuidFilter<"StaffScheduleRevision"> | string
+    title?: StringFilter<"StaffScheduleRevision"> | string
+    status?: EnumStaffScheduleRevisionStatusFilter<"StaffScheduleRevision"> | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonFilter<"StaffScheduleRevision">
+    submittedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    approvedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    submittedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    documentStorageKey?: StringNullableFilter<"StaffScheduleRevision"> | string | null
+    createdAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+    updatedAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+  }
+
+  export type StaffScheduleRevisionOrderByWithRelationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    title?: SortOrder
+    status?: SortOrder
+    snapshotJson?: SortOrder
+    submittedByUserId?: SortOrderInput | SortOrder
+    approvedByUserId?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    workforceScope?: WorkforceScopeOrderByWithRelationInput
+  }
+
+  export type StaffScheduleRevisionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: StaffScheduleRevisionWhereInput | StaffScheduleRevisionWhereInput[]
+    OR?: StaffScheduleRevisionWhereInput[]
+    NOT?: StaffScheduleRevisionWhereInput | StaffScheduleRevisionWhereInput[]
+    workforceScopeId?: UuidFilter<"StaffScheduleRevision"> | string
+    title?: StringFilter<"StaffScheduleRevision"> | string
+    status?: EnumStaffScheduleRevisionStatusFilter<"StaffScheduleRevision"> | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonFilter<"StaffScheduleRevision">
+    submittedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    approvedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    submittedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    documentStorageKey?: StringNullableFilter<"StaffScheduleRevision"> | string | null
+    createdAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+    updatedAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+    workforceScope?: XOR<WorkforceScopeScalarRelationFilter, WorkforceScopeWhereInput>
+  }, "id">
+
+  export type StaffScheduleRevisionOrderByWithAggregationInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    title?: SortOrder
+    status?: SortOrder
+    snapshotJson?: SortOrder
+    submittedByUserId?: SortOrderInput | SortOrder
+    approvedByUserId?: SortOrderInput | SortOrder
+    submittedAt?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    documentStorageKey?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: StaffScheduleRevisionCountOrderByAggregateInput
+    _max?: StaffScheduleRevisionMaxOrderByAggregateInput
+    _min?: StaffScheduleRevisionMinOrderByAggregateInput
+  }
+
+  export type StaffScheduleRevisionScalarWhereWithAggregatesInput = {
+    AND?: StaffScheduleRevisionScalarWhereWithAggregatesInput | StaffScheduleRevisionScalarWhereWithAggregatesInput[]
+    OR?: StaffScheduleRevisionScalarWhereWithAggregatesInput[]
+    NOT?: StaffScheduleRevisionScalarWhereWithAggregatesInput | StaffScheduleRevisionScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"StaffScheduleRevision"> | string
+    workforceScopeId?: UuidWithAggregatesFilter<"StaffScheduleRevision"> | string
+    title?: StringWithAggregatesFilter<"StaffScheduleRevision"> | string
+    status?: EnumStaffScheduleRevisionStatusWithAggregatesFilter<"StaffScheduleRevision"> | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonWithAggregatesFilter<"StaffScheduleRevision">
+    submittedByUserId?: UuidNullableWithAggregatesFilter<"StaffScheduleRevision"> | string | null
+    approvedByUserId?: UuidNullableWithAggregatesFilter<"StaffScheduleRevision"> | string | null
+    submittedAt?: DateTimeNullableWithAggregatesFilter<"StaffScheduleRevision"> | Date | string | null
+    approvedAt?: DateTimeNullableWithAggregatesFilter<"StaffScheduleRevision"> | Date | string | null
+    documentStorageKey?: StringNullableWithAggregatesFilter<"StaffScheduleRevision"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"StaffScheduleRevision"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"StaffScheduleRevision"> | Date | string
   }
 
   export type WorkforceAuditLogWhereInput = {
@@ -87662,6 +93616,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateInput = {
@@ -87674,6 +93631,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUpdateInput = {
@@ -87686,6 +93646,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateInput = {
@@ -87698,6 +93661,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeCreateManyInput = {
@@ -87740,6 +93706,7 @@ export namespace Prisma {
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateInput = {
@@ -87758,6 +93725,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUpdateInput = {
@@ -87776,6 +93744,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateInput = {
@@ -87794,6 +93763,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitCreateManyInput = {
@@ -88319,6 +94289,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateInput = {
@@ -88341,6 +94313,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUpdateInput = {
@@ -88363,6 +94337,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateInput = {
@@ -88385,6 +94361,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentCreateManyInput = {
@@ -88670,6 +94648,423 @@ export namespace Prisma {
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanCreateInput = {
+    id?: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
+    orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
+    lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
+    orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
+    lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanCreateManyInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineCreateInput = {
+    id?: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    plan: WorkforceVacationPlanCreateNestedOneWithoutLinesInput
+    employment: WorkforceEmploymentCreateNestedOneWithoutVacationPlanLinesInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedCreateInput = {
+    id?: string
+    planId: string
+    employmentId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanLineUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    plan?: WorkforceVacationPlanUpdateOneRequiredWithoutLinesNestedInput
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutVacationPlanLinesNestedInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineCreateManyInput = {
+    id?: string
+    planId: string
+    employmentId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanLineUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateInput = {
+    id?: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutPersonnelOrdersInput
+    employment: WorkforceEmploymentCreateNestedOneWithoutPersonnelOrdersInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedCreateInput = {
+    id?: string
+    workforceScopeId: string
+    employmentId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutPersonnelOrdersNestedInput
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutPersonnelOrdersNestedInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateManyInput = {
+    id?: string
+    workforceScopeId: string
+    employmentId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionCreateInput = {
+    id?: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutStaffScheduleRevisionsInput
+  }
+
+  export type StaffScheduleRevisionUncheckedCreateInput = {
+    id?: string
+    workforceScopeId: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StaffScheduleRevisionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutStaffScheduleRevisionsNestedInput
+  }
+
+  export type StaffScheduleRevisionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionCreateManyInput = {
+    id?: string
+    workforceScopeId: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StaffScheduleRevisionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -93205,6 +99600,24 @@ export namespace Prisma {
     none?: WorkforceSeatAllocationWhereInput
   }
 
+  export type WorkforceVacationPlanListRelationFilter = {
+    every?: WorkforceVacationPlanWhereInput
+    some?: WorkforceVacationPlanWhereInput
+    none?: WorkforceVacationPlanWhereInput
+  }
+
+  export type WorkforcePersonnelOrderListRelationFilter = {
+    every?: WorkforcePersonnelOrderWhereInput
+    some?: WorkforcePersonnelOrderWhereInput
+    none?: WorkforcePersonnelOrderWhereInput
+  }
+
+  export type StaffScheduleRevisionListRelationFilter = {
+    every?: StaffScheduleRevisionWhereInput
+    some?: StaffScheduleRevisionWhereInput
+    none?: StaffScheduleRevisionWhereInput
+  }
+
   export type OrgUnitOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -93218,6 +99631,18 @@ export namespace Prisma {
   }
 
   export type WorkforceSeatAllocationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceVacationPlanOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforcePersonnelOrderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type StaffScheduleRevisionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -93692,6 +100117,12 @@ export namespace Prisma {
     none?: WorkforceTimesheetEntryWhereInput
   }
 
+  export type WorkforceVacationPlanLineListRelationFilter = {
+    every?: WorkforceVacationPlanLineWhereInput
+    some?: WorkforceVacationPlanLineWhereInput
+    none?: WorkforceVacationPlanLineWhereInput
+  }
+
   export type WorkforceAbsenceOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -93701,6 +100132,10 @@ export namespace Prisma {
   }
 
   export type WorkforceTimesheetEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type WorkforceVacationPlanLineOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -93925,6 +100360,231 @@ export namespace Prisma {
     _min?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel>
   }
+
+  export type EnumWorkforceVacationPlanStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceVacationPlanStatus | EnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel> | $Enums.WorkforceVacationPlanStatus
+  }
+
+  export type WorkforceVacationPlanWorkforceScopeIdYearOrgUnitIdCompoundUniqueInput = {
+    workforceScopeId: string
+    year: number
+    orgUnitId: string
+  }
+
+  export type WorkforceVacationPlanCountOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    year?: SortOrder
+    orgUnitId?: SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanAvgOrderByAggregateInput = {
+    year?: SortOrder
+  }
+
+  export type WorkforceVacationPlanMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    year?: SortOrder
+    orgUnitId?: SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanMinOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    year?: SortOrder
+    orgUnitId?: SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanSumOrderByAggregateInput = {
+    year?: SortOrder
+  }
+
+  export type EnumWorkforceVacationPlanStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceVacationPlanStatus | EnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceVacationPlanStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceVacationPlanStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel>
+  }
+
+  export type WorkforceVacationPlanScalarRelationFilter = {
+    is?: WorkforceVacationPlanWhereInput
+    isNot?: WorkforceVacationPlanWhereInput
+  }
+
+  export type WorkforceVacationPlanLineCountOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    employmentId?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    days?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanLineAvgOrderByAggregateInput = {
+    days?: SortOrder
+  }
+
+  export type WorkforceVacationPlanLineMaxOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    employmentId?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    days?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanLineMinOrderByAggregateInput = {
+    id?: SortOrder
+    planId?: SortOrder
+    employmentId?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    days?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforceVacationPlanLineSumOrderByAggregateInput = {
+    days?: SortOrder
+  }
+
+  export type EnumWorkforcePersonnelOrderTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderType | EnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderType
+  }
+
+  export type EnumWorkforcePersonnelOrderStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderStatus | EnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderStatus
+  }
+
+  export type WorkforcePersonnelOrderWorkforceScopeIdOrderNumberCompoundUniqueInput = {
+    workforceScopeId: string
+    orderNumber: string
+  }
+
+  export type WorkforcePersonnelOrderCountOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    employmentId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    orderNumber?: SortOrder
+    effectiveDate?: SortOrder
+    note?: SortOrder
+    personDisplayName?: SortOrder
+    documentStorageKey?: SortOrder
+    issuedByUserId?: SortOrder
+    issuedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforcePersonnelOrderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    employmentId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    orderNumber?: SortOrder
+    effectiveDate?: SortOrder
+    note?: SortOrder
+    personDisplayName?: SortOrder
+    documentStorageKey?: SortOrder
+    issuedByUserId?: SortOrder
+    issuedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type WorkforcePersonnelOrderMinOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    employmentId?: SortOrder
+    organizationId?: SortOrder
+    type?: SortOrder
+    status?: SortOrder
+    orderNumber?: SortOrder
+    effectiveDate?: SortOrder
+    note?: SortOrder
+    personDisplayName?: SortOrder
+    documentStorageKey?: SortOrder
+    issuedByUserId?: SortOrder
+    issuedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumWorkforcePersonnelOrderTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderType | EnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderTypeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
+  }
+
+  export type EnumWorkforcePersonnelOrderStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderStatus | EnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
+  }
+
+  export type EnumStaffScheduleRevisionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.StaffScheduleRevisionStatus | EnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel> | $Enums.StaffScheduleRevisionStatus
+  }
   export type JsonFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -93947,6 +100607,85 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type StaffScheduleRevisionCountOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    title?: SortOrder
+    status?: SortOrder
+    snapshotJson?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StaffScheduleRevisionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    title?: SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StaffScheduleRevisionMinOrderByAggregateInput = {
+    id?: SortOrder
+    workforceScopeId?: SortOrder
+    title?: SortOrder
+    status?: SortOrder
+    submittedByUserId?: SortOrder
+    approvedByUserId?: SortOrder
+    submittedAt?: SortOrder
+    approvedAt?: SortOrder
+    documentStorageKey?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumStaffScheduleRevisionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.StaffScheduleRevisionStatus | EnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumStaffScheduleRevisionStatusWithAggregatesFilter<$PrismaModel> | $Enums.StaffScheduleRevisionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel>
+    _max?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type WorkforceAuditLogCountOrderByAggregateInput = {
@@ -93987,32 +100726,6 @@ export namespace Prisma {
     globalPersonId?: SortOrder
     cpEmploymentId?: SortOrder
     createdAt?: SortOrder
-  }
-  export type JsonWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedJsonFilter<$PrismaModel>
-    _max?: NestedJsonFilter<$PrismaModel>
   }
 
   export type OrganizationBundleListRelationFilter = {
@@ -96842,6 +103555,27 @@ export namespace Prisma {
     connect?: WorkforceSeatAllocationWhereUniqueInput | WorkforceSeatAllocationWhereUniqueInput[]
   }
 
+  export type WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput> | WorkforceVacationPlanCreateWithoutWorkforceScopeInput[] | WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput | WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceVacationPlanCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+  }
+
+  export type WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput> | WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput | WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+  }
+
+  export type StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput> | StaffScheduleRevisionCreateWithoutWorkforceScopeInput[] | StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput | StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope
+    connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+  }
+
   export type OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
     create?: XOR<OrgUnitCreateWithoutWorkforceScopeInput, OrgUnitUncheckedCreateWithoutWorkforceScopeInput> | OrgUnitCreateWithoutWorkforceScopeInput[] | OrgUnitUncheckedCreateWithoutWorkforceScopeInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutWorkforceScopeInput | OrgUnitCreateOrConnectWithoutWorkforceScopeInput[]
@@ -96868,6 +103602,27 @@ export namespace Prisma {
     connectOrCreate?: WorkforceSeatAllocationCreateOrConnectWithoutWorkforceScopeInput | WorkforceSeatAllocationCreateOrConnectWithoutWorkforceScopeInput[]
     createMany?: WorkforceSeatAllocationCreateManyWorkforceScopeInputEnvelope
     connect?: WorkforceSeatAllocationWhereUniqueInput | WorkforceSeatAllocationWhereUniqueInput[]
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput> | WorkforceVacationPlanCreateWithoutWorkforceScopeInput[] | WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput | WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforceVacationPlanCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+  }
+
+  export type WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput> | WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput | WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyWorkforceScopeInputEnvelope
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+  }
+
+  export type StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput = {
+    create?: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput> | StaffScheduleRevisionCreateWithoutWorkforceScopeInput[] | StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput | StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput[]
+    createMany?: StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope
+    connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
   }
 
   export type OrgUnitUpdateManyWithoutWorkforceScopeNestedInput = {
@@ -96926,6 +103681,48 @@ export namespace Prisma {
     deleteMany?: WorkforceSeatAllocationScalarWhereInput | WorkforceSeatAllocationScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput> | WorkforceVacationPlanCreateWithoutWorkforceScopeInput[] | WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput | WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceVacationPlanUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceVacationPlanUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceVacationPlanCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    delete?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    update?: WorkforceVacationPlanUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceVacationPlanUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceVacationPlanUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceVacationPlanUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
+  }
+
+  export type WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput> | WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput | WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    disconnect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    delete?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    update?: WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforcePersonnelOrderUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+  }
+
+  export type StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput> | StaffScheduleRevisionCreateWithoutWorkforceScopeInput[] | StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput | StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: StaffScheduleRevisionUpsertWithWhereUniqueWithoutWorkforceScopeInput | StaffScheduleRevisionUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope
+    set?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    disconnect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    delete?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    update?: StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
+  }
+
   export type OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
     create?: XOR<OrgUnitCreateWithoutWorkforceScopeInput, OrgUnitUncheckedCreateWithoutWorkforceScopeInput> | OrgUnitCreateWithoutWorkforceScopeInput[] | OrgUnitUncheckedCreateWithoutWorkforceScopeInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutWorkforceScopeInput | OrgUnitCreateOrConnectWithoutWorkforceScopeInput[]
@@ -96982,6 +103779,48 @@ export namespace Prisma {
     deleteMany?: WorkforceSeatAllocationScalarWhereInput | WorkforceSeatAllocationScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput> | WorkforceVacationPlanCreateWithoutWorkforceScopeInput[] | WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput | WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforceVacationPlanUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforceVacationPlanUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforceVacationPlanCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    delete?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    update?: WorkforceVacationPlanUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforceVacationPlanUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforceVacationPlanUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforceVacationPlanUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput> | WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput | WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyWorkforceScopeInputEnvelope
+    set?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    disconnect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    delete?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    update?: WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: WorkforcePersonnelOrderUpdateManyWithWhereWithoutWorkforceScopeInput | WorkforcePersonnelOrderUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+  }
+
+  export type StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput = {
+    create?: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput> | StaffScheduleRevisionCreateWithoutWorkforceScopeInput[] | StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput[]
+    connectOrCreate?: StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput | StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput[]
+    upsert?: StaffScheduleRevisionUpsertWithWhereUniqueWithoutWorkforceScopeInput | StaffScheduleRevisionUpsertWithWhereUniqueWithoutWorkforceScopeInput[]
+    createMany?: StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope
+    set?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    disconnect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    delete?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    connect?: StaffScheduleRevisionWhereUniqueInput | StaffScheduleRevisionWhereUniqueInput[]
+    update?: StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput[]
+    updateMany?: StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput | StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput[]
+    deleteMany?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
+  }
+
   export type WorkforceScopeCreateNestedOneWithoutOrgUnitsInput = {
     create?: XOR<WorkforceScopeCreateWithoutOrgUnitsInput, WorkforceScopeUncheckedCreateWithoutOrgUnitsInput>
     connectOrCreate?: WorkforceScopeCreateOrConnectWithoutOrgUnitsInput
@@ -97028,6 +103867,13 @@ export namespace Prisma {
     connect?: OrgUnitCommercialLinkWhereUniqueInput | OrgUnitCommercialLinkWhereUniqueInput[]
   }
 
+  export type WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput> | WorkforceVacationPlanCreateWithoutOrgUnitInput[] | WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput | WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput[]
+    createMany?: WorkforceVacationPlanCreateManyOrgUnitInputEnvelope
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+  }
+
   export type OrgUnitUncheckedCreateNestedManyWithoutParentInput = {
     create?: XOR<OrgUnitCreateWithoutParentInput, OrgUnitUncheckedCreateWithoutParentInput> | OrgUnitCreateWithoutParentInput[] | OrgUnitUncheckedCreateWithoutParentInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutParentInput | OrgUnitCreateOrConnectWithoutParentInput[]
@@ -97054,6 +103900,13 @@ export namespace Prisma {
     connectOrCreate?: OrgUnitCommercialLinkCreateOrConnectWithoutOrgUnitInput | OrgUnitCommercialLinkCreateOrConnectWithoutOrgUnitInput[]
     createMany?: OrgUnitCommercialLinkCreateManyOrgUnitInputEnvelope
     connect?: OrgUnitCommercialLinkWhereUniqueInput | OrgUnitCommercialLinkWhereUniqueInput[]
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput> | WorkforceVacationPlanCreateWithoutOrgUnitInput[] | WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput | WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput[]
+    createMany?: WorkforceVacationPlanCreateManyOrgUnitInputEnvelope
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
   }
 
   export type EnumOrgUnitStatusFieldUpdateOperationsInput = {
@@ -97144,6 +103997,20 @@ export namespace Prisma {
     deleteMany?: OrgUnitCommercialLinkScalarWhereInput | OrgUnitCommercialLinkScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput> | WorkforceVacationPlanCreateWithoutOrgUnitInput[] | WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput | WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput[]
+    upsert?: WorkforceVacationPlanUpsertWithWhereUniqueWithoutOrgUnitInput | WorkforceVacationPlanUpsertWithWhereUniqueWithoutOrgUnitInput[]
+    createMany?: WorkforceVacationPlanCreateManyOrgUnitInputEnvelope
+    set?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    delete?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    update?: WorkforceVacationPlanUpdateWithWhereUniqueWithoutOrgUnitInput | WorkforceVacationPlanUpdateWithWhereUniqueWithoutOrgUnitInput[]
+    updateMany?: WorkforceVacationPlanUpdateManyWithWhereWithoutOrgUnitInput | WorkforceVacationPlanUpdateManyWithWhereWithoutOrgUnitInput[]
+    deleteMany?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
+  }
+
   export type OrgUnitUncheckedUpdateManyWithoutParentNestedInput = {
     create?: XOR<OrgUnitCreateWithoutParentInput, OrgUnitUncheckedCreateWithoutParentInput> | OrgUnitCreateWithoutParentInput[] | OrgUnitUncheckedCreateWithoutParentInput[]
     connectOrCreate?: OrgUnitCreateOrConnectWithoutParentInput | OrgUnitCreateOrConnectWithoutParentInput[]
@@ -97198,6 +104065,20 @@ export namespace Prisma {
     update?: OrgUnitCommercialLinkUpdateWithWhereUniqueWithoutOrgUnitInput | OrgUnitCommercialLinkUpdateWithWhereUniqueWithoutOrgUnitInput[]
     updateMany?: OrgUnitCommercialLinkUpdateManyWithWhereWithoutOrgUnitInput | OrgUnitCommercialLinkUpdateManyWithWhereWithoutOrgUnitInput[]
     deleteMany?: OrgUnitCommercialLinkScalarWhereInput | OrgUnitCommercialLinkScalarWhereInput[]
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput> | WorkforceVacationPlanCreateWithoutOrgUnitInput[] | WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput[]
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput | WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput[]
+    upsert?: WorkforceVacationPlanUpsertWithWhereUniqueWithoutOrgUnitInput | WorkforceVacationPlanUpsertWithWhereUniqueWithoutOrgUnitInput[]
+    createMany?: WorkforceVacationPlanCreateManyOrgUnitInputEnvelope
+    set?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    delete?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    connect?: WorkforceVacationPlanWhereUniqueInput | WorkforceVacationPlanWhereUniqueInput[]
+    update?: WorkforceVacationPlanUpdateWithWhereUniqueWithoutOrgUnitInput | WorkforceVacationPlanUpdateWithWhereUniqueWithoutOrgUnitInput[]
+    updateMany?: WorkforceVacationPlanUpdateManyWithWhereWithoutOrgUnitInput | WorkforceVacationPlanUpdateManyWithWhereWithoutOrgUnitInput[]
+    deleteMany?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
   }
 
   export type OrganizationCreateNestedOneWithoutOrgUnitCommercialLinksInput = {
@@ -97547,6 +104428,20 @@ export namespace Prisma {
     connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
   }
 
+  export type WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput> | WorkforceVacationPlanLineCreateWithoutEmploymentInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput | WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyEmploymentInputEnvelope
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+  }
+
+  export type WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput> | WorkforcePersonnelOrderCreateWithoutEmploymentInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput | WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyEmploymentInputEnvelope
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+  }
+
   export type WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput = {
     create?: XOR<WorkforceAbsenceCreateWithoutEmploymentInput, WorkforceAbsenceUncheckedCreateWithoutEmploymentInput> | WorkforceAbsenceCreateWithoutEmploymentInput[] | WorkforceAbsenceUncheckedCreateWithoutEmploymentInput[]
     connectOrCreate?: WorkforceAbsenceCreateOrConnectWithoutEmploymentInput | WorkforceAbsenceCreateOrConnectWithoutEmploymentInput[]
@@ -97586,6 +104481,20 @@ export namespace Prisma {
     connectOrCreate?: WorkforceTimesheetEntryCreateOrConnectWithoutEmploymentInput | WorkforceTimesheetEntryCreateOrConnectWithoutEmploymentInput[]
     createMany?: WorkforceTimesheetEntryCreateManyEmploymentInputEnvelope
     connect?: WorkforceTimesheetEntryWhereUniqueInput | WorkforceTimesheetEntryWhereUniqueInput[]
+  }
+
+  export type WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput> | WorkforceVacationPlanLineCreateWithoutEmploymentInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput | WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyEmploymentInputEnvelope
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+  }
+
+  export type WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput> | WorkforcePersonnelOrderCreateWithoutEmploymentInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput | WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyEmploymentInputEnvelope
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
   }
 
   export type EnumWorkforceEmploymentStatusFieldUpdateOperationsInput = {
@@ -97704,6 +104613,34 @@ export namespace Prisma {
     deleteMany?: WorkforceTimesheetEntryScalarWhereInput | WorkforceTimesheetEntryScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput> | WorkforceVacationPlanLineCreateWithoutEmploymentInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput | WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput[]
+    upsert?: WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutEmploymentInput | WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutEmploymentInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyEmploymentInputEnvelope
+    set?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    delete?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    update?: WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutEmploymentInput | WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutEmploymentInput[]
+    updateMany?: WorkforceVacationPlanLineUpdateManyWithWhereWithoutEmploymentInput | WorkforceVacationPlanLineUpdateManyWithWhereWithoutEmploymentInput[]
+    deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+  }
+
+  export type WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput> | WorkforcePersonnelOrderCreateWithoutEmploymentInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput | WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput[]
+    upsert?: WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutEmploymentInput | WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutEmploymentInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyEmploymentInputEnvelope
+    set?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    disconnect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    delete?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    update?: WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutEmploymentInput | WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutEmploymentInput[]
+    updateMany?: WorkforcePersonnelOrderUpdateManyWithWhereWithoutEmploymentInput | WorkforcePersonnelOrderUpdateManyWithWhereWithoutEmploymentInput[]
+    deleteMany?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+  }
+
   export type WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput = {
     create?: XOR<WorkforceAbsenceCreateWithoutEmploymentInput, WorkforceAbsenceUncheckedCreateWithoutEmploymentInput> | WorkforceAbsenceCreateWithoutEmploymentInput[] | WorkforceAbsenceUncheckedCreateWithoutEmploymentInput[]
     connectOrCreate?: WorkforceAbsenceCreateOrConnectWithoutEmploymentInput | WorkforceAbsenceCreateOrConnectWithoutEmploymentInput[]
@@ -97784,6 +104721,34 @@ export namespace Prisma {
     deleteMany?: WorkforceTimesheetEntryScalarWhereInput | WorkforceTimesheetEntryScalarWhereInput[]
   }
 
+  export type WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput> | WorkforceVacationPlanLineCreateWithoutEmploymentInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput | WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput[]
+    upsert?: WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutEmploymentInput | WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutEmploymentInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyEmploymentInputEnvelope
+    set?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    delete?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    update?: WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutEmploymentInput | WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutEmploymentInput[]
+    updateMany?: WorkforceVacationPlanLineUpdateManyWithWhereWithoutEmploymentInput | WorkforceVacationPlanLineUpdateManyWithWhereWithoutEmploymentInput[]
+    deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput = {
+    create?: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput> | WorkforcePersonnelOrderCreateWithoutEmploymentInput[] | WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput[]
+    connectOrCreate?: WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput | WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput[]
+    upsert?: WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutEmploymentInput | WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutEmploymentInput[]
+    createMany?: WorkforcePersonnelOrderCreateManyEmploymentInputEnvelope
+    set?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    disconnect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    delete?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    connect?: WorkforcePersonnelOrderWhereUniqueInput | WorkforcePersonnelOrderWhereUniqueInput[]
+    update?: WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutEmploymentInput | WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutEmploymentInput[]
+    updateMany?: WorkforcePersonnelOrderUpdateManyWithWhereWithoutEmploymentInput | WorkforcePersonnelOrderUpdateManyWithWhereWithoutEmploymentInput[]
+    deleteMany?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+  }
+
   export type WorkforceEmploymentCreateNestedOneWithoutAbsencesInput = {
     create?: XOR<WorkforceEmploymentCreateWithoutAbsencesInput, WorkforceEmploymentUncheckedCreateWithoutAbsencesInput>
     connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutAbsencesInput
@@ -97822,6 +104787,164 @@ export namespace Prisma {
     upsert?: WorkforceEmploymentUpsertWithoutTimesheetEntriesInput
     connect?: WorkforceEmploymentWhereUniqueInput
     update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutTimesheetEntriesInput, WorkforceEmploymentUpdateWithoutTimesheetEntriesInput>, WorkforceEmploymentUncheckedUpdateWithoutTimesheetEntriesInput>
+  }
+
+  export type WorkforceScopeCreateNestedOneWithoutVacationPlansInput = {
+    create?: XOR<WorkforceScopeCreateWithoutVacationPlansInput, WorkforceScopeUncheckedCreateWithoutVacationPlansInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutVacationPlansInput
+    connect?: WorkforceScopeWhereUniqueInput
+  }
+
+  export type OrgUnitCreateNestedOneWithoutVacationPlansInput = {
+    create?: XOR<OrgUnitCreateWithoutVacationPlansInput, OrgUnitUncheckedCreateWithoutVacationPlansInput>
+    connectOrCreate?: OrgUnitCreateOrConnectWithoutVacationPlansInput
+    connect?: OrgUnitWhereUniqueInput
+  }
+
+  export type WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyPlanInputEnvelope
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+  }
+
+  export type WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyPlanInputEnvelope
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+  }
+
+  export type EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforceVacationPlanStatus
+  }
+
+  export type WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput = {
+    create?: XOR<WorkforceScopeCreateWithoutVacationPlansInput, WorkforceScopeUncheckedCreateWithoutVacationPlansInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutVacationPlansInput
+    upsert?: WorkforceScopeUpsertWithoutVacationPlansInput
+    connect?: WorkforceScopeWhereUniqueInput
+    update?: XOR<XOR<WorkforceScopeUpdateToOneWithWhereWithoutVacationPlansInput, WorkforceScopeUpdateWithoutVacationPlansInput>, WorkforceScopeUncheckedUpdateWithoutVacationPlansInput>
+  }
+
+  export type OrgUnitUpdateOneWithoutVacationPlansNestedInput = {
+    create?: XOR<OrgUnitCreateWithoutVacationPlansInput, OrgUnitUncheckedCreateWithoutVacationPlansInput>
+    connectOrCreate?: OrgUnitCreateOrConnectWithoutVacationPlansInput
+    upsert?: OrgUnitUpsertWithoutVacationPlansInput
+    disconnect?: OrgUnitWhereInput | boolean
+    delete?: OrgUnitWhereInput | boolean
+    connect?: OrgUnitWhereUniqueInput
+    update?: XOR<XOR<OrgUnitUpdateToOneWithWhereWithoutVacationPlansInput, OrgUnitUpdateWithoutVacationPlansInput>, OrgUnitUncheckedUpdateWithoutVacationPlansInput>
+  }
+
+  export type WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
+    upsert?: WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyPlanInputEnvelope
+    set?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    delete?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    update?: WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput | WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput = {
+    create?: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput> | WorkforceVacationPlanLineCreateWithoutPlanInput[] | WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput[]
+    connectOrCreate?: WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput | WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput[]
+    upsert?: WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput[]
+    createMany?: WorkforceVacationPlanLineCreateManyPlanInputEnvelope
+    set?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    disconnect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    delete?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    connect?: WorkforceVacationPlanLineWhereUniqueInput | WorkforceVacationPlanLineWhereUniqueInput[]
+    update?: WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput | WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput[]
+    updateMany?: WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput | WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput[]
+    deleteMany?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+  }
+
+  export type WorkforceVacationPlanCreateNestedOneWithoutLinesInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutLinesInput, WorkforceVacationPlanUncheckedCreateWithoutLinesInput>
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutLinesInput
+    connect?: WorkforceVacationPlanWhereUniqueInput
+  }
+
+  export type WorkforceEmploymentCreateNestedOneWithoutVacationPlanLinesInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedCreateWithoutVacationPlanLinesInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutVacationPlanLinesInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+  }
+
+  export type WorkforceVacationPlanUpdateOneRequiredWithoutLinesNestedInput = {
+    create?: XOR<WorkforceVacationPlanCreateWithoutLinesInput, WorkforceVacationPlanUncheckedCreateWithoutLinesInput>
+    connectOrCreate?: WorkforceVacationPlanCreateOrConnectWithoutLinesInput
+    upsert?: WorkforceVacationPlanUpsertWithoutLinesInput
+    connect?: WorkforceVacationPlanWhereUniqueInput
+    update?: XOR<XOR<WorkforceVacationPlanUpdateToOneWithWhereWithoutLinesInput, WorkforceVacationPlanUpdateWithoutLinesInput>, WorkforceVacationPlanUncheckedUpdateWithoutLinesInput>
+  }
+
+  export type WorkforceEmploymentUpdateOneRequiredWithoutVacationPlanLinesNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedCreateWithoutVacationPlanLinesInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutVacationPlanLinesInput
+    upsert?: WorkforceEmploymentUpsertWithoutVacationPlanLinesInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+    update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutVacationPlanLinesInput, WorkforceEmploymentUpdateWithoutVacationPlanLinesInput>, WorkforceEmploymentUncheckedUpdateWithoutVacationPlanLinesInput>
+  }
+
+  export type WorkforceScopeCreateNestedOneWithoutPersonnelOrdersInput = {
+    create?: XOR<WorkforceScopeCreateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutPersonnelOrdersInput
+    connect?: WorkforceScopeWhereUniqueInput
+  }
+
+  export type WorkforceEmploymentCreateNestedOneWithoutPersonnelOrdersInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedCreateWithoutPersonnelOrdersInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutPersonnelOrdersInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+  }
+
+  export type EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforcePersonnelOrderType
+  }
+
+  export type EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput = {
+    set?: $Enums.WorkforcePersonnelOrderStatus
+  }
+
+  export type WorkforceScopeUpdateOneRequiredWithoutPersonnelOrdersNestedInput = {
+    create?: XOR<WorkforceScopeCreateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutPersonnelOrdersInput
+    upsert?: WorkforceScopeUpsertWithoutPersonnelOrdersInput
+    connect?: WorkforceScopeWhereUniqueInput
+    update?: XOR<XOR<WorkforceScopeUpdateToOneWithWhereWithoutPersonnelOrdersInput, WorkforceScopeUpdateWithoutPersonnelOrdersInput>, WorkforceScopeUncheckedUpdateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceEmploymentUpdateOneRequiredWithoutPersonnelOrdersNestedInput = {
+    create?: XOR<WorkforceEmploymentCreateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedCreateWithoutPersonnelOrdersInput>
+    connectOrCreate?: WorkforceEmploymentCreateOrConnectWithoutPersonnelOrdersInput
+    upsert?: WorkforceEmploymentUpsertWithoutPersonnelOrdersInput
+    connect?: WorkforceEmploymentWhereUniqueInput
+    update?: XOR<XOR<WorkforceEmploymentUpdateToOneWithWhereWithoutPersonnelOrdersInput, WorkforceEmploymentUpdateWithoutPersonnelOrdersInput>, WorkforceEmploymentUncheckedUpdateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceScopeCreateNestedOneWithoutStaffScheduleRevisionsInput = {
+    create?: XOR<WorkforceScopeCreateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutStaffScheduleRevisionsInput
+    connect?: WorkforceScopeWhereUniqueInput
+  }
+
+  export type EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput = {
+    set?: $Enums.StaffScheduleRevisionStatus
+  }
+
+  export type WorkforceScopeUpdateOneRequiredWithoutStaffScheduleRevisionsNestedInput = {
+    create?: XOR<WorkforceScopeCreateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput>
+    connectOrCreate?: WorkforceScopeCreateOrConnectWithoutStaffScheduleRevisionsInput
+    upsert?: WorkforceScopeUpsertWithoutStaffScheduleRevisionsInput
+    connect?: WorkforceScopeWhereUniqueInput
+    update?: XOR<XOR<WorkforceScopeUpdateToOneWithWhereWithoutStaffScheduleRevisionsInput, WorkforceScopeUpdateWithoutStaffScheduleRevisionsInput>, WorkforceScopeUncheckedUpdateWithoutStaffScheduleRevisionsInput>
   }
 
   export type OrganizationBundleCreateNestedManyWithoutBundleInput = {
@@ -101137,6 +108260,74 @@ export namespace Prisma {
     _min?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel>
     _max?: NestedEnumWorkforceTimesheetEntryStatusFilter<$PrismaModel>
   }
+
+  export type NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceVacationPlanStatus | EnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel> | $Enums.WorkforceVacationPlanStatus
+  }
+
+  export type NestedEnumWorkforceVacationPlanStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforceVacationPlanStatus | EnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforceVacationPlanStatus[] | ListEnumWorkforceVacationPlanStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforceVacationPlanStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforceVacationPlanStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforceVacationPlanStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderType | EnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderType
+  }
+
+  export type NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderStatus | EnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderStatus
+  }
+
+  export type NestedEnumWorkforcePersonnelOrderTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderType | EnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderType[] | ListEnumWorkforcePersonnelOrderTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderTypeWithAggregatesFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
+    _max?: NestedEnumWorkforcePersonnelOrderTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumWorkforcePersonnelOrderStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.WorkforcePersonnelOrderStatus | EnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.WorkforcePersonnelOrderStatus[] | ListEnumWorkforcePersonnelOrderStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumWorkforcePersonnelOrderStatusWithAggregatesFilter<$PrismaModel> | $Enums.WorkforcePersonnelOrderStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
+    _max?: NestedEnumWorkforcePersonnelOrderStatusFilter<$PrismaModel>
+  }
+
+  export type NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.StaffScheduleRevisionStatus | EnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel> | $Enums.StaffScheduleRevisionStatus
+  }
+
+  export type NestedEnumStaffScheduleRevisionStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.StaffScheduleRevisionStatus | EnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.StaffScheduleRevisionStatus[] | ListEnumStaffScheduleRevisionStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumStaffScheduleRevisionStatusWithAggregatesFilter<$PrismaModel> | $Enums.StaffScheduleRevisionStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel>
+    _max?: NestedEnumStaffScheduleRevisionStatusFilter<$PrismaModel>
+  }
   export type NestedJsonFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
@@ -103783,6 +110974,7 @@ export namespace Prisma {
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutWorkforceScopeInput = {
@@ -103800,6 +110992,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutWorkforceScopeInput = {
@@ -103831,6 +111024,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutWorkforceScopeInput = {
@@ -103852,6 +111047,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutWorkforceScopeInput = {
@@ -103915,6 +111112,130 @@ export namespace Prisma {
 
   export type WorkforceSeatAllocationCreateManyWorkforceScopeInputEnvelope = {
     data: WorkforceSeatAllocationCreateManyWorkforceScopeInput | WorkforceSeatAllocationCreateManyWorkforceScopeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceVacationPlanCreateWithoutWorkforceScopeInput = {
+    id?: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
+    lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput = {
+    id?: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanCreateOrConnectWithoutWorkforceScopeInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    create: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceVacationPlanCreateManyWorkforceScopeInputEnvelope = {
+    data: WorkforceVacationPlanCreateManyWorkforceScopeInput | WorkforceVacationPlanCreateManyWorkforceScopeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput = {
+    id?: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employment: WorkforceEmploymentCreateNestedOneWithoutPersonnelOrdersInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput = {
+    id?: string
+    employmentId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateOrConnectWithoutWorkforceScopeInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    create: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforcePersonnelOrderCreateManyWorkforceScopeInputEnvelope = {
+    data: WorkforcePersonnelOrderCreateManyWorkforceScopeInput | WorkforcePersonnelOrderCreateManyWorkforceScopeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type StaffScheduleRevisionCreateWithoutWorkforceScopeInput = {
+    id?: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput = {
+    id?: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StaffScheduleRevisionCreateOrConnectWithoutWorkforceScopeInput = {
+    where: StaffScheduleRevisionWhereUniqueInput
+    create: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type StaffScheduleRevisionCreateManyWorkforceScopeInputEnvelope = {
+    data: StaffScheduleRevisionCreateManyWorkforceScopeInput | StaffScheduleRevisionCreateManyWorkforceScopeInput[]
     skipDuplicates?: boolean
   }
 
@@ -104043,6 +111364,112 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"WorkforceSeatAllocation"> | Date | string
   }
 
+  export type WorkforceVacationPlanUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    update: XOR<WorkforceVacationPlanUpdateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedUpdateWithoutWorkforceScopeInput>
+    create: XOR<WorkforceVacationPlanCreateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceVacationPlanUpdateWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    data: XOR<WorkforceVacationPlanUpdateWithoutWorkforceScopeInput, WorkforceVacationPlanUncheckedUpdateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceVacationPlanUpdateManyWithWhereWithoutWorkforceScopeInput = {
+    where: WorkforceVacationPlanScalarWhereInput
+    data: XOR<WorkforceVacationPlanUpdateManyMutationInput, WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforceVacationPlanScalarWhereInput = {
+    AND?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
+    OR?: WorkforceVacationPlanScalarWhereInput[]
+    NOT?: WorkforceVacationPlanScalarWhereInput | WorkforceVacationPlanScalarWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlan"> | string
+    workforceScopeId?: UuidFilter<"WorkforceVacationPlan"> | string
+    year?: IntFilter<"WorkforceVacationPlan"> | number
+    orgUnitId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    status?: EnumWorkforceVacationPlanStatusFilter<"WorkforceVacationPlan"> | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    approvedByUserId?: UuidNullableFilter<"WorkforceVacationPlan"> | string | null
+    submittedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"WorkforceVacationPlan"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"WorkforceVacationPlan"> | string | null
+    createdAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlan"> | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    update: XOR<WorkforcePersonnelOrderUpdateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedUpdateWithoutWorkforceScopeInput>
+    create: XOR<WorkforcePersonnelOrderCreateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    data: XOR<WorkforcePersonnelOrderUpdateWithoutWorkforceScopeInput, WorkforcePersonnelOrderUncheckedUpdateWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforcePersonnelOrderUpdateManyWithWhereWithoutWorkforceScopeInput = {
+    where: WorkforcePersonnelOrderScalarWhereInput
+    data: XOR<WorkforcePersonnelOrderUpdateManyMutationInput, WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeInput>
+  }
+
+  export type WorkforcePersonnelOrderScalarWhereInput = {
+    AND?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+    OR?: WorkforcePersonnelOrderScalarWhereInput[]
+    NOT?: WorkforcePersonnelOrderScalarWhereInput | WorkforcePersonnelOrderScalarWhereInput[]
+    id?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    workforceScopeId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    employmentId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    organizationId?: UuidFilter<"WorkforcePersonnelOrder"> | string
+    type?: EnumWorkforcePersonnelOrderTypeFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFilter<"WorkforcePersonnelOrder"> | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFilter<"WorkforcePersonnelOrder"> | string
+    effectiveDate?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    note?: StringFilter<"WorkforcePersonnelOrder"> | string
+    personDisplayName?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    documentStorageKey?: StringNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedByUserId?: UuidNullableFilter<"WorkforcePersonnelOrder"> | string | null
+    issuedAt?: DateTimeNullableFilter<"WorkforcePersonnelOrder"> | Date | string | null
+    createdAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforcePersonnelOrder"> | Date | string
+  }
+
+  export type StaffScheduleRevisionUpsertWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: StaffScheduleRevisionWhereUniqueInput
+    update: XOR<StaffScheduleRevisionUpdateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedUpdateWithoutWorkforceScopeInput>
+    create: XOR<StaffScheduleRevisionCreateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedCreateWithoutWorkforceScopeInput>
+  }
+
+  export type StaffScheduleRevisionUpdateWithWhereUniqueWithoutWorkforceScopeInput = {
+    where: StaffScheduleRevisionWhereUniqueInput
+    data: XOR<StaffScheduleRevisionUpdateWithoutWorkforceScopeInput, StaffScheduleRevisionUncheckedUpdateWithoutWorkforceScopeInput>
+  }
+
+  export type StaffScheduleRevisionUpdateManyWithWhereWithoutWorkforceScopeInput = {
+    where: StaffScheduleRevisionScalarWhereInput
+    data: XOR<StaffScheduleRevisionUpdateManyMutationInput, StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeInput>
+  }
+
+  export type StaffScheduleRevisionScalarWhereInput = {
+    AND?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
+    OR?: StaffScheduleRevisionScalarWhereInput[]
+    NOT?: StaffScheduleRevisionScalarWhereInput | StaffScheduleRevisionScalarWhereInput[]
+    id?: UuidFilter<"StaffScheduleRevision"> | string
+    workforceScopeId?: UuidFilter<"StaffScheduleRevision"> | string
+    title?: StringFilter<"StaffScheduleRevision"> | string
+    status?: EnumStaffScheduleRevisionStatusFilter<"StaffScheduleRevision"> | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonFilter<"StaffScheduleRevision">
+    submittedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    approvedByUserId?: UuidNullableFilter<"StaffScheduleRevision"> | string | null
+    submittedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    approvedAt?: DateTimeNullableFilter<"StaffScheduleRevision"> | Date | string | null
+    documentStorageKey?: StringNullableFilter<"StaffScheduleRevision"> | string | null
+    createdAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+    updatedAt?: DateTimeFilter<"StaffScheduleRevision"> | Date | string
+  }
+
   export type WorkforceScopeCreateWithoutOrgUnitsInput = {
     id?: string
     anchorOrganizationId: string
@@ -104052,6 +111479,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutOrgUnitsInput = {
@@ -104063,6 +111493,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutOrgUnitsInput = {
@@ -104085,6 +111518,7 @@ export namespace Prisma {
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutChildrenInput = {
@@ -104102,6 +111536,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutChildrenInput = {
@@ -104124,6 +111559,7 @@ export namespace Prisma {
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutParentInput = {
@@ -104141,6 +111577,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutParentInput = {
@@ -104172,6 +111609,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutManagedOrgUnitsInput = {
@@ -104193,6 +111632,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutManagedOrgUnitsInput = {
@@ -104253,6 +111694,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutOrgUnitInput = {
@@ -104274,6 +111717,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutOrgUnitInput = {
@@ -104314,6 +111759,48 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type WorkforceVacationPlanCreateWithoutOrgUnitInput = {
+    id?: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
+    lines?: WorkforceVacationPlanLineCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutPlanInput
+  }
+
+  export type WorkforceVacationPlanCreateOrConnectWithoutOrgUnitInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    create: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceVacationPlanCreateManyOrgUnitInputEnvelope = {
+    data: WorkforceVacationPlanCreateManyOrgUnitInput | WorkforceVacationPlanCreateManyOrgUnitInput[]
+    skipDuplicates?: boolean
+  }
+
   export type WorkforceScopeUpsertWithoutOrgUnitsInput = {
     update: XOR<WorkforceScopeUpdateWithoutOrgUnitsInput, WorkforceScopeUncheckedUpdateWithoutOrgUnitsInput>
     create: XOR<WorkforceScopeCreateWithoutOrgUnitsInput, WorkforceScopeUncheckedCreateWithoutOrgUnitsInput>
@@ -104334,6 +111821,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutOrgUnitsInput = {
@@ -104345,6 +111835,9 @@ export namespace Prisma {
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutChildrenInput = {
@@ -104373,6 +111866,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutChildrenInput = {
@@ -104390,6 +111884,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUpsertWithWhereUniqueWithoutParentInput = {
@@ -104438,6 +111933,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutManagedOrgUnitsInput = {
@@ -104459,6 +111956,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforcePositionUpsertWithWhereUniqueWithoutOrgUnitInput = {
@@ -104521,6 +112020,22 @@ export namespace Prisma {
   export type OrgUnitCommercialLinkUpdateManyWithWhereWithoutOrgUnitInput = {
     where: OrgUnitCommercialLinkScalarWhereInput
     data: XOR<OrgUnitCommercialLinkUpdateManyMutationInput, OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitInput>
+  }
+
+  export type WorkforceVacationPlanUpsertWithWhereUniqueWithoutOrgUnitInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    update: XOR<WorkforceVacationPlanUpdateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedUpdateWithoutOrgUnitInput>
+    create: XOR<WorkforceVacationPlanCreateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedCreateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceVacationPlanUpdateWithWhereUniqueWithoutOrgUnitInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    data: XOR<WorkforceVacationPlanUpdateWithoutOrgUnitInput, WorkforceVacationPlanUncheckedUpdateWithoutOrgUnitInput>
+  }
+
+  export type WorkforceVacationPlanUpdateManyWithWhereWithoutOrgUnitInput = {
+    where: WorkforceVacationPlanScalarWhereInput
+    data: XOR<WorkforceVacationPlanUpdateManyMutationInput, WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitInput>
   }
 
   export type OrganizationCreateWithoutOrgUnitCommercialLinksInput = {
@@ -104647,6 +112162,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutCommercialLinksInput = {
@@ -104658,6 +112176,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutCommercialLinksInput = {
@@ -104680,6 +112201,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutManagedOrgUnitsInput
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutCommercialLinksInput = {
@@ -104697,6 +112219,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedCreateNestedManyWithoutParentInput
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutCommercialLinksInput = {
@@ -104845,6 +112368,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutCommercialLinksInput = {
@@ -104856,6 +112382,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutCommercialLinksInput = {
@@ -104884,6 +112413,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentUpdateOneWithoutManagedOrgUnitsNestedInput
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutCommercialLinksInput = {
@@ -104901,6 +112431,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedUpdateManyWithoutParentNestedInput
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitCreateWithoutPositionsInput = {
@@ -104918,6 +112449,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutManagedOrgUnitsInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutPositionsInput = {
@@ -104935,6 +112467,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedCreateNestedManyWithoutParentInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutPositionsInput = {
@@ -104961,6 +112494,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutPositionInput = {
@@ -104982,6 +112517,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutPositionInput = {
@@ -105050,6 +112587,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentUpdateOneWithoutManagedOrgUnitsNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutPositionsInput = {
@@ -105067,6 +112605,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedUpdateManyWithoutParentNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithWhereUniqueWithoutPositionInput = {
@@ -105198,6 +112737,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutRoleBindingsInput = {
@@ -105219,6 +112760,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutRoleBindingsInput = {
@@ -105285,6 +112828,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutRoleBindingsInput = {
@@ -105306,6 +112851,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceManualGrantUpsertWithoutRoleBindingsInput = {
@@ -105362,6 +112909,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutManualGrantsInput = {
@@ -105383,6 +112932,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutManualGrantsInput = {
@@ -105454,6 +113005,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutManualGrantsInput = {
@@ -105475,6 +113028,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceRoleBindingUpsertWithWhereUniqueWithoutManualGrantInput = {
@@ -105518,6 +113073,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutSeatAllocationsInput = {
@@ -105529,6 +113087,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutSeatAllocationsInput = {
@@ -105555,6 +113116,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutSeatAllocationInput = {
@@ -105576,6 +113139,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutSeatAllocationInput = {
@@ -105603,6 +113168,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutSeatAllocationsInput = {
@@ -105614,6 +113182,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceEmploymentUpsertWithoutSeatAllocationInput = {
@@ -105646,6 +113217,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutSeatAllocationInput = {
@@ -105667,6 +113240,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type OrganizationCreateWithoutWorkforceEmploymentsInput = {
@@ -105793,6 +113368,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeUncheckedCreateWithoutEmploymentsInput = {
@@ -105804,6 +113382,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
     seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
   }
 
   export type WorkforceScopeCreateOrConnectWithoutEmploymentsInput = {
@@ -105826,6 +113407,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutManagedOrgUnitsInput
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutEmploymentsInput = {
@@ -105843,6 +113425,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedCreateNestedManyWithoutParentInput
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutEmploymentsInput = {
@@ -105946,6 +113529,7 @@ export namespace Prisma {
     positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitUncheckedCreateWithoutManagerEmploymentInput = {
@@ -105963,6 +113547,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
     employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutOrgUnitInput
   }
 
   export type OrgUnitCreateOrConnectWithoutManagerEmploymentInput = {
@@ -106095,6 +113680,80 @@ export namespace Prisma {
 
   export type WorkforceTimesheetEntryCreateManyEmploymentInputEnvelope = {
     data: WorkforceTimesheetEntryCreateManyEmploymentInput | WorkforceTimesheetEntryCreateManyEmploymentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceVacationPlanLineCreateWithoutEmploymentInput = {
+    id?: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    plan: WorkforceVacationPlanCreateNestedOneWithoutLinesInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput = {
+    id?: string
+    planId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanLineCreateOrConnectWithoutEmploymentInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    create: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput>
+  }
+
+  export type WorkforceVacationPlanLineCreateManyEmploymentInputEnvelope = {
+    data: WorkforceVacationPlanLineCreateManyEmploymentInput | WorkforceVacationPlanLineCreateManyEmploymentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforcePersonnelOrderCreateWithoutEmploymentInput = {
+    id?: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutPersonnelOrdersInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput = {
+    id?: string
+    workforceScopeId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateOrConnectWithoutEmploymentInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    create: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput>
+  }
+
+  export type WorkforcePersonnelOrderCreateManyEmploymentInputEnvelope = {
+    data: WorkforcePersonnelOrderCreateManyEmploymentInput | WorkforcePersonnelOrderCreateManyEmploymentInput[]
     skipDuplicates?: boolean
   }
 
@@ -106239,6 +113898,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type WorkforceScopeUncheckedUpdateWithoutEmploymentsInput = {
@@ -106250,6 +113912,9 @@ export namespace Prisma {
     orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
     seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrgUnitUpsertWithoutEmploymentsInput = {
@@ -106278,6 +113943,7 @@ export namespace Prisma {
     managerEmployment?: WorkforceEmploymentUpdateOneWithoutManagedOrgUnitsNestedInput
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutEmploymentsInput = {
@@ -106295,6 +113961,7 @@ export namespace Prisma {
     children?: OrgUnitUncheckedUpdateManyWithoutParentNestedInput
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type WorkforcePositionUpsertWithoutEmploymentsInput = {
@@ -106495,6 +114162,52 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"WorkforceTimesheetEntry"> | Date | string
   }
 
+  export type WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutEmploymentInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    update: XOR<WorkforceVacationPlanLineUpdateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedUpdateWithoutEmploymentInput>
+    create: XOR<WorkforceVacationPlanLineCreateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedCreateWithoutEmploymentInput>
+  }
+
+  export type WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutEmploymentInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    data: XOR<WorkforceVacationPlanLineUpdateWithoutEmploymentInput, WorkforceVacationPlanLineUncheckedUpdateWithoutEmploymentInput>
+  }
+
+  export type WorkforceVacationPlanLineUpdateManyWithWhereWithoutEmploymentInput = {
+    where: WorkforceVacationPlanLineScalarWhereInput
+    data: XOR<WorkforceVacationPlanLineUpdateManyMutationInput, WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentInput>
+  }
+
+  export type WorkforceVacationPlanLineScalarWhereInput = {
+    AND?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+    OR?: WorkforceVacationPlanLineScalarWhereInput[]
+    NOT?: WorkforceVacationPlanLineScalarWhereInput | WorkforceVacationPlanLineScalarWhereInput[]
+    id?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    planId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    employmentId?: UuidFilter<"WorkforceVacationPlanLine"> | string
+    startDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    endDate?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    days?: IntFilter<"WorkforceVacationPlanLine"> | number
+    createdAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+    updatedAt?: DateTimeFilter<"WorkforceVacationPlanLine"> | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpsertWithWhereUniqueWithoutEmploymentInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    update: XOR<WorkforcePersonnelOrderUpdateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedUpdateWithoutEmploymentInput>
+    create: XOR<WorkforcePersonnelOrderCreateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedCreateWithoutEmploymentInput>
+  }
+
+  export type WorkforcePersonnelOrderUpdateWithWhereUniqueWithoutEmploymentInput = {
+    where: WorkforcePersonnelOrderWhereUniqueInput
+    data: XOR<WorkforcePersonnelOrderUpdateWithoutEmploymentInput, WorkforcePersonnelOrderUncheckedUpdateWithoutEmploymentInput>
+  }
+
+  export type WorkforcePersonnelOrderUpdateManyWithWhereWithoutEmploymentInput = {
+    where: WorkforcePersonnelOrderScalarWhereInput
+    data: XOR<WorkforcePersonnelOrderUpdateManyMutationInput, WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentInput>
+  }
+
   export type WorkforceEmploymentCreateWithoutAbsencesInput = {
     id?: string
     globalPersonId: string
@@ -106514,6 +114227,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutAbsencesInput = {
@@ -106535,6 +114250,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutAbsencesInput = {
@@ -106572,6 +114289,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutAbsencesInput = {
@@ -106593,6 +114312,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentCreateWithoutTimesheetEntriesInput = {
@@ -106614,6 +114335,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutTimesheetEntriesInput = {
@@ -106635,6 +114358,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutTimesheetEntriesInput = {
@@ -106672,6 +114397,8 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutTimesheetEntriesInput = {
@@ -106693,6 +114420,654 @@ export namespace Prisma {
     roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceScopeCreateWithoutVacationPlansInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeUncheckedCreateWithoutVacationPlansInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeCreateOrConnectWithoutVacationPlansInput = {
+    where: WorkforceScopeWhereUniqueInput
+    create: XOR<WorkforceScopeCreateWithoutVacationPlansInput, WorkforceScopeUncheckedCreateWithoutVacationPlansInput>
+  }
+
+  export type OrgUnitCreateWithoutVacationPlansInput = {
+    id?: string
+    name: string
+    code?: string | null
+    status?: $Enums.OrgUnitStatus
+    sortOrder?: number
+    managerUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutOrgUnitsInput
+    parent?: OrgUnitCreateNestedOneWithoutChildrenInput
+    children?: OrgUnitCreateNestedManyWithoutParentInput
+    managerEmployment?: WorkforceEmploymentCreateNestedOneWithoutManagedOrgUnitsInput
+    positions?: WorkforcePositionCreateNestedManyWithoutOrgUnitInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutOrgUnitInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrgUnitInput
+  }
+
+  export type OrgUnitUncheckedCreateWithoutVacationPlansInput = {
+    id?: string
+    workforceScopeId: string
+    parentId?: string | null
+    name: string
+    code?: string | null
+    status?: $Enums.OrgUnitStatus
+    sortOrder?: number
+    managerEmploymentId?: string | null
+    managerUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    children?: OrgUnitUncheckedCreateNestedManyWithoutParentInput
+    positions?: WorkforcePositionUncheckedCreateNestedManyWithoutOrgUnitInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrgUnitInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrgUnitInput
+  }
+
+  export type OrgUnitCreateOrConnectWithoutVacationPlansInput = {
+    where: OrgUnitWhereUniqueInput
+    create: XOR<OrgUnitCreateWithoutVacationPlansInput, OrgUnitUncheckedCreateWithoutVacationPlansInput>
+  }
+
+  export type WorkforceVacationPlanLineCreateWithoutPlanInput = {
+    id?: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    employment: WorkforceEmploymentCreateNestedOneWithoutVacationPlanLinesInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput = {
+    id?: string
+    employmentId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanLineCreateOrConnectWithoutPlanInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    create: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanLineCreateManyPlanInputEnvelope = {
+    data: WorkforceVacationPlanLineCreateManyPlanInput | WorkforceVacationPlanLineCreateManyPlanInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type WorkforceScopeUpsertWithoutVacationPlansInput = {
+    update: XOR<WorkforceScopeUpdateWithoutVacationPlansInput, WorkforceScopeUncheckedUpdateWithoutVacationPlansInput>
+    create: XOR<WorkforceScopeCreateWithoutVacationPlansInput, WorkforceScopeUncheckedCreateWithoutVacationPlansInput>
+    where?: WorkforceScopeWhereInput
+  }
+
+  export type WorkforceScopeUpdateToOneWithWhereWithoutVacationPlansInput = {
+    where?: WorkforceScopeWhereInput
+    data: XOR<WorkforceScopeUpdateWithoutVacationPlansInput, WorkforceScopeUncheckedUpdateWithoutVacationPlansInput>
+  }
+
+  export type WorkforceScopeUpdateWithoutVacationPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceScopeUncheckedUpdateWithoutVacationPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type OrgUnitUpsertWithoutVacationPlansInput = {
+    update: XOR<OrgUnitUpdateWithoutVacationPlansInput, OrgUnitUncheckedUpdateWithoutVacationPlansInput>
+    create: XOR<OrgUnitCreateWithoutVacationPlansInput, OrgUnitUncheckedCreateWithoutVacationPlansInput>
+    where?: OrgUnitWhereInput
+  }
+
+  export type OrgUnitUpdateToOneWithWhereWithoutVacationPlansInput = {
+    where?: OrgUnitWhereInput
+    data: XOR<OrgUnitUpdateWithoutVacationPlansInput, OrgUnitUncheckedUpdateWithoutVacationPlansInput>
+  }
+
+  export type OrgUnitUpdateWithoutVacationPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutOrgUnitsNestedInput
+    parent?: OrgUnitUpdateOneWithoutChildrenNestedInput
+    children?: OrgUnitUpdateManyWithoutParentNestedInput
+    managerEmployment?: WorkforceEmploymentUpdateOneWithoutManagedOrgUnitsNestedInput
+    positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+  }
+
+  export type OrgUnitUncheckedUpdateWithoutVacationPlansInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    name?: StringFieldUpdateOperationsInput | string
+    code?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumOrgUnitStatusFieldUpdateOperationsInput | $Enums.OrgUnitStatus
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    managerEmploymentId?: NullableStringFieldUpdateOperationsInput | string | null
+    managerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    children?: OrgUnitUncheckedUpdateManyWithoutParentNestedInput
+    positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+  }
+
+  export type WorkforceVacationPlanLineUpsertWithWhereUniqueWithoutPlanInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    update: XOR<WorkforceVacationPlanLineUpdateWithoutPlanInput, WorkforceVacationPlanLineUncheckedUpdateWithoutPlanInput>
+    create: XOR<WorkforceVacationPlanLineCreateWithoutPlanInput, WorkforceVacationPlanLineUncheckedCreateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanLineUpdateWithWhereUniqueWithoutPlanInput = {
+    where: WorkforceVacationPlanLineWhereUniqueInput
+    data: XOR<WorkforceVacationPlanLineUpdateWithoutPlanInput, WorkforceVacationPlanLineUncheckedUpdateWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanLineUpdateManyWithWhereWithoutPlanInput = {
+    where: WorkforceVacationPlanLineScalarWhereInput
+    data: XOR<WorkforceVacationPlanLineUpdateManyMutationInput, WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanInput>
+  }
+
+  export type WorkforceVacationPlanCreateWithoutLinesInput = {
+    id?: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    workforceScope: WorkforceScopeCreateNestedOneWithoutVacationPlansInput
+    orgUnit?: OrgUnitCreateNestedOneWithoutVacationPlansInput
+  }
+
+  export type WorkforceVacationPlanUncheckedCreateWithoutLinesInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanCreateOrConnectWithoutLinesInput = {
+    where: WorkforceVacationPlanWhereUniqueInput
+    create: XOR<WorkforceVacationPlanCreateWithoutLinesInput, WorkforceVacationPlanUncheckedCreateWithoutLinesInput>
+  }
+
+  export type WorkforceEmploymentCreateWithoutVacationPlanLinesInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutVacationPlanLinesInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutVacationPlanLinesInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedCreateWithoutVacationPlanLinesInput>
+  }
+
+  export type WorkforceVacationPlanUpsertWithoutLinesInput = {
+    update: XOR<WorkforceVacationPlanUpdateWithoutLinesInput, WorkforceVacationPlanUncheckedUpdateWithoutLinesInput>
+    create: XOR<WorkforceVacationPlanCreateWithoutLinesInput, WorkforceVacationPlanUncheckedCreateWithoutLinesInput>
+    where?: WorkforceVacationPlanWhereInput
+  }
+
+  export type WorkforceVacationPlanUpdateToOneWithWhereWithoutLinesInput = {
+    where?: WorkforceVacationPlanWhereInput
+    data: XOR<WorkforceVacationPlanUpdateWithoutLinesInput, WorkforceVacationPlanUncheckedUpdateWithoutLinesInput>
+  }
+
+  export type WorkforceVacationPlanUpdateWithoutLinesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
+    orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateWithoutLinesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceEmploymentUpsertWithoutVacationPlanLinesInput = {
+    update: XOR<WorkforceEmploymentUpdateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedUpdateWithoutVacationPlanLinesInput>
+    create: XOR<WorkforceEmploymentCreateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedCreateWithoutVacationPlanLinesInput>
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  export type WorkforceEmploymentUpdateToOneWithWhereWithoutVacationPlanLinesInput = {
+    where?: WorkforceEmploymentWhereInput
+    data: XOR<WorkforceEmploymentUpdateWithoutVacationPlanLinesInput, WorkforceEmploymentUncheckedUpdateWithoutVacationPlanLinesInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithoutVacationPlanLinesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutVacationPlanLinesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceScopeCreateWithoutPersonnelOrdersInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeCreateOrConnectWithoutPersonnelOrdersInput = {
+    where: WorkforceScopeWhereUniqueInput
+    create: XOR<WorkforceScopeCreateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceEmploymentCreateWithoutPersonnelOrdersInput = {
+    id?: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organization: OrganizationCreateNestedOneWithoutWorkforceEmploymentsInput
+    workforceScope: WorkforceScopeCreateNestedOneWithoutEmploymentsInput
+    orgUnit: OrgUnitCreateNestedOneWithoutEmploymentsInput
+    position: WorkforcePositionCreateNestedOneWithoutEmploymentsInput
+    absences?: WorkforceAbsenceCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentUncheckedCreateWithoutPersonnelOrdersInput = {
+    id?: string
+    organizationId: string
+    workforceScopeId: string
+    orgUnitId: string
+    positionId: string
+    globalPersonId: string
+    status?: $Enums.WorkforceEmploymentStatus
+    hireDate: Date | string
+    financeEmployeeId?: string | null
+    commercialOrganizationId?: string | null
+    platformUserId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    absences?: WorkforceAbsenceUncheckedCreateNestedManyWithoutEmploymentInput
+    managedOrgUnits?: OrgUnitUncheckedCreateNestedManyWithoutManagerEmploymentInput
+    roleBindings?: WorkforceRoleBindingUncheckedCreateNestedManyWithoutEmploymentInput
+    manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+  }
+
+  export type WorkforceEmploymentCreateOrConnectWithoutPersonnelOrdersInput = {
+    where: WorkforceEmploymentWhereUniqueInput
+    create: XOR<WorkforceEmploymentCreateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedCreateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceScopeUpsertWithoutPersonnelOrdersInput = {
+    update: XOR<WorkforceScopeUpdateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedUpdateWithoutPersonnelOrdersInput>
+    create: XOR<WorkforceScopeCreateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedCreateWithoutPersonnelOrdersInput>
+    where?: WorkforceScopeWhereInput
+  }
+
+  export type WorkforceScopeUpdateToOneWithWhereWithoutPersonnelOrdersInput = {
+    where?: WorkforceScopeWhereInput
+    data: XOR<WorkforceScopeUpdateWithoutPersonnelOrdersInput, WorkforceScopeUncheckedUpdateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceScopeUpdateWithoutPersonnelOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceScopeUncheckedUpdateWithoutPersonnelOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    staffScheduleRevisions?: StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceEmploymentUpsertWithoutPersonnelOrdersInput = {
+    update: XOR<WorkforceEmploymentUpdateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedUpdateWithoutPersonnelOrdersInput>
+    create: XOR<WorkforceEmploymentCreateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedCreateWithoutPersonnelOrdersInput>
+    where?: WorkforceEmploymentWhereInput
+  }
+
+  export type WorkforceEmploymentUpdateToOneWithWhereWithoutPersonnelOrdersInput = {
+    where?: WorkforceEmploymentWhereInput
+    data: XOR<WorkforceEmploymentUpdateWithoutPersonnelOrdersInput, WorkforceEmploymentUncheckedUpdateWithoutPersonnelOrdersInput>
+  }
+
+  export type WorkforceEmploymentUpdateWithoutPersonnelOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organization?: OrganizationUpdateOneRequiredWithoutWorkforceEmploymentsNestedInput
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutEmploymentsNestedInput
+    orgUnit?: OrgUnitUpdateOneRequiredWithoutEmploymentsNestedInput
+    position?: WorkforcePositionUpdateOneRequiredWithoutEmploymentsNestedInput
+    absences?: WorkforceAbsenceUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceEmploymentUncheckedUpdateWithoutPersonnelOrdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    orgUnitId?: StringFieldUpdateOperationsInput | string
+    positionId?: StringFieldUpdateOperationsInput | string
+    globalPersonId?: StringFieldUpdateOperationsInput | string
+    status?: EnumWorkforceEmploymentStatusFieldUpdateOperationsInput | $Enums.WorkforceEmploymentStatus
+    hireDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    financeEmployeeId?: NullableStringFieldUpdateOperationsInput | string | null
+    commercialOrganizationId?: NullableStringFieldUpdateOperationsInput | string | null
+    platformUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    absences?: WorkforceAbsenceUncheckedUpdateManyWithoutEmploymentNestedInput
+    managedOrgUnits?: OrgUnitUncheckedUpdateManyWithoutManagerEmploymentNestedInput
+    roleBindings?: WorkforceRoleBindingUncheckedUpdateManyWithoutEmploymentNestedInput
+    manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
+    seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
+    timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+  }
+
+  export type WorkforceScopeCreateWithoutStaffScheduleRevisionsInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput = {
+    id?: string
+    anchorOrganizationId: string
+    name: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    orgUnits?: OrgUnitUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    employments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    vacationPlans?: WorkforceVacationPlanUncheckedCreateNestedManyWithoutWorkforceScopeInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutWorkforceScopeInput
+  }
+
+  export type WorkforceScopeCreateOrConnectWithoutStaffScheduleRevisionsInput = {
+    where: WorkforceScopeWhereUniqueInput
+    create: XOR<WorkforceScopeCreateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput>
+  }
+
+  export type WorkforceScopeUpsertWithoutStaffScheduleRevisionsInput = {
+    update: XOR<WorkforceScopeUpdateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedUpdateWithoutStaffScheduleRevisionsInput>
+    create: XOR<WorkforceScopeCreateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedCreateWithoutStaffScheduleRevisionsInput>
+    where?: WorkforceScopeWhereInput
+  }
+
+  export type WorkforceScopeUpdateToOneWithWhereWithoutStaffScheduleRevisionsInput = {
+    where?: WorkforceScopeWhereInput
+    data: XOR<WorkforceScopeUpdateWithoutStaffScheduleRevisionsInput, WorkforceScopeUncheckedUpdateWithoutStaffScheduleRevisionsInput>
+  }
+
+  export type WorkforceScopeUpdateWithoutStaffScheduleRevisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutWorkforceScopeNestedInput
+  }
+
+  export type WorkforceScopeUncheckedUpdateWithoutStaffScheduleRevisionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    anchorOrganizationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnits?: OrgUnitUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    employments?: WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    seatAllocations?: WorkforceSeatAllocationUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeNestedInput
   }
 
   export type OrganizationBundleCreateWithoutBundleInput = {
@@ -108202,6 +116577,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentUncheckedCreateWithoutOrganizationInput = {
@@ -108223,6 +116600,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedCreateNestedManyWithoutEmploymentInput
     seatAllocation?: WorkforceSeatAllocationUncheckedCreateNestedOneWithoutEmploymentInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedCreateNestedManyWithoutEmploymentInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedCreateNestedManyWithoutEmploymentInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedCreateNestedManyWithoutEmploymentInput
   }
 
   export type WorkforceEmploymentCreateOrConnectWithoutOrganizationInput = {
@@ -116256,6 +124635,52 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type WorkforceVacationPlanCreateManyWorkforceScopeInput = {
+    id?: string
+    year: number
+    orgUnitId?: string | null
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateManyWorkforceScopeInput = {
+    id?: string
+    employmentId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StaffScheduleRevisionCreateManyWorkforceScopeInput = {
+    id?: string
+    title: string
+    status?: $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    documentStorageKey?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrgUnitUpdateWithoutWorkforceScopeInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -116271,6 +124696,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutWorkforceScopeInput = {
@@ -116288,6 +124714,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutWorkforceScopeInput = {
@@ -116322,6 +124749,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutWorkforceScopeInput = {
@@ -116343,6 +124772,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateManyWithoutWorkforceScopeInput = {
@@ -116411,6 +124842,146 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type WorkforceVacationPlanUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orgUnit?: OrgUnitUpdateOneWithoutVacationPlansNestedInput
+    lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateManyWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    orgUnitId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutPersonnelOrdersNestedInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateManyWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionUncheckedUpdateWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StaffScheduleRevisionUncheckedUpdateManyWithoutWorkforceScopeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    status?: EnumStaffScheduleRevisionStatusFieldUpdateOperationsInput | $Enums.StaffScheduleRevisionStatus
+    snapshotJson?: JsonNullValueInput | InputJsonValue
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type OrgUnitCreateManyParentInput = {
     id?: string
     workforceScopeId: string
@@ -116458,6 +125029,21 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceVacationPlanCreateManyOrgUnitInput = {
+    id?: string
+    workforceScopeId: string
+    year: number
+    status?: $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: string | null
+    approvedByUserId?: string | null
+    submittedAt?: Date | string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OrgUnitUpdateWithoutParentInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -116473,6 +125059,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutParentInput = {
@@ -116490,6 +125077,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutParentInput = {
@@ -116558,6 +125146,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutOrgUnitInput = {
@@ -116579,6 +125169,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitInput = {
@@ -116619,6 +125211,53 @@ export namespace Prisma {
     organizationId?: StringFieldUpdateOperationsInput | string
     workforceScopeId?: StringFieldUpdateOperationsInput | string
     linkMode?: EnumOrgCommercialLinkModeFieldUpdateOperationsInput | $Enums.OrgCommercialLinkMode
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanUpdateWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutVacationPlansNestedInput
+    lines?: WorkforceVacationPlanLineUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanNestedInput
+  }
+
+  export type WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    year?: IntFieldUpdateOperationsInput | number
+    status?: EnumWorkforceVacationPlanStatusFieldUpdateOperationsInput | $Enums.WorkforceVacationPlanStatus
+    submittedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -116667,6 +125306,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutPositionInput = {
@@ -116688,6 +125329,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateManyWithoutPositionInput = {
@@ -116852,6 +125495,33 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type WorkforceVacationPlanLineCreateManyEmploymentInput = {
+    id?: string
+    planId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforcePersonnelOrderCreateManyEmploymentInput = {
+    id?: string
+    workforceScopeId: string
+    organizationId: string
+    type: $Enums.WorkforcePersonnelOrderType
+    status?: $Enums.WorkforcePersonnelOrderStatus
+    orderNumber: string
+    effectiveDate: Date | string
+    note?: string
+    personDisplayName?: string | null
+    documentStorageKey?: string | null
+    issuedByUserId?: string | null
+    issuedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type WorkforceAbsenceUpdateWithoutEmploymentInput = {
     id?: StringFieldUpdateOperationsInput | string
     organizationId?: StringFieldUpdateOperationsInput | string
@@ -116930,6 +125600,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateWithoutManagerEmploymentInput = {
@@ -116947,6 +125618,7 @@ export namespace Prisma {
     positions?: WorkforcePositionUncheckedUpdateManyWithoutOrgUnitNestedInput
     employments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrgUnitNestedInput
     commercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrgUnitNestedInput
+    vacationPlans?: WorkforceVacationPlanUncheckedUpdateManyWithoutOrgUnitNestedInput
   }
 
   export type OrgUnitUncheckedUpdateManyWithoutManagerEmploymentInput = {
@@ -117065,6 +125737,127 @@ export namespace Prisma {
     source?: StringFieldUpdateOperationsInput | string
     sourceRef?: NullableStringFieldUpdateOperationsInput | string | null
     status?: EnumWorkforceTimesheetEntryStatusFieldUpdateOperationsInput | $Enums.WorkforceTimesheetEntryStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineUpdateWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    plan?: WorkforceVacationPlanUpdateOneRequiredWithoutLinesNestedInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUpdateWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workforceScope?: WorkforceScopeUpdateOneRequiredWithoutPersonnelOrdersNestedInput
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workforceScopeId?: StringFieldUpdateOperationsInput | string
+    organizationId?: StringFieldUpdateOperationsInput | string
+    type?: EnumWorkforcePersonnelOrderTypeFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderType
+    status?: EnumWorkforcePersonnelOrderStatusFieldUpdateOperationsInput | $Enums.WorkforcePersonnelOrderStatus
+    orderNumber?: StringFieldUpdateOperationsInput | string
+    effectiveDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    note?: StringFieldUpdateOperationsInput | string
+    personDisplayName?: NullableStringFieldUpdateOperationsInput | string | null
+    documentStorageKey?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedByUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    issuedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineCreateManyPlanInput = {
+    id?: string
+    employmentId: string
+    startDate: Date | string
+    endDate: Date | string
+    days: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type WorkforceVacationPlanLineUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    employment?: WorkforceEmploymentUpdateOneRequiredWithoutVacationPlanLinesNestedInput
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type WorkforceVacationPlanLineUncheckedUpdateManyWithoutPlanInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    employmentId?: StringFieldUpdateOperationsInput | string
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    days?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -118389,6 +127182,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateWithoutOrganizationInput = {
@@ -118410,6 +127205,8 @@ export namespace Prisma {
     manualGrants?: WorkforceManualGrantUncheckedUpdateManyWithoutEmploymentNestedInput
     seatAllocation?: WorkforceSeatAllocationUncheckedUpdateOneWithoutEmploymentNestedInput
     timesheetEntries?: WorkforceTimesheetEntryUncheckedUpdateManyWithoutEmploymentNestedInput
+    vacationPlanLines?: WorkforceVacationPlanLineUncheckedUpdateManyWithoutEmploymentNestedInput
+    personnelOrders?: WorkforcePersonnelOrderUncheckedUpdateManyWithoutEmploymentNestedInput
   }
 
   export type WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationInput = {

@@ -19,6 +19,10 @@ import { DataHubClient } from "../../integration/data-hub.client";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
 import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../../kernel/ledger/system-gl-config.service";
+import {
   buildGapBuckets,
   computeLcrRatioStub,
   dayOffsetFrom,
@@ -30,6 +34,7 @@ export class TreasuryService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly postingEngine: PostingEngineService,
+    private readonly systemGl: SystemGlConfigService,
     private readonly dataHub: DataHubClient,
     private readonly events: OrchestratorEventsPublisher,
   ) {}
@@ -114,8 +119,8 @@ export class TreasuryService {
     if (existing) return existing;
 
     const branch = await this.headOfficeBranch();
-    const fxTransit = await this.glByCode("1620101");
-    const nostroGl = await this.glByCode("2550201");
+    const fxTransit = await this.systemGl.resolve(SystemGlKey.FX_TRANSIT);
+    const nostroGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
 
     const posting = await this.postingEngine.post({
       reference: `FX-SPOT-${input.idempotencyKey}`,
@@ -212,7 +217,7 @@ export class TreasuryService {
     idempotencyKey: string;
   }) {
     const branch = await this.headOfficeBranch();
-    const placementGl = await this.glByCode("1610101");
+    const placementGl = await this.systemGl.resolve(SystemGlKey.INTERBANK_PLACEMENT);
     const nostro = await this.nostroById(input.nostroAccountId);
     const nostroGl = await this.prisma.glAccount.findFirst({
       where: { id: nostro.glAccountId },
@@ -278,9 +283,9 @@ export class TreasuryService {
     }
 
     const branch = await this.headOfficeBranch();
-    const placementGl = await this.glByCode("1610101");
-    const nostroGl = await this.glByCode("2550201");
-    const incomeGl = await this.glByCode("4100101");
+    const placementGl = await this.systemGl.resolve(SystemGlKey.INTERBANK_PLACEMENT);
+    const nostroGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
+    const incomeGl = await this.systemGl.resolve(SystemGlKey.INTEREST_INCOME);
 
     const days =
       (placement.maturityDate.getTime() - placement.startDate.getTime()) / 86400000;
@@ -357,8 +362,8 @@ export class TreasuryService {
     idempotencyKey: string;
   }) {
     const branch = await this.headOfficeBranch();
-    const gsGl = await this.glByCode("1620201");
-    const nostroGl = await this.glByCode("2550201");
+    const gsGl = await this.systemGl.resolve(SystemGlKey.GOV_SECURITIES);
+    const nostroGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
 
     await this.postingEngine.post({
       reference: `GS-BUY-${input.isin}`,
@@ -409,9 +414,9 @@ export class TreasuryService {
     }
 
     const branch = await this.headOfficeBranch();
-    const gsGl = await this.glByCode("1620201");
-    const nostroGl = await this.glByCode("2550201");
-    const incomeGl = await this.glByCode("4100101");
+    const gsGl = await this.systemGl.resolve(SystemGlKey.GOV_SECURITIES);
+    const nostroGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
+    const incomeGl = await this.systemGl.resolve(SystemGlKey.INTEREST_INCOME);
     const premium = position.faceValueMinor - position.bookValueMinor;
 
     const legs = [

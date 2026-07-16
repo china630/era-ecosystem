@@ -1,0 +1,43 @@
+---
+description: Shared packages — satellite-kit, era-fiscal, era-contracts boundaries
+globs:
+  - packages/satellite-kit/**
+  - packages/era-fiscal/**
+  - packages/era-contracts/**
+  - packages/i18n-common/**
+alwaysApply: false
+---
+
+# Shared packages — placement rules
+
+**Inherits:** monorepo root `.cursor/rules/`.
+
+## `packages/satellite-kit`
+
+Cross-satellite **auth** (SSO exchange, session, login-user), **operating mode**, **MDM clients**, **orchestrator gateway**, **platform hooks**, **UI** (`sso-callback-page`, shared components).
+
+**Form field system (shipped):** `field-presets.ts`, `field.tsx` (`Field`, `FieldSelect`, `FieldTextarea`, `FieldRow`), `field-section.tsx` (`FieldSection`). New satellite modal CRUD must use these with explicit `preset` — see root `DESIGN.md` § Field width taxonomy.
+
+Put here: behavior needed by **2+ satellites** or orchestrator integration. Do not duplicate in each app's `src/lib`.
+
+Workforce MDM helpers (Plan D): `packages/satellite-kit/src/integration/workforce-person.client.ts` — `linkWorkforcePersonIdentity`, `fetchWorkforcePersonOpsBatch`, `buildWorkforceDisplayRow`.
+
+## `packages/era-fiscal`
+
+KKM / fiscalization adapters (`fiscalize`, `fiscalizeForSatellite`). Satellites call via kit wrapper when parent fiscal routing applies.
+
+## `packages/era-contracts`
+
+Zod event schemas (`satelliteEventBaseSchema`, per-vertical `type` + `payload`). **All** satellite event types must be registered here before ingest/worker handlers.
+
+Workforce role catalogs: `packages/era-contracts/src/workforce/satellite-roles.ts` — canonical satellite role codes per `satelliteKey`; used by CP role templates and validation (Plan C).
+
+## `packages/i18n-common`
+
+Shared `messages/common.{az,ru,en}.json` for satellite chrome. App-specific strings stay in each app's `messages/`.
+
+## Change checklist
+
+- [ ] New satellite event? → `era-contracts` + orchestrator ingest + finance worker (if accounting).
+- [ ] New SSO/auth helper? → `satellite-kit` first.
+- [ ] Breaking change? → update `docs/INTEGRATION_SSO_EVENTS.md` and consuming apps.

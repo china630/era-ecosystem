@@ -287,3 +287,41 @@ export function isSatelliteWorkforceTimesheetApproved(
 export function isWorkforceTimesheetOutboundEvent(data: unknown): boolean {
   return isSatelliteWorkforceTimesheetApproved(data);
 }
+
+export const WORKFORCE_VACATION_PLAN_APPROVED =
+  "WORKFORCE_VACATION_PLAN_APPROVED" as const;
+
+export const workforceVacationPlanLineSchema = z.object({
+  employmentId: z.string().uuid(),
+  globalPersonId: z.string().uuid(),
+  financeEmployeeId: z.string().uuid().optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  days: z.number().int().positive(),
+});
+
+export const workforceVacationPlanApprovedPayloadSchema = z.object({
+  cpVacationPlanId: z.string().uuid(),
+  organizationId: z.string().uuid(),
+  year: z.number().int(),
+  orgUnitId: z.string().uuid().optional(),
+  approvedAt: z.string().min(1),
+  approvedByUserId: z.string().uuid(),
+  lines: z.array(workforceVacationPlanLineSchema).min(1),
+});
+
+export const satelliteWorkforceVacationPlanApprovedSchema =
+  satelliteEventBaseSchema.extend({
+    type: z.literal(WORKFORCE_VACATION_PLAN_APPROVED),
+    payload: workforceVacationPlanApprovedPayloadSchema,
+  });
+
+export type SatelliteWorkforceVacationPlanApprovedEvent = z.infer<
+  typeof satelliteWorkforceVacationPlanApprovedSchema
+>;
+
+export function isSatelliteWorkforceVacationPlanApproved(
+  data: unknown,
+): data is SatelliteWorkforceVacationPlanApprovedEvent {
+  return satelliteWorkforceVacationPlanApprovedSchema.safeParse(data).success;
+}

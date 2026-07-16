@@ -154,4 +154,6 @@ Rules:
 - Product-line lead doc: [era-bank-core/PRD.md](../../era-bank-core/PRD.md). Ports/env: [ECOSYSTEM_URLS.md](../ECOSYSTEM_URLS.md).
 - Contracts: `packages/era-contracts/src/events/banking.events.ts` (see TZ §9).
 - Consumes: orchestrator SSO/RBAC/MDM/entitlements; data-hub FX/banks/IBAN/COA template/calendar.
-- Phases and DoD: [era-bank-core/PRD.md](../../era-bank-core/PRD.md) §7 and [era-bank-core/TZ.md](../../era-bank-core/TZ.md) §12.
+- Phases and DoD: [era-bank-core/PRD.md](../../era-bank-core/PRD.md) §7 and [era-bank-core/TZ.md](../../era-bank-core/TZ.md) §14.
+- Risk management & audit chain: [era-bank-core/TZ.md](../../era-bank-core/TZ.md) §12–§13 and ADR [era-bank-risk-and-audit.md](./era-bank-risk-and-audit.md).
+- GL account mapping (product + system): ADR [era-bank-gl-account-mapping.md](./era-bank-gl-account-mapping.md); open code debt tracker [OPEN-TASKS.md](../../era-bank-core/doc/OPEN-TASKS.md).
