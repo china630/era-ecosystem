@@ -23,19 +23,19 @@ model Organization {
   taxIdBlindIndex              String?                       @unique @map("tax_id_blind_index")
   currency                     String                        @default("AZN")
   /// *
-  ///    * Юридический адрес (профиль организации, v19.0).
+  ///    * Р®СЂРёРґРёС‡РµСЃРєРёР№ Р°РґСЂРµСЃ (РїСЂРѕС„РёР»СЊ РѕСЂРіР°РЅРёР·Р°С†РёРё, v19.0).
   legalAddress                 String?                       @map("legal_address")
   /// *
-  ///    * Контактный телефон организации.
+  ///    * РљРѕРЅС‚Р°РєС‚РЅС‹Р№ С‚РµР»РµС„РѕРЅ РѕСЂРіР°РЅРёР·Р°С†РёРё.
   phone                        String?
   /// *
-  ///    * Руководитель (ФИО / должность в свободной форме для печати).
+  ///    * Р СѓРєРѕРІРѕРґРёС‚РµР»СЊ (Р¤РРћ / РґРѕР»Р¶РЅРѕСЃС‚СЊ РІ СЃРІРѕР±РѕРґРЅРѕР№ С„РѕСЂРјРµ РґР»СЏ РїРµС‡Р°С‚Рё).
   directorName                 String?                       @map("director_name")
   /// *
-  ///    * Логотип (URL в объектном хранилище после upload).
+  ///    * Р›РѕРіРѕС‚РёРї (URL РІ РѕР±СЉРµРєС‚РЅРѕРј С…СЂР°РЅРёР»РёС‰Рµ РїРѕСЃР»Рµ upload).
   logoUrl                      String?                       @map("logo_url")
   /// *
-  ///    * Метод оценки запасов для COGS: средневзвешенная (AVCO) или FIFO по движениям.
+  ///    * РњРµС‚РѕРґ РѕС†РµРЅРєРё Р·Р°РїР°СЃРѕРІ РґР»СЏ COGS: СЃСЂРµРґРЅРµРІР·РІРµС€РµРЅРЅР°СЏ (AVCO) РёР»Рё FIFO РїРѕ РґРІРёР¶РµРЅРёСЏРј.
   valuationMethod              InventoryValuationMethod      @default(AVCO) @map("valuation_method")
   settings                     Json                          @default("{}")
   subscriptionPlan             String?                       @map("subscription_plan")
@@ -43,25 +43,25 @@ model Organization {
   createdAt                    DateTime                      @default(now()) @map("created_at")
   updatedAt                    DateTime                      @updatedAt @map("updated_at")
   /// *
-  ///    * Секрет URL вебхука Direct Banking: POST /api/public/banking/webhook/:secret
+  ///    * РЎРµРєСЂРµС‚ URL РІРµР±С…СѓРєР° Direct Banking: POST /api/public/banking/webhook/:secret
   bankWebhookSecret            String?                       @unique @map("bank_webhook_secret")
   /// *
-  ///    * Владелец организации для биллинга (v10.2).
+  ///    * Р’Р»Р°РґРµР»РµС† РѕСЂРіР°РЅРёР·Р°С†РёРё РґР»СЏ Р±РёР»Р»РёРЅРіР° (v10.2).
   ownerId                      String?                       @map("owner_id") @db.Uuid
   /// *
-  ///    * Включённые модули (slug) на уровне организации — денормализация для биллинга v10.2;
-  ///    * источник правды для гейтинга остаётся OrganizationSubscription.customConfig / activeModules.
+  ///    * Р’РєР»СЋС‡С‘РЅРЅС‹Рµ РјРѕРґСѓР»Рё (slug) РЅР° СѓСЂРѕРІРЅРµ РѕСЂРіР°РЅРёР·Р°С†РёРё вЂ” РґРµРЅРѕСЂРјР°Р»РёР·Р°С†РёСЏ РґР»СЏ Р±РёР»Р»РёРЅРіР° v10.2;
+  ///    * РёСЃС‚РѕС‡РЅРёРє РїСЂР°РІРґС‹ РґР»СЏ РіРµР№С‚РёРЅРіР° РѕСЃС‚Р°С‘С‚СЃСЏ OrganizationSubscription.customConfig / activeModules.
   activeModules                String[]                      @default([]) @map("active_modules")
   /// *
   ///    * Bytes stored in object storage for this org (logos, PDFs); quota STORAGE (v23.0).
   storageUsedBytes             BigInt                        @default(0) @map("storage_used_bytes")
-  /// @deprecated Phase 16 — prepaid WhatsApp packs; use whatsappAlertsUsed + BillingTrustGuard.
+  /// @deprecated Phase 16 вЂ” prepaid WhatsApp packs; use whatsappAlertsUsed + BillingTrustGuard.
   whatsappOutboundMessagesBalance Int                         @default(0) @map("whatsapp_outbound_messages_balance")
-  /// @deprecated Legacy post-paid meter — use subscription TariffTier limits.
+  /// @deprecated Legacy post-paid meter вЂ” use subscription TariffTier limits.
   currentCreditTier              TariffTier?                   @map("current_credit_tier")
   /// @deprecated Legacy post-paid balance.
   accumulatedBalance             Decimal                       @default(0) @map("accumulated_balance") @db.Decimal(12, 2)
-  /// @deprecated Org-level period key — use OrganizationSubscription.billingPeriodKey.
+  /// @deprecated Org-level period key вЂ” use OrganizationSubscription.billingPeriodKey.
   billingPeriodKey               String?                       @map("billing_period_key") @db.VarChar(7)
   /// @deprecated Use subscription-tier limits + monthly counters in application layer.
   whatsappAlertsUsed             Int                           @default(0) @map("whatsapp_alerts_used")
@@ -74,7 +74,7 @@ model Organization {
   /// Legal form selected at onboarding (shared with Counterparty legal forms).
   legalForm                    CounterpartyLegalForm         @default(LLC) @map("legal_form")
   isDeleted                    Boolean                       @default(false) @map("is_deleted")
-  /// External client id for Drakaris/yığım aggregator (uppercase alphanumeric).
+  /// External client id for Drakaris/yД±ДџД±m aggregator (uppercase alphanumeric).
   drakarisClientId             String?                       @unique @map("drakaris_client_id")
   absenceTypes                 AbsenceType[]
   absences                     Absence[]
@@ -220,7 +220,7 @@ model TemplateAccount {
   @@map("template_accounts")
 }
 
-/// Global NAS posting role → account code preset per OrganizationKind.
+/// Global NAS posting role в†’ account code preset per OrganizationKind.
 model TemplatePostingRole {
   id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   kind        OrganizationKind @map("kind")
@@ -268,7 +268,7 @@ model AccountBalance {
 }
 
 /// *
-///  * Банковские счета организации (реквизиты для документов и интеграций), 1:N к Organization.
+///  * Р‘Р°РЅРєРѕРІСЃРєРёРµ СЃС‡РµС‚Р° РѕСЂРіР°РЅРёР·Р°С†РёРё (СЂРµРєРІРёР·РёС‚С‹ РґР»СЏ РґРѕРєСѓРјРµРЅС‚РѕРІ Рё РёРЅС‚РµРіСЂР°С†РёР№), 1:N Рє Organization.
 model OrganizationBankAccount {
   id                String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId    String           @map("organization_id") @db.Uuid
@@ -306,23 +306,23 @@ model OrganizationBankAccount {
 }
 
 /// *
-///  * Системный справочник банков Азербайджана (без `organizationId`, общий для всей платформы).
-///  * Двузначный `code` (`01`–`22`) используется в маске NAS-субсчёта `221.<bankCode>.<seq>`.
+///  * РЎРёСЃС‚РµРјРЅС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє Р±Р°РЅРєРѕРІ РђР·РµСЂР±Р°Р№РґР¶Р°РЅР° (Р±РµР· `organizationId`, РѕР±С‰РёР№ РґР»СЏ РІСЃРµР№ РїР»Р°С‚С„РѕСЂРјС‹).
+///  * Р”РІСѓР·РЅР°С‡РЅС‹Р№ `code` (`01`вЂ“`22`) РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ РјР°СЃРєРµ NAS-СЃСѓР±СЃС‡С‘С‚Р° `221.<bankCode>.<seq>`.
 model BankGlossary {
   id                String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  /// Официальное наименование банка на азербайджанском (для UI/печати).
+  /// РћС„РёС†РёР°Р»СЊРЅРѕРµ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ Р±Р°РЅРєР° РЅР° Р°Р·РµСЂР±Р°Р№РґР¶Р°РЅСЃРєРѕРј (РґР»СЏ UI/РїРµС‡Р°С‚Рё).
   nameAz            String       @map("name_az")
-  /// VÖEN банка (10 цифр), уникальный.
+  /// VГ–EN Р±Р°РЅРєР° (10 С†РёС„СЂ), СѓРЅРёРєР°Р»СЊРЅС‹Р№.
   voen              String       @unique
-  /// Двузначный код банка в маске субсчёта `221.<code>.<seq>` (фиксирован для платформы).
+  /// Р”РІСѓР·РЅР°С‡РЅС‹Р№ РєРѕРґ Р±Р°РЅРєР° РІ РјР°СЃРєРµ СЃСѓР±СЃС‡С‘С‚Р° `221.<code>.<seq>` (С„РёРєСЃРёСЂРѕРІР°РЅ РґР»СЏ РїР»Р°С‚С„РѕСЂРјС‹).
   code              String       @unique @db.Char(2)
-  /// Корреспондентский IBAN банка в ЦБА (одинаков для всех филиалов; см. `prisma/catalog/bank/banks-table.md`).
+  /// РљРѕСЂСЂРµСЃРїРѕРЅРґРµРЅС‚СЃРєРёР№ IBAN Р±Р°РЅРєР° РІ Р¦Р‘Рђ (РѕРґРёРЅР°РєРѕРІ РґР»СЏ РІСЃРµС… С„РёР»РёР°Р»РѕРІ; СЃРј. `prisma/catalog/bank/banks-table.md`).
   correspondentIban String?      @unique @map("correspondent_iban")
-  /// SWIFT-код банка (общий для всех филиалов, дублируется в `BankBranch.swift` для UI).
+  /// SWIFT-РєРѕРґ Р±Р°РЅРєР° (РѕР±С‰РёР№ РґР»СЏ РІСЃРµС… С„РёР»РёР°Р»РѕРІ, РґСѓР±Р»РёСЂСѓРµС‚СЃСЏ РІ `BankBranch.swift` РґР»СЏ UI).
   swift             String?
-  /// Контактные телефоны головного офиса.
+  /// РљРѕРЅС‚Р°РєС‚РЅС‹Рµ С‚РµР»РµС„РѕРЅС‹ РіРѕР»РѕРІРЅРѕРіРѕ РѕС„РёСЃР°.
   headPhones        String[]     @default([]) @map("head_phones")
-  /// Юр./фактический адрес головного офиса.
+  /// Р®СЂ./С„Р°РєС‚РёС‡РµСЃРєРёР№ Р°РґСЂРµСЃ РіРѕР»РѕРІРЅРѕРіРѕ РѕС„РёСЃР°.
   headAddress       String?      @map("head_address")
   isActive          Boolean      @default(true) @map("is_active")
   createdAt         DateTime     @default(now()) @map("created_at")
@@ -333,8 +333,8 @@ model BankGlossary {
 }
 
 /// *
-///  * Филиал банка из системного справочника. Используется при создании
-///  * `OrganizationBankAccount` для автогенерации субсчёта 221.<bankCode>.<seq>.
+///  * Р¤РёР»РёР°Р» Р±Р°РЅРєР° РёР· СЃРёСЃС‚РµРјРЅРѕРіРѕ СЃРїСЂР°РІРѕС‡РЅРёРєР°. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РїСЂРё СЃРѕР·РґР°РЅРёРё
+///  * `OrganizationBankAccount` РґР»СЏ Р°РІС‚РѕРіРµРЅРµСЂР°С†РёРё СЃСѓР±СЃС‡С‘С‚Р° 221.<bankCode>.<seq>.
 model BankBranch {
   id                       String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   bankId                   String                    @map("bank_id") @db.Uuid
@@ -343,9 +343,9 @@ model BankBranch {
   name                     String
   swift                    String?
   address                  String?
-  /// Контактные телефоны филиала; в исходной таблице импорта поля разделяются через `;`.
+  /// РљРѕРЅС‚Р°РєС‚РЅС‹Рµ С‚РµР»РµС„РѕРЅС‹ С„РёР»РёР°Р»Р°; РІ РёСЃС…РѕРґРЅРѕР№ С‚Р°Р±Р»РёС†Рµ РёРјРїРѕСЂС‚Р° РїРѕР»СЏ СЂР°Р·РґРµР»СЏСЋС‚СЃСЏ С‡РµСЂРµР· `;`.
   phones                   String[]                  @default([]) @map("phones")
-  /// True для записи головного офиса банка (отображение «Baş ofis»).
+  /// True РґР»СЏ Р·Р°РїРёСЃРё РіРѕР»РѕРІРЅРѕРіРѕ РѕС„РёСЃР° Р±Р°РЅРєР° (РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ В«BaЕџ ofisВ»).
   isHeadOffice             Boolean                   @default(false) @map("is_head_office")
   isActive                 Boolean                   @default(true) @map("is_active")
   createdAt                DateTime                  @default(now()) @map("created_at")
@@ -360,7 +360,7 @@ model BankBranch {
 }
 
 /// *
-///  * Глобальный справочник компаний по VÖEN: асинхронно наполняется из профиля организации и карточек контрагентов (Smart-fill).
+///  * Р“Р»РѕР±Р°Р»СЊРЅС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє РєРѕРјРїР°РЅРёР№ РїРѕ VГ–EN: Р°СЃРёРЅС…СЂРѕРЅРЅРѕ РЅР°РїРѕР»РЅСЏРµС‚СЃСЏ РёР· РїСЂРѕС„РёР»СЏ РѕСЂРіР°РЅРёР·Р°С†РёРё Рё РєР°СЂС‚РѕС‡РµРє РєРѕРЅС‚СЂР°РіРµРЅС‚РѕРІ (Smart-fill).
 model GlobalCompanyDirectory {
   id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   taxId        String   @unique @map("tax_id")
@@ -376,7 +376,7 @@ model GlobalCompanyDirectory {
 }
 
 /// *
-///  * Подключённые модули по организации: цена на момент включения и политика отмены (pro-rata / конец периода).
+///  * РџРѕРґРєР»СЋС‡С‘РЅРЅС‹Рµ РјРѕРґСѓР»Рё РїРѕ РѕСЂРіР°РЅРёР·Р°С†РёРё: С†РµРЅР° РЅР° РјРѕРјРµРЅС‚ РІРєР»СЋС‡РµРЅРёСЏ Рё РїРѕР»РёС‚РёРєР° РѕС‚РјРµРЅС‹ (pro-rata / РєРѕРЅРµС† РїРµСЂРёРѕРґР°).
 model OrganizationModule {
   organizationId      String       @map("organization_id") @db.Uuid
   moduleKey           String       @map("module_key")
@@ -384,10 +384,10 @@ model OrganizationModule {
   activatedAt         DateTime     @default(now()) @map("activated_at")
   pendingDeactivation Boolean      @default(false) @map("pending_deactivation")
   /// *
-  ///    * Заполнено при отключении: автопродление снято, доступ до accessUntil.
+  ///    * Р—Р°РїРѕР»РЅРµРЅРѕ РїСЂРё РѕС‚РєР»СЋС‡РµРЅРёРё: Р°РІС‚РѕРїСЂРѕРґР»РµРЅРёРµ СЃРЅСЏС‚Рѕ, РґРѕСЃС‚СѓРї РґРѕ accessUntil.
   cancelledAt         DateTime?    @map("cancelled_at")
   /// *
-  ///    * Конец текущего оплаченного периода (UTC), после — модуль снимается с activeModules.
+  ///    * РљРѕРЅРµС† С‚РµРєСѓС‰РµРіРѕ РѕРїР»Р°С‡РµРЅРЅРѕРіРѕ РїРµСЂРёРѕРґР° (UTC), РїРѕСЃР»Рµ вЂ” РјРѕРґСѓР»СЊ СЃРЅРёРјР°РµС‚СЃСЏ СЃ activeModules.
   accessUntil         DateTime?    @map("access_until") @db.Timestamptz(6)
   organization        Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -396,7 +396,7 @@ model OrganizationModule {
 }
 
 /// *
-///  * Подключённый пакет модулей (pricing_bundles) по организации; биллинг с дедупликацией пересечений с à la carte.
+///  * РџРѕРґРєР»СЋС‡С‘РЅРЅС‹Р№ РїР°РєРµС‚ РјРѕРґСѓР»РµР№ (pricing_bundles) РїРѕ РѕСЂРіР°РЅРёР·Р°С†РёРё; Р±РёР»Р»РёРЅРі СЃ РґРµРґСѓРїР»РёРєР°С†РёРµР№ РїРµСЂРµСЃРµС‡РµРЅРёР№ СЃ Г  la carte.
 model OrganizationBundle {
   organizationId      String        @map("organization_id") @db.Uuid
   bundleId            String        @map("bundle_id") @db.Uuid
@@ -413,7 +413,7 @@ model OrganizationBundle {
 }
 
 /// *
-///  * Актуальные цены конструктора: база, модули, квоты (v10.2). Сидируется по умолчанию.
+///  * РђРєС‚СѓР°Р»СЊРЅС‹Рµ С†РµРЅС‹ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°: Р±Р°Р·Р°, РјРѕРґСѓР»Рё, РєРІРѕС‚С‹ (v10.2). РЎРёРґРёСЂСѓРµС‚СЃСЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ.
 model Pricing {
   id        String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   key       String      @unique
@@ -421,7 +421,7 @@ model Pricing {
   name      String
   amountAzn Decimal     @map("amount_azn") @db.Decimal(12, 2)
   /// *
-  ///    * Для квот: размер блока (напр. 10 сотрудников, 5 GB, 500 инвойсов); для Foundation/модуля — null.
+  ///    * Р”Р»СЏ РєРІРѕС‚: СЂР°Р·РјРµСЂ Р±Р»РѕРєР° (РЅР°РїСЂ. 10 СЃРѕС‚СЂСѓРґРЅРёРєРѕРІ, 5 GB, 500 РёРЅРІРѕР№СЃРѕРІ); РґР»СЏ Foundation/РјРѕРґСѓР»СЏ вЂ” null.
   unitSize  Int?        @map("unit_size")
   sortOrder Int         @default(0) @map("sort_order")
   createdAt DateTime    @default(now()) @map("created_at")
@@ -431,31 +431,31 @@ model Pricing {
 }
 
 /// *
-///  * Единый счёт платформы на Owner-аккаунт (TZ §14.8 / v12.3). Не путать с Invoice (продажи).
+///  * Р•РґРёРЅС‹Р№ СЃС‡С‘С‚ РїР»Р°С‚С„РѕСЂРјС‹ РЅР° Owner-Р°РєРєР°СѓРЅС‚ (TZ В§14.8 / v12.3). РќРµ РїСѓС‚Р°С‚СЊ СЃ Invoice (РїСЂРѕРґР°Р¶Рё).
 model SubscriptionInvoice {
   id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   /// *
-  ///    * Плательщик / владелец портфеля (owner user).
+  ///    * РџР»Р°С‚РµР»СЊС‰РёРє / РІР»Р°РґРµР»РµС† РїРѕСЂС‚С„РµР»СЏ (owner user).
   userId         String                    @map("user_id") @db.Uuid
   /// *
-  ///    * Итог по счёту (AZN).
+  ///    * РС‚РѕРі РїРѕ СЃС‡С‘С‚Сѓ (AZN).
   amount         Decimal                   @db.Decimal(12, 2)
   status         SubscriptionInvoiceStatus
   /// *
-  ///    * Дата выставления / учёта.
+  ///    * Р”Р°С‚Р° РІС‹СЃС‚Р°РІР»РµРЅРёСЏ / СѓС‡С‘С‚Р°.
   date           DateTime                  @db.Date
   createdAt      DateTime                  @default(now()) @map("created_at")
   updatedAt      DateTime                  @updatedAt @map("updated_at")
   /// *
-  ///    * Расчётный период (месяц и т.п.).
+  ///    * Р Р°СЃС‡С‘С‚РЅС‹Р№ РїРµСЂРёРѕРґ (РјРµСЃСЏС† Рё С‚.Рї.).
   periodStart    DateTime?                 @map("period_start") @db.Timestamptz(6)
   periodEnd      DateTime?                 @map("period_end") @db.Timestamptz(6)
   billingPeriod  String?                   @map("billing_period")
   /// *
-  ///    * Готовый PDF в объектном хранилище (опционально).
+  ///    * Р“РѕС‚РѕРІС‹Р№ PDF РІ РѕР±СЉРµРєС‚РЅРѕРј С…СЂР°РЅРёР»РёС‰Рµ (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ).
   pdfLink        String?                   @map("pdf_link")
   /// *
-  ///    * Связь с заказом оплаты (шлюз); счёт выставляется на owner, услуга — по organization в строках.
+  ///    * РЎРІСЏР·СЊ СЃ Р·Р°РєР°Р·РѕРј РѕРїР»Р°С‚С‹ (С€Р»СЋР·); СЃС‡С‘С‚ РІС‹СЃС‚Р°РІР»СЏРµС‚СЃСЏ РЅР° owner, СѓСЃР»СѓРіР° вЂ” РїРѕ organization РІ СЃС‚СЂРѕРєР°С….
   paymentOrderId String?                   @unique @map("payment_order_id") @db.Uuid
   items          BillingInvoiceItem[]
   paymentOrder   PaymentOrder?             @relation(fields: [paymentOrderId], references: [id])
@@ -469,7 +469,7 @@ model SubscriptionInvoice {
 }
 
 /// *
-///  * Строки платформенного счёта: разбивка по организациям (VÖEN) — TZ §14.8.4.
+///  * РЎС‚СЂРѕРєРё РїР»Р°С‚С„РѕСЂРјРµРЅРЅРѕРіРѕ СЃС‡С‘С‚Р°: СЂР°Р·Р±РёРІРєР° РїРѕ РѕСЂРіР°РЅРёР·Р°С†РёСЏРј (VГ–EN) вЂ” TZ В§14.8.4.
 model BillingInvoiceItem {
   id                    String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   subscriptionInvoiceId String              @map("subscription_invoice_id") @db.Uuid
@@ -485,7 +485,7 @@ model BillingInvoiceItem {
 }
 
 /// *
-///  * Связь пользователь ↔ организация (роль в рамках организации).
+///  * РЎРІСЏР·СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ в†” РѕСЂРіР°РЅРёР·Р°С†РёСЏ (СЂРѕР»СЊ РІ СЂР°РјРєР°С… РѕСЂРіР°РЅРёР·Р°С†РёРё).
 model OrganizationMembership {
   userId          String       @map("user_id") @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
@@ -504,7 +504,7 @@ model OrganizationMembership {
 }
 
 /// *
-///  * Запрос на вступление в организацию (поиск по VÖEN).
+///  * Р—Р°РїСЂРѕСЃ РЅР° РІСЃС‚СѓРїР»РµРЅРёРµ РІ РѕСЂРіР°РЅРёР·Р°С†РёСЋ (РїРѕРёСЃРє РїРѕ VГ–EN).
 model AccessRequest {
   id              String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String              @map("organization_id") @db.Uuid
@@ -528,7 +528,7 @@ model AccessRequest {
 }
 
 /// *
-///  * Приглашение по email в организацию.
+///  * РџСЂРёРіР»Р°С€РµРЅРёРµ РїРѕ email РІ РѕСЂРіР°РЅРёР·Р°С†РёСЋ.
 model OrganizationInvite {
   id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
@@ -550,7 +550,7 @@ model OrganizationInvite {
 }
 
 /// *
-///  * Подразделение (иерархия: parentId).
+///  * РџРѕРґСЂР°Р·РґРµР»РµРЅРёРµ (РёРµСЂР°СЂС…РёСЏ: parentId).
 model Department {
   id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String        @map("organization_id") @db.Uuid
@@ -586,7 +586,7 @@ model Department {
 }
 
 /// *
-///  * Штатная единица (должность) в подразделении.
+///  * РЁС‚Р°С‚РЅР°СЏ РµРґРёРЅРёС†Р° (РґРѕР»Р¶РЅРѕСЃС‚СЊ) РІ РїРѕРґСЂР°Р·РґРµР»РµРЅРёРё.
 model JobPosition {
   id              String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   departmentId    String     @map("department_id") @db.Uuid
@@ -596,10 +596,10 @@ model JobPosition {
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
   /// *
-  ///    * Нижняя граница вилки оклада по штатке (AZN), справочно.
+  ///    * РќРёР¶РЅСЏСЏ РіСЂР°РЅРёС†Р° РІРёР»РєРё РѕРєР»Р°РґР° РїРѕ С€С‚Р°С‚РєРµ (AZN), СЃРїСЂР°РІРѕС‡РЅРѕ.
   minSalary       Decimal    @map("min_salary") @db.Decimal(19, 4)
   /// *
-  ///    * Верхняя граница вилки оклада по штатке (AZN), справочно.
+  ///    * Р’РµСЂС…РЅСЏСЏ РіСЂР°РЅРёС†Р° РІРёР»РєРё РѕРєР»Р°РґР° РїРѕ С€С‚Р°С‚РєРµ (AZN), СЃРїСЂР°РІРѕС‡РЅРѕ.
   maxSalary       Decimal    @map("max_salary") @db.Decimal(19, 4)
   employees       Employee[]
   department      Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
@@ -616,7 +616,7 @@ model JobPosition {
 }
 
 /// *
-///  * Заказ на оплату подписки (шлюз Pasha Bank / mock).
+///  * Р—Р°РєР°Р· РЅР° РѕРїР»Р°С‚Сѓ РїРѕРґРїРёСЃРєРё (С€Р»СЋР· Pasha Bank / mock).
 model PaymentOrder {
   id                  String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId      String               @map("organization_id") @db.Uuid
@@ -643,7 +643,7 @@ model PaymentOrder {
 }
 
 /// *
-///  * Подписка организации (1:1). Slugs модулей: production, ifrs, banking_pro и др.; v8.1 — customConfig.modules (конструктор).
+///  * РџРѕРґРїРёСЃРєР° РѕСЂРіР°РЅРёР·Р°С†РёРё (1:1). Slugs РјРѕРґСѓР»РµР№: production, ifrs, banking_pro Рё РґСЂ.; v8.1 вЂ” customConfig.modules (РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ).
 model OrganizationSubscription {
   id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId          String     @unique @map("organization_id") @db.Uuid
@@ -657,12 +657,12 @@ model OrganizationSubscription {
   createdAt               DateTime   @default(now()) @map("created_at")
   updatedAt               DateTime   @updatedAt @map("updated_at")
   /// *
-  ///    * Принудительная блокировка доступа (супер-админ).
+  ///    * РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅР°СЏ Р±Р»РѕРєРёСЂРѕРІРєР° РґРѕСЃС‚СѓРїР° (СЃСѓРїРµСЂ-Р°РґРјРёРЅ).
   isBlocked      Boolean          @default(false) @map("is_blocked")
   /// *
-  ///    * Конструктор тарифа (v8.1): JSON с полями `modules` (массив slug), опционально `preset`, `quotas`,
-  ///    * `trialPackageId` (UUID PricingBundle), `trialQuotas` (копия/override квот на время trial).
-  ///    * При непустом `modules` гейтинг модулей в первую очередь по этому массиву (см. TZ §14).
+  ///    * РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ С‚Р°СЂРёС„Р° (v8.1): JSON СЃ РїРѕР»СЏРјРё `modules` (РјР°СЃСЃРёРІ slug), РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ `preset`, `quotas`,
+  ///    * `trialPackageId` (UUID PricingBundle), `trialQuotas` (РєРѕРїРёСЏ/override РєРІРѕС‚ РЅР° РІСЂРµРјСЏ trial).
+  ///    * РџСЂРё РЅРµРїСѓСЃС‚РѕРј `modules` РіРµР№С‚РёРЅРі РјРѕРґСѓР»РµР№ РІ РїРµСЂРІСѓСЋ РѕС‡РµСЂРµРґСЊ РїРѕ СЌС‚РѕРјСѓ РјР°СЃСЃРёРІСѓ (СЃРј. TZ В§14).
   customConfig   Json?            @map("custom_config")
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -670,7 +670,7 @@ model OrganizationSubscription {
 }
 
 /// *
-///  * Ключ-значение: тарифы, лимиты, системные сообщения (Super-Admin).
+///  * РљР»СЋС‡-Р·РЅР°С‡РµРЅРёРµ: С‚Р°СЂРёС„С‹, Р»РёРјРёС‚С‹, СЃРёСЃС‚РµРјРЅС‹Рµ СЃРѕРѕР±С‰РµРЅРёСЏ (Super-Admin).
 model SystemConfig {
   id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   key       String   @unique
@@ -923,7 +923,7 @@ model SystemProductTemplate {
 }
 
 /// *
-///  * Каталог платных модулей: месячная цена (поле pricePerMonth = «priceMonthly» в API-описаниях).
+///  * РљР°С‚Р°Р»РѕРі РїР»Р°С‚РЅС‹С… РјРѕРґСѓР»РµР№: РјРµСЃСЏС‡РЅР°СЏ С†РµРЅР° (РїРѕР»Рµ pricePerMonth = В«priceMonthlyВ» РІ API-РѕРїРёСЃР°РЅРёСЏС…).
 model PricingModule {
   id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   key           String   @unique
@@ -938,7 +938,7 @@ model PricingModule {
 }
 
 /// *
-///  * Именованный пакет модулей со скидкой (Paket Yaradıcısı). Один bundle может быть помечен как **Trial-пакет** по умолчанию (`isTrialDefault`).
+///  * РРјРµРЅРѕРІР°РЅРЅС‹Р№ РїР°РєРµС‚ РјРѕРґСѓР»РµР№ СЃРѕ СЃРєРёРґРєРѕР№ (Paket YaradД±cД±sД±). РћРґРёРЅ bundle РјРѕР¶РµС‚ Р±С‹С‚СЊ РїРѕРјРµС‡РµРЅ РєР°Рє **Trial-РїР°РєРµС‚** РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (`isTrialDefault`).
 model PricingBundle {
   id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   /// Stable identifier for trial plan resolution (e.g. TRIAL_3_MONTHS).
@@ -972,7 +972,7 @@ model LandingModuleMarketing {
 }
 
 /// *
-///  * Реферальный партнёр (онлайн-ссылка + QR).
+///  * Р РµС„РµСЂР°Р»СЊРЅС‹Р№ РїР°СЂС‚РЅС‘СЂ (РѕРЅР»Р°Р№РЅ-СЃСЃС‹Р»РєР° + QR).
 model Partner {
   id               String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   code             String    @unique
@@ -991,7 +991,7 @@ model Partner {
 }
 
 /// *
-///  * Привязка организации к партнёру (одна организация — максимум одна активная привязка на уровне бизнес-правил).
+///  * РџСЂРёРІСЏР·РєР° РѕСЂРіР°РЅРёР·Р°С†РёРё Рє РїР°СЂС‚РЅС‘СЂСѓ (РѕРґРЅР° РѕСЂРіР°РЅРёР·Р°С†РёСЏ вЂ” РјР°РєСЃРёРјСѓРј РѕРґРЅР° Р°РєС‚РёРІРЅР°СЏ РїСЂРёРІСЏР·РєР° РЅР° СѓСЂРѕРІРЅРµ Р±РёР·РЅРµСЃ-РїСЂР°РІРёР»).
 model Referral {
   id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   partnerId      String   @map("partner_id") @db.Uuid
@@ -1010,7 +1010,7 @@ model Referral {
 }
 
 /// *
-///  * Начисленная комиссия партнёра за период (после выставления платформенного счёта).
+///  * РќР°С‡РёСЃР»РµРЅРЅР°СЏ РєРѕРјРёСЃСЃРёСЏ РїР°СЂС‚РЅС‘СЂР° Р·Р° РїРµСЂРёРѕРґ (РїРѕСЃР»Рµ РІС‹СЃС‚Р°РІР»РµРЅРёСЏ РїР»Р°С‚С„РѕСЂРјРµРЅРЅРѕРіРѕ СЃС‡С‘С‚Р°).
 model ReferralCommission {
   id                     String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   referralId             String                   @map("referral_id") @db.Uuid
@@ -1037,7 +1037,7 @@ enum ReferralCommissionStatus {
 }
 
 /// *
-///  * Переопределение строк i18n поверх статических файлов фронта.
+///  * РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ СЃС‚СЂРѕРє i18n РїРѕРІРµСЂС… СЃС‚Р°С‚РёС‡РµСЃРєРёС… С„Р°Р№Р»РѕРІ С„СЂРѕРЅС‚Р°.
 model TranslationOverride {
   id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   locale    String
@@ -1053,7 +1053,7 @@ model TranslationOverride {
 }
 
 /// *
-///  * Сличительная ведомость (inventory reconciliation): snapshot + COUNTING/REVIEW + GL on COMPLETED.
+///  * РЎР»РёС‡РёС‚РµР»СЊРЅР°СЏ РІРµРґРѕРјРѕСЃС‚СЊ (inventory reconciliation): snapshot + COUNTING/REVIEW + GL on COMPLETED.
 model InventoryAudit {
   id                     String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId       String               @map("organization_id") @db.Uuid
@@ -1145,10 +1145,10 @@ model StockMovement {
   type            StockMovementType
   reason          StockMovementReason
   /// *
-  ///    * Количество > 0; направление задаёт type
+  ///    * РљРѕР»РёС‡РµСЃС‚РІРѕ > 0; РЅР°РїСЂР°РІР»РµРЅРёРµ Р·Р°РґР°С‘С‚ type
   quantity        Decimal             @db.Decimal(19, 4)
   /// *
-  ///    * Цена закупки (IN) или учётная / средняя на момент операции (OUT)
+  ///    * Р¦РµРЅР° Р·Р°РєСѓРїРєРё (IN) РёР»Рё СѓС‡С‘С‚РЅР°СЏ / СЃСЂРµРґРЅСЏСЏ РЅР° РјРѕРјРµРЅС‚ РѕРїРµСЂР°С†РёРё (OUT)
   price           Decimal             @db.Decimal(19, 4)
   note            String?
   invoiceId       String?             @map("invoice_id") @db.Uuid
@@ -1192,15 +1192,15 @@ model WarehouseBin {
 }
 
 /// *
-///  * Официальные курсы ЦБА (общие для всех организаций).
+///  * РћС„РёС†РёР°Р»СЊРЅС‹Рµ РєСѓСЂСЃС‹ Р¦Р‘Рђ (РѕР±С‰РёРµ РґР»СЏ РІСЃРµС… РѕСЂРіР°РЅРёР·Р°С†РёР№).
 model CbarOfficialRate {
   id           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   /// *
-  ///    * Календарный день курса (по дате из XML ValCurs).
+  ///    * РљР°Р»РµРЅРґР°СЂРЅС‹Р№ РґРµРЅСЊ РєСѓСЂСЃР° (РїРѕ РґР°С‚Рµ РёР· XML ValCurs).
   rateDate     DateTime       @map("rate_date") @db.Date
   currencyCode String         @map("currency_code")
   /// *
-  ///    * Value из XML (для сравнения с предыдущим днём).
+  ///    * Value РёР· XML (РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ СЃ РїСЂРµРґС‹РґСѓС‰РёРј РґРЅС‘Рј).
   value        Decimal        @db.Decimal(19, 4)
   nominal      Int
   /// *
@@ -1223,55 +1223,55 @@ model Employee {
   taxResidencyStatus         TaxResidencyStatus       @default(RESIDENT) @map("tax_residency_status")
   nationality                String?                  @default("AZ")
   workPermitNumber           String?                  @map("work_permit_number")
-  /// False when person has no FIN in MDM — ƏMAS sync blocked until convert-to-FIN in MDM.
+  /// False when person has no FIN in MDM вЂ” ЖЏMAS sync blocked until convert-to-FIN in MDM.
   emasEligible               Boolean                  @default(true) @map("emas_eligible")
   cpEmploymentId             String?                  @unique @map("cp_employment_id") @db.Uuid
   startDate                  DateTime                 @map("start_date") @db.Date
   /// *
-  ///    * Дата выхода на работу (миграционная/кадровая точка отсчёта).
+  ///    * Р”Р°С‚Р° РІС‹С…РѕРґР° РЅР° СЂР°Р±РѕС‚Сѓ (РјРёРіСЂР°С†РёРѕРЅРЅР°СЏ/РєР°РґСЂРѕРІР°СЏ С‚РѕС‡РєР° РѕС‚СЃС‡С‘С‚Р°).
   hireDate                   DateTime                 @map("hire_date") @db.Date
   dateOfBirth                DateTime?                @map("date_of_birth") @db.Date
   contractEndDate            DateTime?                @map("contract_end_date") @db.Date
   /// *
-  ///    * Оклад gross (AZN) = tariffSalary + supplementSalary
+  ///    * РћРєР»Р°Рґ gross (AZN) = tariffSalary + supplementSalary
   salary                     Decimal                  @map("salary") @db.Decimal(19, 4)
   /// Base tariff (AZN); salary = tariff + supplement.
   tariffSalary               Decimal                  @default(0) @map("tariff_salary") @db.Decimal(19, 4)
-  /// Supplement / надбавка (AZN).
+  /// Supplement / РЅР°РґР±Р°РІРєР° (AZN).
   supplementSalary           Decimal                  @default(0) @map("supplement_salary") @db.Decimal(19, 4)
   workScheduleId             String?                  @map("work_schedule_id") @db.Uuid
   createdAt                  DateTime                 @default(now()) @map("created_at")
   updatedAt                  DateTime                 @updatedAt @map("updated_at")
   kind                       EmployeeKind             @default(EMPLOYEE) @map("kind")
   /// *
-  ///    * VÖEN (10 цифр) — обязателен для CONTRACTOR в API
+  ///    * VГ–EN (10 С†РёС„СЂ) вЂ” РѕР±СЏР·Р°С‚РµР»РµРЅ РґР»СЏ CONTRACTOR РІ API
   voenCipher                 String?                  @map("voen_cipher")
   voenBlindIndex             String?                  @map("voen_blind_index")
   /// *
-  ///    * Фиксированные соц. удержания с выплаты подрядчику в месяц (AZN), опционально.
-  ///    * Учитываются при расчёте net вместе с 5% подоходного налога.
+  ///    * Р¤РёРєСЃРёСЂРѕРІР°РЅРЅС‹Рµ СЃРѕС†. СѓРґРµСЂР¶Р°РЅРёСЏ СЃ РІС‹РїР»Р°С‚С‹ РїРѕРґСЂСЏРґС‡РёРєСѓ РІ РјРµСЃСЏС† (AZN), РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ.
+  ///    * РЈС‡РёС‚С‹РІР°СЋС‚СЃСЏ РїСЂРё СЂР°СЃС‡С‘С‚Рµ net РІРјРµСЃС‚Рµ СЃ 5% РїРѕРґРѕС…РѕРґРЅРѕРіРѕ РЅР°Р»РѕРіР°.
   contractorMonthlySocialAzn Decimal?                 @map("contractor_monthly_social_azn") @db.Decimal(19, 4)
   /// *
   ///    * Initial balance for average salary calculations (pre-ERP payroll history), AZN.
   initialSalaryBalance       Decimal                  @default(0) @map("initial_salary_balance") @db.Decimal(19, 4)
   /// *
-  ///    * Остаток отпускных дней на дату миграции (Opening Balances Wizard).
+  ///    * РћСЃС‚Р°С‚РѕРє РѕС‚РїСѓСЃРєРЅС‹С… РґРЅРµР№ РЅР° РґР°С‚Сѓ РјРёРіСЂР°С†РёРё (Opening Balances Wizard).
   initialVacationDays        Decimal                  @default(0) @map("initial_vacation_days") @db.Decimal(8, 2)
   /// *
-  ///    * Текущий накопленный баланс дней основного отпуска (пересчёт cron, TZ §7.0.3).
+  ///    * РўРµРєСѓС‰РёР№ РЅР°РєРѕРїР»РµРЅРЅС‹Р№ Р±Р°Р»Р°РЅСЃ РґРЅРµР№ РѕСЃРЅРѕРІРЅРѕРіРѕ РѕС‚РїСѓСЃРєР° (РїРµСЂРµСЃС‡С‘С‚ cron, TZ В§7.0.3).
   vacationDaysBalance        Decimal                  @default(0) @map("vacation_days_balance") @db.Decimal(8, 2)
   /// *
-  ///    * Норма дней отпуска в год (ТК АР — не менее 21; по умолчанию 21).
+  ///    * РќРѕСЂРјР° РґРЅРµР№ РѕС‚РїСѓСЃРєР° РІ РіРѕРґ (РўРљ РђР  вЂ” РЅРµ РјРµРЅРµРµ 21; РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 21).
   baseVacationDaysPerYear    Int                      @default(21) @map("base_vacation_days_per_year")
   /// *
-  ///    * Учёт в ежедневном перерасчёте отпускного баланса (только ACTIVE штатники).
+  ///    * РЈС‡С‘С‚ РІ РµР¶РµРґРЅРµРІРЅРѕРј РїРµСЂРµСЂР°СЃС‡С‘С‚Рµ РѕС‚РїСѓСЃРєРЅРѕРіРѕ Р±Р°Р»Р°РЅСЃР° (С‚РѕР»СЊРєРѕ ACTIVE С€С‚Р°С‚РЅРёРєРё).
   employmentStatus           EmployeeEmploymentStatus @default(ACTIVE) @map("employment_status")
   /// *
-  ///    * Среднемесячный доход за последние 12 месяцев для миграционного расчёта отпускных.
+  ///    * РЎСЂРµРґРЅРµРјРµСЃСЏС‡РЅС‹Р№ РґРѕС…РѕРґ Р·Р° РїРѕСЃР»РµРґРЅРёРµ 12 РјРµСЃСЏС†РµРІ РґР»СЏ РјРёРіСЂР°С†РёРѕРЅРЅРѕРіРѕ СЂР°СЃС‡С‘С‚Р° РѕС‚РїСѓСЃРєРЅС‹С….
   avgMonthlySalaryLastYear   Decimal?                 @map("avg_monthly_salary_last_year") @db.Decimal(19, 4)
   positionId                 String                   @map("position_id") @db.Uuid
   /// *
-  ///    * Субсчёт 244.x для подотчёта (если задан).
+  ///    * РЎСѓР±СЃС‡С‘С‚ 244.x РґР»СЏ РїРѕРґРѕС‚С‡С‘С‚Р° (РµСЃР»Рё Р·Р°РґР°РЅ).
   accountableAccountCode244  String?                  @map("accountable_account_code_244")
   patronymic                 String?
   emasSyncStatus             IntegrationSyncStatus    @default(NOT_SYNCED) @map("emas_sync_status")
@@ -1320,7 +1320,7 @@ model PayrollRun {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
   /// *
-  ///    * Утверждённый табель месяца (импорт учёта рабочего времени при создании ведомости).
+  ///    * РЈС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ С‚Р°Р±РµР»СЊ РјРµСЃСЏС†Р° (РёРјРїРѕСЂС‚ СѓС‡С‘С‚Р° СЂР°Р±РѕС‡РµРіРѕ РІСЂРµРјРµРЅРё РїСЂРё СЃРѕР·РґР°РЅРёРё РІРµРґРѕРјРѕСЃС‚Рё).
   timesheetId      String?          @map("timesheet_id") @db.Uuid
   organization     Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   timesheet        Timesheet?       @relation(fields: [timesheetId], references: [id])
@@ -1405,10 +1405,10 @@ model PayrollSlip {
   createdAt                 DateTime     @default(now()) @map("created_at")
   updatedAt                 DateTime     @updatedAt @map("updated_at")
   /// *
-  ///    * Удержание фикс. соц. с подрядчика (AZN); для штатных — 0
+  ///    * РЈРґРµСЂР¶Р°РЅРёРµ С„РёРєСЃ. СЃРѕС†. СЃ РїРѕРґСЂСЏРґС‡РёРєР° (AZN); РґР»СЏ С€С‚Р°С‚РЅС‹С… вЂ” 0
   contractorSocialWithheld  Decimal      @default(0) @map("contractor_social_withheld") @db.Decimal(19, 4)
   /// *
-  ///    * Дни из утверждённого табеля (при импорте при создании ведомости).
+  ///    * Р”РЅРё РёР· СѓС‚РІРµСЂР¶РґС‘РЅРЅРѕРіРѕ С‚Р°Р±РµР»СЏ (РїСЂРё РёРјРїРѕСЂС‚Рµ РїСЂРё СЃРѕР·РґР°РЅРёРё РІРµРґРѕРјРѕСЃС‚Рё).
   timesheetWorkDays         Int?         @map("timesheet_work_days")
   timesheetVacationDays     Int?         @map("timesheet_vacation_days")
   timesheetSickDays         Int?         @map("timesheet_sick_days")
@@ -1568,7 +1568,7 @@ model BusinessTrip {
 }
 
 /// *
-///  * Отпуск / больничный (справочник периодов отсутствия).
+///  * РћС‚РїСѓСЃРє / Р±РѕР»СЊРЅРёС‡РЅС‹Р№ (СЃРїСЂР°РІРѕС‡РЅРёРє РїРµСЂРёРѕРґРѕРІ РѕС‚СЃСѓС‚СЃС‚РІРёСЏ).
 model Absence {
   id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
@@ -1579,7 +1579,7 @@ model Absence {
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
   /// *
-  ///    * Учитывается в табеле (синхронизация M/X).
+  ///    * РЈС‡РёС‚С‹РІР°РµС‚СЃСЏ РІ С‚Р°Р±РµР»Рµ (СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ M/X).
   approved        Boolean      @default(true) @map("approved")
   absenceTypeId   String       @map("absence_type_id") @db.Uuid
   absenceType     AbsenceType  @relation(fields: [absenceTypeId], references: [id])
@@ -1600,7 +1600,7 @@ model Absence {
 }
 
 /// *
-///  * Табель учёта рабочего времени (месяц).
+///  * РўР°Р±РµР»СЊ СѓС‡С‘С‚Р° СЂР°Р±РѕС‡РµРіРѕ РІСЂРµРјРµРЅРё (РјРµСЃСЏС†).
 model Timesheet {
   id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String           @map("organization_id") @db.Uuid
@@ -1623,7 +1623,7 @@ model Timesheet {
 }
 
 /// *
-///  * Строка табеля: сотрудник × календарный день.
+///  * РЎС‚СЂРѕРєР° С‚Р°Р±РµР»СЏ: СЃРѕС‚СЂСѓРґРЅРёРє Г— РєР°Р»РµРЅРґР°СЂРЅС‹Р№ РґРµРЅСЊ.
 model TimesheetEntry {
   id                String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   timesheetId       String             @map("timesheet_id") @db.Uuid
@@ -1635,7 +1635,7 @@ model TimesheetEntry {
   eveningHours      Decimal            @default(0) @map("evening_hours") @db.Decimal(8, 2)
   overtimeHours     Decimal            @default(0) @map("overtime_hours") @db.Decimal(8, 2)
   /// *
-  ///    * Заполнено из Absence — ручное редактирование запрещено.
+  ///    * Р—Р°РїРѕР»РЅРµРЅРѕ РёР· Absence вЂ” СЂСѓС‡РЅРѕРµ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ.
   lockedFromAbsence Boolean            @default(false) @map("locked_from_absence")
   createdAt         DateTime           @default(now()) @map("created_at")
   updatedAt         DateTime           @updatedAt @map("updated_at")
@@ -1660,10 +1660,10 @@ model User {
   locale                        UserLocale                 @default(AZ) @map("locale")
   createdAt                     DateTime                   @default(now()) @map("created_at")
   updatedAt                     DateTime                   @updatedAt @map("updated_at")
-  /// When set, self-service PATCH may not change email (see TZ §2.2).
+  /// When set, self-service PATCH may not change email (see TZ В§2.2).
   emailVerifiedAt               DateTime?                  @map("email_verified_at") @db.Timestamptz(6)
   /// *
-  ///    * Глобальный супер-админ платформы (без привязки к org в JWT).
+  ///    * Р“Р»РѕР±Р°Р»СЊРЅС‹Р№ СЃСѓРїРµСЂ-Р°РґРјРёРЅ РїР»Р°С‚С„РѕСЂРјС‹ (Р±РµР· РїСЂРёРІСЏР·РєРё Рє org РІ JWT).
   isSuperAdmin                  Boolean                    @default(false) @map("is_super_admin")
   fullNameCipher                String?                    @map("full_name_cipher")
   avatarUrl                     String?                    @map("avatar_url")
@@ -1811,7 +1811,7 @@ model EarlyAccessThresholdAlert {
   @@map("early_access_threshold_alerts")
 }
 
-/// Idempotent satellite event processing (orchestrator → finance worker).
+/// Idempotent satellite event processing (orchestrator в†’ finance worker).
 model SatelliteEventProcessed {
   id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
@@ -2386,7 +2386,7 @@ model PsaTimeEntry {
   @@map("psa_time_entries")
 }
 
-/// Commercial contract registry (PRD §4.15).
+/// Commercial contract registry (PRD В§4.15).
 model Contract {
   id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String               @map("organization_id") @db.Uuid
@@ -2441,7 +2441,7 @@ model ContractCommitment {
   @@map("contract_commitments")
 }
 
-/// Annual organization budget (PRD §4.16, B2G).
+/// Annual organization budget (PRD В§4.16, B2G).
 model BudgetYear {
   id             String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String           @map("organization_id") @db.Uuid
@@ -2617,21 +2617,21 @@ model Account {
   id                String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId    String                @map("organization_id") @db.Uuid
   code              String
-  /// Официальное / каноническое наименование на азербайджанском (NAS / MMÜS).
+  /// РћС„РёС†РёР°Р»СЊРЅРѕРµ / РєР°РЅРѕРЅРёС‡РµСЃРєРѕРµ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ РЅР° Р°Р·РµСЂР±Р°Р№РґР¶Р°РЅСЃРєРѕРј (NAS / MMГњS).
   nameAz            String                @map("name_az")
-  /// Русскоязычное наименование (NAS / MMÜS).
+  /// Р СѓСЃСЃРєРѕСЏР·С‹С‡РЅРѕРµ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ (NAS / MMГњS).
   nameRu            String                @map("name_ru")
-  /// Англоязычное наименование (NAS / MMÜS).
+  /// РђРЅРіР»РѕСЏР·С‹С‡РЅРѕРµ РЅР°РёРјРµРЅРѕРІР°РЅРёРµ (NAS / MMГњS).
   nameEn            String                @map("name_en")
   type              AccountType
   parentId          String?               @map("parent_id") @db.Uuid
   createdAt         DateTime              @default(now()) @map("created_at")
   updatedAt         DateTime              @updatedAt @map("updated_at")
   /// *
-  ///    * Валюта учёта остатка по счёту (AZN, USD, EUR). Для переоценки — не-AZN.
+  ///    * Р’Р°Р»СЋС‚Р° СѓС‡С‘С‚Р° РѕСЃС‚Р°С‚РєР° РїРѕ СЃС‡С‘С‚Сѓ (AZN, USD, EUR). Р”Р»СЏ РїРµСЂРµРѕС†РµРЅРєРё вЂ” РЅРµ-AZN.
   currency          String                @default("AZN")
   /// *
-  ///    * Книга: NAS (основной план) или IFRS (параллельный учёт).
+  ///    * РљРЅРёРіР°: NAS (РѕСЃРЅРѕРІРЅРѕР№ РїР»Р°РЅ) РёР»Рё IFRS (РїР°СЂР°Р»Р»РµР»СЊРЅС‹Р№ СѓС‡С‘С‚).
   ledgerType        LedgerType            @default(NAS) @map("ledger_type")
   chartEntryId      String?               @map("chart_entry_id") @db.Uuid
   templateAccountId String?               @map("template_account_id") @db.Uuid
@@ -2661,14 +2661,14 @@ model Account {
 }
 
 /// *
-///  * Сопоставление счёта NAS ↔ IFRS для теневых проводок (Multi-GAAP).
+///  * РЎРѕРїРѕСЃС‚Р°РІР»РµРЅРёРµ СЃС‡С‘С‚Р° NAS в†” IFRS РґР»СЏ С‚РµРЅРµРІС‹С… РїСЂРѕРІРѕРґРѕРє (Multi-GAAP).
 model AccountMapping {
   id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
   nasAccountId    String       @map("nas_account_id") @db.Uuid
   ifrsAccountId   String       @map("ifrs_account_id") @db.Uuid
   /// *
-  ///    * Коэффициент пересчёта суммы строки NAS → IFRS (1 = 1:1).
+  ///    * РљРѕСЌС„С„РёС†РёРµРЅС‚ РїРµСЂРµСЃС‡С‘С‚Р° СЃСѓРјРјС‹ СЃС‚СЂРѕРєРё NAS в†’ IFRS (1 = 1:1).
   ratio           Decimal      @default(1) @db.Decimal(19, 8)
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
@@ -2705,7 +2705,7 @@ model IfrsMappingRule {
 }
 
 /**
- * Global template NAS ↔ IFRS mapping (v14.0 / PRD §5.1).
+ * Global template NAS в†” IFRS mapping (v14.0 / PRD В§5.1).
  * Used as a starting point when bootstrapping Multi-GAAP for a new organization.
  */
 model TemplateIFRSMapping {
@@ -2732,19 +2732,21 @@ model Transaction {
   createdAt                    DateTime                      @default(now()) @map("created_at")
   updatedAt                    DateTime                      @updatedAt @map("updated_at")
   /// *
-  ///    * true — курс/суммы в документе зафиксированы (подтверждено бухгалтерией);
-  ///    * false — «плавающий» курс до подтверждения.
+  ///    * true вЂ” РєСѓСЂСЃ/СЃСѓРјРјС‹ РІ РґРѕРєСѓРјРµРЅС‚Рµ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹ (РїРѕРґС‚РІРµСЂР¶РґРµРЅРѕ Р±СѓС…РіР°Р»С‚РµСЂРёРµР№);
+  ///    * false вЂ” В«РїР»Р°РІР°СЋС‰РёР№В» РєСѓСЂСЃ РґРѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ.
   isFinal                      Boolean                       @default(false) @map("is_final")
   /// *
-  ///    * Закрытый период: транзакция не должна корректироваться задним числом
+  ///    * Р—Р°РєСЂС‹С‚С‹Р№ РїРµСЂРёРѕРґ: С‚СЂР°РЅР·Р°РєС†РёСЏ РЅРµ РґРѕР»Р¶РЅР° РєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊСЃСЏ Р·Р°РґРЅРёРј С‡РёСЃР»РѕРј
   isLocked                     Boolean                       @default(false) @map("is_locked")
   counterpartyId               String?                       @map("counterparty_id") @db.Uuid
-  /// Аналитика ЦФО: расходы/прочие проводки, привязанные к департаменту.
+  /// РђРЅР°Р»РёС‚РёРєР° Р¦Р¤Рћ: СЂР°СЃС…РѕРґС‹/РїСЂРѕС‡РёРµ РїСЂРѕРІРѕРґРєРё, РїСЂРёРІСЏР·Р°РЅРЅС‹Рµ Рє РґРµРїР°СЂС‚Р°РјРµРЅС‚Сѓ.
   departmentId                 String?                       @map("department_id") @db.Uuid
   /// Snapshot for purchase invoices (line-level goods/services payload for downstream documents).
   purchaseSnapshot             Json?                         @map("purchase_snapshot")
   /// Snapshot for sales recognition (goods lines + invoiceId basis for shipment flows).
   salesSnapshot                Json?                         @map("sales_snapshot")
+  tradeContext                 TradeContext                  @default(DOMESTIC) @map("trade_context")
+  incoterms                    String?
   advanceReportsPosted         AdvanceReport?                @relation("AdvanceReportPostedTx")
   cashOrdersLinked             CashOrder[]                   @relation("CashOrderLinkedTx")
   cashOrdersPosted             CashOrder[]                   @relation("CashOrderPostedTx")
@@ -2874,7 +2876,7 @@ model Counterparty {
   createdAt       DateTime                  @default(now()) @map("created_at")
   updatedAt       DateTime                  @updatedAt @map("updated_at")
   email           String?
-  /// Плательщик НДС (учётный статус контрагента)
+  /// РџР»Р°С‚РµР»СЊС‰РёРє РќР”РЎ (СѓС‡С‘С‚РЅС‹Р№ СЃС‚Р°С‚СѓСЃ РєРѕРЅС‚СЂР°РіРµРЅС‚Р°)
   isVatPayer      Boolean                   @default(false) @map("is_vat_payer")
   directorNameCipher String?                @map("director_name_cipher")
   phonesJson         Json?                  @default("[]") @map("phones_json")
@@ -2883,7 +2885,7 @@ model Counterparty {
   globalPersonId     String?                @map("global_person_id") @db.Uuid
   globalId        String?                   @map("global_id") @db.Uuid
   /// *
-  ///    * Предпочитаемый язык портала счёта для клиента: `az` | `ru` | `en` (nullable).
+  ///    * РџСЂРµРґРїРѕС‡РёС‚Р°РµРјС‹Р№ СЏР·С‹Рє РїРѕСЂС‚Р°Р»Р° СЃС‡С‘С‚Р° РґР»СЏ РєР»РёРµРЅС‚Р°: `az` | `ru` | `en` (nullable).
   portalLocale    String?                   @map("portal_locale")
   bankAccounts    CounterpartyBankAccount[]
   cashOrders      CashOrder[]
@@ -2959,12 +2961,12 @@ model CounterpartyBankAccount {
 }
 
 /// *
-///  * История ЭЦП (ASAN/SİMA, публичная верификация по id записи).
+///  * РСЃС‚РѕСЂРёСЏ Р­Р¦Рџ (ASAN/SД°MA, РїСѓР±Р»РёС‡РЅР°СЏ РІРµСЂРёС„РёРєР°С†РёСЏ РїРѕ id Р·Р°РїРёСЃРё).
 model DigitalSignatureLog {
   id                    String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId        String                 @map("organization_id") @db.Uuid
   /// *
-  ///    * INVOICE: invoice.id; RECONCILIATION_ACT: детерминированный UUID периода (см. reconciliationDocumentUuid).
+  ///    * INVOICE: invoice.id; RECONCILIATION_ACT: РґРµС‚РµСЂРјРёРЅРёСЂРѕРІР°РЅРЅС‹Р№ UUID РїРµСЂРёРѕРґР° (СЃРј. reconciliationDocumentUuid).
   documentId            String                 @map("document_id") @db.Uuid
   certificateThumbprint String?                @map("certificate_thumbprint")
   signedAt              DateTime?              @map("signed_at")
@@ -2977,7 +2979,7 @@ model DigitalSignatureLog {
   updatedAt             DateTime               @updatedAt @map("updated_at")
   documentKind          SignedDocumentKind     @default(INVOICE) @map("document_kind")
   /// *
-  ///    * SHA-256 финального PDF (hex), после генерации файла
+  ///    * SHA-256 С„РёРЅР°Р»СЊРЅРѕРіРѕ PDF (hex), РїРѕСЃР»Рµ РіРµРЅРµСЂР°С†РёРё С„Р°Р№Р»Р°
   contentHashSha256     String?                @map("content_hash_sha256") @db.VarChar(64)
   organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -3022,12 +3024,12 @@ model Product {
 }
 
 /// *
-///  * Спецификация: из каких продуктов-составляющих состоит готовая продукция.
+///  * РЎРїРµС†РёС„РёРєР°С†РёСЏ: РёР· РєР°РєРёС… РїСЂРѕРґСѓРєС‚РѕРІ-СЃРѕСЃС‚Р°РІР»СЏСЋС‰РёС… СЃРѕСЃС‚РѕРёС‚ РіРѕС‚РѕРІР°СЏ РїСЂРѕРґСѓРєС†РёСЏ.
 model ProductRecipe {
   id                String                   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId    String                   @map("organization_id") @db.Uuid
   /// *
-  ///    * Одна спецификация на продукт (id продукта уникален в системе).
+  ///    * РћРґРЅР° СЃРїРµС†РёС„РёРєР°С†РёСЏ РЅР° РїСЂРѕРґСѓРєС‚ (id РїСЂРѕРґСѓРєС‚Р° СѓРЅРёРєР°Р»РµРЅ РІ СЃРёСЃС‚РµРјРµ).
   finishedProductId String                   @unique @map("finished_product_id") @db.Uuid
   /// Display name for BOM (defaults from finished product on backfill).
   name              String                   @default("") @map("name")
@@ -3053,7 +3055,7 @@ model ProductRecipeLine {
   recipeId           String        @map("recipe_id") @db.Uuid
   componentProductId String        @map("component_product_id") @db.Uuid
   /// *
-  ///    * Количество компонента на 1 единицу готовой продукции
+  ///    * РљРѕР»РёС‡РµСЃС‚РІРѕ РєРѕРјРїРѕРЅРµРЅС‚Р° РЅР° 1 РµРґРёРЅРёС†Сѓ РіРѕС‚РѕРІРѕР№ РїСЂРѕРґСѓРєС†РёРё
   quantityPerUnit    Decimal       @map("quantity_per_unit") @db.Decimal(19, 4)
   createdAt          DateTime      @default(now()) @map("created_at")
   updatedAt          DateTime      @updatedAt @map("updated_at")
@@ -3091,7 +3093,7 @@ model ProductRecipeByproduct {
 }
 
 /// *
-///  * Основное средство; методы амортизации — см. `FixedAssetDepreciationMethod`.
+///  * РћСЃРЅРѕРІРЅРѕРµ СЃСЂРµРґСЃС‚РІРѕ; РјРµС‚РѕРґС‹ Р°РјРѕСЂС‚РёР·Р°С†РёРё вЂ” СЃРј. `FixedAssetDepreciationMethod`.
 model FixedAsset {
   id                   String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId       String                       @map("organization_id") @db.Uuid
@@ -3107,7 +3109,7 @@ model FixedAsset {
   unitsProducedTotal   Decimal                      @default(0) @map("units_produced_total") @db.Decimal(19, 4)
   decliningBalanceRate Decimal?                     @map("declining_balance_rate") @db.Decimal(5, 4)
   /// *
-  ///    * Уже начисленная амортизация (сумма проведённых месяцев)
+  ///    * РЈР¶Рµ РЅР°С‡РёСЃР»РµРЅРЅР°СЏ Р°РјРѕСЂС‚РёР·Р°С†РёСЏ (СЃСѓРјРјР° РїСЂРѕРІРµРґС‘РЅРЅС‹С… РјРµСЃСЏС†РµРІ)
   bookedDepreciation   Decimal                      @default(0) @map("booked_depreciation") @db.Decimal(19, 4)
   departmentId         String?                      @map("department_id") @db.Uuid
   location             String?
@@ -3136,7 +3138,7 @@ model FixedAsset {
   @@map("fixed_assets")
 }
 
-/// Fixed-asset lifecycle journal (acquire, commission, revalue, dispose, transfer, …).
+/// Fixed-asset lifecycle journal (acquire, commission, revalue, dispose, transfer, вЂ¦).
 model FixedAssetEvent {
   id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId   String              @map("organization_id") @db.Uuid
@@ -3231,7 +3233,7 @@ model FixedAssetMonthlyUsage {
 }
 
 /// *
-///  * Факт начисления амортизации по ОС за календарный месяц (идемпотентность при закрытии).
+///  * Р¤Р°РєС‚ РЅР°С‡РёСЃР»РµРЅРёСЏ Р°РјРѕСЂС‚РёР·Р°С†РёРё РїРѕ РћРЎ Р·Р° РєР°Р»РµРЅРґР°СЂРЅС‹Р№ РјРµСЃСЏС† (РёРґРµРјРїРѕС‚РµРЅС‚РЅРѕСЃС‚СЊ РїСЂРё Р·Р°РєСЂС‹С‚РёРё).
 model FixedAssetDepreciationMonth {
   id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
@@ -3281,7 +3283,7 @@ model NetworkDocument {
   recipientTransactionId  String?               @map("recipient_transaction_id") @db.Uuid
   rejectReason            String?               @map("reject_reason")
   eQaimeRef               String?               @map("e_qaime_ref")
-  /// Manual / RPA DVX e-qaimə snapshot for amount/VÖEN compare (ingest-eqaime).
+  /// Manual / RPA DVX e-qaimЙ™ snapshot for amount/VГ–EN compare (ingest-eqaime).
   eqaimePayload           Json?                 @map("eqaime_payload")
   createdAt               DateTime              @default(now()) @map("created_at")
   updatedAt               DateTime              @updatedAt @map("updated_at")
@@ -3304,7 +3306,7 @@ model Invoice {
   dueDate                    DateTime              @map("due_date") @db.Date
   counterpartyId             String                @map("counterparty_id") @db.Uuid
   /// *
-  ///    * Дт при оплате: 101 касса / 221 банк (см. ТЗ)
+  ///    * Р”С‚ РїСЂРё РѕРїР»Р°С‚Рµ: 101 РєР°СЃСЃР° / 221 Р±Р°РЅРє (СЃРј. РўР—)
   debitAccountCode           String                @default("101") @map("debit_account_code")
   totalAmount                Decimal               @default(0) @map("total_amount") @db.Decimal(19, 4)
   paidAmount                 Decimal               @default(0) @map("paid_amount") @db.Decimal(19, 4)
@@ -3314,21 +3316,21 @@ model Invoice {
   updatedAt                  DateTime              @updatedAt @map("updated_at")
   warehouseId                String?               @map("warehouse_id") @db.Uuid
   /// *
-  ///    * Списание склада и проводка 701/201 выполнены (обычно при оплате)
+  ///    * РЎРїРёСЃР°РЅРёРµ СЃРєР»Р°РґР° Рё РїСЂРѕРІРѕРґРєР° 701/201 РІС‹РїРѕР»РЅРµРЅС‹ (РѕР±С‹С‡РЅРѕ РїСЂРё РѕРїР»Р°С‚Рµ)
   inventorySettled           Boolean               @default(false) @map("inventory_settled")
   /// *
-  ///    * Дт 211 / Кт 601 отражены (отгрузка / начисление выручки)
+  ///    * Р”С‚ 211 / РљС‚ 601 РѕС‚СЂР°Р¶РµРЅС‹ (РѕС‚РіСЂСѓР·РєР° / РЅР°С‡РёСЃР»РµРЅРёРµ РІС‹СЂСѓС‡РєРё)
   revenueRecognized          Boolean               @default(false) @map("revenue_recognized")
   /// *
-  ///    * Дт 101|221 / Кт 211 отражены (оплата от дебитора)
+  ///    * Р”С‚ 101|221 / РљС‚ 211 РѕС‚СЂР°Р¶РµРЅС‹ (РѕРїР»Р°С‚Р° РѕС‚ РґРµР±РёС‚РѕСЂР°)
   paymentReceived            Boolean               @default(false) @map("payment_received")
   /// *
-  ///    * Момент первого проведения Дт 211 — Кт 601 (для акта сверки и сальдо)
+  ///    * РњРѕРјРµРЅС‚ РїРµСЂРІРѕРіРѕ РїСЂРѕРІРµРґРµРЅРёСЏ Р”С‚ 211 вЂ” РљС‚ 601 (РґР»СЏ Р°РєС‚Р° СЃРІРµСЂРєРё Рё СЃР°Р»СЊРґРѕ)
   recognizedAt               DateTime?             @map("recognized_at")
   /// Linked revenue recognition transaction id (Dr 211 / Cr 601) for idempotent posting.
   revenuePostedTransactionId String?               @map("revenue_posted_transaction_id") @db.Uuid
   /// *
-  ///    * Гостевая ссылка на портал счёта (opaque token); выдаётся менеджеру, без JWT.
+  ///    * Р“РѕСЃС‚РµРІР°СЏ СЃСЃС‹Р»РєР° РЅР° РїРѕСЂС‚Р°Р» СЃС‡С‘С‚Р° (opaque token); РІС‹РґР°С‘С‚СЃСЏ РјРµРЅРµРґР¶РµСЂСѓ, Р±РµР· JWT.
   publicToken                String?               @unique @map("public_token") @db.VarChar(200)
   dvxSyncStatus              IntegrationSyncStatus @default(NOT_SYNCED) @map("dvx_sync_status")
   dvxSyncedAt                DateTime?             @map("dvx_synced_at") @db.Timestamptz(6)
@@ -3618,7 +3620,7 @@ model StatReportExport {
 }
 
 /// *
-///  * Оплата инвойса (частичная или полная); сумма проводок Дт касса/банк — Кт 211 = amount.
+///  * РћРїР»Р°С‚Р° РёРЅРІРѕР№СЃР° (С‡Р°СЃС‚РёС‡РЅР°СЏ РёР»Рё РїРѕР»РЅР°СЏ); СЃСѓРјРјР° РїСЂРѕРІРѕРґРѕРє Р”С‚ РєР°СЃСЃР°/Р±Р°РЅРє вЂ” РљС‚ 211 = amount.
 model InvoicePayment {
   id              String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String       @map("organization_id") @db.Uuid
@@ -3664,12 +3666,12 @@ model BankStatementLine {
   bankStatementId   String                  @map("bank_statement_id") @db.Uuid
   description       String?
   /// *
-  ///    * Сумма всегда > 0; направление задаёт type
+  ///    * РЎСѓРјРјР° РІСЃРµРіРґР° > 0; РЅР°РїСЂР°РІР»РµРЅРёРµ Р·Р°РґР°С‘С‚ type
   amount            Decimal                 @db.Decimal(19, 4)
   type              BankStatementLineType
   isMatched         Boolean                 @default(false) @map("is_matched")
   /// *
-  ///    * VÖEN контрагента (из выписки / парсинга) для Match с инвойсом
+  ///    * VГ–EN РєРѕРЅС‚СЂР°РіРµРЅС‚Р° (РёР· РІС‹РїРёСЃРєРё / РїР°СЂСЃРёРЅРіР°) РґР»СЏ Match СЃ РёРЅРІРѕР№СЃРѕРј
   counterpartyTaxId String?                 @map("counterparty_tax_id")
   valueDate         DateTime?               @map("value_date") @db.Date
   matchedInvoiceId  String?                 @map("matched_invoice_id") @db.Uuid
@@ -3677,7 +3679,7 @@ model BankStatementLine {
   createdAt         DateTime                @default(now()) @map("created_at")
   updatedAt         DateTime                @updatedAt @map("updated_at")
   /// *
-  ///    * Идемпотентность API/вебхука: pasha:tx-…, abb:…
+  ///    * РРґРµРјРїРѕС‚РµРЅС‚РЅРѕСЃС‚СЊ API/РІРµР±С…СѓРєР°: pasha:tx-вЂ¦, abb:вЂ¦
   integrationKey    String?                 @map("integration_key")
   origin            BankStatementLineOrigin @default(FILE_IMPORT) @map("origin")
   cashFlowItemId    String?                 @map("cash_flow_item_id") @db.Uuid
@@ -3709,14 +3711,14 @@ model CashOrder {
   notes                  String?
   cashAccountCode        String               @default("101.01") @map("cash_account_code")
   /// *
-  ///    * Второй счёт проводки (601, 244, 221, 531 и т.д.).
+  ///    * Р’С‚РѕСЂРѕР№ СЃС‡С‘С‚ РїСЂРѕРІРѕРґРєРё (601, 244, 221, 531 Рё С‚.Рґ.).
   offsetAccountCode      String?              @map("offset_account_code")
   counterpartyId         String?              @map("counterparty_id") @db.Uuid
   employeeId             String?              @map("employee_id") @db.Uuid
   sourceInvoiceId        String?              @map("source_invoice_id") @db.Uuid
   sourceInvoicePaymentId String?              @unique @map("source_invoice_payment_id") @db.Uuid
   /// *
-  ///    * Проводка уже создана (напр. оплата инвойса) — печать ордера без дубля проводки.
+  ///    * РџСЂРѕРІРѕРґРєР° СѓР¶Рµ СЃРѕР·РґР°РЅР° (РЅР°РїСЂ. РѕРїР»Р°С‚Р° РёРЅРІРѕР№СЃР°) вЂ” РїРµС‡Р°С‚СЊ РѕСЂРґРµСЂР° Р±РµР· РґСѓР±Р»СЏ РїСЂРѕРІРѕРґРєРё.
   skipJournalPosting     Boolean              @default(false) @map("skip_journal_posting")
   linkedTransactionId    String?              @map("linked_transaction_id") @db.Uuid
   postedTransactionId    String?              @map("posted_transaction_id") @db.Uuid
@@ -3744,14 +3746,14 @@ model CashOrder {
 }
 
 /// *
-///  * Авансовый отчёт подотчётного лица (закрытие 244).
+///  * РђРІР°РЅСЃРѕРІС‹Р№ РѕС‚С‡С‘С‚ РїРѕРґРѕС‚С‡С‘С‚РЅРѕРіРѕ Р»РёС†Р° (Р·Р°РєСЂС‹С‚РёРµ 244).
 model AdvanceReport {
   id              String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String              @map("organization_id") @db.Uuid
   employeeId      String              @map("employee_id") @db.Uuid
   reportDate      DateTime            @map("report_date") @db.Date
   /// *
-  ///    * Строки расходов: [{ amount, description }]
+  ///    * РЎС‚СЂРѕРєРё СЂР°СЃС…РѕРґРѕРІ: [{ amount, description }]
   expenseLines    Json                @default("[]") @map("expense_lines")
   totalDeclared   Decimal             @map("total_declared") @db.Decimal(19, 4)
   purpose         String              @default("")
@@ -3805,19 +3807,19 @@ model AuditLog {
   entityId       String        @map("entity_id")
   action         String
   /// *
-  ///    * Устаревшее агрегированное поле; для новых записей см. oldValues/newValues.
+  ///    * РЈСЃС‚Р°СЂРµРІС€РµРµ Р°РіСЂРµРіРёСЂРѕРІР°РЅРЅРѕРµ РїРѕР»Рµ; РґР»СЏ РЅРѕРІС‹С… Р·Р°РїРёСЃРµР№ СЃРј. oldValues/newValues.
   changes        Json?
   createdAt      DateTime      @default(now()) @map("created_at")
   /// *
-  ///    * Снимок сущности до изменения (JSON).
+  ///    * РЎРЅРёРјРѕРє СЃСѓС‰РЅРѕСЃС‚Рё РґРѕ РёР·РјРµРЅРµРЅРёСЏ (JSON).
   oldValues      Json?         @map("old_values")
   /// *
-  ///    * Снимок сущности после изменения или ответ API (JSON).
+  ///    * РЎРЅРёРјРѕРє СЃСѓС‰РЅРѕСЃС‚Рё РїРѕСЃР»Рµ РёР·РјРµРЅРµРЅРёСЏ РёР»Рё РѕС‚РІРµС‚ API (JSON).
   newValues      Json?         @map("new_values")
   clientIp       String?       @map("client_ip")
   userAgent      String?       @map("user_agent")
   /// *
-  ///    * SHA-256 от канонического JSON полей + AUDIT_HASH_SECRET.
+  ///    * SHA-256 РѕС‚ РєР°РЅРѕРЅРёС‡РµСЃРєРѕРіРѕ JSON РїРѕР»РµР№ + AUDIT_HASH_SECRET.
   hash           String?       @map("hash")
   organization   Organization? @relation(fields: [organizationId], references: [id])
   user           User?         @relation(fields: [userId], references: [id])
@@ -3828,7 +3830,7 @@ model AuditLog {
 }
 
 /// *
-///  * Архив audit_logs старше политики хранения (перенос из основной таблицы).
+///  * РђСЂС…РёРІ audit_logs СЃС‚Р°СЂС€Рµ РїРѕР»РёС‚РёРєРё С…СЂР°РЅРµРЅРёСЏ (РїРµСЂРµРЅРѕСЃ РёР· РѕСЃРЅРѕРІРЅРѕР№ С‚Р°Р±Р»РёС†С‹).
 model AuditLogArchive {
   id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String?  @map("organization_id") @db.Uuid
@@ -4108,7 +4110,7 @@ model InventoryAuditLine {
 }
 
 /// *
-///  * Документ физической инвентаризации / списания / оприходования (черновик → проведение).
+///  * Р”РѕРєСѓРјРµРЅС‚ С„РёР·РёС‡РµСЃРєРѕР№ РёРЅРІРµРЅС‚Р°СЂРёР·Р°С†РёРё / СЃРїРёСЃР°РЅРёСЏ / РѕРїСЂРёС…РѕРґРѕРІР°РЅРёСЏ (С‡РµСЂРЅРѕРІРёРє в†’ РїСЂРѕРІРµРґРµРЅРёРµ).
 model InventoryAdjustment {
   id              String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId  String                     @map("organization_id") @db.Uuid
@@ -4154,7 +4156,7 @@ model InventoryAdjustmentLine {
   @@map("inventory_adjustment_lines")
 }
 
-// --- Platform recovery: dispute, dual approval, snapshots, rollback (PRD §7.13 / TZ §21) ---
+// --- Platform recovery: dispute, dual approval, snapshots, rollback (PRD В§7.13 / TZ В§21) ---
 
 enum DualApprovalStatus {
   PENDING
@@ -4286,7 +4288,7 @@ model TenantRollbackRecord {
 }
 
 /// *
-///  * Оценка себестоимости списания запасов (см. PRD §11.0, TZ §14.0).
+///  * РћС†РµРЅРєР° СЃРµР±РµСЃС‚РѕРёРјРѕСЃС‚Рё СЃРїРёСЃР°РЅРёСЏ Р·Р°РїР°СЃРѕРІ (СЃРј. PRD В§11.0, TZ В§14.0).
 enum InventoryValuationMethod {
   AVCO
   FIFO
@@ -4373,7 +4375,7 @@ enum CounterpartyRole {
   OTHER
 }
 
-/// Организационно-правовая форма (АР): F/Ş, MMC, QSC, ASC, PHŞ и т.д.
+/// РћСЂРіР°РЅРёР·Р°С†РёРѕРЅРЅРѕ-РїСЂР°РІРѕРІР°СЏ С„РѕСЂРјР° (РђР ): F/Ећ, MMC, QSC, ASC, PHЕћ Рё С‚.Рґ.
 enum CounterpartyLegalForm {
   INDIVIDUAL
   LLC
@@ -4393,11 +4395,11 @@ enum InvoiceStatus {
   CANCELLED
   PARTIALLY_PAID
   /// *
-  ///    * Редактирование и платежи заблокированы после успешной ЭЦП
+  ///    * Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Рё РїР»Р°С‚РµР¶Рё Р·Р°Р±Р»РѕРєРёСЂРѕРІР°РЅС‹ РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕР№ Р­Р¦Рџ
   LOCKED_BY_SIGNATURE
 }
 
-/// Outgoing e-qaimə (DVX) submission lifecycle for sales invoices.
+/// Outgoing e-qaimЙ™ (DVX) submission lifecycle for sales invoices.
 enum EqaimeStatus {
   DRAFT
   READY
@@ -4408,7 +4410,7 @@ enum EqaimeStatus {
 }
 
 /// *
-///  * ASAN İmza / SİMA (Mobile ID).
+///  * ASAN Д°mza / SД°MA (Mobile ID).
 enum SignatureProvider {
   ASAN_IMZA
   SIMA
@@ -4431,14 +4433,14 @@ enum BankStatementLineType {
 }
 
 /// *
-///  * Реестр: банк vs касса (фильтр в UI).
+///  * Р РµРµСЃС‚СЂ: Р±Р°РЅРє vs РєР°СЃСЃР° (С„РёР»СЊС‚СЂ РІ UI).
 enum BankStatementChannel {
   BANK
   CASH
 }
 
 /// *
-///  * Источник строки: импорт, синхронизация, оплата инвойса, ручная касса.
+///  * РСЃС‚РѕС‡РЅРёРє СЃС‚СЂРѕРєРё: РёРјРїРѕСЂС‚, СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ, РѕРїР»Р°С‚Р° РёРЅРІРѕР№СЃР°, СЂСѓС‡РЅР°СЏ РєР°СЃСЃР°.
 enum BankStatementLineOrigin {
   FILE_IMPORT
   DIRECT_SYNC
@@ -4449,7 +4451,7 @@ enum BankStatementLineOrigin {
 }
 
 /// *
-///  * Курс ЦБА, сохранённый в системе (целостность / переоценка только FINAL).
+///  * РљСѓСЂСЃ Р¦Р‘Рђ, СЃРѕС…СЂР°РЅС‘РЅРЅС‹Р№ РІ СЃРёСЃС‚РµРјРµ (С†РµР»РѕСЃС‚РЅРѕСЃС‚СЊ / РїРµСЂРµРѕС†РµРЅРєР° С‚РѕР»СЊРєРѕ FINAL).
 enum CbarRateStatus {
   PRELIMINARY
   FINAL
@@ -4479,7 +4481,7 @@ enum SalaryPayoutFormat {
 }
 
 /// *
-///  * Штатный сотрудник или ГПХ (xidmət müqaviləsi, физлицо с VÖEN).
+///  * РЁС‚Р°С‚РЅС‹Р№ СЃРѕС‚СЂСѓРґРЅРёРє РёР»Рё Р“РџРҐ (xidmЙ™t mГјqavilЙ™si, С„РёР·Р»РёС†Рѕ СЃ VГ–EN).
 enum EmployeeKind {
   EMPLOYEE
   CONTRACTOR
@@ -4501,7 +4503,7 @@ enum TimesheetStatus {
 }
 
 /// *
-///  * Ячейка табеля: рабочий день, отпуск, больничный, выходной, служебная поездка (ezamiyyət).
+///  * РЇС‡РµР№РєР° С‚Р°Р±РµР»СЏ: СЂР°Р±РѕС‡РёР№ РґРµРЅСЊ, РѕС‚РїСѓСЃРє, Р±РѕР»СЊРЅРёС‡РЅС‹Р№, РІС‹С…РѕРґРЅРѕР№, СЃР»СѓР¶РµР±РЅР°СЏ РїРѕРµР·РґРєР° (ezamiyyЙ™t).
 enum TimesheetEntryType {
   WORK
   VACATION
@@ -4524,12 +4526,12 @@ enum StockMovementReason {
   SHIPMENT
   TRANSFER
   /// *
-  ///    * Выпуск готовой продукции (списание компонентов / приход ГП)
+  ///    * Р’С‹РїСѓСЃРє РіРѕС‚РѕРІРѕР№ РїСЂРѕРґСѓРєС†РёРё (СЃРїРёСЃР°РЅРёРµ РєРѕРјРїРѕРЅРµРЅС‚РѕРІ / РїСЂРёС…РѕРґ Р“Рџ)
   MANUFACTURING
 }
 
 /// *
-///  * Сличительная ведомость: жизненный цикл DRAFT → COUNTING → REVIEW → COMPLETED (+ CANCELLED).
+///  * РЎР»РёС‡РёС‚РµР»СЊРЅР°СЏ РІРµРґРѕРјРѕСЃС‚СЊ: Р¶РёР·РЅРµРЅРЅС‹Р№ С†РёРєР» DRAFT в†’ COUNTING в†’ REVIEW в†’ COMPLETED (+ CANCELLED).
 enum InventoryAuditStatus {
   DRAFT
   COUNTING
@@ -4539,7 +4541,7 @@ enum InventoryAuditStatus {
 }
 
 /// *
-///  * Классификация расхождений по строке ведомости (после пересчёта / на этапе REVIEW).
+///  * РљР»Р°СЃСЃРёС„РёРєР°С†РёСЏ СЂР°СЃС…РѕР¶РґРµРЅРёР№ РїРѕ СЃС‚СЂРѕРєРµ РІРµРґРѕРјРѕСЃС‚Рё (РїРѕСЃР»Рµ РїРµСЂРµСЃС‡С‘С‚Р° / РЅР° СЌС‚Р°РїРµ REVIEW).
 enum InventoryDiscrepancyKind {
   NONE
   SURPLUS
@@ -4548,21 +4550,21 @@ enum InventoryDiscrepancyKind {
 }
 
 /// *
-///  * Физическая инвентаризация / акты списания и оприходования (M9).
+///  * Р¤РёР·РёС‡РµСЃРєР°СЏ РёРЅРІРµРЅС‚Р°СЂРёР·Р°С†РёСЏ / Р°РєС‚С‹ СЃРїРёСЃР°РЅРёСЏ Рё РѕРїСЂРёС…РѕРґРѕРІР°РЅРёСЏ (M9).
 enum InventoryAdjustmentStatus {
   DRAFT
   POSTED
 }
 
 /// *
-///  * Тип документа корректировки остатков.
+///  * РўРёРї РґРѕРєСѓРјРµРЅС‚Р° РєРѕСЂСЂРµРєС‚РёСЂРѕРІРєРё РѕСЃС‚Р°С‚РєРѕРІ.
 enum InventoryAdjustmentDocType {
   WRITE_OFF
   SURPLUS
 }
 
 /// *
-///  * Книга учёта: национальный план (NAS) или параллельный IFRS.
+///  * РљРЅРёРіР° СѓС‡С‘С‚Р°: РЅР°С†РёРѕРЅР°Р»СЊРЅС‹Р№ РїР»Р°РЅ (NAS) РёР»Рё РїР°СЂР°Р»Р»РµР»СЊРЅС‹Р№ IFRS.
 enum LedgerType {
   NAS
   IFRS
@@ -4592,7 +4594,7 @@ model UsageMeterEvent {
 }
 
 /// *
-///  * Счёт подписки платформы (v10.2), не путать с Invoice (продажи).
+///  * РЎС‡С‘С‚ РїРѕРґРїРёСЃРєРё РїР»Р°С‚С„РѕСЂРјС‹ (v10.2), РЅРµ РїСѓС‚Р°С‚СЊ СЃ Invoice (РїСЂРѕРґР°Р¶Рё).
 enum SubscriptionInvoiceStatus {
   DRAFT
   ISSUED
@@ -4608,7 +4610,7 @@ enum BillingStatus {
 }
 
 /// *
-///  * Тип строки прайса v10.2: модуль, база Foundation, пакет квоты.
+///  * РўРёРї СЃС‚СЂРѕРєРё РїСЂР°Р№СЃР° v10.2: РјРѕРґСѓР»СЊ, Р±Р°Р·Р° Foundation, РїР°РєРµС‚ РєРІРѕС‚С‹.
 enum PricingKind {
   FOUNDATION
   MODULE
@@ -4671,7 +4673,7 @@ enum PaymentOrderStatus {
 }
 
 /// *
-///  * Приходный / расходный кассовый ордер (PKO / RKO), см. PRD §4.5–4.6.
+///  * РџСЂРёС…РѕРґРЅС‹Р№ / СЂР°СЃС…РѕРґРЅС‹Р№ РєР°СЃСЃРѕРІС‹Р№ РѕСЂРґРµСЂ (PKO / RKO), СЃРј. PRD В§4.5вЂ“4.6.
 enum CashOrderKind {
   KMO
   KXO
@@ -4850,4 +4852,11 @@ enum BudgetYearStatus {
   DRAFT
   APPROVED
   AMENDED
+}
+
+
+enum TradeContext {
+  DOMESTIC
+  EXPORT
+  IMPORT
 }
