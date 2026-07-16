@@ -100,6 +100,8 @@ model Organization {
   fixedAssetMonthlyUsages      FixedAssetMonthlyUsage[]
   fixedAssetEvents             FixedAssetEvent[]
   fixedAssets                  FixedAsset[]
+  fixedAssetTaxProfiles            FixedAssetTaxProfile[]
+  fixedAssetTaxDepreciationMonths  FixedAssetTaxDepreciationMonth[]
   intangibleAmortizationMonths IntangibleAmortizationMonth[]
   intangibleAssets             IntangibleAsset[]
   inventoryAdjustments         InventoryAdjustment[]
@@ -569,6 +571,8 @@ model Department {
   budgetLines     BudgetLine[]
   purchaseRequests PurchaseRequest[]
   fixedAssets     FixedAsset[]
+  fixedAssetTaxProfiles            FixedAssetTaxProfile[]
+  fixedAssetTaxDepreciationMonths  FixedAssetTaxDepreciationMonth[]
   fixedAssetEventsFrom FixedAssetEvent[] @relation("FixedAssetEventFromDept")
   fixedAssetEventsTo   FixedAssetEvent[] @relation("FixedAssetEventToDept")
   deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
@@ -2905,6 +2909,8 @@ model Counterparty {
   customsDeclarationsAsReceiver CustomsDeclaration[] @relation("CustomsDeclarationReceiver")
   agencyCityLedgerSnapshots     AgencyCityLedgerSnapshot[]
   fixedAssets                     FixedAsset[]
+  fixedAssetTaxProfiles            FixedAssetTaxProfile[]
+  fixedAssetTaxDepreciationMonths  FixedAssetTaxDepreciationMonth[]
   deletedAt                       DateTime?            @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId                 String?              @map("deleted_by_user_id") @db.Uuid
   deletedReason                   String?              @map("deleted_reason")
@@ -3125,6 +3131,8 @@ model FixedAsset {
   events               FixedAssetEvent[]
   department           Department?                  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   counterparty         Counterparty?                @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+  taxProfile                  FixedAssetTaxProfile?
+  taxDepreciationMonths       FixedAssetTaxDepreciationMonth[]
   organization         Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   deletedAt            DateTime?                    @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId      String?                      @map("deleted_by_user_id") @db.Uuid
@@ -4864,3 +4872,8 @@ enum TradeContext {
   EXPORT
   IMPORT
 }
+
+
+
+
+

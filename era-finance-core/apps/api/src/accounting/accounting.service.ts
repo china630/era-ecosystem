@@ -25,7 +25,6 @@ import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { SubcontoService } from "./subconto.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
-import { SubcontoService } from "./subconto.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -33,8 +32,8 @@ const Decimal = Prisma.Decimal;
 const VAT_INPUT_FALLBACK = {
   type: AccountType.ASSET,
   parentCode: "290",
-  nameAz: "AlД±nmД±Еџ dЙ™yЙ™rlЙ™r ГјzrЙ™ ЖЏDV",
-  nameRu: "РќР”РЎ Рє Р·Р°С‡С‘С‚Сѓ (РІС…РѕРґСЏС‰РёР№)",
+  nameAz: "AlР”В±nmР”В±Р•Сџ dР™в„ўyР™в„ўrlР™в„ўr Р“СzrР™в„ў Р–РЏDV",
+  nameRu: "Р СњР вЂќР РЋ Р С” Р В·Р В°РЎвЂЎРЎвЂРЎвЂљРЎС“ (Р Р†РЎвЂ¦Р С•Р Т‘РЎРЏРЎвЂ°Р С‘Р в„–)",
   nameEn: "Input VAT",
 } as const;
 
@@ -93,7 +92,7 @@ export class AccountingService {
   }
 
   /**
-   * Р—Р°РїРёСЃСЊ РїСЂРѕРІРѕРґРѕРє РІРЅСѓС‚СЂРё СѓР¶Рµ РѕС‚РєСЂС‹С‚РѕР№ С‚СЂР°РЅР·Р°РєС†РёРё Prisma (СЃРІРµСЂРєР° Р±Р°РЅРєР°, РїРµСЂРµРѕС†РµРЅРєР°).
+   * Р вЂ”Р В°Р С—Р С‘РЎРѓРЎРЉ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С•Р С” Р Р†Р Р…РЎС“РЎвЂљРЎР‚Р С‘ РЎС“Р В¶Р Вµ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљР С•Р в„– РЎвЂљРЎР‚Р В°Р Р…Р В·Р В°Р С”РЎвЂ Р С‘Р С‘ Prisma (РЎРѓР Р†Р ВµРЎР‚Р С”Р В° Р В±Р В°Р Р…Р С”Р В°, Р С—Р ВµРЎР‚Р ВµР С•РЎвЂ Р ВµР Р…Р С”Р В°).
    */
   async postJournalInTransaction(
     tx: Prisma.TransactionClient,
@@ -102,11 +101,11 @@ export class AccountingService {
       date: Date;
       reference?: string;
       description?: string;
-      /** false вЂ” РєСѓСЂСЃ/СЃСѓРјРјС‹ В«РїР»Р°РІР°СЋС‚В» РґРѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ Р±СѓС…РіР°Р»С‚РµСЂРѕРј */
+      /** false РІР‚вЂќ Р С”РЎС“РЎР‚РЎРѓ/РЎРѓРЎС“Р СР СРЎвЂ№ Р’В«Р С—Р В»Р В°Р Р†Р В°РЎР‹РЎвЂљР’В» Р Т‘Р С• Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ Р В±РЎС“РЎвЂ¦Р С–Р В°Р В»РЎвЂљР ВµРЎР‚Р С•Р С */
       isFinal?: boolean;
-      /** РђРЅР°Р»РёС‚РёРєР°: РєРѕРЅС‚СЂР°РіРµРЅС‚ (Р·Р°РєСѓРїРєРё, РІР·Р°РёРјРѕР·Р°С‡С‘С‚ Рё С‚.Рґ.) */
+      /** Р С’Р Р…Р В°Р В»Р С‘РЎвЂљР С‘Р С”Р В°: Р С”Р С•Р Р…РЎвЂљРЎР‚Р В°Р С–Р ВµР Р…РЎвЂљ (Р В·Р В°Р С”РЎС“Р С—Р С”Р С‘, Р Р†Р В·Р В°Р С‘Р СР С•Р В·Р В°РЎвЂЎРЎвЂРЎвЂљ Р С‘ РЎвЂљ.Р Т‘.) */
       counterpartyId?: string | null;
-      /** Р¦Р¤Рћ: С„РёР»СЊС‚СЂ P&L РїРѕ РґРµРїР°СЂС‚Р°РјРµРЅС‚Сѓ РґР»СЏ СЂР°СЃС…РѕРґРЅС‹С…/РїСЂРѕС‡РёС… РїСЂРѕРІРѕРґРѕРє. */
+      /** Р В¦Р В¤Р С›: РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚ P&L Р С—Р С• Р Т‘Р ВµР С—Р В°РЎР‚РЎвЂљР В°Р СР ВµР Р…РЎвЂљРЎС“ Р Т‘Р В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т‘Р Р…РЎвЂ№РЎвЂ¦/Р С—РЎР‚Р С•РЎвЂЎР С‘РЎвЂ¦ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С•Р С”. */
       departmentId?: string | null;
       ledgerType?: LedgerType;
       lines: PostTransactionLine[];
@@ -144,13 +143,13 @@ export class AccountingService {
       const key = monthKeyUtc(date);
       if (closed.includes(key)) {
         throw new BadRequestException(
-          `РџРµСЂРёРѕРґ ${key} Р·Р°РєСЂС‹С‚: РЅРѕРІС‹Рµ РїСЂРѕРІРѕРґРєРё РЅР° СЌС‚Сѓ РґР°С‚Сѓ РЅРµРґРѕСЃС‚СѓРїРЅС‹`,
+          `Р СџР ВµРЎР‚Р С‘Р С•Р Т‘ ${key} Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљ: Р Р…Р С•Р Р†РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С”Р С‘ Р Р…Р В° РЎРЊРЎвЂљРЎС“ Р Т‘Р В°РЎвЂљРЎС“ Р Р…Р ВµР Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№`,
         );
       }
     }
     const lockedPeriodUntil = getLockedPeriodUntil(org?.settings);
     if (lockedPeriodUntil && date.getTime() <= lockedPeriodUntil.getTime()) {
-      throw new HttpException("РџРµСЂРёРѕРґ Р·Р°РєСЂС‹С‚ РґР»СЏ РёР·РјРµРЅРµРЅРёР№", 423);
+      throw new HttpException("Р СџР ВµРЎР‚Р С‘Р С•Р Т‘ Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљ Р Т‘Р В»РЎРЏ Р С‘Р В·Р СР ВµР Р…Р ВµР Р…Р С‘Р в„–", 423);
     }
 
     const codes = [...new Set(lines.map((l) => l.accountCode))];
@@ -284,7 +283,7 @@ export class AccountingService {
     departmentId?: string | null;
     ledgerType?: LedgerType;
     lines: PostTransactionLine[];
-    /** Р СѓС‡РЅР°СЏ РїСЂРѕРІРѕРґРєР° (UI): РїСЂРѕРІРµСЂРєР° РїРѕР»РёС‚РёРєРё USER. */
+    /** Р В РЎС“РЎвЂЎР Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С”Р В° (UI): Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р С—Р С•Р В»Р С‘РЎвЂљР С‘Р С”Р С‘ USER. */
     actingUserRole?: UserRole;
   }): Promise<{ transactionId: string }> {
     if (params.actingUserRole !== undefined) {
@@ -579,7 +578,7 @@ export class AccountingService {
     if (!parentAcc) {
       stack.delete(code);
       throw new NotFoundException(
-        `Parent account ${fb.parentCode} required to create ${code} вЂ” seed NAS chart for this organization`,
+        `Parent account ${fb.parentCode} required to create ${code} РІР‚вЂќ seed NAS chart for this organization`,
       );
     }
 
