@@ -151,7 +151,7 @@ export class InvoicesController {
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({
     summary:
-      "Submit sales invoice to DVX e-Qaimə S2S (ERA_EQAIME_S2S_ENABLED=1; 503 RPA_FALLBACK when disabled)",
+      "Submit sales invoice to DVX e-Qaimə S2S (ERA_EQAIME_S2S_ENABLED=1; 503 when disabled)",
   })
   submitEqaime(@OrganizationId() orgId: string, @Param("id") id: string) {
     return this.eqaime.submit(orgId, id);

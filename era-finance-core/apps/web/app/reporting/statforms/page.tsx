@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { apiFetch } from "../../../lib/api-client";
+import { apiBaseUrl, apiFetch } from "../../../lib/api-client";
 import { useRequireAuth } from "../../../lib/use-require-auth";
 import { PageHeader } from "../../../components/layout/page-header";
 import {
@@ -56,7 +56,6 @@ export default function StatformsPage() {
   const [period, setPeriod] = useState("");
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
 
   const selectedDef = useMemo(
     () => definitions.find((d) => d.code === selectedCode) ?? null,
@@ -76,11 +75,8 @@ export default function StatformsPage() {
     if (defRes.ok) {
       const defs = (await defRes.json()) as StatDefinition[];
       setDefinitions(defs);
-      setSelectedCode((prev) => {
-        if (prev && defs.some((d) => d.code === prev)) return prev;
-        return defs[0]?.code ?? "";
-      });
-      if (defs[0] && !period) {
+      if (!selectedCode && defs[0]) {
+        setSelectedCode(defs[0].code);
         setPeriod(defaultPeriod(defs[0].periodKind));
       }
     }
@@ -88,7 +84,7 @@ export default function StatformsPage() {
       setExports((await expRes.json()) as StatExport[]);
     }
     setLoading(false);
-  }, [token, period]);
+  }, [token, selectedCode]);
 
   useEffect(() => {
     if (!ready || !token) return;
@@ -121,27 +117,8 @@ export default function StatformsPage() {
     void load();
   };
 
-  const download = async (id: string, filenameHint: string) => {
-    setBusyId(id);
-    try {
-      const res = await apiFetch(
-        `/api/reporting/statforms/exports/${id}/download`,
-      );
-      if (!res.ok) {
-        toast.error(t("reporting.statforms.downloadErr"));
-        return;
-      }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${filenameHint}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const downloadUrl = (id: string) =>
+    `${apiBaseUrl()}/api/reporting/statforms/exports/${id}/download`;
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -253,24 +230,13 @@ export default function StatformsPage() {
                       {new Date(row.createdAt).toLocaleString()}
                     </td>
                     <td className={DATA_TABLE_TD_CLASS}>
-                      <button
-                        type="button"
+                      <a
+                        href={downloadUrl(row.id)}
                         className={TABLE_ROW_ICON_BTN_CLASS}
                         title={t("reporting.statforms.download")}
-                        disabled={busyId === row.id}
-                        onClick={() =>
-                          void download(
-                            row.id,
-                            `${row.definition.code}-${row.period}`,
-                          )
-                        }
                       >
-                        {busyId === row.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4" />
-                        )}
-                      </button>
+                        <Download className="h-4 w-4" />
+                      </a>
                     </td>
                   </tr>
                 ))}

@@ -21,7 +21,7 @@ import { RolesGuard } from "../auth/guards/roles.guard";
 import { requireOrgRole } from "../auth/require-org-role";
 import type { AuthUser } from "../auth/types/auth-user";
 import { OrganizationId } from "../common/org-id.decorator";
-import { CreatePayrollRunDto, EmailPayslipDto } from "./dto/create-payroll-run.dto";
+import { CreatePayrollRunDto } from "./dto/create-payroll-run.dto";
 import { PayrollHeavyQueueService } from "./payroll-heavy.queue";
 import { PayrollExportService } from "./payroll-export.service";
 import { PayrollService } from "./payroll.service";
@@ -97,24 +97,6 @@ export class PayrollController {
   })
   postRun(@OrganizationId() organizationId: string, @Param("id") id: string) {
     return this.payroll.postRun(organizationId, id);
-  }
-
-  @Post("runs/:id/email")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Email payslip PDFs for all slips in the run" })
-  emailRun(@OrganizationId() organizationId: string, @Param("id") id: string) {
-    return this.payroll.emailRun(organizationId, id);
-  }
-
-  @Post("slips/:id/email")
-  @Roles(UserRole.OWNER, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Email a single payslip PDF" })
-  emailSlip(
-    @OrganizationId() organizationId: string,
-    @Param("id") id: string,
-    @Body() dto: EmailPayslipDto,
-  ) {
-    return this.payroll.emailSlip(organizationId, id, dto.to);
   }
 
   @Post("runs/:id/pay")

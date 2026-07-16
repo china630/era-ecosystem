@@ -5,11 +5,9 @@ import {
   Get,
   Param,
   ParseIntPipe,
-  ParseUUIDPipe,
   Patch,
   Post,
   Query,
-  StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import {
@@ -41,7 +39,8 @@ import { SurplusStockDocumentDto } from "./dto/surplus-stock-document.dto";
 import { TransferStockDto } from "./dto/transfer-stock.dto";
 import { WriteOffStockDocumentDto } from "./dto/write-off-stock-document.dto";
 import { InventoryService } from "./inventory.service";
-import { StatutoryFormsService } from "./statutory-forms.service";
+import { RequiresModule } from "../subscription/requires-module.decorator";
+import { SubscriptionGuard } from "../subscription/subscription.guard";
 
 @ApiTags("inventory")
 @ApiBearerAuth("bearer")
@@ -49,10 +48,7 @@ import { StatutoryFormsService } from "./statutory-forms.service";
 @UseGuards(SubscriptionGuard, RolesGuard)
 @RequiresModule("inventory")
 export class InventoryController {
-  constructor(
-    private readonly inventory: InventoryService,
-    private readonly statutoryForms: StatutoryFormsService,
-  ) {}
+  constructor(private readonly inventory: InventoryService) {}
 
   @Get("settings")
   @ApiOperation({ summary: "Настройки склада (минус, склад по умолчанию)" })
@@ -285,32 +281,6 @@ export class InventoryController {
     return this.inventory.recordWarehouseShipment(organizationId, dto);
   }
 
-  @Get("shipments/:id/forma-5")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.AUDITOR,
-  )
-  @ApiOperation({
-    summary:
-      "Forma-5 PDF (release requisition) for warehouse shipment by sales invoice id",
-  })
-  async forma5(
-    @OrganizationId() organizationId: string,
-    @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
-  ): Promise<StreamableFile> {
-    const { buffer, filename } = await this.statutoryForms.buildForma5Pdf(
-      organizationId,
-      id,
-    );
-    return new StreamableFile(buffer, {
-      type: "application/pdf",
-      disposition: `attachment; filename="${filename}"`,
-    });
-  }
-
   @Post("transfer")
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({ summary: "Перемещение между складами" })
@@ -400,31 +370,6 @@ export class InventoryController {
     @Param("id") id: string,
   ) {
     return this.inventory.getInventoryAdjustment(organizationId, id);
-  }
-
-  @Get("physical-adjustments/:id/forma-2")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.WAREHOUSE_KEEPER,
-    UserRole.AUDITOR,
-  )
-  @ApiOperation({
-    summary: "Forma-2 PDF (write-off / surplus act) for physical adjustment",
-  })
-  async forma2(
-    @OrganizationId() organizationId: string,
-    @Param("id", new ParseUUIDPipe({ version: "4" })) id: string,
-  ): Promise<StreamableFile> {
-    const { buffer, filename } = await this.statutoryForms.buildForma2Pdf(
-      organizationId,
-      id,
-    );
-    return new StreamableFile(buffer, {
-      type: "application/pdf",
-      disposition: `attachment; filename="${filename}"`,
-    });
   }
 
   @Post("physical-adjustments")

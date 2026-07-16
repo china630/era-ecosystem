@@ -1,4 +1,4 @@
-﻿import { Module } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { PrismaModule } from "../prisma/prisma.module";

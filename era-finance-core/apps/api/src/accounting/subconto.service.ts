@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -30,20 +30,7 @@ const SYSTEM_SUBCONTO_TYPES: Array<{
   { code: "EMPLOYEE", name: "Employee", kind: SubcontoKind.EMPLOYEE },
   { code: "PROJECT", name: "Project", kind: SubcontoKind.PROJECT },
   { code: "ITEM", name: "Item", kind: SubcontoKind.ITEM },
-  { code: "BRANCH", name: "Branch (Poçt / Rabitə / Teleötürücü)", kind: SubcontoKind.CUSTOM },
 ];
-
-/** Canonical valueRef codes for BRANCH multi-branch (one org, segment analytics). */
-export const BRANCH_VALUE_REFS = [
-  { code: "POCT", nameAz: "Poçt", nameRu: "Почта", nameEn: "Post" },
-  { code: "RABITE", nameAz: "Rabitə", nameRu: "Связь", nameEn: "Telecom" },
-  {
-    code: "TELE",
-    nameAz: "Teleötürücü",
-    nameRu: "Телепередача",
-    nameEn: "Broadcast",
-  },
-] as const;
 
 /**
  * Flexible subconto (analytical dimensions on journal entry lines).
@@ -223,30 +210,6 @@ export class SubcontoService {
       created.push(spec.code);
     }
     return { created, existing };
-  }
-
-  /** Seed BRANCH type + return documented valueRef catalog (Poçt/Rabitə/Teleötürücü). */
-  async seedBranchType(organizationId: string) {
-    const existing = await this.prisma.subcontoType.findUnique({
-      where: { organizationId_code: { organizationId, code: "BRANCH" } },
-    });
-    if (existing) {
-      return { created: false, type: existing, valueRefs: BRANCH_VALUE_REFS };
-    }
-    const type = await this.prisma.subcontoType.create({
-      data: {
-        organizationId,
-        code: "BRANCH",
-        name: "Branch (Poçt / Rabitə / Teleötürücü)",
-        kind: SubcontoKind.CUSTOM,
-        isSystem: true,
-      },
-    });
-    return { created: true, type, valueRefs: BRANCH_VALUE_REFS };
-  }
-
-  listBranchValueRefs() {
-    return BRANCH_VALUE_REFS;
   }
 
   /** Idempotent backfill: Transaction.counterpartyId / departmentId → JournalEntryDimension. */

@@ -80,25 +80,6 @@ export class UpdateEmployeeDto {
   @Min(0)
   salary?: number;
 
-  @ApiPropertyOptional({ description: "Base tariff AZN" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  tariffSalary?: number;
-
-  @ApiPropertyOptional({ description: "Supplement AZN" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  supplementSalary?: number;
-
-  @ApiPropertyOptional({ description: "Work schedule id" })
-  @IsOptional()
-  @IsUUID()
-  workScheduleId?: string | null;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)

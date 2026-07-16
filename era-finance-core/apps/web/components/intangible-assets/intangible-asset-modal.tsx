@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { FormEvent, useEffect, useState } from "react";
 import { X } from "lucide-react";
@@ -128,7 +128,7 @@ export function IntangibleAssetModal({
             {t("common.close")}
           </Button>
           <Button type="submit" variant="primary" className={MODAL_FOOTER_BUTTON_CLASS} form="intangible-asset-modal-form" disabled={busy}>
-            {busy ? "тАж" : t("intangibleAssets.save")}
+            {busy ? "…" : t("intangibleAssets.save")}
           </Button>
         </div>
       </div>

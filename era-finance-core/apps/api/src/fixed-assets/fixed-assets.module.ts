@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
-import { RolesGuard } from "../auth/guards/roles.guard";
 import { PrismaModule } from "../prisma/prisma.module";
 import { DepreciationService } from "./depreciation.service";
 import { FixedAssetLifecycleService } from "./fixed-asset-lifecycle.service";
@@ -21,6 +20,6 @@ import { MonthlyDepreciationWorker } from "./monthly-depreciation.worker";
     MonthlyDepreciationWorker,
     RolesGuard,
   ],
-  exports: [DepreciationService, FixedAssetLifecycleService],
+  exports: [DepreciationService],
 })
 export class FixedAssetsModule {}

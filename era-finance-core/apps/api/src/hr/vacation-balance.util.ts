@@ -33,29 +33,7 @@ export function roundDays2(d: Prisma.Decimal): Prisma.Decimal {
 }
 
 /**
- * Extra vacation days from seniority rules: pick the rule with the highest
- * `yearsFrom` where whole years of service >= yearsFrom.
- */
-export function extraDaysFromSeniority(
-  hireDate: Date,
-  asOf: Date,
-  rules: { yearsFrom: number; extraDays: number }[],
-): number {
-  const wholeYears = Math.floor(elapsedDaysSinceHire(hireDate, asOf) / 365);
-  let best: { yearsFrom: number; extraDays: number } | null = null;
-  for (const r of rules) {
-    if (wholeYears >= r.yearsFrom) {
-      if (!best || r.yearsFrom > best.yearsFrom) {
-        best = r;
-      }
-    }
-  }
-  return best?.extraDays ?? 0;
-}
-
-/**
- * vacationDaysBalance = initialVacationDays + (elapsedDays/365)*effectiveBase − usedLaborLeaveDays
- * effectiveBase = baseVacationDaysPerYear + (seniorityExtraDaysPerYear ?? 0)
+ * vacationDaysBalance = initialVacationDays + (elapsedDays/365)*baseVacationDaysPerYear − usedLaborLeaveDays
  */
 export function computeVacationBalance(params: {
   hireDate: Date;
@@ -63,13 +41,11 @@ export function computeVacationBalance(params: {
   initialVacationDays: Prisma.Decimal;
   baseVacationDaysPerYear: number;
   usedLaborLeaveDays: Prisma.Decimal;
-  /** Extra days/year from seniority (added to base for accrual). */
-  seniorityExtraDaysPerYear?: number;
 }): Prisma.Decimal {
-  const base =
-    params.baseVacationDaysPerYear + (params.seniorityExtraDaysPerYear ?? 0);
   const elapsed = elapsedDaysSinceHire(params.hireDate, params.asOf);
-  const accrued = new Decimal(elapsed).div(365).mul(base);
+  const accrued = new Decimal(elapsed)
+    .div(365)
+    .mul(params.baseVacationDaysPerYear);
   const raw = new Decimal(params.initialVacationDays)
     .add(accrued)
     .sub(params.usedLaborLeaveDays);

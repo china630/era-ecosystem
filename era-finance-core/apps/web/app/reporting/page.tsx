@@ -297,14 +297,8 @@ export default function ReportingPage() {
               <Link href="/reporting/aging" className="text-action hover:text-primary">
                 {t("reporting.agingLink")}
               </Link>
-              <Link href="/reporting/ap-aging" className="text-action hover:text-primary">
-                {t("reporting.apAgingLink")}
-              </Link>
               <Link href="/reporting/tax-export" className="text-action hover:text-primary">
                 {t("reporting.taxExportLink")}
-              </Link>
-              <Link href="/reporting/statforms" className="text-action hover:text-primary">
-                {t("reporting.statforms.link")}
               </Link>
             </div>
           </Fragment>

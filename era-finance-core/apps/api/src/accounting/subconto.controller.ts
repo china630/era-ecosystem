@@ -1,4 +1,4 @@
-﻿import {
+import {
   Body,
   Controller,
   Delete,
@@ -39,26 +39,9 @@ export class SubcontoController {
 
   @Post("seed-system-types")
   @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({ summary: "Seed system subconto types (COUNTERPARTY, COST_CENTER, BRANCH, …)" })
+  @ApiOperation({ summary: "Seed system subconto types (COUNTERPARTY, COST_CENTER, …)" })
   seedSystemTypes(@OrganizationId() organizationId: string) {
     return this.subconto.seedSystemTypes(organizationId);
-  }
-
-  @Post("seed-branch")
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
-  @ApiOperation({
-    summary:
-      "Seed BRANCH custom subconto (multi-branch Poçt/Rabitə/Teleötürücü valueRef catalog)",
-  })
-  seedBranch(@OrganizationId() organizationId: string) {
-    return this.subconto.seedBranchType(organizationId);
-  }
-
-  @Get("branch-value-refs")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "List canonical BRANCH valueRef codes" })
-  branchValueRefs() {
-    return this.subconto.listBranchValueRefs();
   }
 
   @Post("backfill-from-transactions")

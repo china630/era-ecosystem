@@ -77,17 +77,23 @@ export class ProfitTaxService {
 
   /**
    * Auto book-to-tax line for depreciation difference (NK Art. 114).
-   * Tax depreciation register is not yet on this branch — amount stays 0 until
-   * FixedAssetTaxDepreciationMonth lands; book depreciation is still reported.
+   * amount = taxDepreciation − bookDepreciation (per Wave 2 plan).
+   * Positive when tax depreciation exceeds book depreciation.
    */
   async syncAutoTaxDepreciationAdjustment(organizationId: string, year: number) {
     this.assertYear(year);
-    const bookAgg = await this.prisma.fixedAssetDepreciationMonth.aggregate({
-      where: { organizationId, year },
-      _sum: { amount: true },
-    });
+    const [bookAgg, taxAgg] = await Promise.all([
+      this.prisma.fixedAssetDepreciationMonth.aggregate({
+        where: { organizationId, year },
+        _sum: { amount: true },
+      }),
+      this.prisma.fixedAssetTaxDepreciationMonth.aggregate({
+        where: { organizationId, year },
+        _sum: { amount: true },
+      }),
+    ]);
     const bookDep = bookAgg._sum.amount ?? new Decimal(0);
-    const taxDep = bookDep;
+    const taxDep = taxAgg._sum.amount ?? new Decimal(0);
     const amount = taxDep.sub(bookDep);
 
     const existing = await this.prisma.profitTaxAdjustment.findFirst({
@@ -103,7 +109,7 @@ export class ProfitTaxService {
       kind: ProfitTaxAdjustmentKind.TEMPORARY,
       code: AUTO_TAX_DEPRECIATION_CODE,
       description:
-        "Tax vs book depreciation difference (placeholder until tax depreciation register; currently 0)",
+        "Tax vs book depreciation difference (tax − book, NK Art. 114 declining balance)",
       amount,
     };
 
@@ -133,12 +139,12 @@ export class ProfitTaxService {
     await this.syncAutoTaxDepreciationAdjustment(organizationId, year);
 
     const { fromStr, toStr } = yearRangeUtc(year);
-    const stmt = await this.reporting.profitAndLoss(
+    const stmt = await this.reporting.fullIncomeStatement(
       organizationId,
       fromStr,
       toStr,
     );
-    const accountingResult = new Decimal(stmt.netProfit);
+    const accountingResult = new Decimal(stmt.accountingResult);
 
     const adjustments = await this.prisma.profitTaxAdjustment.findMany({
       where: { organizationId, year, deletedAt: null },
@@ -157,11 +163,16 @@ export class ProfitTaxService {
       ? taxableBase.mul(rateFraction)
       : new Decimal(0);
 
-    const bookAgg = await this.prisma.fixedAssetDepreciationMonth.aggregate({
-      where: { organizationId, year },
-      _sum: { amount: true },
-    });
-    const bookDep = bookAgg._sum.amount ?? new Decimal(0);
+    const [bookAgg, taxAgg] = await Promise.all([
+      this.prisma.fixedAssetDepreciationMonth.aggregate({
+        where: { organizationId, year },
+        _sum: { amount: true },
+      }),
+      this.prisma.fixedAssetTaxDepreciationMonth.aggregate({
+        where: { organizationId, year },
+        _sum: { amount: true },
+      }),
+    ]);
 
     return {
       year,
@@ -180,14 +191,12 @@ export class ProfitTaxService {
       taxableBase: taxableBase.toFixed(4),
       taxRatePercent: taxRatePercent.toFixed(2),
       taxAmount: taxAmount.toFixed(4),
-      bookDepreciationTotal: bookDep.toFixed(4),
-      taxDepreciationTotal: bookDep.toFixed(4),
+      bookDepreciationTotal: (bookAgg._sum.amount ?? new Decimal(0)).toFixed(4),
+      taxDepreciationTotal: (taxAgg._sum.amount ?? new Decimal(0)).toFixed(4),
     };
   }
 
-  private async resolveProfitTaxRatePercent(
-    year: number,
-  ): Promise<InstanceType<typeof Decimal>> {
+  private async resolveProfitTaxRatePercent(year: number): Promise<InstanceType<typeof Decimal>> {
     const asOf = new Date(Date.UTC(year, 11, 31, 0, 0, 0, 0));
     const row = await this.prisma.taxRate.findFirst({
       where: {

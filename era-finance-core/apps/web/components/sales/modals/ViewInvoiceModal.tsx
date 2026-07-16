@@ -53,10 +53,6 @@ type InvoiceDetail = {
   remaining: string;
   counterpartyId: string;
   revenueRecognized: boolean;
-  isInternational?: boolean;
-  eqaimeNumber?: string | null;
-  eqaimeStatus?: string | null;
-  eqaimeSubmittedAt?: string | null;
   counterparty: { name: string; taxId: string; email: string | null };
   items: Array<{
     id: string;
@@ -115,7 +111,6 @@ export function ViewInvoiceModal({
   const [netErr, setNetErr] = useState<string | null>(null);
   const [viewTab, setViewTab] = useState<"details" | "history" | "activity">("details");
   const [shareBusy, setShareBusy] = useState(false);
-  const [eqaimeBusy, setEqaimeBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!token || !id) {
@@ -327,29 +322,6 @@ export function ViewInvoiceModal({
     }
   }
 
-  async function submitEqaime() {
-    if (!inv) return;
-    setEqaimeBusy(true);
-    try {
-      const res = await apiFetch(`/api/invoices/${inv.id}/eqaime/submit`, {
-        method: "POST",
-      });
-      if (res.status === 503) {
-        toast.error(t("invoices.eqaimeSubmitUnavailable"));
-        return;
-      }
-      if (!res.ok) {
-        toast.error(t("invoices.eqaimeSubmitError"));
-        return;
-      }
-      toast.success(t("invoices.eqaimeSubmitOk"));
-      await load();
-      onInvoicesUpdated?.();
-    } finally {
-      setEqaimeBusy(false);
-    }
-  }
-
   const showNettingCta =
     inv &&
     inv.revenueRecognized &&
@@ -359,38 +331,11 @@ export function ViewInvoiceModal({
   if (!ready || !token) return null;
   if (!ledgerReady) return null;
 
-  const canSubmitEqaime =
-    inv &&
-    !inv.isInternational &&
-    inv.currency === "AZN" &&
-    inv.eqaimeStatus !== "SUBMITTED" &&
-    inv.eqaimeStatus !== "ACCEPTED" &&
-    (inv.status === "SENT" ||
-      inv.status === "PARTIALLY_PAID" ||
-      inv.status === "PAID" ||
-      inv.status === "LOCKED_BY_SIGNATURE");
-
   const headerActions =
     !loading && inv ? (
       <>
         {inv.status === "LOCKED_BY_SIGNATURE" ? (
           <Badge variant="success">{formatInvoiceStatus(t, inv.status)}</Badge>
-        ) : null}
-        {inv.eqaimeStatus ? (
-          <Badge variant="neutral">
-            {t("invoices.eqaimeStatus")}: {inv.eqaimeStatus}
-            {inv.eqaimeNumber ? ` (${inv.eqaimeNumber})` : ""}
-          </Badge>
-        ) : null}
-        {canSubmitEqaime ? (
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={eqaimeBusy}
-            onClick={() => void submitEqaime()}
-          >
-            {eqaimeBusy ? "…" : t("invoices.eqaimeSubmit")}
-          </Button>
         ) : null}
         {canSign ? (
           <Button type="button" variant="primary" onClick={() => setSignOpen(true)}>

@@ -36,7 +36,31 @@ export const EtaxesSelectors = {
     totalNet: ["input[name*='net']", "input[id*='net']"],
     totalVat: ["input[name*='vat']", "input[id*='vat']"],
     totalGross: ["input[name*='total']", "input[id*='total']"],
-    /** Best-effort line-item grid roots — validated during DVX pilot. */
-    lineTableRows: ["table tbody tr", "[data-testid*='line']", ".invoice-lines tr"],
+    lineDescription: [
+      "input[name*='description']",
+      "input[name*='itemName']",
+      "input[id*='description']",
+      "textarea[name*='description']",
+    ],
+    lineQuantity: [
+      "input[name*='quantity']",
+      "input[id*='quantity']",
+      "input[name*='qty']",
+    ],
+    lineUnitPrice: [
+      "input[name*='unitPrice']",
+      "input[name*='price']",
+      "input[id*='unitPrice']",
+    ],
+    lineVatRate: [
+      "input[name*='vatRate']",
+      "input[name*='vat']",
+      "select[name*='vat']",
+    ],
+    lineTotal: [
+      "input[name*='lineTotal']",
+      "input[name*='amount']",
+      "input[id*='lineTotal']",
+    ],
   },
 } as const;

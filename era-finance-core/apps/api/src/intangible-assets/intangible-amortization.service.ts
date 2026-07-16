@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -80,7 +80,7 @@ export class IntangibleAmortizationService {
     }
 
     const [expenseCode, accumulatedCode] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "AMORTIZATION_EXPENSE", tx),
+      this.posting.resolveAccountCode(organizationId, "DEPRECIATION_EXPENSE", tx),
       this.posting.resolveAccountCode(
         organizationId,
         "ACCUMULATED_AMORTIZATION_INTANGIBLE",

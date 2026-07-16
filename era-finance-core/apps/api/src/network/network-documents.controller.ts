@@ -60,25 +60,6 @@ export class NetworkDocumentsController {
     return this.documents.setEQaimeRef(organizationId, id, body.externalId);
   }
 
-  @Post("network/documents/inbox/:id/ingest-eqaime")
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({
-    summary: "Attach manual DVX e-qaimə payload for amount/VÖEN reconciliation",
-  })
-  ingestEqaime(
-    @OrganizationId() organizationId: string,
-    @Param("id") id: string,
-    @Body()
-    body: {
-      externalId?: string;
-      payload?: Record<string, unknown>;
-      totalGross?: number | string;
-      issuerTaxId?: string;
-    },
-  ) {
-    return this.eqaimePrefillSvc.ingestEqaimePayload(organizationId, id, body);
-  }
-
   @Post("network/documents/inbox/:id/accept")
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({ summary: "Accept inbound network document and post mirror journal" })

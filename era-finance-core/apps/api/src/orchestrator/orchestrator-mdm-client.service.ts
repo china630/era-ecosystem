@@ -20,24 +20,6 @@ export type ResolvePersonInput = {
   nationality?: string;
 };
 
-export type MdmHrAddress = {
-  kind: string;
-  line: string | null;
-  city: string | null;
-  region: string | null;
-  postal?: string | null;
-};
-
-export type MdmHrProfile = {
-  bloodGroup: string;
-  maritalStatus: string | null;
-  education: string | null;
-  specialty: string | null;
-  statisticalCategories: string[];
-  photoStorageKey: string | null;
-  addresses: MdmHrAddress[];
-};
-
 @Injectable()
 export class OrchestratorMdmClientService {
   private readonly logger = new Logger(OrchestratorMdmClientService.name);
@@ -187,7 +169,6 @@ export class OrchestratorMdmClientService {
         displayName: string | null;
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
-        hrProfile?: MdmHrProfile | null;
       }
     >
   > {
@@ -207,52 +188,11 @@ export class OrchestratorMdmClientService {
           displayName: string | null;
           primaryIdentifierMasked: string | null;
           accessDenied: boolean;
-          hrProfile?: MdmHrProfile | null;
         }
       >;
     } catch {
       return {};
     }
-  }
-
-  async getHrProfile(
-    personId: string,
-    organizationId: string,
-  ): Promise<{
-    globalPersonId: string;
-    accessDenied: boolean;
-    hrProfile: MdmHrProfile | null;
-  } | null> {
-    const token = this.token();
-    if (!token) return null;
-    try {
-      const q = new URLSearchParams({ organizationId });
-      const res = await fetch(
-        `${this.baseUrl()}/internal/v1/mdm/persons/${encodeURIComponent(personId)}/hr-profile?${q}`,
-        { headers: this.authHeaders() },
-      );
-      if (!res.ok) return null;
-      return (await res.json()) as {
-        globalPersonId: string;
-        accessDenied: boolean;
-        hrProfile: MdmHrProfile | null;
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  async batchHrProfiles(
-    personIds: string[],
-    organizationId: string,
-  ): Promise<Record<string, MdmHrProfile | null>> {
-    const batch = await this.batchOpsProfile(personIds, organizationId);
-    const out: Record<string, MdmHrProfile | null> = {};
-    for (const id of personIds) {
-      const row = batch[id];
-      out[id] = row?.accessDenied ? null : (row?.hrProfile ?? null);
-    }
-    return out;
   }
 
   async workforceResolve(

@@ -12,7 +12,8 @@ import { InventoryAuditService } from "./inventory-audit.service";
 import { InventoryReconciliationController } from "./inventory-reconciliation.controller";
 import { InventoryController } from "./inventory.controller";
 import { InventoryService } from "./inventory.service";
-import { StatutoryFormsService } from "./statutory-forms.service";
+import { WmsController } from "./wms.controller";
+import { WmsMobileService } from "./wms-mobile.service";
 
 @Module({
   imports: [PrismaModule, AccountingModule, StockModule, AccessControlModule, ContractsModule, GovBudgetModule, FxModule],
@@ -22,7 +23,7 @@ import { StatutoryFormsService } from "./statutory-forms.service";
     InventoryReconciliationController,
     WmsController,
   ],
-  providers: [InventoryService, InventoryAuditService, StatutoryFormsService],
-  exports: [InventoryService],
+  providers: [InventoryService, InventoryAuditService, BinBalanceService, WmsMobileService],
+  exports: [InventoryService, BinBalanceService, WmsMobileService],
 })
 export class InventoryModule {}

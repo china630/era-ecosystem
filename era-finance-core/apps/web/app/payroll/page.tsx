@@ -193,7 +193,6 @@ function PayrollPageInner() {
   const [importTimesheet, setImportTimesheet] = useState(false);
   const [approvedTimesheetId, setApprovedTimesheetId] = useState<string | null>(null);
   const [postingRunId, setPostingRunId] = useState<string | null>(null);
-  const [emailingRunId, setEmailingRunId] = useState<string | null>(null);
   const [payingRunId, setPayingRunId] = useState<string | null>(null);
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [selectedBankAccountId, setSelectedBankAccountId] = useState("");
@@ -269,32 +268,6 @@ function PayrollPageInner() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    },
-    [token, t],
-  );
-
-  const emailRun = useCallback(
-    async (runId: string) => {
-      if (!token) return;
-      setEmailingRunId(runId);
-      try {
-        const res = await apiFetch(`/api/hr/payroll/runs/${runId}/email`, {
-          method: "POST",
-        });
-        if (!res.ok) {
-          toast.error(`${t("common.loadErr")}: ${res.status}`);
-          return;
-        }
-        const j = (await res.json()) as { sent?: number; skipped?: number };
-        toast.success(
-          t("payroll.emailPayslipsDone", {
-            sent: j.sent ?? 0,
-            skipped: j.skipped ?? 0,
-          }),
-        );
-      } finally {
-        setEmailingRunId(null);
-      }
     },
     [token, t],
   );
@@ -764,14 +737,6 @@ function PayrollPageInner() {
                 onClick={() => void downloadRunXlsx(currentRun.id)}
               >
                 {t("payroll.exportXlsx")}
-              </button>
-              <button
-                type="button"
-                className={SECONDARY_BUTTON_CLASS}
-                disabled={payrollBusy || emailingRunId === currentRun.id}
-                onClick={() => void emailRun(currentRun.id)}
-              >
-                {emailingRunId === currentRun.id ? "…" : t("payroll.emailPayslips")}
               </button>
               {currentRun.status === "DRAFT" ? (
                 <button

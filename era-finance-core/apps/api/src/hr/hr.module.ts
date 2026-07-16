@@ -25,7 +25,6 @@ import { PayrollHeavyQueueService } from "./payroll-heavy.queue";
 import { PayrollHeavyWorker } from "./payroll-heavy.worker";
 import { PayrollService } from "./payroll.service";
 import { PayrollExportService } from "./payroll-export.service";
-import { PayrollComponentsService } from "./payroll-components.service";
 import { DepartmentHeadScopeService } from "./department-head-scope.service";
 import { NotificationModule } from "../notifications/notification.module";
 import { VacationBalanceService } from "./vacation-balance.service";
@@ -36,18 +35,7 @@ import { HrStaffProvisioningService } from "../integration/hr-staff-provisioning
 import { HrRemindersService } from "./hr-reminders.service";
 import { EmployeeDocumentsController } from "./employee-documents.controller";
 import { EmployeeDocumentsService } from "./employee-documents.service";
-import { MailModule } from "../mail/mail.module";
-import { KassaModule } from "../kassa/kassa.module";
-import { BusinessTripsController } from "./business-trips.controller";
-import { BusinessTripsService } from "./business-trips.service";
-import { PerDiemNormsController } from "./per-diem-norms.controller";
-import { PerDiemNormsService } from "./per-diem-norms.service";
-import { WorkSchedulesController } from "./work-schedules.controller";
-import { WorkSchedulesService } from "./work-schedules.service";
-import { VacationSeniorityController } from "./vacation-seniority.controller";
-import { VacationSeniorityService } from "./vacation-seniority.service";
-import { ActiveListController } from "./active-list.controller";
-import { ActiveListService } from "./active-list.service";
+import { SystemConfigModule } from "../system-config/system-config.module";
 
 @Module({
   imports: [
@@ -57,8 +45,7 @@ import { ActiveListService } from "./active-list.service";
     NotificationModule,
     IntegrationsModule,
     OrchestratorModule,
-    MailModule,
-    KassaModule,
+    SystemConfigModule,
   ],
   controllers: [
     EmployeesController,
@@ -69,11 +56,6 @@ import { ActiveListService } from "./active-list.service";
     OrgStructureController,
     TimesheetController,
     EmployeeDocumentsController,
-    BusinessTripsController,
-    PerDiemNormsController,
-    WorkSchedulesController,
-    VacationSeniorityController,
-    ActiveListController,
   ],
   providers: [
     EmployeesService,
@@ -85,7 +67,6 @@ import { ActiveListService } from "./active-list.service";
     PayrollHeavyWorker,
     PayrollService,
     PayrollExportService,
-    PayrollComponentsService,
     AbsenceTypesService,
     AbsencesService,
     OrgStructureService,
@@ -96,11 +77,6 @@ import { ActiveListService } from "./active-list.service";
     HrStaffProvisioningService,
     HrRemindersService,
     EmployeeDocumentsService,
-    BusinessTripsService,
-    PerDiemNormsService,
-    WorkSchedulesService,
-    VacationSeniorityService,
-    ActiveListService,
     RolesGuard,
   ],
   exports: [OrgStructureService, TimesheetService, AbsenceTypesService],

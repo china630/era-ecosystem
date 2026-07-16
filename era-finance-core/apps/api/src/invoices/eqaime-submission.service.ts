@@ -32,7 +32,7 @@ export class EqaimeSubmissionService {
     if (!this.isS2sEnabled()) {
       throw new HttpException(
         {
-          code: "RPA_FALLBACK",
+          code: "EQAIME_S2S_DISABLED",
           message:
             "e-Qaimə S2S is disabled. Set ERA_EQAIME_S2S_ENABLED=1 or use ERA Finance Assistant RPA.",
         },
@@ -154,25 +154,12 @@ export class EqaimeSubmissionService {
       },
     };
 
-    let result: {
-      submitted: boolean;
-      gatewayStatus?: number;
-      gatewayMessage?: string;
-    };
-    try {
-      const adapter = this.submissionFactory.get();
-      result = await adapter.submit(signedPayload, {
-        organizationId,
-        asanUserId,
-        destination: "EQAIME",
-      });
-    } catch (e) {
-      await this.prisma.invoice.update({
-        where: { id: invoiceId },
-        data: { eqaimeStatus: EqaimeStatus.ERROR },
-      });
-      throw e;
-    }
+    const adapter = this.submissionFactory.get();
+    const result = await adapter.submit(signedPayload, {
+      organizationId,
+      asanUserId,
+      destination: "EQAIME",
+    });
 
     const eqaimeNumber =
       typeof (result as Record<string, unknown>).eqaimeNumber === "string"
@@ -187,9 +174,6 @@ export class EqaimeSubmissionService {
         eqaimeStatus: EqaimeStatus.SUBMITTED,
         eqaimeSubmittedAt: submittedAt,
         dvxExternalId: eqaimeNumber,
-        dvxSyncStatus: "SYNCED",
-        dvxSyncedAt: submittedAt,
-        dvxSyncError: null,
       },
     });
 

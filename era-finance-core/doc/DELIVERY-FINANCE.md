@@ -8,10 +8,7 @@ Source of truth for scope is **`PRD.md`** — every completed item carries a `[x
 
 Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/rules/era-coverage-definition.mdc) · actor matrix: [docs/COVERAGE_MATRIX.md](../../docs/COVERAGE_MATRIX.md).
 
-- [x] 13 legacy `@era/contracts` ingress types → worker
-- [x] **FB-10** `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` → COGS/WIP journal (`satellite-event-dispatch.service.ts`)
-- [x] **FB sale/shift** `SATELLITE_FB_SALE_COMPLETED` → revenue journal (idempotent `fb-sale:{receiptId}`); `SATELLITE_FB_SHIFT_CLOSED` → cash recon stub
-- [x] Finance registration → MDM full cutover — `ERA_MDM_REGISTRATION_CUTOVER` redirects to Orchestrator
+## Delivered milestones (10)
 
 - [x] **M1 — IAM, Multi-tenancy & Onboarding** (PRD §4.1, §4.1.1–4.1.3, §3.2)
   - [x] Registration / org onboarding, SSO handoff, profile — `/login`, `/register-org`, `/auth/cp-handoff`, `/settings/profile`

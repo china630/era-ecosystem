@@ -70,11 +70,10 @@ function formatEqaimeStatus(
   if (!status) return t("invoices.eqaimeStatusNone");
   const map: Record<string, string> = {
     DRAFT: t("invoices.eqaimeStatusDraft"),
-    READY: t("invoices.eqaimeStatusReady"),
     SUBMITTED: t("invoices.eqaimeStatusSubmitted"),
     ACCEPTED: t("invoices.eqaimeStatusAccepted"),
     REJECTED: t("invoices.eqaimeStatusRejected"),
-    ERROR: t("invoices.eqaimeStatusError"),
+    CANCELLED: t("invoices.eqaimeStatusCancelled"),
   };
   return map[status] ?? status;
 }
@@ -284,26 +283,6 @@ export default function InvoicesPage() {
       });
       if (!res.ok) return;
       alert(t("invoices.emailSent"));
-    } finally {
-      setInvoiceActionBusy((b) => (b === key ? null : b));
-    }
-  }
-
-  async function submitEqaime(id: string) {
-    const key = `eqaime:${id}`;
-    setInvoiceActionBusy(key);
-    try {
-      const res = await apiFetch(`/api/invoices/${id}/eqaime/submit`, { method: "POST" });
-      if (res.status === 503) {
-        alert(t("invoices.eqaimeSubmitUnavailable"));
-        return;
-      }
-      if (!res.ok) {
-        alert(t("invoices.eqaimeSubmitError"));
-        return;
-      }
-      alert(t("invoices.eqaimeSubmitOk"));
-      await load();
     } finally {
       setInvoiceActionBusy((b) => (b === key ? null : b));
     }
@@ -539,27 +518,6 @@ export default function InvoicesPage() {
                       </button>
                     </>
                   )}
-                  {(r.status === "SENT" ||
-                    r.status === "PARTIALLY_PAID" ||
-                    r.status === "PAID" ||
-                    r.status === "LOCKED_BY_SIGNATURE") &&
-                    !r.isInternational &&
-                    r.eqaimeStatus !== "SUBMITTED" &&
-                    r.eqaimeStatus !== "ACCEPTED" && (
-                      <button
-                        type="button"
-                        disabled={invoiceActionBusy !== null}
-                        className={TABLE_ROW_ICON_BTN_CLASS}
-                        title={t("invoices.eqaimeSubmit")}
-                        onClick={() => void submitEqaime(r.id)}
-                      >
-                        {invoiceActionBusy === `eqaime:${r.id}` ? (
-                          <Loader2 className="h-4 w-4 animate-spin text-[#2980B9]" aria-hidden />
-                        ) : (
-                          <FileStack className="h-4 w-4 text-[#2980B9]" aria-hidden />
-                        )}
-                      </button>
-                    )}
                   <button
                     type="button"
                     disabled={invoiceActionBusy !== null}
@@ -796,8 +754,8 @@ export default function InvoicesPage() {
                             </>
                           )}
                           {(r.status === "SENT" ||
-                            r.status === "PARTIALLY_PAID" ||
                             r.status === "PAID" ||
+                            r.status === "PARTIALLY_PAID" ||
                             r.status === "LOCKED_BY_SIGNATURE") &&
                             !r.isInternational &&
                             r.eqaimeStatus !== "SUBMITTED" &&
@@ -812,7 +770,7 @@ export default function InvoicesPage() {
                                 {invoiceActionBusy === `eqaime:${r.id}` ? (
                                   <Loader2 className="h-4 w-4 animate-spin text-[#2980B9]" aria-hidden />
                                 ) : (
-                                  <FileStack className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                                  <Send className="h-4 w-4 text-[#2980B9]" aria-hidden />
                                 )}
                               </button>
                             )}

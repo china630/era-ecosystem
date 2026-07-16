@@ -12,8 +12,6 @@ import {
   type VatQuarterSalesRow,
   VatQuarterDataService,
 } from "./vat-quarter-data.service";
-import { SignatureService } from "../signature/signature.service";
-import { GovSignatureAdapterFactory } from "../signature/gov-signature.adapters";
 import { EtaxesSubmissionAdapterFactory } from "./etaxes-submission.adapters";
 
 /** Нормализованный VÖEN: ровно 10 цифр */
@@ -132,8 +130,6 @@ export class ETaxesIntegrationService {
     private readonly prisma: PrismaService,
     private readonly vatQuarter: VatQuarterDataService,
     private readonly posting: PostingAccountResolver,
-    private readonly signatures: SignatureService,
-    private readonly govSignatureFactory: GovSignatureAdapterFactory,
     private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
   ) {}
 
@@ -355,7 +351,7 @@ export class ETaxesIntegrationService {
     submitted: boolean;
     gatewayStatus?: number;
     gatewayMessage?: string;
-    govSignatureId?: string;
+    signedPayloadHash?: string;
   }> {
     const { package: pkg, validation } = await this.buildDeclarationPackage(
       organizationId,
@@ -373,38 +369,11 @@ export class ETaxesIntegrationService {
       where: { id: organizationId },
       select: { settings: true },
     });
-    const asanUserId = this.resolveAsanUserId(org?.settings);
-
-    let payload: unknown = pkg;
-    let govSignatureId: string | undefined;
-    if (this.govSignatureFactory.isLiveEnabled()) {
-      const signed = await this.signatures.signGovPayload(JSON.stringify(pkg), {
-        organizationId,
-        asanUserId,
-        purpose: "TAX_DECLARATION",
-      });
-      govSignatureId = signed.signatureId;
-      payload = {
-        ...pkg,
-        govSignature: {
-          signatureId: signed.signatureId,
-          signedAt: signed.signedAt.toISOString(),
-          provider: signed.provider,
-        },
-      };
-    }
-
     const adapter = this.submissionFactory.get();
-    const result = await adapter.submit(payload, {
+    return adapter.submit(pkg, {
       organizationId,
-      asanUserId,
+      asanUserId: this.resolveAsanUserId(org?.settings),
       destination: "VAT",
     });
-    return {
-      submitted: result.submitted,
-      gatewayStatus: result.gatewayStatus,
-      gatewayMessage: result.gatewayMessage,
-      govSignatureId,
-    };
   }
 }

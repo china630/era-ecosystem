@@ -2,7 +2,6 @@ import { Prisma } from "@erafinance/database";
 import {
   computeVacationBalance,
   elapsedDaysSinceHire,
-  extraDaysFromSeniority,
   inclusiveCalendarDays,
 } from "../../src/hr/vacation-balance.util";
 
@@ -56,31 +55,5 @@ describe("vacation-balance.util", () => {
       usedLaborLeaveDays: new D(5),
     });
     expect(bal.toFixed(2)).toBe("16.00");
-  });
-
-  it("extraDaysFromSeniority: picks highest qualifying yearsFrom", () => {
-    const hire = new Date(Date.UTC(2016, 0, 1));
-    const asOf = new Date(Date.UTC(2026, 0, 1));
-    expect(
-      extraDaysFromSeniority(hire, asOf, [
-        { yearsFrom: 5, extraDays: 2 },
-        { yearsFrom: 10, extraDays: 4 },
-        { yearsFrom: 15, extraDays: 6 },
-      ]),
-    ).toBe(4);
-  });
-
-  it("computeVacationBalance: adds seniority extra to base accrual", () => {
-    const hire = new Date(Date.UTC(2025, 0, 1));
-    const asOf = new Date(Date.UTC(2026, 0, 1));
-    const bal = computeVacationBalance({
-      hireDate: hire,
-      asOf,
-      initialVacationDays: new D(0),
-      baseVacationDaysPerYear: 21,
-      usedLaborLeaveDays: new D(0),
-      seniorityExtraDaysPerYear: 2,
-    });
-    expect(bal.toFixed(2)).toBe("23.00");
   });
 });

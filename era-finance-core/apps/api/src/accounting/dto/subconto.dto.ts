@@ -1,4 +1,4 @@
-﻿import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { SubcontoKind } from "@erafinance/database";
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min, MinLength } from "class-validator";
 

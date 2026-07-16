@@ -43,30 +43,6 @@ export class TimesheetBatchItemDto {
   @Min(0)
   @Max(24)
   hours?: number;
-
-  @ApiPropertyOptional({ description: "Night hours" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  @Max(24)
-  nightHours?: number;
-
-  @ApiPropertyOptional({ description: "Evening hours" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  @Max(24)
-  eveningHours?: number;
-
-  @ApiPropertyOptional({ description: "Overtime hours" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  @Max(24)
-  overtimeHours?: number;
 }
 
 export class TimesheetBatchUpdateDto {

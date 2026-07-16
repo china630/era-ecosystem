@@ -76,9 +76,11 @@ function parseApiErrorBody(data: unknown): string {
 export default function TaxExportPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
-  const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
-  const [yearPeriod, setYearPeriod] = useState(String(new Date().getUTCFullYear()));
-  const [taxType, setTaxType] = useState("SIMPLIFIED_TAX");
+  const now = new Date();
+  const [monthPeriod, setMonthPeriod] = useState(now.toISOString().slice(0, 7));
+  const [year, setYear] = useState(now.getUTCFullYear());
+  const [quarter, setQuarter] = useState(Math.floor(now.getUTCMonth() / 3) + 1);
+  const [taxType, setTaxType] = useState<TaxType>("SIMPLIFIED_TAX");
   const [items, setItems] = useState<TaxDeclarationExport[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -94,10 +96,6 @@ export default function TaxExportPage() {
     if (taxType === "PROFIT_TAX") return String(year);
     return monthPeriod;
   }, [taxType, year, quarter, monthPeriod]);
-
-  const needsYearPeriod =
-    taxType === "PROFIT_TAX" || taxType === "PROPERTY_TAX";
-  const effectivePeriod = needsYearPeriod ? yearPeriod : period;
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -130,7 +128,7 @@ export default function TaxExportPage() {
       const res = await apiFetch("/api/reporting/tax-declarations/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxType, period: effectivePeriod }),
+        body: JSON.stringify({ taxType, period }),
       });
       const data = (await res.json()) as unknown;
       if (!res.ok) {
@@ -145,7 +143,7 @@ export default function TaxExportPage() {
       setErr(t("reporting.taxExportErr"));
     }
     setGenerating(false);
-  }, [taxType, effectivePeriod, load, t]);
+  }, [taxType, period, load, t]);
 
   const loadPayrollPreview = useCallback(async () => {
     setLoadingPayrollPreview(true);
@@ -279,42 +277,16 @@ export default function TaxExportPage() {
         leading={
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
-              <span>{t("reporting.taxExportPeriod")}</span>
-              {needsYearPeriod ? (
-                <input
-                  type="number"
-                  min={2000}
-                  max={2100}
-                  className={`${MODAL_INPUT_CLASS} !w-28`}
-                  value={yearPeriod}
-                  onChange={(e) => setYearPeriod(e.target.value)}
-                />
-              ) : (
-                <input
-                  type="month"
-                  className={`${MODAL_INPUT_CLASS} !w-40`}
-                  value={period}
-                  onChange={(e) => setPeriod(e.target.value)}
-                />
-              )}
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.taxExportType")}</span>
               <select
-                className={`${MODAL_INPUT_CLASS} !min-w-[16rem]`}
+                className={`${MODAL_INPUT_CLASS} !min-w-[14rem]`}
                 value={taxType}
                 onChange={(e) => setTaxType(e.target.value as TaxType)}
               >
-                <option value="SIMPLIFIED_TAX">
-                  {t("reporting.taxTypeSimplified")}
-                </option>
-                <option value="PROFIT_TAX">{t("reporting.taxTypeProfit")}</option>
-                <option value="PAYROLL_WITHHOLDING">
-                  {t("reporting.taxTypePayroll")}
-                </option>
-                <option value="PROPERTY_TAX">
-                  {t("reporting.taxTypeProperty")}
-                </option>
+                <option value="SIMPLIFIED_TAX">{t("reporting.taxExportTypeSimplified")}</option>
+                <option value="VAT">{t("reporting.taxExportTypeVat")}</option>
+                <option value="PROFIT_TAX">{t("reporting.taxExportTypeProfitTax")}</option>
+                <option value="PAYROLL_WITHHOLDING">{t("reporting.taxExportTypePayroll")}</option>
               </select>
             </label>
             {taxType === "SIMPLIFIED_TAX" || taxType === "PAYROLL_WITHHOLDING" ? (

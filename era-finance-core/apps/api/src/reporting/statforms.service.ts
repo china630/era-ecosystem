@@ -252,9 +252,9 @@ export class StatformsService implements OnModuleInit {
 
   private normalizeSource(source?: string): string {
     const s = (source ?? "").trim().toUpperCase();
-    if (s === "GL_ACCOUNT_PREFIX") return "GL_TURNOVER";
-    if (s === "STOCK_QTY") return "INVENTORY_ISSUE";
-    if (s === "PAYROLL_HEADCOUNT") return "HR_HEADCOUNT";
+    if (s === "GL_ACCOUNT_PREFIX") return "GL.TURNOVER";
+    if (s === "STOCK_QTY") return "INVENTORY.ISSUE";
+    if (s === "PAYROLL_HEADCOUNT") return "HR.HEADCOUNT";
     if (s === "CONSTANT") return "CONSTANT";
     return s.replace(/\./g, "_").replace(/-/g, "_");
   }
@@ -316,7 +316,16 @@ export class StatformsService implements OnModuleInit {
         include: { slips: true },
       });
       if (!run) return new Decimal(0);
-      return run.slips.reduce((sum, s) => sum.add(s.gross), new Decimal(0));
+      if (metric === "grosswages" || metric === "gross_wages") {
+        return run.slips.reduce(
+          (sum, s) => sum.add(s.gross),
+          new Decimal(0),
+        );
+      }
+      return run.slips.reduce(
+        (sum, s) => sum.add(s.gross),
+        new Decimal(0),
+      );
     }
 
     if (source === "HR_ABSENCE") {
@@ -382,8 +391,18 @@ export class StatformsService implements OnModuleInit {
     }
 
     if (source === "PRICELIST") {
-      // PriceList model not on this branch yet
-      return new Decimal(0);
+      const lines = await this.prisma.priceListLine.findMany({
+        where: {
+          priceList: { organizationId, isActive: true },
+        },
+        select: { unitPrice: true },
+      });
+      if (lines.length === 0) return new Decimal(0);
+      const total = lines.reduce(
+        (sum, l) => sum.add(l.unitPrice),
+        new Decimal(0),
+      );
+      return total.div(lines.length);
     }
 
     if (source === "INVOICE") {
@@ -428,7 +447,6 @@ export class StatformsService implements OnModuleInit {
       return total.div(entries.length);
     }
 
-    void metric;
     return new Decimal(0);
   }
 

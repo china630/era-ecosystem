@@ -12,15 +12,29 @@ import { ReportingService } from "./reporting.service";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { TaxExportService } from "./tax-export.service";
 import { ProfitTaxService } from "./profit-tax.service";
-import { PropertyTaxService } from "./property-tax.service";
-import { PayrollWithholdingService } from "./payroll-withholding.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
 import { VatQuarterDataService } from "./vat-quarter-data.service";
+import { StandardReportsService } from "./standard-reports.service";
 import { StatformsController } from "./statforms.controller";
 import { StatformsService } from "./statforms.service";
+import {
+  EtaxesSubmissionAdapterFactory,
+  HttpEtaxesSubmissionAdapter,
+  HsmEtaxesSubmissionAdapter,
+} from "./etaxes-submission.adapters";
+import { SystemConfigModule } from "../system-config/system-config.module";
 
 @Module({
-  imports: [PrismaModule, AccountingModule, FixedAssetsModule, FinanceModule],
+  imports: [
+    PrismaModule,
+    forwardRef(() => AccountingModule),
+    FixedAssetsModule,
+    IntangibleAssetsModule,
+    FinanceModule,
+    SystemConfigModule,
+    SignatureModule,
+    StorageModule,
+  ],
   controllers: [ReportingController, StatformsController],
   providers: [
     ReportingService,
@@ -30,11 +44,17 @@ import { StatformsService } from "./statforms.service";
     ETaxesIntegrationService,
     TaxExportService,
     ProfitTaxService,
-    PropertyTaxService,
-    PayrollWithholdingService,
     StatformsService,
+    HttpEtaxesSubmissionAdapter,
+    HsmEtaxesSubmissionAdapter,
+    EtaxesSubmissionAdapterFactory,
     RolesGuard,
   ],
-  exports: [ReportingService, ProfitTaxService],
+  exports: [
+    ReportingService,
+    StandardReportsService,
+    EtaxesSubmissionAdapterFactory,
+    ETaxesIntegrationService,
+  ],
 })
 export class ReportingModule {}

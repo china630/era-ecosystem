@@ -17,16 +17,6 @@ export type PostingSchemaId =
   | "INVENTORY_WRITE_OFF"
   | "INVENTORY_ACCOUNTABLE"
   | "DEPRECIATION"
-  | "FIXED_ASSET_ACQUIRE"
-  | "FIXED_ASSET_CAPITALIZE"
-  | "FIXED_ASSET_REVALUE_UP"
-  | "FIXED_ASSET_REVALUE_DOWN"
-  | "FIXED_ASSET_DISPOSE"
-  | "FIXED_ASSET_GRATUITOUS_IN"
-  | "FIXED_ASSET_GRATUITOUS_OUT"
-  | "INTANGIBLE_AMORTIZATION"
-  | "INTANGIBLE_ACQUIRE"
-  | "INTANGIBLE_DISPOSE"
   | "MANUFACTURING_WIP"
   | "MANUFACTURING_OVERHEAD"
   | "CASH_IN_TRANSIT"
@@ -197,93 +187,6 @@ export const POSTING_SCHEMAS: Record<PostingSchemaId, PostingSchemaDefinition> =
     lines: [
       { role: "DEPRECIATION_EXPENSE", side: "DEBIT", amountKey: "main" },
       { role: "ACCUMULATED_DEPRECIATION", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_ACQUIRE: {
-    id: "FIXED_ASSET_ACQUIRE",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "FIXED_ASSET_COST", side: "DEBIT", amountKey: "main" },
-      { role: "SUPPLIER_PAYABLE", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_CAPITALIZE: {
-    id: "FIXED_ASSET_CAPITALIZE",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "FIXED_ASSET_COST", side: "DEBIT", amountKey: "main" },
-      { role: "SUPPLIER_PAYABLE", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_REVALUE_UP: {
-    id: "FIXED_ASSET_REVALUE_UP",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "FIXED_ASSET_COST", side: "DEBIT", amountKey: "main" },
-      { role: "REVALUATION_RESERVE", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_REVALUE_DOWN: {
-    id: "FIXED_ASSET_REVALUE_DOWN",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "REVALUATION_RESERVE", side: "DEBIT", amountKey: "main" },
-      { role: "FIXED_ASSET_COST", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_DISPOSE: {
-    id: "FIXED_ASSET_DISPOSE",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "ACCUMULATED_DEPRECIATION", side: "DEBIT", amountKey: "accDep" },
-      { role: "MAIN_BANK", side: "DEBIT", amountKey: "proceeds" },
-      { role: "ASSET_DISPOSAL_LOSS", side: "DEBIT", amountKey: "loss" },
-      { role: "FIXED_ASSET_COST", side: "CREDIT", amountKey: "gross" },
-      { role: "ASSET_DISPOSAL_GAIN", side: "CREDIT", amountKey: "gain" },
-    ],
-  },
-  FIXED_ASSET_GRATUITOUS_IN: {
-    id: "FIXED_ASSET_GRATUITOUS_IN",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "FIXED_ASSET_COST", side: "DEBIT", amountKey: "main" },
-      { role: "INVENTORY_SURPLUS_INCOME", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  FIXED_ASSET_GRATUITOUS_OUT: {
-    id: "FIXED_ASSET_GRATUITOUS_OUT",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "ACCUMULATED_DEPRECIATION", side: "DEBIT", amountKey: "accDep" },
-      { role: "ASSET_DISPOSAL_LOSS", side: "DEBIT", amountKey: "nbv" },
-      { role: "FIXED_ASSET_COST", side: "CREDIT", amountKey: "gross" },
-    ],
-  },
-  INTANGIBLE_AMORTIZATION: {
-    id: "INTANGIBLE_AMORTIZATION",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "AMORTIZATION_EXPENSE", side: "DEBIT", amountKey: "main" },
-      { role: "ACCUMULATED_AMORTIZATION_INTANGIBLE", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  INTANGIBLE_ACQUIRE: {
-    id: "INTANGIBLE_ACQUIRE",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "INTANGIBLE_ASSET", side: "DEBIT", amountKey: "main" },
-      { role: "SUPPLIER_PAYABLE", side: "CREDIT", amountKey: "main" },
-    ],
-  },
-  INTANGIBLE_DISPOSE: {
-    id: "INTANGIBLE_DISPOSE",
-    kinds: [...ALL_KINDS],
-    lines: [
-      { role: "ACCUMULATED_AMORTIZATION_INTANGIBLE", side: "DEBIT", amountKey: "accAmort" },
-      { role: "MAIN_BANK", side: "DEBIT", amountKey: "proceeds" },
-      { role: "ASSET_DISPOSAL_LOSS", side: "DEBIT", amountKey: "loss" },
-      { role: "INTANGIBLE_ASSET", side: "CREDIT", amountKey: "gross" },
-      { role: "ASSET_DISPOSAL_GAIN", side: "CREDIT", amountKey: "gain" },
     ],
   },
   MANUFACTURING_WIP: {

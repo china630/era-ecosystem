@@ -9,7 +9,6 @@ import { Cron } from "@nestjs/schedule";
 import { PrismaService } from "../prisma/prisma.service";
 import {
   computeVacationBalance,
-  extraDaysFromSeniority,
   inclusiveCalendarDays,
   utcDayStart,
 } from "./vacation-balance.util";
@@ -43,7 +42,6 @@ export class VacationBalanceService {
       },
       select: {
         id: true,
-        organizationId: true,
         hireDate: true,
         initialVacationDays: true,
         baseVacationDaysPerYear: true,
@@ -51,25 +49,6 @@ export class VacationBalanceService {
     });
     if (employees.length === 0) {
       return { updated: 0 };
-    }
-
-    const orgIds = [...new Set(employees.map((e) => e.organizationId))];
-    const seniorityRules = await this.prisma.vacationSeniorityRule.findMany({
-      where: { organizationId: { in: orgIds } },
-      select: {
-        organizationId: true,
-        yearsFrom: true,
-        extraDays: true,
-      },
-    });
-    const rulesByOrg = new Map<
-      string,
-      { yearsFrom: number; extraDays: number }[]
-    >();
-    for (const r of seniorityRules) {
-      const list = rulesByOrg.get(r.organizationId) ?? [];
-      list.push({ yearsFrom: r.yearsFrom, extraDays: r.extraDays });
-      rulesByOrg.set(r.organizationId, list);
     }
 
     const ids = employees.map((e) => e.id);
@@ -88,7 +67,9 @@ export class VacationBalanceService {
 
     const usedByEmployee = new Map<string, InstanceType<typeof Decimal>>();
     for (const a of absences) {
-      const days = new Decimal(inclusiveCalendarDays(a.startDate, a.endDate));
+      const days = new Decimal(
+        inclusiveCalendarDays(a.startDate, a.endDate),
+      );
       const cur = usedByEmployee.get(a.employeeId) ?? new Decimal(0);
       usedByEmployee.set(a.employeeId, cur.add(days));
     }
@@ -100,18 +81,12 @@ export class VacationBalanceService {
       await this.prisma.$transaction(
         slice.map((emp) => {
           const used = usedByEmployee.get(emp.id) ?? new Decimal(0);
-          const seniorityExtraDaysPerYear = extraDaysFromSeniority(
-            emp.hireDate,
-            asOf,
-            rulesByOrg.get(emp.organizationId) ?? [],
-          );
           const balance = computeVacationBalance({
             hireDate: emp.hireDate,
             asOf,
             initialVacationDays: new Decimal(emp.initialVacationDays),
             baseVacationDaysPerYear: emp.baseVacationDaysPerYear,
             usedLaborLeaveDays: used,
-            seniorityExtraDaysPerYear,
           });
           return this.prisma.employee.update({
             where: { id: emp.id },

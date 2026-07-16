@@ -1,14 +1,11 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
   NotFoundException,
 } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
 import {
   ContractStatus,
   Decimal,
-  Prisma,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
@@ -16,34 +13,8 @@ import { parseIsoDateOnly } from "../reporting/reporting-period.util";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { PatchContractDto } from "./dto/patch-contract.dto";
 
-export type ContractLimitCheckResult = {
-  allowed: boolean;
-  reason: string | null;
-  limit: string | null;
-  committed: string;
-  remaining: string | null;
-  requested: string;
-  status?: ContractStatus;
-  dateTo?: string | null;
-};
-
-function utcTodayDateOnly(): Date {
-  const n = new Date();
-  return new Date(
-    Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()),
-  );
-}
-
-function toDateOnlyUtc(d: Date): Date {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
-  );
-}
-
 @Injectable()
 export class ContractsService {
-  private readonly logger = new Logger(ContractsService.name);
-
   constructor(private readonly prisma: PrismaService) {}
 
   async list(
@@ -175,76 +146,26 @@ export class ContractsService {
     });
   }
 
-  private evaluateLimit(
-    contract: {
-      status: ContractStatus;
-      dateTo: Date | null;
-      amountLimit: Decimal | null;
-      commitments: { amount: Decimal }[];
-    },
-    amount: number | Decimal,
-  ): ContractLimitCheckResult {
+  async checkLimit(contractId: string, amount: number | Decimal) {
+    const contract = await this.prisma.contract.findUnique({
+      where: { id: contractId },
+      include: { commitments: true },
+    });
+    if (!contract) throw new NotFoundException("Contract not found");
+
     const requested = new Decimal(amount.toString());
     const committed = contract.commitments.reduce(
       (sum, c) => sum.add(c.amount),
       new Decimal(0),
     );
-    const dateToIso = contract.dateTo
-      ? toDateOnlyUtc(contract.dateTo).toISOString().slice(0, 10)
-      : null;
-
-    if (contract.status !== ContractStatus.ACTIVE) {
-      return {
-        allowed: false,
-        reason: "CONTRACT_NOT_ACTIVE",
-        limit:
-          contract.amountLimit != null
-            ? new Decimal(contract.amountLimit).toFixed(4)
-            : null,
-        committed: committed.toFixed(4),
-        remaining:
-          contract.amountLimit != null
-            ? new Decimal(contract.amountLimit).sub(committed).toFixed(4)
-            : null,
-        requested: requested.toFixed(4),
-        status: contract.status,
-        dateTo: dateToIso,
-      };
-    }
-
-    if (contract.dateTo) {
-      const today = utcTodayDateOnly();
-      const end = toDateOnlyUtc(contract.dateTo);
-      if (today.getTime() > end.getTime()) {
-        return {
-          allowed: false,
-          reason: "CONTRACT_EXPIRED",
-          limit:
-            contract.amountLimit != null
-              ? new Decimal(contract.amountLimit).toFixed(4)
-              : null,
-          committed: committed.toFixed(4),
-          remaining:
-            contract.amountLimit != null
-              ? new Decimal(contract.amountLimit).sub(committed).toFixed(4)
-              : null,
-          requested: requested.toFixed(4),
-          status: contract.status,
-          dateTo: dateToIso,
-        };
-      }
-    }
 
     if (contract.amountLimit == null) {
       return {
         allowed: true,
-        reason: null,
         limit: null,
         committed: committed.toFixed(4),
         remaining: null,
         requested: requested.toFixed(4),
-        status: contract.status,
-        dateTo: dateToIso,
       };
     }
 
@@ -254,67 +175,11 @@ export class ContractsService {
 
     return {
       allowed,
-      reason: allowed ? null : "LIMIT_EXCEEDED",
       limit: limit.toFixed(4),
       committed: committed.toFixed(4),
       remaining: remaining.toFixed(4),
       requested: requested.toFixed(4),
-      status: contract.status,
-      dateTo: dateToIso,
     };
-  }
-
-  async checkLimit(
-    contractId: string,
-    amount: number | Decimal,
-    organizationId?: string,
-  ): Promise<ContractLimitCheckResult> {
-    const contract = await this.prisma.contract.findFirst({
-      where: {
-        id: contractId,
-        ...(organizationId ? { organizationId } : {}),
-      },
-      include: { commitments: true },
-    });
-    if (!contract) throw new NotFoundException("Contract not found");
-    return this.evaluateLimit(contract, amount);
-  }
-
-  /**
-   * Atomically validates contract limit/status/expiry and creates a commitment
-   * (mirrors gov-budget recordExpenseExecution commitment pattern).
-   */
-  async reserveCommitmentInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    contractId: string,
-    amount: number | Decimal,
-    referenceType: string,
-    referenceId: string,
-  ) {
-    const contract = await tx.contract.findFirst({
-      where: { id: contractId, organizationId },
-      include: { commitments: true },
-    });
-    if (!contract) throw new NotFoundException("Contract not found");
-
-    const check = this.evaluateLimit(contract, amount);
-    if (!check.allowed) {
-      throw new BadRequestException({
-        code: check.reason ?? "CONTRACT_LIMIT_EXCEEDED",
-        message: "Contract commitment not allowed",
-        ...check,
-      });
-    }
-
-    return tx.contractCommitment.create({
-      data: {
-        contractId,
-        amount: new Decimal(amount.toString()),
-        referenceType,
-        referenceId,
-      },
-    });
   }
 
   /** Records contract commitment against a posted document (purchase invoice, PO, etc.). */
@@ -325,36 +190,17 @@ export class ContractsService {
     referenceType: string,
     referenceId: string,
   ) {
-    return this.prisma.$transaction(async (tx) =>
-      this.reserveCommitmentInTransaction(
-        tx,
-        organizationId,
+    const contract = await this.prisma.contract.findFirst({
+      where: { id: contractId, organizationId },
+    });
+    if (!contract) throw new NotFoundException("Contract not found");
+    return this.prisma.contractCommitment.create({
+      data: {
         contractId,
-        amount,
+        amount: new Decimal(amount.toString()),
         referenceType,
         referenceId,
-      ),
-    );
-  }
-
-  /** Sets ACTIVE contracts with dateTo &lt; today (UTC) to EXPIRED. */
-  async expireOverdueContracts(): Promise<{ updated: number }> {
-    const today = utcTodayDateOnly();
-    const result = await this.prisma.contract.updateMany({
-      where: {
-        status: ContractStatus.ACTIVE,
-        dateTo: { lt: today },
       },
-      data: { status: ContractStatus.EXPIRED },
     });
-    return { updated: result.count };
-  }
-
-  @Cron("15 1 * * *", { timeZone: "Asia/Baku" })
-  async expireOverdueContractsCron(): Promise<void> {
-    const { updated } = await this.expireOverdueContracts();
-    if (updated > 0) {
-      this.logger.log(`Expired ${updated} overdue contract(s)`);
-    }
   }
 }

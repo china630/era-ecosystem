@@ -32,17 +32,16 @@ import { OrganizationId } from "../common/org-id.decorator";
 import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { FinanceService } from "../finance/finance.service";
 import { RequiresModule } from "../subscription/requires-module.decorator";
-import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
+import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { ClosePeriodDto } from "./dto/close-period.dto";
 import { CloseFiscalYearDto } from "./dto/close-fiscal-year.dto";
 import { ReopenFiscalYearDto } from "./dto/reopen-fiscal-year.dto";
 import { CreateNettingDto } from "./dto/create-netting.dto";
-import { CreateProfitTaxAdjustmentDto } from "./dto/create-profit-tax-adjustment.dto";
-import { UpdateProfitTaxAdjustmentDto } from "./dto/update-profit-tax-adjustment.dto";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
-import { ProfitTaxService } from "./profit-tax.service";
+import { CreateProfitTaxAdjustmentDto } from "./dto/create-profit-tax-adjustment.dto";
+import { UpdateProfitTaxAdjustmentDto } from "./dto/update-profit-tax-adjustment.dto";
 import { ReportingService } from "./reporting.service";
 import { TaxExportService } from "./tax-export.service";
 import { ProfitTaxService } from "./profit-tax.service";
@@ -785,57 +784,6 @@ export class ReportingController {
     return this.reporting.accountsReceivableAging(organizationId, asOf);
   }
 
-  @Get("ap-aging")
-  @ApiOperation({
-    summary:
-      "AP Aging: старение кредиторки 531 (0-30 / 31-60 / 61-90 / 90+), date asOf optional",
-  })
-  apAging(
-    @OrganizationId() organizationId: string,
-    @Query("asOf") asOf?: string,
-  ) {
-    return this.reporting.accountsPayableAging(organizationId, asOf);
-  }
-
-  @Get("creditor-payment-plan")
-  @ApiOperation({
-    summary:
-      "План платежей кредиторам: непогашенные обязательства 531 + suggestedPayDate",
-  })
-  creditorPaymentPlan(
-    @OrganizationId() organizationId: string,
-    @Query("asOf") asOf?: string,
-  ) {
-    return this.reporting.creditorPaymentPlan(organizationId, asOf);
-  }
-
-  @Get("subconto-analysis")
-  @Roles(
-    UserRole.OWNER,
-    UserRole.ADMIN,
-    UserRole.ACCOUNTANT,
-    UserRole.DIRECTOR,
-    UserRole.AUDITOR,
-  )
-  @ApiOperation({
-    summary:
-      "Subconto / BRANCH analysis (ERA_SUBCONTO_ENABLED); filter by type code + valueRef",
-  })
-  subcontoAnalysis(
-    @OrganizationId() organizationId: string,
-    @Query("dateFrom") dateFrom: string,
-    @Query("dateTo") dateTo: string,
-    @Query("subcontoTypeCode") subcontoTypeCode?: string,
-    @Query("valueRef") valueRef?: string,
-  ) {
-    return this.reporting.subcontoAnalysis(organizationId, {
-      dateFrom,
-      dateTo,
-      subcontoTypeCode,
-      valueRef,
-    });
-  }
-
   @Get("vat-appendix-xlsx")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
@@ -914,24 +862,6 @@ export class ReportingController {
     return this.etaxes.submitDeclarationToGateway(organizationId, year, quarter);
   }
 
-  @Get("eqf-registry")
-  @UseGuards(VoenIntegrityGuard, RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
-  @ApiOperation({
-    summary:
-      "EQF / e-Qaimə registry by debtor (eqaime* + dvxSync* on sales invoices)",
-  })
-  eqfRegistry(
-    @OrganizationId() organizationId: string,
-    @Query("counterpartyId") counterpartyId?: string,
-    @Query("status") status?: string,
-  ) {
-    return this.reporting.listEqfRegistry(organizationId, {
-      counterpartyId,
-      status,
-    });
-  }
-
   @Get("tax-declarations")
   @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
@@ -948,8 +878,7 @@ export class ReportingController {
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({
-    summary:
-      "Generate declaration file (SIMPLIFIED_TAX / PROFIT_TAX / PAYROLL_WITHHOLDING / PROPERTY_TAX)",
+    summary: "Generate declaration file for e-taxes (status: GENERATED)",
   })
   generateTaxDeclaration(
     @OrganizationId() organizationId: string,
@@ -1033,26 +962,26 @@ export class ReportingController {
   }
 
   @Get("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "List profit tax book-to-tax adjustments for year" })
+  @ApiOperation({ summary: "List profit tax book-to-tax adjustments for a year" })
   listProfitTaxAdjustments(
     @OrganizationId() organizationId: string,
     @Query("year") yearStr: string,
   ) {
     const year = Number(yearStr);
     if (!Number.isFinite(year)) {
-      throw new BadRequestException("year is required");
+      throw new BadRequestException("year query parameter is required");
     }
     return this.profitTax.listAdjustments(organizationId, year);
   }
 
   @Post("profit-tax/adjustments")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Create manual profit tax adjustment" })
+  @ApiOperation({ summary: "Create manual profit tax adjustment line" })
   createProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
     @Body() dto: CreateProfitTaxAdjustmentDto,
@@ -1061,10 +990,10 @@ export class ReportingController {
   }
 
   @Patch("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Update manual profit tax adjustment" })
+  @ApiOperation({ summary: "Update manual profit tax adjustment line" })
   updateProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -1074,10 +1003,10 @@ export class ReportingController {
   }
 
   @Delete("profit-tax/adjustments/:id")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Soft-delete manual profit tax adjustment" })
+  @ApiOperation({ summary: "Soft-delete manual profit tax adjustment line" })
   deleteProfitTaxAdjustment(
     @OrganizationId() organizationId: string,
     @Param("id") id: string,
@@ -1086,17 +1015,19 @@ export class ReportingController {
   }
 
   @Get("profit-tax/preview")
-  @UseGuards(SubscriptionGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
   @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Preview annual profit tax aggregation" })
-  previewProfitTax(
+  @ApiOperation({
+    summary: "Preview profit tax aggregate (accounting result + adjustments + tax)",
+  })
+  profitTaxPreview(
     @OrganizationId() organizationId: string,
     @Query("year") yearStr: string,
   ) {
     const year = Number(yearStr);
     if (!Number.isFinite(year)) {
-      throw new BadRequestException("year is required");
+      throw new BadRequestException("year query parameter is required");
     }
     return this.profitTax.preview(organizationId, year);
   }

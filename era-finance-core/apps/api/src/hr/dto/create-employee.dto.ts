@@ -78,37 +78,11 @@ export class CreateEmployeeDto {
   @IsDateString()
   hireDate!: string;
 
-  @ApiPropertyOptional({
-    example: 2500,
-    description: "Gross total AZN (= tariff + supplement). If omitted when tariff/supplement set, computed as sum.",
-  })
-  @ValidateIf(
-    (o: CreateEmployeeDto) =>
-      o.tariffSalary == null && o.supplementSalary == null,
-  )
+  @ApiProperty({ example: 2500, description: "Gross, AZN" })
   @Type(() => Number)
   @IsNumber()
   @Min(0)
-  salary?: number;
-
-  @ApiPropertyOptional({ description: "Base tariff AZN" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  tariffSalary?: number;
-
-  @ApiPropertyOptional({ description: "Supplement AZN" })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  supplementSalary?: number;
-
-  @ApiPropertyOptional({ description: "Work schedule id" })
-  @IsOptional()
-  @IsUUID()
-  workScheduleId?: string;
+  salary!: number;
 
   @ApiPropertyOptional({
     description:

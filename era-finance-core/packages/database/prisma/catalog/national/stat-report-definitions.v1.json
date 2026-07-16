@@ -4,7 +4,7 @@
   "region": "AZ",
   "meta": {
     "source": "Placeholder templates for Goskomstat statistical forms; replace mappingJson with official line layouts when available.",
-    "note": "WS4 seed: 1-müəssisə, 1-əmək / 4-əmək, 1-İKT."
+    "note": "Consumed by StatReportDefinition seed / stat-form engine (Wave 5)."
   },
   "definitions": [
     {
@@ -21,21 +21,8 @@
       }
     },
     {
-      "code": "AZ_STAT_1_EMEK",
-      "name": "1-əmək (labor / workforce annual)",
-      "periodKind": "YEAR",
-      "version": 1,
-      "mappingJson": {
-        "sections": [
-          { "lineCode": "101", "source": "hr.headcount", "metric": "avgFte" },
-          { "lineCode": "102", "source": "hr.payroll", "metric": "grossWages" },
-          { "lineCode": "103", "source": "hr.absence", "metric": "unpaidDays" }
-        ]
-      }
-    },
-    {
-      "code": "AZ_STAT_4_EMEK",
-      "name": "4-əmək (labor / workforce quarterly)",
+      "code": "AZ_STAT_LABOR",
+      "name": "Labor / workforce statistical form (placeholder)",
       "periodKind": "QUARTER",
       "version": 1,
       "mappingJson": {
@@ -47,16 +34,28 @@
       }
     },
     {
-      "code": "AZ_STAT_1_IKT",
-      "name": "1-İKT (ICT / investments statistical form)",
-      "periodKind": "YEAR",
+      "code": "AZ_STAT_PRODUCTION",
+      "name": "Production / output statistical form (placeholder)",
+      "periodKind": "MONTH",
       "version": 1,
       "mappingJson": {
         "sections": [
-          { "lineCode": "401", "source": "gl.turnover", "accountPrefix": "11" },
-          { "lineCode": "402", "source": "gl.turnover", "accountPrefix": "13" },
-          { "lineCode": "403", "source": "inventory.receipt", "filter": "equipment" },
-          { "lineCode": "404", "source": "constant", "constant": 0 }
+          { "lineCode": "201", "source": "inventory.issue", "filter": "finishedGoods" },
+          { "lineCode": "202", "source": "manufacturing.release", "metric": "qty" },
+          { "lineCode": "203", "source": "inventory.receipt", "filter": "rawMaterials" }
+        ]
+      }
+    },
+    {
+      "code": "AZ_STAT_PRICES",
+      "name": "Price index / price observation form (placeholder)",
+      "periodKind": "MONTH",
+      "version": 1,
+      "mappingJson": {
+        "sections": [
+          { "lineCode": "301", "source": "priceList", "metric": "avgUnitPrice" },
+          { "lineCode": "302", "source": "invoice", "metric": "avgSellingPrice" },
+          { "lineCode": "303", "source": "purchase", "metric": "avgPurchasePrice" }
         ]
       }
     }

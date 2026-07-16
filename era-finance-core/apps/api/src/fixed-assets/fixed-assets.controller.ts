@@ -26,17 +26,13 @@ import { RecordFixedAssetUsageDto } from "./dto/record-fixed-asset-usage.dto";
 import { UpsertFixedAssetMonthlyUsageDto } from "./dto/upsert-monthly-usage.dto";
 import { BulkFixedAssetMonthlyUsageDto } from "./dto/bulk-monthly-usage.dto";
 import { UpdateFixedAssetDto } from "./dto/update-fixed-asset.dto";
-import { AcquireFixedAssetDto } from "./dto/acquire-fixed-asset.dto";
-import { CapitalizeFixedAssetDto } from "./dto/capitalize-fixed-asset.dto";
-import { CommissionFixedAssetDto } from "./dto/commission-fixed-asset.dto";
-import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
 import {
-  GratuitousInFixedAssetDto,
-  GratuitousOutFixedAssetDto,
-} from "./dto/gratuitous-fixed-asset.dto";
-import { InventoryFixedAssetDto } from "./dto/inventory-fixed-asset.dto";
+  AcquireFixedAssetDto,
+  AcquireWithCreateFixedAssetDto,
+} from "./dto/acquire-fixed-asset.dto";
+import { ModernizeFixedAssetDto } from "./dto/modernize-fixed-asset.dto";
 import { RevalueFixedAssetDto } from "./dto/revalue-fixed-asset.dto";
-import { TransferFixedAssetDto } from "./dto/transfer-fixed-asset.dto";
+import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
 import { FixedAssetLifecycleService } from "./fixed-asset-lifecycle.service";
 import { FixedAssetsService } from "./fixed-assets.service";
 import { RequiresModule } from "../subscription/requires-module.decorator";
@@ -130,10 +126,21 @@ export class FixedAssetsController {
     return this.assets.recordUsage(organizationId, id, dto.periodUnits);
   }
 
+  @Post("acquire")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Create fixed asset and capitalize in one step" })
+  acquireWithCreate(
+    @OrganizationId() organizationId: string,
+    @Body() dto: AcquireWithCreateFixedAssetDto,
+  ) {
+    return this.lifecycle.acquireWithCreate(organizationId, dto);
+  }
+
   @Post(":id/acquire")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Capitalize fixed asset (Dt 111 / Cr supplier or bank)" })
+  @ApiOperation({ summary: "Capitalize existing fixed asset (Dt 111 / Cr supplier or bank)" })
   acquire(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
@@ -142,34 +149,22 @@ export class FixedAssetsController {
     return this.lifecycle.acquire(organizationId, id, dto);
   }
 
-  @Post(":id/commission")
+  @Post(":id/modernize")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Commission fixed asset into service" })
-  commission(
+  @ApiOperation({ summary: "Capitalize modernization cost on fixed asset" })
+  modernize(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: CommissionFixedAssetDto,
+    @Body() dto: ModernizeFixedAssetDto,
   ) {
-    return this.lifecycle.commission(organizationId, id, dto);
-  }
-
-  @Post(":id/capitalize")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Capitalize additional costs onto fixed asset" })
-  capitalize(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: CapitalizeFixedAssetDto,
-  ) {
-    return this.lifecycle.capitalize(organizationId, id, dto);
+    return this.lifecycle.modernize(organizationId, id, dto);
   }
 
   @Post(":id/revalue")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Revalue fixed asset up or down" })
+  @ApiOperation({ summary: "Revalue fixed asset up or down via revaluation reserve" })
   revalue(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
@@ -181,7 +176,7 @@ export class FixedAssetsController {
   @Post(":id/dispose")
   @UseGuards(RolesGuard)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Dispose fixed asset" })
+  @ApiOperation({ summary: "Dispose fixed asset (full or partial)" })
   dispose(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
@@ -190,61 +185,13 @@ export class FixedAssetsController {
     return this.lifecycle.dispose(organizationId, id, dto);
   }
 
-  @Post(":id/transfer")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Transfer fixed asset between departments" })
-  transfer(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: TransferFixedAssetDto,
-  ) {
-    return this.lifecycle.transfer(organizationId, id, dto);
-  }
-
-  @Post(":id/gratuitous-in")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Record gratuitous receipt of fixed asset" })
-  gratuitousIn(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: GratuitousInFixedAssetDto,
-  ) {
-    return this.lifecycle.gratuitousIn(organizationId, id, dto);
-  }
-
-  @Post(":id/gratuitous-out")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Record gratuitous disposal of fixed asset" })
-  gratuitousOut(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: GratuitousOutFixedAssetDto,
-  ) {
-    return this.lifecycle.gratuitousOut(organizationId, id, dto);
-  }
-
-  @Post(":id/inventory")
-  @UseGuards(RolesGuard)
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
-  @ApiOperation({ summary: "Inventory surplus/shortage adjustment for fixed asset" })
-  inventory(
-    @OrganizationId() organizationId: string,
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: InventoryFixedAssetDto,
-  ) {
-    return this.lifecycle.inventory(organizationId, id, dto);
-  }
-
-  @Get(":id/events")
+  @Get(":id/lifecycle-events")
   @ApiOperation({ summary: "List lifecycle events for a fixed asset" })
-  listEvents(
+  listLifecycleEvents(
     @OrganizationId() organizationId: string,
     @Param("id", ParseUUIDPipe) id: string,
   ) {
-    return this.lifecycle.listEvents(organizationId, id);
+    return this.lifecycle.listLifecycleEvents(organizationId, id);
   }
 
   @Get(":id")

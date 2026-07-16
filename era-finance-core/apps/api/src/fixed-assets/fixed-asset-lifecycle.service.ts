@@ -1,12 +1,13 @@
-﻿import {
+import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import {
-  FixedAssetEventType,
+  FixedAssetLifecycleEventType,
   FixedAssetStatus,
+  LedgerType,
   Prisma,
   type PostingRole,
 } from "@erafinance/database";
@@ -16,24 +17,19 @@ import { PrismaService } from "../prisma/prisma.service";
 import { roundMoney2 } from "./decimal-round";
 import {
   AcquireFixedAssetDto,
+  AcquireWithCreateFixedAssetDto,
   FixedAssetCreditSource,
 } from "./dto/acquire-fixed-asset.dto";
-import { CapitalizeFixedAssetDto } from "./dto/capitalize-fixed-asset.dto";
-import { CommissionFixedAssetDto } from "./dto/commission-fixed-asset.dto";
-import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
-import {
-  GratuitousInFixedAssetDto,
-  GratuitousOutFixedAssetDto,
-} from "./dto/gratuitous-fixed-asset.dto";
-import {
-  FixedAssetInventoryDirection,
-  InventoryFixedAssetDto,
-} from "./dto/inventory-fixed-asset.dto";
+import { ModernizeFixedAssetDto } from "./dto/modernize-fixed-asset.dto";
 import {
   FixedAssetRevaluationDirection,
   RevalueFixedAssetDto,
 } from "./dto/revalue-fixed-asset.dto";
-import { TransferFixedAssetDto } from "./dto/transfer-fixed-asset.dto";
+import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
+import {
+  DEFAULT_TAX_DEPRECIATION_GROUP,
+  resolveTaxDepreciationRateFraction,
+} from "./tax-depreciation-catalog.util";
 
 const Decimal = Prisma.Decimal;
 
@@ -45,13 +41,11 @@ export class FixedAssetLifecycleService {
     private readonly posting: PostingAccountResolver,
   ) {}
 
-  listEvents(organizationId: string, assetId: string) {
-    return this.prisma.fixedAssetEvent.findMany({
+  listLifecycleEvents(organizationId: string, assetId: string) {
+    return this.prisma.fixedAssetLifecycleEvent.findMany({
       where: { organizationId, fixedAssetId: assetId },
-      orderBy: [{ eventDate: "desc" }, { createdAt: "desc" }],
-      include: {
-        transaction: { select: { id: true, reference: true, date: true } },
-      },
+      orderBy: [{ createdAt: "desc" }],
+      include: { transaction: { select: { id: true, reference: true, date: true } } },
     });
   }
 
@@ -61,23 +55,26 @@ export class FixedAssetLifecycleService {
     );
   }
 
-  async commission(
-    organizationId: string,
-    assetId: string,
-    dto: CommissionFixedAssetDto,
-  ) {
-    return this.prisma.$transaction((tx) =>
-      this.commissionInTransaction(tx, organizationId, assetId, dto),
-    );
+  async acquireWithCreate(organizationId: string, dto: AcquireWithCreateFixedAssetDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const asset = await tx.fixedAsset.create({
+        data: {
+          organizationId,
+          name: dto.name.trim(),
+          inventoryNumber: dto.inventoryNumber.trim(),
+          purchaseDate: new Date(dto.purchaseDate),
+          purchasePrice: new Decimal(dto.purchasePrice),
+          usefulLifeMonths: dto.usefulLifeMonths,
+          salvageValue: new Decimal(dto.salvageValue ?? 0),
+        },
+      });
+      return this.acquireInTransaction(tx, organizationId, asset.id, dto);
+    });
   }
 
-  async capitalize(
-    organizationId: string,
-    assetId: string,
-    dto: CapitalizeFixedAssetDto,
-  ) {
+  async modernize(organizationId: string, assetId: string, dto: ModernizeFixedAssetDto) {
     return this.prisma.$transaction((tx) =>
-      this.capitalizeInTransaction(tx, organizationId, assetId, dto),
+      this.modernizeInTransaction(tx, organizationId, assetId, dto),
     );
   }
 
@@ -93,42 +90,6 @@ export class FixedAssetLifecycleService {
     );
   }
 
-  async transfer(organizationId: string, assetId: string, dto: TransferFixedAssetDto) {
-    return this.prisma.$transaction((tx) =>
-      this.transferInTransaction(tx, organizationId, assetId, dto),
-    );
-  }
-
-  async gratuitousIn(
-    organizationId: string,
-    assetId: string,
-    dto: GratuitousInFixedAssetDto,
-  ) {
-    return this.prisma.$transaction((tx) =>
-      this.gratuitousInTransaction(tx, organizationId, assetId, dto),
-    );
-  }
-
-  async gratuitousOut(
-    organizationId: string,
-    assetId: string,
-    dto: GratuitousOutFixedAssetDto,
-  ) {
-    return this.prisma.$transaction((tx) =>
-      this.gratuitousOutInTransaction(tx, organizationId, assetId, dto),
-    );
-  }
-
-  async inventory(
-    organizationId: string,
-    assetId: string,
-    dto: InventoryFixedAssetDto,
-  ) {
-    return this.prisma.$transaction((tx) =>
-      this.inventoryInTransaction(tx, organizationId, assetId, dto),
-    );
-  }
-
   private async acquireInTransaction(
     tx: Prisma.TransactionClient,
     organizationId: string,
@@ -136,28 +97,26 @@ export class FixedAssetLifecycleService {
     dto: AcquireFixedAssetDto,
   ) {
     const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const existing = await tx.fixedAssetEvent.findFirst({
+    const existing = await tx.fixedAssetLifecycleEvent.findFirst({
       where: {
         organizationId,
         fixedAssetId: assetId,
-        eventType: FixedAssetEventType.ACQUIRE,
+        eventType: FixedAssetLifecycleEventType.ACQUISITION,
       },
     });
     if (existing) {
-      throw new ConflictException("Asset is already acquired (ACQUIRE exists)");
+      throw new ConflictException("Asset is already capitalized (ACQUISITION exists)");
     }
 
-    const amount =
-      dto.amount != null
-        ? roundMoney2(new Decimal(dto.amount))
-        : roundMoney2(new Decimal(asset.purchasePrice));
+    const gross = new Decimal(asset.purchasePrice).add(asset.modernizationCost);
+    const amount = dto.amount != null ? roundMoney2(new Decimal(dto.amount)) : roundMoney2(gross);
     if (amount.lte(0)) {
-      throw new BadRequestException("Acquisition amount must be positive");
+      throw new BadRequestException("Capitalization amount must be positive");
     }
 
     const date = dto.date ? new Date(dto.date) : asset.purchaseDate;
-    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
     const creditRole = this.creditRoleForSource(dto.creditSource);
+    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
 
     const [fixedAssetCostCode, creditCode] = await Promise.all([
       this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
@@ -172,74 +131,52 @@ export class FixedAssetLifecycleService {
       isFinal: true,
       counterpartyId:
         dto.creditSource === FixedAssetCreditSource.SUPPLIER ? dto.counterpartyId : null,
-      departmentId: asset.departmentId,
       lines: [
         { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
         { accountCode: creditCode, debit: "0", credit: amount.toString() },
       ],
     });
 
+    const fixedAssetAccountId =
+      asset.fixedAssetAccountId ??
+      (await this.resolveNasAccountId(tx, organizationId, "FIXED_ASSET_COST"));
+
     const updated = await tx.fixedAsset.update({
       where: { id: assetId },
-      data: {
-        counterpartyId:
-          dto.creditSource === FixedAssetCreditSource.SUPPLIER
-            ? dto.counterpartyId ?? asset.counterpartyId
-            : asset.counterpartyId,
-        purchasePrice: amount,
-      },
+      data: { fixedAssetAccountId },
     });
 
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.ACQUIRE,
-      amount,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
+    await this.ensureTaxProfileOnCapitalization(tx, organizationId, assetId, amount);
+
+    const event = await tx.fixedAssetLifecycleEvent.create({
+      data: {
+        organizationId,
+        fixedAssetId: assetId,
+        eventType: FixedAssetLifecycleEventType.ACQUISITION,
+        amount,
+        note: dto.note?.trim() || null,
+        transactionId,
+        payloadJson: {
+          creditSource: dto.creditSource,
+          counterpartyId: dto.counterpartyId ?? null,
+        },
+      },
     });
 
     return { asset: updated, event, transactionId };
   }
 
-  private async commissionInTransaction(
+  private async modernizeInTransaction(
     tx: Prisma.TransactionClient,
     organizationId: string,
     assetId: string,
-    dto: CommissionFixedAssetDto,
-  ) {
-    const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const date = dto.date ? new Date(dto.date) : new Date();
-
-    const updated = await tx.fixedAsset.update({
-      where: { id: assetId },
-      data: { purchaseDate: date },
-    });
-
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.COMMISSION,
-      amount: new Decimal(0),
-      eventDate: date,
-      note: dto.note,
-    });
-
-    return { asset: updated, event, transactionId: null };
-  }
-
-  private async capitalizeInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    assetId: string,
-    dto: CapitalizeFixedAssetDto,
+    dto: ModernizeFixedAssetDto,
   ) {
     const asset = await this.getActiveAsset(tx, organizationId, assetId);
     const amount = roundMoney2(new Decimal(dto.amount));
     const date = dto.date ? new Date(dto.date) : new Date();
-    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
     const creditRole = this.creditRoleForSource(dto.creditSource);
+    this.assertCreditSource(dto.creditSource, dto.counterpartyId);
 
     const [fixedAssetCostCode, creditCode] = await Promise.all([
       this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
@@ -249,12 +186,11 @@ export class FixedAssetLifecycleService {
     const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
       organizationId,
       date,
-      reference: `FA-CAP-${asset.inventoryNumber}`,
-      description: `Fixed asset capitalization: ${asset.name}`,
+      reference: `FA-MOD-${asset.inventoryNumber}`,
+      description: `Fixed asset modernization: ${asset.name}`,
       isFinal: true,
       counterpartyId:
         dto.creditSource === FixedAssetCreditSource.SUPPLIER ? dto.counterpartyId : null,
-      departmentId: asset.departmentId,
       lines: [
         { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
         { accountCode: creditCode, debit: "0", credit: amount.toString() },
@@ -263,17 +199,29 @@ export class FixedAssetLifecycleService {
 
     const updated = await tx.fixedAsset.update({
       where: { id: assetId },
-      data: { purchasePrice: { increment: amount } },
+      data: {
+        modernizationCost: { increment: amount },
+        fixedAssetAccountId:
+          asset.fixedAssetAccountId ??
+          (await this.resolveNasAccountId(tx, organizationId, "FIXED_ASSET_COST")),
+      },
     });
 
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.CAPITALIZE,
-      amount,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
+    await this.adjustTaxNbv(tx, organizationId, assetId, amount, "ADD");
+
+    const event = await tx.fixedAssetLifecycleEvent.create({
+      data: {
+        organizationId,
+        fixedAssetId: assetId,
+        eventType: FixedAssetLifecycleEventType.MODERNIZATION,
+        amount,
+        note: dto.note?.trim() || null,
+        transactionId,
+        payloadJson: {
+          creditSource: dto.creditSource,
+          counterpartyId: dto.counterpartyId ?? null,
+        },
+      },
     });
 
     return { asset: updated, event, transactionId };
@@ -288,6 +236,7 @@ export class FixedAssetLifecycleService {
     const asset = await this.getActiveAsset(tx, organizationId, assetId);
     const amount = roundMoney2(new Decimal(dto.amount));
     const date = dto.date ? new Date(dto.date) : new Date();
+    const remaining = this.remainingPortion(asset);
 
     const [fixedAssetCostCode, revaluationReserveCode, disposalLossCode] =
       await Promise.all([
@@ -297,19 +246,16 @@ export class FixedAssetLifecycleService {
       ]);
 
     const lines: { accountCode: string; debit: string; credit: string }[] = [];
-    let reserveDelta = new Decimal(0);
 
     if (dto.direction === FixedAssetRevaluationDirection.UP) {
       lines.push(
         { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
         { accountCode: revaluationReserveCode, debit: "0", credit: amount.toString() },
       );
-      reserveDelta = amount;
     } else {
       const reserve = roundMoney2(new Decimal(asset.revaluationReserve));
       const fromReserve = Decimal.min(amount, reserve);
       const loss = roundMoney2(amount.sub(fromReserve));
-      reserveDelta = fromReserve.neg();
 
       if (fromReserve.gt(0)) {
         lines.push(
@@ -334,29 +280,55 @@ export class FixedAssetLifecycleService {
       reference: `FA-REV-${asset.inventoryNumber}`,
       description: `Fixed asset revaluation ${dto.direction}: ${asset.name}`,
       isFinal: true,
-      departmentId: asset.departmentId,
       lines,
     });
 
+    const grossBefore = this.grossCarrying(asset);
+    let data: Prisma.FixedAssetUpdateInput;
+    if (dto.direction === FixedAssetRevaluationDirection.UP) {
+      data = {
+        purchasePrice: { increment: amount },
+        revaluationReserve: { increment: amount },
+      };
+      await this.adjustTaxNbvProportional(tx, organizationId, assetId, grossBefore, grossBefore.add(amount));
+    } else {
+      const reserve = roundMoney2(new Decimal(asset.revaluationReserve));
+      const fromReserve = Decimal.min(amount, reserve);
+      const loss = roundMoney2(amount.sub(fromReserve));
+      data = {
+        purchasePrice: { decrement: amount },
+        revaluationReserve: { decrement: fromReserve },
+      };
+      if (loss.gt(0)) {
+        // Loss portion already expensed; carrying reduced via purchasePrice decrement.
+      }
+      await this.adjustTaxNbvProportional(
+        tx,
+        organizationId,
+        assetId,
+        grossBefore,
+        grossBefore.sub(amount),
+      );
+    }
+
     const updated = await tx.fixedAsset.update({
       where: { id: assetId },
-      data: {
-        purchasePrice:
-          dto.direction === FixedAssetRevaluationDirection.UP
-            ? { increment: amount }
-            : { decrement: amount },
-        revaluationReserve: { increment: reserveDelta },
-      },
+      data,
     });
 
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.REVALUE,
-      amount,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
+    const event = await tx.fixedAssetLifecycleEvent.create({
+      data: {
+        organizationId,
+        fixedAssetId: assetId,
+        eventType: FixedAssetLifecycleEventType.REVALUATION,
+        amount,
+        note: dto.note?.trim() || null,
+        transactionId,
+        payloadJson: {
+          direction: dto.direction,
+          remainingPortion: remaining.toString(),
+        },
+      },
     });
 
     return { asset: updated, event, transactionId };
@@ -369,12 +341,25 @@ export class FixedAssetLifecycleService {
     dto: DisposeFixedAssetDto,
   ) {
     const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const gross = roundMoney2(new Decimal(asset.purchasePrice));
-    const accDep = roundMoney2(new Decimal(asset.bookedDepreciation));
+    const portion = new Decimal(dto.portion ?? 1);
+    if (portion.lte(0) || portion.gt(1)) {
+      throw new BadRequestException("portion must be in (0, 1]");
+    }
+
+    const disposed = new Decimal(asset.disposedPortion);
+    const remaining = this.remainingPortion(asset);
+    if (portion.gt(remaining)) {
+      throw new BadRequestException(
+        `Cannot dispose ${portion.toString()}; only ${remaining.toString()} remains`,
+      );
+    }
+
+    const grossTotal = this.grossCarrying(asset);
+    const gross = roundMoney2(grossTotal.mul(portion));
+    const accDep = roundMoney2(new Decimal(asset.bookedDepreciation).mul(portion));
     const nbv = roundMoney2(gross.sub(accDep));
     const proceeds =
       dto.proceeds != null ? roundMoney2(new Decimal(dto.proceeds)) : new Decimal(0);
-    const date = dto.date ? new Date(dto.date) : new Date();
 
     const [
       accumulatedDepreciationCode,
@@ -427,290 +412,53 @@ export class FixedAssetLifecycleService {
       credit: gross.toString(),
     });
 
+    const date = dto.date ? new Date(dto.date) : new Date();
     const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
       organizationId,
       date,
       reference: `FA-DISP-${asset.inventoryNumber}`,
-      description: `Fixed asset disposal: ${asset.name}`,
+      description: `Fixed asset disposal (${portion.mul(100).toFixed(2)}%): ${asset.name}`,
       isFinal: true,
-      departmentId: asset.departmentId,
       lines,
     });
 
-    const updated = await tx.fixedAsset.update({
-      where: { id: assetId },
-      data: {
-        status: FixedAssetStatus.DISPOSED,
-        disposalDate: date,
-        disposalAmount: proceeds,
-        bookedDepreciation: new Decimal(0),
-        revaluationReserve: new Decimal(0),
-      },
-    });
-
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.DISPOSE,
-      amount: gross,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
-    });
-
-    return {
-      asset: updated,
-      event,
-      transactionId,
-      nbv: nbv.toString(),
-      gainLoss: net.toString(),
-    };
-  }
-
-  private async transferInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    assetId: string,
-    dto: TransferFixedAssetDto,
-  ) {
-    const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const dept = await tx.department.findFirst({
-      where: { id: dto.toDepartmentId, organizationId },
-    });
-    if (!dept) throw new NotFoundException("Target department not found");
-
-    const date = dto.date ? new Date(dto.date) : new Date();
-    const fromDepartmentId = asset.departmentId;
+    const newDisposed = roundMoney2(disposed.add(portion));
+    const fullyDisposed = newDisposed.gte(1) || newDisposed.gte(remaining);
 
     const updated = await tx.fixedAsset.update({
       where: { id: assetId },
       data: {
-        departmentId: dto.toDepartmentId,
-        location: dto.location?.trim() || asset.location,
+        disposedPortion: newDisposed,
+        bookedDepreciation: { decrement: accDep },
+        purchasePrice: { decrement: roundMoney2(new Decimal(asset.purchasePrice).mul(portion)) },
+        modernizationCost: {
+          decrement: roundMoney2(new Decimal(asset.modernizationCost).mul(portion)),
+        },
+        status: fullyDisposed ? FixedAssetStatus.DISPOSED : asset.status,
+        disposalDate: fullyDisposed ? date : asset.disposalDate,
       },
     });
 
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.TRANSFER,
-      amount: new Decimal(0),
-      eventDate: date,
-      fromDepartmentId,
-      toDepartmentId: dto.toDepartmentId,
-      note: dto.note,
-    });
+    await this.adjustTaxNbv(tx, organizationId, assetId, gross, "SUBTRACT");
 
-    return { asset: updated, event, transactionId: null };
-  }
-
-  private async gratuitousInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    assetId: string,
-    dto: GratuitousInFixedAssetDto,
-  ) {
-    const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const amount =
-      dto.amount != null
-        ? roundMoney2(new Decimal(dto.amount))
-        : roundMoney2(new Decimal(asset.purchasePrice));
-    const date = dto.date ? new Date(dto.date) : asset.purchaseDate;
-
-    const [fixedAssetCostCode, incomeCode] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
-      this.posting.resolveAccountCode(organizationId, "INVENTORY_SURPLUS_INCOME", tx),
-    ]);
-
-    const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
-      organizationId,
-      date,
-      reference: `FA-GIN-${asset.inventoryNumber}`,
-      description: `Fixed asset gratuitous in: ${asset.name}`,
-      isFinal: true,
-      departmentId: asset.departmentId,
-      lines: [
-        { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
-        { accountCode: incomeCode, debit: "0", credit: amount.toString() },
-      ],
-    });
-
-    const updated = await tx.fixedAsset.update({
-      where: { id: assetId },
-      data: { purchasePrice: amount },
-    });
-
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.GRATUITOUS_IN,
-      amount,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
-    });
-
-    return { asset: updated, event, transactionId };
-  }
-
-  private async gratuitousOutInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    assetId: string,
-    dto: GratuitousOutFixedAssetDto,
-  ) {
-    const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const gross = roundMoney2(new Decimal(asset.purchasePrice));
-    const accDep = roundMoney2(new Decimal(asset.bookedDepreciation));
-    const nbv = roundMoney2(gross.sub(accDep));
-    const date = dto.date ? new Date(dto.date) : new Date();
-
-    const [accumulatedDepreciationCode, fixedAssetCostCode, disposalLossCode] =
-      await Promise.all([
-        this.posting.resolveAccountCode(organizationId, "ACCUMULATED_DEPRECIATION", tx),
-        this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
-        this.posting.resolveAccountCode(organizationId, "ASSET_DISPOSAL_LOSS", tx),
-      ]);
-
-    const lines: { accountCode: string; debit: string; credit: string }[] = [];
-    if (accDep.gt(0)) {
-      lines.push({
-        accountCode: accumulatedDepreciationCode,
-        debit: accDep.toString(),
-        credit: "0",
-      });
-    }
-    if (nbv.gt(0)) {
-      lines.push({
-        accountCode: disposalLossCode,
-        debit: nbv.toString(),
-        credit: "0",
-      });
-    }
-    lines.push({
-      accountCode: fixedAssetCostCode,
-      debit: "0",
-      credit: gross.toString(),
-    });
-
-    const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
-      organizationId,
-      date,
-      reference: `FA-GOUT-${asset.inventoryNumber}`,
-      description: `Fixed asset gratuitous out: ${asset.name}`,
-      isFinal: true,
-      departmentId: asset.departmentId,
-      lines,
-    });
-
-    const updated = await tx.fixedAsset.update({
-      where: { id: assetId },
+    const event = await tx.fixedAssetLifecycleEvent.create({
       data: {
-        status: FixedAssetStatus.DISPOSED,
-        disposalDate: date,
-        disposalAmount: new Decimal(0),
-        bookedDepreciation: new Decimal(0),
-        revaluationReserve: new Decimal(0),
+        organizationId,
+        fixedAssetId: assetId,
+        eventType: FixedAssetLifecycleEventType.DISPOSAL,
+        amount: gross,
+        portion,
+        note: dto.note?.trim() || null,
+        transactionId,
+        payloadJson: {
+          nbv: nbv.toString(),
+          proceeds: proceeds.toString(),
+          accDepPortion: accDep.toString(),
+        },
       },
     });
 
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.GRATUITOUS_OUT,
-      amount: gross,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
-    });
-
-    return { asset: updated, event, transactionId, nbv: nbv.toString() };
-  }
-
-  private async inventoryInTransaction(
-    tx: Prisma.TransactionClient,
-    organizationId: string,
-    assetId: string,
-    dto: InventoryFixedAssetDto,
-  ) {
-    const asset = await this.getActiveAsset(tx, organizationId, assetId);
-    const amount = roundMoney2(new Decimal(dto.amount));
-    const date = dto.date ? new Date(dto.date) : new Date();
-
-    const [fixedAssetCostCode, surplusCode, lossCode] = await Promise.all([
-      this.posting.resolveAccountCode(organizationId, "FIXED_ASSET_COST", tx),
-      this.posting.resolveAccountCode(organizationId, "INVENTORY_SURPLUS_INCOME", tx),
-      this.posting.resolveAccountCode(organizationId, "ASSET_DISPOSAL_LOSS", tx),
-    ]);
-
-    const isSurplus = dto.direction === FixedAssetInventoryDirection.SURPLUS;
-    const lines = isSurplus
-      ? [
-          { accountCode: fixedAssetCostCode, debit: amount.toString(), credit: "0" },
-          { accountCode: surplusCode, debit: "0", credit: amount.toString() },
-        ]
-      : [
-          { accountCode: lossCode, debit: amount.toString(), credit: "0" },
-          { accountCode: fixedAssetCostCode, debit: "0", credit: amount.toString() },
-        ];
-
-    const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
-      organizationId,
-      date,
-      reference: `FA-INV-${asset.inventoryNumber}`,
-      description: `Fixed asset inventory ${dto.direction}: ${asset.name}`,
-      isFinal: true,
-      departmentId: asset.departmentId,
-      lines,
-    });
-
-    const updated = await tx.fixedAsset.update({
-      where: { id: assetId },
-      data: {
-        purchasePrice: isSurplus ? { increment: amount } : { decrement: amount },
-      },
-    });
-
-    const event = await this.createEvent(tx, {
-      organizationId,
-      fixedAssetId: assetId,
-      eventType: FixedAssetEventType.INVENTORY,
-      amount,
-      eventDate: date,
-      transactionId,
-      note: dto.note,
-    });
-
-    return { asset: updated, event, transactionId };
-  }
-
-  private async createEvent(
-    tx: Prisma.TransactionClient,
-    data: {
-      organizationId: string;
-      fixedAssetId: string;
-      eventType: FixedAssetEventType;
-      amount: Prisma.Decimal;
-      eventDate: Date;
-      transactionId?: string | null;
-      fromDepartmentId?: string | null;
-      toDepartmentId?: string | null;
-      note?: string;
-    },
-  ) {
-    return tx.fixedAssetEvent.create({
-      data: {
-        organizationId: data.organizationId,
-        fixedAssetId: data.fixedAssetId,
-        eventType: data.eventType,
-        amount: data.amount,
-        eventDate: data.eventDate,
-        transactionId: data.transactionId ?? null,
-        fromDepartmentId: data.fromDepartmentId ?? null,
-        toDepartmentId: data.toDepartmentId ?? null,
-        note: data.note?.trim() || null,
-      },
-    });
+    return { asset: updated, event, transactionId, nbv: nbv.toString(), gainLoss: net.toString() };
   }
 
   private async getActiveAsset(
@@ -720,6 +468,7 @@ export class FixedAssetLifecycleService {
   ) {
     const asset = await tx.fixedAsset.findFirst({
       where: { id: assetId, organizationId },
+      include: { taxProfile: true },
     });
     if (!asset) throw new NotFoundException("Fixed asset not found");
     if (asset.status === FixedAssetStatus.DISPOSED) {
@@ -728,18 +477,113 @@ export class FixedAssetLifecycleService {
     return asset;
   }
 
+  private grossCarrying(asset: {
+    purchasePrice: Prisma.Decimal;
+    modernizationCost: Prisma.Decimal;
+  }): Prisma.Decimal {
+    return new Decimal(asset.purchasePrice).add(asset.modernizationCost);
+  }
+
+  private remainingPortion(asset: { disposedPortion: Prisma.Decimal }): Prisma.Decimal {
+    const rem = new Decimal(1).sub(asset.disposedPortion);
+    return rem.lt(0) ? new Decimal(0) : rem;
+  }
+
   private creditRoleForSource(source: FixedAssetCreditSource): PostingRole {
     return source === FixedAssetCreditSource.SUPPLIER ? "SUPPLIER_PAYABLE" : "MAIN_BANK";
   }
 
-  private assertCreditSource(
-    source: FixedAssetCreditSource,
-    counterpartyId?: string,
-  ): void {
+  private assertCreditSource(source: FixedAssetCreditSource, counterpartyId?: string): void {
     if (source === FixedAssetCreditSource.SUPPLIER && !counterpartyId) {
-      throw new BadRequestException(
-        "counterpartyId is required when creditSource is SUPPLIER",
-      );
+      throw new BadRequestException("counterpartyId is required when creditSource is SUPPLIER");
     }
+  }
+
+  private async resolveNasAccountId(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    role: PostingRole,
+  ): Promise<string> {
+    const code = await this.posting.resolveAccountCode(organizationId, role, tx);
+    const acc = await tx.account.findFirst({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        code,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    if (!acc) {
+      throw new NotFoundException(`NAS account ${code} not found for role ${role}`);
+    }
+    return acc.id;
+  }
+
+  private async ensureTaxProfileOnCapitalization(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    assetId: string,
+    amount: Prisma.Decimal,
+  ): Promise<void> {
+    const profile = await tx.fixedAssetTaxProfile.findUnique({
+      where: { fixedAssetId: assetId },
+    });
+    if (profile) return;
+    const asset = await tx.fixedAsset.findUnique({ where: { id: assetId } });
+    if (!asset) return;
+    const rateFraction = await resolveTaxDepreciationRateFraction(DEFAULT_TAX_DEPRECIATION_GROUP);
+    await tx.fixedAssetTaxProfile.create({
+      data: {
+        organizationId,
+        fixedAssetId: assetId,
+        taxGroupCode: DEFAULT_TAX_DEPRECIATION_GROUP,
+        taxRatePercent: new Decimal(rateFraction),
+        taxNbv: amount,
+        taxAccumulated: new Decimal(0),
+      },
+    });
+  }
+
+  private async adjustTaxNbv(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    assetId: string,
+    delta: Prisma.Decimal,
+    mode: "ADD" | "SUBTRACT",
+  ): Promise<void> {
+    const profile = await tx.fixedAssetTaxProfile.findUnique({
+      where: { fixedAssetId: assetId },
+    });
+    if (!profile) return;
+    const current = new Decimal(profile.taxNbv);
+    const next =
+      mode === "ADD"
+        ? roundMoney2(current.add(delta))
+        : roundMoney2(Decimal.max(new Decimal(0), current.sub(delta)));
+    await tx.fixedAssetTaxProfile.update({
+      where: { id: profile.id },
+      data: { taxNbv: next },
+    });
+  }
+
+  /** Proportional tax NBV adjustment on revaluation (book gross change ratio). */
+  private async adjustTaxNbvProportional(
+    tx: Prisma.TransactionClient,
+    organizationId: string,
+    assetId: string,
+    grossBefore: Prisma.Decimal,
+    grossAfter: Prisma.Decimal,
+  ): Promise<void> {
+    const profile = await tx.fixedAssetTaxProfile.findUnique({
+      where: { fixedAssetId: assetId },
+    });
+    if (!profile || grossBefore.lte(0)) return;
+    const ratio = grossAfter.div(grossBefore);
+    const next = roundMoney2(new Decimal(profile.taxNbv).mul(ratio));
+    await tx.fixedAssetTaxProfile.update({
+      where: { id: profile.id },
+      data: { taxNbv: Decimal.max(new Decimal(0), next) },
+    });
   }
 }

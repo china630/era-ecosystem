@@ -13,7 +13,6 @@ import { EmptyState } from "../../components/empty-state";
 import { PageHeader } from "../../components/layout/page-header";
 import { SubscriptionPaywall } from "../../components/subscription-paywall";
 import { FixedAssetModal } from "../../components/fixed-assets/fixed-asset-modal";
-import { FixedAssetLifecyclePanel } from "../../components/fixed-assets/fixed-asset-lifecycle-panel";
 import {
   CARD_CONTAINER_CLASS,
   DATA_TABLE_ACTIONS_TD_CLASS,
@@ -66,7 +65,6 @@ function FixedAssetsPageContent() {
   const [faModalOpen, setFaModalOpen] = useState(false);
   const [faModalMode, setFaModalMode] = useState<"create" | "edit">("create");
   const [faEditId, setFaEditId] = useState<string | null>(null);
-  const [lifecycleAssetId, setLifecycleAssetId] = useState<string | null>(null);
   const [depYearMonth, setDepYearMonth] = useState(() => {
     const d = new Date();
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -283,15 +281,6 @@ function FixedAssetsPageContent() {
                 <div className="mt-2 flex flex-wrap items-center justify-end gap-1">
                   <button
                     type="button"
-                    className={SECONDARY_BUTTON_CLASS}
-                    onClick={() =>
-                      setLifecycleAssetId((cur) => (cur === r.id ? null : r.id))
-                    }
-                  >
-                    {t("fixedAssets.lifecycleTitle")}
-                  </button>
-                  <button
-                    type="button"
                     className={TABLE_ROW_ICON_BTN_CLASS}
                     title={t("products.edit")}
                     onClick={() => {
@@ -313,13 +302,6 @@ function FixedAssetsPageContent() {
                     </button>
                   )}
                 </div>
-                {lifecycleAssetId === r.id ? (
-                  <FixedAssetLifecyclePanel
-                    assetId={r.id}
-                    assetName={r.name}
-                    onChanged={() => void load()}
-                  />
-                ) : null}
               </div>
             ))}
           </div>
@@ -385,15 +367,6 @@ function FixedAssetsPageContent() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
-                          className={SECONDARY_BUTTON_CLASS}
-                          onClick={() =>
-                            setLifecycleAssetId((cur) => (cur === r.id ? null : r.id))
-                          }
-                        >
-                          {t("fixedAssets.lifecycleTitle")}
-                        </button>
-                        <button
-                          type="button"
                           className={TABLE_ROW_ICON_BTN_CLASS}
                           title={t("products.edit")}
                           onClick={() => {
@@ -415,13 +388,6 @@ function FixedAssetsPageContent() {
                           </button>
                         )}
                       </div>
-                      {lifecycleAssetId === r.id ? (
-                        <FixedAssetLifecyclePanel
-                          assetId={r.id}
-                          assetName={r.name}
-                          onChanged={() => void load()}
-                        />
-                      ) : null}
                     </td>
                   </tr>
                 ))}

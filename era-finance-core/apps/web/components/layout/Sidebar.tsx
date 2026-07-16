@@ -52,6 +52,7 @@ import {
   ShoppingCart,
   SlidersHorizontal,
   Sparkles,
+  Tags,
   TrendingDown,
   Upload,
   User,
@@ -678,10 +679,10 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
-            href="/procurement/protocols"
-            label={t("nav.procurementProtocols")}
-            isActive={pathname.startsWith("/procurement/protocols")}
-            icon={FileCheck2}
+            href="/customs"
+            label={t("nav.customs")}
+            isActive={pathname.startsWith("/customs")}
+            icon={Ship}
             onNavClick={onNavClick}
           />
           {canPostAccounting ? (
@@ -939,13 +940,6 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
-            href="/reporting/ap-aging"
-            label={t("nav.apAging")}
-            isActive={pathname.startsWith("/reporting/ap-aging")}
-            icon={TrendingDown}
-            onNavClick={onNavClick}
-          />
-          <SideNavSubItem
             href="/reporting/tax-export"
             label={t("reporting.taxExportLink")}
             isActive={pathname.startsWith("/reporting/tax-export")}
@@ -953,17 +947,31 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
-            href="/reporting/eqf-registry"
-            label={t("reporting.eqfRegistryLink")}
-            isActive={pathname.startsWith("/reporting/eqf-registry")}
+            href="/reporting/statforms"
+            label={t("reporting.statforms.nav")}
+            isActive={pathname.startsWith("/reporting/statforms")}
             icon={FileSpreadsheet}
             onNavClick={onNavClick}
           />
           <SideNavSubItem
-            href="/reporting/statforms"
-            label={t("reporting.statforms.link")}
-            isActive={pathname.startsWith("/reporting/statforms")}
-            icon={FileSpreadsheet}
+            href="/reporting/profit-tax"
+            label={t("nav.profitTax")}
+            isActive={pathname.startsWith("/reporting/profit-tax")}
+            icon={Scale}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/vat"
+            label={t("nav.vatDeclaration")}
+            isActive={pathname.startsWith("/reporting/vat")}
+            icon={FileCheck2}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/vat-deposit"
+            label={t("nav.vatDeposit")}
+            isActive={pathname.startsWith("/reporting/vat-deposit")}
+            icon={Landmark}
             onNavClick={onNavClick}
           />
           <SideNavSubItem
@@ -997,14 +1005,6 @@ export function MainSidebar({
           isActive={pathname.startsWith("/fixed-assets")}
           locked={lockedFixedAssets}
           icon={Building2}
-          onNavClick={onNavClick}
-        />
-        <SideNavItem
-          href="/intangible-assets"
-          label={t("nav.sectionIntangibleAssets")}
-          isActive={pathname.startsWith("/intangible-assets")}
-          locked={lockedFixedAssets}
-          icon={Sparkles}
           onNavClick={onNavClick}
         />
 

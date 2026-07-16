@@ -21,8 +21,6 @@ import {
   isSatelliteRetailShiftClosed,
   isSatelliteWholesaleOrderConfirmed,
   isSatelliteFbStockConsumptionCompleted,
-  isSatelliteFbSaleCompleted,
-  isSatelliteFbShiftClosed,
   isSatelliteStaffClockBatch,
   isSatelliteWorkforceAbsenceApproved,
   isSatelliteWorkforceAbsenceCancelled,
@@ -55,8 +53,6 @@ import {
   satelliteRetailShiftClosedSchema,
   satelliteWholesaleOrderConfirmedSchema,
   satelliteFbStockConsumptionCompletedSchema,
-  satelliteFbSaleCompletedSchema,
-  satelliteFbShiftClosedSchema,
   isSatelliteBankGlDailySummary,
   satelliteBankGlDailySummarySchema,
 } from "@era/contracts";
@@ -212,14 +208,6 @@ export class SatelliteEventDispatchService {
     if (isSatelliteFbStockConsumptionCompleted(data)) {
       const event = satelliteFbStockConsumptionCompletedSchema.parse(data);
       return this.handleFbStockConsumption(organizationId, event);
-    }
-    if (isSatelliteFbSaleCompleted(data)) {
-      const event = satelliteFbSaleCompletedSchema.parse(data);
-      return this.handleFbSale(organizationId, event);
-    }
-    if (isSatelliteFbShiftClosed(data)) {
-      const event = satelliteFbShiftClosedSchema.parse(data);
-      return this.handleFbShiftClosed(organizationId, event);
     }
     if (isSatelliteStaffClockBatch(data)) {
       const event = satelliteStaffClockBatchSchema.parse(data);
@@ -930,52 +918,6 @@ export class SatelliteEventDispatchService {
         reservationId: event.payload.reservationId,
         programCode: event.payload.programCode,
         organizationId,
-      },
-    };
-  }
-
-  private async handleFbSale(
-    organizationId: string,
-    event: ReturnType<typeof satelliteFbSaleCompletedSchema.parse>,
-  ): Promise<SatelliteDispatchResult> {
-    const cpId = await this.resolveCounterpartyId(organizationId);
-    const ref = `fb-sale:${event.payload.receiptId}`;
-    const existing = await this.prisma.transaction.findFirst({
-      where: { organizationId, reference: ref },
-      select: { id: true },
-    });
-    if (existing) {
-      return { transactionId: existing.id, meta: { idempotent: true } };
-    }
-    const transactionId = await this.prisma.$transaction(async (tx) =>
-      this.postBalancedJournal(tx, organizationId, {
-        amount: event.payload.amountNet,
-        reference: ref,
-        description: `F&B sale ${event.payload.outletCode ?? event.payload.outletId} (${event.correlationId})`,
-        counterpartyId: cpId,
-      }),
-    );
-    return {
-      transactionId,
-      meta: {
-        ticketId: event.payload.ticketId,
-        receiptId: event.payload.receiptId,
-      },
-    };
-  }
-
-  private async handleFbShiftClosed(
-    organizationId: string,
-    event: ReturnType<typeof satelliteFbShiftClosedSchema.parse>,
-  ): Promise<SatelliteDispatchResult> {
-    this.logger.log(
-      `F&B shift closed (cash recon stub): ${event.payload.shiftId} totalSales=${event.payload.totalSales} org=${organizationId} (${event.correlationId})`,
-    );
-    return {
-      meta: {
-        shiftId: event.payload.shiftId,
-        totalSales: event.payload.totalSales,
-        ticketCount: event.payload.ticketCount,
       },
     };
   }
