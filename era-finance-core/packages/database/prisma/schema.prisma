@@ -191,6 +191,12 @@ model Organization {
   @@index([ownerId])
   @@index([kind])
   @@map("organizations")
+  workSchedules                WorkSchedule[]
+  payrollComponents            PayrollComponent[]
+  payrollSlipLines             PayrollSlipLine[]
+  vacationSeniorityRules       VacationSeniorityRule[]
+  perDiemNorms                 PerDiemNorm[]
+  businessTrips                BusinessTrip[]
 }
 
 /// Organization type / NAS chart variant (commercial vs budget vs NGO).
@@ -1287,6 +1293,9 @@ model Employee {
   /// *
   ///    * Оклад gross (AZN), частный ненефтяной сектор
   salary                     Decimal                  @map("salary") @db.Decimal(19, 4)
+  tariffSalary               Decimal                  @default(0) @map("tariff_salary") @db.Decimal(19, 4)
+  supplementSalary           Decimal                  @default(0) @map("supplement_salary") @db.Decimal(19, 4)
+  workScheduleId             String?                  @map("work_schedule_id") @db.Uuid
   createdAt                  DateTime                 @default(now()) @map("created_at")
   updatedAt                  DateTime                 @updatedAt @map("updated_at")
   kind                       EmployeeKind             @default(EMPLOYEE) @map("kind")
@@ -1353,6 +1362,8 @@ model Employee {
   @@index([organizationId, deletedAt], map: "employees_org_deleted_at_idx")
   @@index([userId])
   @@map("employees")
+  workSchedule               WorkSchedule?            @relation(fields: [workScheduleId], references: [id], onDelete: SetNull)
+  businessTrips              BusinessTrip[]
 }
 
 model PayrollRun {
@@ -1469,6 +1480,7 @@ model PayrollSlip {
   @@index([organizationId, payrollRunId])
   @@index([organizationId, deletedAt], map: "payroll_slips_org_deleted_at_idx")
   @@map("payroll_slips")
+  lines                     PayrollSlipLine[]
 }
 
 /// *
@@ -1528,6 +1540,146 @@ model Timesheet {
 
 /// *
 ///  * Строка табеля: сотрудник × календарный день.
+enum WorkScheduleKind {
+  FIVE_DAY
+  SIX_DAY
+  TWO_SHIFT
+}
+
+enum PayrollComponentKind {
+  EARNING
+  DEDUCTION
+}
+
+enum PayrollComponentCode {
+  BONUS
+  MATERIAL_AID
+  ALIMONY
+  EXECUTION_SHEET
+  LOAN
+  ADVANCE
+  UNION_DUE
+  INCOME_TAX_RELIEF
+  NIGHT_PREMIUM
+  EVENING_PREMIUM
+  OVERTIME_PREMIUM
+  BASE_SALARY
+}
+
+enum BusinessTripKind {
+  DOMESTIC
+  FOREIGN
+}
+
+model WorkSchedule {
+  id                   String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String           @map("organization_id") @db.Uuid
+  name                 String
+  kind                 WorkScheduleKind
+  dayHours             Decimal          @default(8) @map("day_hours") @db.Decimal(8, 2)
+  nightPremiumRate     Decimal          @default(1.5) @map("night_premium_rate") @db.Decimal(8, 4)
+  eveningPremiumRate   Decimal          @default(1.2) @map("evening_premium_rate") @db.Decimal(8, 4)
+  overtimePremiumRate  Decimal          @default(2.0) @map("overtime_premium_rate") @db.Decimal(8, 4)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees            Employee[]
+
+  @@index([organizationId])
+  @@map("work_schedules")
+}
+
+model PayrollComponent {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  code           PayrollComponentCode
+  kind           PayrollComponentKind
+  nameAz         String               @map("name_az")
+  nameRu         String               @map("name_ru")
+  nameEn         String               @map("name_en")
+  isActive       Boolean              @default(true) @map("is_active")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lines          PayrollSlipLine[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@map("payroll_components")
+}
+
+model PayrollSlipLine {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  payrollSlipId  String               @map("payroll_slip_id") @db.Uuid
+  componentId    String?              @map("component_id") @db.Uuid
+  code           PayrollComponentCode
+  kind           PayrollComponentKind
+  amount         Decimal              @db.Decimal(19, 4)
+  note           String               @default("")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payrollSlip    PayrollSlip          @relation(fields: [payrollSlipId], references: [id], onDelete: Cascade)
+  component      PayrollComponent?    @relation(fields: [componentId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, payrollSlipId])
+  @@index([payrollSlipId])
+  @@map("payroll_slip_lines")
+}
+
+model VacationSeniorityRule {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  yearsFrom      Int          @map("years_from")
+  extraDays      Int          @map("extra_days")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, yearsFrom])
+  @@index([organizationId])
+  @@map("vacation_seniority_rules")
+}
+
+model PerDiemNorm {
+  id                 String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String       @map("organization_id") @db.Uuid
+  regionCode         String       @map("region_code")
+  regionName         String       @map("region_name")
+  dailyAznDomestic   Decimal      @map("daily_azn_domestic") @db.Decimal(19, 4)
+  foreignFactor      Decimal      @default(1) @map("foreign_factor") @db.Decimal(8, 4)
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, regionCode])
+  @@index([organizationId])
+  @@map("per_diem_norms")
+}
+
+model BusinessTrip {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String           @map("organization_id") @db.Uuid
+  employeeId      String           @map("employee_id") @db.Uuid
+  kind            BusinessTripKind
+  regionCode      String           @map("region_code")
+  startDate       DateTime         @map("start_date") @db.Date
+  endDate         DateTime         @map("end_date") @db.Date
+  purpose         String           @default("")
+  perDiemTotal    Decimal?         @map("per_diem_total") @db.Decimal(19, 4)
+  advanceReportId String?          @map("advance_report_id") @db.Uuid
+  status          String           @default("DRAFT") // DRAFT|CALCULATED|LINKED
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, employeeId])
+  @@index([organizationId, status])
+  @@map("business_trips")
+}
+
 model TimesheetEntry {
   id                String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   timesheetId       String             @map("timesheet_id") @db.Uuid
@@ -1535,6 +1687,9 @@ model TimesheetEntry {
   dayDate           DateTime           @map("day_date") @db.Date
   type              TimesheetEntryType @map("type")
   hours             Decimal            @default(8) @db.Decimal(8, 2)
+  overtimeHours     Decimal            @default(0) @map("overtime_hours") @db.Decimal(8, 2)
+  eveningHours      Decimal            @default(0) @map("evening_hours") @db.Decimal(8, 2)
+  nightHours        Decimal            @default(0) @map("night_hours") @db.Decimal(8, 2)
   /// *
   ///    * Заполнено из Absence — ручное редактирование запрещено.
   lockedFromAbsence Boolean            @default(false) @map("locked_from_absence")

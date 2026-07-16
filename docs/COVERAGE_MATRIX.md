@@ -83,8 +83,8 @@ Cell values: **Y** = screen/path exists · **—** = not applicable · **N** = g
 | FIN-CIT-01 | Natural person via MDM (HR/CP) | TZ §28.2 | Y | — | Y | Y | — | SHIPPED | — |
 | FIN-HR-MDM-01 | Employee payroll mirror + MDM person read-through | ADR | Y | — | Y | Y | — | SHIPPED | Plan D — no local FIN/name |
 | ORCH-MDM-HR-01 | PersonHrProfile + PersonAddress (blood/stats/addr/edu) grant-gated | ADR | Y | — | — | — | HEADLESS | API | internal `/hr-profile`; ops-profile batch expands |
-| FIN-HR-AL-01 | Aktiv list report (JSON + Excel) MDM HR read-through | TZ | Y | Y `/employees` export | Y | Y | — | SHIPPED | no PII persist on Employee |
-| FIN-HR-PAY-01 | Payroll depth: slip lines, tariff/supplement, night/OT, seniority leave, email payslips, per-diem trips | TZ tender | Y | Y `/payroll` | Y | Y | — | API | WS1; UAT-SMOKE pending |
+| FIN-HR-AL-01 | Aktiv list report (JSON + Excel) MDM ops-profile read-through | TZ | Y | Y `/employees` export | Y | Y | — | API | WS1 restore; full PersonHrProfile batch deferred |
+| FIN-HR-PAY-01 | Payroll depth: slip lines, tariff/supplement, night/OT, seniority leave, email payslips, per-diem trips | TZ tender | Y | Y `/payroll` | Y | Y | — | API | WS1 restore; UAT-SMOKE pending |
 | FIN-FA-LC-01 | Fixed asset lifecycle events + card history | TZ | Y | Y `/fixed-assets` | Y | Y | — | API | WS3 |
 | FIN-IA-01 | Intangible assets + amortization | TZ | Y | Y `/intangible-assets` | Y | Y | — | API | WS3 |
 | FIN-STAT-01 | Goskomstat statforms engine (1-müəssisə, 1/4-əmək, 1-İKT) | TZ | Y | Y `/reporting/statforms` | — | Y | — | API | compliance_pro\|tax_pro |

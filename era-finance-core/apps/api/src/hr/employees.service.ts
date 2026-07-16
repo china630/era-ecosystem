@@ -34,6 +34,61 @@ import type { ResolvePersonInput } from "../orchestrator/orchestrator-mdm-client
 
 const Decimal = Prisma.Decimal;
 
+/** Sync salary = tariff + supplement; if only salary given, tariff=salary, supplement=0. */
+function resolveSalaryParts(input: {
+  salary?: number | null;
+  tariffSalary?: number | null;
+  supplementSalary?: number | null;
+  current?: {
+    salary: Prisma.Decimal | number;
+    tariffSalary?: Prisma.Decimal | number | null;
+    supplementSalary?: Prisma.Decimal | number | null;
+  };
+}): {
+  salary: InstanceType<typeof Decimal>;
+  tariffSalary: InstanceType<typeof Decimal>;
+  supplementSalary: InstanceType<typeof Decimal>;
+} | null {
+  const hasTariff = input.tariffSalary != null;
+  const hasSupplement = input.supplementSalary != null;
+  const hasSalary = input.salary != null;
+
+  if (!hasTariff && !hasSupplement && !hasSalary) {
+    return null;
+  }
+
+  if (hasTariff || hasSupplement) {
+    const tariff = new Decimal(
+      hasTariff
+        ? input.tariffSalary!
+        : input.current?.tariffSalary != null
+          ? Number(input.current.tariffSalary)
+          : hasSalary
+            ? input.salary!
+            : Number(input.current?.salary ?? 0),
+    );
+    const supplement = new Decimal(
+      hasSupplement
+        ? input.supplementSalary!
+        : input.current?.supplementSalary != null
+          ? Number(input.current.supplementSalary)
+          : 0,
+    );
+    return {
+      tariffSalary: tariff,
+      supplementSalary: supplement,
+      salary: tariff.add(supplement),
+    };
+  }
+
+  const salary = new Decimal(input.salary!);
+  return {
+    salary,
+    tariffSalary: salary,
+    supplementSalary: new Decimal(0),
+  };
+}
+
 @Injectable()
 export class EmployeesService {
   constructor(
@@ -187,6 +242,16 @@ export class EmployeesService {
             kind === EmployeeKind.CONTRACTOR
               ? dto.voen!.trim()
               : (dto.voen?.trim() ?? null);
+          const salaryParts = resolveSalaryParts({
+            salary: dto.salary,
+            tariffSalary: dto.tariffSalary,
+            supplementSalary: dto.supplementSalary,
+          });
+          if (!salaryParts) {
+            throw new BadRequestException(
+              "Provide salary or tariffSalary/supplementSalary",
+            );
+          }
           const createData: Record<string, unknown> = {
             organizationId,
             kind,
@@ -203,7 +268,10 @@ export class EmployeesService {
             positionId: dto.positionId,
             startDate: new Date(dto.startDate),
             hireDate: new Date(dto.hireDate),
-            salary: new Decimal(dto.salary),
+            salary: salaryParts.salary,
+            tariffSalary: salaryParts.tariffSalary,
+            supplementSalary: salaryParts.supplementSalary,
+            workScheduleId: dto.workScheduleId ?? null,
             initialVacationDays: new Decimal(dto.initialVacationDays ?? 0),
             avgMonthlySalaryLastYear:
               dto.avgMonthlySalaryLastYear != null
@@ -494,7 +562,25 @@ export class EmployeesService {
     if (dto.contractEndDate !== undefined) {
       data.contractEndDate = dto.contractEndDate ? new Date(dto.contractEndDate) : null;
     }
-    if (dto.salary != null) data.salary = new Decimal(dto.salary);
+    const salaryParts = resolveSalaryParts({
+      salary: dto.salary,
+      tariffSalary: dto.tariffSalary,
+      supplementSalary: dto.supplementSalary,
+      current: {
+        salary: current.salary,
+        tariffSalary: (current as { tariffSalary?: Prisma.Decimal }).tariffSalary,
+        supplementSalary: (current as { supplementSalary?: Prisma.Decimal })
+          .supplementSalary,
+      },
+    });
+    if (salaryParts) {
+      data.salary = salaryParts.salary;
+      data.tariffSalary = salaryParts.tariffSalary;
+      data.supplementSalary = salaryParts.supplementSalary;
+    }
+    if (dto.workScheduleId !== undefined) {
+      data.workScheduleId = dto.workScheduleId;
+    }
     if (dto.voen !== undefined) {
       const voen = dto.voen.trim() || null;
       data.voenBlindIndex = voen ? blindIndex("voen", normalizeVoen(voen)) : null;

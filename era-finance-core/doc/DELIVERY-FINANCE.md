@@ -49,6 +49,8 @@ Taxonomy authority: [`.cursor/rules/era-coverage-definition.mdc`](../../.cursor/
 - [x] **M6 — HR & Payroll (AR localization)** (PRD §4.6, §4.6.1)
   - [x] Employees with FIN, timesheet, absences (CP mirror read), org structure mirror — `/employees`, `/hr/timesheet`, `/hr/structure`
   - [x] Payroll engine v16.1 (income 0/14% >8000, DSMF, İTS, unemployment), GPH 5%, postings to GL on PAID — `/payroll`
+  - [~] **WS1 payroll depth** — work schedules + premium rates, tariff/supplement, slip lines/components, night/evening/OT hours, vacation seniority, per-diem norms + business trips, email payslips — `/hr/work-schedules`, `/hr/vacation-seniority-rules`, `/hr/per-diem-norms`, `/hr/business-trips`, `/payroll` — `[~]` API (UAT-SMOKE pending) — COVERAGE `FIN-HR-PAY-01`
+  - [~] **Aktiv list** JSON + Excel — `GET /hr/reports/active-list`, `/employees` export — MDM ops-profile read-through — `[~]` API — COVERAGE `FIN-HR-AL-01`
   - [x] Production calendar (Baku) via Data Hub — `HrCalendarService`
   - [~] ƏMAS employee prefill + Excel import/export + RPA connector (MOD-V3-EMAS-001); **S2S lifecycle UI** (`/employees` edit modal) + server endpoints behind `ERA_EMAS_S2S_ENABLED` — `[~]` API/STUB when flag off
   - [~] DSMF / e-taxes **payroll withholding declaration** (`PAYROLL_WITHHOLDING`) — generate + per-employee preview UI — `/reporting/tax-export` — `[x]` SHIPPED (Wave 2)

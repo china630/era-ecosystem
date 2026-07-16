@@ -2541,6 +2541,9 @@ export const resources = {
         thStart: "Старт",
         thGross: "Gross",
         loadErr: "Ошибка",
+        activeListExport: "Aktiv list (Excel)",
+        activeListExportHint: "Выгрузка списка активных сотрудников (Aktiv list) в Excel.",
+        activeListExportErr: "Не удалось выгрузить Aktiv list",
         none: "Нет сотрудников.",
         emptyHint:
           "Добавьте сотрудника кнопкой «+ Новый сотрудник» в правом верхнем углу и назначьте штатную должность.",
@@ -3016,6 +3019,8 @@ export const resources = {
         thTsSick: "Таб. X",
         thTsTrip: "Таб. E",
         exportXlsx: "Экспорт в Excel",
+        emailPayslips: "Email расчётных листов",
+        emailPayslipsDone: "Отправлено: {{sent}}, пропущено: {{skipped}}",
         taxDetails: "Удержания",
         calcMonths: "Расчёт за {{n}} мес.",
         loadErr: "Ошибка",
@@ -6665,6 +6670,9 @@ export const resources = {
         thStart: "Başlanğıc",
         thGross: "Brüt",
         loadErr: "Xəta",
+        activeListExport: "Aktiv siyahı (Excel)",
+        activeListExportHint: "Aktiv işçilərin siyahısını (Aktiv list) Excel-ə ixrac.",
+        activeListExportErr: "Aktiv siyahını yükləmək alınmadı",
         none: "İşçi yoxdur.",
         emptyHint:
           "Sağ yuxarı küncdəki «+ Yeni işçi» ilə işçi əlavə edin və ştat vəzifəsi təyin edin.",
@@ -7148,6 +7156,8 @@ export const resources = {
         thTsSick: "Tabel X",
         thTsTrip: "Tabel E",
         exportXlsx: "Excel-ə ixrac",
+        emailPayslips: "Hesablaşma vərəqələrini email et",
+        emailPayslipsDone: "Göndərildi: {{sent}}, keçildi: {{skipped}}",
         taxDetails: "Tutmalar",
         calcMonths: "{{n}} ay üzrə hesablanıb",
         loadErr: "Xəta",
@@ -8487,6 +8497,9 @@ export const resources = {
         eqaimeStatusNone: "—",
       },
       employees: {
+        activeListExport: "Active list (Excel)",
+        activeListExportHint: "Export active employees (Aktiv list) to Excel.",
+        activeListExportErr: "Failed to export active list",
         emas: {
           panelTitle: "ƏMAS S2S",
           panelHint:
@@ -8509,6 +8522,10 @@ export const resources = {
           actionOk: "{{action}} request submitted.",
           actionErr: "ƏMAS submission failed",
         },
+      },
+      payroll: {
+        emailPayslips: "Email payslips",
+        emailPayslipsDone: "Sent: {{sent}}, skipped: {{skipped}}",
       },
     },
   },
