@@ -1,0 +1,22 @@
+---
+description: Retail POS — receipts, shifts, stock, marketplace
+globs:
+  - app/**
+  - src/**
+  - prisma/**
+alwaysApply: false
+---
+
+# Retail POS module map
+
+| Domain | API prefix | Models |
+|--------|------------|--------|
+| Auth / SSO | `app/api/auth/` | `User`, `Role` |
+| Receipts / pay | `app/api/receipts/` | `Receipt`, lines, fiscal, room charge |
+| Shifts | `app/api/shifts/` | open/close, X-report |
+| Products / stock | `products/`, `stock/` | search, check, replenishment |
+| Integrations | `integrations/marketplace`, `integration/` | prescription, stock write-off |
+| Offline | `offline/sync` | edge replay |
+| Events | `events/dispatch` | sale completed → orchestrator |
+
+Room charge when `shouldRouteRevenueToParent`; fiscal via `fiscalizeForSatellite`.
