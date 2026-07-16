@@ -3311,7 +3311,11 @@ model Invoice {
   totalAmount                Decimal               @default(0) @map("total_amount") @db.Decimal(19, 4)
   paidAmount                 Decimal               @default(0) @map("paid_amount") @db.Decimal(19, 4)
   currency                   String                @default("AZN")
-  isInternational            Boolean               @default(false) @map("is_international")
+  isInternational            Boolean               @default(false) @map("is_international")
+  tradeContext               TradeContext          @default(DOMESTIC) @map("trade_context")
+  incoterms                  String?
+  exportDeclarationRef       String?               @map("export_declaration_ref")
+  countryOfDestination       String?               @map("country_of_destination")
   createdAt                  DateTime              @default(now()) @map("created_at")
   updatedAt                  DateTime              @updatedAt @map("updated_at")
   warehouseId                String?               @map("warehouse_id") @db.Uuid
