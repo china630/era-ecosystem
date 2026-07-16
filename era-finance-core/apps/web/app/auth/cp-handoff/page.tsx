@@ -47,7 +47,7 @@ function HandoffInner() {
           organizations: OrgSummary[];
         };
         login(tokens.accessToken, data.user, data.organizations);
-        router.replace(data.user.organizationId ? "/home" : "/companies");
+        router.replace("/home");
         return;
       }
 
@@ -83,7 +83,7 @@ function HandoffInner() {
         organizations: OrgSummary[];
       };
       login(legacyToken, data.user, data.organizations);
-      router.replace(data.user.organizationId ? "/home" : "/companies");
+      router.replace("/home");
     })();
   }, [ready, searchParams, login, router]);
 

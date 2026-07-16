@@ -32,6 +32,12 @@ import {
 } from "../../lib/design-system";
 import { TOOLBAR_MONTH_INPUT_CLASS } from "../../lib/form-styles";
 
+type FaTaxProfile = {
+  taxGroupCode: string;
+  taxNbv: unknown;
+  taxRatePercent: unknown;
+};
+
 type Fa = {
   id: string;
   name: string;
@@ -46,6 +52,7 @@ type Fa = {
   usefulLifeMonths: number;
   salvageValue: unknown;
   bookedDepreciation: unknown;
+  taxProfile?: FaTaxProfile | null;
 };
 
 function FixedAssetsPageContent() {
@@ -153,6 +160,8 @@ function FixedAssetsPageContent() {
     );
   }
   if (!token) return null;
+
+  const hasTaxProfile = rows.some((r) => r.taxProfile);
 
   return (
     <div className="space-y-8">
@@ -328,6 +337,13 @@ function FixedAssetsPageContent() {
                   </th>
                   <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("fixedAssets.thBooked")}</th>
                   <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("fixedAssets.bookValue")}</th>
+                  {hasTaxProfile ? (
+                    <>
+                      <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("fixedAssets.taxGroupCode")}</th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("fixedAssets.taxNbv")}</th>
+                      <th className={DATA_TABLE_TH_RIGHT_CLASS}>{t("fixedAssets.taxRatePercent")}</th>
+                    </>
+                  ) : null}
                   <th className={`${DATA_TABLE_ACTIONS_TH_CLASS} ${hideDestructive ? "" : "min-w-[88px]"}`}>
                     {t("teamPage.actions")}
                   </th>
@@ -354,6 +370,17 @@ function FixedAssetsPageContent() {
                         Number(r.purchasePrice) - Number(r.bookedDepreciation),
                       )}
                     </td>
+                    {hasTaxProfile ? (
+                      <>
+                        <td className={DATA_TABLE_TD_CLASS}>{r.taxProfile?.taxGroupCode ?? "—"}</td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                          {r.taxProfile ? formatMoneyAzn(r.taxProfile.taxNbv) : "—"}
+                        </td>
+                        <td className={DATA_TABLE_TD_RIGHT_CLASS}>
+                          {r.taxProfile ? `${String(r.taxProfile.taxRatePercent)}%` : "—"}
+                        </td>
+                      </>
+                    ) : null}
                     <td className={DATA_TABLE_ACTIONS_TD_CLASS}>
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -403,6 +430,18 @@ function FixedAssetsPageContent() {
           </div>
         </>
       )}
+
+      {!hasTaxProfile && !loading && rows.length > 0 ? (
+        <section className="rounded-xl border border-[#D5DADF] bg-[#F8F9FA] p-4 text-sm text-[#34495E]">
+          <p className="m-0 font-medium">{t("fixedAssets.taxDepreciationTitle")}</p>
+          <p className="m-0 mt-1 text-[#7F8C8D]">
+            {t("fixedAssets.taxDepreciationNote")}{" "}
+            <Link href="/reporting/profit-tax" className="text-action hover:text-primary">
+              {t("reporting.profitTax.link")}
+            </Link>
+          </p>
+        </section>
+      ) : null}
 
       <FixedAssetModal
         open={faModalOpen}

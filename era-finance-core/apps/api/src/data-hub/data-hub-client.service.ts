@@ -39,6 +39,15 @@ export type DataHubUom = {
   nameEn?: string;
 };
 
+export type DataHubCurrency = {
+  code: string;
+  symbol: string;
+  decimals: number;
+  nameAz: string;
+  nameRu?: string;
+  nameEn?: string;
+};
+
 export type DataHubGeoCountry = {
   code: string;
   nameAz: string;
@@ -251,6 +260,10 @@ export class DataHubClientService {
     const body = await this.getJson<{ units?: DataHubUom[]; uom?: DataHubUom[] }>("/uom");
     if (!body) return null;
     return { units: body.units ?? body.uom ?? [] };
+  }
+
+  async getCurrencies(): Promise<{ currencies: DataHubCurrency[] } | null> {
+    return this.getJson<{ currencies: DataHubCurrency[] }>("/currencies");
   }
 
   async addBusinessDays(

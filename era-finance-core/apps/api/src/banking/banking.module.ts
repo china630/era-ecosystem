@@ -1,6 +1,7 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { AuditModule } from "../audit/audit.module";
+import { FxModule } from "../fx/fx.module";
 import { InvoicesModule } from "../invoices/invoices.module";
 import { IntegrationsModule } from "../integrations/integrations.module";
 import { PrismaModule } from "../prisma/prisma.module";
@@ -31,7 +32,8 @@ import { UniversalBankExportService } from "./universal-bank-export.service";
     PrismaModule,
     IntegrationsModule,
     AuditModule,
-    AccountingModule,
+    forwardRef(() => AccountingModule),
+    FxModule,
     InvoicesModule,
     ReportingModule,
     TreasuryModule,

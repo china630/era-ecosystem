@@ -211,20 +211,23 @@ Hotel **outbound-only** (not in `isSatelliteEvent`): `FOLIO_CHARGE_POSTED`, `FOL
 
 | Application | DELIVERY file | Done | Open | **%** |
 |-------------|---------------|------|------|-------|
-| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 180 | 0 | 100% |
+| era-hotel-pms | [DELIVERY.md](../era-hotel-pms/doc/DELIVERY.md) | 226 | 0 | 100% |
 | era-fnb-pos | [DELIVERY-FB.md](../era-fnb-pos/doc/DELIVERY-FB.md) | 43 | 0 | 100% |
 | era-retail-pos | [DELIVERY-RETAIL.md](../era-retail-pos/doc/DELIVERY-RETAIL.md) | 45 | 0 | 100% |
-| era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 43 | 0 | 100% |
+| era-clinic | [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md) | 75 | 0 | 100% |
 | era-construction | [DELIVERY-CONSTRUCTION.md](../era-construction/doc/DELIVERY-CONSTRUCTION.md) | 21 | 0 | 100% |
 | era-auto-service | [DELIVERY-AUTO.md](../era-auto-service/doc/DELIVERY-AUTO.md) | 22 | 0 | 100% |
 | era-wholesale | [DELIVERY-WHOLESALE.md](../era-wholesale/doc/DELIVERY-WHOLESALE.md) | 19 | 0 | 100% |
-| era-crm | [DELIVERY-CRM.md](../era-crm/doc/DELIVERY-CRM.md) | 27 | 0 | 100% |
-| era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 29 | 0 | 100% |
-| era-orchestrator | [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) | 31 | 0 | 100% |
+| era-crm | [DELIVERY-CRM.md](../era-crm/doc/DELIVERY-CRM.md) | 36 | 0 | 100% |
+| era-logistics | [DELIVERY-LOGISTICS.md](../era-logistics/doc/DELIVERY-LOGISTICS.md) | 30 | 0 | 100% |
+| era-bank | [DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md) | 37 | 0 | 100% |
+| era-bank-core | [DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md) | 38 | 0 | 100% |
+| era-bank-dbo | [DELIVERY-BANK-DBO.md](../era-bank-dbo/doc/DELIVERY-BANK-DBO.md) | 16 | 0 | 100% |
+| era-orchestrator | [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) | 78 | 0 | 100% |
 | era-finance-core | [DELIVERY-FINANCE.md](../era-finance-core/doc/DELIVERY-FINANCE.md) | 10 | 0 | 100% |
 | era-data-hub | [DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) | 48 | 0 | 100% |
 
-**Aggregate (12 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 470/470 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
+**Aggregate (15 DELIVERY files):** run `node scripts/delivery-readiness.mjs` for current totals. 744/744 (**100%**). Regenerate: `node scripts/delivery-readiness.mjs`.
 
 ### ElectraWeb FO product readiness (≠ DELIVERY %)
 

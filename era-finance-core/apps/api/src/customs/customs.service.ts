@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { CustomsDeclarationStatus, Prisma } from "@erafinance/database";
 import type { CustomsDeclarationFullPrefillCapture, CustomsDeclarationPrefillCapture } from "@erafinance/api-contracts";
 import { normalizeUnitInputToCatalogCode } from "../common/unit-of-measure-normalize";
@@ -10,6 +10,7 @@ import { IntegrationSyncRunService } from "../integrations/integration-sync-run.
 import { AttachCustomsDeclarationDto, UpsertCustomsDeclarationDto } from "./dto/customs-declaration.dto";
 import { CustomsTaxCalculatorService } from "./customs-tax-calculator.service";
 import { CbarRateSyncService } from "../fx/cbar-rate-sync.service";
+import { LandedCostService } from "./landed-cost.service";
 
 function buildFullCaptureNotes(dto: CustomsDeclarationFullPrefillCapture): string | null {
   const lines: string[] = [];
@@ -45,6 +46,7 @@ export class CustomsService {
     private readonly taxCalculator: CustomsTaxCalculatorService,
     private readonly posting: PostingAccountResolver,
     private readonly cbarSync: CbarRateSyncService,
+    private readonly landedCost: LandedCostService,
   ) {}
 
   list(organizationId: string) {
@@ -397,6 +399,42 @@ export class CustomsService {
         },
       });
       return { ok: true };
+    }).then(async (result) => {
+      try {
+        const landed = await this.landedCost.applyOnAttach(organizationId, id);
+        return { ...result, landedCost: landed };
+      } catch {
+        return { ...result, landedCost: { skipped: true, reason: "allocate_failed" } };
+      }
+    });
+  }
+
+  async patchItemProduct(
+    organizationId: string,
+    declarationId: string,
+    itemId: string,
+    productId: string,
+  ) {
+    const item = await this.prisma.customsDeclarationItem.findFirst({
+      where: { id: itemId, declarationId, organizationId },
+    });
+    if (!item) {
+      throw new NotFoundException("Customs declaration line not found");
+    }
+    const product = await this.prisma.product.findFirst({
+      where: { id: productId, organizationId },
+      select: { id: true, isService: true },
+    });
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+    if (product.isService) {
+      throw new BadRequestException("Service products cannot be linked to BGD goods lines");
+    }
+    return this.prisma.customsDeclarationItem.update({
+      where: { id: itemId },
+      data: { productId },
+      select: { id: true, productId: true, sequenceNumber: true },
     });
   }
 }

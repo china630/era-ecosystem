@@ -42,7 +42,7 @@ describe("PostingJournalBuilder per kind", () => {
     await builder.postInTransaction({} as Prisma.TransactionClient, {
       organizationId: "org-budget",
       schemaId: "INVOICE_REVENUE_RECOGNITION",
-      amounts: { main: 100 },
+      amounts: { main: 100, net: 100, vat: 0 },
       date: new Date("2026-05-01T12:00:00.000Z"),
       description: "test",
     });
@@ -68,7 +68,7 @@ describe("PostingJournalBuilder per kind", () => {
       builder.postInTransaction({} as Prisma.TransactionClient, {
         organizationId: "org-budget",
         schemaId: "INVOICE_REVENUE_RECOGNITION",
-        amounts: { main: 50 },
+        amounts: { main: 50, net: 50, vat: 0 },
         date: new Date(),
         description: "bad",
       }),

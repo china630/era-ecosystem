@@ -46,7 +46,8 @@ import { StatutoryFormsService } from "./statutory-forms.service";
 @ApiTags("inventory")
 @ApiBearerAuth("bearer")
 @Controller("inventory")
-@UseGuards(RolesGuard)
+@UseGuards(SubscriptionGuard, RolesGuard)
+@RequiresModule("inventory")
 export class InventoryController {
   constructor(
     private readonly inventory: InventoryService,

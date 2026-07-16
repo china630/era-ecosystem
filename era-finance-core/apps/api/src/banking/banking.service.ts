@@ -13,6 +13,7 @@ import { assertMayPostManualJournal } from "../auth/policies/invoice-finance.pol
 import { AccountingService } from "../accounting/accounting.service";
 import { BankSubaccountService } from "../accounting/bank-subaccount.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
+import { CbarRateSyncService } from "../fx/cbar-rate-sync.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { endOfUtcDay, parseIsoDateOnly } from "../reporting/reporting-period.util";
@@ -77,6 +78,7 @@ export class BankingService {
     private readonly treasury: TreasuryService,
     private readonly bankSubaccount: BankSubaccountService,
     private readonly posting: PostingAccountResolver,
+    private readonly cbarRates: CbarRateSyncService,
   ) {}
 
   async importCsv(
@@ -1033,22 +1035,14 @@ export class BankingService {
   }
 
   private async getOfficialRate(
-    tx: Prisma.TransactionClient,
+    _tx: Prisma.TransactionClient,
     date: Date,
     currency: string,
   ): Promise<Decimal> {
     const c = currency.trim().toUpperCase();
     if (c === "AZN") return new Decimal(1);
-    const row = await tx.cbarOfficialRate.findUnique({
-      where: {
-        rateDate_currencyCode: { rateDate: date, currencyCode: c },
-      },
-      select: { rate: true },
-    });
-    if (!row) {
-      throw new BadRequestException(`CBAR rate not found for ${c} on selected date`);
-    }
-    return row.rate;
+    const rate = await this.cbarRates.getFinalOfficialAznPerUnit(c, date);
+    return new Decimal(rate);
   }
 
   private async assertNasAccountsExist(

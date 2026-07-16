@@ -571,6 +571,7 @@ exports.Prisma.OrganizationScalarFieldEnum = {
   billingStatus: 'billingStatus',
   operatingMode: 'operatingMode',
   parentOrgId: 'parentOrgId',
+  holdingId: 'holdingId',
   fiscalRouting: 'fiscalRouting',
   revenueRouting: 'revenueRouting',
   activeModules: 'activeModules',
@@ -597,6 +598,24 @@ exports.Prisma.UserScalarFieldEnum = {
   lastNameCipher: 'lastNameCipher',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.HoldingScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  ownerId: 'ownerId',
+  baseCurrency: 'baseCurrency',
+  isDeleted: 'isDeleted',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.HoldingMembershipScalarFieldEnum = {
+  userId: 'userId',
+  holdingId: 'holdingId',
+  role: 'role',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.OrganizationMembershipScalarFieldEnum = {
@@ -1105,6 +1124,13 @@ exports.OrgRouting = exports.$Enums.OrgRouting = {
   PARENT: 'PARENT'
 };
 
+exports.HoldingAccessRole = exports.$Enums.HoldingAccessRole = {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  ACCOUNTANT: 'ACCOUNTANT',
+  VIEWER: 'VIEWER'
+};
+
 exports.AccessRequestStatus = exports.$Enums.AccessRequestStatus = {
   PENDING: 'PENDING',
   ACCEPTED: 'ACCEPTED',
@@ -1269,6 +1295,8 @@ exports.Prisma.ModelName = {
   RolePermission: 'RolePermission',
   Organization: 'Organization',
   User: 'User',
+  Holding: 'Holding',
+  HoldingMembership: 'HoldingMembership',
   OrganizationMembership: 'OrganizationMembership',
   AccessRequest: 'AccessRequest',
   OrganizationInvite: 'OrganizationInvite',

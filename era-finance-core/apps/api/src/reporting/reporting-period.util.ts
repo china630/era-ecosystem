@@ -36,6 +36,90 @@ export function monthRangeUtc(year: number, month1to12: number): { start: Date; 
   return { start, end };
 }
 
+/** Первый и последний календарный день года (UTC). */
+export function yearRangeUtc(year: number): { start: Date; end: Date; fromStr: string; toStr: string } {
+  const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(year, 11, 31, 0, 0, 0, 0));
+  return {
+    start,
+    end,
+    fromStr: dateToIsoYmdUtc(start),
+    toStr: dateToIsoYmdUtc(end),
+  };
+}
+
+/** All 12 month keys YYYY-MM for a calendar year. */
+export function yearMonthKeys(year: number): string[] {
+  return Array.from({ length: 12 }, (_, i) => `${year}-${String(i + 1).padStart(2, "0")}`);
+}
+
+/** True when all 12 months of the year are in closedPeriods. */
+export function areAllMonthsClosed(settingsJson: unknown, year: number): boolean {
+  const closed = new Set(getClosedPeriodKeys(settingsJson));
+  return yearMonthKeys(year).every((k) => closed.has(k));
+}
+
+export function getClosedYearKeys(settingsJson: unknown): number[] {
+  if (!settingsJson || typeof settingsJson !== "object") return [];
+  const r = (settingsJson as Record<string, unknown>).reporting;
+  if (!r || typeof r !== "object") return [];
+  const cy = (r as Record<string, unknown>).closedYears;
+  if (!Array.isArray(cy)) return [];
+  return cy
+    .map((x) => (typeof x === "number" ? x : typeof x === "string" ? Number(x) : NaN))
+    .filter((n) => Number.isFinite(n));
+}
+
+export function mergeClosedYear(
+  settingsJson: unknown,
+  year: number,
+): Record<string, unknown> {
+  const base =
+    settingsJson && typeof settingsJson === "object"
+      ? { ...(settingsJson as Record<string, unknown>) }
+      : {};
+  const rep =
+    base.reporting && typeof base.reporting === "object"
+      ? { ...(base.reporting as Record<string, unknown>) }
+      : {};
+  const prev = Array.isArray(rep.closedYears)
+    ? [...(rep.closedYears as unknown[])]
+    : [];
+  if (!prev.includes(year) && !prev.includes(String(year))) {
+    prev.push(year);
+  }
+  rep.closedYears = prev
+    .map((x) => (typeof x === "number" ? x : Number(x)))
+    .filter((n) => Number.isFinite(n))
+    .sort((a, b) => a - b);
+  base.reporting = rep;
+  return base;
+}
+
+/** Inverse of mergeClosedYear — remove a year from settings.reporting.closedYears. */
+export function unmergeClosedYear(
+  settingsJson: unknown,
+  year: number,
+): Record<string, unknown> {
+  const base =
+    settingsJson && typeof settingsJson === "object"
+      ? { ...(settingsJson as Record<string, unknown>) }
+      : {};
+  const rep =
+    base.reporting && typeof base.reporting === "object"
+      ? { ...(base.reporting as Record<string, unknown>) }
+      : {};
+  const prev = Array.isArray(rep.closedYears)
+    ? [...(rep.closedYears as unknown[])]
+    : [];
+  rep.closedYears = prev
+    .map((x) => (typeof x === "number" ? x : Number(x)))
+    .filter((n) => Number.isFinite(n) && n !== year)
+    .sort((a, b) => a - b);
+  base.reporting = rep;
+  return base;
+}
+
 export function getClosedPeriodKeys(settingsJson: unknown): string[] {
   if (!settingsJson || typeof settingsJson !== "object") return [];
   const r = (settingsJson as Record<string, unknown>).reporting;

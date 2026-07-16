@@ -6,6 +6,7 @@ import { DepreciationService } from "./depreciation.service";
 import { FixedAssetLifecycleService } from "./fixed-asset-lifecycle.service";
 import { FixedAssetsController } from "./fixed-assets.controller";
 import { FixedAssetsService } from "./fixed-assets.service";
+import { RolesGuard } from "../auth/guards/roles.guard";
 import { MonthlyDepreciationQueueService } from "./monthly-depreciation.queue";
 import { MonthlyDepreciationWorker } from "./monthly-depreciation.worker";
 

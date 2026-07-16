@@ -59,8 +59,8 @@ import { SystemCatalogModule } from "./system-catalog/system-catalog.module";
 import { PurchasesModule } from "./purchases/purchases.module";
 import { NetworkModule } from "./network/network.module";
 import { OrchestratorModule } from "./orchestrator/orchestrator.module";
-import { PlatformRecoveryModule } from "./platform-recovery/platform-recovery.module";
-import { DisputeFreezeGuard } from "./platform-recovery/dispute/dispute-freeze.guard";
+import { DisputeFreezeGuard } from "./access/dispute-freeze.guard";
+import { AccessControlModule } from "./access/access-control.module";
 import { SatelliteIntegrationModule } from "./integration/integration.module";
 import { IndustryHandoffsModule } from "./industry-handoffs/industry-handoffs.module";
 import { BillingModule } from "./billing/billing.module";
@@ -126,7 +126,7 @@ const useControlPlaneAuth =
     PurchasesModule,
     NetworkModule,
     OrchestratorModule,
-    PlatformRecoveryModule,
+    AccessControlModule,
     SatelliteIntegrationModule,
     IndustryHandoffsModule,
     BillingModule,
@@ -135,6 +135,7 @@ const useControlPlaneAuth =
   providers: [
     VoenIntegrityGuard,
     ControlPlaneAuthGuard,
+    DisputeFreezeGuard,
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,

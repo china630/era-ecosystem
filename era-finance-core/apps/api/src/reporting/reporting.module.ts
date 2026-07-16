@@ -1,9 +1,12 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { FinanceModule } from "../finance/finance.module";
 import { FixedAssetsModule } from "../fixed-assets/fixed-assets.module";
+import { IntangibleAssetsModule } from "../intangible-assets/intangible-assets.module";
 import { PrismaModule } from "../prisma/prisma.module";
+import { SignatureModule } from "../signature/signature.module";
+import { StorageModule } from "../storage/storage.module";
 import { ReportingController } from "./reporting.controller";
 import { ReportingService } from "./reporting.service";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
@@ -21,6 +24,7 @@ import { StatformsService } from "./statforms.service";
   controllers: [ReportingController, StatformsController],
   providers: [
     ReportingService,
+    StandardReportsService,
     VatQuarterDataService,
     VatAppendixExportService,
     ETaxesIntegrationService,

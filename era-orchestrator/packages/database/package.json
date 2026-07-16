@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "build": "prisma generate && tsc -p tsconfig.runtime.json && node -e \"const fs=require('fs'),p=require('path');for(const f of fs.readdirSync('runtime-cjs/core').filter(x=>x.endsWith('.js'))){const fp=p.join('runtime-cjs/core',f);fs.writeFileSync(fp,fs.readFileSync(fp,'utf8').replaceAll('../../../generated/client','../../generated/client'));}\"",
+    "build": "npx prisma generate && tsc -p tsconfig.runtime.json && node -e \"const fs=require('fs'),p=require('path');for(const f of fs.readdirSync('runtime-cjs/core').filter(x=>x.endsWith('.js'))){const fp=p.join('runtime-cjs/core',f);fs.writeFileSync(fp,fs.readFileSync(fp,'utf8').replaceAll('../../../generated/client','../../generated/client'));}\"",
     "db:generate": "prisma generate",
     "db:migrate:dev": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy"

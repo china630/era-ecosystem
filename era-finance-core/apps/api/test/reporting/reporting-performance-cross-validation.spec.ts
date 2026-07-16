@@ -35,8 +35,10 @@ describe("ReportingService performance and cross-validation", () => {
     const svc = new ReportingService(
       prisma,
       {} as never,
+      {} as never,
       { get: jest.fn() } as never,
       createMockPostingResolver(),
+      {} as never,
     );
     const out = await svc.trialBalance(
       "org-1",
@@ -113,8 +115,10 @@ describe("ReportingService performance and cross-validation", () => {
     const svc = new ReportingService(
       prisma,
       {} as never,
+      {} as never,
       { get: jest.fn() } as never,
       createMockPostingResolver(),
+      {} as never,
     );
     const out = await svc.profitAndLoss(
       "org-1",

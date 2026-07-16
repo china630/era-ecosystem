@@ -57,8 +57,10 @@ describe("ReportingService golden: posted-only trial balance", () => {
     const svc = new ReportingService(
       prisma,
       {} as never,
+      {} as never,
       { get: jest.fn() } as never,
       createMockPostingResolver(),
+      {} as never,
     );
 
     const out = await svc.trialBalance(

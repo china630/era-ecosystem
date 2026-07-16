@@ -120,6 +120,11 @@ exports.resources = {
                 joinOk: "Запрос отправлен. Ожидайте решения владельца.",
                 switchErr: "Не удалось переключить организацию",
                 backHome: "На главную",
+                selectCompanyTitle: "Выберите компанию",
+                selectCompanyHint: "Чтобы продолжить, выберите активную компанию.",
+                noCompanyTitle: "Нет компании",
+                noCompanyHint: "Чтобы продолжить, создайте компанию в ERA или присоединитесь к существующей.",
+                manageOnHub: "Перейти в ERA Hub",
             },
             teamPage: {
                 title: "Команда и доступ",
@@ -1049,6 +1054,11 @@ exports.resources = {
                 joinOk: "Sorğu göndərildi. Sahibin qərarını gözləyin.",
                 switchErr: "Təşkilat dəyişdirilmədi",
                 backHome: "Əsasa",
+                selectCompanyTitle: "Şirkət seçin",
+                selectCompanyHint: "Davam etmək üçün aktiv şirkəti seçməlisiniz.",
+                noCompanyTitle: "Şirkət yoxdur",
+                noCompanyHint: "Davam etmək üçün ERA hesabınızda şirkət yaradın və ya qoşulun.",
+                manageOnHub: "ERA hesabına keç",
             },
             teamPage: {
                 title: "Komanda və giriş",

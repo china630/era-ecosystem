@@ -10,6 +10,7 @@ import {
   Prisma,
   StockMovementReason,
   StockMovementType,
+  TradeContext,
   UserRole,
   type PostingRole,
 } from "@erafinance/database";
@@ -20,6 +21,7 @@ import { randomUUID } from "node:crypto";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
+import { parseOrgIsVatPayer } from "../common/org-vat-payer.util";
 import { ContractsService } from "../contracts/contracts.service";
 import { GovBudgetService } from "../gov-budget/gov-budget.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -41,6 +43,7 @@ import type { CreateWarehouseReceiptDto } from "./dto/create-warehouse-receipt.d
 import type { CreateWarehouseShipmentDto } from "./dto/create-warehouse-shipment.dto";
 import type { CreateTransferDto, TransferLineDto } from "./dto/create-transfer.dto";
 import { assertWarehouseNotUnderReconciliation } from "./inventory-reconciliation-lock";
+import { CbarRateSyncService } from "../fx/cbar-rate-sync.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -56,6 +59,7 @@ export class InventoryService {
     private readonly govBudget: GovBudgetService,
     private readonly posting: PostingAccountResolver,
     private readonly postingJournal: PostingJournalBuilder,
+    private readonly cbarSync: CbarRateSyncService,
   ) {}
 
   private nas(
@@ -1133,6 +1137,7 @@ export class InventoryService {
     organizationId: string,
     invoiceId: string,
     totalAmount: Decimal,
+    fxRateOverride?: number,
   ): Promise<{ transactionId: string }> {
     const full = await tx.invoice.findFirst({
       where: { id: invoiceId, organizationId },
@@ -1148,13 +1153,71 @@ export class InventoryService {
       throw new NotFoundException("Invoice not found");
     }
 
+    const orgRow = await tx.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const orgIsVatPayer = parseOrgIsVatPayer(orgRow?.settings);
+
+    let netTotal = new Decimal(0);
+    let vatTotal = new Decimal(0);
+    for (const item of full.items) {
+      const gross = new Decimal(item.lineTotal);
+      const vr = item.vatRate.toNumber();
+      const pct = vr === -1 ? 0 : vr;
+      if (orgIsVatPayer && pct > 0) {
+        const div = new Decimal(1).add(new Decimal(pct).div(100));
+        const net = gross.div(div);
+        netTotal = netTotal.add(net);
+        vatTotal = vatTotal.add(gross.sub(net));
+      } else {
+        netTotal = netTotal.add(gross);
+      }
+    }
+
+    const grossTotal = totalAmount;
+    let amounts =
+      orgIsVatPayer && vatTotal.gt(0)
+        ? { main: grossTotal, net: netTotal, vat: vatTotal }
+        : { main: grossTotal, net: grossTotal, vat: new Decimal(0) };
+
+    let fxRateToAzn = new Decimal(1);
+    const currency = (full.currency ?? "AZN").trim().toUpperCase();
+    const isExportFx =
+      full.tradeContext === TradeContext.EXPORT && currency !== "AZN";
+    if (isExportFx) {
+      if (
+        fxRateOverride != null &&
+        Number.isFinite(fxRateOverride) &&
+        fxRateOverride > 0
+      ) {
+        fxRateToAzn = new Decimal(fxRateOverride);
+      } else {
+        try {
+          fxRateToAzn = new Decimal(
+            await this.cbarSync.getFinalOfficialAznPerUnit(currency, full.dueDate),
+          );
+        } catch {
+          throw new BadRequestException(
+            `FX rate to AZN is required for export invoice in ${currency}`,
+          );
+        }
+      }
+      amounts = {
+        main: amounts.main.mul(fxRateToAzn),
+        net: amounts.net.mul(fxRateToAzn),
+        vat: amounts.vat.mul(fxRateToAzn),
+      };
+    }
+
     const { transactionId } = await this.postingJournal.postInTransaction(tx, {
       organizationId,
       schemaId: "INVOICE_REVENUE_RECOGNITION",
-      amounts: { main: totalAmount },
+      amounts,
       date: new Date(),
       reference: full.number,
       description: `Отгрузка / выручка по ${full.number}`,
+      counterpartyId: full.counterpartyId,
     });
 
     const snapshotLines: Array<{
@@ -1187,10 +1250,19 @@ export class InventoryService {
     await tx.transaction.update({
       where: { id: transactionId, organizationId },
       data: {
+        tradeContext: full.tradeContext,
+        incoterms: full.incoterms,
         salesSnapshot: {
           version: 1,
           invoiceId: full.id,
           lines: snapshotLines,
+          ...(isExportFx
+            ? {
+                documentCurrency: currency,
+                documentTotal: grossTotal.toString(),
+                fxRateToAzn: fxRateToAzn.toString(),
+              }
+            : {}),
         } as Prisma.InputJsonValue,
       },
     });

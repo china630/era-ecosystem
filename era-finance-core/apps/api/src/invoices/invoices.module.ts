@@ -4,6 +4,7 @@ import { AccountingModule } from "../accounting/accounting.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { IntegrationsModule } from "../integrations/integrations.module";
 import { KassaModule } from "../kassa/kassa.module";
+import { ProductsModule } from "../products/products.module";
 import { SignatureModule } from "../signature/signature.module";
 import { InvoicePdfQueueService } from "./invoice-pdf.queue";
 import { InvoicePdfWorker } from "./invoice-pdf.worker";
@@ -21,6 +22,7 @@ import { EqaimeSubmissionService } from "./eqaime-submission.service";
     InventoryModule,
     IntegrationsModule,
     KassaModule,
+    ProductsModule,
     SignatureModule,
     forwardRef(() => ComplianceModule),
     NetworkModule,

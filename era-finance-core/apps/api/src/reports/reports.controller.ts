@@ -6,11 +6,12 @@ import {
   Param,
   Post,
   Query,
+  Body,
   StreamableFile,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
-import { LedgerType, UserRole } from "@erafinance/database";
+import { LedgerType, UserRole, SignatureProvider } from "@erafinance/database";
 import { Roles } from "../auth/decorators/roles.decorator";
 import { RolesGuard } from "../auth/guards/roles.guard";
 import { OrganizationId } from "../common/org-id.decorator";
@@ -18,6 +19,8 @@ import { parseLedgerTypeQuery } from "../common/ledger-type.util";
 import { MailService } from "../mail/mail.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
+import { SignatureService } from "../signature/signature.service";
+import { InitiateSignatureDto } from "../invoices/dto/initiate-signature.dto";
 import { decryptText } from "../security/pii-crypto.util";
 import { CashFlowService } from "./cash-flow.service";
 import { FinancialReportService } from "./financial-report.service";
@@ -43,6 +46,7 @@ export class ReportsController {
     private readonly reporting: ReportingService,
     private readonly prisma: PrismaService,
     private readonly mail: MailService,
+    private readonly signatures: SignatureService,
   ) {}
 
   @Get("cash-flow")
@@ -242,6 +246,67 @@ export class ReportsController {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       disposition: `attachment; filename="${filename}"`,
     });
+  }
+
+  @Post("reconciliation/:counterpartyId/signature/initiate")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Initiate ASAN İmza / SİMA signature for reconciliation act PDF (period query params required)",
+  })
+  initiateReconciliationSignature(
+    @OrganizationId() organizationId: string,
+    @Param("counterpartyId") counterpartyId: string,
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+    @Body() dto?: InitiateSignatureDto,
+  ) {
+    const from = dateFrom ?? startDate;
+    const to = dateTo ?? endDate;
+    if (!from?.trim() || !to?.trim()) {
+      throw new BadRequestException(
+        "dateFrom and dateTo (or startDate/endDate) are required (YYYY-MM-DD)",
+      );
+    }
+    return this.signatures.initiateReconciliationSignature(
+      organizationId,
+      counterpartyId,
+      from.trim(),
+      to.trim(),
+      dto?.provider ?? SignatureProvider.ASAN_IMZA,
+    );
+  }
+
+  @Get("reconciliation/:counterpartyId/signature/:logId/status")
+  @UseGuards(RolesGuard)
+  @Roles(...RECON_ROLES)
+  @ApiOperation({ summary: "Poll reconciliation act signature session" })
+  reconciliationSignatureStatus(
+    @OrganizationId() organizationId: string,
+    @Param("counterpartyId") counterpartyId: string,
+    @Param("logId") logId: string,
+    @Query("dateFrom") dateFrom?: string,
+    @Query("dateTo") dateTo?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+  ) {
+    const from = dateFrom ?? startDate;
+    const to = dateTo ?? endDate;
+    if (!from?.trim() || !to?.trim()) {
+      throw new BadRequestException(
+        "dateFrom and dateTo (or startDate/endDate) are required (YYYY-MM-DD)",
+      );
+    }
+    return this.signatures.getReconciliationSignatureStatus(
+      organizationId,
+      counterpartyId,
+      from.trim(),
+      to.trim(),
+      logId,
+    );
   }
 
   @Post("reconciliation/:counterpartyId/email")

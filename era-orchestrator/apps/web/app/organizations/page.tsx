@@ -9,6 +9,7 @@ import {
   CARD_CONTAINER_CLASS,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { useCreateOrganization } from "../../components/organizations/create-organization-context";
 import { OrgCard } from "../../components/organizations/org-card";
@@ -76,14 +77,19 @@ export default function OrganizationsPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <button
-            type="button"
-            className={PRIMARY_BUTTON_CLASS}
-            onClick={openCreateOrganization}
-          >
-            <Plus className="mr-1.5 h-4 w-4" aria-hidden />
-            {t("addOrg")}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/holdings" className={SECONDARY_BUTTON_CLASS}>
+              {t("manageHoldings")}
+            </Link>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={openCreateOrganization}
+            >
+              <Plus className="mr-1.5 h-4 w-4" aria-hidden />
+              {t("addOrg")}
+            </button>
+          </div>
         }
       />
       <div className="grid gap-4 sm:grid-cols-2">

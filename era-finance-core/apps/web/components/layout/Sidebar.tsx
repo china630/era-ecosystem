@@ -39,12 +39,14 @@ import {
   PackageSearch,
   PieChart,
   Scale,
+  ScanLine,
   ScrollText,
   Settings,
   Shield,
   ShieldAlert,
   ShieldCheck,
   ShoppingBag,
+  Ship,
   PanelLeftClose,
   PanelRightClose,
   ShoppingCart,
@@ -537,15 +539,6 @@ export function MainSidebar({
           icon={FileCheck2}
           onNavClick={onNavClick}
         />
-        {partnerNavVisible ? (
-          <SideNavItem
-            href="/partner"
-            label={t("partner.nav")}
-            isActive={pathname.startsWith("/partner")}
-            icon={Handshake}
-            onNavClick={onNavClick}
-          />
-        ) : null}
 
         <CollapsibleNavSection
           sectionKey="treasury"
@@ -578,6 +571,13 @@ export function MainSidebar({
                 isActive={pathname.startsWith("/banking/cash")}
                 icon={Wallet}
                 nested
+                onNavClick={onNavClick}
+              />
+              <SideNavSubItem
+                href="/expenses/advance-reports"
+                label={t("nav.advanceReports")}
+                isActive={pathname.startsWith("/expenses/advance-reports")}
+                icon={ScrollText}
                 onNavClick={onNavClick}
               />
               <SideNavItem
@@ -629,6 +629,13 @@ export function MainSidebar({
             label={t("nav.products")}
             isActive={pathname.startsWith("/catalog/products")}
             icon={Boxes}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/catalog/price-lists"
+            label={t("nav.priceLists")}
+            isActive={pathname.startsWith("/catalog/price-lists")}
+            icon={Tags}
             onNavClick={onNavClick}
           />
         </CollapsibleNavSection>
@@ -758,6 +765,13 @@ export function MainSidebar({
             icon={ClipboardList}
             onNavClick={onNavClick}
           />
+          <SideNavSubItem
+            href="/inventory/wms-mobile"
+            label={t("inventory.wms.nav")}
+            isActive={pathname.startsWith("/inventory/wms-mobile")}
+            icon={ScanLine}
+            onNavClick={onNavClick}
+          />
         </CollapsibleNavSection>
 
         <CollapsibleNavSection
@@ -820,17 +834,17 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/hr/positions"
+            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/positions`}
             label={t("nav.hrStaffingUnits")}
-            isActive={pathname.startsWith("/hr/positions")}
+            isActive={false}
             icon={Briefcase}
             nested
             onNavClick={onNavClick}
           />
           <SideNavItem
-            href="/hr/structure"
+            href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/workspace/workforce/org-structure`}
             label={t("nav.hrStructure")}
-            isActive={pathname.startsWith("/hr/structure")}
+            isActive={false}
             icon={Network}
             nested
             onNavClick={onNavClick}
@@ -883,6 +897,34 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/reporting/account-card"
+            label={t("nav.accountCard")}
+            isActive={pathname.startsWith("/reporting/account-card")}
+            icon={ScrollText}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/turnovers"
+            label={t("nav.accountTurnovers")}
+            isActive={pathname.startsWith("/reporting/turnovers")}
+            icon={ArrowLeftRight}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/subconto-analysis"
+            label={t("nav.subcontoAnalysis")}
+            isActive={pathname.startsWith("/reporting/subconto-analysis")}
+            icon={SlidersHorizontal}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/journal"
+            label={t("nav.generalLedger")}
+            isActive={pathname.startsWith("/reporting/journal")}
+            icon={BookOpen}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/reporting/receivables"
             label={t("nav.receivables")}
             isActive={pathname.startsWith("/reporting/receivables")}
@@ -931,6 +973,13 @@ export function MainSidebar({
             icon={Coins}
             onNavClick={onNavClick}
           />
+          <SideNavSubItem
+            href="/reports/statements"
+            label={t("nav.mhbsStatements")}
+            isActive={pathname.startsWith("/reports/statements")}
+            icon={FileSpreadsheet}
+            onNavClick={onNavClick}
+          />
           {canViewHoldingReports ? (
             <SideNavSubItem
               href="/reporting/holding"
@@ -950,6 +999,15 @@ export function MainSidebar({
           icon={Building2}
           onNavClick={onNavClick}
         />
+        <SideNavItem
+          href="/intangible-assets"
+          label={t("nav.sectionIntangibleAssets")}
+          isActive={pathname.startsWith("/intangible-assets")}
+          locked={lockedFixedAssets}
+          icon={Sparkles}
+          onNavClick={onNavClick}
+        />
+
         <SideNavItem
           href="/intangible-assets"
           label={t("nav.sectionIntangibleAssets")}
@@ -1053,21 +1111,18 @@ export function MainSidebar({
                 />
                 {user?.role === "OWNER" ? (
                   <SideNavItem
-                    href="/settings/subscription"
+                    href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/subscription`}
                     label={t("nav.settingsSubscription")}
-                    isActive={
-                      pathname.startsWith("/settings/subscription") ||
-                      pathname.startsWith("/admin/billing")
-                    }
+                    isActive={false}
                     icon={CreditCard}
                     nested
                     onNavClick={onNavClick}
                   />
                 ) : null}
                 <SideNavItem
-                  href="/companies"
+                  href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/organizations`}
                   label={t("nav.companies")}
-                  isActive={pathname.startsWith("/companies")}
+                  isActive={false}
                   icon={Building2}
                   nested
                   onNavClick={onNavClick}
@@ -1078,9 +1133,9 @@ export function MainSidebar({
                 {(user.role === "OWNER" || user.role === "ADMIN") && (
                   <>
                     <SideNavItem
-                      href="/settings/team"
+                      href={`${(process.env.NEXT_PUBLIC_ORCH_WEB_URL ?? "http://127.0.0.1:3000").replace(/\/$/, "")}/settings/team`}
                       label={t("nav.team")}
-                      isActive={pathname.startsWith("/settings/team")}
+                      isActive={false}
                       icon={UserPlus}
                       nested
                       onNavClick={onNavClick}
@@ -1113,14 +1168,6 @@ export function MainSidebar({
                 )}
                 {user.role === "OWNER" ? (
                   <>
-                    <SideNavItem
-                      href="/admin/payment-history"
-                      label={t("nav.paymentHistory")}
-                      isActive={pathname.startsWith("/admin/payment-history")}
-                      icon={ScrollText}
-                      nested
-                      onNavClick={onNavClick}
-                    />
                     <SideNavItem
                       href="/admin/audit-log"
                       label={t("nav.securityAuditLog")}

@@ -30,13 +30,6 @@ const LINK_GROUPS: { groupKey: string; items: { href: string; labelKey: string }
     items: [{ href: "/admin/data/translations", labelKey: "superAdmin.dataHubTranslations" }],
   },
   {
-    groupKey: "superAdmin.dataHubNavMdm",
-    items: [
-      { href: "/admin/data/mdm/companies", labelKey: "superAdmin.dataHubMdmCompanies" },
-      { href: "/admin/data/mdm/counterparties", labelKey: "superAdmin.dataHubMdmCp" },
-    ],
-  },
-  {
     groupKey: "superAdmin.dataHubNavReference",
     items: [{ href: "/admin/data/reference", labelKey: "superAdmin.dataHubReference" }],
   },

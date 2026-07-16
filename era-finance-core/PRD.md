@@ -239,9 +239,13 @@
 | **Локализация** | Язык интерфейса портала: поле **`portal_locale`** у контрагента (`az` / `ru` / `en`), иначе — язык браузера (**Accept-Language**). |
 | **Безопасность** | См. **TZ.md §14.0** — неугадываемый токен + rate limit на публичные GET. |
 
+#### 4.4.1a. Price lists and discount rules (Wave 5 E7)
+
+- [x] **COMPLETED:** модели `PriceList`, `PriceListLine`, `DiscountRule`; CRUD API `GET/POST price-lists/*`; UI **`/catalog/price-lists`**; подстановка цены и скидок в `InvoicesService.buildItems` (snapshot на дату документа).
+
 #### 4.4.2. International trade (Import / Export) — finance & document flow
 
-**Status:** [ ] **PLANNED (scope)** — product-approved **core distinction** between **local (Daxili)** operations that participate in the **national e-qaimə** regime and **international (Xarici)** operations that **do not**; implementation details in [TZ.md](./TZ.md) when scheduled.
+**Status:** [x] **COMPLETED (Wave 5 G9)** — `TradeContext` enum (DOMESTIC/EXPORT/IMPORT), Incoterms, export declaration ref, multilingual Commercial Invoice PDF, import pipeline OCR→Alış→BGD→landed cost; export e-qaimé optional — [ADR](../docs/adr/trade-context-daxili-xarici.md). `@RequiresModule(trade_pro)` on customs trade routes.
 
 At **data model and UX** level, sales and purchase documents must carry an explicit **trade context** (local vs export / import) so validation, PDF outputs, and tax workflows branch correctly without breaking domestic compliance.
 
@@ -255,6 +259,7 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 
 - **AI‑Vision OCR module:** ingest **PDF / images** of **foreign supplier invoices**; use a **Vision‑capable LLM API** (and/or classical OCR fallback) to extract structured fields (**counterparty, dates, currency, line items, amounts, taxes stated on document**) and **pre‑fill** the **`Alış Fakturası`** (purchase invoice) form for accountant review — **human confirmation** remains mandatory before posting.
 - **Customs (BGD):** for **import of goods**, the **import customs declaration (BGD)** is the **baseline document** for **inventory cost basis** and **recoverable / payable VAT mechanics** as applicable under MLSA / DVX practice (exact account mapping in TZ); foreign invoice + BGD together define the compliant story.
+- [x] **COMPLETED (Wave 5 E7):** landed cost allocation engine distributes duty/fees/excise to linked SKU unit cost (`STAT_VALUE|WEIGHT|QUANTITY`); updates `InventoryBatch` and `StockMovement.price` — [ADR](../docs/adr/landed-cost-allocation.md).
 - **Import of services — non‑resident e‑invoice:** support the scenario of **automatic preparation** of **«Qeyri-rezidentin e-qaiməsi»** (non‑resident e‑invoice) for tax reporting when paying **foreign service providers**, aligned with domestic filing obligations where required.
 
 ### 4.5. Модуль 5: Cash Management (Treasury)
@@ -282,7 +287,7 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 | **Назначение** | Полный цикл учёта **наличных денежных средств** в соответствии с требованиями **МФ АР** (методология и формы первички). |
 | **Документооборот** | Генерация и печать **Mədaxil Kassa Orderi (MKO)** и **Məxaric Kassa Orderi (MXO)**; кассовая книга (журнал ордеров в системе). |
 | **Автоматизация** | Прямая связь с модулями **продаж / закупок**: оплата **наличными (Nəqd)** автоматически создаёт **черновик** соответствующего ордера в кассе (см. [TZ.md](./TZ.md) §6.2). |
-| **Авансовые отчёты** | Закрытие задолженности подотчётного лица по счёту **244** на основании предоставленных расходов (чеков). |
+| **Авансовые отчёты** | Реестр документов **`/expenses/advance-reports`**: типизированные строки расходов (счёт затрат, ƏDV, чек), привязка к MXO-выдаче, мультивалюта, печатная форма; проведение закрывает **244** — `[x]` COMPLETED (Wave 5 E7); `@RequiresModule(kassa_pro)`. |
 | **Инкассация** | Отдельный тип **MXO** для передачи наличных в банк (корреспонденция с расчётным счётом **221** и т.п. по ТЗ). |
 | **Доступ** | Коммерческий модуль **`cash_bank_pro`** (касса + банк, единый slug в `pricing_modules`) или полный доступ **ENTERPRISE** (напр. TiVi Media). |
 
@@ -329,7 +334,12 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 ### 4.7. Модуль 7: Reporting
 
 - Trial Balance (ОСВ), P&L (accrual), Balance Sheet, Cash Flow (cash basis).
-- Включён workflow e-Taxes деклараций: генерация файла декларации, подтверждение скачивания бухгалтером и прикрепление официальной квитанции `Elektron Bildiriş` (Постановление КМ АР №120).
+- **Стандартные отчёты 1С-паритета (Wave 1):** карточка счёта с running balance, анализ счёта по контрагенту/департаменту (заголовок `Transaction`; субконто на строках — E4), обороты счетов, шахматка (Дт×Кт; для многострочных проводок — пропорциональное распределение), журнал проводок / главная книга — UI `/reporting/account-card`, `/reporting/turnovers`, `/reporting/journal`; API `GET /api/reporting/account-card|account-turnovers|account-analysis|chessboard|general-ledger` (+ `/export`).
+- **ƏDV книга и декларация (Wave 1):** UI `/reporting/vat` — квартальные таблицы Satış/Alış, итоги (начисленный / входящий / к уплате), XLSX-приложение, предпросмотр валидации и submit; персистентный тип `TaxDeclarationType.VAT` в workflow e-Taxes; гейт `tax_pro`.
+- **ƏDV depozit hesabı (Wave 4 G6):** GL-счёт **223** (`VAT_DEPOSIT_ACCOUNT`), связь с банковским IBAN типа `VAT_DEPOSIT`, операции route/remit/reconcile — UI `/reporting/vat-deposit`, API `accounting/vat-deposit/*`; роли НДС **191** (input) / **545** (output) — [ADR](../docs/adr/vat-deposit-routing.md).
+- **Формы MHBS (Wave 4 G2):** statutory баланс, ОПиУ, ДДС, изменения капитала, пояснения с кодами строк MoF — UI `/reports/statements`, каталог `mhbs-statement-lines.v1.json`, экспорт XLSX/PDF — [ADR](../docs/adr/mhbs-statement-mapping.md); `@RequiresModule(tax_pro)`.
+- **Статистическая отчётность Goskomstat (Wave 5 G3):** конфигурируемый движок `StatReportDefinition` + генератор XLSX по маппингу строк на GL/склад/HR; стандартный placeholder-набор (1-müəssisə, труд, продукция, цены) — UI `/reporting/statforms`, API `GET/POST reporting/statforms/*`; entitlement `compliance_pro` или `tax_pro` — [ADR](../docs/adr/statform-engine.md).
+- Включён workflow e-Taxes деклараций: генерация файла декларации, подтверждение скачивания бухгалтером и прикрепление официальной квитанции `Elektron Bildiriş` (Постановление КМ АР №120) — типы `SIMPLIFIED_TAX` и `VAT`.
 - Multi-GAAP reporting views завершены: параллельные отчёты NAS/IFRS (ОСВ, P&L) и глобальный UI-toggle стандарта учёта.
 - В P&L добавлен фильтр по департаменту (ЦФО): при выборе `departmentId` отчёт считает доходы/расходы только по транзакциям с этим **`Transaction.departmentId`**; расходы на оплату труда (**721**) в разрезе подразделения отражаются **нативно в ГК** за счёт пообъектного проведения зарплаты при **PAID** (см. модуль 6), без отдельной доводки через справочные отчёты по `PayrollSlip`.
 
@@ -453,6 +463,7 @@ At **data model and UX** level, sales and purchase documents must carry an expli
 Автоматическое **списание сырья** при выпуске ГП должно учитывать `wasteFactor`; расхождение «затраченное сырьё − выход ГП» отражается складскими движениями и при необходимости отдельным документом **списание отходов** (см. [TZ.md](./TZ.md) §10.2).
 
 - [x] **COMPLETED (WMS-light bins, v95+):** адресное хранение по ячейкам (`WarehouseBin`: warehouse/code/barcode), опциональные ссылки `binId` в остатках и движениях, UI-раздел «Топология склада» и выбор ячейки при оприходовании.
+- [x] **COMPLETED (Mobile WMS, Wave 5 E6):** bin-level остатки (`BinBalance`), зоны, pick lists, мобильный скан — `/inventory/wms-mobile`, API `inventory/wms/*`; `@RequiresModule(inventory)` — [ADR](../docs/adr/bin-level-wms.md).
 - [x] **COMPLETED (M9 DB integrity + stress, v95+):** в PostgreSQL добавлены **CHECK**-ограничения: `bin_id` не может указывать на ячейку другого склада (`stock_items`, `stock_movements`); при миграции неконсистентные ссылки обнуляются. Покрытие **batch release** с **15+** компонентами BOM в одной транзакции (атомарность списаний).
 - [x] **COMPLETED (Manufacturing byproducts/defects, v95+):** в рецептуре добавлены `byproducts` с `quantityPerUnit` и `costFactor`; при выпуске автоматически оприходуются побочные продукты/брак с нулевой или дисконтированной стоимостью.
 
@@ -740,7 +751,11 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 **Недостающие ключи `PostingRole` (добавить):** `PREPAID_ASSET` (комм. `133`), `CHARTER_CAPITAL` (комм. `301`); при необходимости — отдельные роли для банковских карточных счетов `222–224` (сейчас только `MAIN_BANK`→`221`). Код `538` используется лишь как «анти-касса» guard — оставить как валидатор, не как роль. Код `000` (контра для остатков) — системный, документируется отдельно.
 
-**Гард-рейл:** ввести CI-проверку (тест/линт), запрещающую литералы NAS-кодов в `apps/api/src/**` вне разрешённого списка файлов (резолвер, схемы, seeds, catalog, валидаторы префиксов). Удалить устаревший `ledger.constants.ts` (нет активных импортов).
+**Гард-рейл:** ввести CI-проверку (тест/линт), запрещающую литералы NAS-кодов в `apps/api/src/**` вне разрешённого списка файлов (резолвер, схемы, seeds, catalog, валидаторы префиксов). Удалить устаревший `ledger.constants.ts` (нет активных импортов). **Wave 3 (2026-07):** `lint-nas-literals.mjs` + CI target — **done**; оставшиеся prefix-guards в banking documented as P2 exceptions.
+
+**Wave 3 — гибкое субконто (E4):** до 3 видов субконто на NAS-счёт, измерения на каждой строке `JournalEntry` (`JournalEntryDimension`), отчёты `GET /reporting/subconto/*`, UI `/reporting/subconto-analysis`; запись измерений при проводке под флагом `ERA_SUBCONTO_ENABLED`. ADR: [subconto-analytical-dimensions.md](../docs/adr/subconto-analytical-dimensions.md).
+
+**Wave 3 — ОС / НМА (E5, G8):** полный lifecycle ОС (постановка, модернизация, переоценка, выбытие) на `/fixed-assets`; модуль НМА на `/intangible-assets` (счета 131/132). Реформация баланса: `closeFiscalYear` обнуляет 6x/7x на 801 и переносит на 802.
 
 **Зафиксированные решения (2026-06):** **(1)** эталон плана счетов при онбординге — **Data Hub как единый источник**, локальный JSON только fallback; **(2)** в scope входят **все** справочники DH-003…010 (без отсечения, приоритет — по таблице TZ §28.1); **(3)** де-хардкод выполняется в **полном объёме (P1+P2+P3)** и закрывается **CI-гард-рейлом**. Детали — [TZ.md](./TZ.md) §28 (D-DH-1, D-DH-2, D-COA-1).
 
@@ -884,7 +899,8 @@ If `ProjectedBalance` drops below zero on a date, UI marks it as **cash-gap risk
 
 #### 5.E.8. Wave 3 (roadmap only)
 
-- CRM Pipeline/Deals поверх контрагентов; JSONB user-defined поля по сущностям; Disassembly партий; ресурсный календарь (мастера/оборудование); мобильный scan для инвентаризации.
+- CRM Pipeline/Deals поверх контрагентов; JSONB user-defined поля по сущностям; Disassembly партий; ресурсный календарь (мастера/оборудование).
+- ~~Мобильный scan для инвентаризации~~ → **[x] COMPLETED (Wave 5 E6):** `/inventory/wms-mobile` — см. §4.10, [ADR](../docs/adr/bin-level-wms.md).
 
 ### 5.2. v3.1 — масштабируемость и производительность (Roadmap)
 
@@ -926,7 +942,9 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 #### Phase 3 — Official B2B S2S API
 
 - **Transition** to the **official closed B2B System-to-System API** once available and contractually cleared (**per-organization API key** or successor mechanism), enabling **background** issue/receive/status flows without consumer-only UI dependency.
+- **e-Qaimə S2S (Wave 4 E3):** `EqaimeSubmissionService` + `Invoice.eqaimeNumber|eqaimeStatus|eqaimeSubmittedAt`; submit behind **`ERA_EQAIME_S2S_ENABLED`** and **`E_TAXES_EQAIME_SUBMIT_URL`**; without flag/creds — **503** and Phase 2 RPA prefill on `/sales/invoices`. Architecture — **[docs/adr/eqaime-s2s-submission.md](../docs/adr/eqaime-s2s-submission.md)**.
 - **Cabinet / reconciliation surfaces** without full S2S coverage may continue **Phase 1** exports and/or **Phase 2** extension-assisted flows, optionally complemented by a **Live Session** server adapter (exact scope, refresh policy, retention, and security controls — **[TZ.md](./TZ.md) §13.2**).
+- **ASAN ID + HSM submission seam (Wave 1 foundation):** organization-level **`Organization.settings.tax.asanUserId`** + feature flag **`ERA_ETAXES_HSM_ENABLED`** select between HTTP gateway (`E_TAXES_VAT_SUBMIT_URL`) and HSM/ASAN adapter (`EtaxesSubmissionAdapter`). Live HSM client lands when partner credentials are provisioned; architecture — **[docs/adr/etaxes-hsm-asan-submission.md](../docs/adr/etaxes-hsm-asan-submission.md)**. Same channel is reserved for customs and DSMF destinations in later waves.
 
 **Cross-phase invariant (unchanged):** **Physical Android device farms** (hardware simulation of mobile clients) remain **rejected** as a baseline approach in favor of **horizontally scalable SaaS** (file export, audited extension RPA, API-first workers, session-bound adapters where legally and technically permitted, standard observability per **§6.3 / Integration Health**).
 
@@ -939,6 +957,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 ### 6.2. Цифровое доверие (ASAN İmza / SİMA)
 
 - Подписание инвойсов и актов сверки (PDF); аудит: факт подписи и хеш.
+- **Gov-payload signing (Wave 4 G7):** `GovSignatureAdapter` + `SignatureService.signGovPayload` для пакетов e-taxes (ƏDV, mənfəət), **e-Qaimə S2S** и актов сверки; live за **`ERA_ASAN_SIMA_LIVE=1`** / `SIGNATURE_GATEWAY_MOCK=0`; env `ASAN_IMZA_API_URL`, `SIMA_QR_PAYLOAD_URL` — **[docs/adr/asan-sima-gov-signature.md](../docs/adr/asan-sima-gov-signature.md)**.
 - ЭДО: канал в кабинет контрагента или e-mail с пояснением подписи.
 
 ### 6.3. Direct Banking
@@ -991,7 +1010,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 | **M4 — Retail & POS** | РМК (кассир), смешанные оплаты, онлайн-ККМ; для B2G-платежей — зачисление на спецсчета NAS-Gov с авто-актом. |
 | **M5 — Advanced HRMS** | Расширенное кадровое делопроизводство, интеграции e-sosial, расчёт стажа/отпусков/льгот, тарифные сетки бюджетников. |
 | **M6 — Budgeting & Treasury** | **[ ] → см. §4.16 (полный scope):** годовой бюджет, план vs факт, обязательства/касса, E-Smeta, платёжный календарь, gateway для GOVERNMENT; Contract Management — §4.15. |
-| **M7 — WMS Light** | Адресное хранение (склад → зона → ячейка), put-away/picking, зональные инвентаризации без остановки склада. |
+| **M7 — WMS Light** | Адресное хранение (склад → зона → ячейка), put-away/picking, зональные инвентаризации без остановки склада. **[x] COMPLETED (Wave 5 E6):** `BinBalance`, mobile scan UI `/inventory/wms-mobile` — [ADR](../docs/adr/bin-level-wms.md). |
 | **M8 — Executive Dashboard** | Near real-time KPI (прибыль, дебиторка, бюджет, кассовые разрывы) с drill-down до проводки в Ledger. |
 
 **Архитектурные инварианты v3.2+:**
@@ -1093,7 +1112,7 @@ Product-approved **phased integration strategy** for the **State Tax Service (DV
 
 ### 7.6. Платформа: Super-Admin Back-office
 
-**Экосистема (2026-05+):** канонический Super-Admin для **billing, MDM, early-access, org security** — **`era-orchestrator`** (`app.era-365.online` → `/super-admin/*`). В **Finance web** те же URL сохранены для обратной совместимости: API billing/subscription/referrals/early-access уходит на CP через `resolveApiUrl` ([TZ.md](./TZ.md) §0.1). **NAS, i18n overrides, customs tariffs, Finance landing `/`** — по-прежнему Finance API/DB (§7.6.2, §7.6.4).
+**Экосистема (2026-05+):** канонический Super-Admin для **billing, MDM, early-access, org security** — **`era-orchestrator`** (`app.era-365.online` → `/super-admin/*`). **Marketing landing `/` + landing CMS** — Orchestrator (Finance `/` redirects guests to Orch). Finance **NAS, i18n overrides, customs tariffs** — Finance `/admin/data` (§7.6.2). Owner marketplace — Orch `/settings/subscription`.
 
 **Цель:** централизованное управление платформой, пользователями и глобальными настройками (разделение контуров — см. таблицу ниже).
 
@@ -1663,7 +1682,7 @@ ERA Finance **не навязывает** обязательную синхро�
 | **MOD-GS-001** | Generic SaaS Waves 1–2 | [x] COMPLETED |
 | **MOD-V3-DB-001** | v3 Direct Banking | [x] COMPLETED |
 | **MOD-V3-DVX-001** | v3 DVX (e-taxes) phased | [~] PARTIAL |
-| **MOD-V3-EMAS-001** | v3 ƏMAS phased | [~] PARTIAL |
+| **MOD-V3-EMAS-001** | v3 ƏMAS phased | [~] PARTIAL — S2S lifecycle UI + API behind `ERA_EMAS_S2S_ENABLED`; Excel/RPA fallback |
 | **MOD-V3-SIGN-001** | v3 ASAN İmza / SİMA | [ ] PLANNED |
 | **MOD-V4-BIL-001** | v4 Billing &amp; Subscription | [x] COMPLETED |
 | **MOD-V4-SA-001** | v4 Super-Admin &amp; публичный прайс | [x] COMPLETED |

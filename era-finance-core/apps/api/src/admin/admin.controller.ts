@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  GoneException,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -27,23 +28,8 @@ import { SuperAdminGuard } from "../auth/guards/super-admin.guard";
 import type { AuthUser } from "../auth/types/auth-user";
 import { AdminService } from "./admin.service";
 import { TranslationUpsertDto } from "./dto/translation-upsert.dto";
-import { UpsertChartTemplateEntryDto } from "./dto/upsert-chart-template-entry.dto";
-import { PatchChartTemplateEntryDto } from "./dto/patch-chart-template-entry.dto";
-import { PatchLandingModuleMarketingDto } from "./dto/patch-landing-module-marketing.dto";
 import { PatchTranslationOverrideDto } from "./dto/patch-translation-override.dto";
 import { PutSystemConfigDto } from "./dto/put-system-config.dto";
-import { CreateCurrencyDto, PatchCurrencyDto } from "./dto/admin-currency.dto";
-import {
-  CreateUnitOfMeasureDto,
-  PatchUnitOfMeasureDto,
-} from "./dto/admin-unit-of-measure.dto";
-import { CreateTaxRateDto, PatchTaxRateDto } from "./dto/admin-tax-rate.dto";
-import {
-  PatchTemplateAccountDto,
-  UpsertTemplateAccountDto,
-} from "./dto/admin-template-account.dto";
-import { PatchMeterUnitPricingDto } from "./dto/patch-meter-unit-pricing.dto";
-import { PatchTierSpendCeilingsDto } from "./dto/patch-tier-spend-ceilings.dto";
 
 @ApiTags("admin")
 @ApiBearerAuth("bearer")
@@ -94,21 +80,6 @@ export class AdminController {
       Math.max(1, Number.parseInt(pageSizeRaw ?? "20", 10) || 20),
     );
     return this.admin.listOrganizations(q, page, pageSize);
-  }
-
-  @Get("landing-modules")
-  @ApiOperation({ summary: "List landing page marketing blocks" })
-  listLandingModules() {
-    return this.admin.listLandingModulesAdmin();
-  }
-
-  @Patch("landing-modules/:moduleSlug")
-  @ApiOperation({ summary: "Update landing page marketing block" })
-  patchLandingModule(
-    @Param("moduleSlug") moduleSlug: string,
-    @Body() dto: PatchLandingModuleMarketingDto,
-  ) {
-    return this.admin.patchLandingModuleMarketing(moduleSlug, dto);
   }
 
   @Get("translations")
@@ -189,18 +160,19 @@ export class AdminController {
   }
 
   @Patch("chart-template/:id")
-  @ApiOperation({ summary: "Частичное обновление строки NAS шаблона (kind/code неизменны)" })
-  chartTemplatePatch(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: PatchChartTemplateEntryDto,
-  ) {
-    return this.admin.patchChartTemplateEntry(id, dto);
+  @ApiOperation({ summary: "Disabled — NAS template owned by era-data-hub (Phase 2)" })
+  chartTemplatePatch() {
+    throw new GoneException(
+      "NAS chart template writes moved to era-data-hub (Data-Hub Phase 2)",
+    );
   }
 
   @Post("chart-template")
-  @ApiOperation({ summary: "Создать или обновить строку глобального плана NAS" })
-  chartTemplateUpsert(@Body() dto: UpsertChartTemplateEntryDto) {
-    return this.admin.upsertChartTemplateEntry(dto);
+  @ApiOperation({ summary: "Disabled — NAS template owned by era-data-hub (Phase 2)" })
+  chartTemplateUpsert() {
+    throw new GoneException(
+      "NAS chart template writes moved to era-data-hub (Data-Hub Phase 2)",
+    );
   }
 
   @Get("system-config")
@@ -226,21 +198,25 @@ export class AdminController {
   }
 
   @Get("currencies")
-  @ApiOperation({ summary: "All currencies with relation usage counts" })
+  @ApiOperation({ summary: "All currencies with relation usage counts (local FK cache)" })
   adminCurrencies() {
     return this.catalog.listCurrencies();
   }
 
   @Post("currencies")
-  @ApiOperation({ summary: "Create currency" })
-  adminCreateCurrency(@Body() dto: CreateCurrencyDto) {
-    return this.catalog.createCurrency(dto);
+  @ApiOperation({ summary: "Disabled — Currency catalog owned by era-data-hub" })
+  adminCreateCurrency() {
+    throw new GoneException(
+      "Currency catalog writes moved to era-data-hub (ISO SoR + Finance FK cache)",
+    );
   }
 
   @Patch("currencies/:id")
-  @ApiOperation({ summary: "Patch currency (code immutable)" })
-  adminPatchCurrency(@Param("id", ParseUUIDPipe) id: string, @Body() dto: PatchCurrencyDto) {
-    return this.catalog.patchCurrency(id, dto);
+  @ApiOperation({ summary: "Disabled — Currency catalog owned by era-data-hub" })
+  adminPatchCurrency() {
+    throw new GoneException(
+      "Currency catalog writes moved to era-data-hub (ISO SoR + Finance FK cache)",
+    );
   }
 
   @Get("units-of-measure")
@@ -250,15 +226,15 @@ export class AdminController {
   }
 
   @Post("units-of-measure")
-  @ApiOperation({ summary: "Create unit of measure" })
-  adminCreateUom(@Body() dto: CreateUnitOfMeasureDto) {
-    return this.catalog.createUnitOfMeasure(dto);
+  @ApiOperation({ summary: "Disabled — UoM owned by era-data-hub (Phase 2)" })
+  adminCreateUom() {
+    throw new GoneException("Units of measure writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Patch("units-of-measure/:id")
-  @ApiOperation({ summary: "Patch unit of measure (code immutable)" })
-  adminPatchUom(@Param("id", ParseUUIDPipe) id: string, @Body() dto: PatchUnitOfMeasureDto) {
-    return this.catalog.patchUnitOfMeasure(id, dto);
+  @ApiOperation({ summary: "Disabled — UoM owned by era-data-hub (Phase 2)" })
+  adminPatchUom() {
+    throw new GoneException("Units of measure writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Get("tax-rates")
@@ -268,15 +244,15 @@ export class AdminController {
   }
 
   @Post("tax-rates")
-  @ApiOperation({ summary: "Create tax rate" })
-  adminCreateTaxRate(@Body() dto: CreateTaxRateDto) {
-    return this.catalog.createTaxRate(dto);
+  @ApiOperation({ summary: "Disabled — tax rates owned by era-data-hub (Phase 2)" })
+  adminCreateTaxRate() {
+    throw new GoneException("Tax rate writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Patch("tax-rates/:id")
-  @ApiOperation({ summary: "Patch tax rate (code immutable)" })
-  adminPatchTaxRate(@Param("id", ParseUUIDPipe) id: string, @Body() dto: PatchTaxRateDto) {
-    return this.catalog.patchTaxRate(id, dto);
+  @ApiOperation({ summary: "Disabled — tax rates owned by era-data-hub (Phase 2)" })
+  adminPatchTaxRate() {
+    throw new GoneException("Tax rate writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Get("template-accounts")
@@ -286,66 +262,21 @@ export class AdminController {
   }
 
   @Post("template-accounts")
-  @ApiOperation({ summary: "Upsert template account row" })
-  adminUpsertTemplateAccount(@Body() dto: UpsertTemplateAccountDto) {
-    return this.catalog.upsertTemplateAccount(dto);
+  @ApiOperation({ summary: "Disabled — NAS templates owned by era-data-hub (Phase 2)" })
+  adminUpsertTemplateAccount() {
+    throw new GoneException("Template account writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Patch("template-accounts/:id")
-  @ApiOperation({ summary: "Patch template account row" })
-  adminPatchTemplateAccount(
-    @Param("id", ParseUUIDPipe) id: string,
-    @Body() dto: PatchTemplateAccountDto,
-  ) {
-    return this.catalog.patchTemplateAccount(id, dto);
-  }
-
-  @Get("mdm/companies")
-  @ApiOperation({ summary: "Global company directory (read-only)" })
-  adminMdmCompanies(
-    @Query("q") q?: string,
-    @Query("page") pageRaw?: string,
-    @Query("pageSize") pageSizeRaw?: string,
-  ) {
-    const page = Math.max(1, Number.parseInt(pageRaw ?? "1", 10) || 1);
-    const pageSize = Math.min(
-      100,
-      Math.max(1, Number.parseInt(pageSizeRaw ?? "25", 10) || 25),
-    );
-    return this.catalog.listGlobalCompanies(q, page, pageSize);
-  }
-
-  @Get("mdm/counterparties")
-  @ApiOperation({ summary: "Global counterparties MDM (read-only)" })
-  adminMdmCounterparties(
-    @Query("q") q?: string,
-    @Query("page") pageRaw?: string,
-    @Query("pageSize") pageSizeRaw?: string,
-  ) {
-    const page = Math.max(1, Number.parseInt(pageRaw ?? "1", 10) || 1);
-    const pageSize = Math.min(
-      100,
-      Math.max(1, Number.parseInt(pageSizeRaw ?? "25", 10) || 25),
-    );
-    return this.catalog.listGlobalCounterparties(q, page, pageSize);
+  @ApiOperation({ summary: "Disabled — NAS templates owned by era-data-hub (Phase 2)" })
+  adminPatchTemplateAccount() {
+    throw new GoneException("Template account writes moved to era-data-hub (Data-Hub Phase 2)");
   }
 
   @Get("reference/snapshot")
   @ApiOperation({ summary: "Enums and contract whitelists (read-only)" })
   adminReferenceSnapshot() {
     return this.catalog.getReferenceSnapshot();
-  }
-
-  @Patch("config/billing/meter-unit-pricing")
-  @ApiOperation({ summary: "Phase 16 meter unit prices (super-admin)" })
-  patchMeterUnitPricing(@Body() dto: PatchMeterUnitPricingDto) {
-    return this.admin.patchMeterUnitPricing(dto);
-  }
-
-  @Patch("config/billing/tier-spend-ceilings")
-  @ApiOperation({ summary: "Phase 16 tier spend ceilings (super-admin)" })
-  patchTierSpendCeilings(@Body() dto: PatchTierSpendCeilingsDto) {
-    return this.admin.patchTierSpendCeilings(dto);
   }
 
   @Post("impersonate/:userId")

@@ -35,6 +35,7 @@ import { RecordInvoicePaymentDto } from "./dto/record-invoice-payment.dto";
 import { UpdateInvoiceStatusDto } from "./dto/update-invoice-status.dto";
 import { BulkPrefillInvoicesDto } from "./dto/bulk-prefill-invoices.dto";
 import { BulkSyncResultInvoicesDto } from "./dto/bulk-sync-result-invoices.dto";
+import { PatchInvoiceDto } from "./dto/patch-invoice.dto";
 import { InvoicesService } from "./invoices.service";
 import { EqaimeSubmissionService } from "./eqaime-submission.service";
 
@@ -169,6 +170,19 @@ export class InvoicesController {
   @ApiOperation({ summary: "Создать инвойс (DRAFT), поставить PDF в очередь" })
   create(@OrganizationId() orgId: string, @Body() dto: CreateInvoiceDto) {
     return this.invoices.create(orgId, dto);
+  }
+
+  @Patch(":id")
+  @UseGuards(SubscriptionGuard)
+  @RequiresModule(ModuleEntitlement.TRADE_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Update trade context / Incoterms / export fields (trade_pro)" })
+  patch(
+    @OrganizationId() orgId: string,
+    @Param("id") id: string,
+    @Body() dto: PatchInvoiceDto,
+  ) {
+    return this.invoices.patch(orgId, id, dto);
   }
 
   @Patch(":id/status")

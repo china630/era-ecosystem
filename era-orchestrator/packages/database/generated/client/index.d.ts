@@ -204,6 +204,16 @@ export type Organization = $Result.DefaultSelection<Prisma.$OrganizationPayload>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model Holding
+ * Multi-entity holding group (control-plane SoT). Distinct from DEPARTMENT parentOrgId routing.
+ */
+export type Holding = $Result.DefaultSelection<Prisma.$HoldingPayload>
+/**
+ * Model HoldingMembership
+ * 
+ */
+export type HoldingMembership = $Result.DefaultSelection<Prisma.$HoldingMembershipPayload>
+/**
  * Model OrganizationMembership
  * 
  */
@@ -716,6 +726,16 @@ export const OrgRouting: {
 export type OrgRouting = (typeof OrgRouting)[keyof typeof OrgRouting]
 
 
+export const HoldingAccessRole: {
+  OWNER: 'OWNER',
+  ADMIN: 'ADMIN',
+  ACCOUNTANT: 'ACCOUNTANT',
+  VIEWER: 'VIEWER'
+};
+
+export type HoldingAccessRole = (typeof HoldingAccessRole)[keyof typeof HoldingAccessRole]
+
+
 export const EarlyAccessModuleKey: {
   RETAIL_ECOM: 'RETAIL_ECOM',
   LOGISTICS_CUSTOMS: 'LOGISTICS_CUSTOMS',
@@ -898,6 +918,10 @@ export const OrgOperatingMode: typeof $Enums.OrgOperatingMode
 export type OrgRouting = $Enums.OrgRouting
 
 export const OrgRouting: typeof $Enums.OrgRouting
+
+export type HoldingAccessRole = $Enums.HoldingAccessRole
+
+export const HoldingAccessRole: typeof $Enums.HoldingAccessRole
 
 export type EarlyAccessModuleKey = $Enums.EarlyAccessModuleKey
 
@@ -1407,6 +1431,26 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.holding`: Exposes CRUD operations for the **Holding** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Holdings
+    * const holdings = await prisma.holding.findMany()
+    * ```
+    */
+  get holding(): Prisma.HoldingDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.holdingMembership`: Exposes CRUD operations for the **HoldingMembership** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more HoldingMemberships
+    * const holdingMemberships = await prisma.holdingMembership.findMany()
+    * ```
+    */
+  get holdingMembership(): Prisma.HoldingMembershipDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.organizationMembership`: Exposes CRUD operations for the **OrganizationMembership** model.
@@ -2139,6 +2183,8 @@ export namespace Prisma {
     RolePermission: 'RolePermission',
     Organization: 'Organization',
     User: 'User',
+    Holding: 'Holding',
+    HoldingMembership: 'HoldingMembership',
     OrganizationMembership: 'OrganizationMembership',
     AccessRequest: 'AccessRequest',
     OrganizationInvite: 'OrganizationInvite',
@@ -4996,6 +5042,154 @@ export namespace Prisma {
           }
         }
       }
+      Holding: {
+        payload: Prisma.$HoldingPayload<ExtArgs>
+        fields: Prisma.HoldingFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.HoldingFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.HoldingFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          findFirst: {
+            args: Prisma.HoldingFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.HoldingFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          findMany: {
+            args: Prisma.HoldingFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>[]
+          }
+          create: {
+            args: Prisma.HoldingCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          createMany: {
+            args: Prisma.HoldingCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.HoldingCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>[]
+          }
+          delete: {
+            args: Prisma.HoldingDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          update: {
+            args: Prisma.HoldingUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          deleteMany: {
+            args: Prisma.HoldingDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.HoldingUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.HoldingUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>[]
+          }
+          upsert: {
+            args: Prisma.HoldingUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingPayload>
+          }
+          aggregate: {
+            args: Prisma.HoldingAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateHolding>
+          }
+          groupBy: {
+            args: Prisma.HoldingGroupByArgs<ExtArgs>
+            result: $Utils.Optional<HoldingGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.HoldingCountArgs<ExtArgs>
+            result: $Utils.Optional<HoldingCountAggregateOutputType> | number
+          }
+        }
+      }
+      HoldingMembership: {
+        payload: Prisma.$HoldingMembershipPayload<ExtArgs>
+        fields: Prisma.HoldingMembershipFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.HoldingMembershipFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.HoldingMembershipFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          findFirst: {
+            args: Prisma.HoldingMembershipFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.HoldingMembershipFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          findMany: {
+            args: Prisma.HoldingMembershipFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>[]
+          }
+          create: {
+            args: Prisma.HoldingMembershipCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          createMany: {
+            args: Prisma.HoldingMembershipCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.HoldingMembershipCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>[]
+          }
+          delete: {
+            args: Prisma.HoldingMembershipDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          update: {
+            args: Prisma.HoldingMembershipUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          deleteMany: {
+            args: Prisma.HoldingMembershipDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.HoldingMembershipUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.HoldingMembershipUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>[]
+          }
+          upsert: {
+            args: Prisma.HoldingMembershipUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$HoldingMembershipPayload>
+          }
+          aggregate: {
+            args: Prisma.HoldingMembershipAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateHoldingMembership>
+          }
+          groupBy: {
+            args: Prisma.HoldingMembershipGroupByArgs<ExtArgs>
+            result: $Utils.Optional<HoldingMembershipGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.HoldingMembershipCountArgs<ExtArgs>
+            result: $Utils.Optional<HoldingMembershipCountAggregateOutputType> | number
+          }
+        }
+      }
       OrganizationMembership: {
         payload: Prisma.$OrganizationMembershipPayload<ExtArgs>
         fields: Prisma.OrganizationMembershipFieldRefs
@@ -7066,6 +7260,8 @@ export namespace Prisma {
     rolePermission?: RolePermissionOmit
     organization?: OrganizationOmit
     user?: UserOmit
+    holding?: HoldingOmit
+    holdingMembership?: HoldingMembershipOmit
     organizationMembership?: OrganizationMembershipOmit
     accessRequest?: AccessRequestOmit
     organizationInvite?: OrganizationInviteOmit
@@ -7994,6 +8190,8 @@ export namespace Prisma {
     earlyAccessSignups: number
     auditLogs: number
     ownedOrganizations: number
+    holdings: number
+    holdingMemberships: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8002,6 +8200,8 @@ export namespace Prisma {
     earlyAccessSignups?: boolean | UserCountOutputTypeCountEarlyAccessSignupsArgs
     auditLogs?: boolean | UserCountOutputTypeCountAuditLogsArgs
     ownedOrganizations?: boolean | UserCountOutputTypeCountOwnedOrganizationsArgs
+    holdings?: boolean | UserCountOutputTypeCountHoldingsArgs
+    holdingMemberships?: boolean | UserCountOutputTypeCountHoldingMembershipsArgs
   }
 
   // Custom InputTypes
@@ -8047,6 +8247,60 @@ export namespace Prisma {
    * UserCountOutputType without action
    */
   export type UserCountOutputTypeCountOwnedOrganizationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrganizationWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountHoldingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HoldingWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountHoldingMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HoldingMembershipWhereInput
+  }
+
+
+  /**
+   * Count Type HoldingCountOutputType
+   */
+
+  export type HoldingCountOutputType = {
+    memberships: number
+    organizations: number
+  }
+
+  export type HoldingCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    memberships?: boolean | HoldingCountOutputTypeCountMembershipsArgs
+    organizations?: boolean | HoldingCountOutputTypeCountOrganizationsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * HoldingCountOutputType without action
+   */
+  export type HoldingCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingCountOutputType
+     */
+    select?: HoldingCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * HoldingCountOutputType without action
+   */
+  export type HoldingCountOutputTypeCountMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HoldingMembershipWhereInput
+  }
+
+  /**
+   * HoldingCountOutputType without action
+   */
+  export type HoldingCountOutputTypeCountOrganizationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrganizationWhereInput
   }
 
@@ -49885,6 +50139,7 @@ export namespace Prisma {
     billingStatus: $Enums.BillingStatus | null
     operatingMode: $Enums.OrgOperatingMode | null
     parentOrgId: string | null
+    holdingId: string | null
     fiscalRouting: $Enums.OrgRouting | null
     revenueRouting: $Enums.OrgRouting | null
     storageUsedBytes: bigint | null
@@ -49910,6 +50165,7 @@ export namespace Prisma {
     billingStatus: $Enums.BillingStatus | null
     operatingMode: $Enums.OrgOperatingMode | null
     parentOrgId: string | null
+    holdingId: string | null
     fiscalRouting: $Enums.OrgRouting | null
     revenueRouting: $Enums.OrgRouting | null
     storageUsedBytes: bigint | null
@@ -49935,6 +50191,7 @@ export namespace Prisma {
     billingStatus: number
     operatingMode: number
     parentOrgId: number
+    holdingId: number
     fiscalRouting: number
     revenueRouting: number
     activeModules: number
@@ -49978,6 +50235,7 @@ export namespace Prisma {
     billingStatus?: true
     operatingMode?: true
     parentOrgId?: true
+    holdingId?: true
     fiscalRouting?: true
     revenueRouting?: true
     storageUsedBytes?: true
@@ -50003,6 +50261,7 @@ export namespace Prisma {
     billingStatus?: true
     operatingMode?: true
     parentOrgId?: true
+    holdingId?: true
     fiscalRouting?: true
     revenueRouting?: true
     storageUsedBytes?: true
@@ -50028,6 +50287,7 @@ export namespace Prisma {
     billingStatus?: true
     operatingMode?: true
     parentOrgId?: true
+    holdingId?: true
     fiscalRouting?: true
     revenueRouting?: true
     activeModules?: true
@@ -50142,6 +50402,7 @@ export namespace Prisma {
     billingStatus: $Enums.BillingStatus
     operatingMode: $Enums.OrgOperatingMode
     parentOrgId: string | null
+    holdingId: string | null
     fiscalRouting: $Enums.OrgRouting
     revenueRouting: $Enums.OrgRouting
     activeModules: string[]
@@ -50188,6 +50449,7 @@ export namespace Prisma {
     billingStatus?: boolean
     operatingMode?: boolean
     parentOrgId?: boolean
+    holdingId?: boolean
     fiscalRouting?: boolean
     revenueRouting?: boolean
     activeModules?: boolean
@@ -50233,6 +50495,7 @@ export namespace Prisma {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
@@ -50246,6 +50509,7 @@ export namespace Prisma {
     billingStatus?: boolean
     operatingMode?: boolean
     parentOrgId?: boolean
+    holdingId?: boolean
     fiscalRouting?: boolean
     revenueRouting?: boolean
     activeModules?: boolean
@@ -50263,6 +50527,7 @@ export namespace Prisma {
     updatedAt?: boolean
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -50275,6 +50540,7 @@ export namespace Prisma {
     billingStatus?: boolean
     operatingMode?: boolean
     parentOrgId?: boolean
+    holdingId?: boolean
     fiscalRouting?: boolean
     revenueRouting?: boolean
     activeModules?: boolean
@@ -50292,6 +50558,7 @@ export namespace Prisma {
     updatedAt?: boolean
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
   }, ExtArgs["result"]["organization"]>
 
   export type OrganizationSelectScalar = {
@@ -50304,6 +50571,7 @@ export namespace Prisma {
     billingStatus?: boolean
     operatingMode?: boolean
     parentOrgId?: boolean
+    holdingId?: boolean
     fiscalRouting?: boolean
     revenueRouting?: boolean
     activeModules?: boolean
@@ -50321,7 +50589,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "operatingMode" | "parentOrgId" | "fiscalRouting" | "revenueRouting" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
+  export type OrganizationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "taxIdBlindIndex" | "taxIdCipher" | "subscriptionPlan" | "billingStatus" | "operatingMode" | "parentOrgId" | "holdingId" | "fiscalRouting" | "revenueRouting" | "activeModules" | "storageUsedBytes" | "currentCreditTier" | "accumulatedBalance" | "billingPeriodKey" | "whatsappAlertsUsed" | "ocrPagesUsed" | "currency" | "settings" | "drakarisClientId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["organization"]>
   export type OrganizationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     usageMeterEvents?: boolean | Organization$usageMeterEventsArgs<ExtArgs>
     earlyAccessEvents?: boolean | Organization$earlyAccessEventsArgs<ExtArgs>
@@ -50353,15 +50621,18 @@ export namespace Prisma {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
     departments?: boolean | Organization$departmentsArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
     _count?: boolean | OrganizationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganizationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
   }
   export type OrganizationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     owner?: boolean | Organization$ownerArgs<ExtArgs>
     parentOrg?: boolean | Organization$parentOrgArgs<ExtArgs>
+    holding?: boolean | Organization$holdingArgs<ExtArgs>
   }
 
   export type $OrganizationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -50397,6 +50668,7 @@ export namespace Prisma {
       owner: Prisma.$UserPayload<ExtArgs> | null
       parentOrg: Prisma.$OrganizationPayload<ExtArgs> | null
       departments: Prisma.$OrganizationPayload<ExtArgs>[]
+      holding: Prisma.$HoldingPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -50408,6 +50680,10 @@ export namespace Prisma {
       billingStatus: $Enums.BillingStatus
       operatingMode: $Enums.OrgOperatingMode
       parentOrgId: string | null
+      /**
+       * Holding grouping for multi-entity consolidation — distinct from parentOrgId/DEPARTMENT money routing.
+       */
+      holdingId: string | null
       fiscalRouting: $Enums.OrgRouting
       revenueRouting: $Enums.OrgRouting
       activeModules: string[]
@@ -50847,6 +51123,7 @@ export namespace Prisma {
     owner<T extends Organization$ownerArgs<ExtArgs> = {}>(args?: Subset<T, Organization$ownerArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     parentOrg<T extends Organization$parentOrgArgs<ExtArgs> = {}>(args?: Subset<T, Organization$parentOrgArgs<ExtArgs>>): Prisma__OrganizationClient<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     departments<T extends Organization$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Organization$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    holding<T extends Organization$holdingArgs<ExtArgs> = {}>(args?: Subset<T, Organization$holdingArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -50885,6 +51162,7 @@ export namespace Prisma {
     readonly billingStatus: FieldRef<"Organization", 'BillingStatus'>
     readonly operatingMode: FieldRef<"Organization", 'OrgOperatingMode'>
     readonly parentOrgId: FieldRef<"Organization", 'String'>
+    readonly holdingId: FieldRef<"Organization", 'String'>
     readonly fiscalRouting: FieldRef<"Organization", 'OrgRouting'>
     readonly revenueRouting: FieldRef<"Organization", 'OrgRouting'>
     readonly activeModules: FieldRef<"Organization", 'String[]'>
@@ -52006,6 +52284,25 @@ export namespace Prisma {
   }
 
   /**
+   * Organization.holding
+   */
+  export type Organization$holdingArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    where?: HoldingWhereInput
+  }
+
+  /**
    * Organization without action
    */
   export type OrganizationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -52217,6 +52514,8 @@ export namespace Prisma {
     earlyAccessSignups?: boolean | User$earlyAccessSignupsArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
+    holdings?: boolean | User$holdingsArgs<ExtArgs>
+    holdingMemberships?: boolean | User$holdingMembershipsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -52260,6 +52559,8 @@ export namespace Prisma {
     earlyAccessSignups?: boolean | User$earlyAccessSignupsArgs<ExtArgs>
     auditLogs?: boolean | User$auditLogsArgs<ExtArgs>
     ownedOrganizations?: boolean | User$ownedOrganizationsArgs<ExtArgs>
+    holdings?: boolean | User$holdingsArgs<ExtArgs>
+    holdingMemberships?: boolean | User$holdingMembershipsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -52273,6 +52574,8 @@ export namespace Prisma {
       earlyAccessSignups: Prisma.$EarlyAccessSignupPayload<ExtArgs>[]
       auditLogs: Prisma.$AuditLogPayload<ExtArgs>[]
       ownedOrganizations: Prisma.$OrganizationPayload<ExtArgs>[]
+      holdings: Prisma.$HoldingPayload<ExtArgs>[]
+      holdingMemberships: Prisma.$HoldingMembershipPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -52682,6 +52985,8 @@ export namespace Prisma {
     earlyAccessSignups<T extends User$earlyAccessSignupsArgs<ExtArgs> = {}>(args?: Subset<T, User$earlyAccessSignupsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EarlyAccessSignupPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditLogs<T extends User$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ownedOrganizations<T extends User$ownedOrganizationsArgs<ExtArgs> = {}>(args?: Subset<T, User$ownedOrganizationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    holdings<T extends User$holdingsArgs<ExtArgs> = {}>(args?: Subset<T, User$holdingsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    holdingMemberships<T extends User$holdingMembershipsArgs<ExtArgs> = {}>(args?: Subset<T, User$holdingMembershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -53232,6 +53537,54 @@ export namespace Prisma {
   }
 
   /**
+   * User.holdings
+   */
+  export type User$holdingsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    where?: HoldingWhereInput
+    orderBy?: HoldingOrderByWithRelationInput | HoldingOrderByWithRelationInput[]
+    cursor?: HoldingWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: HoldingScalarFieldEnum | HoldingScalarFieldEnum[]
+  }
+
+  /**
+   * User.holdingMemberships
+   */
+  export type User$holdingMembershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    where?: HoldingMembershipWhereInput
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    cursor?: HoldingMembershipWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: HoldingMembershipScalarFieldEnum | HoldingMembershipScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -53247,6 +53600,2224 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Holding
+   */
+
+  export type AggregateHolding = {
+    _count: HoldingCountAggregateOutputType | null
+    _min: HoldingMinAggregateOutputType | null
+    _max: HoldingMaxAggregateOutputType | null
+  }
+
+  export type HoldingMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    ownerId: string | null
+    baseCurrency: string | null
+    isDeleted: boolean | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type HoldingMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    ownerId: string | null
+    baseCurrency: string | null
+    isDeleted: boolean | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type HoldingCountAggregateOutputType = {
+    id: number
+    name: number
+    ownerId: number
+    baseCurrency: number
+    isDeleted: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type HoldingMinAggregateInputType = {
+    id?: true
+    name?: true
+    ownerId?: true
+    baseCurrency?: true
+    isDeleted?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type HoldingMaxAggregateInputType = {
+    id?: true
+    name?: true
+    ownerId?: true
+    baseCurrency?: true
+    isDeleted?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type HoldingCountAggregateInputType = {
+    id?: true
+    name?: true
+    ownerId?: true
+    baseCurrency?: true
+    isDeleted?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type HoldingAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Holding to aggregate.
+     */
+    where?: HoldingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Holdings to fetch.
+     */
+    orderBy?: HoldingOrderByWithRelationInput | HoldingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: HoldingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Holdings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Holdings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Holdings
+    **/
+    _count?: true | HoldingCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: HoldingMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: HoldingMaxAggregateInputType
+  }
+
+  export type GetHoldingAggregateType<T extends HoldingAggregateArgs> = {
+        [P in keyof T & keyof AggregateHolding]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateHolding[P]>
+      : GetScalarType<T[P], AggregateHolding[P]>
+  }
+
+
+
+
+  export type HoldingGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HoldingWhereInput
+    orderBy?: HoldingOrderByWithAggregationInput | HoldingOrderByWithAggregationInput[]
+    by: HoldingScalarFieldEnum[] | HoldingScalarFieldEnum
+    having?: HoldingScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: HoldingCountAggregateInputType | true
+    _min?: HoldingMinAggregateInputType
+    _max?: HoldingMaxAggregateInputType
+  }
+
+  export type HoldingGroupByOutputType = {
+    id: string
+    name: string
+    ownerId: string
+    baseCurrency: string
+    isDeleted: boolean
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: HoldingCountAggregateOutputType | null
+    _min: HoldingMinAggregateOutputType | null
+    _max: HoldingMaxAggregateOutputType | null
+  }
+
+  type GetHoldingGroupByPayload<T extends HoldingGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<HoldingGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof HoldingGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], HoldingGroupByOutputType[P]>
+            : GetScalarType<T[P], HoldingGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type HoldingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    ownerId?: boolean
+    baseCurrency?: boolean
+    isDeleted?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    memberships?: boolean | Holding$membershipsArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+    organizations?: boolean | Holding$organizationsArgs<ExtArgs>
+    _count?: boolean | HoldingCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holding"]>
+
+  export type HoldingSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    ownerId?: boolean
+    baseCurrency?: boolean
+    isDeleted?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holding"]>
+
+  export type HoldingSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    ownerId?: boolean
+    baseCurrency?: boolean
+    isDeleted?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holding"]>
+
+  export type HoldingSelectScalar = {
+    id?: boolean
+    name?: boolean
+    ownerId?: boolean
+    baseCurrency?: boolean
+    isDeleted?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type HoldingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "ownerId" | "baseCurrency" | "isDeleted" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["holding"]>
+  export type HoldingInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    memberships?: boolean | Holding$membershipsArgs<ExtArgs>
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+    organizations?: boolean | Holding$organizationsArgs<ExtArgs>
+    _count?: boolean | HoldingCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type HoldingIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type HoldingIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    owner?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $HoldingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Holding"
+    objects: {
+      memberships: Prisma.$HoldingMembershipPayload<ExtArgs>[]
+      owner: Prisma.$UserPayload<ExtArgs>
+      organizations: Prisma.$OrganizationPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      ownerId: string
+      baseCurrency: string
+      isDeleted: boolean
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["holding"]>
+    composites: {}
+  }
+
+  type HoldingGetPayload<S extends boolean | null | undefined | HoldingDefaultArgs> = $Result.GetResult<Prisma.$HoldingPayload, S>
+
+  type HoldingCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<HoldingFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: HoldingCountAggregateInputType | true
+    }
+
+  export interface HoldingDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Holding'], meta: { name: 'Holding' } }
+    /**
+     * Find zero or one Holding that matches the filter.
+     * @param {HoldingFindUniqueArgs} args - Arguments to find a Holding
+     * @example
+     * // Get one Holding
+     * const holding = await prisma.holding.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends HoldingFindUniqueArgs>(args: SelectSubset<T, HoldingFindUniqueArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Holding that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {HoldingFindUniqueOrThrowArgs} args - Arguments to find a Holding
+     * @example
+     * // Get one Holding
+     * const holding = await prisma.holding.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends HoldingFindUniqueOrThrowArgs>(args: SelectSubset<T, HoldingFindUniqueOrThrowArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Holding that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingFindFirstArgs} args - Arguments to find a Holding
+     * @example
+     * // Get one Holding
+     * const holding = await prisma.holding.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends HoldingFindFirstArgs>(args?: SelectSubset<T, HoldingFindFirstArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Holding that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingFindFirstOrThrowArgs} args - Arguments to find a Holding
+     * @example
+     * // Get one Holding
+     * const holding = await prisma.holding.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends HoldingFindFirstOrThrowArgs>(args?: SelectSubset<T, HoldingFindFirstOrThrowArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Holdings that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Holdings
+     * const holdings = await prisma.holding.findMany()
+     * 
+     * // Get first 10 Holdings
+     * const holdings = await prisma.holding.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const holdingWithIdOnly = await prisma.holding.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends HoldingFindManyArgs>(args?: SelectSubset<T, HoldingFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Holding.
+     * @param {HoldingCreateArgs} args - Arguments to create a Holding.
+     * @example
+     * // Create one Holding
+     * const Holding = await prisma.holding.create({
+     *   data: {
+     *     // ... data to create a Holding
+     *   }
+     * })
+     * 
+     */
+    create<T extends HoldingCreateArgs>(args: SelectSubset<T, HoldingCreateArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Holdings.
+     * @param {HoldingCreateManyArgs} args - Arguments to create many Holdings.
+     * @example
+     * // Create many Holdings
+     * const holding = await prisma.holding.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends HoldingCreateManyArgs>(args?: SelectSubset<T, HoldingCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Holdings and returns the data saved in the database.
+     * @param {HoldingCreateManyAndReturnArgs} args - Arguments to create many Holdings.
+     * @example
+     * // Create many Holdings
+     * const holding = await prisma.holding.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Holdings and only return the `id`
+     * const holdingWithIdOnly = await prisma.holding.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends HoldingCreateManyAndReturnArgs>(args?: SelectSubset<T, HoldingCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Holding.
+     * @param {HoldingDeleteArgs} args - Arguments to delete one Holding.
+     * @example
+     * // Delete one Holding
+     * const Holding = await prisma.holding.delete({
+     *   where: {
+     *     // ... filter to delete one Holding
+     *   }
+     * })
+     * 
+     */
+    delete<T extends HoldingDeleteArgs>(args: SelectSubset<T, HoldingDeleteArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Holding.
+     * @param {HoldingUpdateArgs} args - Arguments to update one Holding.
+     * @example
+     * // Update one Holding
+     * const holding = await prisma.holding.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends HoldingUpdateArgs>(args: SelectSubset<T, HoldingUpdateArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Holdings.
+     * @param {HoldingDeleteManyArgs} args - Arguments to filter Holdings to delete.
+     * @example
+     * // Delete a few Holdings
+     * const { count } = await prisma.holding.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends HoldingDeleteManyArgs>(args?: SelectSubset<T, HoldingDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Holdings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Holdings
+     * const holding = await prisma.holding.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends HoldingUpdateManyArgs>(args: SelectSubset<T, HoldingUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Holdings and returns the data updated in the database.
+     * @param {HoldingUpdateManyAndReturnArgs} args - Arguments to update many Holdings.
+     * @example
+     * // Update many Holdings
+     * const holding = await prisma.holding.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Holdings and only return the `id`
+     * const holdingWithIdOnly = await prisma.holding.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends HoldingUpdateManyAndReturnArgs>(args: SelectSubset<T, HoldingUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Holding.
+     * @param {HoldingUpsertArgs} args - Arguments to update or create a Holding.
+     * @example
+     * // Update or create a Holding
+     * const holding = await prisma.holding.upsert({
+     *   create: {
+     *     // ... data to create a Holding
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Holding we want to update
+     *   }
+     * })
+     */
+    upsert<T extends HoldingUpsertArgs>(args: SelectSubset<T, HoldingUpsertArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Holdings.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingCountArgs} args - Arguments to filter Holdings to count.
+     * @example
+     * // Count the number of Holdings
+     * const count = await prisma.holding.count({
+     *   where: {
+     *     // ... the filter for the Holdings we want to count
+     *   }
+     * })
+    **/
+    count<T extends HoldingCountArgs>(
+      args?: Subset<T, HoldingCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], HoldingCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Holding.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends HoldingAggregateArgs>(args: Subset<T, HoldingAggregateArgs>): Prisma.PrismaPromise<GetHoldingAggregateType<T>>
+
+    /**
+     * Group by Holding.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends HoldingGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: HoldingGroupByArgs['orderBy'] }
+        : { orderBy?: HoldingGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, HoldingGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetHoldingGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Holding model
+   */
+  readonly fields: HoldingFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Holding.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__HoldingClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    memberships<T extends Holding$membershipsArgs<ExtArgs> = {}>(args?: Subset<T, Holding$membershipsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    owner<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    organizations<T extends Holding$organizationsArgs<ExtArgs> = {}>(args?: Subset<T, Holding$organizationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrganizationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Holding model
+   */
+  interface HoldingFieldRefs {
+    readonly id: FieldRef<"Holding", 'String'>
+    readonly name: FieldRef<"Holding", 'String'>
+    readonly ownerId: FieldRef<"Holding", 'String'>
+    readonly baseCurrency: FieldRef<"Holding", 'String'>
+    readonly isDeleted: FieldRef<"Holding", 'Boolean'>
+    readonly deletedAt: FieldRef<"Holding", 'DateTime'>
+    readonly createdAt: FieldRef<"Holding", 'DateTime'>
+    readonly updatedAt: FieldRef<"Holding", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Holding findUnique
+   */
+  export type HoldingFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter, which Holding to fetch.
+     */
+    where: HoldingWhereUniqueInput
+  }
+
+  /**
+   * Holding findUniqueOrThrow
+   */
+  export type HoldingFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter, which Holding to fetch.
+     */
+    where: HoldingWhereUniqueInput
+  }
+
+  /**
+   * Holding findFirst
+   */
+  export type HoldingFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter, which Holding to fetch.
+     */
+    where?: HoldingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Holdings to fetch.
+     */
+    orderBy?: HoldingOrderByWithRelationInput | HoldingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Holdings.
+     */
+    cursor?: HoldingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Holdings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Holdings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Holdings.
+     */
+    distinct?: HoldingScalarFieldEnum | HoldingScalarFieldEnum[]
+  }
+
+  /**
+   * Holding findFirstOrThrow
+   */
+  export type HoldingFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter, which Holding to fetch.
+     */
+    where?: HoldingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Holdings to fetch.
+     */
+    orderBy?: HoldingOrderByWithRelationInput | HoldingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Holdings.
+     */
+    cursor?: HoldingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Holdings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Holdings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Holdings.
+     */
+    distinct?: HoldingScalarFieldEnum | HoldingScalarFieldEnum[]
+  }
+
+  /**
+   * Holding findMany
+   */
+  export type HoldingFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter, which Holdings to fetch.
+     */
+    where?: HoldingWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Holdings to fetch.
+     */
+    orderBy?: HoldingOrderByWithRelationInput | HoldingOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Holdings.
+     */
+    cursor?: HoldingWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Holdings from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Holdings.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Holdings.
+     */
+    distinct?: HoldingScalarFieldEnum | HoldingScalarFieldEnum[]
+  }
+
+  /**
+   * Holding create
+   */
+  export type HoldingCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Holding.
+     */
+    data: XOR<HoldingCreateInput, HoldingUncheckedCreateInput>
+  }
+
+  /**
+   * Holding createMany
+   */
+  export type HoldingCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Holdings.
+     */
+    data: HoldingCreateManyInput | HoldingCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Holding createManyAndReturn
+   */
+  export type HoldingCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * The data used to create many Holdings.
+     */
+    data: HoldingCreateManyInput | HoldingCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Holding update
+   */
+  export type HoldingUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Holding.
+     */
+    data: XOR<HoldingUpdateInput, HoldingUncheckedUpdateInput>
+    /**
+     * Choose, which Holding to update.
+     */
+    where: HoldingWhereUniqueInput
+  }
+
+  /**
+   * Holding updateMany
+   */
+  export type HoldingUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Holdings.
+     */
+    data: XOR<HoldingUpdateManyMutationInput, HoldingUncheckedUpdateManyInput>
+    /**
+     * Filter which Holdings to update
+     */
+    where?: HoldingWhereInput
+    /**
+     * Limit how many Holdings to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Holding updateManyAndReturn
+   */
+  export type HoldingUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * The data used to update Holdings.
+     */
+    data: XOR<HoldingUpdateManyMutationInput, HoldingUncheckedUpdateManyInput>
+    /**
+     * Filter which Holdings to update
+     */
+    where?: HoldingWhereInput
+    /**
+     * Limit how many Holdings to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Holding upsert
+   */
+  export type HoldingUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Holding to update in case it exists.
+     */
+    where: HoldingWhereUniqueInput
+    /**
+     * In case the Holding found by the `where` argument doesn't exist, create a new Holding with this data.
+     */
+    create: XOR<HoldingCreateInput, HoldingUncheckedCreateInput>
+    /**
+     * In case the Holding was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<HoldingUpdateInput, HoldingUncheckedUpdateInput>
+  }
+
+  /**
+   * Holding delete
+   */
+  export type HoldingDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+    /**
+     * Filter which Holding to delete.
+     */
+    where: HoldingWhereUniqueInput
+  }
+
+  /**
+   * Holding deleteMany
+   */
+  export type HoldingDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Holdings to delete
+     */
+    where?: HoldingWhereInput
+    /**
+     * Limit how many Holdings to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Holding.memberships
+   */
+  export type Holding$membershipsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    where?: HoldingMembershipWhereInput
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    cursor?: HoldingMembershipWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: HoldingMembershipScalarFieldEnum | HoldingMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * Holding.organizations
+   */
+  export type Holding$organizationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organization
+     */
+    select?: OrganizationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organization
+     */
+    omit?: OrganizationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganizationInclude<ExtArgs> | null
+    where?: OrganizationWhereInput
+    orderBy?: OrganizationOrderByWithRelationInput | OrganizationOrderByWithRelationInput[]
+    cursor?: OrganizationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrganizationScalarFieldEnum | OrganizationScalarFieldEnum[]
+  }
+
+  /**
+   * Holding without action
+   */
+  export type HoldingDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Holding
+     */
+    select?: HoldingSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Holding
+     */
+    omit?: HoldingOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model HoldingMembership
+   */
+
+  export type AggregateHoldingMembership = {
+    _count: HoldingMembershipCountAggregateOutputType | null
+    _min: HoldingMembershipMinAggregateOutputType | null
+    _max: HoldingMembershipMaxAggregateOutputType | null
+  }
+
+  export type HoldingMembershipMinAggregateOutputType = {
+    userId: string | null
+    holdingId: string | null
+    role: $Enums.HoldingAccessRole | null
+    createdAt: Date | null
+  }
+
+  export type HoldingMembershipMaxAggregateOutputType = {
+    userId: string | null
+    holdingId: string | null
+    role: $Enums.HoldingAccessRole | null
+    createdAt: Date | null
+  }
+
+  export type HoldingMembershipCountAggregateOutputType = {
+    userId: number
+    holdingId: number
+    role: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type HoldingMembershipMinAggregateInputType = {
+    userId?: true
+    holdingId?: true
+    role?: true
+    createdAt?: true
+  }
+
+  export type HoldingMembershipMaxAggregateInputType = {
+    userId?: true
+    holdingId?: true
+    role?: true
+    createdAt?: true
+  }
+
+  export type HoldingMembershipCountAggregateInputType = {
+    userId?: true
+    holdingId?: true
+    role?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type HoldingMembershipAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HoldingMembership to aggregate.
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HoldingMemberships to fetch.
+     */
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: HoldingMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HoldingMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HoldingMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned HoldingMemberships
+    **/
+    _count?: true | HoldingMembershipCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: HoldingMembershipMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: HoldingMembershipMaxAggregateInputType
+  }
+
+  export type GetHoldingMembershipAggregateType<T extends HoldingMembershipAggregateArgs> = {
+        [P in keyof T & keyof AggregateHoldingMembership]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateHoldingMembership[P]>
+      : GetScalarType<T[P], AggregateHoldingMembership[P]>
+  }
+
+
+
+
+  export type HoldingMembershipGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: HoldingMembershipWhereInput
+    orderBy?: HoldingMembershipOrderByWithAggregationInput | HoldingMembershipOrderByWithAggregationInput[]
+    by: HoldingMembershipScalarFieldEnum[] | HoldingMembershipScalarFieldEnum
+    having?: HoldingMembershipScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: HoldingMembershipCountAggregateInputType | true
+    _min?: HoldingMembershipMinAggregateInputType
+    _max?: HoldingMembershipMaxAggregateInputType
+  }
+
+  export type HoldingMembershipGroupByOutputType = {
+    userId: string
+    holdingId: string
+    role: $Enums.HoldingAccessRole
+    createdAt: Date
+    _count: HoldingMembershipCountAggregateOutputType | null
+    _min: HoldingMembershipMinAggregateOutputType | null
+    _max: HoldingMembershipMaxAggregateOutputType | null
+  }
+
+  type GetHoldingMembershipGroupByPayload<T extends HoldingMembershipGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<HoldingMembershipGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof HoldingMembershipGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], HoldingMembershipGroupByOutputType[P]>
+            : GetScalarType<T[P], HoldingMembershipGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type HoldingMembershipSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    holdingId?: boolean
+    role?: boolean
+    createdAt?: boolean
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holdingMembership"]>
+
+  export type HoldingMembershipSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    holdingId?: boolean
+    role?: boolean
+    createdAt?: boolean
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holdingMembership"]>
+
+  export type HoldingMembershipSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    userId?: boolean
+    holdingId?: boolean
+    role?: boolean
+    createdAt?: boolean
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["holdingMembership"]>
+
+  export type HoldingMembershipSelectScalar = {
+    userId?: boolean
+    holdingId?: boolean
+    role?: boolean
+    createdAt?: boolean
+  }
+
+  export type HoldingMembershipOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "holdingId" | "role" | "createdAt", ExtArgs["result"]["holdingMembership"]>
+  export type HoldingMembershipInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type HoldingMembershipIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type HoldingMembershipIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    holding?: boolean | HoldingDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $HoldingMembershipPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "HoldingMembership"
+    objects: {
+      holding: Prisma.$HoldingPayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      userId: string
+      holdingId: string
+      role: $Enums.HoldingAccessRole
+      createdAt: Date
+    }, ExtArgs["result"]["holdingMembership"]>
+    composites: {}
+  }
+
+  type HoldingMembershipGetPayload<S extends boolean | null | undefined | HoldingMembershipDefaultArgs> = $Result.GetResult<Prisma.$HoldingMembershipPayload, S>
+
+  type HoldingMembershipCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<HoldingMembershipFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: HoldingMembershipCountAggregateInputType | true
+    }
+
+  export interface HoldingMembershipDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['HoldingMembership'], meta: { name: 'HoldingMembership' } }
+    /**
+     * Find zero or one HoldingMembership that matches the filter.
+     * @param {HoldingMembershipFindUniqueArgs} args - Arguments to find a HoldingMembership
+     * @example
+     * // Get one HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends HoldingMembershipFindUniqueArgs>(args: SelectSubset<T, HoldingMembershipFindUniqueArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one HoldingMembership that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {HoldingMembershipFindUniqueOrThrowArgs} args - Arguments to find a HoldingMembership
+     * @example
+     * // Get one HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends HoldingMembershipFindUniqueOrThrowArgs>(args: SelectSubset<T, HoldingMembershipFindUniqueOrThrowArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HoldingMembership that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipFindFirstArgs} args - Arguments to find a HoldingMembership
+     * @example
+     * // Get one HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends HoldingMembershipFindFirstArgs>(args?: SelectSubset<T, HoldingMembershipFindFirstArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first HoldingMembership that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipFindFirstOrThrowArgs} args - Arguments to find a HoldingMembership
+     * @example
+     * // Get one HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends HoldingMembershipFindFirstOrThrowArgs>(args?: SelectSubset<T, HoldingMembershipFindFirstOrThrowArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more HoldingMemberships that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all HoldingMemberships
+     * const holdingMemberships = await prisma.holdingMembership.findMany()
+     * 
+     * // Get first 10 HoldingMemberships
+     * const holdingMemberships = await prisma.holdingMembership.findMany({ take: 10 })
+     * 
+     * // Only select the `userId`
+     * const holdingMembershipWithUserIdOnly = await prisma.holdingMembership.findMany({ select: { userId: true } })
+     * 
+     */
+    findMany<T extends HoldingMembershipFindManyArgs>(args?: SelectSubset<T, HoldingMembershipFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a HoldingMembership.
+     * @param {HoldingMembershipCreateArgs} args - Arguments to create a HoldingMembership.
+     * @example
+     * // Create one HoldingMembership
+     * const HoldingMembership = await prisma.holdingMembership.create({
+     *   data: {
+     *     // ... data to create a HoldingMembership
+     *   }
+     * })
+     * 
+     */
+    create<T extends HoldingMembershipCreateArgs>(args: SelectSubset<T, HoldingMembershipCreateArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many HoldingMemberships.
+     * @param {HoldingMembershipCreateManyArgs} args - Arguments to create many HoldingMemberships.
+     * @example
+     * // Create many HoldingMemberships
+     * const holdingMembership = await prisma.holdingMembership.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends HoldingMembershipCreateManyArgs>(args?: SelectSubset<T, HoldingMembershipCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many HoldingMemberships and returns the data saved in the database.
+     * @param {HoldingMembershipCreateManyAndReturnArgs} args - Arguments to create many HoldingMemberships.
+     * @example
+     * // Create many HoldingMemberships
+     * const holdingMembership = await prisma.holdingMembership.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many HoldingMemberships and only return the `userId`
+     * const holdingMembershipWithUserIdOnly = await prisma.holdingMembership.createManyAndReturn({
+     *   select: { userId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends HoldingMembershipCreateManyAndReturnArgs>(args?: SelectSubset<T, HoldingMembershipCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a HoldingMembership.
+     * @param {HoldingMembershipDeleteArgs} args - Arguments to delete one HoldingMembership.
+     * @example
+     * // Delete one HoldingMembership
+     * const HoldingMembership = await prisma.holdingMembership.delete({
+     *   where: {
+     *     // ... filter to delete one HoldingMembership
+     *   }
+     * })
+     * 
+     */
+    delete<T extends HoldingMembershipDeleteArgs>(args: SelectSubset<T, HoldingMembershipDeleteArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one HoldingMembership.
+     * @param {HoldingMembershipUpdateArgs} args - Arguments to update one HoldingMembership.
+     * @example
+     * // Update one HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends HoldingMembershipUpdateArgs>(args: SelectSubset<T, HoldingMembershipUpdateArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more HoldingMemberships.
+     * @param {HoldingMembershipDeleteManyArgs} args - Arguments to filter HoldingMemberships to delete.
+     * @example
+     * // Delete a few HoldingMemberships
+     * const { count } = await prisma.holdingMembership.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends HoldingMembershipDeleteManyArgs>(args?: SelectSubset<T, HoldingMembershipDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HoldingMemberships.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many HoldingMemberships
+     * const holdingMembership = await prisma.holdingMembership.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends HoldingMembershipUpdateManyArgs>(args: SelectSubset<T, HoldingMembershipUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more HoldingMemberships and returns the data updated in the database.
+     * @param {HoldingMembershipUpdateManyAndReturnArgs} args - Arguments to update many HoldingMemberships.
+     * @example
+     * // Update many HoldingMemberships
+     * const holdingMembership = await prisma.holdingMembership.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more HoldingMemberships and only return the `userId`
+     * const holdingMembershipWithUserIdOnly = await prisma.holdingMembership.updateManyAndReturn({
+     *   select: { userId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends HoldingMembershipUpdateManyAndReturnArgs>(args: SelectSubset<T, HoldingMembershipUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one HoldingMembership.
+     * @param {HoldingMembershipUpsertArgs} args - Arguments to update or create a HoldingMembership.
+     * @example
+     * // Update or create a HoldingMembership
+     * const holdingMembership = await prisma.holdingMembership.upsert({
+     *   create: {
+     *     // ... data to create a HoldingMembership
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the HoldingMembership we want to update
+     *   }
+     * })
+     */
+    upsert<T extends HoldingMembershipUpsertArgs>(args: SelectSubset<T, HoldingMembershipUpsertArgs<ExtArgs>>): Prisma__HoldingMembershipClient<$Result.GetResult<Prisma.$HoldingMembershipPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of HoldingMemberships.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipCountArgs} args - Arguments to filter HoldingMemberships to count.
+     * @example
+     * // Count the number of HoldingMemberships
+     * const count = await prisma.holdingMembership.count({
+     *   where: {
+     *     // ... the filter for the HoldingMemberships we want to count
+     *   }
+     * })
+    **/
+    count<T extends HoldingMembershipCountArgs>(
+      args?: Subset<T, HoldingMembershipCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], HoldingMembershipCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a HoldingMembership.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends HoldingMembershipAggregateArgs>(args: Subset<T, HoldingMembershipAggregateArgs>): Prisma.PrismaPromise<GetHoldingMembershipAggregateType<T>>
+
+    /**
+     * Group by HoldingMembership.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {HoldingMembershipGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends HoldingMembershipGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: HoldingMembershipGroupByArgs['orderBy'] }
+        : { orderBy?: HoldingMembershipGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, HoldingMembershipGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetHoldingMembershipGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the HoldingMembership model
+   */
+  readonly fields: HoldingMembershipFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for HoldingMembership.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__HoldingMembershipClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    holding<T extends HoldingDefaultArgs<ExtArgs> = {}>(args?: Subset<T, HoldingDefaultArgs<ExtArgs>>): Prisma__HoldingClient<$Result.GetResult<Prisma.$HoldingPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the HoldingMembership model
+   */
+  interface HoldingMembershipFieldRefs {
+    readonly userId: FieldRef<"HoldingMembership", 'String'>
+    readonly holdingId: FieldRef<"HoldingMembership", 'String'>
+    readonly role: FieldRef<"HoldingMembership", 'HoldingAccessRole'>
+    readonly createdAt: FieldRef<"HoldingMembership", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * HoldingMembership findUnique
+   */
+  export type HoldingMembershipFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which HoldingMembership to fetch.
+     */
+    where: HoldingMembershipWhereUniqueInput
+  }
+
+  /**
+   * HoldingMembership findUniqueOrThrow
+   */
+  export type HoldingMembershipFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which HoldingMembership to fetch.
+     */
+    where: HoldingMembershipWhereUniqueInput
+  }
+
+  /**
+   * HoldingMembership findFirst
+   */
+  export type HoldingMembershipFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which HoldingMembership to fetch.
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HoldingMemberships to fetch.
+     */
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HoldingMemberships.
+     */
+    cursor?: HoldingMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HoldingMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HoldingMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HoldingMemberships.
+     */
+    distinct?: HoldingMembershipScalarFieldEnum | HoldingMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * HoldingMembership findFirstOrThrow
+   */
+  export type HoldingMembershipFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which HoldingMembership to fetch.
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HoldingMemberships to fetch.
+     */
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for HoldingMemberships.
+     */
+    cursor?: HoldingMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HoldingMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HoldingMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HoldingMemberships.
+     */
+    distinct?: HoldingMembershipScalarFieldEnum | HoldingMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * HoldingMembership findMany
+   */
+  export type HoldingMembershipFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter, which HoldingMemberships to fetch.
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of HoldingMemberships to fetch.
+     */
+    orderBy?: HoldingMembershipOrderByWithRelationInput | HoldingMembershipOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing HoldingMemberships.
+     */
+    cursor?: HoldingMembershipWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` HoldingMemberships from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` HoldingMemberships.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of HoldingMemberships.
+     */
+    distinct?: HoldingMembershipScalarFieldEnum | HoldingMembershipScalarFieldEnum[]
+  }
+
+  /**
+   * HoldingMembership create
+   */
+  export type HoldingMembershipCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * The data needed to create a HoldingMembership.
+     */
+    data: XOR<HoldingMembershipCreateInput, HoldingMembershipUncheckedCreateInput>
+  }
+
+  /**
+   * HoldingMembership createMany
+   */
+  export type HoldingMembershipCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many HoldingMemberships.
+     */
+    data: HoldingMembershipCreateManyInput | HoldingMembershipCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * HoldingMembership createManyAndReturn
+   */
+  export type HoldingMembershipCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * The data used to create many HoldingMemberships.
+     */
+    data: HoldingMembershipCreateManyInput | HoldingMembershipCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * HoldingMembership update
+   */
+  export type HoldingMembershipUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * The data needed to update a HoldingMembership.
+     */
+    data: XOR<HoldingMembershipUpdateInput, HoldingMembershipUncheckedUpdateInput>
+    /**
+     * Choose, which HoldingMembership to update.
+     */
+    where: HoldingMembershipWhereUniqueInput
+  }
+
+  /**
+   * HoldingMembership updateMany
+   */
+  export type HoldingMembershipUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update HoldingMemberships.
+     */
+    data: XOR<HoldingMembershipUpdateManyMutationInput, HoldingMembershipUncheckedUpdateManyInput>
+    /**
+     * Filter which HoldingMemberships to update
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * Limit how many HoldingMemberships to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * HoldingMembership updateManyAndReturn
+   */
+  export type HoldingMembershipUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * The data used to update HoldingMemberships.
+     */
+    data: XOR<HoldingMembershipUpdateManyMutationInput, HoldingMembershipUncheckedUpdateManyInput>
+    /**
+     * Filter which HoldingMemberships to update
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * Limit how many HoldingMemberships to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * HoldingMembership upsert
+   */
+  export type HoldingMembershipUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * The filter to search for the HoldingMembership to update in case it exists.
+     */
+    where: HoldingMembershipWhereUniqueInput
+    /**
+     * In case the HoldingMembership found by the `where` argument doesn't exist, create a new HoldingMembership with this data.
+     */
+    create: XOR<HoldingMembershipCreateInput, HoldingMembershipUncheckedCreateInput>
+    /**
+     * In case the HoldingMembership was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<HoldingMembershipUpdateInput, HoldingMembershipUncheckedUpdateInput>
+  }
+
+  /**
+   * HoldingMembership delete
+   */
+  export type HoldingMembershipDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
+    /**
+     * Filter which HoldingMembership to delete.
+     */
+    where: HoldingMembershipWhereUniqueInput
+  }
+
+  /**
+   * HoldingMembership deleteMany
+   */
+  export type HoldingMembershipDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which HoldingMemberships to delete
+     */
+    where?: HoldingMembershipWhereInput
+    /**
+     * Limit how many HoldingMemberships to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * HoldingMembership without action
+   */
+  export type HoldingMembershipDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the HoldingMembership
+     */
+    select?: HoldingMembershipSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the HoldingMembership
+     */
+    omit?: HoldingMembershipOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: HoldingMembershipInclude<ExtArgs> | null
   }
 
 
@@ -83311,6 +85882,7 @@ export namespace Prisma {
     billingStatus: 'billingStatus',
     operatingMode: 'operatingMode',
     parentOrgId: 'parentOrgId',
+    holdingId: 'holdingId',
     fiscalRouting: 'fiscalRouting',
     revenueRouting: 'revenueRouting',
     activeModules: 'activeModules',
@@ -83343,6 +85915,30 @@ export namespace Prisma {
   };
 
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const HoldingScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    ownerId: 'ownerId',
+    baseCurrency: 'baseCurrency',
+    isDeleted: 'isDeleted',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type HoldingScalarFieldEnum = (typeof HoldingScalarFieldEnum)[keyof typeof HoldingScalarFieldEnum]
+
+
+  export const HoldingMembershipScalarFieldEnum: {
+    userId: 'userId',
+    holdingId: 'holdingId',
+    role: 'role',
+    createdAt: 'createdAt'
+  };
+
+  export type HoldingMembershipScalarFieldEnum = (typeof HoldingMembershipScalarFieldEnum)[keyof typeof HoldingMembershipScalarFieldEnum]
 
 
   export const OrganizationMembershipScalarFieldEnum: {
@@ -84207,6 +86803,20 @@ export namespace Prisma {
    * Reference to a field of type 'BigInt[]'
    */
   export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'HoldingAccessRole'
+   */
+  export type EnumHoldingAccessRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HoldingAccessRole'>
+    
+
+
+  /**
+   * Reference to a field of type 'HoldingAccessRole[]'
+   */
+  export type ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'HoldingAccessRole[]'>
     
 
 
@@ -87401,6 +90011,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
@@ -87446,6 +90057,7 @@ export namespace Prisma {
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
+    holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
   }
 
   export type OrganizationOrderByWithRelationInput = {
@@ -87458,6 +90070,7 @@ export namespace Prisma {
     billingStatus?: SortOrder
     operatingMode?: SortOrder
     parentOrgId?: SortOrderInput | SortOrder
+    holdingId?: SortOrderInput | SortOrder
     fiscalRouting?: SortOrder
     revenueRouting?: SortOrder
     activeModules?: SortOrder
@@ -87503,6 +90116,7 @@ export namespace Prisma {
     owner?: UserOrderByWithRelationInput
     parentOrg?: OrganizationOrderByWithRelationInput
     departments?: OrganizationOrderByRelationAggregateInput
+    holding?: HoldingOrderByWithRelationInput
   }
 
   export type OrganizationWhereUniqueInput = Prisma.AtLeast<{
@@ -87519,6 +90133,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
@@ -87563,6 +90178,7 @@ export namespace Prisma {
     owner?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
     parentOrg?: XOR<OrganizationNullableScalarRelationFilter, OrganizationWhereInput> | null
     departments?: OrganizationListRelationFilter
+    holding?: XOR<HoldingNullableScalarRelationFilter, HoldingWhereInput> | null
   }, "id" | "taxIdBlindIndex" | "drakarisClientId">
 
   export type OrganizationOrderByWithAggregationInput = {
@@ -87575,6 +90191,7 @@ export namespace Prisma {
     billingStatus?: SortOrder
     operatingMode?: SortOrder
     parentOrgId?: SortOrderInput | SortOrder
+    holdingId?: SortOrderInput | SortOrder
     fiscalRouting?: SortOrder
     revenueRouting?: SortOrder
     activeModules?: SortOrder
@@ -87610,6 +90227,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusWithAggregatesFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeWithAggregatesFilter<"Organization"> | $Enums.OrgOperatingMode
     parentOrgId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
+    holdingId?: UuidNullableWithAggregatesFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingWithAggregatesFilter<"Organization"> | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingWithAggregatesFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
@@ -87644,6 +90262,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupListRelationFilter
     auditLogs?: AuditLogListRelationFilter
     ownedOrganizations?: OrganizationListRelationFilter
+    holdings?: HoldingListRelationFilter
+    holdingMemberships?: HoldingMembershipListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -87660,6 +90280,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupOrderByRelationAggregateInput
     auditLogs?: AuditLogOrderByRelationAggregateInput
     ownedOrganizations?: OrganizationOrderByRelationAggregateInput
+    holdings?: HoldingOrderByRelationAggregateInput
+    holdingMemberships?: HoldingMembershipOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -87679,6 +90301,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupListRelationFilter
     auditLogs?: AuditLogListRelationFilter
     ownedOrganizations?: OrganizationListRelationFilter
+    holdings?: HoldingListRelationFilter
+    holdingMemberships?: HoldingMembershipListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -87707,6 +90331,136 @@ export namespace Prisma {
     lastNameCipher?: StringNullableWithAggregatesFilter<"User"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
+  }
+
+  export type HoldingWhereInput = {
+    AND?: HoldingWhereInput | HoldingWhereInput[]
+    OR?: HoldingWhereInput[]
+    NOT?: HoldingWhereInput | HoldingWhereInput[]
+    id?: UuidFilter<"Holding"> | string
+    name?: StringFilter<"Holding"> | string
+    ownerId?: UuidFilter<"Holding"> | string
+    baseCurrency?: StringFilter<"Holding"> | string
+    isDeleted?: BoolFilter<"Holding"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Holding"> | Date | string | null
+    createdAt?: DateTimeFilter<"Holding"> | Date | string
+    updatedAt?: DateTimeFilter<"Holding"> | Date | string
+    memberships?: HoldingMembershipListRelationFilter
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+    organizations?: OrganizationListRelationFilter
+  }
+
+  export type HoldingOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    baseCurrency?: SortOrder
+    isDeleted?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    memberships?: HoldingMembershipOrderByRelationAggregateInput
+    owner?: UserOrderByWithRelationInput
+    organizations?: OrganizationOrderByRelationAggregateInput
+  }
+
+  export type HoldingWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    AND?: HoldingWhereInput | HoldingWhereInput[]
+    OR?: HoldingWhereInput[]
+    NOT?: HoldingWhereInput | HoldingWhereInput[]
+    ownerId?: UuidFilter<"Holding"> | string
+    baseCurrency?: StringFilter<"Holding"> | string
+    isDeleted?: BoolFilter<"Holding"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Holding"> | Date | string | null
+    createdAt?: DateTimeFilter<"Holding"> | Date | string
+    updatedAt?: DateTimeFilter<"Holding"> | Date | string
+    memberships?: HoldingMembershipListRelationFilter
+    owner?: XOR<UserScalarRelationFilter, UserWhereInput>
+    organizations?: OrganizationListRelationFilter
+  }, "id" | "name">
+
+  export type HoldingOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    baseCurrency?: SortOrder
+    isDeleted?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: HoldingCountOrderByAggregateInput
+    _max?: HoldingMaxOrderByAggregateInput
+    _min?: HoldingMinOrderByAggregateInput
+  }
+
+  export type HoldingScalarWhereWithAggregatesInput = {
+    AND?: HoldingScalarWhereWithAggregatesInput | HoldingScalarWhereWithAggregatesInput[]
+    OR?: HoldingScalarWhereWithAggregatesInput[]
+    NOT?: HoldingScalarWhereWithAggregatesInput | HoldingScalarWhereWithAggregatesInput[]
+    id?: UuidWithAggregatesFilter<"Holding"> | string
+    name?: StringWithAggregatesFilter<"Holding"> | string
+    ownerId?: UuidWithAggregatesFilter<"Holding"> | string
+    baseCurrency?: StringWithAggregatesFilter<"Holding"> | string
+    isDeleted?: BoolWithAggregatesFilter<"Holding"> | boolean
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Holding"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Holding"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Holding"> | Date | string
+  }
+
+  export type HoldingMembershipWhereInput = {
+    AND?: HoldingMembershipWhereInput | HoldingMembershipWhereInput[]
+    OR?: HoldingMembershipWhereInput[]
+    NOT?: HoldingMembershipWhereInput | HoldingMembershipWhereInput[]
+    userId?: UuidFilter<"HoldingMembership"> | string
+    holdingId?: UuidFilter<"HoldingMembership"> | string
+    role?: EnumHoldingAccessRoleFilter<"HoldingMembership"> | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFilter<"HoldingMembership"> | Date | string
+    holding?: XOR<HoldingScalarRelationFilter, HoldingWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type HoldingMembershipOrderByWithRelationInput = {
+    userId?: SortOrder
+    holdingId?: SortOrder
+    role?: SortOrder
+    createdAt?: SortOrder
+    holding?: HoldingOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type HoldingMembershipWhereUniqueInput = Prisma.AtLeast<{
+    userId_holdingId?: HoldingMembershipUserIdHoldingIdCompoundUniqueInput
+    AND?: HoldingMembershipWhereInput | HoldingMembershipWhereInput[]
+    OR?: HoldingMembershipWhereInput[]
+    NOT?: HoldingMembershipWhereInput | HoldingMembershipWhereInput[]
+    userId?: UuidFilter<"HoldingMembership"> | string
+    holdingId?: UuidFilter<"HoldingMembership"> | string
+    role?: EnumHoldingAccessRoleFilter<"HoldingMembership"> | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFilter<"HoldingMembership"> | Date | string
+    holding?: XOR<HoldingScalarRelationFilter, HoldingWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "userId_holdingId">
+
+  export type HoldingMembershipOrderByWithAggregationInput = {
+    userId?: SortOrder
+    holdingId?: SortOrder
+    role?: SortOrder
+    createdAt?: SortOrder
+    _count?: HoldingMembershipCountOrderByAggregateInput
+    _max?: HoldingMembershipMaxOrderByAggregateInput
+    _min?: HoldingMembershipMinOrderByAggregateInput
+  }
+
+  export type HoldingMembershipScalarWhereWithAggregatesInput = {
+    AND?: HoldingMembershipScalarWhereWithAggregatesInput | HoldingMembershipScalarWhereWithAggregatesInput[]
+    OR?: HoldingMembershipScalarWhereWithAggregatesInput[]
+    NOT?: HoldingMembershipScalarWhereWithAggregatesInput | HoldingMembershipScalarWhereWithAggregatesInput[]
+    userId?: UuidWithAggregatesFilter<"HoldingMembership"> | string
+    holdingId?: UuidWithAggregatesFilter<"HoldingMembership"> | string
+    role?: EnumHoldingAccessRoleWithAggregatesFilter<"HoldingMembership"> | $Enums.HoldingAccessRole
+    createdAt?: DateTimeWithAggregatesFilter<"HoldingMembership"> | Date | string
   }
 
   export type OrganizationMembershipWhereInput = {
@@ -93001,6 +95755,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateInput = {
@@ -93013,6 +95768,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -93111,6 +95867,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateInput = {
@@ -93123,6 +95880,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -93178,6 +95936,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -93230,6 +95989,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -93261,6 +96021,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -93277,6 +96039,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -93293,6 +96057,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -93309,6 +96075,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -93342,6 +96110,137 @@ export namespace Prisma {
     lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingCreateInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipCreateNestedManyWithoutHoldingInput
+    owner: UserCreateNestedOneWithoutHoldingsInput
+    organizations?: OrganizationCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingUncheckedCreateInput = {
+    id?: string
+    name: string
+    ownerId: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipUncheckedCreateNestedManyWithoutHoldingInput
+    organizations?: OrganizationUncheckedCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUpdateManyWithoutHoldingNestedInput
+    owner?: UserUpdateOneRequiredWithoutHoldingsNestedInput
+    organizations?: OrganizationUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type HoldingUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUncheckedUpdateManyWithoutHoldingNestedInput
+    organizations?: OrganizationUncheckedUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type HoldingCreateManyInput = {
+    id?: string
+    name: string
+    ownerId: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HoldingUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipCreateInput = {
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+    holding: HoldingCreateNestedOneWithoutMembershipsInput
+    user: UserCreateNestedOneWithoutHoldingMembershipsInput
+  }
+
+  export type HoldingMembershipUncheckedCreateInput = {
+    userId: string
+    holdingId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+  }
+
+  export type HoldingMembershipUpdateInput = {
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    holding?: HoldingUpdateOneRequiredWithoutMembershipsNestedInput
+    user?: UserUpdateOneRequiredWithoutHoldingMembershipsNestedInput
+  }
+
+  export type HoldingMembershipUncheckedUpdateInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    holdingId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipCreateManyInput = {
+    userId: string
+    holdingId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+  }
+
+  export type HoldingMembershipUpdateManyMutationInput = {
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipUncheckedUpdateManyInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    holdingId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OrganizationMembershipCreateInput = {
@@ -98332,6 +101231,11 @@ export namespace Prisma {
     none?: OrganizationWhereInput
   }
 
+  export type HoldingNullableScalarRelationFilter = {
+    is?: HoldingWhereInput | null
+    isNot?: HoldingWhereInput | null
+  }
+
   export type UsageMeterEventOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -98426,6 +101330,7 @@ export namespace Prisma {
     billingStatus?: SortOrder
     operatingMode?: SortOrder
     parentOrgId?: SortOrder
+    holdingId?: SortOrder
     fiscalRouting?: SortOrder
     revenueRouting?: SortOrder
     activeModules?: SortOrder
@@ -98460,6 +101365,7 @@ export namespace Prisma {
     billingStatus?: SortOrder
     operatingMode?: SortOrder
     parentOrgId?: SortOrder
+    holdingId?: SortOrder
     fiscalRouting?: SortOrder
     revenueRouting?: SortOrder
     storageUsedBytes?: SortOrder
@@ -98485,6 +101391,7 @@ export namespace Prisma {
     billingStatus?: SortOrder
     operatingMode?: SortOrder
     parentOrgId?: SortOrder
+    holdingId?: SortOrder
     fiscalRouting?: SortOrder
     revenueRouting?: SortOrder
     storageUsedBytes?: SortOrder
@@ -98543,6 +101450,26 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
+  export type HoldingListRelationFilter = {
+    every?: HoldingWhereInput
+    some?: HoldingWhereInput
+    none?: HoldingWhereInput
+  }
+
+  export type HoldingMembershipListRelationFilter = {
+    every?: HoldingMembershipWhereInput
+    some?: HoldingMembershipWhereInput
+    none?: HoldingMembershipWhereInput
+  }
+
+  export type HoldingOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type HoldingMembershipOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     email?: SortOrder
@@ -98576,16 +101503,97 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type HoldingCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    baseCurrency?: SortOrder
+    isDeleted?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HoldingMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    baseCurrency?: SortOrder
+    isDeleted?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type HoldingMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    ownerId?: SortOrder
+    baseCurrency?: SortOrder
+    isDeleted?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumHoldingAccessRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.HoldingAccessRole | EnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumHoldingAccessRoleFilter<$PrismaModel> | $Enums.HoldingAccessRole
+  }
+
+  export type HoldingScalarRelationFilter = {
+    is?: HoldingWhereInput
+    isNot?: HoldingWhereInput
+  }
+
+  export type HoldingMembershipUserIdHoldingIdCompoundUniqueInput = {
+    userId: string
+    holdingId: string
+  }
+
+  export type HoldingMembershipCountOrderByAggregateInput = {
+    userId?: SortOrder
+    holdingId?: SortOrder
+    role?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type HoldingMembershipMaxOrderByAggregateInput = {
+    userId?: SortOrder
+    holdingId?: SortOrder
+    role?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type HoldingMembershipMinOrderByAggregateInput = {
+    userId?: SortOrder
+    holdingId?: SortOrder
+    role?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumHoldingAccessRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HoldingAccessRole | EnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumHoldingAccessRoleWithAggregatesFilter<$PrismaModel> | $Enums.HoldingAccessRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHoldingAccessRoleFilter<$PrismaModel>
+    _max?: NestedEnumHoldingAccessRoleFilter<$PrismaModel>
+  }
+
   export type EnumUserRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.UserRole | EnumUserRoleFieldRefInput<$PrismaModel>
     in?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
     notIn?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
     not?: NestedEnumUserRoleFilter<$PrismaModel> | $Enums.UserRole
-  }
-
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
   }
 
   export type OrganizationMembershipUserIdOrganizationIdCompoundUniqueInput = {
@@ -102404,6 +105412,12 @@ export namespace Prisma {
     connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
   }
 
+  export type HoldingCreateNestedOneWithoutOrganizationsInput = {
+    create?: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
+    connectOrCreate?: HoldingCreateOrConnectWithoutOrganizationsInput
+    connect?: HoldingWhereUniqueInput
+  }
+
   export type UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -103028,6 +106042,16 @@ export namespace Prisma {
     deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
   }
 
+  export type HoldingUpdateOneWithoutOrganizationsNestedInput = {
+    create?: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
+    connectOrCreate?: HoldingCreateOrConnectWithoutOrganizationsInput
+    upsert?: HoldingUpsertWithoutOrganizationsInput
+    disconnect?: HoldingWhereInput | boolean
+    delete?: HoldingWhereInput | boolean
+    connect?: HoldingWhereUniqueInput
+    update?: XOR<XOR<HoldingUpdateToOneWithWhereWithoutOrganizationsInput, HoldingUpdateWithoutOrganizationsInput>, HoldingUncheckedUpdateWithoutOrganizationsInput>
+  }
+
   export type UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput = {
     create?: XOR<UsageMeterEventCreateWithoutOrganizationInput, UsageMeterEventUncheckedCreateWithoutOrganizationInput> | UsageMeterEventCreateWithoutOrganizationInput[] | UsageMeterEventUncheckedCreateWithoutOrganizationInput[]
     connectOrCreate?: UsageMeterEventCreateOrConnectWithoutOrganizationInput | UsageMeterEventCreateOrConnectWithoutOrganizationInput[]
@@ -103451,6 +106475,20 @@ export namespace Prisma {
     connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
   }
 
+  export type HoldingCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput> | HoldingCreateWithoutOwnerInput[] | HoldingUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: HoldingCreateOrConnectWithoutOwnerInput | HoldingCreateOrConnectWithoutOwnerInput[]
+    createMany?: HoldingCreateManyOwnerInputEnvelope
+    connect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+  }
+
+  export type HoldingMembershipCreateNestedManyWithoutUserInput = {
+    create?: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput> | HoldingMembershipCreateWithoutUserInput[] | HoldingMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutUserInput | HoldingMembershipCreateOrConnectWithoutUserInput[]
+    createMany?: HoldingMembershipCreateManyUserInputEnvelope
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+  }
+
   export type OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -103484,6 +106522,20 @@ export namespace Prisma {
     connectOrCreate?: OrganizationCreateOrConnectWithoutOwnerInput | OrganizationCreateOrConnectWithoutOwnerInput[]
     createMany?: OrganizationCreateManyOwnerInputEnvelope
     connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
+  export type HoldingUncheckedCreateNestedManyWithoutOwnerInput = {
+    create?: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput> | HoldingCreateWithoutOwnerInput[] | HoldingUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: HoldingCreateOrConnectWithoutOwnerInput | HoldingCreateOrConnectWithoutOwnerInput[]
+    createMany?: HoldingCreateManyOwnerInputEnvelope
+    connect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+  }
+
+  export type HoldingMembershipUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput> | HoldingMembershipCreateWithoutUserInput[] | HoldingMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutUserInput | HoldingMembershipCreateOrConnectWithoutUserInput[]
+    createMany?: HoldingMembershipCreateManyUserInputEnvelope
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
   }
 
   export type OrganizationMembershipUpdateManyWithoutUserNestedInput = {
@@ -103556,6 +106608,34 @@ export namespace Prisma {
     deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
   }
 
+  export type HoldingUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput> | HoldingCreateWithoutOwnerInput[] | HoldingUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: HoldingCreateOrConnectWithoutOwnerInput | HoldingCreateOrConnectWithoutOwnerInput[]
+    upsert?: HoldingUpsertWithWhereUniqueWithoutOwnerInput | HoldingUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: HoldingCreateManyOwnerInputEnvelope
+    set?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    disconnect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    delete?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    connect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    update?: HoldingUpdateWithWhereUniqueWithoutOwnerInput | HoldingUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: HoldingUpdateManyWithWhereWithoutOwnerInput | HoldingUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: HoldingScalarWhereInput | HoldingScalarWhereInput[]
+  }
+
+  export type HoldingMembershipUpdateManyWithoutUserNestedInput = {
+    create?: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput> | HoldingMembershipCreateWithoutUserInput[] | HoldingMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutUserInput | HoldingMembershipCreateOrConnectWithoutUserInput[]
+    upsert?: HoldingMembershipUpsertWithWhereUniqueWithoutUserInput | HoldingMembershipUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: HoldingMembershipCreateManyUserInputEnvelope
+    set?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    disconnect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    delete?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    update?: HoldingMembershipUpdateWithWhereUniqueWithoutUserInput | HoldingMembershipUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: HoldingMembershipUpdateManyWithWhereWithoutUserInput | HoldingMembershipUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+  }
+
   export type OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<OrganizationMembershipCreateWithoutUserInput, OrganizationMembershipUncheckedCreateWithoutUserInput> | OrganizationMembershipCreateWithoutUserInput[] | OrganizationMembershipUncheckedCreateWithoutUserInput[]
     connectOrCreate?: OrganizationMembershipCreateOrConnectWithoutUserInput | OrganizationMembershipCreateOrConnectWithoutUserInput[]
@@ -103624,6 +106704,164 @@ export namespace Prisma {
     update?: OrganizationUpdateWithWhereUniqueWithoutOwnerInput | OrganizationUpdateWithWhereUniqueWithoutOwnerInput[]
     updateMany?: OrganizationUpdateManyWithWhereWithoutOwnerInput | OrganizationUpdateManyWithWhereWithoutOwnerInput[]
     deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
+  export type HoldingUncheckedUpdateManyWithoutOwnerNestedInput = {
+    create?: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput> | HoldingCreateWithoutOwnerInput[] | HoldingUncheckedCreateWithoutOwnerInput[]
+    connectOrCreate?: HoldingCreateOrConnectWithoutOwnerInput | HoldingCreateOrConnectWithoutOwnerInput[]
+    upsert?: HoldingUpsertWithWhereUniqueWithoutOwnerInput | HoldingUpsertWithWhereUniqueWithoutOwnerInput[]
+    createMany?: HoldingCreateManyOwnerInputEnvelope
+    set?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    disconnect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    delete?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    connect?: HoldingWhereUniqueInput | HoldingWhereUniqueInput[]
+    update?: HoldingUpdateWithWhereUniqueWithoutOwnerInput | HoldingUpdateWithWhereUniqueWithoutOwnerInput[]
+    updateMany?: HoldingUpdateManyWithWhereWithoutOwnerInput | HoldingUpdateManyWithWhereWithoutOwnerInput[]
+    deleteMany?: HoldingScalarWhereInput | HoldingScalarWhereInput[]
+  }
+
+  export type HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput> | HoldingMembershipCreateWithoutUserInput[] | HoldingMembershipUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutUserInput | HoldingMembershipCreateOrConnectWithoutUserInput[]
+    upsert?: HoldingMembershipUpsertWithWhereUniqueWithoutUserInput | HoldingMembershipUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: HoldingMembershipCreateManyUserInputEnvelope
+    set?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    disconnect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    delete?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    update?: HoldingMembershipUpdateWithWhereUniqueWithoutUserInput | HoldingMembershipUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: HoldingMembershipUpdateManyWithWhereWithoutUserInput | HoldingMembershipUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+  }
+
+  export type HoldingMembershipCreateNestedManyWithoutHoldingInput = {
+    create?: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput> | HoldingMembershipCreateWithoutHoldingInput[] | HoldingMembershipUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutHoldingInput | HoldingMembershipCreateOrConnectWithoutHoldingInput[]
+    createMany?: HoldingMembershipCreateManyHoldingInputEnvelope
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+  }
+
+  export type UserCreateNestedOneWithoutHoldingsInput = {
+    create?: XOR<UserCreateWithoutHoldingsInput, UserUncheckedCreateWithoutHoldingsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutHoldingsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type OrganizationCreateNestedManyWithoutHoldingInput = {
+    create?: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput> | OrganizationCreateWithoutHoldingInput[] | OrganizationUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutHoldingInput | OrganizationCreateOrConnectWithoutHoldingInput[]
+    createMany?: OrganizationCreateManyHoldingInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
+  export type HoldingMembershipUncheckedCreateNestedManyWithoutHoldingInput = {
+    create?: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput> | HoldingMembershipCreateWithoutHoldingInput[] | HoldingMembershipUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutHoldingInput | HoldingMembershipCreateOrConnectWithoutHoldingInput[]
+    createMany?: HoldingMembershipCreateManyHoldingInputEnvelope
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+  }
+
+  export type OrganizationUncheckedCreateNestedManyWithoutHoldingInput = {
+    create?: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput> | OrganizationCreateWithoutHoldingInput[] | OrganizationUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutHoldingInput | OrganizationCreateOrConnectWithoutHoldingInput[]
+    createMany?: OrganizationCreateManyHoldingInputEnvelope
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+  }
+
+  export type HoldingMembershipUpdateManyWithoutHoldingNestedInput = {
+    create?: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput> | HoldingMembershipCreateWithoutHoldingInput[] | HoldingMembershipUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutHoldingInput | HoldingMembershipCreateOrConnectWithoutHoldingInput[]
+    upsert?: HoldingMembershipUpsertWithWhereUniqueWithoutHoldingInput | HoldingMembershipUpsertWithWhereUniqueWithoutHoldingInput[]
+    createMany?: HoldingMembershipCreateManyHoldingInputEnvelope
+    set?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    disconnect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    delete?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    update?: HoldingMembershipUpdateWithWhereUniqueWithoutHoldingInput | HoldingMembershipUpdateWithWhereUniqueWithoutHoldingInput[]
+    updateMany?: HoldingMembershipUpdateManyWithWhereWithoutHoldingInput | HoldingMembershipUpdateManyWithWhereWithoutHoldingInput[]
+    deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+  }
+
+  export type UserUpdateOneRequiredWithoutHoldingsNestedInput = {
+    create?: XOR<UserCreateWithoutHoldingsInput, UserUncheckedCreateWithoutHoldingsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutHoldingsInput
+    upsert?: UserUpsertWithoutHoldingsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutHoldingsInput, UserUpdateWithoutHoldingsInput>, UserUncheckedUpdateWithoutHoldingsInput>
+  }
+
+  export type OrganizationUpdateManyWithoutHoldingNestedInput = {
+    create?: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput> | OrganizationCreateWithoutHoldingInput[] | OrganizationUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutHoldingInput | OrganizationCreateOrConnectWithoutHoldingInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutHoldingInput | OrganizationUpsertWithWhereUniqueWithoutHoldingInput[]
+    createMany?: OrganizationCreateManyHoldingInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutHoldingInput | OrganizationUpdateWithWhereUniqueWithoutHoldingInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutHoldingInput | OrganizationUpdateManyWithWhereWithoutHoldingInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
+  export type HoldingMembershipUncheckedUpdateManyWithoutHoldingNestedInput = {
+    create?: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput> | HoldingMembershipCreateWithoutHoldingInput[] | HoldingMembershipUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: HoldingMembershipCreateOrConnectWithoutHoldingInput | HoldingMembershipCreateOrConnectWithoutHoldingInput[]
+    upsert?: HoldingMembershipUpsertWithWhereUniqueWithoutHoldingInput | HoldingMembershipUpsertWithWhereUniqueWithoutHoldingInput[]
+    createMany?: HoldingMembershipCreateManyHoldingInputEnvelope
+    set?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    disconnect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    delete?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    connect?: HoldingMembershipWhereUniqueInput | HoldingMembershipWhereUniqueInput[]
+    update?: HoldingMembershipUpdateWithWhereUniqueWithoutHoldingInput | HoldingMembershipUpdateWithWhereUniqueWithoutHoldingInput[]
+    updateMany?: HoldingMembershipUpdateManyWithWhereWithoutHoldingInput | HoldingMembershipUpdateManyWithWhereWithoutHoldingInput[]
+    deleteMany?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutHoldingNestedInput = {
+    create?: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput> | OrganizationCreateWithoutHoldingInput[] | OrganizationUncheckedCreateWithoutHoldingInput[]
+    connectOrCreate?: OrganizationCreateOrConnectWithoutHoldingInput | OrganizationCreateOrConnectWithoutHoldingInput[]
+    upsert?: OrganizationUpsertWithWhereUniqueWithoutHoldingInput | OrganizationUpsertWithWhereUniqueWithoutHoldingInput[]
+    createMany?: OrganizationCreateManyHoldingInputEnvelope
+    set?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    disconnect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    delete?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    connect?: OrganizationWhereUniqueInput | OrganizationWhereUniqueInput[]
+    update?: OrganizationUpdateWithWhereUniqueWithoutHoldingInput | OrganizationUpdateWithWhereUniqueWithoutHoldingInput[]
+    updateMany?: OrganizationUpdateManyWithWhereWithoutHoldingInput | OrganizationUpdateManyWithWhereWithoutHoldingInput[]
+    deleteMany?: OrganizationScalarWhereInput | OrganizationScalarWhereInput[]
+  }
+
+  export type HoldingCreateNestedOneWithoutMembershipsInput = {
+    create?: XOR<HoldingCreateWithoutMembershipsInput, HoldingUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: HoldingCreateOrConnectWithoutMembershipsInput
+    connect?: HoldingWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutHoldingMembershipsInput = {
+    create?: XOR<UserCreateWithoutHoldingMembershipsInput, UserUncheckedCreateWithoutHoldingMembershipsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutHoldingMembershipsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumHoldingAccessRoleFieldUpdateOperationsInput = {
+    set?: $Enums.HoldingAccessRole
+  }
+
+  export type HoldingUpdateOneRequiredWithoutMembershipsNestedInput = {
+    create?: XOR<HoldingCreateWithoutMembershipsInput, HoldingUncheckedCreateWithoutMembershipsInput>
+    connectOrCreate?: HoldingCreateOrConnectWithoutMembershipsInput
+    upsert?: HoldingUpsertWithoutMembershipsInput
+    connect?: HoldingWhereUniqueInput
+    update?: XOR<XOR<HoldingUpdateToOneWithWhereWithoutMembershipsInput, HoldingUpdateWithoutMembershipsInput>, HoldingUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutHoldingMembershipsNestedInput = {
+    create?: XOR<UserCreateWithoutHoldingMembershipsInput, UserUncheckedCreateWithoutHoldingMembershipsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutHoldingMembershipsInput
+    upsert?: UserUpsertWithoutHoldingMembershipsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutHoldingMembershipsInput, UserUpdateWithoutHoldingMembershipsInput>, UserUncheckedUpdateWithoutHoldingMembershipsInput>
   }
 
   export type UserCreateNestedOneWithoutMembershipsInput = {
@@ -105226,6 +108464,23 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
+  export type NestedEnumHoldingAccessRoleFilter<$PrismaModel = never> = {
+    equals?: $Enums.HoldingAccessRole | EnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumHoldingAccessRoleFilter<$PrismaModel> | $Enums.HoldingAccessRole
+  }
+
+  export type NestedEnumHoldingAccessRoleWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.HoldingAccessRole | EnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    in?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    notIn?: $Enums.HoldingAccessRole[] | ListEnumHoldingAccessRoleFieldRefInput<$PrismaModel>
+    not?: NestedEnumHoldingAccessRoleWithAggregatesFilter<$PrismaModel> | $Enums.HoldingAccessRole
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumHoldingAccessRoleFilter<$PrismaModel>
+    _max?: NestedEnumHoldingAccessRoleFilter<$PrismaModel>
+  }
+
   export type NestedEnumUserRoleFilter<$PrismaModel = never> = {
     equals?: $Enums.UserRole | EnumUserRoleFieldRefInput<$PrismaModel>
     in?: $Enums.UserRole[] | ListEnumUserRoleFieldRefInput<$PrismaModel>
@@ -105628,6 +108883,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutSubscriptionInput = {
@@ -105640,6 +108896,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -105752,6 +109009,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSubscriptionInput = {
@@ -105764,6 +109022,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -106098,6 +109357,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutBillingInvoiceItemsInput = {
@@ -106110,6 +109370,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -106265,6 +109526,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBillingInvoiceItemsInput = {
@@ -106277,6 +109539,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -106373,6 +109636,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutUsageMeterEventsInput = {
@@ -106385,6 +109649,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -106497,6 +109762,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutUsageMeterEventsInput = {
@@ -106509,6 +109775,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -106916,6 +110183,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEntitlementsInput = {
@@ -106928,6 +110196,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -107067,6 +110336,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEntitlementsInput = {
@@ -107079,6 +110349,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -107208,6 +110479,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutSatelliteEndpointsInput = {
@@ -107220,6 +110492,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -107359,6 +110632,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutSatelliteEndpointsInput = {
@@ -107371,6 +110645,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -107500,6 +110775,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceAssignmentsInput = {
@@ -107512,6 +110788,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -107624,6 +110901,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceAssignmentsInput = {
@@ -107636,6 +110914,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -108811,6 +112090,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutOrgUnitCommercialLinksInput = {
@@ -108823,6 +112103,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -109009,6 +112290,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOrgUnitCommercialLinksInput = {
@@ -109021,6 +112303,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -110013,6 +113296,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutWorkforceEmploymentsInput = {
@@ -110025,6 +113309,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -110535,6 +113820,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutWorkforceEmploymentsInput = {
@@ -110547,6 +113833,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -111892,6 +115179,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPaymentOrdersInput = {
@@ -111904,6 +115192,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -112097,6 +115386,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPaymentOrdersInput = {
@@ -112109,6 +115399,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -113364,6 +116655,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
     earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOwnedOrganizationsInput = {
@@ -113379,6 +116672,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
     earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOwnedOrganizationsInput = {
@@ -113438,6 +116733,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutDepartmentsInput = {
@@ -113450,6 +116746,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -113551,6 +116848,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutParentOrgInput = {
@@ -113562,6 +116860,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -113615,6 +116914,35 @@ export namespace Prisma {
   export type OrganizationCreateManyParentOrgInputEnvelope = {
     data: OrganizationCreateManyParentOrgInput | OrganizationCreateManyParentOrgInput[]
     skipDuplicates?: boolean
+  }
+
+  export type HoldingCreateWithoutOrganizationsInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipCreateNestedManyWithoutHoldingInput
+    owner: UserCreateNestedOneWithoutHoldingsInput
+  }
+
+  export type HoldingUncheckedCreateWithoutOrganizationsInput = {
+    id?: string
+    name: string
+    ownerId: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipUncheckedCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingCreateOrConnectWithoutOrganizationsInput = {
+    where: HoldingWhereUniqueInput
+    create: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
   }
 
   export type UsageMeterEventUpsertWithWhereUniqueWithoutOrganizationInput = {
@@ -114411,6 +117739,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
     earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOwnedOrganizationsInput = {
@@ -114426,6 +117756,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationUpsertWithoutDepartmentsInput = {
@@ -114491,6 +117823,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutDepartmentsInput = {
@@ -114503,6 +117836,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -114576,6 +117910,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFilter<"Organization"> | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFilter<"Organization"> | $Enums.OrgOperatingMode
     parentOrgId?: UuidNullableFilter<"Organization"> | string | null
+    holdingId?: UuidNullableFilter<"Organization"> | string | null
     fiscalRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFilter<"Organization"> | $Enums.OrgRouting
     activeModules?: StringNullableListFilter<"Organization">
@@ -114591,6 +117926,41 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Organization"> | Date | string | null
     createdAt?: DateTimeFilter<"Organization"> | Date | string
     updatedAt?: DateTimeFilter<"Organization"> | Date | string
+  }
+
+  export type HoldingUpsertWithoutOrganizationsInput = {
+    update: XOR<HoldingUpdateWithoutOrganizationsInput, HoldingUncheckedUpdateWithoutOrganizationsInput>
+    create: XOR<HoldingCreateWithoutOrganizationsInput, HoldingUncheckedCreateWithoutOrganizationsInput>
+    where?: HoldingWhereInput
+  }
+
+  export type HoldingUpdateToOneWithWhereWithoutOrganizationsInput = {
+    where?: HoldingWhereInput
+    data: XOR<HoldingUpdateWithoutOrganizationsInput, HoldingUncheckedUpdateWithoutOrganizationsInput>
+  }
+
+  export type HoldingUpdateWithoutOrganizationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUpdateManyWithoutHoldingNestedInput
+    owner?: UserUpdateOneRequiredWithoutHoldingsNestedInput
+  }
+
+  export type HoldingUncheckedUpdateWithoutOrganizationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUncheckedUpdateManyWithoutHoldingNestedInput
   }
 
   export type OrganizationMembershipCreateWithoutUserInput = {
@@ -114785,6 +118155,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutOwnerInput = {
@@ -114796,6 +118167,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -114848,6 +118220,62 @@ export namespace Prisma {
 
   export type OrganizationCreateManyOwnerInputEnvelope = {
     data: OrganizationCreateManyOwnerInput | OrganizationCreateManyOwnerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type HoldingCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipCreateNestedManyWithoutHoldingInput
+    organizations?: OrganizationCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingUncheckedCreateWithoutOwnerInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: HoldingMembershipUncheckedCreateNestedManyWithoutHoldingInput
+    organizations?: OrganizationUncheckedCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingCreateOrConnectWithoutOwnerInput = {
+    where: HoldingWhereUniqueInput
+    create: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type HoldingCreateManyOwnerInputEnvelope = {
+    data: HoldingCreateManyOwnerInput | HoldingCreateManyOwnerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type HoldingMembershipCreateWithoutUserInput = {
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+    holding: HoldingCreateNestedOneWithoutMembershipsInput
+  }
+
+  export type HoldingMembershipUncheckedCreateWithoutUserInput = {
+    holdingId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+  }
+
+  export type HoldingMembershipCreateOrConnectWithoutUserInput = {
+    where: HoldingMembershipWhereUniqueInput
+    create: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput>
+  }
+
+  export type HoldingMembershipCreateManyUserInputEnvelope = {
+    data: HoldingMembershipCreateManyUserInput | HoldingMembershipCreateManyUserInput[]
     skipDuplicates?: boolean
   }
 
@@ -114931,6 +118359,468 @@ export namespace Prisma {
     data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyWithoutOwnerInput>
   }
 
+  export type HoldingUpsertWithWhereUniqueWithoutOwnerInput = {
+    where: HoldingWhereUniqueInput
+    update: XOR<HoldingUpdateWithoutOwnerInput, HoldingUncheckedUpdateWithoutOwnerInput>
+    create: XOR<HoldingCreateWithoutOwnerInput, HoldingUncheckedCreateWithoutOwnerInput>
+  }
+
+  export type HoldingUpdateWithWhereUniqueWithoutOwnerInput = {
+    where: HoldingWhereUniqueInput
+    data: XOR<HoldingUpdateWithoutOwnerInput, HoldingUncheckedUpdateWithoutOwnerInput>
+  }
+
+  export type HoldingUpdateManyWithWhereWithoutOwnerInput = {
+    where: HoldingScalarWhereInput
+    data: XOR<HoldingUpdateManyMutationInput, HoldingUncheckedUpdateManyWithoutOwnerInput>
+  }
+
+  export type HoldingScalarWhereInput = {
+    AND?: HoldingScalarWhereInput | HoldingScalarWhereInput[]
+    OR?: HoldingScalarWhereInput[]
+    NOT?: HoldingScalarWhereInput | HoldingScalarWhereInput[]
+    id?: UuidFilter<"Holding"> | string
+    name?: StringFilter<"Holding"> | string
+    ownerId?: UuidFilter<"Holding"> | string
+    baseCurrency?: StringFilter<"Holding"> | string
+    isDeleted?: BoolFilter<"Holding"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Holding"> | Date | string | null
+    createdAt?: DateTimeFilter<"Holding"> | Date | string
+    updatedAt?: DateTimeFilter<"Holding"> | Date | string
+  }
+
+  export type HoldingMembershipUpsertWithWhereUniqueWithoutUserInput = {
+    where: HoldingMembershipWhereUniqueInput
+    update: XOR<HoldingMembershipUpdateWithoutUserInput, HoldingMembershipUncheckedUpdateWithoutUserInput>
+    create: XOR<HoldingMembershipCreateWithoutUserInput, HoldingMembershipUncheckedCreateWithoutUserInput>
+  }
+
+  export type HoldingMembershipUpdateWithWhereUniqueWithoutUserInput = {
+    where: HoldingMembershipWhereUniqueInput
+    data: XOR<HoldingMembershipUpdateWithoutUserInput, HoldingMembershipUncheckedUpdateWithoutUserInput>
+  }
+
+  export type HoldingMembershipUpdateManyWithWhereWithoutUserInput = {
+    where: HoldingMembershipScalarWhereInput
+    data: XOR<HoldingMembershipUpdateManyMutationInput, HoldingMembershipUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type HoldingMembershipScalarWhereInput = {
+    AND?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+    OR?: HoldingMembershipScalarWhereInput[]
+    NOT?: HoldingMembershipScalarWhereInput | HoldingMembershipScalarWhereInput[]
+    userId?: UuidFilter<"HoldingMembership"> | string
+    holdingId?: UuidFilter<"HoldingMembership"> | string
+    role?: EnumHoldingAccessRoleFilter<"HoldingMembership"> | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFilter<"HoldingMembership"> | Date | string
+  }
+
+  export type HoldingMembershipCreateWithoutHoldingInput = {
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutHoldingMembershipsInput
+  }
+
+  export type HoldingMembershipUncheckedCreateWithoutHoldingInput = {
+    userId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+  }
+
+  export type HoldingMembershipCreateOrConnectWithoutHoldingInput = {
+    where: HoldingMembershipWhereUniqueInput
+    create: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput>
+  }
+
+  export type HoldingMembershipCreateManyHoldingInputEnvelope = {
+    data: HoldingMembershipCreateManyHoldingInput | HoldingMembershipCreateManyHoldingInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutHoldingsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutHoldingsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutHoldingsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutHoldingsInput, UserUncheckedCreateWithoutHoldingsInput>
+  }
+
+  export type OrganizationCreateWithoutHoldingInput = {
+    id?: string
+    name: string
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkCreateNestedManyWithoutOrganizationInput
+    owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
+    parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
+    departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationUncheckedCreateWithoutHoldingInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutOrganizationInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutOrganizationInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    subscription?: OrganizationSubscriptionUncheckedCreateNestedOneWithoutOrganizationInput
+    paymentOrders?: PaymentOrderUncheckedCreateNestedManyWithoutOrganizationInput
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutOrganizationInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationTemplates?: NotificationTemplateUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedCreateNestedManyWithoutOrganizationInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    bookableResources?: BookableResourceUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingSlots?: BookingSlotUncheckedCreateNestedManyWithoutOrganizationInput
+    bookingAppointments?: BookingAppointmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformPromotions?: PlatformPromotionUncheckedCreateNestedManyWithoutOrganizationInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedCreateNestedManyWithoutOrganizationInput
+    platformShipments?: PlatformShipmentUncheckedCreateNestedManyWithoutOrganizationInput
+    platformAuditLogs?: PlatformAuditLogUncheckedCreateNestedManyWithoutOrganizationInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedCreateNestedManyWithoutOrganizationInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedCreateNestedManyWithoutOrganizationInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceAssignments?: WorkforceAssignmentUncheckedCreateNestedManyWithoutOrganizationInput
+    workforceEmployments?: WorkforceEmploymentUncheckedCreateNestedManyWithoutOrganizationInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedCreateNestedManyWithoutOrganizationInput
+    departments?: OrganizationUncheckedCreateNestedManyWithoutParentOrgInput
+  }
+
+  export type OrganizationCreateOrConnectWithoutHoldingInput = {
+    where: OrganizationWhereUniqueInput
+    create: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput>
+  }
+
+  export type OrganizationCreateManyHoldingInputEnvelope = {
+    data: OrganizationCreateManyHoldingInput | OrganizationCreateManyHoldingInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type HoldingMembershipUpsertWithWhereUniqueWithoutHoldingInput = {
+    where: HoldingMembershipWhereUniqueInput
+    update: XOR<HoldingMembershipUpdateWithoutHoldingInput, HoldingMembershipUncheckedUpdateWithoutHoldingInput>
+    create: XOR<HoldingMembershipCreateWithoutHoldingInput, HoldingMembershipUncheckedCreateWithoutHoldingInput>
+  }
+
+  export type HoldingMembershipUpdateWithWhereUniqueWithoutHoldingInput = {
+    where: HoldingMembershipWhereUniqueInput
+    data: XOR<HoldingMembershipUpdateWithoutHoldingInput, HoldingMembershipUncheckedUpdateWithoutHoldingInput>
+  }
+
+  export type HoldingMembershipUpdateManyWithWhereWithoutHoldingInput = {
+    where: HoldingMembershipScalarWhereInput
+    data: XOR<HoldingMembershipUpdateManyMutationInput, HoldingMembershipUncheckedUpdateManyWithoutHoldingInput>
+  }
+
+  export type UserUpsertWithoutHoldingsInput = {
+    update: XOR<UserUpdateWithoutHoldingsInput, UserUncheckedUpdateWithoutHoldingsInput>
+    create: XOR<UserCreateWithoutHoldingsInput, UserUncheckedCreateWithoutHoldingsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutHoldingsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutHoldingsInput, UserUncheckedUpdateWithoutHoldingsInput>
+  }
+
+  export type UserUpdateWithoutHoldingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutHoldingsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type OrganizationUpsertWithWhereUniqueWithoutHoldingInput = {
+    where: OrganizationWhereUniqueInput
+    update: XOR<OrganizationUpdateWithoutHoldingInput, OrganizationUncheckedUpdateWithoutHoldingInput>
+    create: XOR<OrganizationCreateWithoutHoldingInput, OrganizationUncheckedCreateWithoutHoldingInput>
+  }
+
+  export type OrganizationUpdateWithWhereUniqueWithoutHoldingInput = {
+    where: OrganizationWhereUniqueInput
+    data: XOR<OrganizationUpdateWithoutHoldingInput, OrganizationUncheckedUpdateWithoutHoldingInput>
+  }
+
+  export type OrganizationUpdateManyWithWhereWithoutHoldingInput = {
+    where: OrganizationScalarWhereInput
+    data: XOR<OrganizationUpdateManyMutationInput, OrganizationUncheckedUpdateManyWithoutHoldingInput>
+  }
+
+  export type HoldingCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    owner: UserCreateNestedOneWithoutHoldingsInput
+    organizations?: OrganizationCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingUncheckedCreateWithoutMembershipsInput = {
+    id?: string
+    name: string
+    ownerId: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    organizations?: OrganizationUncheckedCreateNestedManyWithoutHoldingInput
+  }
+
+  export type HoldingCreateOrConnectWithoutMembershipsInput = {
+    where: HoldingWhereUniqueInput
+    create: XOR<HoldingCreateWithoutMembershipsInput, HoldingUncheckedCreateWithoutMembershipsInput>
+  }
+
+  export type UserCreateWithoutHoldingMembershipsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserUncheckedCreateWithoutHoldingMembershipsInput = {
+    id?: string
+    email: string
+    passwordHash: string
+    isSuperAdmin?: boolean
+    firstNameCipher?: string | null
+    lastNameCipher?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    memberships?: OrganizationMembershipUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+  }
+
+  export type UserCreateOrConnectWithoutHoldingMembershipsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutHoldingMembershipsInput, UserUncheckedCreateWithoutHoldingMembershipsInput>
+  }
+
+  export type HoldingUpsertWithoutMembershipsInput = {
+    update: XOR<HoldingUpdateWithoutMembershipsInput, HoldingUncheckedUpdateWithoutMembershipsInput>
+    create: XOR<HoldingCreateWithoutMembershipsInput, HoldingUncheckedCreateWithoutMembershipsInput>
+    where?: HoldingWhereInput
+  }
+
+  export type HoldingUpdateToOneWithWhereWithoutMembershipsInput = {
+    where?: HoldingWhereInput
+    data: XOR<HoldingUpdateWithoutMembershipsInput, HoldingUncheckedUpdateWithoutMembershipsInput>
+  }
+
+  export type HoldingUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    owner?: UserUpdateOneRequiredWithoutHoldingsNestedInput
+    organizations?: OrganizationUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type HoldingUncheckedUpdateWithoutMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    organizations?: OrganizationUncheckedUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type UserUpsertWithoutHoldingMembershipsInput = {
+    update: XOR<UserUpdateWithoutHoldingMembershipsInput, UserUncheckedUpdateWithoutHoldingMembershipsInput>
+    create: XOR<UserCreateWithoutHoldingMembershipsInput, UserUncheckedCreateWithoutHoldingMembershipsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutHoldingMembershipsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutHoldingMembershipsInput, UserUncheckedUpdateWithoutHoldingMembershipsInput>
+  }
+
+  export type UserUpdateWithoutHoldingMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutHoldingMembershipsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: StringFieldUpdateOperationsInput | string
+    isSuperAdmin?: BoolFieldUpdateOperationsInput | boolean
+    firstNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    lastNameCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+  }
+
   export type UserCreateWithoutMembershipsInput = {
     id?: string
     email: string
@@ -114944,6 +118834,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutMembershipsInput = {
@@ -114959,6 +118851,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutMembershipsInput = {
@@ -115018,6 +118912,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutMembershipsInput = {
@@ -115030,6 +118925,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -115103,6 +118999,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutMembershipsInput = {
@@ -115118,6 +119016,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationUpsertWithoutMembershipsInput = {
@@ -115183,6 +119083,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutMembershipsInput = {
@@ -115195,6 +119096,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -115604,6 +119506,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -115616,6 +119519,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -115678,6 +119582,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEarlyAccessEventsInput = {
@@ -115693,6 +119599,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEarlyAccessEventsInput = {
@@ -115763,6 +119671,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -115775,6 +119684,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -115843,6 +119753,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEarlyAccessEventsInput = {
@@ -115858,6 +119770,8 @@ export namespace Prisma {
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutEarlyAccessSignupsInput = {
@@ -115912,6 +119826,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -115924,6 +119839,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -115986,6 +119902,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEarlyAccessSignupsInput = {
@@ -116001,6 +119919,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
     auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEarlyAccessSignupsInput = {
@@ -116071,6 +119991,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -116083,6 +120004,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -116151,6 +120073,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEarlyAccessSignupsInput = {
@@ -116166,6 +120090,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
     auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutAuditLogsInput = {
@@ -116220,6 +120146,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutAuditLogsInput = {
@@ -116232,6 +120159,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -116294,6 +120222,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventCreateNestedManyWithoutUserInput
     earlyAccessSignups?: EarlyAccessSignupCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -116309,6 +120239,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedCreateNestedManyWithoutUserInput
     earlyAccessSignups?: EarlyAccessSignupUncheckedCreateNestedManyWithoutUserInput
     ownedOrganizations?: OrganizationUncheckedCreateNestedManyWithoutOwnerInput
+    holdings?: HoldingUncheckedCreateNestedManyWithoutOwnerInput
+    holdingMemberships?: HoldingMembershipUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -116379,6 +120311,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutAuditLogsInput = {
@@ -116391,6 +120324,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -116459,6 +120393,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutUserNestedInput
     earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -116474,6 +120410,8 @@ export namespace Prisma {
     earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutUserNestedInput
     earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutUserNestedInput
     ownedOrganizations?: OrganizationUncheckedUpdateManyWithoutOwnerNestedInput
+    holdings?: HoldingUncheckedUpdateManyWithoutOwnerNestedInput
+    holdingMemberships?: HoldingMembershipUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OrganizationCreateWithoutNotificationTemplatesInput = {
@@ -116528,6 +120466,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationTemplatesInput = {
@@ -116540,6 +120479,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -116698,6 +120638,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationTemplatesInput = {
@@ -116710,6 +120651,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -116822,6 +120764,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationOutboxEntriesInput = {
@@ -116834,6 +120777,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -117007,6 +120951,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationOutboxEntriesInput = {
@@ -117019,6 +120964,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -117209,6 +121155,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutNotificationDeliveryLogsInput = {
@@ -117221,6 +121168,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -117380,6 +121328,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutNotificationDeliveryLogsInput = {
@@ -117392,6 +121341,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -117488,6 +121438,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPaymentLinksInput = {
@@ -117500,6 +121451,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -117651,6 +121603,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPaymentLinksInput = {
@@ -117663,6 +121616,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -117804,6 +121758,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPortalLinksInput = {
@@ -117816,6 +121771,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -117928,6 +121884,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPortalLinksInput = {
@@ -117940,6 +121897,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -118036,6 +121994,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookableResourcesInput = {
@@ -118048,6 +122007,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118228,6 +122188,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookableResourcesInput = {
@@ -118240,6 +122201,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -118368,6 +122330,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingSlotsInput = {
@@ -118380,6 +122343,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118553,6 +122517,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingSlotsInput = {
@@ -118565,6 +122530,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -118708,6 +122674,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutBookingAppointmentsInput = {
@@ -118720,6 +122687,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -118884,6 +122852,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutBookingAppointmentsInput = {
@@ -118896,6 +122865,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119056,6 +123026,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformPromotionsInput = {
@@ -119068,6 +123039,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119180,6 +123152,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformPromotionsInput = {
@@ -119192,6 +123165,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119288,6 +123262,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformCustomDomainsInput = {
@@ -119300,6 +123275,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119412,6 +123388,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformCustomDomainsInput = {
@@ -119424,6 +123401,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119520,6 +123498,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformShipmentsInput = {
@@ -119532,6 +123511,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119644,6 +123624,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformShipmentsInput = {
@@ -119656,6 +123637,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119752,6 +123734,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformAuditLogsInput = {
@@ -119764,6 +123747,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -119876,6 +123860,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformAuditLogsInput = {
@@ -119888,6 +123873,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -119984,6 +123970,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformIdempotencyRecordsInput = {
@@ -119996,6 +123983,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -120108,6 +124096,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformIdempotencyRecordsInput = {
@@ -120120,6 +124109,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -120216,6 +124206,7 @@ export namespace Prisma {
     owner?: UserCreateNestedOneWithoutOwnedOrganizationsInput
     parentOrg?: OrganizationCreateNestedOneWithoutDepartmentsInput
     departments?: OrganizationCreateNestedManyWithoutParentOrgInput
+    holding?: HoldingCreateNestedOneWithoutOrganizationsInput
   }
 
   export type OrganizationUncheckedCreateWithoutPlatformLoyaltyLedgerInput = {
@@ -120228,6 +124219,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -120340,6 +124332,7 @@ export namespace Prisma {
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutPlatformLoyaltyLedgerInput = {
@@ -120352,6 +124345,7 @@ export namespace Prisma {
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
     parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -122318,6 +126312,7 @@ export namespace Prisma {
     subscriptionPlan?: string | null
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123308,6 +127303,7 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutParentOrgInput = {
@@ -123319,6 +127315,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123373,6 +127370,7 @@ export namespace Prisma {
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
     billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
     operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
     fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
     activeModules?: OrganizationUpdateactiveModulesInput | string[]
@@ -123449,6 +127447,7 @@ export namespace Prisma {
     billingStatus?: $Enums.BillingStatus
     operatingMode?: $Enums.OrgOperatingMode
     parentOrgId?: string | null
+    holdingId?: string | null
     fiscalRouting?: $Enums.OrgRouting
     revenueRouting?: $Enums.OrgRouting
     activeModules?: OrganizationCreateactiveModulesInput | string[]
@@ -123464,6 +127463,22 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type HoldingCreateManyOwnerInput = {
+    id?: string
+    name: string
+    baseCurrency?: string
+    isDeleted?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HoldingMembershipCreateManyUserInput = {
+    holdingId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
   }
 
   export type OrganizationMembershipUpdateWithoutUserInput = {
@@ -123668,11 +127683,253 @@ export namespace Prisma {
     orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
     parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
     departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+    holding?: HoldingUpdateOneWithoutOrganizationsNestedInput
   }
 
   export type OrganizationUncheckedUpdateWithoutOwnerInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUncheckedUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUncheckedUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUncheckedUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUncheckedUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUncheckedUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUncheckedUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUncheckedUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUncheckedUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUncheckedUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUncheckedUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUncheckedUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUncheckedUpdateManyWithoutOrganizationNestedInput
+    departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    parentOrgId?: NullableStringFieldUpdateOperationsInput | string | null
+    holdingId?: NullableStringFieldUpdateOperationsInput | string | null
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUpdateManyWithoutHoldingNestedInput
+    organizations?: OrganizationUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type HoldingUncheckedUpdateWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    memberships?: HoldingMembershipUncheckedUpdateManyWithoutHoldingNestedInput
+    organizations?: OrganizationUncheckedUpdateManyWithoutHoldingNestedInput
+  }
+
+  export type HoldingUncheckedUpdateManyWithoutOwnerInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    baseCurrency?: StringFieldUpdateOperationsInput | string
+    isDeleted?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipUpdateWithoutUserInput = {
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    holding?: HoldingUpdateOneRequiredWithoutMembershipsNestedInput
+  }
+
+  export type HoldingMembershipUncheckedUpdateWithoutUserInput = {
+    holdingId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipUncheckedUpdateManyWithoutUserInput = {
+    holdingId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipCreateManyHoldingInput = {
+    userId: string
+    role?: $Enums.HoldingAccessRole
+    createdAt?: Date | string
+  }
+
+  export type OrganizationCreateManyHoldingInput = {
+    id?: string
+    name: string
+    ownerId?: string | null
+    taxIdBlindIndex?: string | null
+    taxIdCipher?: string | null
+    subscriptionPlan?: string | null
+    billingStatus?: $Enums.BillingStatus
+    operatingMode?: $Enums.OrgOperatingMode
+    parentOrgId?: string | null
+    fiscalRouting?: $Enums.OrgRouting
+    revenueRouting?: $Enums.OrgRouting
+    activeModules?: OrganizationCreateactiveModulesInput | string[]
+    storageUsedBytes?: bigint | number
+    currentCreditTier?: $Enums.TariffTier | null
+    accumulatedBalance?: Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: string | null
+    whatsappAlertsUsed?: number
+    ocrPagesUsed?: number
+    currency?: string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type HoldingMembershipUpdateWithoutHoldingInput = {
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutHoldingMembershipsNestedInput
+  }
+
+  export type HoldingMembershipUncheckedUpdateWithoutHoldingInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type HoldingMembershipUncheckedUpdateManyWithoutHoldingInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    role?: EnumHoldingAccessRoleFieldUpdateOperationsInput | $Enums.HoldingAccessRole
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrganizationUpdateWithoutHoldingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
+    taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
+    subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
+    billingStatus?: EnumBillingStatusFieldUpdateOperationsInput | $Enums.BillingStatus
+    operatingMode?: EnumOrgOperatingModeFieldUpdateOperationsInput | $Enums.OrgOperatingMode
+    fiscalRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    revenueRouting?: EnumOrgRoutingFieldUpdateOperationsInput | $Enums.OrgRouting
+    activeModules?: OrganizationUpdateactiveModulesInput | string[]
+    storageUsedBytes?: BigIntFieldUpdateOperationsInput | bigint | number
+    currentCreditTier?: NullableEnumTariffTierFieldUpdateOperationsInput | $Enums.TariffTier | null
+    accumulatedBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    billingPeriodKey?: NullableStringFieldUpdateOperationsInput | string | null
+    whatsappAlertsUsed?: IntFieldUpdateOperationsInput | number
+    ocrPagesUsed?: IntFieldUpdateOperationsInput | number
+    currency?: StringFieldUpdateOperationsInput | string
+    settings?: JsonNullValueInput | InputJsonValue
+    drakarisClientId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usageMeterEvents?: UsageMeterEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessEvents?: EarlyAccessEventUpdateManyWithoutOrganizationNestedInput
+    earlyAccessSignups?: EarlyAccessSignupUpdateManyWithoutOrganizationNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutOrganizationNestedInput
+    subscription?: OrganizationSubscriptionUpdateOneWithoutOrganizationNestedInput
+    paymentOrders?: PaymentOrderUpdateManyWithoutOrganizationNestedInput
+    memberships?: OrganizationMembershipUpdateManyWithoutOrganizationNestedInput
+    billingInvoiceItems?: BillingInvoiceItemUpdateManyWithoutOrganizationNestedInput
+    notificationTemplates?: NotificationTemplateUpdateManyWithoutOrganizationNestedInput
+    notificationOutboxEntries?: NotificationOutboxUpdateManyWithoutOrganizationNestedInput
+    notificationDeliveryLogs?: NotificationDeliveryLogUpdateManyWithoutOrganizationNestedInput
+    platformPaymentLinks?: PlatformPaymentLinkUpdateManyWithoutOrganizationNestedInput
+    platformPortalLinks?: PlatformPortalLinkUpdateManyWithoutOrganizationNestedInput
+    bookableResources?: BookableResourceUpdateManyWithoutOrganizationNestedInput
+    bookingSlots?: BookingSlotUpdateManyWithoutOrganizationNestedInput
+    bookingAppointments?: BookingAppointmentUpdateManyWithoutOrganizationNestedInput
+    platformPromotions?: PlatformPromotionUpdateManyWithoutOrganizationNestedInput
+    platformCustomDomains?: PlatformCustomDomainUpdateManyWithoutOrganizationNestedInput
+    platformShipments?: PlatformShipmentUpdateManyWithoutOrganizationNestedInput
+    platformAuditLogs?: PlatformAuditLogUpdateManyWithoutOrganizationNestedInput
+    platformIdempotencyRecords?: PlatformIdempotencyRecordUpdateManyWithoutOrganizationNestedInput
+    platformLoyaltyLedger?: PlatformLoyaltyLedgerUpdateManyWithoutOrganizationNestedInput
+    satelliteEndpoints?: SatelliteEndpointUpdateManyWithoutOrganizationNestedInput
+    satelliteEntitlements?: OrganizationSatelliteEntitlementUpdateManyWithoutOrganizationNestedInput
+    workforceAssignments?: WorkforceAssignmentUpdateManyWithoutOrganizationNestedInput
+    workforceEmployments?: WorkforceEmploymentUpdateManyWithoutOrganizationNestedInput
+    orgUnitCommercialLinks?: OrgUnitCommercialLinkUpdateManyWithoutOrganizationNestedInput
+    owner?: UserUpdateOneWithoutOwnedOrganizationsNestedInput
+    parentOrg?: OrganizationUpdateOneWithoutDepartmentsNestedInput
+    departments?: OrganizationUpdateManyWithoutParentOrgNestedInput
+  }
+
+  export type OrganizationUncheckedUpdateWithoutHoldingInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null
@@ -123724,9 +127981,10 @@ export namespace Prisma {
     departments?: OrganizationUncheckedUpdateManyWithoutParentOrgNestedInput
   }
 
-  export type OrganizationUncheckedUpdateManyWithoutOwnerInput = {
+  export type OrganizationUncheckedUpdateManyWithoutHoldingInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    ownerId?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdBlindIndex?: NullableStringFieldUpdateOperationsInput | string | null
     taxIdCipher?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionPlan?: NullableStringFieldUpdateOperationsInput | string | null

@@ -13,15 +13,22 @@ import {
   Prisma,
   SignedDocumentKind,
 } from "@erafinance/database";
+import { AccountingService } from "../accounting/accounting.service";
 import { DepreciationService } from "../fixed-assets/depreciation.service";
+import { IntangibleAmortizationService } from "../intangible-assets/intangible-amortization.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
 import {
+  areAllMonthsClosed,
   endOfUtcDay,
   getClosedPeriodKeys,
+  getClosedYearKeys,
   mergeClosedPeriod,
+  mergeClosedYear,
   monthRangeUtc,
   parseIsoDateOnly,
+  unmergeClosedYear,
+  yearRangeUtc,
 } from "./reporting-period.util";
 import { verifyQrPublicBase } from "../common/verify-public-url";
 import { reconciliationDocumentUuid } from "../signature/reconciliation-document-id";
@@ -34,13 +41,9 @@ import { renderReconciliationPdfAz } from "./reconciliation-pdf.render";
 import { decodeOrganizationTaxId, decryptText } from "../security/pii-crypto.util";
 
 /**
- * Cash/Bank balances for dashboards:
- * - Cash: 101* (cash desks)
- * - Bank: 221–224 (bank accounts / cards)
+ * Cash/Bank balances for dashboards — prefixes derived from posting roles
+ * (CASH_AZN / CASH_FOREIGN / MAIN_BANK), not hard-coded NAS literals.
  */
-const CASH_PREFIX = "101";
-const BANK_CODES = ["221", "222", "223", "224"] as const;
-const BANK_PREFIXES = [...BANK_CODES] as ReadonlyArray<string>;
 
 function d(v: Decimal | null | undefined): Decimal {
   return v ?? new Decimal(0);
@@ -81,9 +84,52 @@ export class ReportingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly depreciation: DepreciationService,
+    private readonly intangibleAmortization: IntangibleAmortizationService,
     private readonly config: ConfigService,
     private readonly posting: PostingAccountResolver,
+    private readonly accounting: AccountingService,
   ) {}
+
+  /** Account code prefixes for cash desks + bank from posting roles (FEAT-FC-COA-001). */
+  private async cashBankCodePrefixes(
+    organizationId: string,
+  ): Promise<{ cashPrefixes: string[]; bankPrefixes: string[] }> {
+    const [cashAzn, cashFx, mainBank, bankSettlement] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "CASH_AZN"),
+      this.posting.resolveAccountCode(organizationId, "CASH_FOREIGN"),
+      this.posting.resolveAccountCode(organizationId, "MAIN_BANK"),
+      this.posting.resolveAccountCode(organizationId, "BANK_SETTLEMENT"),
+    ]);
+    const root3 = (code: string) => code.split(".")[0].slice(0, 3);
+    const cashPrefixes = [...new Set([root3(cashAzn), root3(cashFx)])];
+    // Bank class: 221–224 family via 2-digit stem of MAIN_BANK when commercial (22x)
+    const bankStem = root3(mainBank).slice(0, 2);
+    const bankPrefixes = [
+      ...new Set([
+        root3(mainBank),
+        root3(bankSettlement),
+        ...(bankStem.length === 2 ? [`${bankStem}1`, `${bankStem}2`, `${bankStem}3`, `${bankStem}4`] : []),
+      ]),
+    ];
+    return { cashPrefixes, bankPrefixes };
+  }
+
+  private async cashBankAccountWhere(
+    organizationId: string,
+    ledgerType: LedgerType,
+  ): Promise<Prisma.AccountWhereInput> {
+    const { cashPrefixes, bankPrefixes } = await this.cashBankCodePrefixes(
+      organizationId,
+    );
+    return {
+      organizationId,
+      ledgerType,
+      OR: [
+        ...cashPrefixes.map((p) => ({ code: { startsWith: p } })),
+        ...bankPrefixes.map((p) => ({ code: { startsWith: p } })),
+      ],
+    };
+  }
 
   async trialBalance(
     organizationId: string,
@@ -502,6 +548,133 @@ export class ReportingService {
         (deptFilter
           ? " При фильтре ЦФО обороты по выручке, себестоимости, ФОТ и 662 учитываются только по транзакциям с привязкой к этому департаменту."
           : ""),
+    };
+  }
+
+  /**
+   * Full income statement: all REVENUE / EXPENSE accounts (6x / 7x class),
+   * used as accounting result for profit-tax aggregation.
+   */
+  async fullIncomeStatement(
+    organizationId: string,
+    dateFromStr: string,
+    dateToStr: string,
+    ledgerType: LedgerType = LedgerType.NAS,
+  ) {
+    if (!dateFromStr?.trim() || !dateToStr?.trim()) {
+      throw new BadRequestException("dateFrom and dateTo are required");
+    }
+    let dateFrom: Date;
+    let dateTo: Date;
+    try {
+      dateFrom = parseIsoDateOnly(dateFromStr);
+      dateTo = parseIsoDateOnly(dateToStr);
+    } catch {
+      throw new BadRequestException(
+        "Invalid dateFrom/dateTo (expected YYYY-MM-DD)",
+      );
+    }
+    if (dateFrom.getTime() > dateTo.getTime()) {
+      throw new BadRequestException("dateFrom must be <= dateTo");
+    }
+
+    const accounts = await this.prisma.account.findMany({
+      where: {
+        organizationId,
+        ledgerType,
+        type: { in: [AccountType.REVENUE, AccountType.EXPENSE] },
+      },
+      orderBy: { code: "asc" },
+    });
+
+    const empty = {
+      dateFrom: dateFromStr,
+      dateTo: dateToStr,
+      ledgerType,
+      revenue: [] as Array<{
+        accountCode: string;
+        accountName: string;
+        section: string;
+        amount: string;
+      }>,
+      expenses: [] as Array<{
+        accountCode: string;
+        accountName: string;
+        section: string;
+        amount: string;
+      }>,
+      totals: { revenue: "0.0000", expenses: "0.0000" },
+      accountingResult: "0.0000",
+    };
+
+    if (accounts.length === 0) {
+      return empty;
+    }
+
+    const agg = await this.prisma.journalEntry.groupBy({
+      by: ["accountId"],
+      where: {
+        organizationId,
+        ledgerType,
+        accountId: { in: accounts.map((a) => a.id) },
+        transaction: {
+          date: { gte: dateFrom, lte: dateTo },
+          isFinal: true,
+        },
+      },
+      _sum: { debit: true, credit: true },
+    });
+    const sumMap = new Map(
+      agg.map((r) => [
+        r.accountId,
+        { dr: d(r._sum.debit), cr: d(r._sum.credit) },
+      ]),
+    );
+
+    const revenue: typeof empty.revenue = [];
+    const expenses: typeof empty.expenses = [];
+    let revTotal = new Decimal(0);
+    let expTotal = new Decimal(0);
+
+    for (const a of accounts) {
+      const s = sumMap.get(a.id) ?? { dr: new Decimal(0), cr: new Decimal(0) };
+      const section = a.code.length >= 1 ? `${a.code.charAt(0)}x` : "?";
+      const name = pickAccountDisplayName(a, "en");
+      if (a.type === AccountType.REVENUE) {
+        const amount = s.cr.sub(s.dr);
+        if (amount.isZero()) continue;
+        revTotal = revTotal.add(amount);
+        revenue.push({
+          accountCode: a.code,
+          accountName: name,
+          section,
+          amount: amount.toFixed(4),
+        });
+      } else {
+        const amount = s.dr.sub(s.cr);
+        if (amount.isZero()) continue;
+        expTotal = expTotal.add(amount);
+        expenses.push({
+          accountCode: a.code,
+          accountName: name,
+          section,
+          amount: amount.toFixed(4),
+        });
+      }
+    }
+
+    const accountingResult = revTotal.sub(expTotal);
+    return {
+      dateFrom: dateFromStr,
+      dateTo: dateToStr,
+      ledgerType,
+      revenue,
+      expenses,
+      totals: {
+        revenue: revTotal.toFixed(4),
+        expenses: expTotal.toFixed(4),
+      },
+      accountingResult: accountingResult.toFixed(4),
     };
   }
 
@@ -1245,14 +1418,7 @@ export class ReportingService {
     );
 
     const cashAccs = await this.prisma.account.findMany({
-      where: {
-        organizationId,
-        ledgerType,
-        OR: [
-          { code: { startsWith: CASH_PREFIX } },
-          ...BANK_PREFIXES.map((p) => ({ code: { startsWith: p } })),
-        ],
-      },
+      where: await this.cashBankAccountWhere(organizationId, ledgerType),
     });
     const taxAcc = await this.prisma.account.findFirst({
       where: {
@@ -1591,14 +1757,7 @@ export class ReportingService {
 
     const { start: monthStart, end: monthEnd } = monthRangeUtc(y, m);
     const cashAccs = await this.prisma.account.findMany({
-      where: {
-        organizationId,
-        ledgerType,
-        OR: [
-          { code: { startsWith: CASH_PREFIX } },
-          ...BANK_PREFIXES.map((p) => ({ code: { startsWith: p } })),
-        ],
-      },
+      where: await this.cashBankAccountWhere(organizationId, ledgerType),
       select: { id: true },
     });
     const cashIds = cashAccs.map((a) => a.id);
@@ -1631,6 +1790,348 @@ export class ReportingService {
     };
   }
 
+  /**
+   * Close fiscal year: require 12 closed months, roll P&L to PERIOD_RESULT (801),
+   * then to RETAINED_EARNINGS (802). Records FiscalYearClose + settings.reporting.closedYears.
+   */
+  async closeFiscalYear(
+    organizationId: string,
+    year: number,
+    closedByUserId?: string | null,
+  ) {
+    if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+      throw new BadRequestException("year must be 2000-2100");
+    }
+
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+    });
+    if (!org) throw new BadRequestException("Organization not found");
+
+    if (getClosedYearKeys(org.settings).includes(year)) {
+      throw new BadRequestException(`Fiscal year ${year} is already closed`);
+    }
+    if (!areAllMonthsClosed(org.settings, year)) {
+      throw new BadRequestException(
+        `All 12 months of ${year} must be closed before fiscal year close`,
+      );
+    }
+
+    const existing = await this.prisma.fiscalYearClose.findUnique({
+      where: {
+        organizationId_year: { organizationId, year },
+      },
+    });
+    if (existing) {
+      throw new BadRequestException(`Fiscal year ${year} is already closed`);
+    }
+
+    const { fromStr, toStr, end } = yearRangeUtc(year);
+    const stmt = await this.fullIncomeStatement(
+      organizationId,
+      fromStr,
+      toStr,
+      LedgerType.NAS,
+    );
+    const result = new Decimal(stmt.accountingResult);
+
+    const [periodResultCode, retainedCode] = await Promise.all([
+      this.posting.resolveAccountCode(organizationId, "PERIOD_RESULT"),
+      this.posting.resolveAccountCode(organizationId, "RETAINED_EARNINGS"),
+    ]);
+
+    const lines: Array<{
+      accountCode: string;
+      debit: string | number;
+      credit: string | number;
+    }> = [];
+
+    for (const row of stmt.revenue) {
+      const amt = new Decimal(row.amount);
+      if (amt.lte(0)) continue;
+      lines.push({
+        accountCode: row.accountCode,
+        debit: amt.toFixed(4),
+        credit: 0,
+      });
+      lines.push({
+        accountCode: periodResultCode,
+        debit: 0,
+        credit: amt.toFixed(4),
+      });
+    }
+    for (const row of stmt.expenses) {
+      const amt = new Decimal(row.amount);
+      if (amt.lte(0)) continue;
+      lines.push({
+        accountCode: periodResultCode,
+        debit: amt.toFixed(4),
+        credit: 0,
+      });
+      lines.push({
+        accountCode: row.accountCode,
+        debit: 0,
+        credit: amt.toFixed(4),
+      });
+    }
+
+    // Transfer 801 → 802 (profit: Dr 801 Cr 802; loss: Dr 802 Cr 801)
+    if (result.gt(0)) {
+      lines.push({
+        accountCode: periodResultCode,
+        debit: result.toFixed(4),
+        credit: 0,
+      });
+      lines.push({
+        accountCode: retainedCode,
+        debit: 0,
+        credit: result.toFixed(4),
+      });
+    } else if (result.lt(0)) {
+      const loss = result.neg();
+      lines.push({
+        accountCode: retainedCode,
+        debit: loss.toFixed(4),
+        credit: 0,
+      });
+      lines.push({
+        accountCode: periodResultCode,
+        debit: 0,
+        credit: loss.toFixed(4),
+      });
+    }
+
+    const closedAt = new Date();
+    let transactionId: string | null = null;
+
+    const protocolJson = {
+      year,
+      closedAt: closedAt.toISOString(),
+      revenue: stmt.revenue,
+      expenses: stmt.expenses,
+      accountingResult: result.toFixed(4),
+      periodResultAccount: periodResultCode,
+      retainedEarningsAccount: retainedCode,
+      transactionId: null as string | null,
+      lineCount: lines.length,
+    };
+
+    await this.prisma.$transaction(async (tx) => {
+      if (lines.length > 0) {
+        const posted = await this.accounting.postJournalInTransaction(tx, {
+          organizationId,
+          date: end,
+          reference: `FY-CLOSE-${year}`,
+          description: `Fiscal year ${year} close: P&L → ${periodResultCode} → ${retainedCode}`,
+          isFinal: true,
+          lines,
+          skipClosedPeriodGuard: true,
+        });
+        transactionId = posted.transactionId;
+        protocolJson.transactionId = transactionId;
+      }
+
+      await tx.fiscalYearClose.create({
+        data: {
+          organizationId,
+          year,
+          closedAt,
+          closedByUserId: closedByUserId ?? null,
+          resultAmount: result,
+          transactionId,
+          protocolJson: protocolJson as Prisma.InputJsonValue,
+        },
+      });
+
+      const fresh = await tx.organization.findUnique({
+        where: { id: organizationId },
+      });
+      if (!fresh) throw new BadRequestException("Organization not found");
+      await tx.organization.update({
+        where: { id: organizationId },
+        data: {
+          settings: mergeClosedYear(fresh.settings, year) as Prisma.InputJsonValue,
+        },
+      });
+    });
+
+    return {
+      year,
+      closedAt: closedAt.toISOString(),
+      accountingResult: result.toFixed(4),
+      periodResultAccount: periodResultCode,
+      retainedEarningsAccount: retainedCode,
+      transactionId,
+      protocolJson,
+    };
+  }
+
+  /** Fiscal year close protocol row (reformation report). */
+  async getFiscalYearClose(organizationId: string, year: number) {
+    if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+      throw new BadRequestException("year must be 2000-2100");
+    }
+    const row = await this.prisma.fiscalYearClose.findUnique({
+      where: { organizationId_year: { organizationId, year } },
+    });
+    if (!row) {
+      throw new BadRequestException(`Fiscal year ${year} is not closed`);
+    }
+    return row;
+  }
+
+  /**
+   * Reopen a closed fiscal year: reverse the close journal, mark FiscalYearClose reversed,
+   * remove year from settings.reporting.closedYears.
+   */
+  async reopenFiscalYear(
+    organizationId: string,
+    year: number,
+    reopenedByUserId?: string | null,
+  ) {
+    if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+      throw new BadRequestException("year must be 2000-2100");
+    }
+
+    const closeRow = await this.prisma.fiscalYearClose.findUnique({
+      where: { organizationId_year: { organizationId, year } },
+    });
+    if (!closeRow) {
+      throw new BadRequestException(`Fiscal year ${year} is not closed`);
+    }
+    if (closeRow.reversedAt) {
+      throw new BadRequestException(`Fiscal year ${year} is already reopened`);
+    }
+
+    const { end } = yearRangeUtc(year);
+    const reversedAt = new Date();
+    let reversalTransactionId: string | null = null;
+
+    await this.prisma.$transaction(async (tx) => {
+      const reverseLines: Array<{
+        accountCode: string;
+        debit: string;
+        credit: string;
+      }> = [];
+
+      if (closeRow.transactionId) {
+        const entries = await tx.journalEntry.findMany({
+          where: {
+            organizationId,
+            transactionId: closeRow.transactionId,
+            ledgerType: LedgerType.NAS,
+          },
+          include: { account: { select: { code: true } } },
+          orderBy: { createdAt: "asc" },
+        });
+        for (const e of entries) {
+          reverseLines.push({
+            accountCode: e.account.code,
+            debit: e.credit.toFixed(4),
+            credit: e.debit.toFixed(4),
+          });
+        }
+      } else if (closeRow.protocolJson && typeof closeRow.protocolJson === "object") {
+        const protocol = closeRow.protocolJson as Record<string, unknown>;
+        const periodResultAccount = String(protocol.periodResultAccount ?? "");
+        const retainedEarningsAccount = String(protocol.retainedEarningsAccount ?? "");
+        const accountingResult = new Decimal(String(protocol.accountingResult ?? "0"));
+
+        const revenue = Array.isArray(protocol.revenue) ? protocol.revenue : [];
+        for (const row of revenue) {
+          if (!row || typeof row !== "object") continue;
+          const r = row as Record<string, unknown>;
+          const amt = new Decimal(String(r.amount ?? "0"));
+          if (amt.lte(0)) continue;
+          const code = String(r.accountCode ?? "");
+          reverseLines.push({ accountCode: code, debit: "0", credit: amt.toFixed(4) });
+          reverseLines.push({
+            accountCode: periodResultAccount,
+            debit: amt.toFixed(4),
+            credit: "0",
+          });
+        }
+        const expenses = Array.isArray(protocol.expenses) ? protocol.expenses : [];
+        for (const row of expenses) {
+          if (!row || typeof row !== "object") continue;
+          const r = row as Record<string, unknown>;
+          const amt = new Decimal(String(r.amount ?? "0"));
+          if (amt.lte(0)) continue;
+          const code = String(r.accountCode ?? "");
+          reverseLines.push({
+            accountCode: periodResultAccount,
+            debit: "0",
+            credit: amt.toFixed(4),
+          });
+          reverseLines.push({ accountCode: code, debit: amt.toFixed(4), credit: "0" });
+        }
+        if (accountingResult.gt(0)) {
+          reverseLines.push({
+            accountCode: retainedEarningsAccount,
+            debit: accountingResult.toFixed(4),
+            credit: "0",
+          });
+          reverseLines.push({
+            accountCode: periodResultAccount,
+            debit: "0",
+            credit: accountingResult.toFixed(4),
+          });
+        } else if (accountingResult.lt(0)) {
+          const loss = accountingResult.neg();
+          reverseLines.push({
+            accountCode: periodResultAccount,
+            debit: loss.toFixed(4),
+            credit: "0",
+          });
+          reverseLines.push({
+            accountCode: retainedEarningsAccount,
+            debit: "0",
+            credit: loss.toFixed(4),
+          });
+        }
+      }
+
+      if (reverseLines.length > 0) {
+        const posted = await this.accounting.postJournalInTransaction(tx, {
+          organizationId,
+          date: end,
+          reference: `FY-REOPEN-${year}`,
+          description: `Fiscal year ${year} reopen (reversal of FY-CLOSE-${year})`,
+          isFinal: true,
+          lines: reverseLines,
+          skipClosedPeriodGuard: true,
+        });
+        reversalTransactionId = posted.transactionId;
+      }
+
+      await tx.fiscalYearClose.update({
+        where: { id: closeRow.id },
+        data: {
+          reversedAt,
+          reversalTransactionId,
+        },
+      });
+
+      const fresh = await tx.organization.findUnique({
+        where: { id: organizationId },
+      });
+      if (!fresh) throw new BadRequestException("Organization not found");
+      await tx.organization.update({
+        where: { id: organizationId },
+        data: {
+          settings: unmergeClosedYear(fresh.settings, year) as Prisma.InputJsonValue,
+        },
+      });
+    });
+
+    return {
+      year,
+      reversedAt: reversedAt.toISOString(),
+      reversalTransactionId,
+      reopenedByUserId: reopenedByUserId ?? null,
+    };
+  }
+
   async closePeriod(organizationId: string, year: number, month: number) {
     if (month < 1 || month > 12) {
       throw new BadRequestException("month must be 1-12");
@@ -1640,6 +2141,12 @@ export class ReportingService {
 
     const dep = await this.prisma.$transaction(async (tx) => {
       const depResult = await this.depreciation.applyForClosedMonth(
+        tx,
+        organizationId,
+        year,
+        month,
+      );
+      const iaResult = await this.intangibleAmortization.applyForClosedMonth(
         tx,
         organizationId,
         year,
@@ -1697,13 +2204,14 @@ export class ReportingService {
         where: { id: organizationId },
         data: { settings: nextSettings as Prisma.InputJsonValue },
       });
-      return depResult;
+      return { depreciation: depResult, intangibleAmortization: iaResult };
     });
 
     return {
       closedPeriod: key,
       transactionsMarked: true,
-      depreciation: dep,
+      depreciation: dep.depreciation,
+      intangibleAmortization: dep.intangibleAmortization,
     };
   }
 

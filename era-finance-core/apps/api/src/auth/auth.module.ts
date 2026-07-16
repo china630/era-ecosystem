@@ -23,7 +23,7 @@ import { ControlPlaneModule } from "../control-plane/control-plane.module";
     ControlPlaneModule,
     GlobalCompanyDirectoryModule,
     forwardRef(() => OrganizationsModule),
-    HrModule,
+    forwardRef(() => HrModule),
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

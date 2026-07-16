@@ -60,6 +60,7 @@ export const CHART_ACCOUNT_NAMES_AZ: Record<string, string> = {
   "533": "Əmək haqqı üzrə personal qarşısında öhdəliklər",
   "534": "Personal qarşısında digər öhdəliklər",
   "541": "İcarə üzrə öhdəliklər",
+  "545": "ƏDV üzrə öhdəliklər",
   "551": "Büdcəyə digər məcburi ödənişlər üzrə hesablaşmalar",
   "561": "Digər qısamüddətli öhdəliklər",
 

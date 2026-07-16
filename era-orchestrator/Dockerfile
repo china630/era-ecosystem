@@ -27,8 +27,9 @@ WORKDIR /workspace/era-orchestrator
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build?schema=public"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-ARG NEXT_PUBLIC_ORCH_API_URL=http://127.0.0.1:4000
-ARG NEXT_PUBLIC_FINANCE_WEB_URL=http://127.0.0.1:3100
+# Baked into the Next.js client bundle — use public HTTPS hosts for GHCR/prod builds.
+ARG NEXT_PUBLIC_ORCH_API_URL=https://api.era-365.online
+ARG NEXT_PUBLIC_FINANCE_WEB_URL=https://finance-core.era-365.online
 ENV NEXT_PUBLIC_ORCH_API_URL=${NEXT_PUBLIC_ORCH_API_URL}
 ENV NEXT_PUBLIC_FINANCE_WEB_URL=${NEXT_PUBLIC_FINANCE_WEB_URL}
 

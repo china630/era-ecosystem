@@ -19,6 +19,7 @@ function makeServiceWithInvoice(invoice: unknown) {
     noop,
     posting,
     createMockPostingJournalBuilder(undefined, posting),
+    { maybeRouteFromInvoicePayment: jest.fn().mockResolvedValue({ routed: false }) } as any,
     noop,
     noop,
     noop,
@@ -26,6 +27,7 @@ function makeServiceWithInvoice(invoice: unknown) {
     noop,
     noop,
     noop,
+    noop, // syncRuns
   );
   return { service, prisma };
 }

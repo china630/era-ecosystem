@@ -24,7 +24,7 @@ export function parseSeedCli(args: string[]): SeedCliOptions {
   return {
     layers: layersRaw
       ? layersRaw.split(",").map((x) => x.trim()).filter(Boolean)
-      : ["core", "national", "hr", "bank", "geo", "trade"],
+      : ["core", "national", "hr"],
     skip: new Set(
       (skipRaw ?? "")
         .split(",")

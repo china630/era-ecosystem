@@ -110,6 +110,17 @@ export type ETaxesVatDeclarationPackage = {
   };
   appendixSales: ETaxesVatSalesLineJson[];
   appendixPurchases: ETaxesVatPurchaseLineJson[];
+  totals: {
+    salesNet: string;
+    salesVat: string;
+    salesGross: string;
+    purchasesNet: string;
+    purchasesVat: string;
+    purchasesGross: string;
+    outputVat: string;
+    inputVat: string;
+    vatPayable: string;
+  };
   ledgerReference?: {
     nasRevenue601CreditQuarterAzn?: string | null;
   };
@@ -185,13 +196,10 @@ export class ETaxesIntegrationService {
           },
         });
       }
-      if (
-        row.supplierVoen?.trim() &&
-        !isValidVoen10(row.supplierVoen)
-      ) {
+      if (!isValidVoen10(row.supplierVoen)) {
         issues.push({
           code: "PURCHASE_SUPPLIER_VOEN_INVALID",
-          message: `Alış sətri ${i + 1}: təchizatçı VÖEN-i səhvdir.`,
+          message: `Alış sətri ${i + 1} (${row.documentNumber}): təchizatçı VÖEN-i yoxdur və ya səhvdir.`,
           context: { stockMovementId: row.stockMovementId },
         });
       }
@@ -295,7 +303,7 @@ export class ETaxesIntegrationService {
     if (!org) throw new BadRequestException("Organization not found");
     const orgTaxId = decodeOrganizationTaxId(org);
 
-    const { fromStr, toStr, sales, purchases } =
+    const { fromStr, toStr, sales, purchases, totals } =
       await this.vatQuarter.loadQuarterVatRows(organizationId, year, quarter);
 
     const errors = this.validateRows(orgTaxId, sales, purchases);
@@ -324,6 +332,7 @@ export class ETaxesIntegrationService {
       },
       appendixSales: this.mapSalesToBtp(sales),
       appendixPurchases: this.mapPurchasesToBtp(purchases),
+      totals,
       ledgerReference: {
         nasRevenue601CreditQuarterAzn: nas601,
       },

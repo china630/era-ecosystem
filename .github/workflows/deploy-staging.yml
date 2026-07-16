@@ -7,12 +7,9 @@ on:
         description: GHCR tag (e.g. dev-abc1234 or dev)
         required: false
         default: dev
-  # After GHCR build on `dev` — pull + migrate + up on the staging droplet.
-  # Requires Environment `staging` secrets (SSH_*, ENV_FILE, GHCR_PULL_TOKEN)
-  # and droplet UFW allowing SSH :22 from GitHub Actions.
   workflow_run:
     workflows: ["Build and push images"]
-    branches: [dev]
+    branches: [dev, master]
     types: [completed]
 
 jobs:
@@ -42,11 +39,11 @@ jobs:
             echo "value=${{ inputs.image_tag }}" >> "$GITHUB_OUTPUT"
           else
             short=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
-            echo "value=dev-${short}" >> "$GITHUB_OUTPUT"
+            branch="${{ github.event.workflow_run.head_branch }}"
+            echo "value=${branch}-${short}" >> "$GITHUB_OUTPUT"
           fi
 
-      # Never expand multi-line ENV_FILE into the SSH script body: appleboy
-      # script_stop injects exit checks between lines and corrupts .env.
+      # Pack ENV_FILE as one base64 line — never expand multi-line secrets into SSH script.
       - name: Pack remote .env (base64)
         id: envpack
         env:
@@ -55,7 +52,7 @@ jobs:
           set -euo pipefail
           owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
           {
-            printf '%s\n' "$ENV_FILE"
+            printf '%s\n' "$ENV_FILE" | grep -vE '^(DRONE_SSH_|IMAGE_TAG=|GHCR_IMAGE_PREFIX=)' || true
             echo "IMAGE_TAG=${{ steps.tag.outputs.value }}"
             echo "GHCR_IMAGE_PREFIX=ghcr.io/${owner}/era-ecosystem"
           } | base64 -w0 > /tmp/era-env.b64
@@ -75,7 +72,9 @@ jobs:
           port: ${{ secrets.SSH_PORT != '' && secrets.SSH_PORT || 22 }}
           timeout: 60s
           command_timeout: 30m
-          script_stop: true
+          # script_stop injects lines between every script line — keep script single-line-safe
+          # and rely on set -e instead.
+          script_stop: false
           envs: ERA_ENV_B64,GHCR_PULL_TOKEN,GIT_SHA,GH_ACTOR
           script: |
             set -euo pipefail
@@ -83,17 +82,10 @@ jobs:
             git fetch origin
             git checkout "$GIT_SHA"
             printf '%s' "$ERA_ENV_B64" | base64 -d > .env
-            # Drop duplicate keys if ENV_FILE already had IMAGE_TAG / GHCR prefix
-            awk -F= '
-              /^IMAGE_TAG=/ { k=$0; next }
-              /^GHCR_IMAGE_PREFIX=/ { g=$0; next }
-              { print }
-              END { if (k!="") print k; if (g!="") print g }
-            ' .env > .env.tmp && mv .env.tmp .env
             echo "$GHCR_PULL_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env pull
             chmod +x docker/scripts/migrate-all.sh
             COMPOSE_FILE=docker-compose.prod.yml ./docker/scripts/migrate-all.sh
-            docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env up -d --remove-orphans
             docker image prune -f
             node scripts/ecosystem-smoke-all.mjs || echo "WARN: ecosystem-smoke-all failed (non-blocking)"

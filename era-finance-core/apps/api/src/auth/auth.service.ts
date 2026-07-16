@@ -11,7 +11,6 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import {
   AccessRequestStatus,
-  HoldingAccessRole,
   InviteStatus,
   Prisma,
   TariffTier,
@@ -33,6 +32,7 @@ import { MailService } from "../mail/mail.service";
 import { PiiCryptoService } from "../security/pii-crypto.service";
 import { GlobalCompanyDirectoryService } from "../global-directory/global-company-directory.service";
 import { ControlPlaneClient } from "../control-plane/control-plane.client";
+import { OrchestratorHoldingsClientService } from "../orchestrator/orchestrator-holdings-client.service";
 import {
   decodeOrganizationTaxId,
   decryptText,
@@ -89,6 +89,7 @@ export class AuthService {
     private readonly piiCrypto: PiiCryptoService,
     private readonly directory: GlobalCompanyDirectoryService,
     private readonly controlPlane: ControlPlaneClient,
+    private readonly holdingsCp: OrchestratorHoldingsClientService,
   ) {}
 
   private inviteTokenSecret(): string {
@@ -262,6 +263,7 @@ export class AuthService {
 
   /** Регистрация только аккаунта (email + ФИО + пароль); организация — через POST /auth/organizations. */
   async registerUser(dto: RegisterUserDto) {
+    this.assertMdmRegistrationCutover();
     const email = dto.email.toLowerCase().trim();
     const existing = await this.prisma.user.findUnique({
       where: { email },
@@ -428,13 +430,14 @@ export class AuthService {
   }
 
   private assertMdmRegistrationCutover(): void {
-    if (process.env.ERA_MDM_REGISTRATION_CUTOVER !== "true") return;
+    // Organization signup SoT is Orchestrator; Finance no longer accepts local register SoT.
     const orchUrl =
+      process.env.NEXT_PUBLIC_ORCH_WEB_URL?.replace(/\/$/, "") ??
       process.env.ORCHESTRATOR_WEB_URL?.replace(/\/$/, "") ??
-      "http://localhost:3100";
+      "http://127.0.0.1:3000";
     throw new BadRequestException({
       message:
-        "Organization registration is only available on ERA Orchestrator (MDM cutover v2.0).",
+        "Organization registration is only available on ERA Orchestrator (control plane).",
       redirectUrl: `${orchUrl}/register-org`,
       code: "MDM_REGISTRATION_CUTOVER",
     });
@@ -449,15 +452,6 @@ export class AuthService {
     const dup = await this.findOrganizationByTaxIdForLookup(normalizedTaxId);
     if (dup) {
       throw new ConflictException("VÖEN already registered");
-    }
-
-    if (dto.holdingId) {
-      const holding = await this.prisma.holding.findFirst({
-        where: { id: dto.holdingId, ownerId: userId },
-      });
-      if (!holding) {
-        throw new ForbiddenException("Holding not found or access denied");
-      }
     }
 
     const kind = legalFormToOrganizationKind(dto.legalForm);
@@ -478,7 +472,6 @@ export class AuthService {
             settings: {
               templateGroup: organizationKindToPayrollSettingsTemplateGroup(kind),
             },
-            ...(dto.holdingId && { holdingId: dto.holdingId }),
           },
         });
         const trial = await resolveNewOrganizationTrialSubscription(tx, o.createdAt);
@@ -946,31 +939,9 @@ export class AuthService {
     };
   }
 
-  /** Владелец холдинга или участник с ролью не VIEWER — как в AccessControlService. */
+  /** Holding report access is resolved live from control plane. */
   private async userMayViewAnyHoldingReport(userId: string): Promise<boolean> {
-    const row = await this.prisma.holding.findFirst({
-      where: {
-        OR: [
-          { ownerId: userId },
-          {
-            memberships: {
-              some: {
-                userId,
-                role: {
-                  in: [
-                    HoldingAccessRole.OWNER,
-                    HoldingAccessRole.ADMIN,
-                    HoldingAccessRole.ACCOUNTANT,
-                  ],
-                },
-              },
-            },
-          },
-        ],
-      },
-      select: { id: true },
-    });
-    return Boolean(row);
+    return this.holdingsCp.userMayViewAnyHoldingReport(userId);
   }
 
   private async listOrganizationsForUser(userId: string): Promise<OrgSummary[]> {

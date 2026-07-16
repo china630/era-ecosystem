@@ -35,6 +35,8 @@ import { RequiresModule } from "../subscription/requires-module.decorator";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ClosePeriodDto } from "./dto/close-period.dto";
+import { CloseFiscalYearDto } from "./dto/close-fiscal-year.dto";
+import { ReopenFiscalYearDto } from "./dto/reopen-fiscal-year.dto";
 import { CreateNettingDto } from "./dto/create-netting.dto";
 import { CreateProfitTaxAdjustmentDto } from "./dto/create-profit-tax-adjustment.dto";
 import { UpdateProfitTaxAdjustmentDto } from "./dto/update-profit-tax-adjustment.dto";
@@ -43,13 +45,28 @@ import { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
 import { ProfitTaxService } from "./profit-tax.service";
 import { ReportingService } from "./reporting.service";
 import { TaxExportService } from "./tax-export.service";
+import { ProfitTaxService } from "./profit-tax.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
 import {
+  accountAnalysisPdfBuffer,
+  accountAnalysisXlsxBuffer,
+  accountCardPdfBuffer,
+  accountCardXlsxBuffer,
+  accountTurnoversPdfBuffer,
+  accountTurnoversXlsxBuffer,
+  chessboardPdfBuffer,
+  chessboardXlsxBuffer,
+  generalLedgerPdfBuffer,
+  generalLedgerXlsxBuffer,
   plPdfBuffer,
   plXlsxBuffer,
   trialBalancePdfBuffer,
   trialBalanceXlsxBuffer,
 } from "../reports/report-export.util";
+import {
+  StandardReportsService,
+  type AnalysisDimension,
+} from "./standard-reports.service";
 
 @ApiTags("reporting")
 @ApiBearerAuth("bearer")
@@ -57,6 +74,7 @@ import {
 export class ReportingController {
   constructor(
     private readonly reporting: ReportingService,
+    private readonly standardReports: StandardReportsService,
     private readonly vatAppendix: VatAppendixExportService,
     private readonly etaxes: ETaxesIntegrationService,
     private readonly taxExport: TaxExportService,
@@ -107,6 +125,352 @@ export class ReportingController {
     return new StreamableFile(buffer, {
       type: "application/pdf",
       disposition: `attachment; filename="trial-balance-${dateFrom}-${dateTo}.pdf"`,
+    });
+  }
+
+  @Get("account-card")
+  @ApiOperation({ summary: "Карточка счёта (account card) with running balance" })
+  accountCard(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.accountCard(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("account-card/export")
+  @ApiOperation({ summary: "Export account card to PDF/XLSX" })
+  async accountCardExport(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode: string,
+    @Query("format") format: string,
+    @Query("ledgerType") ledgerType?: string,
+  ): Promise<StreamableFile> {
+    const data = await this.standardReports.accountCard(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      parseLedgerTypeQuery(ledgerType),
+    );
+    const fmt = (format ?? "").toLowerCase();
+    const code = data.account.code;
+    if (fmt === "xlsx") {
+      const buffer = await accountCardXlsxBuffer(data);
+      return new StreamableFile(buffer, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: `attachment; filename="account-card-${code}-${dateFrom}-${dateTo}.xlsx"`,
+      });
+    }
+    const buffer = await accountCardPdfBuffer(data);
+    return new StreamableFile(buffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="account-card-${code}-${dateFrom}-${dateTo}.pdf"`,
+    });
+  }
+
+  @Get("account-turnovers")
+  @ApiOperation({ summary: "Обороты счетов (turnovers) for the period" })
+  accountTurnovers(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.accountTurnovers(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("account-turnovers/export")
+  @ApiOperation({ summary: "Export account turnovers to PDF/XLSX" })
+  async accountTurnoversExport(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("format") format: string,
+    @Query("ledgerType") ledgerType?: string,
+  ): Promise<StreamableFile> {
+    const data = await this.standardReports.accountTurnovers(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+    );
+    const fmt = (format ?? "").toLowerCase();
+    if (fmt === "xlsx") {
+      const buffer = await accountTurnoversXlsxBuffer(data);
+      return new StreamableFile(buffer, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: `attachment; filename="account-turnovers-${dateFrom}-${dateTo}.xlsx"`,
+      });
+    }
+    const buffer = await accountTurnoversPdfBuffer(data);
+    return new StreamableFile(buffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="account-turnovers-${dateFrom}-${dateTo}.pdf"`,
+    });
+  }
+
+  @Get("account-analysis")
+  @ApiOperation({
+    summary:
+      "Анализ счёта by counterparty|department (Transaction header dims; subconto — E4)",
+  })
+  accountAnalysis(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode: string,
+    @Query("dimension") dimension: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
+    return this.standardReports.accountAnalysis(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      dim,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("account-analysis/export")
+  @ApiOperation({ summary: "Export account analysis to PDF/XLSX" })
+  async accountAnalysisExport(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode: string,
+    @Query("dimension") dimension: string,
+    @Query("format") format: string,
+    @Query("ledgerType") ledgerType?: string,
+  ): Promise<StreamableFile> {
+    const dim = (dimension ?? "counterparty").trim() as AnalysisDimension;
+    const data = await this.standardReports.accountAnalysis(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      dim,
+      parseLedgerTypeQuery(ledgerType),
+    );
+    const fmt = (format ?? "").toLowerCase();
+    const code = data.account.code;
+    if (fmt === "xlsx") {
+      const buffer = await accountAnalysisXlsxBuffer(data);
+      return new StreamableFile(buffer, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: `attachment; filename="account-analysis-${code}-${dateFrom}-${dateTo}.xlsx"`,
+      });
+    }
+    const buffer = await accountAnalysisPdfBuffer(data);
+    return new StreamableFile(buffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="account-analysis-${code}-${dateFrom}-${dateTo}.pdf"`,
+    });
+  }
+
+  @Get("subconto/trial-balance")
+  @ApiOperation({
+    summary:
+      "Trial balance by account + subconto dimension (JournalEntryDimension); falls back when flag off",
+  })
+  subcontoTrialBalance(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode?: string,
+    @Query("subcontoTypeId") subcontoTypeId?: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.trialBalanceBySubconto(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      subcontoTypeId,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("subconto/account-card")
+  @ApiOperation({
+    summary:
+      "Account card filtered by journal-line subconto dimension; falls back to account card when flag off",
+  })
+  subcontoAccountCard(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("accountCode") accountCode: string,
+    @Query("subcontoTypeId") subcontoTypeId?: string,
+    @Query("valueId") valueId?: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.accountCardBySubconto(
+      organizationId,
+      dateFrom,
+      dateTo,
+      accountCode,
+      subcontoTypeId,
+      valueId,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("subconto/analysis")
+  @ApiOperation({
+    summary: "Subconto drill-down: period totals per valueId/valueRef for a subconto type",
+  })
+  subcontoAnalysis(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("subcontoTypeId") subcontoTypeId: string,
+    @Query("accountCode") accountCode?: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.subcontoAnalysis(
+      organizationId,
+      dateFrom,
+      dateTo,
+      subcontoTypeId,
+      accountCode,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("chessboard")
+  @ApiOperation({
+    summary:
+      "Шахматка: debit×credit account pairs (multi-line journals distributed proportionally)",
+  })
+  chessboard(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.standardReports.chessboard(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Get("chessboard/export")
+  @ApiOperation({ summary: "Export chessboard to PDF/XLSX" })
+  async chessboardExport(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("format") format: string,
+    @Query("ledgerType") ledgerType?: string,
+  ): Promise<StreamableFile> {
+    const data = await this.standardReports.chessboard(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+    );
+    const fmt = (format ?? "").toLowerCase();
+    if (fmt === "xlsx") {
+      const buffer = await chessboardXlsxBuffer(data);
+      return new StreamableFile(buffer, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: `attachment; filename="chessboard-${dateFrom}-${dateTo}.xlsx"`,
+      });
+    }
+    const buffer = await chessboardPdfBuffer(data);
+    return new StreamableFile(buffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="chessboard-${dateFrom}-${dateTo}.pdf"`,
+    });
+  }
+
+  @Get("general-ledger")
+  @ApiOperation({ summary: "Журнал проводок / главная книга" })
+  generalLedger(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountCode") accountCode?: string,
+    @Query("counterpartyId") counterpartyId?: string,
+    @Query("departmentId") departmentId?: string,
+    @Query("skip") skipStr?: string,
+    @Query("take") takeStr?: string,
+  ) {
+    const skip = skipStr != null && skipStr !== "" ? Number(skipStr) : undefined;
+    const take = takeStr != null && takeStr !== "" ? Number(takeStr) : undefined;
+    return this.standardReports.generalLedger(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+      {
+        accountCode,
+        counterpartyId,
+        departmentId,
+        skip: Number.isFinite(skip) ? skip : undefined,
+        take: Number.isFinite(take) ? take : undefined,
+      },
+    );
+  }
+
+  @Get("general-ledger/export")
+  @ApiOperation({ summary: "Export general ledger to PDF/XLSX" })
+  async generalLedgerExport(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("format") format: string,
+    @Query("ledgerType") ledgerType?: string,
+    @Query("accountCode") accountCode?: string,
+    @Query("counterpartyId") counterpartyId?: string,
+    @Query("departmentId") departmentId?: string,
+  ): Promise<StreamableFile> {
+    const data = await this.standardReports.generalLedger(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+      {
+        accountCode,
+        counterpartyId,
+        departmentId,
+        skip: 0,
+        take: 5000,
+      },
+    );
+    const fmt = (format ?? "").toLowerCase();
+    if (fmt === "xlsx") {
+      const buffer = await generalLedgerXlsxBuffer(data);
+      return new StreamableFile(buffer, {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: `attachment; filename="general-ledger-${dateFrom}-${dateTo}.xlsx"`,
+      });
+    }
+    const buffer = await generalLedgerPdfBuffer(data);
+    return new StreamableFile(buffer, {
+      type: "application/pdf",
+      disposition: `attachment; filename="general-ledger-${dateFrom}-${dateTo}.pdf"`,
     });
   }
 
@@ -473,7 +837,8 @@ export class ReportingController {
   }
 
   @Get("vat-appendix-xlsx")
-  @UseGuards(VoenIntegrityGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
   @ApiOperation({
     summary:
       "Excel: список продаж/покупок с НДС за квартал (e-taxes.gov.az, приложение к декларации)",
@@ -504,7 +869,8 @@ export class ReportingController {
   }
 
   @Get("etaxes-vat-declaration")
-  @UseGuards(VoenIntegrityGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
   @ApiOperation({
     summary:
       "JSON-пакет ƏDV əlavəsi (e-taxes.gov.az / BTP sahələri) və yoxlama nəticəsi",
@@ -526,7 +892,8 @@ export class ReportingController {
   }
 
   @Post("etaxes-vat-declaration/submit")
-  @UseGuards(VoenIntegrityGuard, RolesGuard)
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
   @ApiOperation({
     summary: "ƏDV paketini vergi şlüzünə göndər (E_TAXES_VAT_SUBMIT_URL)",
@@ -607,6 +974,38 @@ export class ReportingController {
       type: out.contentType,
       disposition: `attachment; filename="${out.filename}"`,
     });
+  }
+
+  @Post("tax-declarations/:id/submit")
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Submit generated declaration to e-taxes gateway (VAT / PROFIT_TAX / PAYROLL_WITHHOLDING via HSM/HTTP seam)",
+  })
+  submitTaxDeclaration(
+    @OrganizationId() organizationId: string,
+    @Param("id") id: string,
+  ) {
+    return this.taxExport.submitDeclaration(organizationId, id);
+  }
+
+  @Get("payroll-withholding/preview")
+  @UseGuards(SubscriptionGuard, VoenIntegrityGuard, RolesGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary: "Preview payroll withholding aggregate for YYYY-MM (POSTED payroll run)",
+  })
+  payrollWithholdingPreview(
+    @OrganizationId() organizationId: string,
+    @Query("period") period: string,
+  ) {
+    if (!period?.match(/^\d{4}-(0[1-9]|1[0-2])$/)) {
+      throw new BadRequestException("period must be YYYY-MM");
+    }
+    return this.taxExport.aggregatePayrollWithholding(organizationId, period);
   }
 
   @Post("tax-declarations/:id/receipt")
@@ -711,5 +1110,82 @@ export class ReportingController {
     @Body() dto: ClosePeriodDto,
   ) {
     return this.reporting.closePeriod(organizationId, dto.year, dto.month);
+  }
+
+  @Get("income-statement")
+  @UseGuards(RolesGuard)
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.ACCOUNTANT,
+    UserRole.DIRECTOR,
+    UserRole.AUDITOR,
+  )
+  @ApiOperation({
+    summary: "Full income statement (all REVENUE/EXPENSE accounts)",
+  })
+  incomeStatement(
+    @OrganizationId() organizationId: string,
+    @Query("dateFrom") dateFrom: string,
+    @Query("dateTo") dateTo: string,
+    @Query("ledgerType") ledgerType?: string,
+  ) {
+    return this.reporting.fullIncomeStatement(
+      organizationId,
+      dateFrom,
+      dateTo,
+      parseLedgerTypeQuery(ledgerType),
+    );
+  }
+
+  @Post("close-fiscal-year")
+  @UseGuards(RolesGuard, VoenIntegrityGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Close fiscal year: roll P&L to 801 then retained earnings 802",
+  })
+  closeFiscalYear(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CloseFiscalYearDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reporting.closeFiscalYear(
+      organizationId,
+      dto.year,
+      user?.userId ?? null,
+    );
+  }
+
+  @Get("fiscal-year-close/:year")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @ApiOperation({ summary: "Fiscal year close protocol (reformation report)" })
+  fiscalYearClose(
+    @OrganizationId() organizationId: string,
+    @Param("year") yearStr: string,
+  ) {
+    const year = Number(yearStr);
+    if (!Number.isFinite(year)) {
+      throw new BadRequestException("year must be a number");
+    }
+    return this.reporting.getFiscalYearClose(organizationId, year);
+  }
+
+  @Post("reopen-fiscal-year")
+  @UseGuards(RolesGuard, VoenIntegrityGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Reopen fiscal year: reverse close journal and remove from closedYears",
+  })
+  reopenFiscalYear(
+    @OrganizationId() organizationId: string,
+    @Body() dto: ReopenFiscalYearDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reporting.reopenFiscalYear(
+      organizationId,
+      dto.year,
+      user?.userId ?? null,
+    );
   }
 }

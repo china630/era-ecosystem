@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  BankAccountType,
   LedgerType,
   OrganizationKind,
   Prisma,
@@ -86,6 +87,63 @@ export class PostingAccountResolver {
     return out;
   }
 
+  /**
+   * Resolve ƏDV deposit GL: prefer linked `VAT_DEPOSIT` bank account ledger code,
+   * else posting role `VAT_DEPOSIT_ACCOUNT`.
+   */
+  async resolveVatDepositAccountCode(
+    organizationId: string,
+    tx?: Prisma.TransactionClient,
+    bankAccountId?: string | null,
+  ): Promise<string> {
+    const db = tx ?? this.prisma;
+
+    if (bankAccountId?.trim()) {
+      const row = await db.organizationBankAccount.findFirst({
+        where: {
+          id: bankAccountId.trim(),
+          organizationId,
+          isArchived: false,
+          deletedAt: null,
+        },
+        select: { ledgerAccountCode: true, accountType: true },
+      });
+      if (!row) {
+        throw new NotFoundException("VAT deposit bank account not found");
+      }
+      if (row.accountType !== BankAccountType.VAT_DEPOSIT) {
+        throw new BadRequestException(
+          "bankAccountId must reference an organization bank account of type VAT_DEPOSIT",
+        );
+      }
+      const code = row.ledgerAccountCode?.trim();
+      if (!code) {
+        throw new BadRequestException("VAT deposit bank account has no ledgerAccountCode");
+      }
+      await this.assertAccountExists(organizationId, code, db);
+      return code;
+    }
+
+    const linked = await db.organizationBankAccount.findFirst({
+      where: {
+        organizationId,
+        accountType: BankAccountType.VAT_DEPOSIT,
+        isArchived: false,
+        isFrozen: false,
+        deletedAt: null,
+      },
+      orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+      select: { ledgerAccountCode: true },
+    });
+    const linkedCode = linked?.ledgerAccountCode?.trim();
+    if (linkedCode) {
+      await this.assertAccountExists(organizationId, linkedCode, db);
+      return linkedCode;
+    }
+
+    return this.resolveAccountCode(organizationId, "VAT_DEPOSIT_ACCOUNT", tx);
+  }
+
   /** COMMERCIAL preset codes (sync) for deprecated ledger.constants shim. */
   commercialPresetCode(role: PostingRole): string {
     const map = this.templateCache.get(OrganizationKind.COMMERCIAL);
@@ -97,6 +155,8 @@ export class PostingAccountResolver {
       PAYROLL_EXPENSE: "721",
       PAYROLL_PAYABLE: "533",
       PAYROLL_TAX_PAYABLE: "521",
+      PAYROLL_SOCIAL_PAYABLE: "523",
+      SOCIAL_PAYABLE: "523",
       INVENTORY_GOODS: "201",
       COGS: "701",
       FX_GAIN: "662",
@@ -105,8 +165,9 @@ export class PostingAccountResolver {
       CASH_FOREIGN: "102.01",
       CASH_IN_TRANSIT: "251",
       MAIN_BANK: "221",
-      VAT_INPUT: "241",
-      VAT_OUTPUT: "541",
+      VAT_INPUT: "191",
+      VAT_OUTPUT: "545",
+      VAT_DEPOSIT_ACCOUNT: "223",
       ACCUMULATED_DEPRECIATION: "112",
       FINISHED_GOODS: "204",
       WIP_MANUFACTURING: "203",
@@ -114,11 +175,19 @@ export class PostingAccountResolver {
       MISC_OPERATING_EXPENSE: "731",
       MANUFACTURING_OVERHEAD_CREDIT: "741",
       INVENTORY_SURPLUS_INCOME: "631",
-      FOUNDER_FUNDS: "545",
+      FOUNDER_FUNDS: "561",
       ACCOUNTABLE_PERSONS: "244",
       TRANSIT_TRANSFER: "231",
       PREPAID_ASSET: "133",
       CHARTER_CAPITAL: "821",
+      PERIOD_RESULT: "801",
+      RETAINED_EARNINGS: "802",
+      FIXED_ASSET_COST: "111",
+      INTANGIBLE_ASSET: "131",
+      ACCUMULATED_AMORTIZATION_INTANGIBLE: "132",
+      REVALUATION_RESERVE: "811",
+      ASSET_DISPOSAL_GAIN: "631",
+      ASSET_DISPOSAL_LOSS: "731",
     };
     const code = fallbacks[role];
     if (!code) throw new NotFoundException(`Commercial preset missing for role ${role}`);

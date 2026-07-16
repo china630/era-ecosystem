@@ -106,7 +106,8 @@ function defaultCashCodeForCurrency(
   const cur = currency.trim().toUpperCase() || "AZN";
   const want = cur === "AZN" ? "AZN" : "FX";
   const match = rows.filter((r) => r.cashProfile === want);
-  if (match.length === 0) return want === "AZN" ? "101.01" : "102.01";
+  // Prefer catalog code from org chart (posting-role seeded); no hard-coded NAS literals.
+  if (match.length === 0) return rows[0]?.code ?? "";
   return match[0].code;
 }
 
@@ -201,7 +202,7 @@ export default function BankingCashPage() {
   const [pkoAmount, setPkoAmount] = useState("");
   const [pkoCurrency, setPkoCurrency] = useState<SupportedCurrency>("AZN");
   const [pkoPurpose, setPkoPurpose] = useState("");
-  const [pkoCash, setPkoCash] = useState("101.01");
+  const [pkoCash, setPkoCash] = useState("");
   const [pkoOffset, setPkoOffset] = useState("");
   const [pkoCpId, setPkoCpId] = useState("");
   const [pkoEmpId, setPkoEmpId] = useState("");
@@ -214,7 +215,7 @@ export default function BankingCashPage() {
   const [rkoAmount, setRkoAmount] = useState("");
   const [rkoCurrency, setRkoCurrency] = useState<SupportedCurrency>("AZN");
   const [rkoPurpose, setRkoPurpose] = useState("");
-  const [rkoCash, setRkoCash] = useState("101.01");
+  const [rkoCash, setRkoCash] = useState("");
   const [rkoOffset, setRkoOffset] = useState("");
   const [rkoCpId, setRkoCpId] = useState("");
   const [rkoEmpId, setRkoEmpId] = useState("");
@@ -526,8 +527,8 @@ export default function BankingCashPage() {
         amount: amt,
         currency: quickCurrency,
         purpose: quickPurpose.trim(),
-        cashAccountCode: "101.01",
-        offsetAccountCode: "731",
+        cashAccountCode: defaultCashCodeForCurrency(quickCurrency, cashCatalog) || undefined,
+        offsetAccountCode: undefined,
         cashFlowItemId: quickCfId,
       }),
     });

@@ -52,7 +52,11 @@ export async function buildInvoicePdfModelFromIds(
     dueDate: invoice.dueDate,
     totalAmount: invoice.totalAmount,
     currency: invoice.currency,
-    isInternational: (invoice as { isInternational?: boolean }).isInternational ?? false,
+    isInternational: invoice.isInternational ?? false,
+    tradeContext: invoice.tradeContext,
+    incoterms: invoice.incoterms,
+    exportDeclarationRef: invoice.exportDeclarationRef,
+    countryOfDestination: invoice.countryOfDestination,
     counterparty: {
       name: invoice.counterparty.nameCipher
         ? decryptText(invoice.counterparty.nameCipher) ?? ""
@@ -110,7 +114,11 @@ export async function buildInvoicePdfModelByInvoiceIdPublic(
     dueDate: invoice.dueDate,
     totalAmount: invoice.totalAmount,
     currency: invoice.currency,
-    isInternational: (invoice as { isInternational?: boolean }).isInternational ?? false,
+    isInternational: invoice.isInternational ?? false,
+    tradeContext: invoice.tradeContext,
+    incoterms: invoice.incoterms,
+    exportDeclarationRef: invoice.exportDeclarationRef,
+    countryOfDestination: invoice.countryOfDestination,
     counterparty: {
       name: invoice.counterparty.nameCipher
         ? decryptText(invoice.counterparty.nameCipher) ?? ""

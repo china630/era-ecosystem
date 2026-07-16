@@ -164,6 +164,21 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | FIN-AP-01 | AP aging + creditor payment plan | Y `/reporting/ap-aging` | API | — |
 | FC-FX-01 | Converter + revaluation on hub CBAR | Y | SHIPPED | `ERA_DATA_HUB_ENABLED` |
 | FC-FX-02 | Customs auto CBAR on bgdDate | Y | SHIPPED | Finance Trade Pro |
+| FIN-ADV-01 | Advance reports registry (list/detail/post/print) | Y `/expenses/advance-reports` | SHIPPED | Wave 5 E7; `@RequiresModule(kassa_pro)` |
+| FIN-ADV-02 | Advance report expense lines (cost account, VAT, receipt) + MXO link | Y advance report modal | SHIPPED | Wave 5 E7 |
+| FIN-PRICE-01 | Price list CRUD + lines | Y `/catalog/price-lists` | SHIPPED | Wave 5 E7 |
+| FIN-PRICE-02 | Discount rules + invoice price resolution | Y invoice create modal | SHIPPED | `PriceListsService.resolvePrice` |
+| FIN-LANDED-01 | BGD landed cost allocation to SKU | Y `/customs/[id]` | SHIPPED | Wave 5 E7; `@RequiresModule(trade_pro)` — [ADR](./adr/landed-cost-allocation.md) |
+| FIN-LANDED-02 | Product link on BGD line + batch cost update | Y customs detail | SHIPPED | `STAT_VALUE|WEIGHT|QUANTITY` methods |
+| FIN-TRADE-01 | TradeContext DOMESTIC/EXPORT/IMPORT on invoices | Y `/sales/invoices` | SHIPPED | Wave 5 G9 — [ADR](./adr/trade-context-daxili-xarici.md) |
+| FIN-TRADE-02 | Incoterms + export decl ref + Commercial Invoice PDF | Y invoice PDF | SHIPPED | Multilingual blocks |
+| FIN-TRADE-03 | Import pipeline OCR→purchase→BGD→landed cost | Y `/customs`, `/purchases` | SHIPPED | `POST customs/import-pipeline` |
+| FIN-WMS-01 | Bin-level balances (`BinBalance`) | Y `/inventory/wms-mobile` | SHIPPED | Wave 5 E6 — [ADR](./adr/bin-level-wms.md) |
+| FIN-WMS-02 | Mobile scan receive/issue/transfer/adjust | Y `/inventory/wms-mobile` | SHIPPED | `@RequiresModule(inventory)` |
+| FIN-WMS-03 | Warehouse zones + pick lists | Y WMS mobile + API | SHIPPED | put-away/picking |
+| FIN-STAT-01 | Stat form definition catalog + generator | Y `/reporting/statforms` | SHIPPED | Wave 5 G3 — [ADR](./adr/statform-engine.md) |
+| FIN-STAT-02 | Standard placeholder set (1-müəssisə, labor, production, prices) | Y statforms generate | SHIPPED | Verify official Goskomstat blanks before filing |
+| FIN-STAT-03 | Stat form XLSX export + download history | Y `/reporting/statforms` | SHIPPED | `compliance_pro` or `tax_pro` |
 
 ---
 
@@ -173,10 +188,12 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 |----|------------|-----|-----|--------|---------|
 | DH-REGISTRY | Hub `/registry/v1` health + auth | ADR | Y | HEADLESS | service token |
 | DH-FX-01 | Hub FX ingest + `/fx/*` API | TZ §FX | Y | SHIPPED | `ERA_DATA_HUB_DATA_SOURCE=hub` prod |
+| DH-CUR-01 | Hub ISO currency catalog `/currencies` | ADR | Y | SHIPPED | sync-from-finance; ≠ FX |
 | FC-DH-001 | Finance FX consumer | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-002 | Finance HS/customs tariffs | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-003 | Finance calendar consumer | PRD §4.18 | Y | SHIPPED | — |
 | FC-DH-004…010 | Banks/IBAN/VÖEN/geo/UoM/tax/CoA | PRD §4.18 | Y | SHIPPED | hub + fallback |
+| FC-DH-011 | ISO currency catalog (hub SoR) | ADR hub | Y `/system/currencies` | SHIPPED | FK cache; admin read-only |
 | FC-DH-COA | PostingRole de-hardcode CI | TZ §28.3 | — | HEADLESS | `lint-nas-literals.mjs` |
 | LOG-REF-01 | Logistics HS/FX preview via Finance | Y `/customs` | Y | SHIPPED | — |
 | BANK-REF-01 | Bank multi-catalog hub + snapshot | — | Y | API | on-prem snapshot |

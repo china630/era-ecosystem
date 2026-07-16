@@ -19,7 +19,6 @@ import {
   ORGANIZATION_BANK_ACCOUNT_TYPES,
 } from "@erafinance/api-contracts";
 import { PrismaService } from "../prisma/prisma.service";
-import type { CreateCurrencyDto, PatchCurrencyDto } from "./dto/admin-currency.dto";
 import type {
   CreateTaxRateDto,
   PatchTaxRateDto,
@@ -57,12 +56,12 @@ export class AdminCatalogService {
             approvalPolicies: true,
             prepaidExpenses: true,
             psaProjects: true,
+            contracts: true,
             accounts: true,
             counterpartyBankAccounts: true,
             invoices: true,
             customsDeclarations: true,
             cashOrders: true,
-            holdings: true,
           },
         },
       },
@@ -72,41 +71,6 @@ export class AdminCatalogService {
       usageTotal: sumRelationCounts(r._count as Record<string, number>),
       _count: undefined,
     }));
-  }
-
-  async createCurrency(dto: CreateCurrencyDto) {
-    const code = dto.code.trim().toUpperCase();
-    return this.prisma.currency.create({
-      data: {
-        code,
-        symbol: dto.symbol.trim(),
-        decimals: dto.decimals ?? 2,
-        nameAz: dto.nameAz.trim(),
-        nameRu: dto.nameRu.trim(),
-        nameEn: dto.nameEn.trim(),
-        isActive: dto.isActive ?? true,
-        sortOrder: dto.sortOrder ?? 0,
-      },
-    });
-  }
-
-  async patchCurrency(id: string, dto: PatchCurrencyDto) {
-    try {
-      return await this.prisma.currency.update({
-        where: { id },
-        data: {
-          ...(dto.symbol !== undefined ? { symbol: dto.symbol.trim() } : {}),
-          ...(dto.decimals !== undefined ? { decimals: dto.decimals } : {}),
-          ...(dto.nameAz !== undefined ? { nameAz: dto.nameAz.trim() } : {}),
-          ...(dto.nameRu !== undefined ? { nameRu: dto.nameRu.trim() } : {}),
-          ...(dto.nameEn !== undefined ? { nameEn: dto.nameEn.trim() } : {}),
-          ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
-          ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
-        },
-      });
-    } catch {
-      throw new NotFoundException("Currency not found");
-    }
   }
 
   async listUnitsOfMeasure() {
@@ -351,26 +315,16 @@ export class AdminCatalogService {
   }
 
   async listGlobalCompanies(q: string | undefined, page: number, pageSize: number) {
-    const skip = (page - 1) * pageSize;
-    const trimmed = q?.trim();
-    const where: Prisma.GlobalCompanyDirectoryWhereInput = trimmed
-      ? {
-          OR: [
-            { taxId: { contains: trimmed } },
-            { name: { contains: trimmed, mode: "insensitive" } },
-          ],
-        }
-      : {};
-    const [total, items] = await Promise.all([
-      this.prisma.globalCompanyDirectory.count({ where }),
-      this.prisma.globalCompanyDirectory.findMany({
-        where,
-        orderBy: { updatedAt: "desc" },
-        skip,
-        take: pageSize,
-      }),
-    ]);
-    return { total, page, pageSize, items };
+    // GlobalCompanyDirectory dropped — SoR is era-data-hub (lookup by VÖEN only).
+    void q;
+    return {
+      total: 0,
+      page,
+      pageSize,
+      items: [] as unknown[],
+      source: "era-data-hub",
+      note: "Local global_company_directory removed; use hub GET /companies/:voen",
+    };
   }
 
   async listGlobalCounterparties(q: string | undefined, page: number, pageSize: number) {

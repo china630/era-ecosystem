@@ -38,10 +38,14 @@ export class CreateInvoiceItemDto {
   @IsString()
   unitOfMeasureCode?: string;
 
-  @ApiProperty()
+  @ApiPropertyOptional({
+    description: "Unit price; when omitted with productId, resolved from price list",
+  })
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  unitPrice!: number;
+  @Min(0)
+  unitPrice?: number;
 
   @ApiProperty({ description: "Ставка НДС строки: -1 (освобождение), 0, 2, 8 или 18 (%)" })
   @Type(() => Number)
@@ -111,6 +115,33 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsBoolean()
   isInternational?: boolean;
+
+  @ApiPropertyOptional({
+    enum: ["DOMESTIC", "EXPORT", "IMPORT"],
+    default: "DOMESTIC",
+    description: "Trade context: domestic / export / import",
+  })
+  @IsOptional()
+  @IsIn(["DOMESTIC", "EXPORT", "IMPORT"])
+  tradeContext?: "DOMESTIC" | "EXPORT" | "IMPORT";
+
+  @ApiPropertyOptional({ example: "FOB", description: "Incoterms 2020" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  incoterms?: string;
+
+  @ApiPropertyOptional({ description: "Export customs declaration reference" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  exportDeclarationRef?: string;
+
+  @ApiPropertyOptional({ description: "Country of destination" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  countryOfDestination?: string;
 
   @ApiPropertyOptional({ description: "PSA / project link (optional)" })
   @IsOptional()

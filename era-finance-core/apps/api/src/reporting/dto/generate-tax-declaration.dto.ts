@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+
 import { IsIn, IsString, Matches } from "class-validator";
 
 const TAX_TYPES = [
@@ -24,7 +25,10 @@ export class GenerateTaxDeclarationDto {
       "Reporting period: YYYY-MM for SIMPLIFIED_TAX / PAYROLL_WITHHOLDING, YYYY for PROFIT_TAX / PROPERTY_TAX",
     example: "2026-04",
   })
+
   @IsString()
   @Matches(/^(\d{4}-(0[1-9]|1[0-2])|\d{4})$/)
   period!: string;
+
 }
+

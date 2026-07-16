@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { AccountingModule } from "../accounting/accounting.module";
 import { BankingModule } from "../banking/banking.module";
 import { RolesGuard } from "../auth/guards/roles.guard";
@@ -9,6 +9,13 @@ import { AbsencesController } from "./absences.controller";
 import { AbsencesService } from "./absences.service";
 import { EmployeesController } from "./employees.controller";
 import { EmployeesService } from "./employees.service";
+import { EmasController } from "./emas.controller";
+import { EmasContractService } from "./emas-contract.service";
+import {
+  EmasSubmissionAdapterFactory,
+  HttpEmasSubmissionAdapter,
+  HsmEmasSubmissionAdapter,
+} from "./emas-submission.adapters";
 import { OrgStructureController } from "./org-structure.controller";
 import { OrgStructureService } from "./org-structure.service";
 import { TimesheetController } from "./timesheet.controller";
@@ -45,7 +52,7 @@ import { ActiveListService } from "./active-list.service";
 @Module({
   imports: [
     PrismaModule,
-    AccountingModule,
+    forwardRef(() => AccountingModule),
     BankingModule,
     NotificationModule,
     IntegrationsModule,
@@ -55,6 +62,7 @@ import { ActiveListService } from "./active-list.service";
   ],
   controllers: [
     EmployeesController,
+    EmasController,
     PayrollController,
     AbsencesController,
     AbsenceTypesController,
@@ -69,6 +77,10 @@ import { ActiveListService } from "./active-list.service";
   ],
   providers: [
     EmployeesService,
+    EmasContractService,
+    HttpEmasSubmissionAdapter,
+    HsmEmasSubmissionAdapter,
+    EmasSubmissionAdapterFactory,
     PayrollHeavyQueueService,
     PayrollHeavyWorker,
     PayrollService,

@@ -23,6 +23,7 @@ import {
 } from "../reporting/reporting-period.util";
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
+import { SubcontoService } from "./subconto.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
 import { SubcontoService } from "./subconto.service";
 
@@ -109,6 +110,8 @@ export class AccountingService {
       departmentId?: string | null;
       ledgerType?: LedgerType;
       lines: PostTransactionLine[];
+      /** System year-end close may post into an already closed calendar month. */
+      skipClosedPeriodGuard?: boolean;
     },
   ): Promise<{ transactionId: string }> {
     const {
@@ -121,6 +124,7 @@ export class AccountingService {
       departmentId,
       ledgerType = LedgerType.NAS,
       lines,
+      skipClosedPeriodGuard = false,
     } = params;
     this.validateBalance(lines);
 
@@ -135,12 +139,14 @@ export class AccountingService {
       org.kind,
       lines.map((l) => l.accountCode),
     );
-    const closed = getClosedPeriodKeys(org?.settings);
-    const key = monthKeyUtc(date);
-    if (closed.includes(key)) {
-      throw new BadRequestException(
-        `Период ${key} закрыт: новые проводки на эту дату недоступны`,
-      );
+    if (!skipClosedPeriodGuard) {
+      const closed = getClosedPeriodKeys(org?.settings);
+      const key = monthKeyUtc(date);
+      if (closed.includes(key)) {
+        throw new BadRequestException(
+          `Период ${key} закрыт: новые проводки на эту дату недоступны`,
+        );
+      }
     }
     const lockedPeriodUntil = getLockedPeriodUntil(org?.settings);
     if (lockedPeriodUntil && date.getTime() <= lockedPeriodUntil.getTime()) {
@@ -193,6 +199,12 @@ export class AccountingService {
       accountId: string;
       debit: Decimal;
       credit: Decimal;
+      journalEntryId: string;
+    }> = [];
+    const dimensionTargets: Array<{
+      journalEntryId: string;
+      accountId: string;
+      line: PostTransactionLine;
     }> = [];
     const createdEntries: Array<{
       journalEntryId: string;
@@ -222,6 +234,12 @@ export class AccountingService {
         accountId: account.id,
         debit,
         credit,
+        journalEntryId: journalEntry.id,
+      });
+      dimensionTargets.push({
+        journalEntryId: journalEntry.id,
+        accountId: account.id,
+        line,
       });
       createdEntries.push({
         journalEntryId: je.id,
@@ -229,6 +247,13 @@ export class AccountingService {
         line,
       });
     }
+
+    await this.subconto.applyDimensionsToJournalEntries(tx, {
+      organizationId,
+      journalEntries: dimensionTargets,
+      counterpartyId,
+      departmentId,
+    });
 
     if (ledgerType === LedgerType.NAS) {
       await this.subconto.applyDimensionsToJournalEntries(tx, {
@@ -242,6 +267,7 @@ export class AccountingService {
         organizationId,
         transactionId: transaction.id,
         nasLines,
+        subcontoService: this.subconto,
       });
     }
 

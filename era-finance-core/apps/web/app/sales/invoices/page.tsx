@@ -210,6 +210,26 @@ export default function InvoicesPage() {
     if (firstPayable) openPay(firstPayable);
   }, [loading, rows, payForId, search]);
 
+  async function submitEqaime(id: string) {
+    const key = `eqaime:${id}`;
+    setInvoiceActionBusy(key);
+    try {
+      const res = await apiFetch(`/api/invoices/${id}/eqaime/submit`, { method: "POST" });
+      if (res.status === 503) {
+        alert(t("invoices.eqaimeSubmitUnavailable"));
+        return;
+      }
+      if (!res.ok) {
+        alert(t("invoices.eqaimeSubmitError"));
+        return;
+      }
+      alert(t("invoices.eqaimeSubmitOk"));
+      await load();
+    } finally {
+      setInvoiceActionBusy((b) => (b === key ? null : b));
+    }
+  }
+
   async function patchStatus(id: string, status: "SENT" | "PAID") {
     const key = `${id}:${status}`;
     setInvoiceActionBusy(key);
@@ -642,6 +662,9 @@ export default function InvoicesPage() {
                   </th>
                   <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("invoices.counterparty")}</th>
                   <th className={DATA_TABLE_TH_CENTER_CLASS}>{t("invoices.status")}</th>
+                  <th className={`hidden lg:table-cell ${DATA_TABLE_TH_CENTER_CLASS}`}>
+                    {t("invoices.eqaimeStatus")}
+                  </th>
                   <th className={`hidden lg:table-cell ${DATA_TABLE_TH_RIGHT_CLASS}`}>
                     {t("invoices.due")}
                   </th>
@@ -681,6 +704,18 @@ export default function InvoicesPage() {
                       <td className={DATA_TABLE_TD_CLASS}>{r.counterparty.name}</td>
                       <td className={DATA_TABLE_TD_CENTER_CLASS}>
                         {formatInvoiceStatus(t, r.status)}
+                      </td>
+                      <td className={`hidden lg:table-cell ${DATA_TABLE_TD_CENTER_CLASS} text-xs`}>
+                        {!r.isInternational ? (
+                          <div className="space-y-0.5">
+                            <div>{formatEqaimeStatus(t, r.eqaimeStatus)}</div>
+                            {r.eqaimeNumber ? (
+                              <div className="text-[#7F8C8D]">{r.eqaimeNumber}</div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className={`hidden lg:table-cell ${DATA_TABLE_TD_RIGHT_CLASS}`}>
                         {String(r.dueDate).slice(0, 10)}

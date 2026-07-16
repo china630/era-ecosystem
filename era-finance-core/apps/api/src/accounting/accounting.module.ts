@@ -15,6 +15,7 @@ import { SubcontoController } from "./subconto.controller";
 import { SubcontoService } from "./subconto.service";
 
 @Module({
+  imports: [],
   controllers: [
     AccountingController,
     PostingRolesController,

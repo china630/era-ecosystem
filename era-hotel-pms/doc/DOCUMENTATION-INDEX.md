@@ -105,7 +105,6 @@
 |------|---------------|
 | elektraweb-gap-analysis-az-global.md | stable |
 | elektraweb-modules-catalog.md | stable |
-| elektraweb-modules-pricing-analysis.md | stable |
 
 ---
 
