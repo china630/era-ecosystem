@@ -147,3 +147,33 @@ export function isSatelliteClinicWardDayCharge(
 ): data is SatelliteClinicWardDayChargeEvent {
   return satelliteClinicWardDayChargeSchema.safeParse(data).success;
 }
+
+export const SATELLITE_CLINIC_CAPACITY_CHANGED =
+  "SATELLITE_CLINIC_CAPACITY_CHANGED" as const;
+
+export const satelliteClinicCapacityChangedSchema =
+  satelliteEventBaseSchema.extend({
+    type: z.literal(SATELLITE_CLINIC_CAPACITY_CHANGED),
+    payload: z.object({
+      from: z.string(),
+      to: z.string(),
+      riskLevel: z.enum(["ok", "warning", "critical"]),
+      remainingPct: z.number(),
+      remainingSlots: z.number().int(),
+      totalSlots: z.number().int(),
+      occupiedSlots: z.number().int(),
+      bookingAllowed: z.boolean(),
+      guestEquivalent: z.number(),
+      message: z.string(),
+    }),
+  });
+
+export type SatelliteClinicCapacityChangedEvent = z.infer<
+  typeof satelliteClinicCapacityChangedSchema
+>;
+
+export function isSatelliteClinicCapacityChanged(
+  data: unknown,
+): data is SatelliteClinicCapacityChangedEvent {
+  return satelliteClinicCapacityChangedSchema.safeParse(data).success;
+}

@@ -3,9 +3,11 @@ import {
   WORKFORCE_ABSENCE_APPROVED,
   WORKFORCE_ORG_UNIT_UPSERTED,
   WORKFORCE_POSITION_UPSERTED,
+  WORKFORCE_VACATION_PLAN_APPROVED,
   satelliteWorkforceAbsenceApprovedSchema,
   satelliteWorkforceOrgUnitUpsertedSchema,
   satelliteWorkforcePositionUpsertedSchema,
+  satelliteWorkforceVacationPlanApprovedSchema,
   workforceAbsenceEventPayloadSchema,
   workforceOrgUnitPayloadSchema,
   workforcePositionPayloadSchema,
@@ -82,5 +84,34 @@ describe("workforce org events", () => {
       payload: posPayload,
     };
     expect(satelliteWorkforcePositionUpsertedSchema.parse(event)).toEqual(event);
+  });
+});
+
+describe("workforce vacation plan events", () => {
+  it("round-trips WORKFORCE_VACATION_PLAN_APPROVED envelope", () => {
+    const payload = {
+      cpVacationPlanId: "550e8400-e29b-41d4-a716-446655440010",
+      organizationId: "660e8400-e29b-41d4-a716-446655440011",
+      year: 2026,
+      approvedAt: "2026-07-01T10:00:00.000Z",
+      approvedByUserId: "770e8400-e29b-41d4-a716-446655440012",
+      lines: [
+        {
+          employmentId: "880e8400-e29b-41d4-a716-446655440013",
+          globalPersonId: "990e8400-e29b-41d4-a716-446655440014",
+          startDate: "2026-08-01",
+          endDate: "2026-08-14",
+          days: 14,
+        },
+      ],
+    };
+    const event = {
+      type: WORKFORCE_VACATION_PLAN_APPROVED,
+      organizationId: payload.organizationId,
+      correlationId: `${payload.cpVacationPlanId}:APPROVED:1`,
+      occurredAt: payload.approvedAt,
+      payload,
+    };
+    expect(satelliteWorkforceVacationPlanApprovedSchema.parse(event)).toEqual(event);
   });
 });

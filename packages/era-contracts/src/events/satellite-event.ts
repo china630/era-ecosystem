@@ -1,5 +1,6 @@
 import { isSatelliteAutoWorkOrderCompleted } from "./auto-sto.events";
 import {
+  isSatelliteClinicCapacityChanged,
   isSatelliteClinicLabOrderCompleted,
   isSatelliteClinicPrescriptionIssued,
   isSatelliteClinicProcedureCompleted,
@@ -26,7 +27,11 @@ import {
   isSatelliteRetailShiftClosed,
 } from "./retail.events";
 import { isSatelliteWholesaleOrderConfirmed } from "./wholesale.events";
-import { isSatelliteFbStockConsumptionCompleted } from "./fb.events";
+import {
+  isSatelliteFbSaleCompleted,
+  isSatelliteFbShiftClosed,
+  isSatelliteFbStockConsumptionCompleted,
+} from "./fb.events";
 import {
   isSatelliteBankGlDailySummary,
 } from "./banking.events";
@@ -47,6 +52,7 @@ import {
   isSatelliteWorkforcePositionUpserted,
   isSatelliteWorkforceTimesheetBatchImported,
   isSatelliteWorkforceTimesheetApproved,
+  isSatelliteWorkforceVacationPlanApproved,
 } from "./workforce.events";
 
 export type KnownSatelliteEvent = { type: string };
@@ -75,8 +81,11 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteClinicLabOrderCompleted(data) ||
     isSatelliteClinicProcedureCompleted(data) ||
     isSatelliteClinicPrescriptionIssued(data) ||
+    isSatelliteClinicCapacityChanged(data) ||
     isSatelliteWholesaleOrderConfirmed(data) ||
     isSatelliteFbStockConsumptionCompleted(data) ||
+    isSatelliteFbSaleCompleted(data) ||
+    isSatelliteFbShiftClosed(data) ||
     isSatelliteStaffProvisioned(data) ||
     isSatelliteStaffDeactivated(data) ||
     isSatelliteStaffClockBatch(data) ||
@@ -91,7 +100,8 @@ export function isSatelliteEvent(data: unknown): data is KnownSatelliteEvent & {
     isSatelliteWorkforceEmploymentHired(data) ||
     isSatelliteWorkforceEmploymentTerminated(data) ||
     isSatelliteWorkforceTimesheetBatchImported(data) ||
-    isSatelliteWorkforceTimesheetApproved(data)
+    isSatelliteWorkforceTimesheetApproved(data) ||
+    isSatelliteWorkforceVacationPlanApproved(data)
   );
 }
 
