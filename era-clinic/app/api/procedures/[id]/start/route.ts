@@ -1,30 +1,52 @@
-import { jsonOk, jsonError, handleRouteError, getRouteSession, requireClinicRole } from "@/lib/api-utils";
+import { z } from "zod";
+import {
+  jsonOk,
+  jsonError,
+  handleRouteError,
+  getRouteSession,
+  requireClinicRole,
+  hasClinicAdminRole,
+} from "@/lib/api-utils";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
-import { prisma } from "@/lib/prisma";
+import {
+  checkInProcedureOrder,
+  mapAttendanceHttpStatus,
+  ProcedureAttendanceError,
+} from "@/domain/procedure/procedure-attendance.service";
+
+/** Legacy alias → check-in (requires QR or override). */
+const schema = z.object({
+  qrToken: z.string().min(8).optional(),
+  overrideReason: z.string().min(3).max(500).optional(),
+});
 
 export async function POST(
-  _request: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getRouteSession();
-    const denied = requireClinicRole(session, [CLINIC_ROLE.NURSE, CLINIC_ROLE.DOCTOR]);
+    const denied = requireClinicRole(session, [
+      CLINIC_ROLE.NURSE,
+      CLINIC_ROLE.DOCTOR,
+    ]);
     if (denied) return denied;
 
     const { id } = await params;
-    const order = await prisma.procedureOrder.findUnique({ where: { id } });
-    if (!order) return jsonError("Procedure not found", 404);
-    if (order.status !== "SCHEDULED") {
-      return jsonError(`Cannot start procedure in status ${order.status}`, 400);
-    }
+    const body = schema.parse(await req.json().catch(() => ({})));
+    const canOverride =
+      hasClinicAdminRole(session!) || session!.role === CLINIC_ROLE.DOCTOR;
 
-    const updated = await prisma.procedureOrder.update({
-      where: { id },
-      data: { status: "IN_PROGRESS" },
-      include: { patientRef: true },
-    });
+    const updated = await checkInProcedureOrder(
+      id,
+      { userId: session!.sub, canOverrideCheckIn: canOverride },
+      body,
+    );
     return jsonOk(updated);
   } catch (err) {
+    if (err instanceof ProcedureAttendanceError) {
+      return jsonError(err.message, mapAttendanceHttpStatus(err), { code: err.code });
+    }
     return handleRouteError(err);
   }
 }

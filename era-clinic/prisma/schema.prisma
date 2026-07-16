@@ -16,6 +16,20 @@ model Tenant {
   schedulingSlotMinutes    Int                      @default(5) @map("scheduling_slot_minutes")
   procedureOverQuotaPolicy ProcedureOverQuotaPolicy @default(CHARGE_FOLIO) @map("procedure_over_quota_policy")
   defaultOutletId          String?                  @map("default_outlet_id")
+  /// Favorite diagnostic keys: `mod:USG`, `mod:USG:abdomen`, `lab:hematology`, `code:LAB-CBC`
+  catalogFavoriteCodes     String[]                 @default([]) @map("catalog_favorite_codes")
+  /// `first` = favorites sorted to top; `only` = hide non-favorites in pickers
+  catalogFavoritesMode     String                   @default("first") @map("catalog_favorites_mode")
+  patientCardResultsPreview Int                     @default(5) @map("patient_card_results_preview")
+  patientCardPlanPreview    Int                     @default(15) @map("patient_card_plan_preview")
+  patientCardHistoryPageSize Int                    @default(25) @map("patient_card_history_page_size")
+  patientCardPlanPageSize   Int                     @default(25) @map("patient_card_plan_page_size")
+  /// Check-in allowed from scheduledAt − N minutes
+  procedureCheckInGraceBeforeMin Int                @default(5) @map("procedure_check_in_grace_before_min")
+  /// Check-in allowed until scheduledAt + N minutes
+  procedureCheckInGraceAfterMin  Int                @default(15) @map("procedure_check_in_grace_after_min")
+  /// Last published `ok`|`warning`|`critical` for capacity foresight debounce
+  lastCapacityRiskLevel    String?                  @map("last_capacity_risk_level")
   createdAt                DateTime                 @default(now())
   outlets                  Outlet[]
 }
@@ -62,9 +76,15 @@ enum ResourceKind {
 
 enum ProcedureOrderStatus {
   SCHEDULED
-  IN_PROGRESS
+  CHECKED_IN
   COMPLETED
+  NO_SHOW
   CANCELLED
+}
+
+enum ProcedureCheckInChannel {
+  QR
+  OVERRIDE
 }
 
 enum ProgramSchedulingMode {
@@ -96,6 +116,26 @@ enum LisFileFormat {
   HL7_FRAGMENT
 }
 
+/// Clinical/administrative sex for dosing, protocols, rooming (ops cache — not MDM SoR yet).
+enum PatientSex {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+enum PatientBloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+  UNKNOWN
+}
+
 model Outlet {
   id        String   @id @default(cuid())
   tenantId  String
@@ -109,21 +149,28 @@ model Outlet {
 }
 
 model PatientRef {
-  id               String            @id @default(cuid())
-  refCode          String            @unique
-  fullName         String
-  phone            String?
-  nationality      String?           @default("AZ")
-  globalPersonId   String?
-  appointments     Appointment[]
-  visits           Visit[]
-  labOrders        LabOrder[]
-  episodes         ClinicalEpisode[]
-  procedureOrders       ProcedureOrder[]
-  contraindications     PatientContraindication[]
-  bedAssignments        BedAssignment[]
-  inpatientAdmissions   InpatientAdmission[]
-  createdAt             DateTime          @default(now())
+  id                      String             @id @default(cuid())
+  refCode                 String             @unique
+  fullName                String
+  phone                   String?
+  nationality             String?            @default("AZ")
+  /// Clinical sex (ops cache). SoR for identifiers remains MDM.
+  sex                     PatientSex         @default(UNKNOWN)
+  /// Calendar date only; age is derived at read time.
+  birthDate               DateTime?          @db.Date
+  bloodGroup              PatientBloodGroup  @default(UNKNOWN) @map("blood_group")
+  emergencyContactName    String?            @map("emergency_contact_name")
+  emergencyContactPhone   String?            @map("emergency_contact_phone")
+  globalPersonId          String?
+  appointments            Appointment[]
+  visits                  Visit[]
+  labOrders               LabOrder[]
+  episodes                ClinicalEpisode[]
+  procedureOrders         ProcedureOrder[]
+  contraindications       PatientContraindication[]
+  bedAssignments          BedAssignment[]
+  inpatientAdmissions     InpatientAdmission[]
+  createdAt               DateTime           @default(now())
 }
 
 model Practitioner {
@@ -484,6 +531,19 @@ model ProcedureOrder {
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
   resourceId       String?
+  /// Reception moved/assigned outside auto-planner
+  manuallyAdjusted Boolean              @default(false) @map("manually_adjusted")
+  checkedInAt      DateTime?            @map("checked_in_at")
+  checkedInByUserId String?             @map("checked_in_by_user_id")
+  checkInChannel   ProcedureCheckInChannel? @map("check_in_channel")
+  checkInOverrideReason String?         @map("check_in_override_reason")
+  completedAt      DateTime?            @map("completed_at")
+  completedByUserId String?             @map("completed_by_user_id")
+  noShowAt         DateTime?            @map("no_show_at")
+  noShowByUserId   String?              @map("no_show_by_user_id")
+  cancelledAt      DateTime?            @map("cancelled_at")
+  cancelledByUserId String?             @map("cancelled_by_user_id")
+  cancelReason     String?              @map("cancel_reason")
   visit            Visit?               @relation(fields: [visitId], references: [id])
   patientRef       PatientRef           @relation(fields: [patientRefId], references: [id])
   procedureType    ProcedureType?       @relation(fields: [procedureTypeId], references: [id])
@@ -494,6 +554,7 @@ model ProcedureOrder {
   @@index([scheduledAt, status])
   @@index([patientRefId])
   @@index([resourceId, scheduledAt])
+  @@index([status, scheduledAt])
 }
 
 enum InpatientAdmissionStatus {

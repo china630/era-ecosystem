@@ -83,7 +83,7 @@ Implementation: `Tenant` / `Outlet.preset` + `requireClinicPreset()` in middlewa
 |----|------|-------|
 | P2-01 | Smart scheduler polish (resource conflicts, practitioner duration in master data) | SANATORIUM plan §1.1 |
 | P2-02 | Doctor/nurse queue UX (role dashboards) | `/doctor`, `/nurse` |
-| P2-03 | CPOE modal + template picker wired to admin templates | M10 |
+| P2-03 | CPOE modal + template picker wired to admin templates | M10; catalog [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) seeded — UI renderer still pending |
 | P2-04 | Catalog sync schedule + stale indicator | M6 |
 | P2-05 | Cashier structured flow + `@era/fiscal` mock unified | CLI-24 STUB ok |
 | P2-06 | Executive KPI filters (date, practitioner) | K-14 |

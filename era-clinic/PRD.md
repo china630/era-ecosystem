@@ -135,7 +135,7 @@ Architecture: [ADR clinic-product-lines-and-presets.md](../docs/adr/clinic-produ
 
 | ID | История | Критерий |
 |----|---------|----------|
-| K-12 | Справочник услуг и анализов (кэш) | Синхронизация кодов с Finance price list |
+| K-12 | Справочник услуг и анализов (кэш) | Синхронизация кодов с Finance price list; стандартные шаблоны исследований/анализов — [DIAGNOSTIC_AND_LAB_CATALOG](./doc/DIAGNOSTIC_AND_LAB_CATALOG.md) |
 | K-13 | Скидка на визит | Только `CLINIC_ADMIN` / `BUSINESS_OWNER`; audit log |
 | K-14 | Сводка выручки за день | `BUSINESS_OWNER`: visits + lab, без GL в спутнике |
 | K-15 | Отмена визита с причиной | До закрытия — без события; после — void flow в Finance (ручной) |
@@ -201,3 +201,5 @@ SSO + RBAC claims; публикация событий через `@era/satellit
 | 2026-05-25 | SW3/K2-K3: full lab lifecycle, discount audit, executive summary |
 | 2026-05-28 | Enrichment W1: M5 critical flag, M6 price cache |
 | 2026-06-16 | §1.4 product lines & presets; out-of-scope clarified (full HIS vs inpatient_day); M13 → PARTIAL |
+| 2026-07-14 | Standard diagnostic + lab template catalog (USG/CT/ECG/panels) — seed JSON + K-12 link |
+| 2026-07-14 | Catalog v1.1 P0+P1: 85 studies, 45 lab panels, 13 visits, 7 packages |

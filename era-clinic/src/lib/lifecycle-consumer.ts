@@ -77,9 +77,9 @@ export async function handleGuestCheckedOut(
   await prisma.procedureOrder.updateMany({
     where: {
       reservationId: p.reservationId,
-      status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+      status: { in: ["SCHEDULED", "CHECKED_IN"] },
     },
-    data: { status: "CANCELLED" },
+    data: { status: "CANCELLED", cancelledAt: new Date(), cancelReason: "hotel_checkout" },
   });
 }
 

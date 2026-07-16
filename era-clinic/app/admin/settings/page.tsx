@@ -25,6 +25,20 @@ const PRESET_LABELS: Record<ClinicPresetCode, string> = {
   [CLINIC_PRESET.WELLNESS]: "Wellness",
 };
 
+type CardLimits = {
+  patientCardResultsPreview: number;
+  patientCardPlanPreview: number;
+  patientCardHistoryPageSize: number;
+  patientCardPlanPageSize: number;
+};
+
+const CARD_DEFAULTS: CardLimits = {
+  patientCardResultsPreview: 5,
+  patientCardPlanPreview: 15,
+  patientCardHistoryPageSize: 25,
+  patientCardPlanPageSize: 25,
+};
+
 export default function ClinicAdminSettingsPage() {
   const t = useTranslations("adminSettings");
   const tc = useTranslations("common");
@@ -33,11 +47,13 @@ export default function ClinicAdminSettingsPage() {
   const [enabledPresets, setEnabledPresets] = useState<ClinicPresetCode[]>([
     CLINIC_PRESET.OUTPATIENT,
   ]);
+  const [cardLimits, setCardLimits] = useState<CardLimits>(CARD_DEFAULTS);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [draftPresets, setDraftPresets] = useState<ClinicPresetCode[]>([
     CLINIC_PRESET.OUTPATIENT,
   ]);
+  const [draftCard, setDraftCard] = useState<CardLimits>(CARD_DEFAULTS);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,6 +67,18 @@ export default function ClinicAdminSettingsPage() {
         const presets = (row.enabledPresets ?? [CLINIC_PRESET.OUTPATIENT]) as ClinicPresetCode[];
         setEnabledPresets(presets);
         setDraftPresets(presets);
+        const limits: CardLimits = {
+          patientCardResultsPreview:
+            row.patientCardResultsPreview ?? CARD_DEFAULTS.patientCardResultsPreview,
+          patientCardPlanPreview:
+            row.patientCardPlanPreview ?? CARD_DEFAULTS.patientCardPlanPreview,
+          patientCardHistoryPageSize:
+            row.patientCardHistoryPageSize ?? CARD_DEFAULTS.patientCardHistoryPageSize,
+          patientCardPlanPageSize:
+            row.patientCardPlanPageSize ?? CARD_DEFAULTS.patientCardPlanPageSize,
+        };
+        setCardLimits(limits);
+        setDraftCard(limits);
       });
   }, []);
 
@@ -71,6 +99,7 @@ export default function ClinicAdminSettingsPage() {
       body: JSON.stringify({
         clinicName: draft.trim() || clinicName,
         enabledPresets: draftPresets,
+        ...draftCard,
       }),
     });
     if (res.ok) {
@@ -78,6 +107,14 @@ export default function ClinicAdminSettingsPage() {
       const row = d.data ?? d;
       setClinicName(row.clinicName ?? draft);
       setEnabledPresets(row.enabledPresets ?? draftPresets);
+      setCardLimits({
+        patientCardResultsPreview:
+          row.patientCardResultsPreview ?? draftCard.patientCardResultsPreview,
+        patientCardPlanPreview: row.patientCardPlanPreview ?? draftCard.patientCardPlanPreview,
+        patientCardHistoryPageSize:
+          row.patientCardHistoryPageSize ?? draftCard.patientCardHistoryPageSize,
+        patientCardPlanPageSize: row.patientCardPlanPageSize ?? draftCard.patientCardPlanPageSize,
+      });
       setOpen(false);
       setMsg(tc("saved"));
       window.location.reload();
@@ -110,13 +147,14 @@ export default function ClinicAdminSettingsPage() {
           <tr className="border-b">
             <td className="p-3 font-medium">{t("clinicName")}</td>
             <td className="p-3">{clinicName}</td>
-            <td className="p-3 text-right" rowSpan={2}>
+            <td className="p-3 text-right" rowSpan={6}>
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
                 onClick={() => {
                   setDraft(clinicName);
                   setDraftPresets(enabledPresets);
+                  setDraftCard(cardLimits);
                   setOpen(true);
                 }}
               >
@@ -124,11 +162,27 @@ export default function ClinicAdminSettingsPage() {
               </button>
             </td>
           </tr>
-          <tr>
+          <tr className="border-b">
             <td className="p-3 font-medium">{t("enabledPresets")}</td>
             <td className="p-3">
               {enabledPresets.map((p) => PRESET_LABELS[p] ?? p).join(", ")}
             </td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("cardResultsPreview")}</td>
+            <td className="p-3">{cardLimits.patientCardResultsPreview}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("cardPlanPreview")}</td>
+            <td className="p-3">{cardLimits.patientCardPlanPreview}</td>
+          </tr>
+          <tr className="border-b">
+            <td className="p-3 font-medium">{t("cardHistoryPageSize")}</td>
+            <td className="p-3">{cardLimits.patientCardHistoryPageSize}</td>
+          </tr>
+          <tr>
+            <td className="p-3 font-medium">{t("cardPlanPageSize")}</td>
+            <td className="p-3">{cardLimits.patientCardPlanPageSize}</td>
           </tr>
         </tbody>
       </table>
@@ -141,7 +195,7 @@ export default function ClinicAdminSettingsPage() {
             onChange={(e) => setDraft(e.target.value)}
           />
         </label>
-        <fieldset className="space-y-2 text-[13px]">
+        <fieldset className="mb-4 space-y-2 text-[13px]">
           <legend className="font-medium">{t("enabledPresets")}</legend>
           {ALL_CLINIC_PRESETS.map((code) => (
             <label key={code} className="flex items-center gap-2">
@@ -150,7 +204,35 @@ export default function ClinicAdminSettingsPage() {
                 checked={draftPresets.includes(code)}
                 onChange={() => togglePreset(code)}
               />
-              {PRESET_LABELS[code]}
+              {PRESET_LABELS[code] ?? code}
+            </label>
+          ))}
+        </fieldset>
+        <fieldset className="grid gap-3 text-[13px] sm:grid-cols-2">
+          <legend className="mb-1 font-medium sm:col-span-2">{t("cardLimitsTitle")}</legend>
+          {(
+            [
+              ["patientCardResultsPreview", "cardResultsPreview"],
+              ["patientCardPlanPreview", "cardPlanPreview"],
+              ["patientCardHistoryPageSize", "cardHistoryPageSize"],
+              ["patientCardPlanPageSize", "cardPlanPageSize"],
+            ] as const
+          ).map(([key, labelKey]) => (
+            <label key={key} className="block">
+              {t(labelKey)}
+              <input
+                type="number"
+                min={key.includes("Page") ? 10 : 1}
+                max={key.includes("Page") ? 100 : 50}
+                className={`mt-1 w-full ${MODAL_INPUT_CLASS}`}
+                value={draftCard[key]}
+                onChange={(e) =>
+                  setDraftCard((prev) => ({
+                    ...prev,
+                    [key]: Number(e.target.value) || prev[key],
+                  }))
+                }
+              />
             </label>
           ))}
         </fieldset>

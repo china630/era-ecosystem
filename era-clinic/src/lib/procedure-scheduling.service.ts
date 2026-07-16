@@ -12,15 +12,18 @@ function addMinutes(d: Date, mins: number): Date {
 export async function rescheduleProcedureOrder(
   orderId: string,
   scheduledAt: Date,
-): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null }> {
+  opts?: { resourceId?: string },
+): Promise<{ id: string; scheduledAt: Date; endsAt: Date | null; resourceId: string | null }> {
   const order = await prisma.procedureOrder.findUnique({
     where: { id: orderId },
     include: { resourceBooking: true, procedureType: true },
   });
   if (!order) throw new Error("Procedure not found");
-  if (!["SCHEDULED", "IN_PROGRESS"].includes(order.status)) {
-    throw new Error("Only scheduled procedures can be rescheduled");
+  if (order.status !== "SCHEDULED") {
+    throw new Error("Only SCHEDULED procedures can be rescheduled");
   }
+
+  const targetResourceId = opts?.resourceId ?? order.resourceId;
 
   const duration =
     order.endsAt && order.scheduledAt
@@ -52,17 +55,17 @@ export async function rescheduleProcedureOrder(
     throw new Error("Same procedure already scheduled for this day");
   }
 
-  if (order.resourceId) {
+  if (targetResourceId) {
     const bookings = await prisma.resourceBooking.findMany({
       where: {
-        resourceId: order.resourceId,
+        resourceId: targetResourceId,
         startsAt: { lt: slotEnd },
         endsAt: { gt: slotStart },
         NOT: order.resourceBooking ? { id: order.resourceBooking.id } : undefined,
       },
     });
     const resource = await prisma.resource.findUnique({
-      where: { id: order.resourceId },
+      where: { id: targetResourceId },
     });
     if (resource && bookings.length >= resource.capacity) {
       throw new Error("Resource conflict at selected time");
@@ -78,7 +81,7 @@ export async function rescheduleProcedureOrder(
     where: {
       patientRefId: order.patientRefId,
       scheduledAt: { gte: sameDayStart, lt: sameDayEnd },
-      status: { not: "CANCELLED" },
+      status: { notIn: ["CANCELLED", "NO_SHOW"] },
       id: { not: order.id },
     },
   });
@@ -98,13 +101,30 @@ export async function rescheduleProcedureOrder(
 
   const updated = await prisma.procedureOrder.update({
     where: { id: orderId },
-    data: { scheduledAt: slotStart, endsAt: slotEnd },
+    data: {
+      scheduledAt: slotStart,
+      endsAt: slotEnd,
+      ...(targetResourceId ? { resourceId: targetResourceId } : {}),
+    },
   });
 
-  if (order.resourceBooking) {
+  if (order.resourceBooking && targetResourceId) {
     await prisma.resourceBooking.update({
       where: { id: order.resourceBooking.id },
-      data: { startsAt: slotStart, endsAt: slotEnd },
+      data: {
+        startsAt: slotStart,
+        endsAt: slotEnd,
+        resourceId: targetResourceId,
+      },
+    });
+  } else if (!order.resourceBooking && targetResourceId) {
+    await prisma.resourceBooking.create({
+      data: {
+        resourceId: targetResourceId,
+        procedureOrderId: order.id,
+        startsAt: slotStart,
+        endsAt: slotEnd,
+      },
     });
   }
 

@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       where: {
         patientRefId: patient.id,
         scheduledAt: { gte: day, lt: next },
-        status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+        status: { in: ["SCHEDULED", "CHECKED_IN"] },
       },
       include: { patientRef: true },
       orderBy: { scheduledAt: "asc" },
@@ -46,6 +46,8 @@ export async function POST(req: Request) {
       patientRefId: patient.id,
       patientName: patient.fullName,
       orders,
+      /** Client must pass this token again on check-in (anti-fraud). */
+      qrToken: body.token.trim(),
     });
   } catch (err) {
     return handleRouteError(err);

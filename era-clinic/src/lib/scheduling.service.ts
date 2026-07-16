@@ -64,7 +64,7 @@ export async function getAvailableSlots(input: {
           ? { practitioner: { code: input.practitionerCode } }
           : {}),
       },
-      select: { scheduledAt: true },
+      select: { id: true, scheduledAt: true },
     }),
     prisma.resourceBooking.findMany({
       where: {
@@ -78,8 +78,12 @@ export async function getAvailableSlots(input: {
     }),
   ]);
 
+  const appointmentByTime = new Map<number, string>();
   const taken = new Set<number>();
-  for (const a of appointments) taken.add(a.scheduledAt.getTime());
+  for (const a of appointments) {
+    taken.add(a.scheduledAt.getTime());
+    appointmentByTime.set(a.scheduledAt.getTime(), a.id);
+  }
   for (const b of resourceBookings) {
     for (const slot of slots) {
       if (slot >= b.startsAt && slot < b.endsAt) taken.add(slot.getTime());
@@ -94,6 +98,7 @@ export async function getAvailableSlots(input: {
       time: slotAt.toISOString(),
       label: slotAt.toTimeString().slice(0, 5),
       available: !taken.has(slotAt.getTime()),
+      appointmentId: appointmentByTime.get(slotAt.getTime()) ?? null,
     })),
     meta: { conflictCount: conflicts },
   };
