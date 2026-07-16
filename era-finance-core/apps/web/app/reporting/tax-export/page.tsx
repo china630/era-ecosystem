@@ -55,6 +55,7 @@ export default function TaxExportPage() {
   const { t } = useTranslation();
   const { token, ready } = useRequireAuth();
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
+  const [yearPeriod, setYearPeriod] = useState(String(new Date().getUTCFullYear()));
   const [taxType, setTaxType] = useState("SIMPLIFIED_TAX");
   const [items, setItems] = useState<TaxDeclarationExport[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -62,6 +63,10 @@ export default function TaxExportPage() {
   const [loadingList, setLoadingList] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [receiptFiles, setReceiptFiles] = useState<Record<string, File | null>>({});
+
+  const needsYearPeriod =
+    taxType === "PROFIT_TAX" || taxType === "PROPERTY_TAX";
+  const effectivePeriod = needsYearPeriod ? yearPeriod : period;
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -94,7 +99,7 @@ export default function TaxExportPage() {
       const res = await apiFetch("/api/reporting/tax-declarations/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ taxType, period }),
+        body: JSON.stringify({ taxType, period: effectivePeriod }),
       });
       const data = (await res.json()) as unknown;
       if (!res.ok) {
@@ -107,7 +112,7 @@ export default function TaxExportPage() {
       setErr(t("reporting.taxExportErr"));
     }
     setGenerating(false);
-  }, [taxType, period, load, t]);
+  }, [taxType, effectivePeriod, load, t]);
 
   const statusLabel = useMemo(
     () => ({
@@ -204,21 +209,41 @@ export default function TaxExportPage() {
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.taxExportPeriod")}</span>
-              <input
-                type="month"
-                className={`${MODAL_INPUT_CLASS} !w-40`}
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              />
+              {needsYearPeriod ? (
+                <input
+                  type="number"
+                  min={2000}
+                  max={2100}
+                  className={`${MODAL_INPUT_CLASS} !w-28`}
+                  value={yearPeriod}
+                  onChange={(e) => setYearPeriod(e.target.value)}
+                />
+              ) : (
+                <input
+                  type="month"
+                  className={`${MODAL_INPUT_CLASS} !w-40`}
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                />
+              )}
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium text-[#34495E]">
               <span>{t("reporting.taxExportType")}</span>
               <select
-                className={`${MODAL_INPUT_CLASS} !min-w-[14rem]`}
+                className={`${MODAL_INPUT_CLASS} !min-w-[16rem]`}
                 value={taxType}
                 onChange={(e) => setTaxType(e.target.value)}
               >
-                <option value="SIMPLIFIED_TAX">Sadələşdirilmiş vergi / Simplified Tax</option>
+                <option value="SIMPLIFIED_TAX">
+                  {t("reporting.taxTypeSimplified")}
+                </option>
+                <option value="PROFIT_TAX">{t("reporting.taxTypeProfit")}</option>
+                <option value="PAYROLL_WITHHOLDING">
+                  {t("reporting.taxTypePayroll")}
+                </option>
+                <option value="PROPERTY_TAX">
+                  {t("reporting.taxTypeProperty")}
+                </option>
               </select>
             </label>
           </div>

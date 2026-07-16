@@ -12,6 +12,8 @@ import { InvoicesController } from "./invoices.controller";
 import { InvoicesService } from "./invoices.service";
 import { PublicInvoiceController } from "./public-invoice.controller";
 import { NetworkModule } from "../network/network.module";
+import { ReportingModule } from "../reporting/reporting.module";
+import { EqaimeSubmissionService } from "./eqaime-submission.service";
 
 @Module({
   imports: [
@@ -22,13 +24,14 @@ import { NetworkModule } from "../network/network.module";
     SignatureModule,
     forwardRef(() => ComplianceModule),
     NetworkModule,
+    ReportingModule,
   ],
   controllers: [
     InvoicesController,
     InvoiceSignatureController,
     PublicInvoiceController,
   ],
-  providers: [InvoicesService, InvoicePdfQueueService, InvoicePdfWorker],
-  exports: [InvoicesService],
+  providers: [InvoicesService, EqaimeSubmissionService, InvoicePdfQueueService, InvoicePdfWorker],
+  exports: [InvoicesService, EqaimeSubmissionService],
 })
 export class InvoicesModule {}

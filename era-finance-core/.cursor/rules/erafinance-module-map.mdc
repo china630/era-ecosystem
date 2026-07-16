@@ -1,0 +1,117 @@
+---
+description: ERA Finance — карта модулей (якорь API ↔ Web ↔ Prisma); для @ и навигации по репо
+globs:
+  - apps/api/**
+  - apps/web/**
+  - apps/extension/**
+  - packages/database/**
+  - packages/api-contracts/**
+  - packages/i18n/**
+alwaysApply: false
+---
+
+# Карта модулей (якорь — `apps/api/src`)
+
+Источник правды по **коду** — папка в **`apps/api/src/<module>/`**. В колонке Web указаны типичные экраны Next.js (`apps/web/app/...`). Если модуля нет в таблице «только инфра», смотри раздел внизу.
+
+### Как называть модуль в чате (язык)
+
+В первом столбце: **русское продуктовое имя** и **английский slug** в скобках (как папка в API). Так удобно писать и по-русски («модуль Склад»), и по-английски для совпадения с репо (`inventory`). **AZ** в таблице не дублируем — в интерфейсе те же модули, что и в RU; при желании добавь азербайджанское имя в скобках во второй строке ячейки вручную.
+
+## Доменные модули (API ↔ Web)
+
+| Модуль (к чату) | API `apps/api/src/…` | Web `apps/web/app/…` | Примечание |
+|-----------------|----------------------|----------------------|------------|
+| Бухгалтерия (`accounting`) | `accounting/` | `accounting/`, `reporting/vat-deposit/` | IFRS-связка; subconto: `GET/POST accounting/subconto/*` (`SubcontoType`, `AccountSubcontoConfig`, `seed-branch` POCT/RABITE/TELE, backfill); flag `ERA_SUBCONTO_ENABLED`; `GET reporting/subconto-analysis`; **ƏDV depozit:** `GET/POST accounting/vat-deposit/*` (`VatDepositService`); roles `VAT_INPUT→191`, `VAT_OUTPUT→545`, `VAT_DEPOSIT_ACCOUNT→223` |
+| План счетов и маппинг (`accounts`) | `accounts/` | `accounting/chart/`, `accounting/mapping/`, `accounting/ifrs-mapping/` | IFRS-правила |
+| Админка (`admin`) | `admin/` | `admin/`, `super-admin/` | орг. админка и супер-админ |
+| Журнал аудита (`audit`) | `audit/` | `settings/audit/` | |
+| **Рабочее место аудитора (`audit-hub`)** | `audit-hub/` + **`audit-hub/me/*`** (см. подраздел ниже) | `audit-hub/`, **`audit-invitations/`** | add-on **`audit_hub`** на **клиентской** org; guest — заголовки **`x-audit-engagement-invite-id`**, **`x-audit-engagement-token`** |
+| Авторизация и сессии (`auth`) | `auth/` | `login/`, `auth/cp-handoff/` | register/join SoT → Orchestrator; Finance rejects local register. Локальный `/login` (satellite) + `/auth/cp-handoff` SSO; гость `/`→`/login`, authed `/`→`/home`; org-less → CP `/organizations` (blocking modal). Middleware без legacy-редиректов |
+| Банк (`banking`) | `banking/` | `banking/`, `(app)/banking/` | часть экранов в route groups |
+| Биллинг consumer (`billing`) | `billing/` (no HTTP controllers) | — (Orch `/settings/subscription`) | slim: meter + entitlement helpers; SoT on Orch |
+| Контрагенты (`counterparties`) | `counterparties/` | `crm/counterparties/` | CRM |
+| Финансы продаж/закупок (`finance`) | `finance/` | `sales/`, `purchases/`, `sales/reconciliation/` | на web нет папки `finance/` |
+| Основные средства (`fixed-assets`) | `fixed-assets/` | `fixed-assets/` | ОС lifecycle: acquire, modernize, revalue, dispose |
+| Нематериальные активы (`intangible-assets`) | `intangible-assets/` | `intangible-assets/` | НМА 131/132, амортизация, постановка/выбытие |
+| Курсы валют (`fx`) | `fx/` | — | UI может быть в банке/отчётах |
+| Глобальный справочник компаний (`global-directory`) | `global-directory/` | `crm/counterparties/`, `settings/organization/` | org portfolio UI → Orch `/organizations` |
+| HR и зарплата (`hr`) | `hr/` | `hr/timesheet/`, `employees/`, `payroll/` | structure/positions UI → Orch Workforce Hub; WS1: `work-schedules`, `vacation-seniority-rules`, `per-diem-norms`, `business-trips`, payroll slip lines + email payslips; **WS2 Aktiv list:** `GET /hr/reports/active-list` (+ `.xlsx`) — MDM HR profile read-through only; vacation-plan mirror HEADLESS |
+| Интеграции (`integrations`) | `integrations/` | `admin/integrations/` | health, bulk excel fallback (`apps/api/src/integrations/**`) и sync-run |
+| OCR импорт инвойсов (`ocr`) | `ocr/` | `purchases/` | AI распознавание foreign invoices, очередь и статусы |
+| Таможня / BGD (`customs`) | `customs/` | `customs/` | BGD; `POST …/allocate-landed-cost`, `POST …/import-pipeline`, `PATCH …/items/:itemId/product`; landed cost → `InventoryBatch` |
+| Склад (`inventory`, `stock`) | `inventory/` + `stock/` | `inventory/`, `inventory/wms-mobile/` | WMS mobile: `GET/POST inventory/wms/*` (zones, bin-balances, scan, receive/issue/transfer/adjust, pick-lists); `@RequiresModule(inventory)`; `stock` — подмодуль Nest; **Forma-5/Forma-2:** `GET inventory/shipments/:id/forma-5`, `GET inventory/physical-adjustments/:id/forma-2` (`StatutoryFormsService`) |
+| Закупки / тендеры (`procurement`) | `procurement/` | `procurement/protocols/`, `purchases/` | PR: approve stockHints, `POST procurement/requests/:id/link-purchase`; **протоколы:** CRUD `procurement/protocols` (`ProcurementProtocol`+`Bid`) |
+| Договоры (`contracts`) | `contracts/` | `contracts/` | `POST contracts/check-limit` hard-block (ACTIVE/dateTo/amount); `reserveCommitmentInTransaction`; daily expire cron → EXPIRED; `@RequiresModule(contract_management_pro)` |
+| Счета продаж (`invoices`) | `invoices/` | `sales/invoices/` | e-Qaimə S2S: `GET/POST /invoices/:id/eqaime/*` (`EqaimeSubmissionService`); flag `ERA_EQAIME_S2S_ENABLED` |
+| Касса и денежные средства (`kassa`, `treasury`) | `kassa/` + `treasury/` | `(app)/banking/cash/`, `(app)/banking/money/`, `banking/`, `expenses/advance-reports/` | кассы и денежные потоки; **авансовые отчёты:** `GET/POST banking/cash/advance-reports/*` (`AdvanceReportService`); `@RequiresModule(kassa_pro)` |
+| Производство (`manufacturing`) | `manufacturing/` (+ overhead в том же модуле) | `manufacturing/` | overhead: `manufacturing-overhead.*` |
+| PSA / проекты (`psa`) | `psa/` | `psa/projects/` | billable hours, `InvoicesService` + `projectId` |
+| Миграция данных (`migration`) | `migration/` | `settings/migration/` | |
+| Компании и холдинг (`organizations`) | `organizations/` | `holding/`, `reporting/holding/`, `settings/organization/` | Org portfolio → Orch `/organizations`. Holdings SoT → Orch `/holdings` + `internal/v1/holdings/*`; Finance only consolidates (live-lookup) |
+| Каталог / номенклатура (`products`) | `products/` | `catalog/products/`, `catalog/price-lists/` | **прайс-листы:** `GET/POST price-lists/*`, `DiscountRule`; подстановка цены в `InvoicesService.buildItems` |
+| Отчётность и аналитика (`reporting`) | `reporting/` | `reporting/`, `reporting/account-card/`, `reporting/turnovers/`, `reporting/subconto-analysis/`, `reporting/journal/`, `reporting/vat/`, `reporting/vat-deposit/`, `reporting/tax-export/`, `reporting/profit-tax/`, `reporting/statforms/`, `reporting/eqf-registry/`, `reporting/aging/`, `reporting/ap-aging/` | API: `GET reporting/eqf-registry`; `GET reporting/ap-aging`, `GET reporting/creditor-payment-plan`; `GET reporting/subconto-analysis`; `GET/POST reporting/statforms/*`; etaxes submit signs via `GovSignatureAdapter` when live; `@RequiresModule(tax_pro)` where gated |
+| Регламентированные отчёты (`reports`) | `reports/` | `reports/`, `reports/statements/` | баланс, ДДС и т.д.; **MHBS statutory:** `GET reports/statements/{balance,pl,cash-flow,equity-changes,notes}` (+ `/export`); catalog `mhbs-statement-lines.v1.json`; `@RequiresModule(tax_pro)` |
+| Налоговый экспорт (`tax`) | `tax/` | `reporting/tax-export/`, `reporting/vat/` | VÖEN lookup; декларации через `reporting/` |
+| Доступ и роли (`access`) | `access/` | `settings/team/` | ACL, без отдельного раздела «access» на web |
+| Ранний доступ / painted door (`early-access`) | `early-access/` | сайдбар «Отраслевые решения», модалка; Super-Admin → waitlist | Валидация спроса по вертикалям (PRD §5.0.1); не entitlement |
+| Подписка и квоты (`subscription`, `quota`) | `subscription/` + `quota/` | Orch `/settings/subscription` (links from Finance nav) | guards/access only on Finance |
+| **ERA Finance Assistant** (browser extension RPA) | — | — | `apps/extension/` (WXT, MV3); Magic Auth + коннекторы порталов (`apps/extension/src/connectors/emas/**`, `apps/extension/src/connectors/etaxes/**`, `apps/extension/src/connectors/customs/**`); см. **TZ §13.6**, **TZ §20** |
+
+### Audit Hub — внешний аудитор (guest session)
+
+| Слой | Путь / артефакт |
+|------|-----------------|
+| **API (self-service, без `RequiresModule` на домашней org)** | `apps/api/src/audit-hub/audit-hub-me.controller.ts` — префикс контроллера `audit-hub/me`: `GET audit-invites/inbox`, `POST audit-invites/:id/accept`, `POST audit-invites/:id/decline`, `GET audit-engagement/context` |
+| **Резолвинг контекста клиентской org** | `apps/api/src/audit-hub/audit-engagement-resolve.guard.ts` (глобальный guard), `apps/api/src/common/request-with-audit-engagement.ts` (`RequestWithAuditEngagement`, `OrgId` из engagement) |
+| **Инвайты / домен** | `audit-engagement-invite.service.ts`, `audit-engagement.service.ts`, `audit-engagement-guest-access-log.interceptor.ts` |
+| **Web — экран приглашений** | `apps/web/app/audit-invitations/page.tsx` (inbox, accept + consent, decline, запись invite+token в `sessionStorage`) |
+| **Web — клиентская сессия** | `apps/web/lib/audit-engagement-session.tsx` (провайдер в `apps/web/app/app-shell.tsx`), `apps/web/lib/audit-hub-api.ts`, ключи `apps/web/lib/session-keys.ts` (`AUDIT_ENGAGEMENT_INVITE_ID_KEY`, `AUDIT_ENGAGEMENT_TOKEN_KEY`) |
+| **Web — баннер / UX** | `apps/web/components/audit-hub/ExternalAuditEngagementBanner.tsx`, `apps/web/app/audit-hub/layout.tsx` |
+| **Web — отчёты Audit Hub (риск / NAS-IFRS)** | `apps/web/components/audit-hub/audit-hub-risk-result.tsx`, `audit-hub-nas-ifrs-result.tsx`; экспорт **`apps/web/lib/audit-hub-export.ts`** (CSV + XLSX) |
+| **Заголовки к API** | **`x-audit-engagement-invite-id`**, **`x-audit-engagement-token`** (как в `audit-engagement-session.tsx` / `audit-hub-api.ts`; HTTP обычно case-insensitive) |
+| **i18n** | `packages/i18n/src/resources.ts` → ветка **`auditHub.*`** (в т.ч. `invitations*`, `external*`) |
+
+## Shared packages (web + extension + API types)
+
+| Пакет | Путь | Назначение |
+|-------|------|------------|
+| `@erafinance/api-contracts` | `packages/api-contracts/` | Zod-схемы общих DTO (auth snapshot, subscription, HR prefill для расширения). |
+| `@erafinance/i18n` | `packages/i18n/` | `resources` (веб) + `extensionResources` (`extension.*`); импорт в `apps/web/lib/i18n/resources.ts`. |
+
+## Инфраструктура и поперечные слои (в основном только API)
+
+| API / пакет | Web | Примечание |
+|-------------|-----|------------|
+| `prisma/` | — | Nest + Prisma tenant; схема в `packages/database/prisma/` |
+| `common/`, `constants/`, `utils/` | общие импорты в `apps/web/lib/` и т.п. | без единого «модуля» на web |
+| `mail/`, `storage/`, `queue/` | — | фоновые/технические сервисы |
+| `privacy/` | — | маскирование и проч.; UI может быть размазан |
+| `signature/` | — | подписи: PDF invoice mock/live; **gov-payload** ASAN/SİMA (`GovSignatureAdapter`, `ERA_ASAN_SIMA_LIVE`, `ASAN_IMZA_API_URL`, `SIMA_QR_PAYLOAD_URL`) — [ADR](../../../docs/adr/asan-sima-gov-signature.md) |
+| `scripts/` | — | не подключается как Nest-модуль приложения |
+| `system-config/` | `settings/` (частично) | привязка к настройкам по фиче |
+
+## Prisma и данные
+
+- **Схема и миграции:** `packages/database/prisma/` (`schema.prisma`, `migrations/`, скрипты `prisma/*.ts`).
+- При задаче «и БД» добавляй в контекст **`@packages/database/prisma`** или конкретный файл.
+- **Prisma / data:** schema in `packages/database/prisma/`. Hub-owned catalogs (FX, HS tariffs, companies, banks, geo, UoM, tax, **ISO currencies**, NAS template) → `era-data-hub` via `DataHubClientService`. Finance keeps FK cache tables (`UnitOfMeasure`, `TaxRate`, `BankGlossary`, `BankBranch`, `Country`, `City`, `Currency`) and per-org data. Super-admin `/admin/data` is read-only for hub catalogs (including currencies).
+
+## Web-разделы без одноимённой папки в `apps/api/src`
+
+Имеют смысл в UI, но маппятся на **несколько** API-модулей:
+
+| Web `apps/web/app/…` | Связь с API (ориентир) |
+|----------------------|-------------------------|
+| `purchases/` | `finance`, `invoices`, `counterparties`, `accounting` — по фиче |
+| `expenses/` | `accounting`, `kassa` / `treasury` — advance reports at `expenses/advance-reports/` |
+| `verify/` | `auth` |
+| `settings/` (кроме перечисленных подпутей) | `organizations`, `subscription`, `auth`, `integrations` |
+| `(app)/`, `(dashboard)/`, `(public)/` | группы маршрутов Next; не домены сами по себе |
+
+## Как использовать
+
+1. **В промпте по имени из таблицы:** «задача в модуле **Склад**» или «в **`inventory`**» — по первому столбцу возьми API- и Web-пути и подставь **`@apps/api/src/<slug>`** и **`@apps/web/app/...`** (для двойных модулей — оба slug, напр. `kassa` и `treasury`).
+2. **Точечно:** если в строке несколько web-путей — в контекст только тот, где правка UI.
+3. **Обновление карты:** новый домен в API → новая строка: модуль (RU + slug), API, Web, примечание.
+4. **Подразделы под строкой таблицы** (напр. **Audit Hub — guest**): детальные файлы и контракты — смотри сразу под таблицей доменных модулей, не дублируй длинные пути в ячейке «Примечание».

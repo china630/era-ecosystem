@@ -16,13 +16,28 @@ import {
   ApiOperation,
   ApiTags,
 } from "@nestjs/swagger";
+import { UserRole } from "@erafinance/database";
 import { OrganizationId } from "../common/org-id.decorator";
+import { Roles } from "../auth/decorators/roles.decorator";
+import { RolesGuard } from "../auth/guards/roles.guard";
 import { CreateFixedAssetDto } from "./dto/create-fixed-asset.dto";
 import { RunMonthlyDepreciationDto } from "./dto/run-monthly-depreciation.dto";
 import { RecordFixedAssetUsageDto } from "./dto/record-fixed-asset-usage.dto";
 import { UpsertFixedAssetMonthlyUsageDto } from "./dto/upsert-monthly-usage.dto";
 import { BulkFixedAssetMonthlyUsageDto } from "./dto/bulk-monthly-usage.dto";
 import { UpdateFixedAssetDto } from "./dto/update-fixed-asset.dto";
+import { AcquireFixedAssetDto } from "./dto/acquire-fixed-asset.dto";
+import { CapitalizeFixedAssetDto } from "./dto/capitalize-fixed-asset.dto";
+import { CommissionFixedAssetDto } from "./dto/commission-fixed-asset.dto";
+import { DisposeFixedAssetDto } from "./dto/dispose-fixed-asset.dto";
+import {
+  GratuitousInFixedAssetDto,
+  GratuitousOutFixedAssetDto,
+} from "./dto/gratuitous-fixed-asset.dto";
+import { InventoryFixedAssetDto } from "./dto/inventory-fixed-asset.dto";
+import { RevalueFixedAssetDto } from "./dto/revalue-fixed-asset.dto";
+import { TransferFixedAssetDto } from "./dto/transfer-fixed-asset.dto";
+import { FixedAssetLifecycleService } from "./fixed-asset-lifecycle.service";
 import { FixedAssetsService } from "./fixed-assets.service";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
@@ -34,7 +49,10 @@ import { ModuleEntitlement } from "../subscription/subscription.constants";
 @RequiresModule(ModuleEntitlement.FIXED_ASSETS)
 @Controller("fixed-assets")
 export class FixedAssetsController {
-  constructor(private readonly assets: FixedAssetsService) {}
+  constructor(
+    private readonly assets: FixedAssetsService,
+    private readonly lifecycle: FixedAssetLifecycleService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "Список основных средств" })
@@ -110,6 +128,123 @@ export class FixedAssetsController {
     @Body() dto: RecordFixedAssetUsageDto,
   ) {
     return this.assets.recordUsage(organizationId, id, dto.periodUnits);
+  }
+
+  @Post(":id/acquire")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Capitalize fixed asset (Dt 111 / Cr supplier or bank)" })
+  acquire(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: AcquireFixedAssetDto,
+  ) {
+    return this.lifecycle.acquire(organizationId, id, dto);
+  }
+
+  @Post(":id/commission")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Commission fixed asset into service" })
+  commission(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: CommissionFixedAssetDto,
+  ) {
+    return this.lifecycle.commission(organizationId, id, dto);
+  }
+
+  @Post(":id/capitalize")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Capitalize additional costs onto fixed asset" })
+  capitalize(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: CapitalizeFixedAssetDto,
+  ) {
+    return this.lifecycle.capitalize(organizationId, id, dto);
+  }
+
+  @Post(":id/revalue")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Revalue fixed asset up or down" })
+  revalue(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: RevalueFixedAssetDto,
+  ) {
+    return this.lifecycle.revalue(organizationId, id, dto);
+  }
+
+  @Post(":id/dispose")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Dispose fixed asset" })
+  dispose(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: DisposeFixedAssetDto,
+  ) {
+    return this.lifecycle.dispose(organizationId, id, dto);
+  }
+
+  @Post(":id/transfer")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Transfer fixed asset between departments" })
+  transfer(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: TransferFixedAssetDto,
+  ) {
+    return this.lifecycle.transfer(organizationId, id, dto);
+  }
+
+  @Post(":id/gratuitous-in")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Record gratuitous receipt of fixed asset" })
+  gratuitousIn(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: GratuitousInFixedAssetDto,
+  ) {
+    return this.lifecycle.gratuitousIn(organizationId, id, dto);
+  }
+
+  @Post(":id/gratuitous-out")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Record gratuitous disposal of fixed asset" })
+  gratuitousOut(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: GratuitousOutFixedAssetDto,
+  ) {
+    return this.lifecycle.gratuitousOut(organizationId, id, dto);
+  }
+
+  @Post(":id/inventory")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({ summary: "Inventory surplus/shortage adjustment for fixed asset" })
+  inventory(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: InventoryFixedAssetDto,
+  ) {
+    return this.lifecycle.inventory(organizationId, id, dto);
+  }
+
+  @Get(":id/events")
+  @ApiOperation({ summary: "List lifecycle events for a fixed asset" })
+  listEvents(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    return this.lifecycle.listEvents(organizationId, id);
   }
 
   @Get(":id")

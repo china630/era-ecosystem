@@ -1,11 +1,7 @@
 import {
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Injectable,
 } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import axios from "axios";
 import { LedgerType } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
@@ -16,6 +12,9 @@ import {
   type VatQuarterSalesRow,
   VatQuarterDataService,
 } from "./vat-quarter-data.service";
+import { SignatureService } from "../signature/signature.service";
+import { GovSignatureAdapterFactory } from "../signature/gov-signature.adapters";
+import { EtaxesSubmissionAdapterFactory } from "./etaxes-submission.adapters";
 
 /** Нормализованный VÖEN: ровно 10 цифр */
 function normalizeVoenDigits(raw: string | null | undefined): string | null {
@@ -121,9 +120,19 @@ export class ETaxesIntegrationService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly vatQuarter: VatQuarterDataService,
-    private readonly config: ConfigService,
     private readonly posting: PostingAccountResolver,
+    private readonly signatures: SignatureService,
+    private readonly govSignatureFactory: GovSignatureAdapterFactory,
+    private readonly submissionFactory: EtaxesSubmissionAdapterFactory,
   ) {}
+
+  private resolveAsanUserId(settingsJson: unknown): string | null {
+    if (!settingsJson || typeof settingsJson !== "object") return null;
+    const tax = (settingsJson as Record<string, unknown>).tax;
+    if (!tax || typeof tax !== "object") return null;
+    const id = (tax as Record<string, unknown>).asanUserId;
+    return typeof id === "string" && id.trim() ? id.trim() : null;
+  }
 
   private validateRows(
     orgVoen: string,
@@ -337,6 +346,7 @@ export class ETaxesIntegrationService {
     submitted: boolean;
     gatewayStatus?: number;
     gatewayMessage?: string;
+    govSignatureId?: string;
   }> {
     const { package: pkg, validation } = await this.buildDeclarationPackage(
       organizationId,
@@ -350,57 +360,42 @@ export class ETaxesIntegrationService {
       });
     }
 
-    const url = this.config.get<string>("E_TAXES_VAT_SUBMIT_URL")?.trim();
-    if (!url) {
-      throw new HttpException(
-        {
-          code: "E_TAXES_GATEWAY_NOT_CONFIGURED",
-          message:
-            "E_TAXES_VAT_SUBMIT_URL təyin edilməyib. Birbaşa API inteqrasiyası üçün URL konfiqurasiya edin.",
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { settings: true },
+    });
+    const asanUserId = this.resolveAsanUserId(org?.settings);
+
+    let payload: unknown = pkg;
+    let govSignatureId: string | undefined;
+    if (this.govSignatureFactory.isLiveEnabled()) {
+      const signed = await this.signatures.signGovPayload(JSON.stringify(pkg), {
+        organizationId,
+        asanUserId,
+        purpose: "TAX_DECLARATION",
+      });
+      govSignatureId = signed.signatureId;
+      payload = {
+        ...pkg,
+        govSignature: {
+          signatureId: signed.signatureId,
+          signedAt: signed.signedAt.toISOString(),
+          provider: signed.provider,
         },
-        HttpStatus.SERVICE_UNAVAILABLE,
-      );
+      };
     }
 
-    try {
-      const res = await axios.post(url, pkg, {
-        timeout: 25_000,
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        validateStatus: () => true,
-      });
-      if (res.status >= 200 && res.status < 300) {
-        return { submitted: true, gatewayStatus: res.status };
-      }
-      const bodySnippet =
-        typeof res.data === "string"
-          ? res.data.slice(0, 500)
-          : JSON.stringify(res.data).slice(0, 500);
-      throw new HttpException(
-        {
-          code: "E_TAXES_GATEWAY_REJECTED",
-          message: `Portal cavabı: HTTP ${res.status}`,
-          body: bodySnippet,
-        },
-        HttpStatus.BAD_GATEWAY,
-      );
-    } catch (e) {
-      if (e instanceof HttpException) throw e;
-      if (axios.isAxiosError(e)) {
-        throw new HttpException(
-          {
-            code: "E_TAXES_GATEWAY_UNREACHABLE",
-            message:
-              e.code === "ECONNABORTED"
-                ? "Gateway timeout"
-                : e.message || "Network error",
-          },
-          HttpStatus.SERVICE_UNAVAILABLE,
-        );
-      }
-      throw e;
-    }
+    const adapter = this.submissionFactory.get();
+    const result = await adapter.submit(payload, {
+      organizationId,
+      asanUserId,
+      destination: "VAT",
+    });
+    return {
+      submitted: result.submitted,
+      gatewayStatus: result.gatewayStatus,
+      gatewayMessage: result.gatewayMessage,
+      govSignatureId,
+    };
   }
 }

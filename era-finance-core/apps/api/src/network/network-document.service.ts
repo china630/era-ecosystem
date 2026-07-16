@@ -15,6 +15,7 @@ import type { NetworkDocumentTransport } from "./transport/network-document-tran
 import { NetworkEqaimePrefillService } from "./network-eqaime-prefill.service";
 import { InProcessNetworkDocumentTransport } from "./transport/in-process-network-document-transport";
 import { OrchestratorNetworkDocumentTransport } from "./transport/orchestrator-network-document-transport";
+import { decryptText } from "../security/pii-crypto.util";
 
 const Decimal = Prisma.Decimal;
 
@@ -227,7 +228,15 @@ export class NetworkDocumentService {
         totalNet: d.totalNet.toFixed(4),
         vatAmount: d.vatAmount.toFixed(4),
         eQaimeRef: d.eQaimeRef,
-        eqaimeStatus: this.eqaimePrefill.compareWithEQaime(d).status,
+        eqaimeStatus: this.eqaimePrefill.compareWithEQaime({
+          eQaimeRef: d.eQaimeRef,
+          totalGross: d.totalGross,
+          issuerTaxIdBlindIndex: d.issuerTaxIdBlindIndex,
+          issuerTaxId: d.issuerOrganization.taxIdCipher
+            ? decryptText(d.issuerOrganization.taxIdCipher)
+            : null,
+          eqaimePayload: d.eqaimePayload,
+        }).status,
         createdAt: d.createdAt.toISOString(),
       })),
     };
@@ -237,11 +246,19 @@ export class NetworkDocumentService {
     const doc = await this.prisma.networkDocument.findFirst({
       where: { id, recipientOrganizationId: recipientOrgId },
       include: {
-        issuerOrganization: { select: { name: true } },
+        issuerOrganization: { select: { name: true, taxIdCipher: true } },
       },
     });
     if (!doc) throw new NotFoundException("Network document not found");
-    const eqaimeCompare = this.eqaimePrefill.compareWithEQaime(doc);
+    const eqaimeCompare = this.eqaimePrefill.compareWithEQaime({
+      eQaimeRef: doc.eQaimeRef,
+      totalGross: doc.totalGross,
+      issuerTaxIdBlindIndex: doc.issuerTaxIdBlindIndex,
+      issuerTaxId: doc.issuerOrganization.taxIdCipher
+        ? decryptText(doc.issuerOrganization.taxIdCipher)
+        : null,
+      eqaimePayload: doc.eqaimePayload,
+    });
     return {
       ...doc,
       totalGross: doc.totalGross.toFixed(4),

@@ -98,7 +98,10 @@ model Organization {
   employees                    Employee[]
   fixedAssetDepreciationMonths FixedAssetDepreciationMonth[]
   fixedAssetMonthlyUsages      FixedAssetMonthlyUsage[]
+  fixedAssetEvents             FixedAssetEvent[]
   fixedAssets                  FixedAsset[]
+  intangibleAmortizationMonths IntangibleAmortizationMonth[]
+  intangibleAssets             IntangibleAsset[]
   inventoryAdjustments         InventoryAdjustment[]
   inventoryAuditLines          InventoryAuditLine[]
   inventoryAudits              InventoryAudit[]
@@ -117,11 +120,19 @@ model Organization {
   currencyRef                  Currency                      @relation("OrganizationCurrency", fields: [currency], references: [code], onUpdate: Cascade)
   paymentOrders                PaymentOrder[]
   taxDeclarationExports        TaxDeclarationExport[]
+  profitTaxAdjustments         ProfitTaxAdjustment[]
+  statReportExports            StatReportExport[]
   payrollRuns                  PayrollRun[]
   salaryRegistries             SalaryRegistry[]
   bankPaymentDrafts            BankPaymentDraft[]
   ifrsMappingRules             IfrsMappingRule[]
   payrollSlips                 PayrollSlip[]
+  payrollSlipLines             PayrollSlipLine[]
+  payrollComponents            PayrollComponent[]
+  workSchedules                WorkSchedule[]
+  vacationSeniorityRules       VacationSeniorityRule[]
+  perDiemNorms                 PerDiemNorm[]
+  businessTrips                BusinessTrip[]
   postingRoleOverrides         OrganizationPostingRole[]
   integrationSyncRuns          IntegrationSyncRun[]
   ocrJobs                      OcrJob[]
@@ -149,6 +160,7 @@ model Organization {
   purchaseRequests             PurchaseRequest[]
   supplierScorecards           SupplierScorecard[]
   supplierRatings              SupplierRating[]
+  procurementProtocols         ProcurementProtocol[]
   employeeDocuments            EmployeeDocument[]
   psaProjects                  PsaProject[]
   contracts                    Contract[]
@@ -168,6 +180,8 @@ model Organization {
   councilVerdicts              CouncilVerdict[]
   networkDocumentsIssued       NetworkDocument[]             @relation("NetworkDocIssuer")
   networkDocumentsReceived     NetworkDocument[]             @relation("NetworkDocRecipient")
+  subcontoTypes                SubcontoType[]
+  accountSubcontoConfigs       AccountSubcontoConfig[]
 
   @@index([ownerId])
   @@index([holdingId, id])
@@ -554,6 +568,9 @@ model Department {
   psaProjects     PsaProject[]
   budgetLines     BudgetLine[]
   purchaseRequests PurchaseRequest[]
+  fixedAssets     FixedAsset[]
+  fixedAssetEventsFrom FixedAssetEvent[] @relation("FixedAssetEventFromDept")
+  fixedAssetEventsTo   FixedAssetEvent[] @relation("FixedAssetEventToDept")
   deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId String?       @map("deleted_by_user_id") @db.Uuid
   deletedReason   String?       @map("deleted_reason")
@@ -1216,8 +1233,13 @@ model Employee {
   dateOfBirth                DateTime?                @map("date_of_birth") @db.Date
   contractEndDate            DateTime?                @map("contract_end_date") @db.Date
   /// *
-  ///    * Оклад gross (AZN), частный ненефтяной сектор
+  ///    * Оклад gross (AZN) = tariffSalary + supplementSalary
   salary                     Decimal                  @map("salary") @db.Decimal(19, 4)
+  /// Base tariff (AZN); salary = tariff + supplement.
+  tariffSalary               Decimal                  @default(0) @map("tariff_salary") @db.Decimal(19, 4)
+  /// Supplement / надбавка (AZN).
+  supplementSalary           Decimal                  @default(0) @map("supplement_salary") @db.Decimal(19, 4)
+  workScheduleId             String?                  @map("work_schedule_id") @db.Uuid
   createdAt                  DateTime                 @default(now()) @map("created_at")
   updatedAt                  DateTime                 @updatedAt @map("updated_at")
   kind                       EmployeeKind             @default(EMPLOYEE) @map("kind")
@@ -1269,8 +1291,10 @@ model Employee {
   managedDepartments         Department[]             @relation("DepartmentManager")
   organization               Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   jobPosition                JobPosition              @relation(fields: [positionId], references: [id])
+  workSchedule               WorkSchedule?            @relation(fields: [workScheduleId], references: [id], onDelete: SetNull)
   payrollSlips               PayrollSlip[]
   timesheetEntries           TimesheetEntry[]
+  businessTrips              BusinessTrip[]
   inventoryAuditsResponsible InventoryAudit[]       @relation("InventoryAuditResponsible")
   inventoryAuditLinesAccountable InventoryAuditLine[] @relation("InventoryAuditLineAccountable")
   psaTimeEntries                 PsaTimeEntry[]
@@ -1278,6 +1302,7 @@ model Employee {
 
   @@unique([organizationId, globalPersonId], map: "employees_org_global_person_uidx")
   @@index([positionId])
+  @@index([workScheduleId])
   @@index([organizationId, voenBlindIndex], map: "employees_org_voen_blind_idx")
   @@index([organizationId, createdAt])
   @@index([organizationId, deletedAt], map: "employees_org_deleted_at_idx")
@@ -1388,17 +1413,158 @@ model PayrollSlip {
   timesheetVacationDays     Int?         @map("timesheet_vacation_days")
   timesheetSickDays         Int?         @map("timesheet_sick_days")
   timesheetBusinessTripDays Int?         @map("timesheet_business_trip_days")
-  employee                  Employee     @relation(fields: [employeeId], references: [id])
-  organization              Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  payrollRun                PayrollRun   @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  deletedAt                 DateTime?    @map("deleted_at") @db.Timestamptz(6)
-  deletedByUserId           String?      @map("deleted_by_user_id") @db.Uuid
-  deletedReason             String?      @map("deleted_reason")
+  employee                  Employee          @relation(fields: [employeeId], references: [id])
+  organization              Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payrollRun                PayrollRun        @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  lines                     PayrollSlipLine[]
+  deletedAt                 DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId           String?           @map("deleted_by_user_id") @db.Uuid
+  deletedReason             String?           @map("deleted_reason")
 
   @@unique([payrollRunId, employeeId])
   @@index([organizationId, payrollRunId])
   @@index([organizationId, deletedAt], map: "payroll_slips_org_deleted_at_idx")
   @@map("payroll_slips")
+}
+
+enum WorkScheduleKind {
+  FIVE_DAY
+  SIX_DAY
+  TWO_SHIFT
+}
+
+enum PayrollComponentKind {
+  EARNING
+  DEDUCTION
+}
+
+enum PayrollComponentCode {
+  BONUS
+  MATERIAL_AID
+  ALIMONY
+  EXECUTION_SHEET
+  LOAN
+  ADVANCE
+  UNION_DUE
+  INCOME_TAX_RELIEF
+  NIGHT_PREMIUM
+  EVENING_PREMIUM
+  OVERTIME_PREMIUM
+  BASE_SALARY
+}
+
+enum BusinessTripKind {
+  DOMESTIC
+  FOREIGN
+}
+
+model WorkSchedule {
+  id                   String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String           @map("organization_id") @db.Uuid
+  name                 String
+  kind                 WorkScheduleKind
+  dayHours             Decimal          @default(8) @map("day_hours") @db.Decimal(8, 2)
+  nightPremiumRate     Decimal          @default(1.5) @map("night_premium_rate") @db.Decimal(8, 4)
+  eveningPremiumRate   Decimal          @default(1.2) @map("evening_premium_rate") @db.Decimal(8, 4)
+  overtimePremiumRate  Decimal          @default(2.0) @map("overtime_premium_rate") @db.Decimal(8, 4)
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+  organization         Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees            Employee[]
+
+  @@index([organizationId])
+  @@map("work_schedules")
+}
+
+model PayrollComponent {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  code           PayrollComponentCode
+  kind           PayrollComponentKind
+  nameAz         String               @map("name_az")
+  nameRu         String               @map("name_ru")
+  nameEn         String               @map("name_en")
+  isActive       Boolean              @default(true) @map("is_active")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  lines          PayrollSlipLine[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@map("payroll_components")
+}
+
+model PayrollSlipLine {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String               @map("organization_id") @db.Uuid
+  payrollSlipId  String               @map("payroll_slip_id") @db.Uuid
+  componentId    String?              @map("component_id") @db.Uuid
+  code           PayrollComponentCode
+  kind           PayrollComponentKind
+  amount         Decimal              @db.Decimal(19, 4)
+  note           String               @default("")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payrollSlip    PayrollSlip          @relation(fields: [payrollSlipId], references: [id], onDelete: Cascade)
+  component      PayrollComponent?    @relation(fields: [componentId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, payrollSlipId])
+  @@index([payrollSlipId])
+  @@map("payroll_slip_lines")
+}
+
+model VacationSeniorityRule {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  yearsFrom      Int          @map("years_from")
+  extraDays      Int          @map("extra_days")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, yearsFrom])
+  @@index([organizationId])
+  @@map("vacation_seniority_rules")
+}
+
+model PerDiemNorm {
+  id                 String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId     String       @map("organization_id") @db.Uuid
+  regionCode         String       @map("region_code")
+  regionName         String       @map("region_name")
+  dailyAznDomestic   Decimal      @map("daily_azn_domestic") @db.Decimal(19, 4)
+  foreignFactor      Decimal      @default(1) @map("foreign_factor") @db.Decimal(8, 4)
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+  organization       Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, regionCode])
+  @@index([organizationId])
+  @@map("per_diem_norms")
+}
+
+model BusinessTrip {
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId  String           @map("organization_id") @db.Uuid
+  employeeId      String           @map("employee_id") @db.Uuid
+  kind            BusinessTripKind
+  regionCode      String           @map("region_code")
+  startDate       DateTime         @map("start_date") @db.Date
+  endDate         DateTime         @map("end_date") @db.Date
+  purpose         String           @default("")
+  perDiemTotal    Decimal?         @map("per_diem_total") @db.Decimal(19, 4)
+  advanceReportId String?          @map("advance_report_id") @db.Uuid
+  status          String           @default("DRAFT") // DRAFT|CALCULATED|LINKED
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employee        Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, employeeId])
+  @@index([organizationId, status])
+  @@map("business_trips")
 }
 
 /// *
@@ -1465,6 +1631,9 @@ model TimesheetEntry {
   dayDate           DateTime           @map("day_date") @db.Date
   type              TimesheetEntryType @map("type")
   hours             Decimal            @default(8) @db.Decimal(8, 2)
+  nightHours        Decimal            @default(0) @map("night_hours") @db.Decimal(8, 2)
+  eveningHours      Decimal            @default(0) @map("evening_hours") @db.Decimal(8, 2)
+  overtimeHours     Decimal            @default(0) @map("overtime_hours") @db.Decimal(8, 2)
   /// *
   ///    * Заполнено из Absence — ручное редактирование запрещено.
   lockedFromAbsence Boolean            @default(false) @map("locked_from_absence")
@@ -1996,6 +2165,52 @@ model PurchaseRequestApproval {
   @@map("purchase_request_approvals")
 }
 
+enum ProcurementProtocolStatus {
+  DRAFT
+  REGISTERED
+}
+
+/// Tender / quotation protocol registry (WS6 #22).
+model ProcurementProtocol {
+  id                   String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                    @map("organization_id") @db.Uuid
+  number               String
+  protocolDate         DateTime                  @map("protocol_date") @db.Date
+  /// TENDER | QUOTATION | OTHER
+  procedureType        String                    @map("procedure_type") @db.VarChar(32)
+  title                String
+  winnerCounterpartyId String?                   @map("winner_counterparty_id") @db.Uuid
+  contractId           String?                   @map("contract_id") @db.Uuid
+  status               ProcurementProtocolStatus @default(DRAFT)
+  notes                String?
+  createdAt            DateTime                  @default(now()) @map("created_at")
+  updatedAt            DateTime                  @updatedAt @map("updated_at")
+  organization         Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  winnerCounterparty   Counterparty?             @relation("ProcurementProtocolWinner", fields: [winnerCounterpartyId], references: [id], onDelete: SetNull)
+  contract             Contract?                 @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  bids                 Bid[]
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status, protocolDate(sort: Desc)])
+  @@map("procurement_protocols")
+}
+
+model Bid {
+  id             String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  protocolId     String              @map("protocol_id") @db.Uuid
+  counterpartyId String              @map("counterparty_id") @db.Uuid
+  amount         Decimal             @db.Decimal(19, 4)
+  isWinner       Boolean             @default(false) @map("is_winner")
+  note           String?
+  createdAt      DateTime            @default(now()) @map("created_at")
+  protocol       ProcurementProtocol @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  counterparty   Counterparty        @relation(fields: [counterpartyId], references: [id], onDelete: Restrict)
+
+  @@index([protocolId])
+  @@index([counterpartyId])
+  @@map("procurement_bids")
+}
+
 model SupplierScorecard {
   id             String                      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String                      @map("organization_id") @db.Uuid
@@ -2191,6 +2406,7 @@ model Contract {
   currencyRef    Currency             @relation("ContractCurrency", fields: [currency], references: [code], onUpdate: Cascade)
   lines          ContractLine[]
   commitments    ContractCommitment[]
+  procurementProtocols ProcurementProtocol[]
 
   @@unique([organizationId, number])
   @@index([organizationId, status])
@@ -2429,6 +2645,7 @@ model Account {
   children          Account[]             @relation("AccountHierarchy")
   balances          AccountBalance[]
   journalEntries    JournalEntry[]
+  subcontoConfigs   AccountSubcontoConfig[]
   deletedAt         DateTime?             @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId   String?               @map("deleted_by_user_id") @db.Uuid
   deletedReason     String?               @map("deleted_reason")
@@ -2532,6 +2749,8 @@ model Transaction {
   cashOrdersLinked             CashOrder[]                   @relation("CashOrderLinkedTx")
   cashOrdersPosted             CashOrder[]                   @relation("CashOrderPostedTx")
   fixedAssetDepreciationMonths FixedAssetDepreciationMonth[]
+  fixedAssetEvents             FixedAssetEvent[]
+  intangibleAmortizationMonths IntangibleAmortizationMonth[]
   invoicePayments              InvoicePayment[]
   paymentAllocations           PaymentAllocation[]
   journalEntries               JournalEntry[]
@@ -2557,18 +2776,19 @@ model Transaction {
 }
 
 model JournalEntry {
-  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  transactionId  String       @map("transaction_id") @db.Uuid
-  accountId      String       @map("account_id") @db.Uuid
-  debit          Decimal      @default(0) @db.Decimal(19, 4)
-  credit         Decimal      @default(0) @db.Decimal(19, 4)
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
-  ledgerType     LedgerType   @default(NAS) @map("ledger_type")
-  account        Account      @relation(fields: [accountId], references: [id])
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  transaction    Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  transactionId  String                  @map("transaction_id") @db.Uuid
+  accountId      String                  @map("account_id") @db.Uuid
+  debit          Decimal                 @default(0) @db.Decimal(19, 4)
+  credit         Decimal                 @default(0) @db.Decimal(19, 4)
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  ledgerType     LedgerType              @default(NAS) @map("ledger_type")
+  account        Account                 @relation(fields: [accountId], references: [id])
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  transaction    Transaction             @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  dimensions     JournalEntryDimension[]
 
   @@index([organizationId, transactionId])
   @@index([organizationId, accountId])
@@ -2577,6 +2797,67 @@ model JournalEntry {
   @@index([organizationId, createdAt])
   @@index([organizationId, ledgerType])
   @@map("journal_entries")
+}
+
+enum SubcontoKind {
+  COUNTERPARTY
+  PROJECT
+  COST_CENTER
+  ITEM
+  EMPLOYEE
+  CUSTOM
+}
+
+/// Analytical dimension type (subconto). BRANCH multi-branch uses kind=CUSTOM code=BRANCH.
+model SubcontoType {
+  id             String                  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                  @map("organization_id") @db.Uuid
+  code           String
+  name           String
+  kind           SubcontoKind
+  isSystem       Boolean                 @default(false) @map("is_system")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  accountConfigs AccountSubcontoConfig[]
+  dimensions     JournalEntryDimension[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, kind])
+  @@map("subconto_types")
+}
+
+model AccountSubcontoConfig {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  accountId      String       @map("account_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  sortOrder      Int          @map("sort_order")
+  required       Boolean      @default(false)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  account        Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, sortOrder])
+  @@unique([accountId, subcontoTypeId])
+  @@index([organizationId, accountId])
+  @@map("account_subconto_configs")
+}
+
+model JournalEntryDimension {
+  id             String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  journalEntryId String       @map("journal_entry_id") @db.Uuid
+  subcontoTypeId String       @map("subconto_type_id") @db.Uuid
+  valueId        String?      @map("value_id") @db.Uuid
+  valueRef       String?      @map("value_ref")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  subcontoType   SubcontoType @relation(fields: [subcontoTypeId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([subcontoTypeId, valueId])
+  @@index([subcontoTypeId, valueRef])
+  @@map("journal_entry_dimensions")
 }
 
 model Counterparty {
@@ -2616,9 +2897,12 @@ model Counterparty {
   purchaseRequestsPreferred       PurchaseRequest[]    @relation("PurchaseRequestPreferredSupplier")
   supplierScorecards              SupplierScorecard[]
   supplierRatings                 SupplierRating[]
+  procurementProtocolsWon         ProcurementProtocol[] @relation("ProcurementProtocolWinner")
+  procurementBids                 Bid[]
   customsDeclarationsAsSender     CustomsDeclaration[] @relation("CustomsDeclarationSender")
   customsDeclarationsAsReceiver CustomsDeclaration[] @relation("CustomsDeclarationReceiver")
   agencyCityLedgerSnapshots     AgencyCityLedgerSnapshot[]
+  fixedAssets                     FixedAsset[]
   deletedAt                       DateTime?            @map("deleted_at") @db.Timestamptz(6)
   deletedByUserId                 String?              @map("deleted_by_user_id") @db.Uuid
   deletedReason                   String?              @map("deleted_reason")
@@ -2825,19 +3109,106 @@ model FixedAsset {
   /// *
   ///    * Уже начисленная амортизация (сумма проведённых месяцев)
   bookedDepreciation   Decimal                      @default(0) @map("booked_depreciation") @db.Decimal(19, 4)
-  createdAt          DateTime                      @default(now()) @map("created_at")
-  updatedAt          DateTime                      @updatedAt @map("updated_at")
-  depreciationMonths FixedAssetDepreciationMonth[]
-  monthlyUsages      FixedAssetMonthlyUsage[]
-  organization       Organization                  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  deletedAt          DateTime?                     @map("deleted_at") @db.Timestamptz(6)
-  deletedByUserId    String?                       @map("deleted_by_user_id") @db.Uuid
-  deletedReason      String?                       @map("deleted_reason")
+  departmentId         String?                      @map("department_id") @db.Uuid
+  location             String?
+  counterpartyId       String?                      @map("counterparty_id") @db.Uuid
+  /// Revaluation reserve balance (equity layer) when asset is revalued.
+  revaluationReserve   Decimal                      @default(0) @map("revaluation_reserve") @db.Decimal(19, 4)
+  disposalDate         DateTime?                    @map("disposal_date") @db.Date
+  disposalAmount       Decimal?                     @map("disposal_amount") @db.Decimal(19, 4)
+  createdAt            DateTime                     @default(now()) @map("created_at")
+  updatedAt            DateTime                     @updatedAt @map("updated_at")
+  depreciationMonths   FixedAssetDepreciationMonth[]
+  monthlyUsages        FixedAssetMonthlyUsage[]
+  events               FixedAssetEvent[]
+  department           Department?                  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  counterparty         Counterparty?                @relation(fields: [counterpartyId], references: [id], onDelete: SetNull)
+  organization         Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deletedAt            DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId      String?                      @map("deleted_by_user_id") @db.Uuid
+  deletedReason        String?                      @map("deleted_reason")
 
   @@unique([organizationId, inventoryNumber])
   @@index([organizationId, purchaseDate])
+  @@index([organizationId, departmentId])
+  @@index([counterpartyId])
   @@index([organizationId, deletedAt], map: "fixed_assets_org_deleted_at_idx")
   @@map("fixed_assets")
+}
+
+/// Fixed-asset lifecycle journal (acquire, commission, revalue, dispose, transfer, …).
+model FixedAssetEvent {
+  id               String              @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId   String              @map("organization_id") @db.Uuid
+  fixedAssetId     String              @map("fixed_asset_id") @db.Uuid
+  eventType        FixedAssetEventType @map("event_type")
+  amount           Decimal             @default(0) @db.Decimal(19, 4)
+  eventDate        DateTime            @map("event_date") @db.Date
+  transactionId    String?             @map("transaction_id") @db.Uuid
+  fromDepartmentId String?             @map("from_department_id") @db.Uuid
+  toDepartmentId   String?             @map("to_department_id") @db.Uuid
+  note             String?
+  createdAt        DateTime            @default(now()) @map("created_at")
+  organization     Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  fixedAsset       FixedAsset          @relation(fields: [fixedAssetId], references: [id], onDelete: Cascade)
+  transaction      Transaction?        @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  fromDepartment   Department?         @relation("FixedAssetEventFromDept", fields: [fromDepartmentId], references: [id], onDelete: SetNull)
+  toDepartment     Department?         @relation("FixedAssetEventToDept", fields: [toDepartmentId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, fixedAssetId])
+  @@index([fixedAssetId, eventType])
+  @@index([organizationId, eventDate])
+  @@map("fixed_asset_events")
+}
+
+/// Intangible asset register (NAS 131/132).
+model IntangibleAsset {
+  id                   String                       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId       String                       @map("organization_id") @db.Uuid
+  name                 String
+  inventoryNumber      String                       @map("inventory_number")
+  purchaseDate         DateTime                     @map("purchase_date") @db.Date
+  purchasePrice        Decimal                      @map("purchase_price") @db.Decimal(19, 4)
+  usefulLifeMonths     Int                          @map("useful_life_months")
+  salvageValue         Decimal                      @default(0) @map("salvage_value") @db.Decimal(19, 4)
+  depreciationMethod   FixedAssetDepreciationMethod @default(STRAIGHT_LINE) @map("depreciation_method")
+  status               FixedAssetStatus             @default(ACTIVE)
+  bookedAmortization   Decimal                      @default(0) @map("booked_amortization") @db.Decimal(19, 4)
+  createdAt            DateTime                     @default(now()) @map("created_at")
+  updatedAt            DateTime                     @updatedAt @map("updated_at")
+  amortizationMonths   IntangibleAmortizationMonth[]
+  organization         Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deletedAt            DateTime?                    @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId      String?                      @map("deleted_by_user_id") @db.Uuid
+  deletedReason        String?                      @map("deleted_reason")
+
+  @@unique([organizationId, inventoryNumber])
+  @@index([organizationId, purchaseDate])
+  @@index([organizationId, deletedAt], map: "intangible_assets_org_deleted_at_idx")
+  @@map("intangible_assets")
+}
+
+/// Posted intangible amortization per calendar month (idempotent close).
+model IntangibleAmortizationMonth {
+  id                String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId    String          @map("organization_id") @db.Uuid
+  intangibleAssetId String          @map("intangible_asset_id") @db.Uuid
+  year              Int
+  month             Int
+  amount            Decimal         @db.Decimal(19, 4)
+  transactionId     String?         @map("transaction_id") @db.Uuid
+  createdAt         DateTime        @default(now()) @map("created_at")
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  intangibleAsset   IntangibleAsset @relation(fields: [intangibleAssetId], references: [id], onDelete: Cascade)
+  transaction       Transaction?    @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  deletedAt         DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  deletedByUserId   String?         @map("deleted_by_user_id") @db.Uuid
+  deletedReason     String?         @map("deleted_reason")
+
+  @@unique([intangibleAssetId, year, month])
+  @@index([organizationId, year, month])
+  @@index([organizationId, deletedAt], map: "intangible_amortization_months_org_deleted_at_idx")
+  @@map("intangible_amortization_months")
 }
 
 /// *
@@ -2910,6 +3281,8 @@ model NetworkDocument {
   recipientTransactionId  String?               @map("recipient_transaction_id") @db.Uuid
   rejectReason            String?               @map("reject_reason")
   eQaimeRef               String?               @map("e_qaime_ref")
+  /// Manual / RPA DVX e-qaimə snapshot for amount/VÖEN compare (ingest-eqaime).
+  eqaimePayload           Json?                 @map("eqaime_payload")
   createdAt               DateTime              @default(now()) @map("created_at")
   updatedAt               DateTime              @updatedAt @map("updated_at")
 
@@ -2961,6 +3334,9 @@ model Invoice {
   dvxSyncedAt                DateTime?             @map("dvx_synced_at") @db.Timestamptz(6)
   dvxSyncError               String?               @map("dvx_sync_error")
   dvxExternalId              String?               @map("dvx_external_id")
+  eqaimeNumber               String?               @map("eqaime_number")
+  eqaimeStatus               EqaimeStatus?         @map("eqaime_status")
+  eqaimeSubmittedAt          DateTime?             @map("eqaime_submitted_at") @db.Timestamptz(6)
   projectId                  String?               @map("project_id") @db.Uuid
   matchedBankLines           BankStatementLine[]   @relation("InvoiceBankMatch")
   cashOrders                 CashOrder[]
@@ -2984,6 +3360,7 @@ model Invoice {
   @@index([organizationId, createdAt])
   @@index([organizationId, counterpartyId])
   @@index([organizationId, deletedAt], map: "invoices_org_deleted_at_idx")
+  @@index([organizationId, eqaimeStatus], map: "invoices_org_eqaime_status_idx")
   @@map("invoices")
 }
 
@@ -3163,6 +3540,81 @@ model TaxDeclarationExport {
   @@index([organizationId, status], map: "tax_decl_org_status_idx")
   @@index([organizationId, deletedAt], map: "tax_declaration_exports_org_deleted_at_idx")
   @@map("tax_declaration_exports")
+}
+
+enum ProfitTaxAdjustmentKind {
+  PERMANENT
+  TEMPORARY
+}
+
+enum ProfitTaxAdjustmentSource {
+  MANUAL
+  AUTO_TAX_DEPRECIATION
+}
+
+/// Book-to-tax adjustment lines for profit tax declaration.
+model ProfitTaxAdjustment {
+  id             String                    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                    @map("organization_id") @db.Uuid
+  year           Int
+  kind           ProfitTaxAdjustmentKind
+  code           String
+  description    String
+  amount         Decimal                   @db.Decimal(19, 4)
+  source         ProfitTaxAdjustmentSource
+  createdAt      DateTime                  @default(now()) @map("created_at")
+  updatedAt      DateTime                  @updatedAt @map("updated_at")
+  deletedAt      DateTime?                 @map("deleted_at") @db.Timestamptz(6)
+  organization   Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, year])
+  @@index([organizationId, deletedAt], map: "profit_tax_adjustments_org_deleted_at_idx")
+  @@map("profit_tax_adjustments")
+}
+
+enum StatReportPeriodKind {
+  YEAR
+  QUARTER
+  MONTH
+}
+
+enum StatReportExportStatus {
+  GENERATED
+  UPLOADED
+}
+
+/// Global catalog row for Goskomstat statistical report forms (mapping engine config).
+/// Generated exports are the "run" artifacts (StatReportExport).
+model StatReportDefinition {
+  id          String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  code        String               @unique
+  name        String
+  periodKind  StatReportPeriodKind @map("period_kind")
+  version     Int                  @default(1)
+  mappingJson Json                 @default("{}") @map("mapping_json")
+  isActive    Boolean              @default(true) @map("is_active")
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
+  exports     StatReportExport[]
+
+  @@index([isActive, code])
+  @@map("stat_report_definitions")
+}
+
+model StatReportExport {
+  id             String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                 @map("organization_id") @db.Uuid
+  definitionId   String                 @map("definition_id") @db.Uuid
+  period         String
+  status         StatReportExportStatus @default(GENERATED)
+  fileUrl        String                 @map("file_url")
+  createdAt      DateTime               @default(now()) @map("created_at")
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  definition     StatReportDefinition   @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, definitionId, period])
+  @@index([organizationId, status, createdAt(sort: Desc)])
+  @@map("stat_report_exports")
 }
 
 /// *
@@ -3945,6 +4397,16 @@ enum InvoiceStatus {
   LOCKED_BY_SIGNATURE
 }
 
+/// Outgoing e-qaimə (DVX) submission lifecycle for sales invoices.
+enum EqaimeStatus {
+  DRAFT
+  READY
+  SUBMITTED
+  ACCEPTED
+  REJECTED
+  ERROR
+}
+
 /// *
 ///  * ASAN İmza / SİMA (Mobile ID).
 enum SignatureProvider {
@@ -4176,8 +4638,23 @@ enum FixedAssetStatus {
   DISPOSED
 }
 
+enum FixedAssetEventType {
+  ACQUIRE
+  COMMISSION
+  CAPITALIZE
+  REVALUE
+  DISPOSE
+  TRANSFER
+  GRATUITOUS_IN
+  GRATUITOUS_OUT
+  INVENTORY
+}
+
 enum TaxDeclarationType {
   SIMPLIFIED_TAX
+  PROFIT_TAX
+  PAYROLL_WITHHOLDING
+  PROPERTY_TAX
 }
 
 enum TaxDeclarationExportStatus {

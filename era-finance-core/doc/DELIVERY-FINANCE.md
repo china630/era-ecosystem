@@ -13,6 +13,7 @@ Finance core — quartet product path (Track C).
 
 - [x] 13 legacy `@era/contracts` ingress types → worker
 - [x] **FB-10** `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` → COGS/WIP journal (`satellite-event-dispatch.service.ts`)
+- [x] **FB sale/shift** `SATELLITE_FB_SALE_COMPLETED` → revenue journal (idempotent `fb-sale:{receiptId}`); `SATELLITE_FB_SHIFT_CLOSED` → cash recon stub
 - [x] Finance registration → MDM full cutover — `ERA_MDM_REGISTRATION_CUTOVER` redirects to Orchestrator
 
 ## FIN-HR-ABS — Payroll absence mirror (Plan A)

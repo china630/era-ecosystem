@@ -25,6 +25,7 @@ import {
   Database,
   Factory,
   FileCheck2,
+  FileSpreadsheet,
   FileText,
   FolderTree,
   Gavel,
@@ -48,6 +49,7 @@ import {
   PanelRightClose,
   ShoppingCart,
   SlidersHorizontal,
+  Sparkles,
   TrendingDown,
   Upload,
   User,
@@ -668,6 +670,13 @@ export function MainSidebar({
             nested
             onNavClick={onNavClick}
           />
+          <SideNavSubItem
+            href="/procurement/protocols"
+            label={t("nav.procurementProtocols")}
+            isActive={pathname.startsWith("/procurement/protocols")}
+            icon={FileCheck2}
+            onNavClick={onNavClick}
+          />
           {canPostAccounting ? (
             <SideNavSubItem
               href="/finance/payables/suppliers"
@@ -888,10 +897,31 @@ export function MainSidebar({
             onNavClick={onNavClick}
           />
           <SideNavSubItem
+            href="/reporting/ap-aging"
+            label={t("nav.apAging")}
+            isActive={pathname.startsWith("/reporting/ap-aging")}
+            icon={TrendingDown}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
             href="/reporting/tax-export"
             label={t("reporting.taxExportLink")}
             isActive={pathname.startsWith("/reporting/tax-export")}
             icon={Gavel}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/eqf-registry"
+            label={t("reporting.eqfRegistryLink")}
+            isActive={pathname.startsWith("/reporting/eqf-registry")}
+            icon={FileSpreadsheet}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/statforms"
+            label={t("reporting.statforms.link")}
+            isActive={pathname.startsWith("/reporting/statforms")}
+            icon={FileSpreadsheet}
             onNavClick={onNavClick}
           />
           <SideNavSubItem
@@ -918,6 +948,14 @@ export function MainSidebar({
           isActive={pathname.startsWith("/fixed-assets")}
           locked={lockedFixedAssets}
           icon={Building2}
+          onNavClick={onNavClick}
+        />
+        <SideNavItem
+          href="/intangible-assets"
+          label={t("nav.sectionIntangibleAssets")}
+          isActive={pathname.startsWith("/intangible-assets")}
+          locked={lockedFixedAssets}
+          icon={Sparkles}
           onNavClick={onNavClick}
         />
 

@@ -9,6 +9,7 @@ import {
   LedgerType,
   Prisma,
   TaxDeclarationExportStatus,
+  TaxDeclarationType,
 } from "@erafinance/database";
 import ExcelJS from "exceljs";
 import { endOfUtcDay, monthRangeUtc } from "./reporting-period.util";
@@ -17,6 +18,13 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { STORAGE_SERVICE, type StorageService } from "../storage/storage.interface";
 import type { GenerateTaxDeclarationDto } from "./dto/generate-tax-declaration.dto";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { ProfitTaxService } from "./profit-tax.service";
+import {
+  PayrollWithholdingService,
+  type PayrollWithholdingAggregate,
+  type PayrollWithholdingLine,
+} from "./payroll-withholding.service";
+import { PropertyTaxService } from "./property-tax.service";
 
 type DeclarationRecord = {
   id: string;
@@ -29,7 +37,7 @@ type DeclarationRecord = {
   updatedAt: Date;
 };
 
-function parsePeriod(period: string): { year: number; month: number } {
+function parseMonthPeriod(period: string): { year: number; month: number } {
   const m = period.match(/^(\d{4})-(\d{2})$/);
   if (!m) throw new BadRequestException("period must be in YYYY-MM format");
   const year = Number(m[1]);
@@ -40,12 +48,26 @@ function parsePeriod(period: string): { year: number; month: number } {
   return { year, month };
 }
 
+function parseYearPeriod(period: string): number {
+  if (!/^\d{4}$/.test(period)) {
+    throw new BadRequestException("period must be YYYY");
+  }
+  const year = Number(period);
+  if (!Number.isFinite(year) || year < 2000 || year > 2100) {
+    throw new BadRequestException("invalid year");
+  }
+  return year;
+}
+
 @Injectable()
 export class TaxExportService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_SERVICE) private readonly storage: StorageService,
     private readonly posting: PostingAccountResolver,
+    private readonly profitTax: ProfitTaxService,
+    private readonly payrollWithholding: PayrollWithholdingService,
+    private readonly propertyTax: PropertyTaxService,
   ) {}
 
   async list(organizationId: string): Promise<DeclarationRecord[]> {
@@ -64,7 +86,7 @@ export class TaxExportService {
     revenueAzn: Decimal;
     simplifiedTaxAmountAzn: Decimal;
   }> {
-    const { year, month } = parsePeriod(period);
+    const { year, month } = parseMonthPeriod(period);
     const { start, end } = monthRangeUtc(year, month);
     const revenueCode = await this.posting.resolveAccountCode(organizationId, "SALES_REVENUE");
     const account = await this.prisma.account.findFirst({
@@ -156,42 +178,238 @@ export class TaxExportService {
     return Buffer.isBuffer(raw) ? raw : Buffer.from(new Uint8Array(raw));
   }
 
-  async generate(organizationId: string, dto: GenerateTaxDeclarationDto) {
-    if (dto.taxType !== "SIMPLIFIED_TAX") {
-      throw new BadRequestException("Unsupported tax type");
-    }
-    const org = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
-      select: { id: true, name: true, taxIdCipher: true },
-    });
-    if (!org) throw new NotFoundException("Organization not found");
-    const orgTaxId = decodeOrganizationTaxId(org);
-    if (!orgTaxId.trim()) {
-      throw new BadRequestException("Organization tax ID is required");
-    }
+  private buildPayrollWithholdingXml(input: {
+    orgTaxId: string;
+    orgName: string;
+    agg: PayrollWithholdingAggregate;
+  }): string {
+    const rowXml = (line: PayrollWithholdingLine) => `
+    <EmployeeRow kind="${line.kind}">
+      <EmployeeId>${line.employeeId}</EmployeeId>
+      <FIN>${line.fin ?? ""}</FIN>
+      <DisplayName>${line.displayName}</DisplayName>
+      <GrossAZN>${line.gross.toFixed(2)}</GrossAZN>
+      <PIT>${line.pitTotal.toFixed(2)}</PIT>
+      <DSMFWorker>${line.dsmfWorker.toFixed(2)}</DSMFWorker>
+      <DSMFEmployer>${line.dsmfEmployer.toFixed(2)}</DSMFEmployer>
+      <ITSWorker>${line.itsWorker.toFixed(2)}</ITSWorker>
+      <ITSEmployer>${line.itsEmployer.toFixed(2)}</ITSEmployer>
+      <UnemploymentWorker>${line.unemploymentWorker.toFixed(2)}</UnemploymentWorker>
+      <UnemploymentEmployer>${line.unemploymentEmployer.toFixed(2)}</UnemploymentEmployer>
+      <ContractorSocialWithheld>${line.contractorSocialWithheld.toFixed(2)}</ContractorSocialWithheld>
+      <SocialTotal>${line.socialTotal.toFixed(2)}</SocialTotal>
+      <SlipLineEarnings>${line.slipLineEarnings}</SlipLineEarnings>
+      <SlipLineDeductions>${line.slipLineDeductions}</SlipLineDeductions>
+    </EmployeeRow>`;
 
-    const agg = await this.aggregateSimplifiedTax(organizationId, dto.period);
-    const xml = this.buildSimplifiedTaxXml({
-      orgTaxId,
-      orgName: org.name,
-      period: dto.period,
-      periodFrom: agg.periodFrom,
-      periodTo: agg.periodTo,
-      revenueAzn: agg.revenueAzn,
-      simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
-    });
-    const xlsx = await this.buildSimplifiedTaxXlsxBuffer({
-      orgName: org.name,
-      orgTaxId,
-      period: dto.period,
-      periodFrom: agg.periodFrom,
-      periodTo: agg.periodTo,
-      revenueAzn: agg.revenueAzn,
-      simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
-    });
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<TaxDeclaration schemaVersion="1.0" target="e-taxes.gov.az">
+  <DeclarationType>PAYROLL_WITHHOLDING</DeclarationType>
+  <Period>${input.agg.period}</Period>
+  <Taxpayer>
+    <TaxId>${input.orgTaxId}</TaxId>
+    <Name>${input.orgName}</Name>
+  </Taxpayer>
+  <ReportingWindow>
+    <PeriodFrom>${input.agg.periodFrom}</PeriodFrom>
+    <PeriodTo>${input.agg.periodTo}</PeriodTo>
+  </ReportingWindow>
+  <Employees>${input.agg.employees.map(rowXml).join("")}</Employees>
+  <Contractors>${input.agg.contractors.map(rowXml).join("")}</Contractors>
+  <Totals>
+    <PITTotal>${input.agg.totals.pitTotal}</PITTotal>
+    <SocialTotal>${input.agg.totals.socialTotal}</SocialTotal>
+    <GrossTotal>${input.agg.totals.grossTotal}</GrossTotal>
+    <SlipLineEarningsTotal>${input.agg.totals.slipLineEarningsTotal}</SlipLineEarningsTotal>
+    <SlipLineDeductionsTotal>${input.agg.totals.slipLineDeductionsTotal}</SlipLineDeductionsTotal>
+  </Totals>
+</TaxDeclaration>`;
+  }
 
+  private async buildPayrollWithholdingXlsxBuffer(input: {
+    orgName: string;
+    orgTaxId: string;
+    agg: PayrollWithholdingAggregate;
+  }): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet("PayrollWithholding");
+    sheet.columns = [
+      { header: "Kind", key: "kind", width: 12 },
+      { header: "Employee ID", key: "employeeId", width: 36 },
+      { header: "FIN (masked)", key: "fin", width: 14 },
+      { header: "Name", key: "name", width: 30 },
+      { header: "Gross", key: "gross", width: 12 },
+      { header: "PIT", key: "pit", width: 12 },
+      { header: "Social total", key: "social", width: 14 },
+      { header: "Line earnings", key: "earn", width: 12 },
+      { header: "Line deductions", key: "ded", width: 14 },
+    ];
+    for (const line of [...input.agg.employees, ...input.agg.contractors]) {
+      sheet.addRow({
+        kind: line.kind,
+        employeeId: line.employeeId,
+        fin: line.fin ?? "",
+        name: line.displayName,
+        gross: Number(line.gross),
+        pit: Number(line.pitTotal),
+        social: Number(line.socialTotal),
+        earn: Number(line.slipLineEarnings),
+        ded: Number(line.slipLineDeductions),
+      });
+    }
+    const summary = wb.addWorksheet("Summary");
+    summary.addRows([
+      ["Tax type", "PAYROLL_WITHHOLDING"],
+      ["Taxpayer", input.orgName],
+      ["VÖEN", input.orgTaxId],
+      ["Period", input.agg.period],
+      ["PIT total", input.agg.totals.pitTotal],
+      ["Social total", input.agg.totals.socialTotal],
+      ["Gross total", input.agg.totals.grossTotal],
+    ]);
+    const raw = await wb.xlsx.writeBuffer();
+    return Buffer.isBuffer(raw) ? raw : Buffer.from(new Uint8Array(raw));
+  }
+
+  private buildProfitTaxXml(input: {
+    orgTaxId: string;
+    orgName: string;
+    agg: Awaited<ReturnType<ProfitTaxService["aggregateProfitTax"]>>;
+  }): string {
+    const adjXml = input.agg.adjustments
+      .map(
+        (a) => `
+    <Adjustment>
+      <Code>${a.code}</Code>
+      <Kind>${a.kind}</Kind>
+      <Source>${a.source}</Source>
+      <Description>${a.description}</Description>
+      <AmountAZN>${a.amount}</AmountAZN>
+    </Adjustment>`,
+      )
+      .join("");
+
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<TaxDeclaration schemaVersion="1.0" target="e-taxes.gov.az">
+  <DeclarationType>PROFIT_TAX</DeclarationType>
+  <Period>${input.agg.year}</Period>
+  <Taxpayer>
+    <TaxId>${input.orgTaxId}</TaxId>
+    <Name>${input.orgName}</Name>
+  </Taxpayer>
+  <Computation>
+    <PeriodFrom>${input.agg.periodFrom}</PeriodFrom>
+    <PeriodTo>${input.agg.periodTo}</PeriodTo>
+    <AccountingResultAZN>${input.agg.accountingResult}</AccountingResultAZN>
+    <AdjustmentsTotalAZN>${input.agg.adjustmentsTotal}</AdjustmentsTotalAZN>
+    <TaxableBaseAZN>${input.agg.taxableBase}</TaxableBaseAZN>
+    <TaxRatePercent>${input.agg.taxRatePercent}</TaxRatePercent>
+    <TaxAmountAZN>${input.agg.taxAmount}</TaxAmountAZN>
+  </Computation>
+  <Adjustments>${adjXml}</Adjustments>
+</TaxDeclaration>`;
+  }
+
+  private async buildProfitTaxXlsxBuffer(input: {
+    orgName: string;
+    orgTaxId: string;
+    agg: Awaited<ReturnType<ProfitTaxService["aggregateProfitTax"]>>;
+  }): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet("ProfitTax");
+    sheet.addRows([
+      ["Tax type", "PROFIT_TAX"],
+      ["Taxpayer", input.orgName],
+      ["VÖEN", input.orgTaxId],
+      ["Year", input.agg.year],
+      ["Accounting result", input.agg.accountingResult],
+      ["Adjustments total", input.agg.adjustmentsTotal],
+      ["Taxable base", input.agg.taxableBase],
+      ["Rate %", input.agg.taxRatePercent],
+      ["Tax amount", input.agg.taxAmount],
+    ]);
+    const adj = wb.addWorksheet("Adjustments");
+    adj.addRow(["Code", "Kind", "Source", "Description", "Amount"]);
+    for (const a of input.agg.adjustments) {
+      adj.addRow([a.code, a.kind, a.source, a.description, a.amount]);
+    }
+    const raw = await wb.xlsx.writeBuffer();
+    return Buffer.isBuffer(raw) ? raw : Buffer.from(new Uint8Array(raw));
+  }
+
+  private buildPropertyTaxXml(input: {
+    orgTaxId: string;
+    orgName: string;
+    agg: Awaited<ReturnType<PropertyTaxService["aggregatePropertyTax"]>>;
+  }): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<TaxDeclaration schemaVersion="1.0" target="e-taxes.gov.az">
+  <DeclarationType>PROPERTY_TAX</DeclarationType>
+  <Period>${input.agg.year}</Period>
+  <Taxpayer>
+    <TaxId>${input.orgTaxId}</TaxId>
+    <Name>${input.orgName}</Name>
+  </Taxpayer>
+  <Computation>
+    <PeriodFrom>${input.agg.periodFrom}</PeriodFrom>
+    <PeriodTo>${input.agg.periodTo}</PeriodTo>
+    <NetBookTotalAZN>${input.agg.netBookTotal}</NetBookTotalAZN>
+    <TaxRatePercent>${input.agg.ratePercent}</TaxRatePercent>
+    <TaxAmountAZN>${input.agg.taxAmount}</TaxAmountAZN>
+    <AssetCount>${input.agg.assetCount}</AssetCount>
+    <RateNote>${input.agg.rateNote}</RateNote>
+  </Computation>
+</TaxDeclaration>`;
+  }
+
+  private async buildPropertyTaxXlsxBuffer(input: {
+    orgName: string;
+    orgTaxId: string;
+    agg: Awaited<ReturnType<PropertyTaxService["aggregatePropertyTax"]>>;
+  }): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const sheet = wb.addWorksheet("PropertyTax");
+    sheet.addRows([
+      ["Tax type", "PROPERTY_TAX"],
+      ["Taxpayer", input.orgName],
+      ["VÖEN", input.orgTaxId],
+      ["Year", input.agg.year],
+      ["Net book total", input.agg.netBookTotal],
+      ["Rate %", input.agg.ratePercent],
+      ["Tax amount", input.agg.taxAmount],
+      ["Note", input.agg.rateNote],
+    ]);
+    const assets = wb.addWorksheet("Assets");
+    assets.addRow([
+      "Inventory #",
+      "Name",
+      "Purchase",
+      "Booked dep.",
+      "Net book",
+    ]);
+    for (const line of input.agg.lines) {
+      assets.addRow([
+        line.inventoryNumber,
+        line.name,
+        line.purchasePrice,
+        line.bookedDepreciation,
+        line.netBookValue,
+      ]);
+    }
+    const raw = await wb.xlsx.writeBuffer();
+    return Buffer.isBuffer(raw) ? raw : Buffer.from(new Uint8Array(raw));
+  }
+
+  private async storeAndCreate(
+    organizationId: string,
+    taxType: TaxDeclarationType,
+    period: string,
+    xml: string,
+    xlsx: Buffer,
+    computation: Record<string, unknown>,
+  ) {
     const stamp = Date.now();
-    const baseKey = `orgs/${organizationId}/tax-exports/${dto.taxType}/${dto.period}-${stamp}`;
+    const baseKey = `orgs/${organizationId}/tax-exports/${taxType}/${period}-${stamp}`;
     const xmlKey = `${baseKey}.xml`;
     const xlsxKey = `${baseKey}.xlsx`;
     await this.storage.putObject(xmlKey, Buffer.from(xml, "utf8"), {
@@ -205,8 +423,8 @@ export class TaxExportService {
     const created = await this.prisma.taxDeclarationExport.create({
       data: {
         organizationId,
-        taxType: dto.taxType,
-        period: dto.period,
+        taxType,
+        period,
         generatedFileUrl: xmlKey,
         status: TaxDeclarationExportStatus.GENERATED,
       },
@@ -215,11 +433,137 @@ export class TaxExportService {
     return {
       ...created,
       artifacts: { xmlKey, xlsxKey },
-      computation: {
-        revenueAzn: agg.revenueAzn.toFixed(2),
-        simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn.toFixed(2),
-      },
+      computation,
     };
+  }
+
+  async generate(organizationId: string, dto: GenerateTaxDeclarationDto) {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true, name: true, taxIdCipher: true },
+    });
+    if (!org) throw new NotFoundException("Organization not found");
+    const orgTaxId = decodeOrganizationTaxId(org);
+    if (!orgTaxId.trim()) {
+      throw new BadRequestException("Organization tax ID is required");
+    }
+
+    if (dto.taxType === "SIMPLIFIED_TAX") {
+      const agg = await this.aggregateSimplifiedTax(organizationId, dto.period);
+      const xml = this.buildSimplifiedTaxXml({
+        orgTaxId,
+        orgName: org.name,
+        period: dto.period,
+        periodFrom: agg.periodFrom,
+        periodTo: agg.periodTo,
+        revenueAzn: agg.revenueAzn,
+        simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
+      });
+      const xlsx = await this.buildSimplifiedTaxXlsxBuffer({
+        orgName: org.name,
+        orgTaxId,
+        period: dto.period,
+        periodFrom: agg.periodFrom,
+        periodTo: agg.periodTo,
+        revenueAzn: agg.revenueAzn,
+        simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn,
+      });
+      return this.storeAndCreate(
+        organizationId,
+        TaxDeclarationType.SIMPLIFIED_TAX,
+        dto.period,
+        xml,
+        xlsx,
+        {
+          revenueAzn: agg.revenueAzn.toFixed(2),
+          simplifiedTaxAmountAzn: agg.simplifiedTaxAmountAzn.toFixed(2),
+        },
+      );
+    }
+
+    if (dto.taxType === "PROFIT_TAX") {
+      const year = parseYearPeriod(dto.period);
+      const agg = await this.profitTax.aggregateProfitTax(organizationId, year);
+      const xml = this.buildProfitTaxXml({
+        orgTaxId,
+        orgName: org.name,
+        agg,
+      });
+      const xlsx = await this.buildProfitTaxXlsxBuffer({
+        orgName: org.name,
+        orgTaxId,
+        agg,
+      });
+      return this.storeAndCreate(
+        organizationId,
+        TaxDeclarationType.PROFIT_TAX,
+        dto.period,
+        xml,
+        xlsx,
+        {
+          accountingResult: agg.accountingResult,
+          taxableBase: agg.taxableBase,
+          taxAmount: agg.taxAmount,
+        },
+      );
+    }
+
+    if (dto.taxType === "PAYROLL_WITHHOLDING") {
+      const agg = await this.payrollWithholding.aggregate(
+        organizationId,
+        dto.period,
+      );
+      const xml = this.buildPayrollWithholdingXml({
+        orgTaxId,
+        orgName: org.name,
+        agg,
+      });
+      const xlsx = await this.buildPayrollWithholdingXlsxBuffer({
+        orgName: org.name,
+        orgTaxId,
+        agg,
+      });
+      return this.storeAndCreate(
+        organizationId,
+        TaxDeclarationType.PAYROLL_WITHHOLDING,
+        dto.period,
+        xml,
+        xlsx,
+        { totals: agg.totals },
+      );
+    }
+
+    if (dto.taxType === "PROPERTY_TAX") {
+      const year = parseYearPeriod(dto.period);
+      const agg = await this.propertyTax.aggregatePropertyTax(
+        organizationId,
+        year,
+      );
+      const xml = this.buildPropertyTaxXml({
+        orgTaxId,
+        orgName: org.name,
+        agg,
+      });
+      const xlsx = await this.buildPropertyTaxXlsxBuffer({
+        orgName: org.name,
+        orgTaxId,
+        agg,
+      });
+      return this.storeAndCreate(
+        organizationId,
+        TaxDeclarationType.PROPERTY_TAX,
+        dto.period,
+        xml,
+        xlsx,
+        {
+          netBookTotal: agg.netBookTotal,
+          taxAmount: agg.taxAmount,
+          ratePercent: agg.ratePercent,
+        },
+      );
+    }
+
+    throw new BadRequestException("Unsupported tax type");
   }
 
   async downloadGenerated(organizationId: string, exportId: string) {

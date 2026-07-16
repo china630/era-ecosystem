@@ -11,12 +11,15 @@ import { GrantReceiptController } from "./posting/grant-receipt.controller";
 import { GrantReceiptService } from "./posting/grant-receipt.service";
 import { PostingRolesController } from "./posting/posting-roles.controller";
 import { PostingRolesService } from "./posting/posting-roles.service";
+import { SubcontoController } from "./subconto.controller";
+import { SubcontoService } from "./subconto.service";
 
 @Module({
   controllers: [
     AccountingController,
     PostingRolesController,
     GrantReceiptController,
+    SubcontoController,
   ],
   providers: [
     AccountingService,
@@ -27,6 +30,7 @@ import { PostingRolesService } from "./posting/posting-roles.service";
     PostingJournalBuilder,
     PostingRolesService,
     GrantReceiptService,
+    SubcontoService,
     RolesGuard,
   ],
   exports: [
@@ -36,6 +40,7 @@ import { PostingRolesService } from "./posting/posting-roles.service";
     PostingAccountResolver,
     PostingJournalBuilder,
     GrantReceiptService,
+    SubcontoService,
   ],
 })
 export class AccountingModule {}

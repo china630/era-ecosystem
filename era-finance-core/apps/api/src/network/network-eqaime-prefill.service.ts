@@ -15,6 +15,73 @@ type StoredLine = {
   productId?: string | null;
 };
 
+export type EqaimeCompareInput = {
+  eQaimeRef: string | null;
+  totalGross: Prisma.Decimal;
+  issuerTaxIdBlindIndex?: string | null;
+  /** Decrypted issuer VÖEN when available (for voen compare). */
+  issuerTaxId?: string | null;
+  /** Snapshot from DVX ingest / RPA (optional). */
+  eqaimePayload?: unknown;
+};
+
+export type EqaimeCompareResult = {
+  status: "MATCH" | "MISMATCH" | "MISSING";
+  ref?: string | null;
+  details?: {
+    amountMatch?: boolean;
+    voenMatch?: boolean | null;
+    expectedGross?: string;
+    eqaimeGross?: string | null;
+    expectedVoen?: string | null;
+    eqaimeVoen?: string | null;
+  };
+};
+
+function extractEqaimeGross(payload: unknown): Prisma.Decimal | null {
+  if (!payload || typeof payload !== "object") return null;
+  const p = payload as Record<string, unknown>;
+  const totals = p.totals;
+  if (totals && typeof totals === "object") {
+    const g = (totals as Record<string, unknown>).grossAzn ?? (totals as Record<string, unknown>).totalGross;
+    if (g != null && g !== "") {
+      try {
+        return new Decimal(String(g));
+      } catch {
+        return null;
+      }
+    }
+  }
+  for (const key of ["totalGross", "grossAzn", "totalGrossAzn", "amount"]) {
+    if (p[key] != null && p[key] !== "") {
+      try {
+        return new Decimal(String(p[key]));
+      } catch {
+        /* continue */
+      }
+    }
+  }
+  return null;
+}
+
+function extractEqaimeVoen(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const p = payload as Record<string, unknown>;
+  const issuer = p.issuer;
+  if (issuer && typeof issuer === "object") {
+    const taxId = (issuer as Record<string, unknown>).taxId ?? (issuer as Record<string, unknown>).voen;
+    if (typeof taxId === "string" && taxId.trim()) {
+      return normalizeVoen(taxId);
+    }
+  }
+  for (const key of ["issuerTaxId", "sellerVoen", "voen", "taxId"]) {
+    if (typeof p[key] === "string" && (p[key] as string).trim()) {
+      return normalizeVoen(p[key] as string);
+    }
+  }
+  return null;
+}
+
 @Injectable()
 export class NetworkEqaimePrefillService {
   constructor(private readonly prisma: PrismaService) {}
@@ -115,12 +182,113 @@ export class NetworkEqaimePrefillService {
     });
   }
 
-  compareWithEQaime(
-    doc: { eQaimeRef: string | null; totalGross: Prisma.Decimal },
-  ): { status: "MATCH" | "MISMATCH" | "MISSING"; ref?: string | null } {
+  /**
+   * Compare network document totals / issuer VÖEN against ingested e-qaimə payload when present.
+   * MISSING — no ref; MATCH — ref present and amounts/voen agree (or no comparable data);
+   * MISMATCH — comparable field present and differs.
+   */
+  compareWithEQaime(doc: EqaimeCompareInput): EqaimeCompareResult {
     if (!doc.eQaimeRef?.trim()) {
       return { status: "MISSING" };
     }
-    return { status: "MATCH", ref: doc.eQaimeRef.trim() };
+
+    const ref = doc.eQaimeRef.trim();
+    const payload = doc.eqaimePayload;
+    const eqaimeGross = extractEqaimeGross(payload);
+    const eqaimeVoen = extractEqaimeVoen(payload);
+
+    const details: EqaimeCompareResult["details"] = {
+      expectedGross: doc.totalGross.toFixed(4),
+      eqaimeGross: eqaimeGross?.toFixed(4) ?? null,
+      eqaimeVoen,
+    };
+
+    let amountMatch: boolean | undefined;
+    if (eqaimeGross != null) {
+      amountMatch = doc.totalGross.sub(eqaimeGross).abs().lte(new Decimal("0.01"));
+      details.amountMatch = amountMatch;
+    }
+
+    let voenMatch: boolean | undefined;
+    const expectedVoen = doc.issuerTaxId
+      ? normalizeVoen(doc.issuerTaxId)
+      : null;
+    details.expectedVoen = expectedVoen;
+    if (eqaimeVoen && expectedVoen) {
+      voenMatch = eqaimeVoen === expectedVoen;
+      details.voenMatch = voenMatch;
+    } else if (eqaimeVoen) {
+      details.voenMatch = null;
+    }
+
+    if (amountMatch === false || voenMatch === false) {
+      return { status: "MISMATCH", ref, details };
+    }
+    return { status: "MATCH", ref, details };
+  }
+
+  /**
+   * Attach a manual / RPA DVX e-qaimə payload for reconciliation.
+   */
+  async ingestEqaimePayload(
+    recipientOrgId: string,
+    networkDocId: string,
+    body: {
+      externalId?: string;
+      payload?: Record<string, unknown>;
+      totalGross?: number | string;
+      issuerTaxId?: string;
+    },
+  ) {
+    const doc = await this.prisma.networkDocument.findFirst({
+      where: { id: networkDocId, recipientOrganizationId: recipientOrgId },
+    });
+    if (!doc) throw new NotFoundException("Network document not found");
+
+    const payload: Record<string, unknown> = {
+      ...(body.payload ?? {}),
+    };
+    if (body.totalGross != null && payload.totalGross == null && payload.totals == null) {
+      payload.totals = { grossAzn: Number(body.totalGross) };
+    }
+    if (body.issuerTaxId?.trim() && payload.issuerTaxId == null) {
+      payload.issuerTaxId = normalizeVoen(body.issuerTaxId);
+    }
+
+    const externalId =
+      (typeof body.externalId === "string" && body.externalId.trim()) ||
+      (typeof payload.eqaimeNumber === "string" && payload.eqaimeNumber.trim()) ||
+      (typeof payload.id === "string" && payload.id.trim()) ||
+      doc.eQaimeRef ||
+      null;
+
+    if (!externalId) {
+      throw new BadRequestException("externalId (or payload.eqaimeNumber) is required");
+    }
+
+    const updated = await this.prisma.networkDocument.update({
+      where: { id: doc.id },
+      data: {
+        eQaimeRef: externalId,
+        eqaimePayload: payload as Prisma.InputJsonValue,
+      },
+    });
+
+    const compare = this.compareWithEQaime({
+      eQaimeRef: updated.eQaimeRef,
+      totalGross: updated.totalGross,
+      issuerTaxIdBlindIndex: updated.issuerTaxIdBlindIndex,
+      issuerTaxId:
+        typeof payload.issuerTaxId === "string"
+          ? (payload.issuerTaxId as string)
+          : body.issuerTaxId ?? null,
+      eqaimePayload: updated.eqaimePayload,
+    });
+
+    return {
+      id: updated.id,
+      eQaimeRef: updated.eQaimeRef,
+      eqaimeCompare: compare,
+    };
   }
 }

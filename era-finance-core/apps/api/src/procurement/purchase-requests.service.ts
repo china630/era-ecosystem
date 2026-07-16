@@ -8,6 +8,7 @@ import {
   Decimal,
   PurchaseRequestApprovalDecision,
   PurchaseRequestStatus,
+  StockMovementReason,
 } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
 import { normalizeListPagination } from "../common/list-pagination";
@@ -38,6 +39,9 @@ export class PurchaseRequestsService {
     department: { select: { id: true, name: true } },
     requesterUser: { select: { id: true, email: true } },
     preferredCounterparty: { select: { id: true, nameCipher: true } },
+    purchaseTransaction: {
+      select: { id: true, isFinal: true, reference: true, date: true },
+    },
     approvals: {
       orderBy: { decidedAt: "desc" as const },
       include: {
@@ -139,6 +143,43 @@ export class PurchaseRequestsService {
     }
   }
 
+  /** Suggested on-hand qty per product line (sum across warehouses). */
+  private async buildStockHints(
+    organizationId: string,
+    lines: { productId: string | null; lineNo: number; quantity: Decimal | null }[],
+  ) {
+    const productIds = [
+      ...new Set(lines.map((l) => l.productId).filter((id): id is string => !!id)),
+    ];
+    if (!productIds.length) return [];
+
+    const stock = await this.prisma.stockItem.findMany({
+      where: { organizationId, productId: { in: productIds } },
+      select: { productId: true, quantity: true, warehouseId: true },
+    });
+    const byProduct = new Map<string, Decimal>();
+    for (const s of stock) {
+      byProduct.set(
+        s.productId,
+        (byProduct.get(s.productId) ?? new Decimal(0)).add(s.quantity),
+      );
+    }
+
+    return lines
+      .filter((l) => l.productId)
+      .map((l) => {
+        const onHand = byProduct.get(l.productId!) ?? new Decimal(0);
+        const needed = l.quantity ?? new Decimal(0);
+        return {
+          lineNo: l.lineNo,
+          productId: l.productId!,
+          requestedQty: needed.toFixed(4),
+          warehouseQtyOnHand: onHand.toFixed(4),
+          shortfall: Decimal.max(needed.sub(onHand), 0).toFixed(4),
+        };
+      });
+  }
+
   async create(
     organizationId: string,
     requesterUserId: string,
@@ -227,7 +268,7 @@ export class PurchaseRequestsService {
           ? null
           : new Date(`${dto.neededByDate}T00:00:00.000Z`);
 
-    return this.prisma.$transaction(async (tx) => {
+    const updated = await this.prisma.$transaction(async (tx) => {
       if (dto.lines != null) {
         await tx.purchaseRequestLine.deleteMany({
           where: { purchaseRequestId: id },
@@ -269,6 +310,14 @@ export class PurchaseRequestsService {
         include: this.includeDetail,
       });
     });
+
+    if (
+      dto.status === PurchaseRequestStatus.ORDERED ||
+      dto.purchaseTransactionId
+    ) {
+      return this.tryCloseWhenFulfilled(organizationId, id);
+    }
+    return updated;
   }
 
   async remove(organizationId: string, id: string) {
@@ -309,7 +358,9 @@ export class PurchaseRequestsService {
       throw new BadRequestException("Only SUBMITTED requests can be approved");
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const stockHints = await this.buildStockHints(organizationId, existing.lines);
+
+    const updated = await this.prisma.$transaction(async (tx) => {
       await tx.purchaseRequestApproval.create({
         data: {
           purchaseRequestId: id,
@@ -335,6 +386,99 @@ export class PurchaseRequestsService {
         },
         include: this.includeDetail,
       });
+    });
+
+    return { ...updated, stockHints };
+  }
+
+  /**
+   * Link a posted purchase invoice transaction when PR is ORDERED.
+   * Auto-closes when the purchase is final and warehouse receipt exists for product lines.
+   */
+  async linkPurchase(
+    organizationId: string,
+    id: string,
+    transactionId: string,
+  ) {
+    const existing = await this.get(organizationId, id);
+    if (existing.status !== PurchaseRequestStatus.ORDERED) {
+      throw new BadRequestException(
+        "Purchase can only be linked when status is ORDERED",
+      );
+    }
+
+    const tx = await this.prisma.transaction.findFirst({
+      where: { id: transactionId, organizationId },
+      select: { id: true, isFinal: true, purchaseSnapshot: true },
+    });
+    if (!tx) throw new NotFoundException("Purchase transaction not found");
+    if (tx.purchaseSnapshot == null) {
+      throw new BadRequestException(
+        "Transaction must be a purchase invoice (purchaseSnapshot required)",
+      );
+    }
+
+    const other = await this.prisma.purchaseRequest.findFirst({
+      where: {
+        organizationId,
+        purchaseTransactionId: transactionId,
+        NOT: { id },
+      },
+      select: { id: true, number: true },
+    });
+    if (other) {
+      throw new BadRequestException(
+        `Transaction already linked to purchase request ${other.number}`,
+      );
+    }
+
+    await this.prisma.purchaseRequest.update({
+      where: { id },
+      data: { purchaseTransactionId: transactionId },
+    });
+
+    return this.tryCloseWhenFulfilled(organizationId, id);
+  }
+
+  /**
+   * Marks PR CLOSED when linked purchase isFinal and warehouse receipt exists
+   * for all product lines (StockMovement RECEIPT with BASIS_TX note).
+   */
+  async tryCloseWhenFulfilled(organizationId: string, id: string) {
+    const row = await this.get(organizationId, id);
+    if (row.status === PurchaseRequestStatus.CLOSED) return row;
+    if (row.status !== PurchaseRequestStatus.ORDERED) return row;
+    if (!row.purchaseTransactionId || !row.purchaseTransaction) return row;
+    if (!row.purchaseTransaction.isFinal) return row;
+
+    const productIds = [
+      ...new Set(
+        row.lines.map((l) => l.productId).filter((pid): pid is string => !!pid),
+      ),
+    ];
+    if (productIds.length > 0) {
+      const movements = await this.prisma.stockMovement.findMany({
+        where: {
+          organizationId,
+          reason: StockMovementReason.RECEIPT,
+          productId: { in: productIds },
+          note: { contains: `BASIS_TX:${row.purchaseTransactionId}` },
+        },
+        select: { productId: true },
+      });
+      const received = new Set(movements.map((m) => m.productId));
+      for (const pid of productIds) {
+        if (!received.has(pid)) return row;
+      }
+    }
+
+    return this.prisma.purchaseRequest.update({
+      where: { id },
+      data: {
+        status: PurchaseRequestStatus.CLOSED,
+        closedAt: new Date(),
+      },
+      include: this.includeDetail,
     });
   }
 }

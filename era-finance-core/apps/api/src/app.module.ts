@@ -25,6 +25,7 @@ import { CounterpartiesModule } from "./counterparties/counterparties.module";
 import { FinanceModule } from "./finance/finance.module";
 import { FxModule } from "./fx/fx.module";
 import { FixedAssetsModule } from "./fixed-assets/fixed-assets.module";
+import { IntangibleAssetsModule } from "./intangible-assets/intangible-assets.module";
 import { MigrationModule } from "./migration/migration.module";
 import { HrModule } from "./hr/hr.module";
 import { IntegrationsModule } from "./integrations/integrations.module";
@@ -97,6 +98,7 @@ const useControlPlaneAuth =
     ProcurementModule,
     InventoryModule,
     FixedAssetsModule,
+    IntangibleAssetsModule,
     MigrationModule,
     ManufacturingModule,
     PsaModule,

@@ -6,6 +6,7 @@ import {
   CounterpartyRole,
   Decimal,
   DigitalSignatureStatus,
+  EqaimeStatus,
   InvoiceStatus,
   LedgerType,
   pickAccountDisplayName,
@@ -903,6 +904,307 @@ export class ReportingService {
     };
   }
 
+  /**
+   * AP aging on supplier payables (531): open credit balance per purchase transaction,
+   * aged by document date buckets 0-30 / 31-60 / 61-90 / 90+.
+   */
+  async accountsPayableAging(organizationId: string, asOfIso?: string) {
+    const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
+    const todayUtc = Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate(),
+    );
+    const asOfEnd = endOfUtcDay(new Date(todayUtc));
+
+    const supplierPayableCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "SUPPLIER_PAYABLE",
+    );
+    const acc = await this.prisma.account.findFirst({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        code: supplierPayableCode,
+      },
+    });
+    if (!acc) {
+      return {
+        asOf: new Date(todayUtc).toISOString().slice(0, 10),
+        rows: [],
+        totals: {
+          bucket0to30: "0.0000",
+          bucket31to60: "0.0000",
+          bucket61to90: "0.0000",
+          bucket90plus: "0.0000",
+          total: "0.0000",
+        },
+        methodologyNote:
+          "Счёт поставщиков (SUPPLIER_PAYABLE) не найден в плане счетов NAS.",
+      };
+    }
+
+    const entries = await this.prisma.journalEntry.findMany({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        accountId: acc.id,
+        transaction: {
+          date: { lte: asOfEnd },
+          counterpartyId: { not: null },
+        },
+      },
+      select: {
+        debit: true,
+        credit: true,
+        transaction: {
+          select: {
+            id: true,
+            date: true,
+            counterpartyId: true,
+            counterparty: {
+              select: { id: true, nameCipher: true, taxIdCipher: true },
+            },
+          },
+        },
+      },
+    });
+
+    type Bucket = {
+      b0_30: Decimal;
+      b31_60: Decimal;
+      b61_90: Decimal;
+      b90_plus: Decimal;
+    };
+    type TxAgg = {
+      counterpartyId: string;
+      name: string;
+      taxId: string;
+      date: Date;
+      net: Decimal;
+    };
+    const byTx = new Map<string, TxAgg>();
+
+    for (const e of entries) {
+      const tx = e.transaction;
+      const cpId = tx.counterpartyId;
+      if (!cpId || !tx.counterparty) continue;
+      const net = new Decimal(e.credit.toString()).sub(new Decimal(e.debit.toString()));
+      const cur = byTx.get(tx.id) ?? {
+        counterpartyId: cpId,
+        name: tx.counterparty.nameCipher
+          ? decryptText(tx.counterparty.nameCipher) ?? ""
+          : "",
+        taxId: tx.counterparty.taxIdCipher
+          ? decryptText(tx.counterparty.taxIdCipher) ?? ""
+          : "",
+        date: tx.date,
+        net: new Decimal(0),
+      };
+      cur.net = cur.net.add(net);
+      byTx.set(tx.id, cur);
+    }
+
+    const byCp = new Map<
+      string,
+      { name: string; taxId: string; buckets: Bucket }
+    >();
+
+    for (const agg of byTx.values()) {
+      if (agg.net.lte(0)) continue;
+      const docUtc = Date.UTC(
+        agg.date.getUTCFullYear(),
+        agg.date.getUTCMonth(),
+        agg.date.getUTCDate(),
+      );
+      const daysPast = Math.max(0, Math.floor((todayUtc - docUtc) / 86400000));
+      let bucket: keyof Bucket;
+      if (daysPast <= 30) bucket = "b0_30";
+      else if (daysPast <= 60) bucket = "b31_60";
+      else if (daysPast <= 90) bucket = "b61_90";
+      else bucket = "b90_plus";
+
+      const cur =
+        byCp.get(agg.counterpartyId) ??
+        {
+          name: agg.name,
+          taxId: agg.taxId,
+          buckets: {
+            b0_30: new Decimal(0),
+            b31_60: new Decimal(0),
+            b61_90: new Decimal(0),
+            b90_plus: new Decimal(0),
+          },
+        };
+      cur.buckets[bucket] = cur.buckets[bucket].add(agg.net);
+      byCp.set(agg.counterpartyId, cur);
+    }
+
+    const rows = [...byCp.entries()].map(([counterpartyId, v]) => ({
+      counterpartyId,
+      name: v.name,
+      taxId: v.taxId,
+      bucket0to30: v.buckets.b0_30.toFixed(4),
+      bucket31to60: v.buckets.b31_60.toFixed(4),
+      bucket61to90: v.buckets.b61_90.toFixed(4),
+      bucket90plus: v.buckets.b90_plus.toFixed(4),
+      total: v.buckets.b0_30
+        .add(v.buckets.b31_60)
+        .add(v.buckets.b61_90)
+        .add(v.buckets.b90_plus)
+        .toFixed(4),
+    }));
+
+    rows.sort((a, b) => Number(b.total) - Number(a.total));
+
+    const sum = rows.reduce(
+      (acc, r) => ({
+        bucket0to30: acc.bucket0to30.add(new Decimal(r.bucket0to30)),
+        bucket31to60: acc.bucket31to60.add(new Decimal(r.bucket31to60)),
+        bucket61to90: acc.bucket61to90.add(new Decimal(r.bucket61to90)),
+        bucket90plus: acc.bucket90plus.add(new Decimal(r.bucket90plus)),
+        total: acc.total.add(new Decimal(r.total)),
+      }),
+      {
+        bucket0to30: new Decimal(0),
+        bucket31to60: new Decimal(0),
+        bucket61to90: new Decimal(0),
+        bucket90plus: new Decimal(0),
+        total: new Decimal(0),
+      },
+    );
+
+    return {
+      asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      rows,
+      totals: {
+        bucket0to30: sum.bucket0to30.toFixed(4),
+        bucket31to60: sum.bucket31to60.toFixed(4),
+        bucket61to90: sum.bucket61to90.toFixed(4),
+        bucket90plus: sum.bucket90plus.toFixed(4),
+        total: sum.total.toFixed(4),
+      },
+      methodologyNote:
+        "Кредиторка 531 по транзакциям с контрагентом; корзины от даты документа: 0-30, 31-60, 61-90, 90+.",
+    };
+  }
+
+  /**
+   * Creditor payment plan: unpaid supplier payables with suggested pay date
+   * = document date due proxy (today+7 when no explicit due).
+   */
+  async creditorPaymentPlan(organizationId: string, asOfIso?: string) {
+    const today = asOfIso?.trim() ? parseIsoDateOnly(asOfIso) : new Date();
+    const todayUtc = Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate(),
+    );
+    const asOfEnd = endOfUtcDay(new Date(todayUtc));
+    const suggestedDefault = new Date(todayUtc + 7 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+
+    const supplierPayableCode = await this.posting.resolveAccountCode(
+      organizationId,
+      "SUPPLIER_PAYABLE",
+    );
+    const acc = await this.prisma.account.findFirst({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        code: supplierPayableCode,
+      },
+    });
+    if (!acc) {
+      return { asOf: new Date(todayUtc).toISOString().slice(0, 10), rows: [] };
+    }
+
+    const entries = await this.prisma.journalEntry.findMany({
+      where: {
+        organizationId,
+        ledgerType: LedgerType.NAS,
+        accountId: acc.id,
+        transaction: {
+          date: { lte: asOfEnd },
+          counterpartyId: { not: null },
+        },
+      },
+      select: {
+        debit: true,
+        credit: true,
+        transaction: {
+          select: {
+            id: true,
+            date: true,
+            reference: true,
+            description: true,
+            counterpartyId: true,
+            counterparty: {
+              select: { id: true, nameCipher: true, taxIdCipher: true },
+            },
+          },
+        },
+      },
+    });
+
+    type RowAgg = {
+      transactionId: string;
+      counterpartyId: string;
+      name: string;
+      taxId: string;
+      documentDate: string;
+      reference: string | null;
+      description: string | null;
+      outstanding: Decimal;
+    };
+    const byTx = new Map<string, RowAgg>();
+
+    for (const e of entries) {
+      const tx = e.transaction;
+      if (!tx.counterpartyId || !tx.counterparty) continue;
+      const net = new Decimal(e.credit.toString()).sub(new Decimal(e.debit.toString()));
+      const cur = byTx.get(tx.id) ?? {
+        transactionId: tx.id,
+        counterpartyId: tx.counterpartyId,
+        name: tx.counterparty.nameCipher
+          ? decryptText(tx.counterparty.nameCipher) ?? ""
+          : "",
+        taxId: tx.counterparty.taxIdCipher
+          ? decryptText(tx.counterparty.taxIdCipher) ?? ""
+          : "",
+        documentDate: tx.date.toISOString().slice(0, 10),
+        reference: tx.reference,
+        description: tx.description,
+        outstanding: new Decimal(0),
+      };
+      cur.outstanding = cur.outstanding.add(net);
+      byTx.set(tx.id, cur);
+    }
+
+    const rows = [...byTx.values()]
+      .filter((r) => r.outstanding.gt(0))
+      .map((r) => ({
+        transactionId: r.transactionId,
+        counterpartyId: r.counterpartyId,
+        name: r.name,
+        taxId: r.taxId,
+        documentDate: r.documentDate,
+        reference: r.reference,
+        description: r.description,
+        outstanding: r.outstanding.toFixed(4),
+        suggestedPayDate: suggestedDefault,
+      }))
+      .sort((a, b) => a.documentDate.localeCompare(b.documentDate));
+
+    return {
+      asOf: new Date(todayUtc).toISOString().slice(0, 10),
+      rows,
+      methodologyNote:
+        "Непогашенный кредит 531 по транзакции; suggestedPayDate = asOf+7 (явного dueDate у закупок нет).",
+    };
+  }
+
   async dashboard(
     organizationId: string,
     ledgerType: LedgerType = LedgerType.NAS,
@@ -1402,6 +1704,210 @@ export class ReportingService {
       closedPeriod: key,
       transactionsMarked: true,
       depreciation: dep,
+    };
+  }
+
+  /**
+   * EQF registry: sales invoices with e-qaimə / DVX sync fields, filterable by debtor.
+   */
+  async listEqfRegistry(
+    organizationId: string,
+    opts?: { counterpartyId?: string; status?: string },
+  ) {
+    const where: Prisma.InvoiceWhereInput = {
+      organizationId,
+      deletedAt: null,
+      isInternational: false,
+      currency: "AZN",
+    };
+    if (opts?.counterpartyId?.trim()) {
+      where.counterpartyId = opts.counterpartyId.trim();
+    }
+    if (opts?.status?.trim()) {
+      where.eqaimeStatus = opts.status.trim() as EqaimeStatus;
+    }
+
+    const rows = await this.prisma.invoice.findMany({
+      where,
+      orderBy: [{ counterpartyId: "asc" }, { createdAt: "desc" }],
+      take: 500,
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        totalAmount: true,
+        currency: true,
+        dueDate: true,
+        createdAt: true,
+        counterpartyId: true,
+        eqaimeNumber: true,
+        eqaimeStatus: true,
+        eqaimeSubmittedAt: true,
+        dvxExternalId: true,
+        dvxSyncStatus: true,
+        dvxSyncedAt: true,
+        dvxSyncError: true,
+        counterparty: {
+          select: { id: true, nameCipher: true, taxIdCipher: true },
+        },
+      },
+    });
+
+    const items = rows.map((inv) => {
+      const name = inv.counterparty.nameCipher
+        ? decryptText(inv.counterparty.nameCipher) ?? ""
+        : "";
+      const taxId = inv.counterparty.taxIdCipher
+        ? decryptText(inv.counterparty.taxIdCipher)
+        : null;
+      return {
+        id: inv.id,
+        number: inv.number,
+        status: inv.status,
+        totalAmount: inv.totalAmount.toFixed(4),
+        currency: inv.currency,
+        dueDate: inv.dueDate.toISOString().slice(0, 10),
+        createdAt: inv.createdAt.toISOString(),
+        counterpartyId: inv.counterpartyId,
+        counterparty: {
+          id: inv.counterparty.id,
+          name,
+          taxId,
+        },
+        eqaimeNumber: inv.eqaimeNumber,
+        eqaimeStatus: inv.eqaimeStatus,
+        eqaimeSubmittedAt: inv.eqaimeSubmittedAt?.toISOString() ?? null,
+        dvxExternalId: inv.dvxExternalId,
+        dvxSyncStatus: inv.dvxSyncStatus,
+        dvxSyncedAt: inv.dvxSyncedAt?.toISOString() ?? null,
+        dvxSyncError: inv.dvxSyncError,
+      };
+    });
+
+    const byCounterparty = new Map<
+      string,
+      {
+        counterpartyId: string;
+        counterpartyName: string;
+        counterpartyTaxId: string | null;
+        invoices: typeof items;
+      }
+    >();
+    for (const item of items) {
+      const g = byCounterparty.get(item.counterpartyId) ?? {
+        counterpartyId: item.counterpartyId,
+        counterpartyName: item.counterparty.name,
+        counterpartyTaxId: item.counterparty.taxId,
+        invoices: [],
+      };
+      g.invoices.push(item);
+      byCounterparty.set(item.counterpartyId, g);
+    }
+
+    const s2sRaw = this.config.get<string>("ERA_EQAIME_S2S_ENABLED", "0");
+    const s2sEnabled = s2sRaw === "1" || s2sRaw?.toLowerCase() === "true";
+
+    return {
+      total: items.length,
+      items,
+      groups: Array.from(byCounterparty.values()),
+      s2sEnabled,
+    };
+  }
+
+  /**
+   * Subconto / BRANCH analysis: group NAS turnover by JournalEntryDimension valueRef/valueId.
+   * Gated by ERA_SUBCONTO_ENABLED (returns empty when off).
+   */
+  async subcontoAnalysis(
+    organizationId: string,
+    opts: {
+      dateFrom: string;
+      dateTo: string;
+      subcontoTypeCode?: string;
+      valueRef?: string;
+    },
+  ) {
+    const enabled =
+      (this.config.get<string>("ERA_SUBCONTO_ENABLED") ?? "false").toLowerCase() ===
+      "true";
+    if (!enabled) {
+      return {
+        enabled: false,
+        rows: [],
+        note: "ERA_SUBCONTO_ENABLED is false — enable to use analytical dimensions",
+      };
+    }
+
+    const dateFrom = parseIsoDateOnly(opts.dateFrom);
+    const dateTo = endOfUtcDay(parseIsoDateOnly(opts.dateTo));
+    const typeCode = (opts.subcontoTypeCode ?? "BRANCH").trim().toUpperCase();
+
+    const type = await this.prisma.subcontoType.findUnique({
+      where: {
+        organizationId_code: { organizationId, code: typeCode },
+      },
+    });
+    if (!type) {
+      return {
+        enabled: true,
+        subcontoTypeCode: typeCode,
+        rows: [],
+        note: `Subconto type ${typeCode} not found — seed via POST /accounting/subconto/seed-branch`,
+      };
+    }
+
+    const dims = await this.prisma.journalEntryDimension.findMany({
+      where: {
+        subcontoTypeId: type.id,
+        ...(opts.valueRef?.trim()
+          ? { valueRef: opts.valueRef.trim().toUpperCase() }
+          : {}),
+        journalEntry: {
+          organizationId,
+          ledgerType: LedgerType.NAS,
+          transaction: {
+            isFinal: true,
+            date: { gte: dateFrom, lte: dateTo },
+          },
+        },
+      },
+      select: {
+        valueId: true,
+        valueRef: true,
+        journalEntry: { select: { debit: true, credit: true } },
+      },
+    });
+
+    const map = new Map<
+      string,
+      { valueId: string | null; valueRef: string | null; debit: Decimal; credit: Decimal }
+    >();
+    for (const d of dims) {
+      const key = `${d.valueRef ?? ""}|${d.valueId ?? ""}`;
+      const row = map.get(key) ?? {
+        valueId: d.valueId,
+        valueRef: d.valueRef,
+        debit: new Decimal(0),
+        credit: new Decimal(0),
+      };
+      row.debit = row.debit.add(d.journalEntry.debit);
+      row.credit = row.credit.add(d.journalEntry.credit);
+      map.set(key, row);
+    }
+
+    return {
+      enabled: true,
+      subcontoTypeCode: typeCode,
+      dateFrom: opts.dateFrom,
+      dateTo: opts.dateTo,
+      rows: [...map.values()].map((r) => ({
+        valueId: r.valueId,
+        valueRef: r.valueRef,
+        debit: r.debit.toFixed(4),
+        credit: r.credit.toFixed(4),
+        net: r.debit.sub(r.credit).toFixed(4),
+      })),
     };
   }
 }

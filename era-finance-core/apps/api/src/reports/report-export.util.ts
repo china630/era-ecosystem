@@ -166,3 +166,32 @@ export async function cashFlowPdfBuffer(payload: {
     );
   });
 }
+
+export async function statReportXlsxBuffer(payload: {
+  definitionCode: string;
+  definitionName: string;
+  period: string;
+  dateFrom: string;
+  dateTo: string;
+  orgName: string;
+  lines: Array<{
+    lineCode: string;
+    source: string;
+    metric?: string;
+    amount: string;
+  }>;
+}): Promise<Buffer> {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("StatForm");
+  ws.addRow(["Organization", payload.orgName]);
+  ws.addRow(["Form code", payload.definitionCode]);
+  ws.addRow(["Form name", payload.definitionName]);
+  ws.addRow(["Period", payload.period]);
+  ws.addRow(["Date from", payload.dateFrom, "Date to", payload.dateTo]);
+  ws.addRow([]);
+  ws.addRow(["Line", "Source", "Metric", "Amount"]);
+  payload.lines.forEach((l) =>
+    ws.addRow([l.lineCode, l.source, l.metric ?? "", Number(l.amount)]),
+  );
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}

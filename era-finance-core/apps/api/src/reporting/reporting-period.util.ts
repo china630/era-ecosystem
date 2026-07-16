@@ -66,6 +66,23 @@ export function dateToIsoYmdUtc(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+/** Calendar year bounds (UTC date-only) for annual statutory reports. */
+export function yearRangeUtc(year: number): {
+  start: Date;
+  end: Date;
+  fromStr: string;
+  toStr: string;
+} {
+  const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
+  const end = new Date(Date.UTC(year, 11, 31, 0, 0, 0, 0));
+  return {
+    start,
+    end,
+    fromStr: dateToIsoYmdUtc(start),
+    toStr: dateToIsoYmdUtc(end),
+  };
+}
+
 /**
  * Нарезка периода [dateFrom, dateTo] по календарным месяцам (UTC).
  * Для каждого куска — границы включительно и дата курса (конец куска).

@@ -10,6 +10,7 @@ import { InventoryAuditService } from "./inventory-audit.service";
 import { InventoryReconciliationController } from "./inventory-reconciliation.controller";
 import { InventoryController } from "./inventory.controller";
 import { InventoryService } from "./inventory.service";
+import { StatutoryFormsService } from "./statutory-forms.service";
 
 @Module({
   imports: [PrismaModule, AccountingModule, StockModule, AccessControlModule, ContractsModule, GovBudgetModule],
@@ -18,7 +19,7 @@ import { InventoryService } from "./inventory.service";
     InventoryAuditController,
     InventoryReconciliationController,
   ],
-  providers: [InventoryService, InventoryAuditService],
+  providers: [InventoryService, InventoryAuditService, StatutoryFormsService],
   exports: [InventoryService],
 })
 export class InventoryModule {}

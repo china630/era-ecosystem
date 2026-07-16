@@ -24,6 +24,7 @@ import {
 import { IfrsAutoMappingService } from "./ifrs-auto-mapping.service";
 import { PostingAccountResolver } from "./posting/posting-account-resolver.service";
 import { assertBudgetJournalLinesSafe } from "./posting/posting-kind-guard";
+import { SubcontoService } from "./subconto.service";
 
 type Decimal = Prisma.Decimal;
 const Decimal = Prisma.Decimal;
@@ -43,10 +44,18 @@ function asCount(v: unknown): number {
   return 0;
 }
 
+export type PostTransactionLineDimension = {
+  subcontoTypeId: string;
+  valueId?: string | null;
+  valueRef?: string | null;
+};
+
 export type PostTransactionLine = {
   accountCode: string;
   debit: string | number;
   credit: string | number;
+  /** Optional analytical dimensions (subconto); applied when ERA_SUBCONTO_ENABLED=true. */
+  dimensions?: PostTransactionLineDimension[];
 };
 
 @Injectable()
@@ -55,6 +64,7 @@ export class AccountingService {
     private readonly prisma: PrismaService,
     private readonly ifrsAutoMapping: IfrsAutoMappingService,
     private readonly posting: PostingAccountResolver,
+    private readonly subconto: SubcontoService,
   ) {}
 
   validateBalance(lines: PostTransactionLine[]): void {
@@ -184,6 +194,11 @@ export class AccountingService {
       debit: Decimal;
       credit: Decimal;
     }> = [];
+    const createdEntries: Array<{
+      journalEntryId: string;
+      accountId: string;
+      line: PostTransactionLine;
+    }> = [];
 
     for (const line of lines) {
       const account = byCode.get(line.accountCode);
@@ -192,7 +207,7 @@ export class AccountingService {
       }
       const debit = new Decimal(line.debit ?? 0);
       const credit = new Decimal(line.credit ?? 0);
-      await tx.journalEntry.create({
+      const je = await tx.journalEntry.create({
         data: {
           organizationId,
           transactionId: transaction.id,
@@ -208,9 +223,20 @@ export class AccountingService {
         debit,
         credit,
       });
+      createdEntries.push({
+        journalEntryId: je.id,
+        accountId: account.id,
+        line,
+      });
     }
 
     if (ledgerType === LedgerType.NAS) {
+      await this.subconto.applyDimensionsToJournalEntries(tx, {
+        organizationId,
+        journalEntries: createdEntries,
+        counterpartyId,
+        departmentId,
+      });
       await this.ifrsAutoMapping.mirrorFromNas({
         tx,
         organizationId,

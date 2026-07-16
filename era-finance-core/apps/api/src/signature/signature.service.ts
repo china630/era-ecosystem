@@ -14,6 +14,8 @@ import {
 import { parseSignerDisplayName } from "../common/certificate-subject.util";
 import { PrismaService } from "../prisma/prisma.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import type { GovSignaturePurpose } from "./gov-signature.adapter";
+import { GovSignatureAdapterFactory } from "./gov-signature.adapters";
 
 const MOCK_DELAY_MS = 2000;
 
@@ -32,11 +34,29 @@ export class SignatureService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly govSignatureFactory: GovSignatureAdapterFactory,
   ) {}
 
   /** 1 — имитация Mobile ID (по умолчанию); 0 — только ожидание внешнего шлюза (без авто-завершения). */
   isGatewayMock(): boolean {
     return this.config.get<string>("SIGNATURE_GATEWAY_MOCK", "1") !== "0";
+  }
+
+  /**
+   * Signs a gov-submit payload (tax declaration, e-qaimə, reconciliation package).
+   * Uses MockGovSignatureAdapter when SIGNATURE_GATEWAY_MOCK=1 and ERA_ASAN_SIMA_LIVE=0.
+   */
+  async signGovPayload(
+    payload: Buffer | string,
+    opts: {
+      organizationId: string;
+      asanUserId?: string | null;
+      purpose: GovSignaturePurpose;
+      provider?: SignatureProvider;
+    },
+  ) {
+    const adapter = this.govSignatureFactory.get();
+    return adapter.signPayload(payload, opts);
   }
 
   /**

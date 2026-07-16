@@ -3,14 +3,18 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createHmac, timingSafeEqual } from "node:crypto";
+import PDFDocument from "pdfkit";
 import {
   Decimal,
   EmployeeKind,
   OrganizationKind,
+  PayrollComponentCode,
+  PayrollComponentKind,
   PayrollRunStatus,
   UserRole,
 } from "@erafinance/database";
@@ -28,6 +32,7 @@ import {
   calculatePayrollByTemplateGroup,
   parsePayrollTaxSettings,
 } from "../payroll/tax-calculator";
+import { roundMoney2 } from "./payroll-calculator";
 import { BankingGatewayService } from "../banking/banking-gateway.service";
 import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-client.service";
 import { batchEmployeePersonMap } from "./employee-person.util";
@@ -37,9 +42,18 @@ import {
   STORAGE_SERVICE,
   type StorageService,
 } from "../storage/storage.interface";
+import { MailService } from "../mail/mail.service";
+import { PayrollComponentsService } from "./payroll-components.service";
+import {
+  PDF_FONT_UNICODE,
+  PDF_FONT_UNICODE_BOLD,
+  registerUnicodeFonts,
+} from "../reporting/pdf-font.util";
 
 @Injectable()
 export class PayrollService {
+  private readonly logger = new Logger(PayrollService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly accounting: AccountingService,
@@ -52,6 +66,8 @@ export class PayrollService {
     private readonly notifications: NotificationService,
     private readonly posting: PostingAccountResolver,
     private readonly mdm: OrchestratorMdmClientService,
+    private readonly mail: MailService,
+    private readonly payrollComponents: PayrollComponentsService,
   ) {}
 
   listRuns(organizationId: string) {
@@ -73,7 +89,12 @@ export class PayrollService {
     const run = await this.prisma.payrollRun.findFirst({
       where: { id, organizationId },
       include: {
-        slips: { include: { employee: true } },
+        slips: {
+          include: {
+            employee: true,
+            lines: { orderBy: [{ kind: "asc" }, { code: "asc" }] },
+          },
+        },
       },
     });
     if (!run) throw new NotFoundException("Payroll run not found");
@@ -116,9 +137,13 @@ export class PayrollService {
       throw new ConflictException("Payroll run already exists for this month");
     }
 
-    const [employees, org] = await Promise.all([
-      this.prisma.employee.findMany({ where: { organizationId } }),
+    const [employees, org, componentIdByCode] = await Promise.all([
+      this.prisma.employee.findMany({
+        where: { organizationId },
+        include: { workSchedule: true },
+      }),
       this.prisma.organization.findUnique({ where: { id: organizationId } }),
+      this.payrollComponents.componentIdMap(organizationId),
     ]);
     if (employees.length === 0) {
       throw new BadRequestException("No employees to pay");
@@ -146,6 +171,20 @@ export class PayrollService {
       }
     }
 
+    const linesByEmployee = new Map<
+      string,
+      Array<{
+        code: PayrollComponentCode;
+        amount: number;
+        note?: string;
+      }>
+    >();
+    for (const line of dto.employeeLines ?? []) {
+      const list = linesByEmployee.get(line.employeeId) ?? [];
+      list.push(line);
+      linesByEmployee.set(line.employeeId, list);
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const run = await tx.payrollRun.create({
         data: {
@@ -158,7 +197,17 @@ export class PayrollService {
       });
 
       for (const emp of employees) {
-        let grossBase = new Decimal(emp.salary);
+        const tariff = new Decimal(
+          (emp as { tariffSalary?: Decimal }).tariffSalary ?? 0,
+        );
+        const supplement = new Decimal(
+          (emp as { supplementSalary?: Decimal }).supplementSalary ?? 0,
+        );
+        let grossBase =
+          tariff.add(supplement).gt(0)
+            ? tariff.add(supplement)
+            : new Decimal(emp.salary);
+
         if (
           emp.kind === EmployeeKind.EMPLOYEE &&
           tsSummary?.mixByEmployeeId[emp.id]
@@ -173,25 +222,124 @@ export class PayrollService {
             m,
           );
         }
+
+        const slipLineDrafts: Array<{
+          code: PayrollComponentCode;
+          kind: PayrollComponentKind;
+          amount: Decimal;
+          note: string;
+          componentId: string | null;
+        }> = [];
+
+        const pushLine = (
+          code: PayrollComponentCode,
+          amount: Decimal,
+          note = "",
+        ) => {
+          if (amount.lte(0) && code !== PayrollComponentCode.BASE_SALARY) {
+            return;
+          }
+          const kind = this.payrollComponents.kindForCode(code);
+          slipLineDrafts.push({
+            code,
+            kind,
+            amount: roundMoney2(amount),
+            note,
+            componentId: componentIdByCode.get(code) ?? null,
+          });
+        };
+
+        pushLine(PayrollComponentCode.BASE_SALARY, grossBase);
+
+        const hoursRow = tsSummary?.hoursByEmployeeId?.[emp.id];
+        const schedule = emp.workSchedule;
+        if (hoursRow && schedule && emp.kind === EmployeeKind.EMPLOYEE) {
+          const normDays = Math.max(1, tsSummary?.normWorkingDays ?? 21);
+          const dayHours = new Decimal(schedule.dayHours || 8);
+          const monthlyHours = dayHours.mul(normDays);
+          const hourly = monthlyHours.gt(0)
+            ? grossBase.div(monthlyHours)
+            : new Decimal(0);
+          // Premium differential: hours × hourly × (rate − 1)
+          const nightExtra = hourly
+            .mul(hoursRow.night)
+            .mul(new Decimal(schedule.nightPremiumRate).sub(1));
+          const eveningExtra = hourly
+            .mul(hoursRow.evening)
+            .mul(new Decimal(schedule.eveningPremiumRate).sub(1));
+          const otExtra = hourly
+            .mul(hoursRow.overtime)
+            .mul(new Decimal(schedule.overtimePremiumRate).sub(1));
+          pushLine(PayrollComponentCode.NIGHT_PREMIUM, nightExtra);
+          pushLine(PayrollComponentCode.EVENING_PREMIUM, eveningExtra);
+          pushLine(PayrollComponentCode.OVERTIME_PREMIUM, otExtra);
+        }
+
+        for (const manual of linesByEmployee.get(emp.id) ?? []) {
+          pushLine(
+            manual.code,
+            new Decimal(manual.amount),
+            manual.note?.trim() ?? "",
+          );
+        }
+
+        let earnings = new Decimal(0);
+        let deductions = new Decimal(0);
+        let taxRelief = new Decimal(0);
+        for (const line of slipLineDrafts) {
+          if (line.code === PayrollComponentCode.BASE_SALARY) continue;
+          if (line.code === PayrollComponentCode.INCOME_TAX_RELIEF) {
+            taxRelief = taxRelief.add(line.amount);
+            continue;
+          }
+          if (line.kind === PayrollComponentKind.EARNING) {
+            earnings = earnings.add(line.amount);
+          } else {
+            deductions = deductions.add(line.amount);
+          }
+        }
+
+        const taxableGross = roundMoney2(
+          grossBase.add(earnings).sub(taxRelief),
+        );
+        if (taxableGross.isNegative()) {
+          throw new BadRequestException(
+            `Negative taxable gross for employee ${emp.id}`,
+          );
+        }
+
         const b =
           emp.kind === EmployeeKind.CONTRACTOR
             ? calculateContractorMicroPayrollTax(
-                new Decimal(emp.salary),
+                taxableGross,
                 emp.contractorMonthlySocialAzn,
               )
             : calculatePayrollByTemplateGroup(
-                grossBase,
+                taxableGross,
                 templateGroup,
                 taxSettings,
               );
-        if (b.net.isNegative()) {
+
+        const statutoryWorker = roundMoney2(
+          b.incomeTax
+            .add(b.dsmfWorker)
+            .add(b.itsWorker)
+            .add(b.unemploymentWorker)
+            .add(b.contractorSocialWithheld),
+        );
+        const net = roundMoney2(
+          taxableGross.sub(statutoryWorker).sub(deductions),
+        );
+
+        if (net.isNegative()) {
           const p = personMap.get(emp.globalPersonId);
           throw new BadRequestException(
-            `Отрицательная сумма к выплате для сотрудника ${p?.lastName ?? emp.id}: проверьте оклад и фикс. соц. удержания`,
+            `Отрицательная сумма к выплате для сотрудника ${p?.lastName ?? emp.id}: проверьте оклад и удержания`,
           );
         }
+
         const ts = tsSummary?.byEmployeeId[emp.id];
-        await tx.payrollSlip.create({
+        const slip = await tx.payrollSlip.create({
           data: {
             organizationId,
             payrollRunId: run.id,
@@ -205,19 +353,38 @@ export class PayrollService {
             unemploymentWorker: b.unemploymentWorker,
             unemploymentEmployer: b.unemploymentEmployer,
             contractorSocialWithheld: b.contractorSocialWithheld,
-            net: b.net,
+            net,
             timesheetWorkDays: ts?.work ?? null,
             timesheetVacationDays: ts?.vacation ?? null,
             timesheetSickDays: ts?.sick ?? null,
             timesheetBusinessTripDays: ts?.businessTrip ?? null,
           },
         });
+
+        if (slipLineDrafts.length > 0) {
+          await tx.payrollSlipLine.createMany({
+            data: slipLineDrafts.map((line) => ({
+              organizationId,
+              payrollSlipId: slip.id,
+              componentId: line.componentId,
+              code: line.code,
+              kind: line.kind,
+              amount: line.amount,
+              note: line.note,
+            })),
+          });
+        }
       }
 
       return tx.payrollRun.findUniqueOrThrow({
         where: { id: run.id },
         include: {
-          slips: { include: { employee: true } },
+          slips: {
+            include: {
+              employee: true,
+              lines: true,
+            },
+          },
         },
       });
     });
@@ -713,6 +880,169 @@ export class PayrollService {
     const orgType = settings.organizationType;
     if (orgType === "GOVERNMENT") return "GOVERNMENT";
     return "COMMERCIAL";
+  }
+
+  async buildPayslipPdfBuffer(slip: {
+    id: string;
+    gross: Decimal;
+    net: Decimal;
+    incomeTax: Decimal;
+    dsmfWorker: Decimal;
+    itsWorker: Decimal;
+    unemploymentWorker: Decimal;
+    contractorSocialWithheld: Decimal;
+    lines?: Array<{
+      code: string;
+      kind: string;
+      amount: Decimal;
+      note: string;
+    }>;
+    employee?: {
+      firstName?: string;
+      lastName?: string;
+      tariffSalary?: Decimal | null;
+      supplementSalary?: Decimal | null;
+      salary?: Decimal;
+    };
+    payrollRun?: { year: number; month: number };
+  }): Promise<Buffer> {
+    const doc = new PDFDocument({ margin: 48, size: "A4" });
+    registerUnicodeFonts(doc);
+    const chunks: Buffer[] = [];
+    doc.on("data", (c: Buffer) => chunks.push(c));
+
+    const name = `${slip.employee?.lastName ?? ""} ${slip.employee?.firstName ?? ""}`.trim() || "Employee";
+    const period =
+      slip.payrollRun != null
+        ? `${String(slip.payrollRun.month).padStart(2, "0")}/${slip.payrollRun.year}`
+        : "";
+
+    doc.font(PDF_FONT_UNICODE_BOLD).fontSize(16).text("Payslip / Əmək haqqı vərəqəsi");
+    doc.moveDown(0.5);
+    doc.font(PDF_FONT_UNICODE).fontSize(11);
+    doc.text(`Employee: ${name}`);
+    if (period) doc.text(`Period: ${period}`);
+    doc.moveDown(0.5);
+    doc.text(`Gross: ${Number(slip.gross).toFixed(2)} AZN`);
+    doc.text(`Income tax: ${Number(slip.incomeTax).toFixed(2)} AZN`);
+    doc.text(`DSMF worker: ${Number(slip.dsmfWorker).toFixed(2)} AZN`);
+    doc.text(`ITS worker: ${Number(slip.itsWorker).toFixed(2)} AZN`);
+    doc.text(
+      `Unemployment worker: ${Number(slip.unemploymentWorker).toFixed(2)} AZN`,
+    );
+    if (Number(slip.contractorSocialWithheld) > 0) {
+      doc.text(
+        `Contractor social: ${Number(slip.contractorSocialWithheld).toFixed(2)} AZN`,
+      );
+    }
+    doc.font(PDF_FONT_UNICODE_BOLD).text(`Net: ${Number(slip.net).toFixed(2)} AZN`);
+
+    if (slip.lines && slip.lines.length > 0) {
+      doc.moveDown(0.75);
+      doc.font(PDF_FONT_UNICODE_BOLD).text("Lines");
+      doc.font(PDF_FONT_UNICODE);
+      for (const line of slip.lines) {
+        doc.text(
+          `${line.kind} ${line.code}: ${Number(line.amount).toFixed(2)} AZN${line.note ? ` — ${line.note}` : ""}`,
+        );
+      }
+    }
+
+    doc.end();
+    await new Promise<void>((resolve, reject) => {
+      doc.on("end", () => resolve());
+      doc.on("error", reject);
+    });
+    return Buffer.concat(chunks);
+  }
+
+  async emailSlip(
+    organizationId: string,
+    slipId: string,
+    toEmail?: string,
+  ): Promise<{ ok: boolean; sentTo?: string; skipped?: string }> {
+    const slip = await this.prisma.payrollSlip.findFirst({
+      where: { id: slipId, organizationId },
+      include: {
+        employee: { include: { linkedUser: true } },
+        lines: true,
+        payrollRun: true,
+      },
+    });
+    if (!slip) throw new NotFoundException("Payroll slip not found");
+
+    const personMap = await batchEmployeePersonMap(
+      this.mdm,
+      organizationId,
+      [slip.employee.globalPersonId],
+    );
+    const person = personMap.get(slip.employee.globalPersonId);
+    const enriched = {
+      ...slip,
+      employee: {
+        ...slip.employee,
+        firstName: person?.firstName ?? "—",
+        lastName: person?.lastName ?? "—",
+      },
+    };
+
+    const email =
+      toEmail?.trim() ||
+      slip.employee.linkedUser?.email?.trim() ||
+      null;
+    if (!email) {
+      this.logger.log(
+        `Payslip email skipped for slip ${slipId}: no email (MDM/linked user)`,
+      );
+      return { ok: false, skipped: "no_email" };
+    }
+
+    const pdf = await this.buildPayslipPdfBuffer(enriched);
+    const period = `${String(slip.payrollRun.month).padStart(2, "0")}-${slip.payrollRun.year}`;
+    await this.mail.sendMail({
+      to: email,
+      subject: `Payslip ${period}`,
+      text: `Payslip for ${period} attached.`,
+      attachments: [
+        {
+          filename: `payslip-${period}-${slip.id.slice(0, 8)}.pdf`,
+          content: pdf,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+    return { ok: true, sentTo: email };
+  }
+
+  async emailRun(
+    organizationId: string,
+    runId: string,
+  ): Promise<{
+    sent: number;
+    skipped: number;
+    results: Array<{ slipId: string; ok: boolean; sentTo?: string; skipped?: string }>;
+  }> {
+    const run = await this.prisma.payrollRun.findFirst({
+      where: { id: runId, organizationId },
+      include: { slips: { select: { id: true } } },
+    });
+    if (!run) throw new NotFoundException("Payroll run not found");
+
+    const results: Array<{
+      slipId: string;
+      ok: boolean;
+      sentTo?: string;
+      skipped?: string;
+    }> = [];
+    let sent = 0;
+    let skipped = 0;
+    for (const s of run.slips) {
+      const r = await this.emailSlip(organizationId, s.id);
+      results.push({ slipId: s.id, ...r });
+      if (r.ok) sent += 1;
+      else skipped += 1;
+    }
+    return { sent, skipped, results };
   }
 
   private signPayload(payload: string): string {

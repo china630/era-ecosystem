@@ -1,0 +1,64 @@
+{
+  "templateKey": "statReports.az",
+  "version": 1,
+  "region": "AZ",
+  "meta": {
+    "source": "Placeholder templates for Goskomstat statistical forms; replace mappingJson with official line layouts when available.",
+    "note": "WS4 seed: 1-müəssisə, 1-əmək / 4-əmək, 1-İKT."
+  },
+  "definitions": [
+    {
+      "code": "AZ_STAT_1_MUESSISE",
+      "name": "1-müəssisə (annual enterprise report)",
+      "periodKind": "YEAR",
+      "version": 1,
+      "mappingJson": {
+        "sections": [
+          { "lineCode": "010", "source": "gl.turnover", "accountPrefix": "1" },
+          { "lineCode": "020", "source": "gl.turnover", "accountPrefix": "2" },
+          { "lineCode": "030", "source": "hr.headcount", "metric": "avgFte" }
+        ]
+      }
+    },
+    {
+      "code": "AZ_STAT_1_EMEK",
+      "name": "1-əmək (labor / workforce annual)",
+      "periodKind": "YEAR",
+      "version": 1,
+      "mappingJson": {
+        "sections": [
+          { "lineCode": "101", "source": "hr.headcount", "metric": "avgFte" },
+          { "lineCode": "102", "source": "hr.payroll", "metric": "grossWages" },
+          { "lineCode": "103", "source": "hr.absence", "metric": "unpaidDays" }
+        ]
+      }
+    },
+    {
+      "code": "AZ_STAT_4_EMEK",
+      "name": "4-əmək (labor / workforce quarterly)",
+      "periodKind": "QUARTER",
+      "version": 1,
+      "mappingJson": {
+        "sections": [
+          { "lineCode": "101", "source": "hr.headcount", "metric": "avgFte" },
+          { "lineCode": "102", "source": "hr.payroll", "metric": "grossWages" },
+          { "lineCode": "103", "source": "hr.absence", "metric": "unpaidDays" }
+        ]
+      }
+    },
+    {
+      "code": "AZ_STAT_1_IKT",
+      "name": "1-İKT (ICT / investments statistical form)",
+      "periodKind": "YEAR",
+      "version": 1,
+      "mappingJson": {
+        "sections": [
+          { "lineCode": "401", "source": "gl.turnover", "accountPrefix": "11" },
+          { "lineCode": "402", "source": "gl.turnover", "accountPrefix": "13" },
+          { "lineCode": "403", "source": "inventory.receipt", "filter": "equipment" },
+          { "lineCode": "404", "source": "constant", "constant": 0 }
+        ]
+      }
+    }
+  ]
+}

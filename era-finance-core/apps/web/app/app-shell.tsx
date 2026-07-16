@@ -345,7 +345,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       pathname.startsWith("/sales/invoices") ||
       pathname.startsWith("/sales/reconciliation");
     const purchasesActive =
-      pathname.startsWith("/purchases") || pathname.startsWith("/finance/payables");
+      pathname.startsWith("/purchases") ||
+      pathname.startsWith("/finance/payables") ||
+      pathname.startsWith("/procurement");
     const manufacturingNavActive = pathname.startsWith("/manufacturing");
     const warehouseActive = pathname.startsWith("/inventory");
     const catalogCrmActive =
@@ -377,6 +379,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         (pathname.startsWith("/reporting") &&
           !pathname.startsWith("/reporting/receivables") &&
           !pathname.startsWith("/reporting/aging") &&
+          !pathname.startsWith("/reporting/ap-aging") &&
           !pathname.startsWith("/reporting/tax-export") &&
           !pathname.startsWith("/reporting/holding")));
     /** Только хаб остатков `/inventory`, без вложенных экранов (köçürmə, inventar və s.) */

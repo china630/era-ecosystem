@@ -8,6 +8,7 @@ const TAX_RATES = [
   { code: "EDV_0", kind: TaxRateKind.VAT, percent: 0, nameAz: "ƏDV 0%", nameRu: "НДС 0%", nameEn: "VAT 0%", sortOrder: 3 },
   { code: "EDV_EXEMPT", kind: TaxRateKind.VAT, percent: 0, nameAz: "ƏDV-dən azad", nameRu: "Освобождено от НДС", nameEn: "VAT exempt", sortOrder: 4 },
   { code: "EXCISE_TOBACCO", kind: TaxRateKind.EXCISE, percent: 35, nameAz: "Aksiz (tütün)", nameRu: "Акциз (табак)", nameEn: "Excise (tobacco)", sortOrder: 10 },
+  { code: "MENFEET_20", kind: TaxRateKind.INCOME, percent: 20, nameAz: "Mənfəət vergisi 20%", nameRu: "Налог на прибыль 20%", nameEn: "Profit tax 20%", sortOrder: 20 },
 ] as const;
 
 export async function seedTaxRates(ctx: SeedContext): Promise<void> {

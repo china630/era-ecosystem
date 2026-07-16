@@ -28,6 +28,7 @@ import { PermissionsGuard } from "../common/guards/permissions.guard";
 import { OrganizationId } from "../common/org-id.decorator";
 import { ApprovePurchaseRequestDto } from "./dto/approve-purchase-request.dto";
 import { CreatePurchaseRequestDto } from "./dto/create-purchase-request.dto";
+import { LinkPurchaseDto } from "./dto/link-purchase.dto";
 import { UpdatePurchaseRequestDto } from "./dto/update-purchase-request.dto";
 import { PurchaseRequestsService } from "./purchase-requests.service";
 
@@ -152,5 +153,25 @@ export class PurchaseRequestsController {
     @Body() dto: ApprovePurchaseRequestDto,
   ) {
     return this.requests.approve(organizationId, id, user.userId, dto);
+  }
+
+  @Post(":id/link-purchase")
+  @Permissions("purchases.manage")
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.ACCOUNTANT,
+    UserRole.PROCUREMENT,
+  )
+  @ApiOperation({
+    summary:
+      "Link posted purchase invoice transaction (ORDERED); auto-close when final + warehouse receipt",
+  })
+  linkPurchase(
+    @OrganizationId() organizationId: string,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Body() dto: LinkPurchaseDto,
+  ) {
+    return this.requests.linkPurchase(organizationId, id, dto.transactionId);
   }
 }

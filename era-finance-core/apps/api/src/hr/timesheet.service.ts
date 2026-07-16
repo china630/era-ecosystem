@@ -320,6 +320,9 @@ export class TimesheetService {
           b.hours != null
             ? new Decimal(b.hours)
             : defaultHoursForType(b.type);
+        const nightHrs = new Decimal(b.nightHours ?? 0);
+        const eveningHrs = new Decimal(b.eveningHours ?? 0);
+        const overtimeHrs = new Decimal(b.overtimeHours ?? 0);
         for (let d = b.fromDay; d <= b.toDay; d++) {
           const dayDate = dayDateUtc(year, month, d);
           const existing = await tx.timesheetEntry.findUnique({
@@ -348,9 +351,19 @@ export class TimesheetService {
               dayDate,
               type: b.type,
               hours: hrs,
+              nightHours: nightHrs,
+              eveningHours: eveningHrs,
+              overtimeHours: overtimeHrs,
               lockedFromAbsence: false,
             },
-            update: { type: b.type, hours: hrs, lockedFromAbsence: false },
+            update: {
+              type: b.type,
+              hours: hrs,
+              nightHours: nightHrs,
+              eveningHours: eveningHrs,
+              overtimeHours: overtimeHrs,
+              lockedFromAbsence: false,
+            },
           });
         }
       }
@@ -469,6 +482,10 @@ export class TimesheetService {
       string,
       { workBizWorkingDays: number; vacationCalendarDays: number }
     >();
+    const hoursEmp = new Map<
+      string,
+      { hours: Decimal; night: Decimal; evening: Decimal; overtime: Decimal }
+    >();
 
     for (const e of entries) {
       let row = byEmp.get(e.employeeId);
@@ -476,6 +493,21 @@ export class TimesheetService {
         row = { work: 0, vacation: 0, sick: 0, businessTrip: 0 };
         byEmp.set(e.employeeId, row);
       }
+      let hrs = hoursEmp.get(e.employeeId);
+      if (!hrs) {
+        hrs = {
+          hours: new Decimal(0),
+          night: new Decimal(0),
+          evening: new Decimal(0),
+          overtime: new Decimal(0),
+        };
+        hoursEmp.set(e.employeeId, hrs);
+      }
+      hrs.hours = hrs.hours.add(e.hours);
+      hrs.night = hrs.night.add(e.nightHours ?? 0);
+      hrs.evening = hrs.evening.add(e.eveningHours ?? 0);
+      hrs.overtime = hrs.overtime.add(e.overtimeHours ?? 0);
+
       switch (e.type) {
         case TimesheetEntryType.WORK:
           row.work += 1;
@@ -530,12 +562,26 @@ export class TimesheetService {
       };
     }
 
+    const hoursByEmployeeId: Record<
+      string,
+      { hours: number; night: number; evening: number; overtime: number }
+    > = {};
+    for (const [id, v] of hoursEmp) {
+      hoursByEmployeeId[id] = {
+        hours: Number(v.hours.toFixed(2)),
+        night: Number(v.night.toFixed(2)),
+        evening: Number(v.evening.toFixed(2)),
+        overtime: Number(v.overtime.toFixed(2)),
+      };
+    }
+
     return {
       year: ts.year,
       month: ts.month,
       normWorkingDays,
       byEmployeeId: Object.fromEntries(byEmp),
       mixByEmployeeId,
+      hoursByEmployeeId,
     };
   }
 

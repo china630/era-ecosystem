@@ -77,11 +77,15 @@ export class InventoryService {
         select: { id: true },
       });
       if (!contract) throw new NotFoundException("Contract not found");
-      const check = await this.contracts.checkLimit(dto.contractId, amountAzn);
+      const check = await this.contracts.checkLimit(
+        dto.contractId,
+        amountAzn,
+        organizationId,
+      );
       if (!check.allowed) {
         throw new BadRequestException({
-          code: "CONTRACT_LIMIT_EXCEEDED",
-          message: "Contract amount limit exceeded",
+          code: check.reason ?? "CONTRACT_LIMIT_EXCEEDED",
+          message: "Contract commitment not allowed",
           ...check,
         });
       }
@@ -101,14 +105,20 @@ export class InventoryService {
     }
   }
 
+  /**
+   * Prefer atomic contract reserve inside the purchase `$transaction`.
+   * Budget usage remains via documentUsage (separate table).
+   */
   private async recordPurchaseLimitUsage(
+    tx: Prisma.TransactionClient,
     organizationId: string,
     dto: PurchaseStockDto,
     amountAzn: Decimal,
     transactionId: string,
   ): Promise<void> {
     if (dto.contractId) {
-      await this.contracts.documentUsage(
+      await this.contracts.reserveCommitmentInTransaction(
+        tx,
         organizationId,
         dto.contractId,
         amountAzn,
@@ -723,7 +733,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
-      await this.recordPurchaseLimitUsage(organizationId, dto, grAz, transactionId);
+      await this.recordPurchaseLimitUsage(tx, organizationId, dto, grAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),
@@ -863,7 +873,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
-      await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
+      await this.recordPurchaseLimitUsage(tx, organizationId, dto, gAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),
@@ -1916,7 +1926,7 @@ export class InventoryService {
           purchaseSnapshot: { version: 1, lines: snapshotLines } as Prisma.InputJsonValue,
         },
       });
-      await this.recordPurchaseLimitUsage(organizationId, dto, gAz, transactionId);
+      await this.recordPurchaseLimitUsage(tx, organizationId, dto, gAz, transactionId);
 
       return {
         totalAmount: totalGross.toString(),
