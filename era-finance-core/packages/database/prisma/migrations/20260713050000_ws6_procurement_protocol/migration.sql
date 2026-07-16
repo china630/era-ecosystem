@@ -3,7 +3,13 @@
 DO $enum$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ProcurementProtocolStatus') THEN
+    DO $do_ProcurementProtocolStatus$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ProcurementProtocolStatus') THEN
     CREATE TYPE "ProcurementProtocolStatus" AS ENUM ('DRAFT', 'REGISTERED');
+  END IF;
+END
+$do_ProcurementProtocolStatus$;
   END IF;
 END $enum$;
 

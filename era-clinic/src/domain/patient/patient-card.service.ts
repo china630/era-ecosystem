@@ -88,7 +88,7 @@ function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
   return {
     ...ev,
     subtitle: ev.subtitle
-      ? `${bakuTimeLabel(ev.at)} · ${ev.subtitle}`
+      ? `${bakuTimeLabel(ev.at)} В· ${ev.subtitle}`
       : bakuTimeLabel(ev.at),
   };
 }
@@ -142,7 +142,7 @@ export async function getPatientCardSummary(patientRefId: string) {
       where: {
         patientRefId,
         scheduledAt: { gte: now },
-        status: { in: ["SCHEDULED", "CHECKED_IN"] },
+        status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       orderBy: { scheduledAt: "asc" },
     }),
@@ -163,7 +163,7 @@ export async function getPatientCardSummary(patientRefId: string) {
       where: {
         patientRefId,
         scheduledAt: { gte: now },
-        status: { in: ["SCHEDULED", "CHECKED_IN"] },
+        status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
       },
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
@@ -219,7 +219,7 @@ export async function getPatientCardSummary(patientRefId: string) {
         id: `procedure:${p.id}`,
         type: "procedure",
         at: p.scheduledAt.toISOString(),
-        title: `Procedure · ${p.procedureName}`,
+        title: `Procedure В· ${p.procedureName}`,
         subtitle: p.procedureCode,
         status: p.status,
         codes: [p.procedureCode],
@@ -286,10 +286,10 @@ export async function getPatientHistoryPage(
       id: `visit:${v.id}`,
       type: "visit",
       at,
-      title: `Visit · ${v.practitioner.fullName}`,
+      title: `Visit В· ${v.practitioner.fullName}`,
       subtitle:
         services.length > 0
-          ? services.slice(0, 6).join(", ") + (services.length > 6 ? "…" : "")
+          ? services.slice(0, 6).join(", ") + (services.length > 6 ? "вЂ¦" : "")
           : undefined,
       status: v.status,
       href: "/appointments",
@@ -309,7 +309,7 @@ export async function getPatientHistoryPage(
       id: `appointment:${a.id}`,
       type: "appointment",
       at: a.scheduledAt.toISOString(),
-      title: `Appointment · ${a.practitioner.fullName}`,
+      title: `Appointment В· ${a.practitioner.fullName}`,
       subtitle: a.roomCode ? `Room ${a.roomCode}` : a.practitioner.code,
       status: a.status,
       href: "/appointments",
@@ -352,7 +352,7 @@ export async function getPatientPlanPage(
 
   const where = {
     patientRefId,
-    status: { in: ["SCHEDULED", "CHECKED_IN"] as const },
+    status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
     scheduledAt: {
       gte: opts.from && opts.from > now ? opts.from : now,
       ...(opts.to ? { lte: opts.to } : {}),
@@ -373,7 +373,7 @@ export async function getPatientPlanPage(
     id: `procedure:${p.id}`,
     type: "procedure",
     at: p.scheduledAt.toISOString(),
-    title: `Procedure · ${p.procedureName}`,
+    title: `Procedure В· ${p.procedureName}`,
     subtitle: p.procedureCode,
     status: p.status,
     codes: [p.procedureCode],

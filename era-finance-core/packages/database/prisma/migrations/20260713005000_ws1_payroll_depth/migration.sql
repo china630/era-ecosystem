@@ -1,14 +1,38 @@
 -- WS1: Payroll depth (schedules, slip lines, seniority, per-diem, business trips)
-CREATE TYPE "WorkScheduleKind" AS ENUM ('FIVE_DAY', 'SIX_DAY', 'TWO_SHIFT');
-CREATE TYPE "PayrollComponentKind" AS ENUM ('EARNING', 'DEDUCTION');
-CREATE TYPE "PayrollComponentCode" AS ENUM (
+DO $do_WorkScheduleKind$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WorkScheduleKind') THEN
+    CREATE TYPE "WorkScheduleKind" AS ENUM ('FIVE_DAY', 'SIX_DAY', 'TWO_SHIFT');
+  END IF;
+END
+$do_WorkScheduleKind$;
+DO $do_PayrollComponentKind$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PayrollComponentKind') THEN
+    CREATE TYPE "PayrollComponentKind" AS ENUM ('EARNING', 'DEDUCTION');
+  END IF;
+END
+$do_PayrollComponentKind$;
+DO $do_PayrollComponentCode$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PayrollComponentCode') THEN
+    CREATE TYPE "PayrollComponentCode" AS ENUM (
   'BONUS', 'MATERIAL_AID', 'ALIMONY', 'EXECUTION_SHEET', 'LOAN', 'ADVANCE',
   'UNION_DUE', 'INCOME_TAX_RELIEF', 'NIGHT_PREMIUM', 'EVENING_PREMIUM',
   'OVERTIME_PREMIUM', 'BASE_SALARY'
 );
-CREATE TYPE "BusinessTripKind" AS ENUM ('DOMESTIC', 'FOREIGN');
+  END IF;
+END
+$do_PayrollComponentCode$;
+DO $do_BusinessTripKind$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BusinessTripKind') THEN
+    CREATE TYPE "BusinessTripKind" AS ENUM ('DOMESTIC', 'FOREIGN');
+  END IF;
+END
+$do_BusinessTripKind$;
 
-CREATE TABLE "work_schedules" (
+CREATE TABLE IF NOT EXISTS "work_schedules" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "name" TEXT NOT NULL,
@@ -21,7 +45,7 @@ CREATE TABLE "work_schedules" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "work_schedules_pkey" PRIMARY KEY ("id")
 );
-CREATE INDEX "work_schedules_organization_id_idx" ON "work_schedules"("organization_id");
+CREATE INDEX IF NOT EXISTS "work_schedules_organization_id_idx" ON "work_schedules"("organization_id");
 ALTER TABLE "work_schedules" ADD CONSTRAINT "work_schedules_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -36,7 +60,7 @@ ALTER TABLE "timesheet_entries" ADD COLUMN IF NOT EXISTS "night_hours" DECIMAL(8
 ALTER TABLE "timesheet_entries" ADD COLUMN IF NOT EXISTS "evening_hours" DECIMAL(8,2) NOT NULL DEFAULT 0;
 ALTER TABLE "timesheet_entries" ADD COLUMN IF NOT EXISTS "overtime_hours" DECIMAL(8,2) NOT NULL DEFAULT 0;
 
-CREATE TABLE "payroll_components" (
+CREATE TABLE IF NOT EXISTS "payroll_components" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "code" "PayrollComponentCode" NOT NULL,
@@ -49,12 +73,12 @@ CREATE TABLE "payroll_components" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "payroll_components_pkey" PRIMARY KEY ("id")
 );
-CREATE UNIQUE INDEX "payroll_components_organization_id_code_key" ON "payroll_components"("organization_id", "code");
-CREATE INDEX "payroll_components_organization_id_is_active_idx" ON "payroll_components"("organization_id", "is_active");
+CREATE UNIQUE INDEX IF NOT EXISTS "payroll_components_organization_id_code_key" ON "payroll_components"("organization_id", "code");
+CREATE INDEX IF NOT EXISTS "payroll_components_organization_id_is_active_idx" ON "payroll_components"("organization_id", "is_active");
 ALTER TABLE "payroll_components" ADD CONSTRAINT "payroll_components_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-CREATE TABLE "payroll_slip_lines" (
+CREATE TABLE IF NOT EXISTS "payroll_slip_lines" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "payroll_slip_id" UUID NOT NULL,
@@ -67,8 +91,8 @@ CREATE TABLE "payroll_slip_lines" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "payroll_slip_lines_pkey" PRIMARY KEY ("id")
 );
-CREATE INDEX "payroll_slip_lines_organization_id_payroll_slip_id_idx" ON "payroll_slip_lines"("organization_id", "payroll_slip_id");
-CREATE INDEX "payroll_slip_lines_payroll_slip_id_idx" ON "payroll_slip_lines"("payroll_slip_id");
+CREATE INDEX IF NOT EXISTS "payroll_slip_lines_organization_id_payroll_slip_id_idx" ON "payroll_slip_lines"("organization_id", "payroll_slip_id");
+CREATE INDEX IF NOT EXISTS "payroll_slip_lines_payroll_slip_id_idx" ON "payroll_slip_lines"("payroll_slip_id");
 ALTER TABLE "payroll_slip_lines" ADD CONSTRAINT "payroll_slip_lines_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "payroll_slip_lines" ADD CONSTRAINT "payroll_slip_lines_payroll_slip_id_fkey"
@@ -76,7 +100,7 @@ ALTER TABLE "payroll_slip_lines" ADD CONSTRAINT "payroll_slip_lines_payroll_slip
 ALTER TABLE "payroll_slip_lines" ADD CONSTRAINT "payroll_slip_lines_component_id_fkey"
   FOREIGN KEY ("component_id") REFERENCES "payroll_components"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
-CREATE TABLE "vacation_seniority_rules" (
+CREATE TABLE IF NOT EXISTS "vacation_seniority_rules" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "years_from" INTEGER NOT NULL,
@@ -85,11 +109,11 @@ CREATE TABLE "vacation_seniority_rules" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "vacation_seniority_rules_pkey" PRIMARY KEY ("id")
 );
-CREATE UNIQUE INDEX "vacation_seniority_rules_organization_id_years_from_key" ON "vacation_seniority_rules"("organization_id", "years_from");
+CREATE UNIQUE INDEX IF NOT EXISTS "vacation_seniority_rules_organization_id_years_from_key" ON "vacation_seniority_rules"("organization_id", "years_from");
 ALTER TABLE "vacation_seniority_rules" ADD CONSTRAINT "vacation_seniority_rules_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-CREATE TABLE "per_diem_norms" (
+CREATE TABLE IF NOT EXISTS "per_diem_norms" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "region_code" TEXT NOT NULL,
@@ -100,11 +124,11 @@ CREATE TABLE "per_diem_norms" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "per_diem_norms_pkey" PRIMARY KEY ("id")
 );
-CREATE UNIQUE INDEX "per_diem_norms_organization_id_region_code_key" ON "per_diem_norms"("organization_id", "region_code");
+CREATE UNIQUE INDEX IF NOT EXISTS "per_diem_norms_organization_id_region_code_key" ON "per_diem_norms"("organization_id", "region_code");
 ALTER TABLE "per_diem_norms" ADD CONSTRAINT "per_diem_norms_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-CREATE TABLE "business_trips" (
+CREATE TABLE IF NOT EXISTS "business_trips" (
   "id" UUID NOT NULL DEFAULT uuid_generate_v4(),
   "organization_id" UUID NOT NULL,
   "employee_id" UUID NOT NULL,
@@ -120,8 +144,8 @@ CREATE TABLE "business_trips" (
   "updated_at" TIMESTAMP(3) NOT NULL,
   CONSTRAINT "business_trips_pkey" PRIMARY KEY ("id")
 );
-CREATE INDEX "business_trips_organization_id_employee_id_idx" ON "business_trips"("organization_id", "employee_id");
-CREATE INDEX "business_trips_organization_id_status_idx" ON "business_trips"("organization_id", "status");
+CREATE INDEX IF NOT EXISTS "business_trips_organization_id_employee_id_idx" ON "business_trips"("organization_id", "employee_id");
+CREATE INDEX IF NOT EXISTS "business_trips_organization_id_status_idx" ON "business_trips"("organization_id", "status");
 ALTER TABLE "business_trips" ADD CONSTRAINT "business_trips_organization_id_fkey"
   FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "business_trips" ADD CONSTRAINT "business_trips_employee_id_fkey"
