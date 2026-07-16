@@ -1,4 +1,4 @@
-/** РљР»СЋС‡ РїРµСЂРёРѕРґР° YYYY-MM РїРѕ UTC-РєР°Р»РµРЅРґР°СЂСЋ РґР°С‚С‹ РїСЂРѕРІРѕРґРєРё. */
+/** Ключ периода YYYY-MM по UTC-календарю даты проводки. */
 export function monthKeyUtc(d: Date): string {
   const y = d.getUTCFullYear();
   const m = d.getUTCMonth() + 1;
@@ -13,7 +13,7 @@ export function parseIsoDateOnly(s: string): Date {
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 0, 0, 0, 0));
 }
 
-/** РљРѕРЅРµС† РєР°Р»РµРЅРґР°СЂРЅРѕРіРѕ РґРЅСЏ UTC РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ СЃ DateTime. */
+/** Конец календарного дня UTC для сравнения с DateTime. */
 export function endOfUtcDay(dateFromParse: Date): Date {
   return new Date(
     Date.UTC(
@@ -28,7 +28,7 @@ export function endOfUtcDay(dateFromParse: Date): Date {
   );
 }
 
-/** РџРµСЂРІС‹Р№ Рё РїРѕСЃР»РµРґРЅРёР№ РєР°Р»РµРЅРґР°СЂРЅС‹Р№ РґРµРЅСЊ РјРµСЃСЏС†Р° (UTC 00:00, РґР»СЏ СЃСЂР°РІРЅРµРЅРёСЏ СЃ @db.Date). */
+/** Первый и последний календарный день месяца (UTC 00:00, для сравнения с @db.Date). */
 export function monthRangeUtc(year: number, month1to12: number): { start: Date; end: Date } {
   const start = new Date(Date.UTC(year, month1to12 - 1, 1, 0, 0, 0, 0));
   const lastDay = new Date(Date.UTC(year, month1to12, 0, 0, 0, 0, 0)).getUTCDate();
@@ -36,7 +36,7 @@ export function monthRangeUtc(year: number, month1to12: number): { start: Date; 
   return { start, end };
 }
 
-/** РџРµСЂРІС‹Р№ Рё РїРѕСЃР»РµРґРЅРёР№ РєР°Р»РµРЅРґР°СЂРЅС‹Р№ РґРµРЅСЊ РіРѕРґР° (UTC). */
+/** Первый и последний календарный день года (UTC). */
 export function yearRangeUtc(year: number): { start: Date; end: Date; fromStr: string; toStr: string } {
   const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0));
   const end = new Date(Date.UTC(year, 11, 31, 0, 0, 0, 0));
@@ -96,7 +96,7 @@ export function mergeClosedYear(
   return base;
 }
 
-/** Inverse of mergeClosedYear вЂ” remove a year from settings.reporting.closedYears. */
+/** Inverse of mergeClosedYear — remove a year from settings.reporting.closedYears. */
 export function unmergeClosedYear(
   settingsJson: unknown,
   year: number,
@@ -142,7 +142,7 @@ export function getLockedPeriodUntil(settingsJson: unknown): Date | null {
   }
 }
 
-/** YYYY-MM-DD РїРѕ UTC-РєР°Р»РµРЅРґР°СЂСЋ (РґР»СЏ API РѕС‚С‡С‘С‚РѕРІ). */
+/** YYYY-MM-DD по UTC-календарю (для API отчётов). */
 export function dateToIsoYmdUtc(d: Date): string {
   const y = d.getUTCFullYear();
   const m = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -151,8 +151,8 @@ export function dateToIsoYmdUtc(d: Date): string {
 }
 
 /**
- * РќР°СЂРµР·РєР° РїРµСЂРёРѕРґР° [dateFrom, dateTo] РїРѕ РєР°Р»РµРЅРґР°СЂРЅС‹Рј РјРµСЃСЏС†Р°Рј (UTC).
- * Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РєСѓСЃРєР° вЂ” РіСЂР°РЅРёС†С‹ РІРєР»СЋС‡РёС‚РµР»СЊРЅРѕ Рё РґР°С‚Р° РєСѓСЂСЃР° (РєРѕРЅРµС† РєСѓСЃРєР°).
+ * Нарезка периода [dateFrom, dateTo] по календарным месяцам (UTC).
+ * Для каждого куска — границы включительно и дата курса (конец куска).
  */
 export function accrualMonthSlices(
   dateFrom: Date,

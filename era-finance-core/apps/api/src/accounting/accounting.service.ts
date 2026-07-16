@@ -32,8 +32,8 @@ const Decimal = Prisma.Decimal;
 const VAT_INPUT_FALLBACK = {
   type: AccountType.ASSET,
   parentCode: "290",
-  nameAz: "AlР”В±nmР”В±Р•Сџ dР™в„ўyР™в„ўrlР™в„ўr Р“СzrР™в„ў Р–РЏDV",
-  nameRu: "Р СњР вЂќР РЋ Р С” Р В·Р В°РЎвЂЎРЎвЂРЎвЂљРЎС“ (Р Р†РЎвЂ¦Р С•Р Т‘РЎРЏРЎвЂ°Р С‘Р в„–)",
+  nameAz: "Alınmış dəyərlər üzrə ƏDV",
+  nameRu: "НДС к зачёту (входящий)",
   nameEn: "Input VAT",
 } as const;
 
@@ -44,18 +44,15 @@ function asCount(v: unknown): number {
   return 0;
 }
 
-export type PostTransactionLineDimension = {
-  subcontoTypeId: string;
-  valueId?: string | null;
-  valueRef?: string | null;
-};
-
 export type PostTransactionLine = {
   accountCode: string;
   debit: string | number;
   credit: string | number;
-  /** Optional analytical dimensions (subconto); applied when ERA_SUBCONTO_ENABLED=true. */
-  dimensions?: PostTransactionLineDimension[];
+  dimensions?: Array<{
+    subcontoTypeId: string;
+    valueId?: string | null;
+    valueRef?: string | null;
+  }>;
 };
 
 @Injectable()
@@ -92,7 +89,7 @@ export class AccountingService {
   }
 
   /**
-   * Р вЂ”Р В°Р С—Р С‘РЎРѓРЎРЉ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С•Р С” Р Р†Р Р…РЎС“РЎвЂљРЎР‚Р С‘ РЎС“Р В¶Р Вµ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљР С•Р в„– РЎвЂљРЎР‚Р В°Р Р…Р В·Р В°Р С”РЎвЂ Р С‘Р С‘ Prisma (РЎРѓР Р†Р ВµРЎР‚Р С”Р В° Р В±Р В°Р Р…Р С”Р В°, Р С—Р ВµРЎР‚Р ВµР С•РЎвЂ Р ВµР Р…Р С”Р В°).
+   * Запись проводок внутри уже открытой транзакции Prisma (сверка банка, переоценка).
    */
   async postJournalInTransaction(
     tx: Prisma.TransactionClient,
@@ -101,11 +98,11 @@ export class AccountingService {
       date: Date;
       reference?: string;
       description?: string;
-      /** false РІР‚вЂќ Р С”РЎС“РЎР‚РЎРѓ/РЎРѓРЎС“Р СР СРЎвЂ№ Р’В«Р С—Р В»Р В°Р Р†Р В°РЎР‹РЎвЂљР’В» Р Т‘Р С• Р С—Р С•Р Т‘РЎвЂљР Р†Р ВµРЎР‚Р В¶Р Т‘Р ВµР Р…Р С‘РЎРЏ Р В±РЎС“РЎвЂ¦Р С–Р В°Р В»РЎвЂљР ВµРЎР‚Р С•Р С */
+      /** false — курс/суммы «плавают» до подтверждения бухгалтером */
       isFinal?: boolean;
-      /** Р С’Р Р…Р В°Р В»Р С‘РЎвЂљР С‘Р С”Р В°: Р С”Р С•Р Р…РЎвЂљРЎР‚Р В°Р С–Р ВµР Р…РЎвЂљ (Р В·Р В°Р С”РЎС“Р С—Р С”Р С‘, Р Р†Р В·Р В°Р С‘Р СР С•Р В·Р В°РЎвЂЎРЎвЂРЎвЂљ Р С‘ РЎвЂљ.Р Т‘.) */
+      /** Аналитика: контрагент (закупки, взаимозачёт и т.д.) */
       counterpartyId?: string | null;
-      /** Р В¦Р В¤Р С›: РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚ P&L Р С—Р С• Р Т‘Р ВµР С—Р В°РЎР‚РЎвЂљР В°Р СР ВµР Р…РЎвЂљРЎС“ Р Т‘Р В»РЎРЏ РЎР‚Р В°РЎРѓРЎвЂ¦Р С•Р Т‘Р Р…РЎвЂ№РЎвЂ¦/Р С—РЎР‚Р С•РЎвЂЎР С‘РЎвЂ¦ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С•Р С”. */
+      /** ЦФО: фильтр P&L по департаменту для расходных/прочих проводок. */
       departmentId?: string | null;
       ledgerType?: LedgerType;
       lines: PostTransactionLine[];
@@ -143,13 +140,13 @@ export class AccountingService {
       const key = monthKeyUtc(date);
       if (closed.includes(key)) {
         throw new BadRequestException(
-          `Р СџР ВµРЎР‚Р С‘Р С•Р Т‘ ${key} Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљ: Р Р…Р С•Р Р†РЎвЂ№Р Вµ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С”Р С‘ Р Р…Р В° РЎРЊРЎвЂљРЎС“ Р Т‘Р В°РЎвЂљРЎС“ Р Р…Р ВµР Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р Р…РЎвЂ№`,
+          `Период ${key} закрыт: новые проводки на эту дату недоступны`,
         );
       }
     }
     const lockedPeriodUntil = getLockedPeriodUntil(org?.settings);
     if (lockedPeriodUntil && date.getTime() <= lockedPeriodUntil.getTime()) {
-      throw new HttpException("Р СџР ВµРЎР‚Р С‘Р С•Р Т‘ Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљ Р Т‘Р В»РЎРЏ Р С‘Р В·Р СР ВµР Р…Р ВµР Р…Р С‘Р в„–", 423);
+      throw new HttpException("Период закрыт для изменений", 423);
     }
 
     const codes = [...new Set(lines.map((l) => l.accountCode))];
@@ -205,11 +202,6 @@ export class AccountingService {
       accountId: string;
       line: PostTransactionLine;
     }> = [];
-    const createdEntries: Array<{
-      journalEntryId: string;
-      accountId: string;
-      line: PostTransactionLine;
-    }> = [];
 
     for (const line of lines) {
       const account = byCode.get(line.accountCode);
@@ -218,7 +210,7 @@ export class AccountingService {
       }
       const debit = new Decimal(line.debit ?? 0);
       const credit = new Decimal(line.credit ?? 0);
-      const je = await tx.journalEntry.create({
+      const journalEntry = await tx.journalEntry.create({
         data: {
           organizationId,
           transactionId: transaction.id,
@@ -233,15 +225,10 @@ export class AccountingService {
         accountId: account.id,
         debit,
         credit,
-        journalEntryId: je.id,
+        journalEntryId: journalEntry.id,
       });
       dimensionTargets.push({
-        journalEntryId: je.id,
-        accountId: account.id,
-        line,
-      });
-      createdEntries.push({
-        journalEntryId: je.id,
+        journalEntryId: journalEntry.id,
         accountId: account.id,
         line,
       });
@@ -255,12 +242,6 @@ export class AccountingService {
     });
 
     if (ledgerType === LedgerType.NAS) {
-      await this.subconto.applyDimensionsToJournalEntries(tx, {
-        organizationId,
-        journalEntries: createdEntries,
-        counterpartyId,
-        departmentId,
-      });
       await this.ifrsAutoMapping.mirrorFromNas({
         tx,
         organizationId,
@@ -283,7 +264,7 @@ export class AccountingService {
     departmentId?: string | null;
     ledgerType?: LedgerType;
     lines: PostTransactionLine[];
-    /** Р В РЎС“РЎвЂЎР Р…Р В°РЎРЏ Р С—РЎР‚Р С•Р Р†Р С•Р Т‘Р С”Р В° (UI): Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В° Р С—Р С•Р В»Р С‘РЎвЂљР С‘Р С”Р С‘ USER. */
+    /** Ручная проводка (UI): проверка политики USER. */
     actingUserRole?: UserRole;
   }): Promise<{ transactionId: string }> {
     if (params.actingUserRole !== undefined) {
@@ -578,7 +559,7 @@ export class AccountingService {
     if (!parentAcc) {
       stack.delete(code);
       throw new NotFoundException(
-        `Parent account ${fb.parentCode} required to create ${code} РІР‚вЂќ seed NAS chart for this organization`,
+        `Parent account ${fb.parentCode} required to create ${code} — seed NAS chart for this organization`,
       );
     }
 
