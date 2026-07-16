@@ -16,6 +16,10 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
 import { LedgerService } from "../../kernel/ledger/ledger.service";
+import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../../kernel/ledger/system-gl-config.service";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
 import { AmlService } from "../aml/aml.service";
 import {
@@ -26,14 +30,13 @@ import {
 } from "./card-txn.engine";
 import { MockAzeriCardGateway } from "./gateway/mock-azericard.gateway";
 
-const SETTLEMENT_GL_CODE = "2550201";
-
 @Injectable()
 export class CardsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly ledger: LedgerService,
+    private readonly systemGl: SystemGlConfigService,
     private readonly postingEngine: PostingEngineService,
     private readonly aml: AmlService,
     private readonly gateway: MockAzeriCardGateway,
@@ -309,10 +312,7 @@ export class CardsService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const settlementGl = await this.prisma.glAccount.findFirst({
-      where: { bankOrgId: this.bankOrg.bankOrgId, code: SETTLEMENT_GL_CODE },
-    });
-    if (!settlementGl) throw new NotFoundException("Settlement GL not seeded");
+    const settlementGl = await this.systemGl.resolve(SystemGlKey.NOSTRO);
 
     const posting = await this.postingEngine.post({
       reference: `CARD-CAP-${authTxn.processorRef}`,

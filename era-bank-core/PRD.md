@@ -138,7 +138,7 @@ Module IDs are the commercial `banking_*` keys. **`banking_core` is mandatory**;
 
 ## §7. Release phases
 
-Reference: ADR D6 (consistency), TZ §12 (DoD per phase).
+Reference: ADR D6 (consistency), TZ §14 (DoD per phase); risk management TZ §12 + ADR [era-bank-risk-and-audit.md](../docs/adr/era-bank-risk-and-audit.md).
 
 | Phase | Scope | Gate |
 |-------|-------|------|

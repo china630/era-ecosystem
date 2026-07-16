@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { TxnType } from "@era/bank-core-database";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { PrismaService } from "../../prisma/prisma.service";
+import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../ledger/system-gl-config.service";
 import { PostingEngineService } from "./posting-engine.service";
 
 @Injectable()
@@ -10,15 +14,8 @@ export class TellerPostingService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly postingEngine: PostingEngineService,
+    private readonly systemGl: SystemGlConfigService,
   ) {}
-
-  private async glByCode(code: string) {
-    const gl = await this.prisma.glAccount.findFirst({
-      where: { bankOrgId: this.bankOrg.bankOrgId, code },
-    });
-    if (!gl) throw new NotFoundException(`GL ${code} not seeded`);
-    return gl;
-  }
 
   async cashDeposit(input: {
     accountId: string;
@@ -32,7 +29,7 @@ export class TellerPostingService {
       where: { id: input.accountId, bankOrgId: this.bankOrg.bankOrgId },
     });
     if (!account) throw new NotFoundException("Account not found");
-    const cashGl = await this.glByCode("1000101");
+    const cashGl = await this.systemGl.resolve(SystemGlKey.CASH_VAULT);
     return this.postingEngine.post({
       reference: input.reference ?? `CASH-IN-${input.idempotencyKey}`,
       idempotencyKey: input.idempotencyKey,
@@ -73,7 +70,7 @@ export class TellerPostingService {
       where: { id: input.accountId, bankOrgId: this.bankOrg.bankOrgId },
     });
     if (!account) throw new NotFoundException("Account not found");
-    const cashGl = await this.glByCode("1000101");
+    const cashGl = await this.systemGl.resolve(SystemGlKey.CASH_VAULT);
     return this.postingEngine.post({
       reference: input.reference ?? `CASH-OUT-${input.idempotencyKey}`,
       idempotencyKey: input.idempotencyKey,

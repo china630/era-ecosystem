@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type GlAccount = $Result.DefaultSelection<Prisma.$GlAccountPayload>
 /**
+ * Model SystemGlConfig
+ * Bank-wide system GL mapping (nostro, FX transit, MFR, etc.). Product GL lives in ProductTemplate.paramsJson.
+ */
+export type SystemGlConfig = $Result.DefaultSelection<Prisma.$SystemGlConfigPayload>
+/**
  * Model Branch
  * 
  */
@@ -874,6 +879,16 @@ export class PrismaClient<
   get glAccount(): Prisma.GlAccountDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.systemGlConfig`: Exposes CRUD operations for the **SystemGlConfig** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SystemGlConfigs
+    * const systemGlConfigs = await prisma.systemGlConfig.findMany()
+    * ```
+    */
+  get systemGlConfig(): Prisma.SystemGlConfigDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.branch`: Exposes CRUD operations for the **Branch** model.
     * Example usage:
     * ```ts
@@ -1647,6 +1662,7 @@ export namespace Prisma {
 
   export const ModelName: {
     GlAccount: 'GlAccount',
+    SystemGlConfig: 'SystemGlConfig',
     Branch: 'Branch',
     BankCustomer: 'BankCustomer',
     BeneficialOwner: 'BeneficialOwner',
@@ -1696,7 +1712,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "glAccount" | "branch" | "bankCustomer" | "beneficialOwner" | "account" | "accountHold" | "journalTransaction" | "journalEntry" | "productTemplate" | "eodRun" | "auditLogEntry" | "paymentOrder" | "paymentRailMessage" | "depositContract" | "loanContract" | "loanScheduleInstallment" | "amlRule" | "amlAlert" | "amlScreeningHit" | "fmnReport" | "regReportRun" | "fatcaCrsClassification" | "dboCustomerCredential" | "dboOtpChallenge" | "corporateSignatory" | "cardProduct" | "card" | "cardTransaction" | "cardProcessorMessage" | "treasuryCounterparty" | "nostroVostroAccount" | "fxDeal" | "interbankPlacement" | "govSecurityPosition" | "liquidityGapSnapshot"
+      modelProps: "glAccount" | "systemGlConfig" | "branch" | "bankCustomer" | "beneficialOwner" | "account" | "accountHold" | "journalTransaction" | "journalEntry" | "productTemplate" | "eodRun" | "auditLogEntry" | "paymentOrder" | "paymentRailMessage" | "depositContract" | "loanContract" | "loanScheduleInstallment" | "amlRule" | "amlAlert" | "amlScreeningHit" | "fmnReport" | "regReportRun" | "fatcaCrsClassification" | "dboCustomerCredential" | "dboOtpChallenge" | "corporateSignatory" | "cardProduct" | "card" | "cardTransaction" | "cardProcessorMessage" | "treasuryCounterparty" | "nostroVostroAccount" | "fxDeal" | "interbankPlacement" | "govSecurityPosition" | "liquidityGapSnapshot"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1771,6 +1787,80 @@ export namespace Prisma {
           count: {
             args: Prisma.GlAccountCountArgs<ExtArgs>
             result: $Utils.Optional<GlAccountCountAggregateOutputType> | number
+          }
+        }
+      }
+      SystemGlConfig: {
+        payload: Prisma.$SystemGlConfigPayload<ExtArgs>
+        fields: Prisma.SystemGlConfigFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SystemGlConfigFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SystemGlConfigFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          findFirst: {
+            args: Prisma.SystemGlConfigFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SystemGlConfigFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          findMany: {
+            args: Prisma.SystemGlConfigFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>[]
+          }
+          create: {
+            args: Prisma.SystemGlConfigCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          createMany: {
+            args: Prisma.SystemGlConfigCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SystemGlConfigCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>[]
+          }
+          delete: {
+            args: Prisma.SystemGlConfigDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          update: {
+            args: Prisma.SystemGlConfigUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          deleteMany: {
+            args: Prisma.SystemGlConfigDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SystemGlConfigUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SystemGlConfigUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>[]
+          }
+          upsert: {
+            args: Prisma.SystemGlConfigUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SystemGlConfigPayload>
+          }
+          aggregate: {
+            args: Prisma.SystemGlConfigAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSystemGlConfig>
+          }
+          groupBy: {
+            args: Prisma.SystemGlConfigGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SystemGlConfigGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SystemGlConfigCountArgs<ExtArgs>
+            result: $Utils.Optional<SystemGlConfigCountAggregateOutputType> | number
           }
         }
       }
@@ -4399,6 +4489,7 @@ export namespace Prisma {
   }
   export type GlobalOmitConfig = {
     glAccount?: GlAccountOmit
+    systemGlConfig?: SystemGlConfigOmit
     branch?: BranchOmit
     bankCustomer?: BankCustomerOmit
     beneficialOwner?: BeneficialOwnerOmit
@@ -5791,6 +5882,1019 @@ export namespace Prisma {
      * Omit specific fields from the GlAccount
      */
     omit?: GlAccountOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SystemGlConfig
+   */
+
+  export type AggregateSystemGlConfig = {
+    _count: SystemGlConfigCountAggregateOutputType | null
+    _min: SystemGlConfigMinAggregateOutputType | null
+    _max: SystemGlConfigMaxAggregateOutputType | null
+  }
+
+  export type SystemGlConfigMinAggregateOutputType = {
+    id: string | null
+    bankOrgId: string | null
+    key: string | null
+    glCode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SystemGlConfigMaxAggregateOutputType = {
+    id: string | null
+    bankOrgId: string | null
+    key: string | null
+    glCode: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SystemGlConfigCountAggregateOutputType = {
+    id: number
+    bankOrgId: number
+    key: number
+    glCode: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SystemGlConfigMinAggregateInputType = {
+    id?: true
+    bankOrgId?: true
+    key?: true
+    glCode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SystemGlConfigMaxAggregateInputType = {
+    id?: true
+    bankOrgId?: true
+    key?: true
+    glCode?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SystemGlConfigCountAggregateInputType = {
+    id?: true
+    bankOrgId?: true
+    key?: true
+    glCode?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SystemGlConfigAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemGlConfig to aggregate.
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemGlConfigs to fetch.
+     */
+    orderBy?: SystemGlConfigOrderByWithRelationInput | SystemGlConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SystemGlConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemGlConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemGlConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SystemGlConfigs
+    **/
+    _count?: true | SystemGlConfigCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SystemGlConfigMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SystemGlConfigMaxAggregateInputType
+  }
+
+  export type GetSystemGlConfigAggregateType<T extends SystemGlConfigAggregateArgs> = {
+        [P in keyof T & keyof AggregateSystemGlConfig]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSystemGlConfig[P]>
+      : GetScalarType<T[P], AggregateSystemGlConfig[P]>
+  }
+
+
+
+
+  export type SystemGlConfigGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SystemGlConfigWhereInput
+    orderBy?: SystemGlConfigOrderByWithAggregationInput | SystemGlConfigOrderByWithAggregationInput[]
+    by: SystemGlConfigScalarFieldEnum[] | SystemGlConfigScalarFieldEnum
+    having?: SystemGlConfigScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SystemGlConfigCountAggregateInputType | true
+    _min?: SystemGlConfigMinAggregateInputType
+    _max?: SystemGlConfigMaxAggregateInputType
+  }
+
+  export type SystemGlConfigGroupByOutputType = {
+    id: string
+    bankOrgId: string
+    key: string
+    glCode: string
+    createdAt: Date
+    updatedAt: Date
+    _count: SystemGlConfigCountAggregateOutputType | null
+    _min: SystemGlConfigMinAggregateOutputType | null
+    _max: SystemGlConfigMaxAggregateOutputType | null
+  }
+
+  type GetSystemGlConfigGroupByPayload<T extends SystemGlConfigGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SystemGlConfigGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SystemGlConfigGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SystemGlConfigGroupByOutputType[P]>
+            : GetScalarType<T[P], SystemGlConfigGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SystemGlConfigSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    bankOrgId?: boolean
+    key?: boolean
+    glCode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["systemGlConfig"]>
+
+  export type SystemGlConfigSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    bankOrgId?: boolean
+    key?: boolean
+    glCode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["systemGlConfig"]>
+
+  export type SystemGlConfigSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    bankOrgId?: boolean
+    key?: boolean
+    glCode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["systemGlConfig"]>
+
+  export type SystemGlConfigSelectScalar = {
+    id?: boolean
+    bankOrgId?: boolean
+    key?: boolean
+    glCode?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SystemGlConfigOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "bankOrgId" | "key" | "glCode" | "createdAt" | "updatedAt", ExtArgs["result"]["systemGlConfig"]>
+
+  export type $SystemGlConfigPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SystemGlConfig"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      bankOrgId: string
+      key: string
+      glCode: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["systemGlConfig"]>
+    composites: {}
+  }
+
+  type SystemGlConfigGetPayload<S extends boolean | null | undefined | SystemGlConfigDefaultArgs> = $Result.GetResult<Prisma.$SystemGlConfigPayload, S>
+
+  type SystemGlConfigCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SystemGlConfigFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SystemGlConfigCountAggregateInputType | true
+    }
+
+  export interface SystemGlConfigDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SystemGlConfig'], meta: { name: 'SystemGlConfig' } }
+    /**
+     * Find zero or one SystemGlConfig that matches the filter.
+     * @param {SystemGlConfigFindUniqueArgs} args - Arguments to find a SystemGlConfig
+     * @example
+     * // Get one SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SystemGlConfigFindUniqueArgs>(args: SelectSubset<T, SystemGlConfigFindUniqueArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SystemGlConfig that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SystemGlConfigFindUniqueOrThrowArgs} args - Arguments to find a SystemGlConfig
+     * @example
+     * // Get one SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SystemGlConfigFindUniqueOrThrowArgs>(args: SelectSubset<T, SystemGlConfigFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SystemGlConfig that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigFindFirstArgs} args - Arguments to find a SystemGlConfig
+     * @example
+     * // Get one SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SystemGlConfigFindFirstArgs>(args?: SelectSubset<T, SystemGlConfigFindFirstArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SystemGlConfig that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigFindFirstOrThrowArgs} args - Arguments to find a SystemGlConfig
+     * @example
+     * // Get one SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SystemGlConfigFindFirstOrThrowArgs>(args?: SelectSubset<T, SystemGlConfigFindFirstOrThrowArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SystemGlConfigs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SystemGlConfigs
+     * const systemGlConfigs = await prisma.systemGlConfig.findMany()
+     * 
+     * // Get first 10 SystemGlConfigs
+     * const systemGlConfigs = await prisma.systemGlConfig.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const systemGlConfigWithIdOnly = await prisma.systemGlConfig.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SystemGlConfigFindManyArgs>(args?: SelectSubset<T, SystemGlConfigFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SystemGlConfig.
+     * @param {SystemGlConfigCreateArgs} args - Arguments to create a SystemGlConfig.
+     * @example
+     * // Create one SystemGlConfig
+     * const SystemGlConfig = await prisma.systemGlConfig.create({
+     *   data: {
+     *     // ... data to create a SystemGlConfig
+     *   }
+     * })
+     * 
+     */
+    create<T extends SystemGlConfigCreateArgs>(args: SelectSubset<T, SystemGlConfigCreateArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SystemGlConfigs.
+     * @param {SystemGlConfigCreateManyArgs} args - Arguments to create many SystemGlConfigs.
+     * @example
+     * // Create many SystemGlConfigs
+     * const systemGlConfig = await prisma.systemGlConfig.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SystemGlConfigCreateManyArgs>(args?: SelectSubset<T, SystemGlConfigCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SystemGlConfigs and returns the data saved in the database.
+     * @param {SystemGlConfigCreateManyAndReturnArgs} args - Arguments to create many SystemGlConfigs.
+     * @example
+     * // Create many SystemGlConfigs
+     * const systemGlConfig = await prisma.systemGlConfig.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SystemGlConfigs and only return the `id`
+     * const systemGlConfigWithIdOnly = await prisma.systemGlConfig.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SystemGlConfigCreateManyAndReturnArgs>(args?: SelectSubset<T, SystemGlConfigCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SystemGlConfig.
+     * @param {SystemGlConfigDeleteArgs} args - Arguments to delete one SystemGlConfig.
+     * @example
+     * // Delete one SystemGlConfig
+     * const SystemGlConfig = await prisma.systemGlConfig.delete({
+     *   where: {
+     *     // ... filter to delete one SystemGlConfig
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SystemGlConfigDeleteArgs>(args: SelectSubset<T, SystemGlConfigDeleteArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SystemGlConfig.
+     * @param {SystemGlConfigUpdateArgs} args - Arguments to update one SystemGlConfig.
+     * @example
+     * // Update one SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SystemGlConfigUpdateArgs>(args: SelectSubset<T, SystemGlConfigUpdateArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SystemGlConfigs.
+     * @param {SystemGlConfigDeleteManyArgs} args - Arguments to filter SystemGlConfigs to delete.
+     * @example
+     * // Delete a few SystemGlConfigs
+     * const { count } = await prisma.systemGlConfig.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SystemGlConfigDeleteManyArgs>(args?: SelectSubset<T, SystemGlConfigDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SystemGlConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SystemGlConfigs
+     * const systemGlConfig = await prisma.systemGlConfig.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SystemGlConfigUpdateManyArgs>(args: SelectSubset<T, SystemGlConfigUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SystemGlConfigs and returns the data updated in the database.
+     * @param {SystemGlConfigUpdateManyAndReturnArgs} args - Arguments to update many SystemGlConfigs.
+     * @example
+     * // Update many SystemGlConfigs
+     * const systemGlConfig = await prisma.systemGlConfig.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SystemGlConfigs and only return the `id`
+     * const systemGlConfigWithIdOnly = await prisma.systemGlConfig.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SystemGlConfigUpdateManyAndReturnArgs>(args: SelectSubset<T, SystemGlConfigUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SystemGlConfig.
+     * @param {SystemGlConfigUpsertArgs} args - Arguments to update or create a SystemGlConfig.
+     * @example
+     * // Update or create a SystemGlConfig
+     * const systemGlConfig = await prisma.systemGlConfig.upsert({
+     *   create: {
+     *     // ... data to create a SystemGlConfig
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SystemGlConfig we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SystemGlConfigUpsertArgs>(args: SelectSubset<T, SystemGlConfigUpsertArgs<ExtArgs>>): Prisma__SystemGlConfigClient<$Result.GetResult<Prisma.$SystemGlConfigPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SystemGlConfigs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigCountArgs} args - Arguments to filter SystemGlConfigs to count.
+     * @example
+     * // Count the number of SystemGlConfigs
+     * const count = await prisma.systemGlConfig.count({
+     *   where: {
+     *     // ... the filter for the SystemGlConfigs we want to count
+     *   }
+     * })
+    **/
+    count<T extends SystemGlConfigCountArgs>(
+      args?: Subset<T, SystemGlConfigCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SystemGlConfigCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SystemGlConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SystemGlConfigAggregateArgs>(args: Subset<T, SystemGlConfigAggregateArgs>): Prisma.PrismaPromise<GetSystemGlConfigAggregateType<T>>
+
+    /**
+     * Group by SystemGlConfig.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SystemGlConfigGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SystemGlConfigGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SystemGlConfigGroupByArgs['orderBy'] }
+        : { orderBy?: SystemGlConfigGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SystemGlConfigGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSystemGlConfigGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SystemGlConfig model
+   */
+  readonly fields: SystemGlConfigFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SystemGlConfig.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SystemGlConfigClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SystemGlConfig model
+   */
+  interface SystemGlConfigFieldRefs {
+    readonly id: FieldRef<"SystemGlConfig", 'String'>
+    readonly bankOrgId: FieldRef<"SystemGlConfig", 'String'>
+    readonly key: FieldRef<"SystemGlConfig", 'String'>
+    readonly glCode: FieldRef<"SystemGlConfig", 'String'>
+    readonly createdAt: FieldRef<"SystemGlConfig", 'DateTime'>
+    readonly updatedAt: FieldRef<"SystemGlConfig", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SystemGlConfig findUnique
+   */
+  export type SystemGlConfigFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which SystemGlConfig to fetch.
+     */
+    where: SystemGlConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemGlConfig findUniqueOrThrow
+   */
+  export type SystemGlConfigFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which SystemGlConfig to fetch.
+     */
+    where: SystemGlConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemGlConfig findFirst
+   */
+  export type SystemGlConfigFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which SystemGlConfig to fetch.
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemGlConfigs to fetch.
+     */
+    orderBy?: SystemGlConfigOrderByWithRelationInput | SystemGlConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemGlConfigs.
+     */
+    cursor?: SystemGlConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemGlConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemGlConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemGlConfigs.
+     */
+    distinct?: SystemGlConfigScalarFieldEnum | SystemGlConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemGlConfig findFirstOrThrow
+   */
+  export type SystemGlConfigFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which SystemGlConfig to fetch.
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemGlConfigs to fetch.
+     */
+    orderBy?: SystemGlConfigOrderByWithRelationInput | SystemGlConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SystemGlConfigs.
+     */
+    cursor?: SystemGlConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemGlConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemGlConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemGlConfigs.
+     */
+    distinct?: SystemGlConfigScalarFieldEnum | SystemGlConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemGlConfig findMany
+   */
+  export type SystemGlConfigFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter, which SystemGlConfigs to fetch.
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SystemGlConfigs to fetch.
+     */
+    orderBy?: SystemGlConfigOrderByWithRelationInput | SystemGlConfigOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SystemGlConfigs.
+     */
+    cursor?: SystemGlConfigWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SystemGlConfigs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SystemGlConfigs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SystemGlConfigs.
+     */
+    distinct?: SystemGlConfigScalarFieldEnum | SystemGlConfigScalarFieldEnum[]
+  }
+
+  /**
+   * SystemGlConfig create
+   */
+  export type SystemGlConfigCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to create a SystemGlConfig.
+     */
+    data: XOR<SystemGlConfigCreateInput, SystemGlConfigUncheckedCreateInput>
+  }
+
+  /**
+   * SystemGlConfig createMany
+   */
+  export type SystemGlConfigCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SystemGlConfigs.
+     */
+    data: SystemGlConfigCreateManyInput | SystemGlConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SystemGlConfig createManyAndReturn
+   */
+  export type SystemGlConfigCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * The data used to create many SystemGlConfigs.
+     */
+    data: SystemGlConfigCreateManyInput | SystemGlConfigCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SystemGlConfig update
+   */
+  export type SystemGlConfigUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * The data needed to update a SystemGlConfig.
+     */
+    data: XOR<SystemGlConfigUpdateInput, SystemGlConfigUncheckedUpdateInput>
+    /**
+     * Choose, which SystemGlConfig to update.
+     */
+    where: SystemGlConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemGlConfig updateMany
+   */
+  export type SystemGlConfigUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SystemGlConfigs.
+     */
+    data: XOR<SystemGlConfigUpdateManyMutationInput, SystemGlConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which SystemGlConfigs to update
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * Limit how many SystemGlConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SystemGlConfig updateManyAndReturn
+   */
+  export type SystemGlConfigUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * The data used to update SystemGlConfigs.
+     */
+    data: XOR<SystemGlConfigUpdateManyMutationInput, SystemGlConfigUncheckedUpdateManyInput>
+    /**
+     * Filter which SystemGlConfigs to update
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * Limit how many SystemGlConfigs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SystemGlConfig upsert
+   */
+  export type SystemGlConfigUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * The filter to search for the SystemGlConfig to update in case it exists.
+     */
+    where: SystemGlConfigWhereUniqueInput
+    /**
+     * In case the SystemGlConfig found by the `where` argument doesn't exist, create a new SystemGlConfig with this data.
+     */
+    create: XOR<SystemGlConfigCreateInput, SystemGlConfigUncheckedCreateInput>
+    /**
+     * In case the SystemGlConfig was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SystemGlConfigUpdateInput, SystemGlConfigUncheckedUpdateInput>
+  }
+
+  /**
+   * SystemGlConfig delete
+   */
+  export type SystemGlConfigDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
+    /**
+     * Filter which SystemGlConfig to delete.
+     */
+    where: SystemGlConfigWhereUniqueInput
+  }
+
+  /**
+   * SystemGlConfig deleteMany
+   */
+  export type SystemGlConfigDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SystemGlConfigs to delete
+     */
+    where?: SystemGlConfigWhereInput
+    /**
+     * Limit how many SystemGlConfigs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SystemGlConfig without action
+   */
+  export type SystemGlConfigDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SystemGlConfig
+     */
+    select?: SystemGlConfigSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SystemGlConfig
+     */
+    omit?: SystemGlConfigOmit<ExtArgs> | null
   }
 
 
@@ -43808,6 +44912,18 @@ export namespace Prisma {
   export type GlAccountScalarFieldEnum = (typeof GlAccountScalarFieldEnum)[keyof typeof GlAccountScalarFieldEnum]
 
 
+  export const SystemGlConfigScalarFieldEnum: {
+    id: 'id',
+    bankOrgId: 'bankOrgId',
+    key: 'key',
+    glCode: 'glCode',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SystemGlConfigScalarFieldEnum = (typeof SystemGlConfigScalarFieldEnum)[keyof typeof SystemGlConfigScalarFieldEnum]
+
+
   export const BranchScalarFieldEnum: {
     id: 'id',
     bankOrgId: 'bankOrgId',
@@ -45162,6 +46278,64 @@ export namespace Prisma {
     parentId?: StringNullableWithAggregatesFilter<"GlAccount"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GlAccount"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GlAccount"> | Date | string
+  }
+
+  export type SystemGlConfigWhereInput = {
+    AND?: SystemGlConfigWhereInput | SystemGlConfigWhereInput[]
+    OR?: SystemGlConfigWhereInput[]
+    NOT?: SystemGlConfigWhereInput | SystemGlConfigWhereInput[]
+    id?: StringFilter<"SystemGlConfig"> | string
+    bankOrgId?: StringFilter<"SystemGlConfig"> | string
+    key?: StringFilter<"SystemGlConfig"> | string
+    glCode?: StringFilter<"SystemGlConfig"> | string
+    createdAt?: DateTimeFilter<"SystemGlConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemGlConfig"> | Date | string
+  }
+
+  export type SystemGlConfigOrderByWithRelationInput = {
+    id?: SortOrder
+    bankOrgId?: SortOrder
+    key?: SortOrder
+    glCode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemGlConfigWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    bankOrgId_key?: SystemGlConfigBankOrgIdKeyCompoundUniqueInput
+    AND?: SystemGlConfigWhereInput | SystemGlConfigWhereInput[]
+    OR?: SystemGlConfigWhereInput[]
+    NOT?: SystemGlConfigWhereInput | SystemGlConfigWhereInput[]
+    bankOrgId?: StringFilter<"SystemGlConfig"> | string
+    key?: StringFilter<"SystemGlConfig"> | string
+    glCode?: StringFilter<"SystemGlConfig"> | string
+    createdAt?: DateTimeFilter<"SystemGlConfig"> | Date | string
+    updatedAt?: DateTimeFilter<"SystemGlConfig"> | Date | string
+  }, "id" | "bankOrgId_key">
+
+  export type SystemGlConfigOrderByWithAggregationInput = {
+    id?: SortOrder
+    bankOrgId?: SortOrder
+    key?: SortOrder
+    glCode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SystemGlConfigCountOrderByAggregateInput
+    _max?: SystemGlConfigMaxOrderByAggregateInput
+    _min?: SystemGlConfigMinOrderByAggregateInput
+  }
+
+  export type SystemGlConfigScalarWhereWithAggregatesInput = {
+    AND?: SystemGlConfigScalarWhereWithAggregatesInput | SystemGlConfigScalarWhereWithAggregatesInput[]
+    OR?: SystemGlConfigScalarWhereWithAggregatesInput[]
+    NOT?: SystemGlConfigScalarWhereWithAggregatesInput | SystemGlConfigScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SystemGlConfig"> | string
+    bankOrgId?: StringWithAggregatesFilter<"SystemGlConfig"> | string
+    key?: StringWithAggregatesFilter<"SystemGlConfig"> | string
+    glCode?: StringWithAggregatesFilter<"SystemGlConfig"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"SystemGlConfig"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SystemGlConfig"> | Date | string
   }
 
   export type BranchWhereInput = {
@@ -48020,6 +49194,69 @@ export namespace Prisma {
     currency?: NullableStringFieldUpdateOperationsInput | string | null
     isPostable?: BoolFieldUpdateOperationsInput | boolean
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemGlConfigCreateInput = {
+    id?: string
+    bankOrgId: string
+    key: string
+    glCode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemGlConfigUncheckedCreateInput = {
+    id?: string
+    bankOrgId: string
+    key: string
+    glCode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemGlConfigUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bankOrgId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    glCode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemGlConfigUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bankOrgId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    glCode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemGlConfigCreateManyInput = {
+    id?: string
+    bankOrgId: string
+    key: string
+    glCode: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SystemGlConfigUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bankOrgId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    glCode?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SystemGlConfigUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bankOrgId?: StringFieldUpdateOperationsInput | string
+    key?: StringFieldUpdateOperationsInput | string
+    glCode?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -51398,6 +52635,38 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedDateTimeFilter<$PrismaModel>
     _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type SystemGlConfigBankOrgIdKeyCompoundUniqueInput = {
+    bankOrgId: string
+    key: string
+  }
+
+  export type SystemGlConfigCountOrderByAggregateInput = {
+    id?: SortOrder
+    bankOrgId?: SortOrder
+    key?: SortOrder
+    glCode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemGlConfigMaxOrderByAggregateInput = {
+    id?: SortOrder
+    bankOrgId?: SortOrder
+    key?: SortOrder
+    glCode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SystemGlConfigMinOrderByAggregateInput = {
+    id?: SortOrder
+    bankOrgId?: SortOrder
+    key?: SortOrder
+    glCode?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type EnumBranchStatusFilter<$PrismaModel = never> = {

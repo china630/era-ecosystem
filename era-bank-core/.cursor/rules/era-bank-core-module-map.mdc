@@ -1,0 +1,65 @@
+# era-bank-core — module map (ops API)
+
+Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
+
+## GL (ledger)
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/gl/accounts` | Chart of accounts |
+| GET | `/gl/trial-balance` | Trial balance snapshot |
+| POST | `/accounts` | Open customer account |
+| GET | `/accounts` | List — filters `customerId`, `branchId`, `iban`, `status` |
+| GET | `/accounts/:id` | Detail + holds |
+| GET | `/accounts/:id/statement` | Movements `from` / `to` |
+| POST | `/accounts/:id/close` | Close — zero available balance, no ACTIVE holds |
+| POST | `/accounts/:id/holds` | Place hold |
+| DELETE | `/accounts/:id/holds/:holdId` | Release hold |
+
+## Postings
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/postings` | Queue — `status`, `branchId`, `type`, dates |
+| GET | `/postings/:id` | Detail + legs |
+| POST | `/postings/cash-deposit` | Teller template |
+| POST | `/postings/cash-withdrawal` | Teller template |
+| POST | `/postings/internal-transfer` | Teller template |
+| POST | `/postings/:id/approve` | Checker from JWT |
+| POST | `/postings/:id/reject` | PENDING → REJECTED |
+| POST | `/postings/:id/reverse` | Reversal |
+
+## Branches
+
+| Method | Path | Notes |
+|--------|------|-------|
+| POST | `/branches/cross-branch-withdrawal` | MFR wrapper |
+
+## CIF
+
+| Method | Path | Notes |
+|--------|------|-------|
+| GET | `/cif/customers?q=` | Search FIN/VÖEN/ID |
+| POST | `/cif/customers` | Onboard NATURAL/LEGAL |
+
+## Payments / deposits / loans
+
+| Module | Routes |
+|--------|--------|
+| Payments | `GET/POST /payments/orders`, `GET /payments/orders/:id`, `POST .../submit`, `POST /payments/inbound` |
+| Deposits | `GET/POST /deposits`, `GET /deposits/:id`, `POST .../close`, `POST .../rollover` (maturity extend only) |
+| Loans | `GET/POST /loans`, `GET /loans/:id`, `GET .../schedule`, `POST .../disburse`, `.../repay`, `.../restructure` |
+
+## Product factory
+
+| Method | Path |
+|--------|------|
+| GET | `/product-templates` |
+| POST | `/product-templates` |
+
+## EOD
+
+| Method | Path |
+|--------|------|
+| POST | `/eod/run` |
+| GET | `/eod/:date` |
