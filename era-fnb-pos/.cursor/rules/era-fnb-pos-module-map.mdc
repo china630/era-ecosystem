@@ -1,0 +1,13 @@
+# era-fnb-pos — module map
+
+| Route | API | Role |
+|-------|-----|------|
+| `/floor` | tickets, tables, outlets | Waiter — walk-in, banquet BEO |
+| `/orders` | tickets, in-house link, room-charge, pay cash/card, `defer-to-hub`, shift panel | Waiter / manager |
+| `/kds` | kds fire | Kitchen |
+| `/admin/menu` | `/api/menu`, `/api/menu/categories`, `/api/menu/[id]`, `/api/menu/[id]/prices` | Manager — categories/items modal CRUD, price history, recipeSku, imageUrl |
+| `/admin/tables` | `/api/tables`, `/api/tables/[id]` | Manager — static table master CRUD |
+| `/admin/daily-menu` | `/api/admin/daily-menu` | Manager |
+| `/admin/settings` | outlet config | Admin |
+
+Integration: `GET /api/in-house`, `GET /api/banquets`, `GET /api/billing/context`, PMS room-charge + settlement pending bridge (`POST /api/tickets/[id]/defer-to-hub`, `POST /api/integration/settlement-confirmed`). Standalone GL: `SATELLITE_FB_SALE_COMPLETED` on local pay, `SATELLITE_FB_SHIFT_CLOSED` on Z-close.

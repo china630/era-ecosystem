@@ -113,19 +113,37 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id         String       @id @default(cuid())
-  categoryId String       @map("category_id")
+  id         String          @id @default(cuid())
+  categoryId String          @map("category_id")
   plu        String
   name       String
-  priceAzn   Decimal      @map("price_azn") @db.Decimal(12, 2)
-  active     Boolean      @default(true)
-  recipeSku  String?      @map("recipe_sku")
-  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  priceAzn   Decimal         @map("price_azn") @db.Decimal(12, 2)
+  active     Boolean         @default(true)
+  recipeSku  String?         @map("recipe_sku")
+  imageUrl   String?         @map("image_url")
+  category   MenuCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   lines      TicketLine[]
   dailyEntries DailyMenuEntry[]
+  priceHistory MenuItemPrice[]
 
   @@unique([categoryId, plu])
   @@map("menu_items")
+}
+
+/// Selling-price journal for menu reporting (catalog history; TicketLine still snapshots sale price).
+model MenuItemPrice {
+  id            String    @id @default(cuid())
+  menuItemId    String    @map("menu_item_id")
+  priceAzn      Decimal   @map("price_azn") @db.Decimal(12, 2)
+  effectiveFrom DateTime  @map("effective_from")
+  effectiveTo   DateTime? @map("effective_to")
+  reason        String?
+  createdBy     String?   @map("created_by")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  menuItem      MenuItem  @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId, effectiveFrom])
+  @@map("menu_item_prices")
 }
 
 model DailyMenuEntry {

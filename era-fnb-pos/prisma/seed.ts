@@ -122,6 +122,24 @@ async function main() {
     },
   });
 
+  const items = await prisma.menuItem.findMany({
+    select: { id: true, priceAzn: true },
+  });
+  for (const item of items) {
+    const hasPrice = await prisma.menuItemPrice.findFirst({
+      where: { menuItemId: item.id, effectiveTo: null },
+    });
+    if (!hasPrice) {
+      await prisma.menuItemPrice.create({
+        data: {
+          menuItemId: item.id,
+          priceAzn: item.priceAzn,
+          effectiveFrom: new Date(),
+        },
+      });
+    }
+  }
+
   console.log("era-fnb-pos seed OK");
 }
 

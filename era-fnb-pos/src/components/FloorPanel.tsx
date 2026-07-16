@@ -17,6 +17,7 @@ type MenuItem = {
   plu: string;
   name: string;
   priceAzn: string | number;
+  imageUrl?: string | null;
 };
 
 type Outlet = {
@@ -272,6 +273,30 @@ export default function FloorPanel() {
         <p className="text-sm text-[#7F8C8D]">{tc("loading")}</p>
       ) : (
         <>
+          {menuItems.some((m) => m.imageUrl) && (
+            <div className={`${CARD_CLASS} mb-3 p-3`}>
+              <p className="mb-2 text-xs text-[#7F8C8D]">{t("menuStrip")}</p>
+              <div className="flex gap-2 overflow-x-auto">
+                {menuItems
+                  .filter((m) => m.imageUrl)
+                  .slice(0, 12)
+                  .map((m) => (
+                    <div
+                      key={m.id}
+                      className="w-20 shrink-0 text-center text-[10px] text-[#34495E]"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={m.imageUrl!}
+                        alt={m.name}
+                        className="mb-1 h-14 w-20 rounded object-cover"
+                      />
+                      {m.name}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
           <ColorLegend
             className="mb-3"
             items={[

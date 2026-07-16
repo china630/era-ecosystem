@@ -2,13 +2,15 @@
 
 Source: [DELIVERY-FB.md](./DELIVERY-FB.md), [PRD.md](../PRD.md), [07-phases-delivery-user-stories.md](./07-phases-delivery-user-stories.md).
 
-## Done (FB-0, FB-1, FB-4)
+## Done (FB-0, FB-1, FB-4 + admin/finance waves)
 
 - Floor, orders, KDS, calendar shell
 - Ticket lifecycle, fire, pay (stub fiscal), void, room charge, shifts
-- Menu admin, auth FB_WAITER / FB_MANAGER
+- Menu admin modal CRUD (categories/items), tables admin, price history, imageUrl, recipeSku deep-link
+- Standalone GL: `SATELLITE_FB_SALE_COMPLETED` / `SATELLITE_FB_SHIFT_CLOSED` (LOCAL_CASHIER only)
 - Banquet `beoId`, outlet `BANQUET`
 - PMS bridge (in-house, room charge, shift NA guard)
+- Auth FB_WAITER / FB_MANAGER
 
 ## P0 — Nafta demo (this sprint)
 

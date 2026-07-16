@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
+import { recordMenuItemPrice } from "@/lib/menu-price-history";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
@@ -9,9 +9,15 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const dailyOnly = url.searchParams.get("dailyOnly") === "true";
     const outletCode = url.searchParams.get("outletCode") ?? "RESTAURANT";
+    const includeInactive = url.searchParams.get("includeInactive") === "true";
 
     const categories = await prisma.menuCategory.findMany({
-      include: { items: { where: { active: true }, orderBy: { name: "asc" } } },
+      include: {
+        items: {
+          where: includeInactive ? undefined : { active: true },
+          orderBy: { name: "asc" },
+        },
+      },
       orderBy: { sortOrder: "asc" },
     });
 
@@ -50,11 +56,14 @@ export async function GET(request: Request) {
 
 const createSchema = z.object({
   outletCode: z.string().default("RESTAURANT"),
-  categoryName: z.string().min(1),
+  categoryId: z.string().min(1).optional(),
+  categoryName: z.string().min(1).optional(),
   plu: z.string().min(1),
   name: z.string().min(1),
   priceAzn: z.number().nonnegative(),
   active: z.boolean().optional(),
+  recipeSku: z.string().min(1).nullable().optional(),
+  imageUrl: z.union([z.string().url(), z.literal(""), z.null()]).optional(),
 });
 
 export async function POST(request: Request) {
@@ -73,27 +82,49 @@ export async function POST(request: Request) {
       });
     }
 
-    let category = await prisma.menuCategory.findFirst({
-      where: { outletId: outlet.id, name: body.categoryName },
-    });
-    if (!category) {
-      category = await prisma.menuCategory.create({
-        data: {
-          outletId: outlet.id,
-          name: body.categoryName,
-          sortOrder: 99,
-        },
+    let category =
+      body.categoryId != null
+        ? await prisma.menuCategory.findUnique({ where: { id: body.categoryId } })
+        : null;
+    if (!category && body.categoryName) {
+      category = await prisma.menuCategory.findFirst({
+        where: { outletId: outlet.id, name: body.categoryName },
       });
+      if (!category) {
+        category = await prisma.menuCategory.create({
+          data: {
+            outletId: outlet.id,
+            name: body.categoryName,
+            sortOrder: 99,
+          },
+        });
+      }
+    }
+    if (!category) {
+      return jsonError("categoryId or categoryName required", 400);
     }
 
-    const item = await prisma.menuItem.create({
-      data: {
-        categoryId: category.id,
-        plu: body.plu,
-        name: body.name,
-        priceAzn: body.priceAzn,
-        active: body.active ?? true,
-      },
+    const imageUrl =
+      body.imageUrl === "" || body.imageUrl === undefined
+        ? null
+        : body.imageUrl;
+
+    const item = await prisma.$transaction(async (tx) => {
+      const created = await tx.menuItem.create({
+        data: {
+          categoryId: category!.id,
+          plu: body.plu,
+          name: body.name,
+          priceAzn: body.priceAzn,
+          active: body.active ?? true,
+          recipeSku: body.recipeSku ?? null,
+          imageUrl,
+        },
+      });
+      await recordMenuItemPrice(tx, created.id, body.priceAzn, {
+        createdBy: session?.login ?? session?.sub ?? null,
+      });
+      return created;
     });
 
     return jsonOk(item, 201);

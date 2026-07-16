@@ -1,23 +1,17 @@
 import { z } from "zod";
-import { handleRouteError, jsonOk } from "@/lib/api-utils";
+import { handleRouteError, jsonError, jsonOk } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
 
 export async function GET() {
   try {
-    const tables = await prisma.posTable.findMany({
-      orderBy: { code: "asc" },
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        seats: true,
-        zone: true,
-        status: true,
-        outletId: true,
+    const categories = await prisma.menuCategory.findMany({
+      orderBy: { sortOrder: "asc" },
+      include: {
+        _count: { select: { items: true } },
       },
     });
-    return jsonOk(tables);
+    return jsonOk(categories);
   } catch (err) {
     return handleRouteError(err);
   }
@@ -25,10 +19,8 @@ export async function GET() {
 
 const createSchema = z.object({
   outletCode: z.string().default("RESTAURANT"),
-  code: z.string().min(1),
   name: z.string().min(1),
-  seats: z.number().int().positive().optional(),
-  zone: z.string().optional(),
+  sortOrder: z.number().int().optional(),
 });
 
 export async function POST(request: Request) {
@@ -43,22 +35,28 @@ export async function POST(request: Request) {
     });
     if (!outlet) {
       outlet = await prisma.outlet.create({
-        data: {
-          code: body.outletCode,
-          name: body.outletCode,
-        },
+        data: { code: body.outletCode, name: body.outletCode },
       });
     }
-    const table = await prisma.posTable.create({
+
+    const existing = await prisma.menuCategory.findFirst({
+      where: { outletId: outlet.id, name: body.name },
+    });
+    if (existing) return jsonError("Category already exists", 409);
+
+    const maxSort = await prisma.menuCategory.aggregate({
+      where: { outletId: outlet.id },
+      _max: { sortOrder: true },
+    });
+
+    const category = await prisma.menuCategory.create({
       data: {
         outletId: outlet.id,
-        code: body.code,
         name: body.name,
-        seats: body.seats ?? 4,
-        zone: body.zone,
+        sortOrder: body.sortOrder ?? (maxSort._max.sortOrder ?? 0) + 1,
       },
     });
-    return jsonOk(table, 201);
+    return jsonOk(category, 201);
   } catch (err) {
     return handleRouteError(err);
   }
