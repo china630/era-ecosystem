@@ -1,0 +1,33 @@
+---
+description: ERA Hotel PMS — local dev port 3201, Prisma, satellite env
+alwaysApply: true
+---
+
+# Hotel PMS — local development
+
+**Inherits:** monorepo root `.cursor/rules/`. Port **3201** — `npm run dev` (`docs/ECOSYSTEM_URLS.md`).
+
+## Stack
+
+Next.js App Router: `app/` (UI) + `app/api/` (Route Handlers). Prisma: `prisma/schema.prisma`. Services: `src/lib/services/`.
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Dev server :3201 |
+| `npm run db:migrate` / `db:push` | Prisma schema |
+| `npm run db:seed` | Demo data |
+
+## Env (satellite)
+
+`DATABASE_URL`, `ERA_SATELLITE_ORGANIZATION_ID`, `ERA_HOTEL_GUEST_MDM_STRICT` (prod: `true`), `CONTROL_PLANE_URL`, `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, JWT/cookie secrets.
+
+## i18n
+
+`messages/{az,ru,en}.json` + `@era/i18n-common`. New UI strings: all three locales.
+
+## Auth
+
+- Staff: `POST /api/auth/login` (local)
+- Management: SSO `/sso/callback` from orchestrator launcher

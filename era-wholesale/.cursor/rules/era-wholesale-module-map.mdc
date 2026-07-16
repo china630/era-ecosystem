@@ -1,0 +1,20 @@
+---
+description: Wholesale — orders, pick waves, EDI, credit limit
+globs:
+  - app/**
+  - src/**
+  - prisma/**
+alwaysApply: false
+---
+
+# Wholesale module map
+
+| Domain | API prefix | Notes |
+|--------|------------|-------|
+| Auth / SSO | `app/api/auth/` | local + SSO |
+| Orders | `app/api/orders/` | confirm, pay, TTN |
+| Pick / warehouse | `pick-waves/`, `pick-lists/` | wave picking |
+| Credit | `credit-limit/` | B2B credit check |
+| EDI | `edi/export` | export integrations |
+| MDM | `mdm/voen-lookup` | buyer lookup |
+| Events | `events/dispatch` | orchestrator |

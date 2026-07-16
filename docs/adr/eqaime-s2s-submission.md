@@ -23,21 +23,25 @@ Fields on `Invoice`:
 | Field | Purpose |
 |-------|---------|
 | `eqaimeNumber` | DVX-assigned number after accept |
-| `eqaimeStatus` | `EqaimeStatus` enum (draft / submitted / accepted / rejected / cancelled) |
+| `eqaimeStatus` | `EqaimeStatus` enum (`DRAFT` / `READY` / `SUBMITTED` / `ACCEPTED` / `REJECTED` / `ERROR`) |
 | `eqaimeSubmittedAt` | UTC timestamp of last S2S attempt |
 
 Existing `dvxSync*` fields remain for network-inbox / reconciliation flows.
 
 ### Submission channel
 
-1. Guard: `ERA_EQAIME_S2S_ENABLED=1` (otherwise **503** `EQAIME_S2S_DISABLED` + RPA fallback message).
-2. Build package → **`SignatureService.signGovPayload`** (purpose `EQAIME_SUBMIT`) when gov signing is required.
-3. Submit via **`EtaxesSubmissionAdapter`** destination `etaxes_eqaime` → `E_TAXES_EQAIME_SUBMIT_URL`.
+1. Guard: `ERA_EQAIME_S2S_ENABLED=1` (otherwise **503** `RPA_FALLBACK` so the browser extension can take over).
+2. Build package → **`SignatureService.signGovPayload`** (purpose `EQAIME`).
+3. Submit via **`EtaxesSubmissionAdapter`** destination `EQAIME` → `E_TAXES_EQAIME_SUBMIT_URL`.
 
-### RPA and incoming flows (unchanged primary path)
+### Registry
 
-- Extension connector `erp-to-eqaime.ts` — line-items prefill; user signs on portal.
-- **Network inbox:** `GET network/documents/inbox/:id/eqaime-prefill` for cross-org prefill; incoming pull to purchase drafts remains partial (PRD M1).
+- **`GET /api/reporting/eqf-registry?counterpartyId=&status=`** — invoices with `eqaime*` / `dvxSync*` grouped by debtor.
+
+### RPA and incoming flows
+
+- Extension connector `erp-to-eqaime.ts` — header + best-effort line-items; structured `lineItemPlan` stub when DOM selectors miss.
+- **Network inbox:** `GET …/eqaime-prefill`; `POST …/ingest-eqaime` attaches DVX payload for amount/VÖEN compare (`MATCH` / `MISMATCH` / `MISSING`).
 
 ### Entitlements
 

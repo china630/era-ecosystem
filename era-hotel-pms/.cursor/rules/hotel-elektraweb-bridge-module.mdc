@@ -1,0 +1,34 @@
+---
+description: Elektraweb live bridge — browser extension dual-run (era-hotel-pms)
+globs: era-hotel-pms/extensions/elektraweb-bridge/**,era-hotel-pms/app/api/integrations/elektraweb-bridge/**,era-hotel-pms/src/lib/integration/elektraweb-bridge/**
+---
+
+# Hotel PMS — Elektraweb live bridge
+
+**Operator / engineer guide:** [doc/ELEKTRAWEB-LIVE-BRIDGE.md](../../doc/ELEKTRAWEB-LIVE-BRIDGE.md)  
+**Extension install:** [extensions/elektraweb-bridge/README.md](../../extensions/elektraweb-bridge/README.md)  
+**ADR:** [docs/adr/hotel-elektraweb-live-bridge.md](../../../docs/adr/hotel-elektraweb-live-bridge.md)
+
+## Tenant binding
+
+| Source of truth | Env / token claim |
+|-----------------|-------------------|
+| ERA org | `ERA_SATELLITE_ORGANIZATION_ID` (deployment; never from Elektraweb) |
+| Elektraweb property | `ELEKTRAWEB_HOTEL_ID` (e.g. 31606) |
+| Bridge JWT | embeds both; ingest 409 if row `HOTELID` mismatches |
+
+## Auth
+
+- Options login form → `POST /api/integrations/elektraweb-bridge/login`
+- Ingest Bearer: bridge JWT or optional `ELEKTRAWEB_BRIDGE_TOKEN`
+- Kill switch: `ELEKTRAWEB_BRIDGE_ENABLED=1`
+
+## API
+
+| Method | Route |
+|--------|-------|
+| POST | `/api/integrations/elektraweb-bridge/login` |
+| POST | `/api/integrations/elektraweb-bridge` |
+| GET | `/api/integrations/elektraweb-bridge/health` |
+
+Lifecycle on status-diff: `guest-lifecycle-events.ts` (not full native check-in posting).

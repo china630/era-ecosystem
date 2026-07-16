@@ -1,0 +1,12 @@
+---
+description: ERA Logistics — local dev port 3205, Prisma, satellite env
+alwaysApply: true
+---
+
+# Logistics — local development
+
+**Inherits:** monorepo root `.cursor/rules/`. Port **3205** — `npm run dev`.
+
+Prisma: `prisma/schema.prisma`. **Env:** standard satellite vars (`ERA_SATELLITE_ORGANIZATION_ID`, `ORCHESTRATOR_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, …).
+
+**i18n:** `messages/{az,ru,en}.json` + `@era/i18n-common`.

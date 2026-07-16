@@ -1,0 +1,54 @@
+---
+description: ERA ecosystem — control plane vs satellite vs finance, tenancy layers, SSO, events
+alwaysApply: true
+---
+
+# ERA — architecture boundaries
+
+## Three planes
+
+| Plane | Repo | Owns |
+|-------|------|------|
+| **Control plane** | `era-orchestrator` | Identity launcher, billing, entitlements, MDM API, satellite event ingest, org operating mode |
+| **Finance satellite** | `era-finance-core` | GL, documents, inventory, HR/payroll, tax, CRM counterparty MDM for accounting |
+| **Industry satellites** | `era-hotel-pms`, `era-fnb-pos`, … | Vertical operational data only |
+
+**Rule:** cross-tenant, cross-satellite, or commercial logic → orchestrator. Ledger and accounting events → finance.
+
+## Tenancy layers (do not conflate)
+
+| Need | Mechanism |
+|------|-----------|
+| Bar + restaurant, same VOEN, same deployment | Multiple **`Outlet`** rows in satellite DB |
+| Clinic/shop as department of hotel, own DB | Orchestrator org `DEPARTMENT` + `parentOrgId`; revenue/fiscal may route **PARENT**; ops data stays in department DB |
+| Separate legal entity | Separate org `STANDALONE` + unique `taxIdBlindIndex` (VOEN) |
+
+See `docs/adr/org-operating-mode.md`. Detach department → standalone: routing only, no data migration.
+
+## Identity and auth
+
+| Actor | Login | Org resolution |
+|-------|-------|----------------|
+| Operational staff (waiter, reception, housekeeping) | Local form on satellite UI (`/api/auth/login`) | Deployment-bound; no org picker |
+| Owner / management | SSO from orchestrator launcher | Signed `organizationId` in SSO payload → satellite session |
+| Finance / platform user | Orchestrator or finance login | `organizationMembership`; multi-org switcher for owners only |
+
+SSO: HMAC payload `email|organizationId|expiresAt`. Local staff users use `passwordHash`; SSO users use `sso:no-password` and cannot local-login.
+
+## MDM and globalPersonId
+
+- MDM DB: `era-orchestrator/packages/mdm-database` — `GlobalNaturalPerson`, identifiers, access grants.
+- Satellites: optional `globalPersonId` on Guest/Patient/Employee refs; resolve via `internal/v1/mdm/*`.
+- Future: multi-identifier (FIN, passport), merge foreigner → citizen when FIN obtained.
+
+## Event bus
+
+- Publish: `publishToOrchestratorGateway` → `POST /api/v1/satellite-events` (Bearer `SATELLITE_EVENT_SERVICE_TOKEN`).
+- Queue: `era-satellite-events` (BullMQ). Envelope: `@era/contracts` `satelliteEventBaseSchema` + `type` + `payload`.
+- Finance worker consumes for accounting dispatch; HR provisioning events are planned, not yet wired.
+
+## Where to put new code
+
+- New billable SKU / satellite gate → orchestrator `pricing_modules` + `satellites` table.
+- New hotel operational screen → `era-hotel-pms` only; accounting truth stays finance.
+- New shared auth/SSO helper → `packages/satellite-kit` first, then thin wrapper per app.

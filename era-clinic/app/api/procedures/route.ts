@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const orders = await prisma.procedureOrder.findMany({
       where: {
         scheduledAt: { gte: day, lt: next },
-        status: { in: ["SCHEDULED", "IN_PROGRESS"] },
+        status: { in: ["SCHEDULED", "CHECKED_IN"] },
       },
       include: { patientRef: true },
       orderBy: { scheduledAt: "asc" },

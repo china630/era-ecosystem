@@ -1,0 +1,13 @@
+---
+description: Clinic — UI per satellite playbook
+globs:
+  - app/**/*.tsx
+  - src/**
+alwaysApply: false
+---
+
+# Clinic UI
+
+Follow **`docs/UI_PLAYBOOK_SATELLITES.md`**. Reception and clinical workflows: fast patient lookup, visit completion, cashier pay flows.
+
+Use `@era/satellite-kit/ui`. Sanatorium flows link to hotel `PatientRef` / `globalPersonId`.

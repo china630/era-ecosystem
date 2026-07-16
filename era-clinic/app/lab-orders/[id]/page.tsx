@@ -7,15 +7,21 @@ import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
   ColorLegend,
-  FORM_FIELD_GROUP_CLASS,
-  FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
   PageHeader,
 } from "@era/satellite-kit/ui";
+import {
+  TemplateResultForm,
+  linesFromAnalytes,
+  structuredResultPayload,
+  type ResultLineState,
+} from "@/components/TemplateResultForm";
+import type {
+  CatalogFieldDef,
+  DiagnosticCatalogItem,
+} from "@/domain/catalog/diagnostic-catalog-shared";
 
 const resultsFormId = "lab-results-form";
 
@@ -30,8 +36,6 @@ type LabOrder = {
   visitId: string | null;
   patientRef: { refCode: string; fullName: string };
 };
-
-type ResultLine = { code: string; value: string; unit?: string };
 
 const STEP_KEYS = ["collect", "results", "publish", "complete"] as const;
 
@@ -52,9 +56,11 @@ export default function LabOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [resultLines, setResultLines] = useState<ResultLine[]>([
-    { code: "WBC", value: "", unit: "10^9/L" },
-  ]);
+  const [catalogItem, setCatalogItem] = useState<DiagnosticCatalogItem | null>(null);
+  const [metaFields, setMetaFields] = useState<CatalogFieldDef[]>([]);
+  const [metaValues, setMetaValues] = useState<Record<string, string>>({});
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
+  const [resultLines, setResultLines] = useState<ResultLineState[]>([]);
   const [resultsModalOpen, setResultsModalOpen] = useState(false);
 
   const loadOrder = useCallback(async () => {
@@ -62,22 +68,57 @@ export default function LabOrderDetailPage() {
     setError("");
     const res = await fetch("/api/lab-orders");
     const data = await res.json();
-    const found = Array.isArray(data)
-      ? (data as LabOrder[]).find((o) => o.id === id)
-      : null;
-    setOrder(found ?? null);
-    if (found?.resultJson) {
-      try {
-        setResultLines(JSON.parse(found.resultJson) as ResultLine[]);
-      } catch {
-        /* keep defaults */
+    const list = Array.isArray(data) ? data : (data.data ?? []);
+    const found = (list as LabOrder[]).find((o) => o.id === id) ?? null;
+    setOrder(found);
+
+    if (found) {
+      const primaryCode = found.testCode.split(",")[0]?.trim() ?? found.testCode;
+      const catRes = await fetch(
+        `/api/diagnostic-catalog?applyFavorites=false&search=${encodeURIComponent(primaryCode)}`,
+      );
+      const catData = await catRes.json();
+      const row = catData.data ?? catData;
+      setMetaFields(row.metaFields ?? []);
+      const item =
+        ((row.items ?? []) as DiagnosticCatalogItem[]).find(
+          (i) => i.code === primaryCode || i.serviceCode === primaryCode,
+        ) ?? null;
+      setCatalogItem(item);
+
+      if (found.resultJson) {
+        try {
+          const parsed = JSON.parse(found.resultJson) as ResultLineState[];
+          if (item?.kind === "lab_panel") {
+            setResultLines(parsed);
+          } else {
+            const fields: Record<string, string> = {};
+            const meta: Record<string, string> = {};
+            for (const line of parsed) {
+              if (line.code.startsWith("meta.")) meta[line.code.slice(5)] = line.value;
+              else fields[line.code] = line.value;
+            }
+            setFieldValues(fields);
+            setMetaValues(meta);
+            setResultLines(parsed);
+          }
+        } catch {
+          /* keep defaults */
+        }
+      } else if (item?.analytes?.length) {
+        setResultLines(linesFromAnalytes(item.analytes));
+      } else {
+        setResultLines([]);
+        setFieldValues({});
+        setMetaValues({});
       }
     }
+
     setLoading(false);
   }, [id]);
 
   useEffect(() => {
-    loadOrder();
+    void loadOrder();
   }, [loadOrder]);
 
   async function runAction(path: string, body?: unknown) {
@@ -94,16 +135,33 @@ export default function LabOrderDetailPage() {
       setBusy(false);
       return;
     }
-    setOrder(data);
+    setOrder(data.data ?? data);
     setBusy(false);
     if (path === "results") setResultsModalOpen(false);
   }
 
   async function saveResults(e: React.FormEvent) {
     e.preventDefault();
-    await runAction("results", {
-      lines: resultLines.filter((l) => l.code && l.value),
+    if (!catalogItem) {
+      await runAction("results", {
+        lines: resultLines.filter((l) => l.code && l.value),
+      });
+      return;
+    }
+    const payload = structuredResultPayload({
+      item: catalogItem,
+      metaValues,
+      fieldValues,
+      lines: resultLines,
     });
+    await runAction("results", payload);
+  }
+
+  function openResultsModal() {
+    if (catalogItem?.analytes?.length && resultLines.length === 0) {
+      setResultLines(linesFromAnalytes(catalogItem.analytes));
+    }
+    setResultsModalOpen(true);
   }
 
   const currentStep = order ? stepIndex(order.status) : 0;
@@ -119,14 +177,14 @@ export default function LabOrderDetailPage() {
           </Link>
         }
       />
-      <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-6`}>
+      <div className={`${CARD_CONTAINER_CLASS} space-y-6 p-6`}>
         {loading ? (
           <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>
         ) : !order ? (
           <p className="text-[13px] text-red-600">{t("notFound")}</p>
         ) : (
           <>
-            <div className="text-[13px] space-y-1">
+            <div className="space-y-1 text-[13px]">
               <div>
                 <strong>{order.testCode}</strong> — {order.patientRef.fullName}
               </div>
@@ -134,6 +192,11 @@ export default function LabOrderDetailPage() {
                 {t("status")}: {order.status} · {order.amountNet} AZN
                 {order.visitId ? ` · ${t("visit")} ${order.visitId.slice(0, 8)}…` : ""}
               </div>
+              {catalogItem && (
+                <div className="text-[#7F8C8D]">
+                  {t("template")}: {catalogItem.code} ({catalogItem.kind})
+                </div>
+              )}
             </div>
 
             <ColorLegend
@@ -167,19 +230,18 @@ export default function LabOrderDetailPage() {
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
                 disabled={busy}
-                onClick={() => runAction("collect")}
+                onClick={() => void runAction("collect")}
               >
                 {t("markCollected")}
               </button>
             )}
 
-            {(order.status === "COLLECTED" ||
-              order.status === "IN_PROGRESS") && (
+            {(order.status === "COLLECTED" || order.status === "IN_PROGRESS") && (
               <button
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
                 disabled={busy}
-                onClick={() => setResultsModalOpen(true)}
+                onClick={openResultsModal}
               >
                 {t("saveResults")}
               </button>
@@ -188,7 +250,7 @@ export default function LabOrderDetailPage() {
             {order.status === "RESULT_READY" && (
               <div className="space-y-2">
                 {order.resultJson && (
-                  <pre className="rounded border bg-slate-50 p-3 text-[12px] overflow-auto">
+                  <pre className="overflow-auto rounded border bg-slate-50 p-3 text-[12px]">
                     {order.resultJson}
                   </pre>
                 )}
@@ -196,7 +258,7 @@ export default function LabOrderDetailPage() {
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
                   disabled={busy}
-                  onClick={() => runAction("publish")}
+                  onClick={() => void runAction("publish")}
                 >
                   {t("publishToDoctor")}
                 </button>
@@ -208,7 +270,7 @@ export default function LabOrderDetailPage() {
                 type="button"
                 className={PRIMARY_BUTTON_CLASS}
                 disabled={busy}
-                onClick={() => runAction("complete")}
+                onClick={() => void runAction("complete")}
               >
                 {t("completeBilling")}
               </button>
@@ -241,42 +303,24 @@ export default function LabOrderDetailPage() {
           />
         }
       >
-        <form id={resultsFormId} onSubmit={saveResults} className={FORM_STACK_CLASS}>
-          {resultLines.map((line, idx) => (
-            <div key={idx} className="grid grid-cols-2 gap-2">
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t("code")}</label>
-                <input
-                  className={MODAL_INPUT_CLASS}
-                  value={line.code}
-                  onChange={(e) => {
-                    const next = [...resultLines];
-                    next[idx] = { ...next[idx], code: e.target.value };
-                    setResultLines(next);
-                  }}
-                />
-              </div>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t("value")}</label>
-                <input
-                  className={MODAL_INPUT_CLASS}
-                  value={line.value}
-                  onChange={(e) => {
-                    const next = [...resultLines];
-                    next[idx] = { ...next[idx], value: e.target.value };
-                    setResultLines(next);
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="text-[13px] text-[#2980B9]"
-            onClick={() => setResultLines([...resultLines, { code: "", value: "" }])}
-          >
-            {t("addLine")}
-          </button>
+        <form id={resultsFormId} onSubmit={(e) => void saveResults(e)}>
+          <TemplateResultForm
+            item={catalogItem}
+            metaFields={metaFields}
+            metaValues={metaValues}
+            onMetaChange={(k, v) => setMetaValues((prev) => ({ ...prev, [k]: v }))}
+            lines={resultLines}
+            onLinesChange={setResultLines}
+            fieldValues={fieldValues}
+            onFieldChange={(k, v) => setFieldValues((prev) => ({ ...prev, [k]: v }))}
+            labels={{
+              meta: t("metaFields"),
+              fields: t("templateFields"),
+              analytes: t("analytes"),
+              value: t("value"),
+              noTemplate: t("noTemplate"),
+            }}
+          />
         </form>
       </ModalShell>
     </>

@@ -76,7 +76,7 @@ Prerequisite: `chingiz@era.com` / bootstrap password, `CLINIC_ADMIN`; after `doc
 
 1. **`/admin/master-data`** — add practitioner: FIN or passport+country required; MDM lookup; edit loads identifier types from MDM (re-enter to change). No plaintext FIN/passport on practitioner row.
 2. **`/admin/wards`** — create/edit/delete ward and bed via modals.
-3. **`/patients`** — register patient with transient FIN/passport; **`/patients/[id]`** — edit shows MDM identifier types; contraindication modals on body map.
+3. **`/patients`** — register patient with sex, date of birth, blood group, emergency contact + transient FIN/passport; list shows sex/age columns. **`/patients/[id]`** — header shows sex · age; identity block shows nationality, blood, emergency contact; edit demographics; MDM identifier types; contraindication block under identity; **Now/next** shows pending labs (not buried in results); Results = with results only; History modal filter `pending`; Plan preview; deep link `?panel=history|plan`. From **`/nurse`**, patient name opens the card.
 4. **`/appointments`** — **New appointment** modal; cancel visit via modal (reason required).
 5. **`/lab-orders`** — **New lab order** modal from patient list.
 6. **`/visits/[id]`** — complete confirm modal; issue prescription modal; discount modal.
@@ -90,8 +90,9 @@ Prerequisite: preset `sanatorium_clinical`; hotel guest with medical rate plan c
 
 1. **`/sanatorium`** — episode visible; **no** procedures until checkup (complaint + ICD).
 2. **Complete checkup & schedule program** → FIFO chart with 5-min slots; same procedure not twice same day.
-3. **`/nurse`** — paste QR from hotel check-in (`guestQrToken`) → verify → **Start** → **Complete** → MEDICAL folio line on hotel.
-4. **`/sanatorium/resources`** — read-only occupancy grid.
+3. **`/nurse`** — paste guest QR (`guestQrToken`) → verify → **Check-in** (same QR, time window) → **Complete**; overdue list forces **No-show** or late check-in. Complete without check-in is blocked.
+4. **`/sanatorium/resources`** — reception **day matrix**: free slots green / occupied blocked; **drag** SCHEDULED onto free cell or **Move** picker (`available-slots`); **Cancel** frees inventory. Episode chart links to matrix (no nurse complete on chart).
+5. Dispute path: audit on ProcedureOrder (`checkedInAt/By`, `checkInChannel`, `completedAt/By`, `noShowAt/By`).
 5. Reschedule procedure time on chart → conflict rules enforced.
 6. Walk-in **Register walk-in** → program instantiate → billing per settlement hub or cashier.
 7. Early hotel check-out → future procedures **CANCELLED** (lifecycle consumer).

@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "ERA Elektraweb Bridge",
+  "version": "0.1.0",
+  "description": "Temporary dual-run: mirror Elektraweb guests/reservations/folios into ERA Hotel PMS",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": [
+    "https://app.elektraweb.com/*",
+    "https://*.elektraweb.com/*",
+    "http://localhost:3201/*",
+    "http://127.0.0.1:3201/*",
+    "https://*/*",
+    "http://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "ERA Elektraweb Bridge"
+  },
+  "options_page": "options.html",
+  "content_scripts": [
+    {
+      "matches": ["https://app.elektraweb.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://app.elektraweb.com/*"],
+      "js": ["injected.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

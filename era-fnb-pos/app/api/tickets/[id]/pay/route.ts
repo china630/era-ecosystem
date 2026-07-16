@@ -4,6 +4,7 @@ import { runPlatformCommerceHooks } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
 import { releaseTableForTicket } from "@/lib/ticket-helpers";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
+import { dispatchFbSaleCompleted } from "@/lib/fb-finance-events";
 import { dispatchStockConsumptionIfEnabled } from "@/lib/stock-consumption";
 import {
   payBlockedReason,
@@ -32,7 +33,7 @@ export async function POST(
 
   const ticket = await prisma.ticket.findUnique({
     where: { id },
-    include: { table: true, outlet: true },
+    include: { table: true, outlet: true, lines: true },
   });
   if (!ticket) {
     return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
@@ -140,6 +141,22 @@ export async function POST(
   void dispatchStockConsumptionIfEnabled(id, body.method, amount).catch(() => {
     // E8 optional; enabled via STOCK_CONSUMPTION_ENABLED
   });
+
+  if (settlement === "LOCAL_CASHIER") {
+    const receiptId = fiscal.receiptId?.trim() || `fb-ticket-${id}`;
+    const lineCount = ticket.lines.filter((l) => l.kitchenStatus !== "VOID").length;
+    void dispatchFbSaleCompleted({
+      ticketId: id,
+      outletId: ticket.outletId,
+      outletCode: ticket.outlet.code,
+      amountAzn: amount,
+      paymentMethod: body.method,
+      receiptId,
+      lineCount,
+    }).catch(() => {
+      // Revenue event best-effort; ticket already closed
+    });
+  }
 
   await trySendPlatformNotification({
     templateKey: "fb.ticket.paid",

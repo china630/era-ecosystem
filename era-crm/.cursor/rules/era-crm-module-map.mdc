@@ -1,0 +1,48 @@
+---
+
+description: CRM — leads, pipeline, visits, inbox
+
+globs:
+
+  - app/**
+
+  - src/**
+
+  - prisma/**
+
+alwaysApply: false
+
+---
+
+
+
+# CRM module map
+
+
+
+| Domain | API prefix | Notes |
+
+|--------|------------|-------|
+
+| Auth / SSO | `app/api/auth/` | login, me, SSO |
+
+| Leads | `app/api/leads/` | CRUD, stage, score, convert, assign, follow-up |
+
+| Lead detail | `app/leads/[id]/` | party card UI (v3.0) |
+
+| Import | `app/api/leads/import/` | CSV/XLSX bulk (v3.0) |
+
+| Pipeline | `app/api/pipeline/rules` | automation rules |
+
+| Visits | `app/api/visits/` | field visits |
+
+| Inbox | `app/api/inbox/` | communications inbox |
+
+| Users | `app/api/users/` | team |
+
+| MDM | `app/api/mdm/voen-lookup`, `person-lookup` | VÖEN + FIN (v3.0) |
+
+| Events | `events/dispatch` | orchestrator |
+
+| Admin import UI | `app/admin/import/` | SatAdmin upload (v3.0) |
+

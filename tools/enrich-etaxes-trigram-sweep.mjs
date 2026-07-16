@@ -187,7 +187,7 @@ async function main() {
     if (samePlan && cpIndex < plan.total_queries) {
       startIndex = cpIndex;
     } else {
-      // Plan rebuilt (cache changed): re-run remaining uncached queries from start.
+      // Plan rebuilt (cache shrunk remaining list): scan uncached from index 0.
       startIndex = 0;
       console.log(
         `Plan changed or checkpoint past end (${cpIndex}/${plan.total_queries}) — scanning remaining uncached queries`,

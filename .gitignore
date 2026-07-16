@@ -22,3 +22,12 @@ docker-data/
 
 # Legal entity enrichment cache (local scrape; never commit)
 data/legal-entities/.cache/
+
+# Elektraweb bridge HAR / PII captures (LoginToken + guest data — never commit)
+**/*.har
+era-hotel-pms/doc/nafta/bridge-har/_*.txt
+era-hotel-pms/doc/nafta/bridge-har/*.json
+
+# Local port/reference scratch (never commit)
+.cursor/port-refs/
+

@@ -22,6 +22,7 @@ import {
   BookOpen,
   ScrollText,
   Shield,
+  Star,
 } from "lucide-react";
 import {
   EraAppRouteShell,
@@ -92,6 +93,7 @@ export default function ClinicOpsShell({ children }: { children: React.ReactNode
           },
           { href: "/admin/wards", label: t("inpatient"), icon: BedDouble },
           { href: "/admin/catalog", label: t("catalog"), icon: BookOpen },
+          { href: "/admin/catalog-favorites", label: t("catalogFavorites"), icon: Star },
           { href: "/admin/templates", label: t("templates"), icon: FileSpreadsheet },
           {
             href: "/admin/lis-profiles",

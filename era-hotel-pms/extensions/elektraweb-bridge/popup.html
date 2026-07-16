@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Bridge</title>
+    <style>
+      body {
+        font-family: Segoe UI, system-ui, sans-serif;
+        width: 280px;
+        margin: 0;
+        padding: 12px;
+        font-size: 13px;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+      .row {
+        margin: 6px 0;
+      }
+      .ok {
+        color: #0a7a2f;
+      }
+      .err {
+        color: #b00020;
+      }
+      button {
+        margin-top: 8px;
+        margin-right: 6px;
+        padding: 6px 10px;
+        border: 0;
+        border-radius: 6px;
+        background: #0b5fff;
+        color: #fff;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #555;
+      }
+      code {
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ERA ↔ Elektraweb</h1>
+    <div id="status">…</div>
+    <div class="row">
+      <label><input type="checkbox" id="enabled" /> Capture &amp; sync</label>
+    </div>
+    <button id="openOptions" class="secondary" type="button">Login / settings</button>
+    <button id="flush" type="button">Flush now</button>
+    <script src="popup.js"></script>
+  </body>
+</html>

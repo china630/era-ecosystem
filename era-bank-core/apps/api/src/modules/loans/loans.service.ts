@@ -2,10 +2,8 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InstallmentStatus, LoanStatus, TxnType } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import { getProductGlCode } from "../../common/product-gl";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
-
-const LOAN_PORTFOLIO_GL = "1300101";
-const INTEREST_INCOME_GL = "4100101";
 
 @Injectable()
 export class LoansService {
@@ -34,6 +32,22 @@ export class LoansService {
     });
     if (!gl) throw new NotFoundException(`GL ${code} not seeded`);
     return gl;
+  }
+
+  private async productGlCodes(productTemplateId: string) {
+    const template = await this.prisma.productTemplate.findFirst({
+      where: { id: productTemplateId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!template) throw new NotFoundException("Product template not found");
+    const assetCode = getProductGlCode(template.paramsJson, "glAssetCode");
+    const interestIncomeCode = getProductGlCode(
+      template.paramsJson,
+      "glInterestIncomeCode",
+    );
+    return {
+      loanGl: await this.glByCode(assetCode),
+      interestGl: await this.glByCode(interestIncomeCode),
+    };
   }
 
   originate(input: {
@@ -103,7 +117,7 @@ export class LoansService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const loanGl = await this.glByCode(LOAN_PORTFOLIO_GL);
+    const { loanGl } = await this.productGlCodes(loan.productTemplateId);
 
     await this.postingEngine.post({
       reference: `LOAN-DISB-${id}`,
@@ -150,8 +164,7 @@ export class LoansService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const loanGl = await this.glByCode(LOAN_PORTFOLIO_GL);
-    const interestGl = await this.glByCode(INTEREST_INCOME_GL);
+    const { loanGl, interestGl } = await this.productGlCodes(loan.productTemplateId);
 
     const principalPart =
       amountMinor > loan.outstandingMinor ? loan.outstandingMinor : amountMinor;

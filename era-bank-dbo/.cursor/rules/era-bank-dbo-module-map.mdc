@@ -1,0 +1,52 @@
+---
+description: era-bank-dbo route map — customer digital banking channel
+globs: era-bank-dbo/**/*
+---
+
+# era-bank-dbo module map
+
+Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
+
+## Public
+
+| Path | UI |
+|------|-----|
+| `/login` | Retail + corporate auth (OTP / ASAN stub) |
+
+## Customer (authenticated)
+
+| Path | UI |
+|------|-----|
+| `/dashboard` | Home, total balance |
+| `/accounts` | Account cards |
+| `/accounts/[id]` | Account detail |
+| `/transfers` | Internal transfer |
+| `/payments` | Payment order list |
+| `/payments/new` | Create + sign + submit (retail) |
+| `/payments/approve` | Corporate signatory queue |
+
+## BFF (`app/api`)
+
+| Route | Engine proxy |
+|-------|--------------|
+| `GET /api/health` | Local |
+| `POST /api/auth/otp/request` | `POST /api/v1/dbo/auth/otp/request` |
+| `POST /api/auth/otp/verify` | `POST /api/v1/dbo/auth/otp/verify` |
+| `POST /api/auth/asan/challenge` | Channel stub + optional engine |
+| `POST /api/auth/asan/callback` | `POST /api/v1/dbo/auth/asan/callback` |
+| `POST /api/auth/logout` | `POST /api/v1/dbo/auth/logout` |
+| `GET /api/auth/me` | `GET /api/v1/dbo/auth/me` |
+| `GET /api/accounts` | `GET /api/v1/dbo/accounts` |
+| `GET /api/accounts/[id]` | `GET /api/v1/dbo/accounts/:id` |
+| `GET /api/accounts/[id]/statement` | `GET /api/v1/dbo/accounts/:id/statement` |
+| `POST /api/transfers/internal` | `POST /api/v1/dbo/transfers/internal` |
+| `GET/POST /api/payments/orders` | `/api/v1/dbo/payments/orders` |
+| `GET /api/payments/orders/[id]` | `/api/v1/dbo/payments/orders/:id` |
+| `POST /api/payments/orders/[id]/sign` | `/api/v1/dbo/payments/orders/:id/sign` |
+| `POST /api/payments/orders/[id]/submit` | `/api/v1/dbo/payments/orders/:id/submit` |
+| `POST /api/payments/orders/[id]/preflight` | `/api/v1/dbo/payments/orders/:id/preflight` (optional) |
+| `GET /api/payments/sign-requests` | Channel DB |
+
+## Channel DB models
+
+`CustomerSession`, `CorporateApiKey`, `PaymentSignRequest` only.

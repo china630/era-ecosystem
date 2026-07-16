@@ -100,6 +100,13 @@ Source: [MODULES_CATALOG](../../docs/MODULES_CATALOG.md)
 ## Planned — v1.1
 
 - [x] M10: EHR templates / CPOE lite
+- [x] M10 pack: standard diagnostic + lab templates v1.1 — [DIAGNOSTIC_AND_LAB_CATALOG.md](./DIAGNOSTIC_AND_LAB_CATALOG.md) + `prisma/seed-data/diagnostic-lab-catalog.json` (85 studies, 45 lab panels, 13 visits, 7 packages → `ClinicalTemplate` + `ServiceCatalogCache`)
+- [x] Diagnostic catalog UI — picker on `/lab-orders`, template result form on `/lab-orders/[id]`, favorites admin `/admin/catalog-favorites` (`Tenant.catalogFavoriteCodes` + mode)
+- [x] Patient card clinical sections — `/patients/[id]`: contraindications → now/next (incl. pending labs ORDERED/COLLECTED/IN_PROGRESS) → results preview → plan preview; history/plan modals; `GET /api/patients/:id/card-summary` + `…/card-feed`; admin card limits in settings
+- [x] Patient clinical demographics — sex, birthDate→age, blood group, emergency contact on `PatientRef` ops cache; register + card UI (CLI-28 / ADR clinic-patient-clinical-demographics)
+- [x] Patient clinical timeline API (legacy feed) — `GET /api/patients/:id/timeline` (Baku day groups; still available)
+- [x] Procedure day-ops (CLI-26) — ADR [clinic-procedure-day-ops.md](../../docs/adr/clinic-procedure-day-ops.md): statuses `CHECKED_IN`/`NO_SHOW`; reception matrix DnD + available-slots; nurse QR check-in (grace −5/+15); complete only after check-in
+- [x] Clinic→hotel capacity foresight (CLI-27) — ADR [clinic-hotel-capacity-foresight.md](../../docs/adr/clinic-hotel-capacity-foresight.md): remaining% slot inventory; warn ≤15% / critical blocks medical booking; `SATELLITE_CLINIC_CAPACITY_CHANGED`
 - [x] M11: LIS analyzer import
 - [x] M12: Insurance / DMS eligibility
 - [x] M13: Inpatient / bed management — **SHIPPED** (ADT-light + `/admin/wards` modal CRUD + daily charge cron)
@@ -121,7 +128,8 @@ ADR: [sanatorium-vnext.md](../../docs/adr/sanatorium-vnext.md). Migration: `2026
 
 ### Clinic UX
 
-- [x] Resource-aware `GET /api/scheduling/slots`; drag reschedule UI
+- [x] Resource-aware `GET /api/scheduling/slots` (includes `appointmentId` on busy slots); id-based drag reschedule UI
+- [x] Procedure inventory matrix — `/sanatorium/resources` + `available-slots` (hotel-like free/blocked)
 - [x] Visit card + CPOE on `/appointments`; ICD catalog `GET /api/icd`
 - [x] `/doctor`, `/nurse`, `/cashier` + nav; clinic role guards
 - [x] Catalog sync — Finance URL with local fallback

@@ -1,0 +1,53 @@
+---
+description: ERA coverage definition — SHIPPED vs API/STUB and actor-aware matrix
+alwaysApply: true
+---
+
+# ERA — coverage definition (honest done)
+
+## Source of truth
+
+| Layer | Document |
+|-------|----------|
+| Actor matrix (Doc/API/UI × roles) | `docs/COVERAGE_MATRIX.md` |
+| Engineering checklists | `era-*/doc/DELIVERY*.md` |
+| Nafta pilot gaps | `docs/NAFTA_DOC_API_UI_AUDIT.md` |
+| UAT usability | `docs/LOCAL_UAT_GAP_CHECKLIST.md` |
+| Integration boundaries (MDM/hub/workforce) | `docs/INTEGRATION_AUDIT_CI.md` — `npm run audit:integration:strict` before SHIPPED on MDM/reference rows |
+| UI pattern | `docs/UI_PLAYBOOK_SATELLITES.md` |
+
+**DELIVERY checkbox % ≠ SHIPPED.** READINESS_MATRIX §6 applies.
+
+## Status taxonomy
+
+| Status | DELIVERY tag | When to use |
+|--------|--------------|-------------|
+| **SHIPPED** | `[x]` | Doc + API + UI for declared actor + UAT-SMOKE UI step (no curl-only) |
+| **API** | `[~]` | Backend/route exists; admin or ops UI deferred |
+| **STUB** | `[s]` | Mock vendor / NBC / notify / e-qaimé |
+| **HEADLESS** | `[h]` | Workers, webhooks, event consumers — ADR link required |
+| **BLOCKED** | `[ ]` | External file/creds/cert |
+
+## Actor columns (pick per capability)
+
+| Actor | Scope |
+|-------|--------|
+| **OpsUI** | Local login staff (`/login`, reception, floor) |
+| **SatAdmin** | Satellite `/admin/*`, `CLINIC_ADMIN`, `Hotel_Admin` |
+| **OrgOwner** | SSO `BUSINESS_OWNER`, `/workspace`, `/executive` |
+| **SuperAdmin** | Orch `/super-admin/*`, platform-only routes |
+
+## Anti-patterns (do not merge)
+
+- `[x]` on «справочник / master data» without SatAdmin list + modal CRUD
+- MODULES_CATALOG **DONE** without COVERAGE_MATRIX row
+- NAFTA audit **OK** when only API exists
+- UAT-SMOKE steps that require curl for ops flows marked SHIPPED
+
+## Definition of done (feature)
+
+1. COVERAGE_MATRIX row updated (ID + actor columns)
+2. DELIVERY tag matches status (`[x]` only for SHIPPED/HEADLESS)
+3. UAT-SMOKE UI path for SHIPPED ops/admin flows
+4. Module-map `.mdc` route listed
+5. i18n en + az + ru for new screens

@@ -133,6 +133,15 @@ exports.Prisma.GlAccountScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.SystemGlConfigScalarFieldEnum = {
+  id: 'id',
+  bankOrgId: 'bankOrgId',
+  key: 'key',
+  glCode: 'glCode',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.BranchScalarFieldEnum = {
   id: 'id',
   bankOrgId: 'bankOrgId',
@@ -887,6 +896,7 @@ exports.PositionStatus = exports.$Enums.PositionStatus = {
 
 exports.Prisma.ModelName = {
   GlAccount: 'GlAccount',
+  SystemGlConfig: 'SystemGlConfig',
   Branch: 'Branch',
   BankCustomer: 'BankCustomer',
   BeneficialOwner: 'BeneficialOwner',

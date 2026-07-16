@@ -24,6 +24,7 @@
 | [UAT-SMOKE.md](UAT-SMOKE.md) | `doc/UAT-SMOKE.md` | hotel-pms | stable |
 | [ELEKTRAWEB-PARITY.md](ELEKTRAWEB-PARITY.md) | `doc/ELEKTRAWEB-PARITY.md` | hotel-pms | stable |
 | [ELEKTRAWEB-IMPORT.md](ELEKTRAWEB-IMPORT.md) | `doc/ELEKTRAWEB-IMPORT.md` | hotel-pms | stable |
+| [ELEKTRAWEB-LIVE-BRIDGE.md](ELEKTRAWEB-LIVE-BRIDGE.md) | `doc/ELEKTRAWEB-LIVE-BRIDGE.md` | hotel-pms | stable |
 | [ELEKTRAWEB-IMPORT-UI-AUDIT.md](ELEKTRAWEB-IMPORT-UI-AUDIT.md) | `doc/ELEKTRAWEB-IMPORT-UI-AUDIT.md` | hotel-pms | stable |
 | [FRONT-OFFICE-ELECTRAWEB.md](FRONT-OFFICE-ELECTRAWEB.md) | `doc/FRONT-OFFICE-ELECTRAWEB.md` | hotel-pms | stable |
 | [FRONT-OFFICE-STATUS.md](FRONT-OFFICE-STATUS.md) | `doc/FRONT-OFFICE-STATUS.md` | hotel-pms | stable |

@@ -27,12 +27,14 @@ Four tiers for workforce identity:
 4. `STAFF_PROVISIONED.payload.fullName` is a **T3 display stamp only** (from MDM at provision time); not authoritative.
 5. Finance Employee create/update rejects body fields `finCode`, `firstName`, `lastName`, `passportNumber`; list/get enrich via MDM batch on the server.
 6. `PersonAccessGrant` workforce stub created on hire (`WORKFORCE_EMPLOYMENT` relationship).
+7. **HR extended profile (Aktiv list):** blood group, statistical categories, addresses, marital status, education, specialty, photo — live in MDM `PersonHrProfile` / `PersonAddress` only; Finance `GET /hr/reports/active-list` is **read-through** via `batchHrProfiles` / ops-profile — never persisted on `Employee`.
 
 ## Consequences
 
 - Finance person card is read-only MDM read-through; payroll modals show MDM banner.
 - Audit script flags `WORKFORCE_PII_LEAK` on CP workforce models and `PII_DUPLICATE` on Finance Employee plaintext columns.
 - Satellite staff models must not add `finCode` / `passportNumber` columns (T3 ops cache only).
+- Related: [cp-personnel-orders.md](./cp-personnel-orders.md) (orders/ştat in CP, not Finance).
 
 ## API surface
 

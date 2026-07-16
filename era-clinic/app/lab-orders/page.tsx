@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
@@ -12,8 +12,14 @@ import {
   ModalShell,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  PageHeader,
 } from "@era/satellite-kit/ui";
-import { PageHeader } from "@era/satellite-kit/ui";
+import { DiagnosticCatalogPicker } from "@/components/DiagnosticCatalogPicker";
+import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import {
+  expandPackageCodes,
+  filterAndSortCatalogItems,
+} from "@/domain/catalog/diagnostic-catalog-shared";
 
 type LabOrder = {
   id: string;
@@ -36,7 +42,13 @@ export default function LabOrdersPage() {
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
-  const [form, setForm] = useState({ patientRefCode: "", testCode: "", visitId: "" });
+  const [form, setForm] = useState({ patientRefCode: "", visitId: "" });
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [catalogItems, setCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
+  const [favoriteKeys, setFavoriteKeys] = useState<string[]>([]);
+  const [favoritesMode, setFavoritesMode] = useState<"first" | "only">("first");
+  const [search, setSearch] = useState("");
+  const [modalityFilter, setModalityFilter] = useState("");
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -60,23 +72,59 @@ export default function LabOrdersPage() {
       .then((d) => setPatients((d.data ?? d) as PatientOption[]));
   }, []);
 
+  useEffect(() => {
+    void fetch("/api/diagnostic-catalog?kinds=lab_panel,imaging,functional,endoscopy,package&applyFavorites=false")
+      .then((r) => r.json())
+      .then((d) => {
+        const row = d.data ?? d;
+        setCatalogItems(row.items ?? []);
+        setFavoriteKeys(row.favorites?.keys ?? []);
+        setFavoritesMode(row.favorites?.mode === "only" ? "only" : "first");
+      });
+  }, []);
+
+  const modalities = useMemo(() => {
+    const map = new Map<string, L10n>();
+    for (const item of catalogItems) {
+      if (!map.has(item.modality)) {
+        map.set(item.modality, {
+          en: item.modality,
+          ru: item.modality,
+          az: item.modality,
+        });
+      }
+    }
+    return [...map.entries()].map(([code, title]) => ({ code, title }));
+  }, [catalogItems]);
+
+  const pickerItems = useMemo(
+    () =>
+      filterAndSortCatalogItems(catalogItems, favoriteKeys, favoritesMode, {
+        search,
+        modality: modalityFilter || undefined,
+      }),
+    [catalogItems, favoriteKeys, favoritesMode, search, modalityFilter],
+  );
+
   async function createOrder() {
     const patient = patients.find((p) => p.refCode === form.patientRefCode);
-    if (!patient || !form.testCode.trim()) return;
+    if (!patient || selectedCodes.length === 0) return;
+    const expanded = expandPackageCodes(selectedCodes, catalogItems);
     const res = await fetch("/api/lab-orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         patientRefCode: patient.refCode,
         patientFullName: patient.fullName,
-        testCode: form.testCode.trim(),
+        testCodes: expanded,
         visitId: form.visitId.trim() || undefined,
       }),
     });
     const data = await res.json();
     const order = data.data ?? data;
     setCreateOpen(false);
-    setForm({ patientRefCode: "", testCode: "", visitId: "" });
+    setForm({ patientRefCode: "", visitId: "" });
+    setSelectedCodes([]);
     if (order?.id) router.push(`/lab-orders/${order.id}`);
     else await loadOrders();
   }
@@ -107,7 +155,7 @@ export default function LabOrdersPage() {
           </div>
         }
       />
-      <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-4`}>
+      <div className={`${CARD_CONTAINER_CLASS} space-y-4 p-6`}>
         <label className="flex items-center gap-2 text-[13px]">
           <input
             type="checkbox"
@@ -184,7 +232,7 @@ export default function LabOrdersPage() {
       </div>
 
       <ModalShell open={createOpen} title={t("createTitle")} onClose={() => setCreateOpen(false)}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <select
             className={MODAL_INPUT_CLASS}
             value={form.patientRefCode}
@@ -197,12 +245,30 @@ export default function LabOrdersPage() {
               </option>
             ))}
           </select>
-          <input
-            className={MODAL_INPUT_CLASS}
-            placeholder={t("testCode")}
-            value={form.testCode}
-            onChange={(e) => setForm({ ...form, testCode: e.target.value })}
+          <DiagnosticCatalogPicker
+            items={pickerItems}
+            selected={selectedCodes}
+            onChange={setSelectedCodes}
+            favoriteKeys={favoriteKeys}
+            favoritesMode={favoritesMode}
+            search={search}
+            onSearchChange={setSearch}
+            modalityFilter={modalityFilter}
+            onModalityFilterChange={setModalityFilter}
+            modalities={modalities}
+            labels={{
+              search: t("searchCatalog"),
+              allModalities: t("allModalities"),
+              favoriteBadge: t("favoriteBadge"),
+              empty: t("catalogEmpty"),
+              favoritesOnlyHint: t("favoritesOnlyHint"),
+            }}
           />
+          {selectedCodes.length > 0 && (
+            <p className="text-[12px] text-[#7F8C8D]">
+              {t("selectedCount", { count: selectedCodes.length })}
+            </p>
+          )}
           <input
             className={MODAL_INPUT_CLASS}
             placeholder={t("visitIdOptional")}
@@ -210,7 +276,11 @@ export default function LabOrdersPage() {
             onChange={(e) => setForm({ ...form, visitId: e.target.value })}
           />
         </div>
-        <ModalFooter onCancel={() => setCreateOpen(false)} onSubmit={() => void createOrder()} submitLabel={tc("save")} />
+        <ModalFooter
+          onCancel={() => setCreateOpen(false)}
+          onSubmit={() => void createOrder()}
+          submitLabel={tc("save")}
+        />
       </ModalShell>
     </>
   );

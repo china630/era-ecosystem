@@ -7,12 +7,30 @@ import {
 } from "@/domain/patient/patient.service";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 
+const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
+const patientBloodGroup = z.enum([
+  "A_POS",
+  "A_NEG",
+  "B_POS",
+  "B_NEG",
+  "AB_POS",
+  "AB_NEG",
+  "O_POS",
+  "O_NEG",
+  "UNKNOWN",
+]);
+
 const createSchema = z
   .object({
     refCode: z.string().min(1),
     fullName: z.string().min(1),
     phone: z.string().optional(),
     nationality: z.string().optional(),
+    sex: patientSex.optional(),
+    birthDate: z.string().nullable().optional(),
+    bloodGroup: patientBloodGroup.optional(),
+    emergencyContactName: z.string().nullable().optional(),
+    emergencyContactPhone: z.string().nullable().optional(),
     finCode: z.string().optional(),
     passportNumber: z.string().optional(),
     issuingCountry: z.string().optional(),
@@ -45,4 +63,3 @@ export async function POST(req: Request) {
     return handleRouteError(err);
   }
 }
-

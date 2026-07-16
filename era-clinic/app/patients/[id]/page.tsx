@@ -2,25 +2,61 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { PatientContraindicationsPanel } from "@/components/PatientContraindicationsPanel";
+import { PatientCardClinicalSections } from "@/components/PatientCardClinicalSections";
+import { birthDateToInputValue } from "@/domain/patient/patient-demographics";
 import {
+  CARD_CONTAINER_CLASS,
   Field,
   FieldRow,
   FieldSelect,
   ModalFooter,
   ModalShell,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
+
+type PatientSex = "MALE" | "FEMALE" | "OTHER" | "UNKNOWN";
+type PatientBloodGroup =
+  | "A_POS"
+  | "A_NEG"
+  | "B_POS"
+  | "B_NEG"
+  | "AB_POS"
+  | "AB_NEG"
+  | "O_POS"
+  | "O_NEG"
+  | "UNKNOWN";
 
 type Patient = {
   id: string;
   refCode: string;
   fullName: string;
   phone?: string | null;
+  nationality?: string | null;
+  sex?: PatientSex;
+  birthDate?: string | null;
+  ageYears?: number | null;
+  bloodGroup?: PatientBloodGroup;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
   globalPersonId?: string | null;
   identifiersSummary?: Array<{ type: string; issuingCountry: string | null; isPrimary: boolean }>;
+};
+
+const BLOOD_LABELS: Record<PatientBloodGroup, string> = {
+  A_POS: "A+",
+  A_NEG: "A-",
+  B_POS: "B+",
+  B_NEG: "B-",
+  AB_POS: "AB+",
+  AB_NEG: "AB-",
+  O_POS: "O+",
+  O_NEG: "O-",
+  UNKNOWN: "—",
 };
 
 function maskPersonId(id: string | null | undefined): string {
@@ -29,21 +65,47 @@ function maskPersonId(id: string | null | undefined): string {
   return `${id.slice(0, 4)}…${id.slice(-4)}`;
 }
 
+const emptyForm = {
+  fullName: "",
+  phone: "",
+  nationality: "AZ",
+  sex: "UNKNOWN" as PatientSex,
+  birthDate: "",
+  bloodGroup: "UNKNOWN" as PatientBloodGroup,
+  emergencyContactName: "",
+  emergencyContactPhone: "",
+  finCode: "",
+  passportNumber: "",
+  issuingCountry: "AZ",
+};
+
 export default function PatientCardPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const panel = searchParams.get("panel");
   const t = useTranslations("patientRegistry");
   const tc = useTranslations("common");
   const [patient, setPatient] = useState<Patient | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [mdmStatus, setMdmStatus] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    finCode: "",
-    passportNumber: "",
-    issuingCountry: "AZ",
-  });
+  const [form, setForm] = useState(emptyForm);
+
+  const sexLabel = useCallback(
+    (sex: PatientSex | undefined) => {
+      switch (sex) {
+        case "MALE":
+          return t("sexMale");
+        case "FEMALE":
+          return t("sexFemale");
+        case "OTHER":
+          return t("sexOther");
+        default:
+          return t("sexUnknown");
+      }
+    },
+    [t],
+  );
 
   const load = useCallback(async () => {
     if (!params.id) return;
@@ -55,6 +117,12 @@ export default function PatientCardPage() {
     setForm({
       fullName: p.fullName ?? "",
       phone: p.phone ?? "",
+      nationality: p.nationality ?? "AZ",
+      sex: p.sex ?? "UNKNOWN",
+      birthDate: birthDateToInputValue(p.birthDate),
+      bloodGroup: p.bloodGroup ?? "UNKNOWN",
+      emergencyContactName: p.emergencyContactName ?? "",
+      emergencyContactPhone: p.emergencyContactPhone ?? "",
       finCode: "",
       passportNumber: "",
       issuingCountry: "AZ",
@@ -133,6 +201,12 @@ export default function PatientCardPage() {
       body: JSON.stringify({
         fullName: form.fullName,
         phone: form.phone || null,
+        nationality: form.nationality.trim() || null,
+        sex: form.sex,
+        birthDate: form.birthDate.trim() || null,
+        bloodGroup: form.bloodGroup,
+        emergencyContactName: form.emergencyContactName.trim() || null,
+        emergencyContactPhone: form.emergencyContactPhone.trim() || null,
         finCode: form.finCode.trim() || null,
         passportNumber: form.passportNumber.trim() || null,
         issuingCountry: form.issuingCountry.trim() || null,
@@ -152,16 +226,41 @@ export default function PatientCardPage() {
     return <p className="p-6 text-sm text-slate-500">{tc("loading")}</p>;
   }
 
+  const ageLine =
+    patient.ageYears != null ? t("ageYears", { age: patient.ageYears }) : t("ageUnknown");
+  const headerMeta = [patient.refCode, sexLabel(patient.sex), ageLine].filter(Boolean).join(" · ");
+
   return (
-    <main className="mx-auto max-w-lg space-y-6 p-6">
-      <Link href="/patients" className="text-sm text-blue-600 hover:underline">
-        ← {t("backToList")}
-      </Link>
-      <header className="flex items-start justify-between gap-2">
-        <div>
-          <h1 className="text-xl font-semibold">{patient.fullName ?? patient.refCode}</h1>
-          <p className="text-sm text-slate-500">{patient.refCode}</p>
-          <p className="mt-1 text-xs">
+    <>
+      <PageHeader
+        title={patient.fullName ?? patient.refCode}
+        subtitle={headerMeta}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
+              {tc("edit")}
+            </button>
+            {patient.globalPersonId &&
+            patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
+            !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") ? (
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => void mergeFinObtained()}
+              >
+                {t("finObtained")}
+              </button>
+            ) : null}
+            <Link href="/patients" className={SECONDARY_BUTTON_CLASS}>
+              {t("backToList")}
+            </Link>
+          </div>
+        }
+      />
+
+      <div className="mx-auto max-w-3xl space-y-6 px-4 pb-10 sm:px-0">
+        <div className={`${CARD_CONTAINER_CLASS} space-y-2 p-4 text-[13px]`}>
+          <p>
             {t("mdmBadge")}:{" "}
             {patient.globalPersonId ? (
               <span className="text-green-700">{maskPersonId(patient.globalPersonId)}</span>
@@ -169,45 +268,126 @@ export default function PatientCardPage() {
               <span className="text-red-600">{t("mdmMissing")}</span>
             )}
           </p>
+          <div className="grid gap-1 text-[#7F8C8D] sm:grid-cols-2">
+            {patient.phone ? (
+              <p>
+                {t("phone")}: {patient.phone}
+              </p>
+            ) : null}
+            {patient.nationality ? (
+              <p>
+                {t("nationality")}: {patient.nationality}
+              </p>
+            ) : null}
+            <p>
+              {t("sex")}: {sexLabel(patient.sex)}
+            </p>
+            <p>
+              {t("birthDate")}: {birthDateToInputValue(patient.birthDate) || "—"} ({ageLine})
+            </p>
+            <p>
+              {t("bloodGroup")}:{" "}
+              {patient.bloodGroup && patient.bloodGroup !== "UNKNOWN"
+                ? BLOOD_LABELS[patient.bloodGroup]
+                : t("bloodUnknown")}
+            </p>
+            {patient.emergencyContactName || patient.emergencyContactPhone ? (
+              <p>
+                {t("emergencyContact")}:{" "}
+                {[patient.emergencyContactName, patient.emergencyContactPhone].filter(Boolean).join(" · ")}
+              </p>
+            ) : null}
+          </div>
           {patient.identifiersSummary && patient.identifiersSummary.length > 0 ? (
-            <p className="text-xs text-slate-500">
+            <p className="text-[#7F8C8D]">
               {patient.identifiersSummary.map((i) => i.type).join(", ")}
             </p>
           ) : null}
+          {msg ? <p>{msg}</p> : null}
         </div>
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => setEditOpen(true)}>
-          {tc("edit")}
-        </button>
-        {patient.globalPersonId &&
-        patient.identifiersSummary?.some((i) => i.type === "PASSPORT") &&
-        !patient.identifiersSummary?.some((i) => i.type === "AZ_FIN") ? (
-          <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void mergeFinObtained()}>
-            {t("finObtained")}
-          </button>
-        ) : null}
-      </header>
-      {msg ? <p className="text-sm">{msg}</p> : null}
-      <section>
-        <h2 className="mb-2 text-sm font-medium uppercase tracking-wide text-slate-500">
-          {t("contraindicationsTitle")}
-        </h2>
-        <PatientContraindicationsPanel patientRefId={patient.id} />
-      </section>
+
+        <section className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 shadow-sm">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-amber-900">
+            {t("contraindicationsTitle")}
+          </h2>
+          <PatientContraindicationsPanel patientRefId={patient.id} />
+        </section>
+
+        <PatientCardClinicalSections patientRefId={patient.id} panel={panel} />
+      </div>
 
       <ModalShell open={editOpen} title={t("editPatient")} onClose={() => setEditOpen(false)}>
         <div className="space-y-4">
+          <p className="text-xs text-[#7F8C8D]">{t("demographicsHint")}</p>
           <Field
             label={t("fullName")}
             preset="shortText"
             value={form.fullName}
             onChange={(e) => setForm({ ...form, fullName: e.target.value })}
           />
-          <Field
-            label={t("phone")}
-            preset="phone"
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          />
+          <FieldRow cols={2}>
+            <Field
+              label={t("phone")}
+              preset="phone"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+            <Field
+              label={t("nationality")}
+              preset="code"
+              value={form.nationality}
+              onChange={(e) => setForm({ ...form, nationality: e.target.value.toUpperCase() })}
+            />
+          </FieldRow>
+          <FieldRow cols={2}>
+            <FieldSelect
+              label={t("sex")}
+              preset="shortText"
+              value={form.sex}
+              onChange={(e) => setForm({ ...form, sex: e.target.value as PatientSex })}
+            >
+              <option value="UNKNOWN">{t("sexUnknown")}</option>
+              <option value="MALE">{t("sexMale")}</option>
+              <option value="FEMALE">{t("sexFemale")}</option>
+              <option value="OTHER">{t("sexOther")}</option>
+            </FieldSelect>
+            <Field
+              label={t("birthDate")}
+              preset="shortText"
+              type="date"
+              value={form.birthDate}
+              onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+            />
+          </FieldRow>
+          <FieldSelect
+            label={t("bloodGroup")}
+            preset="shortText"
+            value={form.bloodGroup}
+            onChange={(e) => setForm({ ...form, bloodGroup: e.target.value as PatientBloodGroup })}
+          >
+            <option value="UNKNOWN">{t("bloodUnknown")}</option>
+            {(Object.keys(BLOOD_LABELS) as PatientBloodGroup[])
+              .filter((k) => k !== "UNKNOWN")
+              .map((k) => (
+                <option key={k} value={k}>
+                  {BLOOD_LABELS[k]}
+                </option>
+              ))}
+          </FieldSelect>
+          <FieldRow cols={2}>
+            <Field
+              label={t("emergencyContactName")}
+              preset="shortText"
+              value={form.emergencyContactName}
+              onChange={(e) => setForm({ ...form, emergencyContactName: e.target.value })}
+            />
+            <Field
+              label={t("emergencyContactPhone")}
+              preset="phone"
+              value={form.emergencyContactPhone}
+              onChange={(e) => setForm({ ...form, emergencyContactPhone: e.target.value })}
+            />
+          </FieldRow>
           <FieldRow cols={2} className="items-end">
             <Field
               label={t("finCode")}
@@ -215,7 +395,11 @@ export default function PatientCardPage() {
               value={form.finCode}
               onChange={(e) => setForm({ ...form, finCode: e.target.value.toUpperCase() })}
             />
-            <button type="button" className={`${SECONDARY_BUTTON_CLASS} self-end`} onClick={() => void lookupMdm()}>
+            <button
+              type="button"
+              className={`${SECONDARY_BUTTON_CLASS} self-end`}
+              onClick={() => void lookupMdm()}
+            >
               {t("mdmLookup")}
             </button>
           </FieldRow>
@@ -235,8 +419,12 @@ export default function PatientCardPage() {
             />
           </FieldRow>
         </div>
-        <ModalFooter onCancel={() => setEditOpen(false)} onSubmit={() => void savePatient()} submitLabel={tc("save")} />
+        <ModalFooter
+          onCancel={() => setEditOpen(false)}
+          onSubmit={() => void savePatient()}
+          submitLabel={tc("save")}
+        />
       </ModalShell>
-    </main>
+    </>
   );
 }

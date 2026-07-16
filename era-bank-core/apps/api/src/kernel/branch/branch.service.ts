@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { BranchStatus } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
+import {
+  SystemGlConfigService,
+  SystemGlKey,
+} from "../ledger/system-gl-config.service";
 import { PostingEngineService } from "../posting-engine/posting-engine.service";
 import { TxnType } from "@era/bank-core-database";
 import { buildCrossBranchWithdrawalLegs } from "./interbranch.builder";
@@ -12,6 +16,7 @@ export class BranchService {
     private readonly prisma: PrismaService,
     private readonly bankOrg: BankOrgConfig,
     private readonly postingEngine: PostingEngineService,
+    private readonly systemGl: SystemGlConfigService,
   ) {}
 
   list() {
@@ -48,13 +53,8 @@ export class BranchService {
     });
     if (!account) throw new NotFoundException("Account not found");
 
-    const mfrGl = await this.prisma.glAccount.findFirst({
-      where: { bankOrgId: this.bankOrg.bankOrgId, code: "2990101" },
-    });
-    const cashGl = await this.prisma.glAccount.findFirst({
-      where: { bankOrgId: this.bankOrg.bankOrgId, code: "1000101" },
-    });
-    if (!mfrGl || !cashGl) throw new NotFoundException("Required GL accounts not seeded");
+    const mfrGl = await this.systemGl.resolve(SystemGlKey.MFR_SETTLEMENT);
+    const cashGl = await this.systemGl.resolve(SystemGlKey.CASH_VAULT);
 
     const legs = buildCrossBranchWithdrawalLegs({
       amountMinor: input.amountMinor,

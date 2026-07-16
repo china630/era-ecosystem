@@ -1,7 +1,12 @@
 import { listPersonIdentifiers } from "@era/satellite-kit";
+import type { PatientBloodGroup, PatientSex } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
+import {
+  ageYearsFromBirthDate,
+  parseBirthDateInput,
+} from "@/domain/patient/patient-demographics";
 
 export class PatientMdmRequiredError extends Error {
   constructor(message = "Patient must resolve to globalPersonId via FIN, passport, or MDM") {
@@ -17,6 +22,37 @@ export type PatientIdentifierInput = {
   phone?: string;
 };
 
+export type PatientClinicalDemographicsInput = {
+  nationality?: string | null;
+  sex?: PatientSex;
+  birthDate?: string | Date | null;
+  bloodGroup?: PatientBloodGroup;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+};
+
+function demographicsWriteData(data: PatientClinicalDemographicsInput) {
+  const birthDate =
+    typeof data.birthDate === "string" || data.birthDate === null
+      ? parseBirthDateInput(data.birthDate as string | null | undefined)
+      : data.birthDate;
+  return {
+    nationality: data.nationality,
+    sex: data.sex,
+    birthDate,
+    bloodGroup: data.bloodGroup,
+    emergencyContactName: data.emergencyContactName,
+    emergencyContactPhone: data.emergencyContactPhone,
+  };
+}
+
+function withDerivedDemographics<T extends { birthDate?: Date | null }>(row: T) {
+  return {
+    ...row,
+    ageYears: ageYearsFromBirthDate(row.birthDate ?? null),
+  };
+}
+
 export async function listPatients(query?: string) {
   const where = query?.trim()
     ? {
@@ -27,22 +63,24 @@ export async function listPatients(query?: string) {
         ],
       }
     : undefined;
-  return prisma.patientRef.findMany({
+  const rows = await prisma.patientRef.findMany({
     where,
     orderBy: { createdAt: "desc" },
     take: 200,
   });
+  return rows.map(withDerivedDemographics);
 }
 
 export async function getPatient(id: string) {
   const row = await prisma.patientRef.findUnique({ where: { id } });
   if (!row) return null;
+  const base = withDerivedDemographics(row);
   if (!row.globalPersonId) {
-    return { ...row, identifiersSummary: [] as { type: string; issuingCountry: string | null; isPrimary: boolean }[] };
+    return { ...base, identifiersSummary: [] as { type: string; issuingCountry: string | null; isPrimary: boolean }[] };
   }
   const mdm = await listPersonIdentifiers(row.globalPersonId);
   return {
-    ...row,
+    ...base,
     identifiersSummary: (mdm.identifiers ?? []).map((i) => ({
       type: i.type,
       issuingCountry: i.issuingCountry,
@@ -56,6 +94,11 @@ export async function createPatient(data: {
   fullName: string;
   phone?: string;
   nationality?: string;
+  sex?: PatientSex;
+  birthDate?: string | null;
+  bloodGroup?: PatientBloodGroup;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
   finCode?: string;
   passportNumber?: string;
   issuingCountry?: string;
@@ -66,12 +109,18 @@ export async function createPatient(data: {
     );
   }
 
+  const demo = demographicsWriteData(data);
   const patient = await prisma.patientRef.create({
     data: {
       refCode: data.refCode,
       fullName: data.fullName,
       phone: data.phone,
-      nationality: data.nationality,
+      nationality: demo.nationality ?? undefined,
+      sex: demo.sex,
+      birthDate: demo.birthDate === undefined ? undefined : demo.birthDate,
+      bloodGroup: demo.bloodGroup,
+      emergencyContactName: demo.emergencyContactName ?? undefined,
+      emergencyContactPhone: demo.emergencyContactPhone ?? undefined,
     },
   });
 
@@ -94,7 +143,7 @@ export async function createPatient(data: {
     throw new PatientMdmRequiredError();
   }
 
-  return updated;
+  return withDerivedDemographics(updated);
 }
 
 export async function updatePatient(
@@ -103,6 +152,11 @@ export async function updatePatient(
     fullName?: string;
     phone?: string | null;
     nationality?: string | null;
+    sex?: PatientSex;
+    birthDate?: string | null;
+    bloodGroup?: PatientBloodGroup;
+    emergencyContactName?: string | null;
+    emergencyContactPhone?: string | null;
     finCode?: string | null;
     passportNumber?: string | null;
     issuingCountry?: string | null;
@@ -120,12 +174,18 @@ export async function updatePatient(
     data.issuingCountry !== undefined ||
     data.phone !== undefined;
 
+  const demo = demographicsWriteData(data);
   const updated = await prisma.patientRef.update({
     where: { id },
     data: {
       fullName: data.fullName,
       phone: data.phone,
-      nationality: data.nationality,
+      nationality: demo.nationality,
+      sex: demo.sex,
+      birthDate: demo.birthDate === undefined ? undefined : demo.birthDate,
+      bloodGroup: demo.bloodGroup,
+      emergencyContactName: demo.emergencyContactName,
+      emergencyContactPhone: demo.emergencyContactPhone,
     },
   });
 
@@ -146,5 +206,5 @@ export async function updatePatient(
     return getPatient(id);
   }
 
-  return updated;
+  return withDerivedDemographics(updated);
 }

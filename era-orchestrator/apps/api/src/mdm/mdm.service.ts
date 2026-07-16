@@ -5,9 +5,13 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import {
+  BloodGroup,
   IdentifierTrust,
+  MaritalStatus,
+  PersonAddressKind,
   PersonIdentifierType,
   PersonSegment,
+  StatisticalCategory,
 } from "@era365/mdm-database";
 import { ControlPlanePrismaService } from "../prisma/control-plane-prisma.service";
 import { MdmPrismaService } from "../prisma/mdm-prisma.service";
@@ -43,6 +47,29 @@ function maskIdentifierValue(value: string): string {
   if (v.length <= 4) return "****";
   return `${"*".repeat(Math.min(v.length - 4, 6))}${v.slice(-4)}`;
 }
+
+export type PersonHrAddressView = {
+  kind: PersonAddressKind;
+  line: string | null;
+  city: string | null;
+  region: string | null;
+  postal: string | null;
+};
+
+export type PersonHrProfileView = {
+  bloodGroup: BloodGroup;
+  maritalStatus: MaritalStatus | null;
+  education: string | null;
+  specialty: string | null;
+  statisticalCategories: StatisticalCategory[];
+  photoStorageKey: string | null;
+  addresses: PersonHrAddressView[];
+};
+
+const BLOOD_GROUPS = new Set(Object.values(BloodGroup));
+const MARITAL_STATUSES = new Set(Object.values(MaritalStatus));
+const STAT_CATEGORIES = new Set(Object.values(StatisticalCategory));
+const ADDRESS_KINDS = new Set(Object.values(PersonAddressKind));
 
 @Injectable()
 export class MdmService {
@@ -816,6 +843,7 @@ export class MdmService {
     fullName: string | null;
     identifiers: Array<{ maskedValue: string; isPrimary: boolean }>;
     accessDenied: boolean;
+    hrProfile: PersonHrProfileView | null;
   }) {
     const primary =
       profile.identifiers.find((i) => i.isPrimary) ?? profile.identifiers[0];
@@ -824,6 +852,7 @@ export class MdmService {
       displayName: profile.accessDenied ? null : profile.fullName,
       primaryIdentifierMasked: primary?.maskedValue ?? null,
       accessDenied: profile.accessDenied,
+      hrProfile: profile.accessDenied ? null : profile.hrProfile,
     };
   }
 
@@ -838,6 +867,7 @@ export class MdmService {
         displayName: string | null;
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
+        hrProfile: PersonHrProfileView | null;
       }
     >
   > {
@@ -851,6 +881,7 @@ export class MdmService {
         displayName: string | null;
         primaryIdentifierMasked: string | null;
         accessDenied: boolean;
+        hrProfile: PersonHrProfileView | null;
       }
     > = {};
     let logPersonId: string | null = null;
@@ -865,6 +896,7 @@ export class MdmService {
           displayName: null,
           primaryIdentifierMasked: null,
           accessDenied: true,
+          hrProfile: null,
         };
       }
     }
@@ -972,6 +1004,10 @@ export class MdmService {
       };
     });
 
+    const hrProfile = accessDenied
+      ? null
+      : await this.loadHrProfileView(canonical);
+
     return {
       globalPersonId: canonical,
       fullName:
@@ -984,6 +1020,298 @@ export class MdmService {
           : null,
       identifiers,
       accessDenied,
+      hrProfile,
+    };
+  }
+
+  private emptyHrProfileView(): PersonHrProfileView {
+    return {
+      bloodGroup: BloodGroup.UNKNOWN,
+      maritalStatus: null,
+      education: null,
+      specialty: null,
+      statisticalCategories: [],
+      photoStorageKey: null,
+      addresses: [],
+    };
+  }
+
+  private async loadHrProfileView(personId: string): Promise<PersonHrProfileView> {
+    const [row, addresses] = await Promise.all([
+      this.mdm.personHrProfile.findUnique({ where: { personId } }),
+      this.mdm.personAddress.findMany({
+        where: { personId },
+        orderBy: { kind: "asc" },
+      }),
+    ]);
+    if (!row) {
+      return {
+        ...this.emptyHrProfileView(),
+        addresses: addresses.map((a) => ({
+          kind: a.kind,
+          line: (decryptText(a.lineCipher) ?? "").trim() || null,
+          city: a.cityCipher
+            ? (decryptText(a.cityCipher) ?? "").trim() || null
+            : null,
+          region: a.regionCipher
+            ? (decryptText(a.regionCipher) ?? "").trim() || null
+            : null,
+          postal: a.postalCipher
+            ? (decryptText(a.postalCipher) ?? "").trim() || null
+            : null,
+        })),
+      };
+    }
+    return {
+      bloodGroup: row.bloodGroup,
+      maritalStatus: row.maritalStatus,
+      education: row.educationCipher
+        ? (decryptText(row.educationCipher) ?? "").trim() || null
+        : null,
+      specialty: row.specialtyCipher
+        ? (decryptText(row.specialtyCipher) ?? "").trim() || null
+        : null,
+      statisticalCategories: row.statisticalCategories ?? [],
+      photoStorageKey: row.photoStorageKey,
+      addresses: addresses.map((a) => ({
+        kind: a.kind,
+        line: (decryptText(a.lineCipher) ?? "").trim() || null,
+        city: a.cityCipher
+          ? (decryptText(a.cityCipher) ?? "").trim() || null
+          : null,
+        region: a.regionCipher
+          ? (decryptText(a.regionCipher) ?? "").trim() || null
+          : null,
+        postal: a.postalCipher
+          ? (decryptText(a.postalCipher) ?? "").trim() || null
+          : null,
+      })),
+    };
+  }
+
+  private async assertPersonAccessGrant(personId: string, organizationId: string) {
+    const orgId = organizationId.trim();
+    if (!orgId) throw new BadRequestException("organizationId required");
+    const grant = await this.mdm.personAccessGrant.findUnique({
+      where: {
+        personId_granteeOrgId: { personId, granteeOrgId: orgId },
+      },
+    });
+    if (!grant) {
+      return { accessDenied: true as const, orgId };
+    }
+    return { accessDenied: false as const, orgId };
+  }
+
+  async getPersonHrProfile(personId: string, organizationId: string) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { id: canonical },
+    });
+    if (!person) throw new NotFoundException("person not found");
+
+    const gate = await this.assertPersonAccessGrant(canonical, organizationId);
+    if (gate.accessDenied) {
+      return {
+        globalPersonId: canonical,
+        accessDenied: true as const,
+        hrProfile: null,
+      };
+    }
+
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: canonical,
+        actorOrgId: gate.orgId,
+        action: "HR_PROFILE_READ",
+        metaJson: JSON.stringify({}),
+      },
+    });
+
+    return {
+      globalPersonId: canonical,
+      accessDenied: false as const,
+      hrProfile: await this.loadHrProfileView(canonical),
+    };
+  }
+
+  async patchPersonHrProfile(
+    personId: string,
+    organizationId: string,
+    body: {
+      bloodGroup?: string;
+      maritalStatus?: string | null;
+      education?: string | null;
+      specialty?: string | null;
+      statisticalCategories?: string[];
+      photoStorageKey?: string | null;
+      addresses?: Array<{
+        kind: string;
+        line?: string | null;
+        city?: string | null;
+        region?: string | null;
+        postal?: string | null;
+      }>;
+    },
+  ) {
+    const canonical = await this.resolveCanonicalPersonId(personId);
+    const person = await this.mdm.globalNaturalPerson.findUnique({
+      where: { id: canonical },
+    });
+    if (!person) throw new NotFoundException("person not found");
+
+    const gate = await this.assertPersonAccessGrant(canonical, organizationId);
+    if (gate.accessDenied) {
+      throw new BadRequestException("PersonAccessGrant required for organizationId");
+    }
+
+    let bloodGroup: BloodGroup | undefined;
+    if (body.bloodGroup != null) {
+      if (!BLOOD_GROUPS.has(body.bloodGroup as BloodGroup)) {
+        throw new BadRequestException("invalid bloodGroup");
+      }
+      bloodGroup = body.bloodGroup as BloodGroup;
+    }
+
+    let maritalStatus: MaritalStatus | null | undefined;
+    if (body.maritalStatus === null) maritalStatus = null;
+    else if (body.maritalStatus != null) {
+      if (!MARITAL_STATUSES.has(body.maritalStatus as MaritalStatus)) {
+        throw new BadRequestException("invalid maritalStatus");
+      }
+      maritalStatus = body.maritalStatus as MaritalStatus;
+    }
+
+    let statisticalCategories: StatisticalCategory[] | undefined;
+    if (body.statisticalCategories != null) {
+      if (!Array.isArray(body.statisticalCategories)) {
+        throw new BadRequestException("statisticalCategories must be an array");
+      }
+      for (const c of body.statisticalCategories) {
+        if (!STAT_CATEGORIES.has(c as StatisticalCategory)) {
+          throw new BadRequestException(`invalid statisticalCategory: ${c}`);
+        }
+      }
+      statisticalCategories = body.statisticalCategories as StatisticalCategory[];
+    }
+
+    await this.mdm.$transaction(async (tx) => {
+      await tx.personHrProfile.upsert({
+        where: { personId: canonical },
+        create: {
+          personId: canonical,
+          bloodGroup: bloodGroup ?? BloodGroup.UNKNOWN,
+          maritalStatus: maritalStatus === undefined ? null : maritalStatus,
+          educationCipher:
+            body.education != null && body.education.trim()
+              ? encryptText(body.education.trim())
+              : null,
+          specialtyCipher:
+            body.specialty != null && body.specialty.trim()
+              ? encryptText(body.specialty.trim())
+              : null,
+          statisticalCategories: statisticalCategories ?? [],
+          photoStorageKey: body.photoStorageKey ?? null,
+        },
+        update: {
+          ...(bloodGroup !== undefined ? { bloodGroup } : {}),
+          ...(maritalStatus !== undefined ? { maritalStatus } : {}),
+          ...(body.education !== undefined
+            ? {
+                educationCipher:
+                  body.education != null && body.education.trim()
+                    ? encryptText(body.education.trim())
+                    : null,
+              }
+            : {}),
+          ...(body.specialty !== undefined
+            ? {
+                specialtyCipher:
+                  body.specialty != null && body.specialty.trim()
+                    ? encryptText(body.specialty.trim())
+                    : null,
+              }
+            : {}),
+          ...(statisticalCategories !== undefined
+            ? { statisticalCategories }
+            : {}),
+          ...(body.photoStorageKey !== undefined
+            ? { photoStorageKey: body.photoStorageKey }
+            : {}),
+        },
+      });
+
+      if (body.addresses != null) {
+        for (const addr of body.addresses) {
+          if (!ADDRESS_KINDS.has(addr.kind as PersonAddressKind)) {
+            throw new BadRequestException(`invalid address kind: ${addr.kind}`);
+          }
+          const kind = addr.kind as PersonAddressKind;
+          const line = (addr.line ?? "").trim();
+          if (!line) {
+            await tx.personAddress.deleteMany({
+              where: { personId: canonical, kind },
+            });
+            continue;
+          }
+          await tx.personAddress.upsert({
+            where: {
+              personId_kind: { personId: canonical, kind },
+            },
+            create: {
+              personId: canonical,
+              kind,
+              lineCipher: encryptText(line),
+              cityCipher:
+                addr.city != null && addr.city.trim()
+                  ? encryptText(addr.city.trim())
+                  : null,
+              regionCipher:
+                addr.region != null && addr.region.trim()
+                  ? encryptText(addr.region.trim())
+                  : null,
+              postalCipher:
+                addr.postal != null && addr.postal.trim()
+                  ? encryptText(addr.postal.trim())
+                  : null,
+            },
+            update: {
+              lineCipher: encryptText(line),
+              cityCipher:
+                addr.city != null && addr.city.trim()
+                  ? encryptText(addr.city.trim())
+                  : null,
+              regionCipher:
+                addr.region != null && addr.region.trim()
+                  ? encryptText(addr.region.trim())
+                  : null,
+              postalCipher:
+                addr.postal != null && addr.postal.trim()
+                  ? encryptText(addr.postal.trim())
+                  : null,
+            },
+          });
+        }
+      }
+    });
+
+    await this.mdm.personAccessLog.create({
+      data: {
+        personId: canonical,
+        actorOrgId: gate.orgId,
+        action: "HR_PROFILE_PATCH",
+        metaJson: JSON.stringify({
+          fields: Object.keys(body).filter(
+            (k) => (body as Record<string, unknown>)[k] !== undefined,
+          ),
+        }),
+      },
+    });
+
+    return {
+      globalPersonId: canonical,
+      accessDenied: false as const,
+      hrProfile: await this.loadHrProfileView(canonical),
     };
   }
 

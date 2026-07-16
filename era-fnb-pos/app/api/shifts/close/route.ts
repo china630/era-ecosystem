@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { dispatchFbShiftClosed } from "@/lib/fb-finance-events";
 import { prisma } from "@/lib/prisma";
 import { reportPosShiftStatus } from "@/lib/pms-bridge-client";
 import { FB_ROLES, getSessionFromRequest, requireAnyRole } from "@/lib/session";
@@ -58,6 +59,18 @@ export async function POST(request: Request) {
     shiftId: shift.id,
     closedAt: closed.closedAt?.toISOString(),
   });
+
+  if (closed.closedAt) {
+    void dispatchFbShiftClosed({
+      shiftId: closed.id,
+      outletId: closed.outletId,
+      outletCode: closed.outlet.code,
+      openedAt: closed.openedAt,
+      closedAt: closed.closedAt,
+    }).catch(() => {
+      // Shift already closed; Finance recon is best-effort
+    });
+  }
 
   return NextResponse.json(closed);
 }

@@ -42,7 +42,9 @@ Banner component: `FinanceBoundaryBanner` — shows when `NEXT_PUBLIC_FINANCE_WE
 | `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` | **Live** (Wave 5) | Multi-line NAS journal from `revenueLines` + GL map |
 | `SATELLITE_HOTEL_INVOICE_ISSUED` | **Live** | Draft sales invoice in Finance via orchestrator satellite-events |
 | `SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT` | **Live** (snapshot persisted) | Agency balance snapshot stored in Finance `AgencyCityLedgerSnapshot`; counterparty read when linked |
-| fb-pos consumption (E8) | Planned | Inventory movement in Finance |
+| fb-pos consumption (E8) | **Live** | `SATELLITE_FB_STOCK_CONSUMPTION_COMPLETED` → WIP/COGS journal |
+| fb-pos standalone sale | **Live** | `SATELLITE_FB_SALE_COMPLETED` on LOCAL_CASHIER pay → revenue journal (not for room-charge/hub) |
+| fb-pos shift closed | **Live** (stub) | `SATELLITE_FB_SHIFT_CLOSED` — cash recon log meta |
 
 ## What hotel keeps locally
 

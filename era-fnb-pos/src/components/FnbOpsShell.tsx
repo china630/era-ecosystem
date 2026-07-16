@@ -20,6 +20,7 @@ import {
   Receipt,
 
   UtensilsCrossed,
+  LayoutPanelTop,
 
 } from "lucide-react";
 
@@ -58,6 +59,8 @@ const linkKeys = [
   { href: "/kds", key: "kds", icon: ChefHat },
 
   { href: "/admin/menu", key: "menu", icon: UtensilsCrossed },
+
+  { href: "/admin/tables", key: "tables", icon: LayoutPanelTop },
 
   { href: "/admin/daily-menu", key: "dailyMenu", icon: ClipboardList },
 

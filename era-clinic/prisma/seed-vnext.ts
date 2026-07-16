@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { PrismaClient } from "@prisma/client";
 import {
   hashPassword,
@@ -6,6 +8,203 @@ import {
 } from "@era/satellite-kit";
 
 const prisma = new PrismaClient();
+
+type L10n = { en: string; ru: string; az: string };
+type CatalogField = Record<string, unknown>;
+type CatalogTemplate = {
+  code: string;
+  category: string;
+  title: L10n;
+  serviceCode?: string;
+  fields: CatalogField[];
+};
+type CatalogModality = {
+  code: string;
+  kind: string;
+  title: L10n;
+  templates: CatalogTemplate[];
+};
+type LabPanel = {
+  code: string;
+  category: string;
+  title: L10n;
+  serviceCode?: string;
+  analytes: CatalogField[];
+};
+type VisitTemplate = {
+  code: string;
+  specialty: string;
+  title: L10n;
+  fields: CatalogField[];
+};
+type CheckupPackage = {
+  code: string;
+  title: L10n;
+  includes: string[];
+};
+type DiagnosticCatalog = {
+  version?: string;
+  commonMetaFields?: CatalogField[];
+  modalities: CatalogModality[];
+  labPanels: LabPanel[];
+  visitTemplates: VisitTemplate[];
+  packages?: CheckupPackage[];
+};
+
+function loadDiagnosticCatalog(): DiagnosticCatalog {
+  const path = join(__dirname, "seed-data", "diagnostic-lab-catalog.json");
+  return JSON.parse(readFileSync(path, "utf8")) as DiagnosticCatalog;
+}
+
+async function seedDiagnosticCatalog(catalog: DiagnosticCatalog) {
+  let clinicalCount = 0;
+  let catalogCount = 0;
+  const meta = catalog.commonMetaFields ?? [];
+
+  for (const modality of catalog.modalities) {
+    for (const tpl of modality.templates) {
+      const bodyJson = JSON.stringify({
+        kind: modality.kind,
+        modality: modality.code,
+        category: tpl.category,
+        title: tpl.title,
+        metaFields: meta,
+        fields: tpl.fields,
+      });
+      await prisma.clinicalTemplate.upsert({
+        where: { code: tpl.code },
+        create: {
+          code: tpl.code,
+          title: tpl.title.en,
+          specialty: modality.code,
+          bodyJson,
+        },
+        update: {
+          title: tpl.title.en,
+          specialty: modality.code,
+          bodyJson,
+        },
+      });
+      clinicalCount += 1;
+
+      const serviceCode = tpl.serviceCode ?? tpl.code;
+      await prisma.serviceCatalogCache.upsert({
+        where: { code: serviceCode },
+        create: {
+          code: serviceCode,
+          description: tpl.title.en,
+          amount: 0,
+        },
+        update: {
+          description: tpl.title.en,
+          syncedAt: new Date(),
+        },
+      });
+      catalogCount += 1;
+    }
+  }
+
+  for (const panel of catalog.labPanels) {
+    const bodyJson = JSON.stringify({
+      kind: "lab_panel",
+      category: panel.category,
+      title: panel.title,
+      analytes: panel.analytes,
+    });
+    await prisma.clinicalTemplate.upsert({
+      where: { code: panel.code },
+      create: {
+        code: panel.code,
+        title: panel.title.en,
+        specialty: "LAB",
+        bodyJson,
+      },
+      update: {
+        title: panel.title.en,
+        specialty: "LAB",
+        bodyJson,
+      },
+    });
+    clinicalCount += 1;
+
+    const serviceCode = panel.serviceCode ?? panel.code;
+    await prisma.serviceCatalogCache.upsert({
+      where: { code: serviceCode },
+      create: {
+        code: serviceCode,
+        description: panel.title.en,
+        amount: 0,
+      },
+      update: {
+        description: panel.title.en,
+        syncedAt: new Date(),
+      },
+    });
+    catalogCount += 1;
+  }
+
+  for (const visit of catalog.visitTemplates) {
+    const bodyJson = JSON.stringify({
+      kind: "visit",
+      specialty: visit.specialty,
+      title: visit.title,
+      fields: visit.fields,
+    });
+    await prisma.clinicalTemplate.upsert({
+      where: { code: visit.code },
+      create: {
+        code: visit.code,
+        title: visit.title.en,
+        specialty: visit.specialty,
+        bodyJson,
+      },
+      update: {
+        title: visit.title.en,
+        specialty: visit.specialty,
+        bodyJson,
+      },
+    });
+    clinicalCount += 1;
+  }
+
+  for (const pkg of catalog.packages ?? []) {
+    const bodyJson = JSON.stringify({
+      kind: "package",
+      title: pkg.title,
+      includes: pkg.includes,
+    });
+    await prisma.clinicalTemplate.upsert({
+      where: { code: pkg.code },
+      create: {
+        code: pkg.code,
+        title: pkg.title.en,
+        specialty: "PACKAGE",
+        bodyJson,
+      },
+      update: {
+        title: pkg.title.en,
+        specialty: "PACKAGE",
+        bodyJson,
+      },
+    });
+    clinicalCount += 1;
+    await prisma.serviceCatalogCache.upsert({
+      where: { code: pkg.code },
+      create: {
+        code: pkg.code,
+        description: pkg.title.en,
+        amount: 0,
+      },
+      update: {
+        description: pkg.title.en,
+        syncedAt: new Date(),
+      },
+    });
+    catalogCount += 1;
+  }
+
+  return { clinicalCount, catalogCount };
+}
 
 async function seedDemoAdmin() {
   const password = platformSuperAdminBootstrapPassword();
@@ -165,23 +364,8 @@ async function main() {
     },
   });
 
-  await prisma.clinicalTemplate.createMany({
-    data: [
-      {
-        code: "GP-VISIT",
-        title: "General visit",
-        specialty: "GP",
-        bodyJson: JSON.stringify({ fields: ["complaint", "vitals", "plan"] }),
-      },
-      {
-        code: "CARDIO",
-        title: "Cardiology",
-        specialty: "CARDIO",
-        bodyJson: JSON.stringify({ fields: ["ecg", "diagnosis", "therapy"] }),
-      },
-    ],
-    skipDuplicates: true,
-  });
+  const diagnosticCatalog = loadDiagnosticCatalog();
+  const seeded = await seedDiagnosticCatalog(diagnosticCatalog);
 
   await prisma.lisFileProfile.upsert({
     where: { name: "default-csv" },
@@ -200,7 +384,11 @@ async function main() {
     },
   });
 
-  console.log("Clinic vNext seed OK", { usg: usg.code });
+  console.log("Clinic vNext seed OK", {
+    usg: usg.code,
+    clinicalTemplates: seeded.clinicalCount,
+    catalogCodes: seeded.catalogCount,
+  });
 }
 
 main()

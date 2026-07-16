@@ -19,6 +19,10 @@ const patchSchema = z.object({
   procedureOverQuotaPolicy: z
     .enum(["CHARGE_FOLIO", "BLOCK", "WARN_ONLY"])
     .optional(),
+  patientCardResultsPreview: z.number().int().min(1).max(50).optional(),
+  patientCardPlanPreview: z.number().int().min(1).max(50).optional(),
+  patientCardHistoryPageSize: z.number().int().min(10).max(100).optional(),
+  patientCardPlanPageSize: z.number().int().min(10).max(100).optional(),
 });
 
 export async function GET() {

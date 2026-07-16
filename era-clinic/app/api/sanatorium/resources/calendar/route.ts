@@ -1,6 +1,6 @@
 import { jsonOk, handleRouteError, getRouteSession, requireClinicRole } from "@/lib/api-utils";
 import { CLINIC_ROLE } from "@/lib/clinic-roles";
-import { getResourceCalendar } from "@/lib/procedure-scheduling.service";
+import { getResourceDayMatrix } from "@/domain/procedure/procedure-inventory.service";
 
 export async function GET(request: Request) {
   try {
@@ -15,8 +15,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const dateParam = url.searchParams.get("date") ?? new Date().toISOString().slice(0, 10);
     const date = new Date(`${dateParam}T00:00:00`);
-    const calendar = await getResourceCalendar(date);
-    return jsonOk({ date: dateParam, resources: calendar });
+    return jsonOk(await getResourceDayMatrix(date));
   } catch (err) {
     return handleRouteError(err);
   }
