@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+
+<html data-lang="en" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>ERA 365 × Pasha — Product Catalog</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --ink: #1E2A35; --slate: #34495E; --muted: #536472; --faint: #6E7C86; --line: #C5CED6;
+      --action: #2980B9; --action-deep: #1B6FA3; --teal: #1F8A70;
+      --w: 1280px; --h: 720px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #152029; color: var(--ink); font-family: "Noto Sans", Manrope, sans-serif; }
+    .toolbar {
+      position: sticky; top: 0; z-index: 40; display: flex; gap: 8px; justify-content: center; align-items: center;
+      padding: 10px; background: rgba(21,32,41,.94); color: #fff; font-size: 12px;
+    }
+    .toolbar button, .toolbar a {
+      border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; border-radius: 8px;
+      padding: 7px 12px; font: inherit; cursor: pointer; text-decoration: none;
+    }
+    .toolbar .active, .toolbar .primary { background: var(--action); border-color: var(--action); }
+    .toolbar .hint { opacity: .55; margin-left: 6px; }
+    .deck { padding: 24px 12px 48px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .slide {
+      width: var(--w); height: var(--h); position: relative; overflow: hidden;
+      background: linear-gradient(165deg, #EAF0F5 0%, #D7E1EA 48%, #CDD8E4 100%);
+      box-shadow: 0 16px 40px rgba(0,0,0,.35); page-break-after: always; break-after: page;
+    }
+    .slide::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(780px 360px at 110% -5%, rgba(41,128,185,.26), transparent 60%),
+        radial-gradient(620px 320px at -15% 105%, rgba(31,138,112,.12), transparent 55%),
+        linear-gradient(90deg, rgba(41,128,185,.14), transparent 16%);
+    }
+    .slide::after {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
+      background: linear-gradient(180deg, var(--action), #1F8A70);
+    }
+    .slide > * { position: relative; z-index: 1; }
+    .slide.ink { background: linear-gradient(145deg, #243442 0%, #2F4558 50%, #1F6A9A 125%); color: #F0F5F9; }
+    .slide.ink::after { background: linear-gradient(180deg, #5DB0E0, #2980B9); }
+    .slide.ink h1, .slide.ink h2, .slide.ink h3 { color: #fff; }
+    .slide.ink .lead, .slide.ink .footer { color: rgba(240,245,249,.82); }
+    .slide.ink .footer { border-top-color: rgba(255,255,255,.18); }
+    .slide.ink .footer strong { color: #fff; }
+    .frame { height: 100%; padding: 40px 48px 42px; display: flex; flex-direction: column; }
+    .kicker { margin: 0 0 8px; font: 700 11px/1 Manrope, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--action-deep); }
+    .slide.ink .kicker { color: #9ACAE8; }
+    h1, h2, h3 { font-family: Manrope, sans-serif; margin: 0; letter-spacing: -.02em; color: var(--slate); }
+    h1 { font-size: 44px; font-weight: 800; line-height: 1.05; }
+    h2 { font-size: 28px; font-weight: 800; line-height: 1.12; max-width: 24ch; }
+    h3 { font-size: 15px; font-weight: 700; }
+    .lead { margin: 10px 0 0; font-size: 15px; line-height: 1.4; color: var(--muted); max-width: 56ch; }
+    .body { margin-top: 14px; flex: 1; font-size: 13px; }
+    .footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--faint); }
+    .footer strong { color: var(--slate); }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .panel {
+      background: linear-gradient(180deg, #F7FAFC, #E7EEF5); border: 1px solid rgba(52,73,94,.14);
+      border-radius: 12px; padding: 12px 13px; box-shadow: 0 6px 14px rgba(36,52,66,.05);
+    }
+    .panel.hero { background: linear-gradient(145deg, #1F6A9A 0%, #2980B9 50%, #2A9B7A 140%); color: #fff; border: 0; }
+    .panel.hero h3, .panel.hero .mini { color: #fff; }
+    .panel.hero p, .panel.hero li { color: rgba(255,255,255,.92); }
+    .panel.slate { background: linear-gradient(160deg, #2D3E4E, #34495E); color: #EAF1F6; border: 0; }
+    .panel.slate h3, .panel.slate .mini { color: #fff; }
+    .panel.slate p { color: rgba(234,241,246,.85); }
+    .mini { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+    .panel p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    ul.mods { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+    ul.mods li { position: relative; padding-left: 14px; font-size: 12px; line-height: 1.3; color: var(--ink); }
+    ul.mods li::before { content: ""; position: absolute; left: 0; top: .5em; width: 6px; height: 6px; border-radius: 2px; background: var(--action); }
+    .panel.hero ul.mods li { color: rgba(255,255,255,.95); }
+    .panel.hero ul.mods li::before { background: #fff; }
+    .tag {
+      display: inline-block; margin: 0 5px 5px 0; padding: 5px 8px; border-radius: 8px;
+      background: rgba(41,128,185,.14); color: var(--action-deep); font-size: 11px; font-weight: 700;
+    }
+    .brand { font: 800 15px/1 Manrope, sans-serif; letter-spacing: .16em; color: #8FCBEC; }
+    .rule { width: 64px; height: 4px; background: #5DB0E0; border-radius: 2px; margin: 16px 0 12px; }
+    .note { margin-top: 10px; padding: 10px 12px; border-left: 4px solid var(--action); background: rgba(41,128,185,.12); border-radius: 0 10px 10px 0; color: var(--slate); font-size: 12px; }
+    .lang-az { display: none !important; }
+    html[data-lang="en"] .lang-en { display: block !important; }
+    html[data-lang="en"] span.lang-en,
+    html[data-lang="en"] a.lang-en,
+    html[data-lang="en"] strong.lang-en { display: inline !important; }
+    html[data-lang="en"] table.lang-en { display: table !important; }
+    html[data-lang="en"] thead.lang-en,
+    html[data-lang="en"] tbody.lang-en { display: table-row-group !important; }
+    html[data-lang="en"] tr.lang-en { display: table-row !important; }
+    html[data-lang="en"] th.lang-en,
+    html[data-lang="en"] td.lang-en { display: table-cell !important; }
+    html[data-lang="en"] ul.lang-en,
+    html[data-lang="en"] ol.lang-en { display: grid !important; }
+    html[data-lang="en"] li.lang-en { display: list-item !important; }
+    html[data-lang="en"] h1.lang-en,
+    html[data-lang="en"] h2.lang-en,
+    html[data-lang="en"] h3.lang-en,
+    html[data-lang="en"] p.lang-en,
+    html[data-lang="en"] div.lang-en { display: block !important; }
+
+    html[data-lang="az"] .lang-en { display: none !important; }
+    html[data-lang="az"] .lang-az { display: block !important; }
+    html[data-lang="az"] span.lang-az,
+    html[data-lang="az"] a.lang-az,
+    html[data-lang="az"] strong.lang-az { display: inline !important; }
+    html[data-lang="az"] table.lang-az { display: table !important; }
+    html[data-lang="az"] thead.lang-az,
+    html[data-lang="az"] tbody.lang-az { display: table-row-group !important; }
+    html[data-lang="az"] tr.lang-az { display: table-row !important; }
+    html[data-lang="az"] th.lang-az,
+    html[data-lang="az"] td.lang-az { display: table-cell !important; }
+    html[data-lang="az"] ul.lang-az,
+    html[data-lang="az"] ol.lang-az { display: grid !important; }
+    html[data-lang="az"] li.lang-az { display: list-item !important; }
+    html[data-lang="az"] h1.lang-az,
+    html[data-lang="az"] h2.lang-az,
+    html[data-lang="az"] h3.lang-az,
+    html[data-lang="az"] p.lang-az,
+    html[data-lang="az"] div.lang-az { display: block !important; }
+
+    .part-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      background: rgba(41,128,185,.16); color: var(--action-deep); letter-spacing: .04em;
+    }
+    .slide.ink .part-badge { background: rgba(255,255,255,.12); color: #B7D9F0; }
+    .why {
+      margin-top: 8px; padding: 9px 11px; border-radius: 10px;
+      background: linear-gradient(90deg, rgba(31,138,112,.15), rgba(41,128,185,.12));
+      border: 1px solid rgba(31,138,112,.25); font-size: 12px; line-height: 1.35; color: var(--slate);
+    }
+    .why strong { color: var(--action-deep); }
+    .why-label { white-space: nowrap; }
+    .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .sign-grid .name { font: 800 17px/1.15 Manrope, sans-serif; color: #fff; }
+    .sign-grid .role { margin-top: 4px; font-size: 12px; color: rgba(240,245,249,.82); }
+
+    @media print {
+      .toolbar { display: none !important; }
+      body { background: #fff; }
+      .deck { padding: 0; gap: 0; }
+      .slide { width: 297mm; height: 167mm; box-shadow: none; }
+      @page { size: 297mm 167mm; margin: 0; }
+    }
+  
+    /* Final readability (monolingual — keep blocks roomy) */
+    .panel {
+      padding: 16px 16px 14px !important;
+      min-height: 118px;
+    }
+    .panel.slate {
+      background: linear-gradient(160deg, #243442 0%, #34495E 55%, #2A4054 100%) !important;
+      color: #F2F6FA !important;
+      border: 0 !important;
+    }
+    .panel.slate .mini { color: #9EB6C8 !important; }
+    .panel.slate h3 { color: #FFFFFF !important; }
+    .panel.slate p,
+    .panel.slate li,
+    .panel.slate ul.mods li { color: #E4EEF6 !important; }
+    .panel.slate ul.mods li::before { background: #5DB0E0 !important; }
+    .panel.hero ul.mods li { color: rgba(255,255,255,.95) !important; }
+    .why, .az-flag {
+      margin-top: 12px !important;
+      padding: 14px 16px !important;
+      min-height: 64px;
+      font-size: 13px !important;
+      line-height: 1.45 !important;
+      border-width: 1px !important;
+      border-left-width: 5px !important;
+      display: block !important;
+    }
+    .az-flag {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why-label {
+      white-space: nowrap !important;
+      display: inline !important;
+    }
+    ul.clean li, ul.mods li { font-size: 13px !important; line-height: 1.4 !important; }
+    .arch-box { padding: 14px 15px !important; min-height: 72px; }
+    .arch-box .d { font-size: 13px !important; line-height: 1.4 !important; }
+    .sat { min-height: 102px; padding: 13px !important; }
+    .note { padding: 12px 14px !important; font-size: 13px !important; }
+
+  </style>
+<style>
+          .toolbar,script{display:none!important}
+          .panel.slate,.panel.slate *{color:inherit}
+          .panel.slate{color:#F2F6FA!important}
+          .panel.slate .mini{color:#9EB6C8!important}
+          .panel.slate h3{color:#fff!important}
+          .panel.slate li{color:#E4EEF6!important}
+        </style></head>
+<body>
+
+<div class="deck">
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+<div class="part-badge">Presentation pack · Part 2 of 2 · Product Catalog</div>
+
+<div class="brand">ERA 365 · PART 2</div>
+<div class="rule"></div>
+<h1>Product catalog<br/>for marketplace packaging</h1>
+
+<p class="lead">Companion to <strong style="color:#fff">Part 1 · Executive Partnership</strong>. Finance Core first — designed for Azerbaijan legislation — then industry satellites, then strategic banking.</p>
+
+</div>
+<div>
+<div><a href="https://www.era-365.online" style="color:#9ACAE8;font-weight:700;text-decoration:none">www.era-365.online</a></div>
+<div style="margin-top:6px;opacity:.8">Confidential · Part 2 of 2 · 2026</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Product Catalog</span><span>01 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Why ERA 365</p>
+
+<h2>Built for Azerbaijan — not adapted later</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Q · Why ERA 365?</div>
+
+<h3>A · Local legislation &amp; operating reality first</h3>
+
+<p style="margin-top:10px">Finance Core (and the stack around it) is designed around Azerbaijan rules: <strong>VÖEN</strong>, <strong>AZN</strong>, <strong>FIN</strong>, NAS-oriented accounting, local tax/trade practice, Asia/Baku dates — so Holding clients get a system that fits from day one.</p>
+
+</div>
+<div class="panel">
+<div class="mini">What this means in practice</div>
+
+<ul class="mods">
+<li>Legal entity &amp; tax identity modeled for VÖEN orgs</li>
+<li>Citizen FIN + foreigner passport paths in MDM</li>
+<li>Finance tax / trade modules oriented to AZ compliance</li>
+<li>Data Hub: CBAR FX, VÖEN company directory, local banks</li>
+<li>Industry satellites post into Finance — one book for AZ auditors</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Why</span><span>02 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">★ Finance Core</p>
+<h2>Killer product — enterprise ERP for Azerbaijan</h2>
+
+<p class="lead">Accounting truth for every ERA 365 vertical. Source of GL, sales invoices, inventory, tax, and satellite postings.</p>
+
+<div class="body">
+<div class="g3">
+<div class="panel hero">
+<div class="mini">GL</div>
+<h3>Ledger &amp; COA</h3>
+<ul class="mods">
+<li>NAS chart of accounts (template + org)</li>
+<li>Journals / mappings</li>
+<li>Satellite GL dispatch worker</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Documents</div>
+<h3>Sales &amp; purchases</h3>
+<ul class="mods">
+<li>Sales invoices — SoT for issued docs</li>
+<li>Purchases, PO, supplier receipts</li>
+<li>Counterparty CRM (accounting MDM)</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Stock</div>
+<h3>Inventory</h3>
+<ul class="mods">
+<li>Warehouses, movements, audits</li>
+<li>Inventory settings</li>
+<li>Bridge to retail / F&amp;B / auto parts</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Cash</div>
+<h3>Bank &amp; kassa</h3>
+<ul class="mods"><li>Banking pro · cash desk</li><li>Tier-gated cash ops</li></ul>
+
+</div>
+<div class="panel">
+<div class="mini">AZ</div>
+<h3>Tax &amp; compliance</h3>
+<ul class="mods"><li>Tax / trade for Azerbaijan legislation</li><li>Local compliance / reporting path</li><li>NAS-oriented chart of accounts</li></ul>
+
+</div>
+<div class="panel">
+<div class="mini">People / Assets</div>
+<h3>HR · FA · Mfg</h3>
+<ul class="mods">
+<li>HR &amp; payroll</li>
+<li>Fixed assets registry</li>
+<li>Manufacturing MVP · IFRS mapping MVP</li>
+</ul>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Finance Core is built for Azerbaijan legislation — VÖEN, AZN, FIN/NAS context, local tax &amp; trade — not a foreign ERP adapted after the fact.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Finance Core</span><span>03 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Platform</p>
+<h2>Orchestrator · MDM · Data Hub</h2>
+
+<div class="body">
+<div class="g3">
+<div class="panel slate">
+<div class="mini">Orchestrator</div>
+<h3>Control plane</h3>
+<ul class="mods" style="margin-top:8px;color:#EAF1F6">
+<li>Org membership · SSO launcher</li>
+<li>Local staff login</li>
+<li>Billing · modules · add-ons</li>
+<li>Satellite event ingest</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">MDM</div>
+<h3>People master data</h3>
+<ul class="mods">
+<li>globalPersonId in satellites</li>
+<li>PII ownership in MDM</li>
+<li>FIN + foreigner passport</li>
+<li>Access grants</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Data Hub</div>
+<h3>Reference DaaS</h3>
+<div style="margin-top:8px">
+<span class="tag">CBAR FX</span><span class="tag">VÖEN directory</span><span class="tag">Banks</span>
+<span class="tag">Geo</span><span class="tag">Tax / customs</span><span class="tag">Calendars</span>
+</div>
+<p>Metered add-on · feeds Finance &amp; satellites</p>
+
+</div>
+</div>
+<div class="note">Commercial packaging tip: sell <strong>Foundation</strong> = Orchestrator + MDM (+ Data Hub optional) together with Finance Core.</div>
+
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Control plane, MDM (FIN/passport) and Data Hub (CBAR / VÖEN) are built around Azerbaijan operating reality.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Platform services</span><span>04 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Hotel PMS</p>
+<h2>Hospitality satellite</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Commercial modules</div>
+<ul class="mods">
+<li>hotel_core — FO, Front Cash, Night Audit</li>
+<li>hotel_housekeeping — Room Rack / HK</li>
+<li>hotel_distribution — Channel + Contracts</li>
+<li>hotel_guest_experience</li>
+<li>hotel_spa · transfers · banquets</li>
+<li>hotel_medical_sanatorium</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Capabilities</div>
+<ul class="mods">
+<li>Reservations, folio, night audit</li>
+<li>F&amp;B room charge bridge</li>
+<li>Clinic / sanatorium bridge</li>
+<li>Yield / BAR · loyalty hook</li>
+<li>Room service QR · maintenance WO</li>
+<li>Bundles: City / Resort / Sanatorium</li>
+</ul>
+
+</div>
+</div>
+<div class="note"><strong>→ Finance:</strong> folio / posting handoff — hotel ops do not replace GL.</div>
+
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Sanatorium / hospitality ops + guest identity (FIN/passport via MDM) for Azerbaijan properties; folio posts to local Finance books.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Hotel PMS</span><span>05 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Clinic</p>
+<h2>Healthcare satellite</h2>
+
+<div class="body">
+<div class="g3">
+<div class="panel">
+<div class="mini">Core</div>
+<ul class="mods">
+<li>Patient ref · practitioners · rooms</li>
+<li>Appointments · visit card</li>
+<li>Multi-room schedule / reschedule</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Clinical</div>
+<ul class="mods">
+<li>Lab (+ critical flags)</li>
+<li>EHR / CPOE lite</li>
+<li>LIS HL7 import</li>
+<li>Telehealth + patient portal</li>
+<li>Insurance eligibility (Finance proxy)</li>
+</ul>
+
+</div>
+<div class="panel hero">
+<div class="mini">Bridge</div>
+<h3>Sanatorium × Hotel</h3>
+<p>Guest / patient linkage for Nafta-style properties. Price cache from Finance.</p>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Clinical day ops linked to hotel guests when needed; pricing from Finance; person identity under AZ FIN/passport rules.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Clinic</span><span>06 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">F&amp;B POS</p>
+<h2>Food &amp; beverage satellite</h2>
+
+<div class="body">
+<div class="g4">
+<div class="panel"><div class="mini">Floor</div><ul class="mods"><li>Menu / outlet</li><li>Floor + ticket</li><li>Payments</li><li>Split / void / discount</li></ul></div>
+<div class="panel"><div class="mini">Kitchen</div><ul class="mods"><li>KDS</li><li>Course timing</li><li>Recipe depletion</li></ul></div>
+<div class="panel"><div class="mini">Ops</div><ul class="mods"><li>Shifts X/Z</li><li>Delivery inbox</li><li>Labor roster PIN</li></ul></div>
+<div class="panel hero"><div class="mini">Bridge</div><h3>Hotel room charge</h3><p>Posts to PMS folio · recipe events toward stock/Finance path</p></div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Outlet ops for AZ hospitality groups; room charge and recipe events feed the Finance / inventory boundary.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · FnB POS</span><span>07 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Retail POS</p>
+<h2>Retail &amp; pharmacy satellite</h2>
+
+<div class="body">
+<div class="g3">
+<div class="panel hero">
+<div class="mini">POS</div>
+<ul class="mods">
+<li>Shift · checkout · presets (incl. pharmacy)</li>
+<li>Product lookup (Finance SKU cache)</li>
+<li>Promotions lite · customer at POS</li>
+<li>X-report · offline queue</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Growth</div>
+<ul class="mods">
+<li>Fiscal KKM adapter</li>
+<li>Marketplace webhooks</li>
+<li>BOPIS / omnichannel OMS</li>
+<li>Mobile stock · replenishment · SRM</li>
+</ul>
+
+</div>
+<div class="panel slate">
+<div class="mini">→ Finance</div>
+<h3>Sales &amp; stock truth</h3>
+<p>Sale completed / shift closed events; inventory remains Finance-owned.</p>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> POS designed for AZ retail / pharmacy presets; fiscal path and stock truth stay aligned with Finance Core.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Retail POS</span><span>08 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">CRM</p>
+<h2>Sales CRM satellite</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel">
+<ul class="mods">
+<li>Pipeline · lead card · create UI</li>
+<li>Visit log (+ geo) · next-contact · scoring / SLA</li>
+<li>Pipeline automation rules</li>
+<li>Live WhatsApp Business API (platform)</li>
+<li>Party profile (individual / legal, VÖEN)</li>
+<li>Prospect CSV/XLSX import</li>
+<li>Individual FIN → MDM</li>
+</ul>
+
+</div>
+<div class="panel hero">
+<div class="mini">→ Finance</div>
+<h3>Convert → counterparty</h3>
+<p>Lead conversion creates / links Finance counterparty — sales system of engagement, Finance system of record for accounting parties.</p>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Leads and legal parties with VÖEN; convert into Finance counterparties for Azerbaijan B2B sales.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · CRM</span><span>09 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Logistics · Auto · Wholesale · Construction</p>
+<h2>Field &amp; trade satellites</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel">
+<div class="mini">Logistics</div>
+<ul class="mods">
+<li>Fleet · trips · waybill · POD (+ media)</li>
+<li>Fuel · customs hub · compliance alerts</li>
+<li>Multi-stop · driver mobile API · tracking token</li>
+<li>Rate matrix · COD clearing · hub cross-dock</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Auto service</div>
+<ul class="mods">
+<li>Vehicle card · work order · labor / parts lines</li>
+<li>Bay calendar · intake · shop-floor timer</li>
+<li>VIN catalogue · vehicle history · tool crib</li>
+<li>B2B parts PO → Finance</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Wholesale</div>
+<ul class="mods">
+<li>B2B order · credit limit · pick/pack</li>
+<li>TTN delivery note · pick waves</li>
+<li>EDI / buyer API export</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Construction</div>
+<ul class="mods">
+<li>Project / site · BOQ · material requisition</li>
+<li>Progress acts (КС) · daily log · punch list</li>
+<li>Gantt · equipment hours · CDE · timesheets</li>
+<li>Subcontractor claims</li>
+</ul>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Waybill, TTN, acts and auto parts flow into Finance documents — same AZ enterprise books.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Field &amp; trade</span><span>10 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Platform add-ons</p>
+<h2>Cross-cutting commercial add-ons</h2>
+
+<div class="body">
+<div class="g4">
+<div class="panel"><h3>Notifications</h3><p>WA / email / SMS</p></div>
+<div class="panel"><h3>Booking</h3><p>Widgets (clinic, hotel, auto…)</p></div>
+<div class="panel"><h3>Customer Portal</h3><p>Orders, visits, docs</p></div>
+<div class="panel"><h3>Payments</h3><p>Pay-by-link, deposits</p></div>
+<div class="panel"><h3>Loyalty</h3><p>Promos, points</p></div>
+<div class="panel"><h3>Custom domain</h3><p>White-label</p></div>
+<div class="panel"><h3>Delivery</h3><p>Retail + logistics</p></div>
+<div class="panel hero"><h3>Reference data</h3><p>Data Hub metering SKU</p></div>
+</div>
+<div class="note">Sold via Orchestrator catalog — not duplicated inside each satellite.</div>
+
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Platform add-ons billed via Orchestrator for AZ multi-org groups — same commercial fabric as Finance.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Add-ons</span><span>11 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Strategic line</p>
+<h2>Bank Core &amp; Bank satellite</h2>
+
+<p class="lead">Secondary to Finance Core. Separate regulated CBS for mid-market banks — not the hero SKU for Holding marketplace day one.</p>
+
+<div class="body">
+<div class="g3">
+<div class="panel">
+<div class="mini">Bank Core</div>
+<h3>Headless CBS engine</h3>
+<ul class="mods">
+<li>Customer-money ledger (≠ Finance Core)</li>
+<li>ACID posting · CIF · EOD/EOM</li>
+<li>Product factory · audit</li>
+</ul>
+
+</div>
+<div class="panel">
+<div class="mini">Bank satellite</div>
+<h3>Ops UI</h3>
+<ul class="mods">
+<li>Teller / back-office / risk UI</li>
+<li>Calls Bank Core API — no money in UI DB</li>
+<li>DBO channel — roadmap</li>
+</ul>
+
+</div>
+<div class="panel slate">
+<div class="mini">Status</div>
+<h3>Certification track</h3>
+<p>MVP architecture implemented. Present as strategic enterprise line — not “switch on tomorrow” for Holding banks. Bank’s own corporate books still use Finance Core.</p>
+
+</div>
+</div>
+<div class="why"><strong class="why-label">Why ERA 365:</strong> Separate CBAR-oriented CBS line for banks; bank’s own corporate books still use Finance Core under AZ enterprise rules.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Banking (strategic)</span><span>12 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Nafta</p>
+<h2>Pilot packaging example</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Parent</div>
+<h3>Nafta · STANDALONE VÖEN</h3>
+<p>Hotel PMS + <strong>Finance Core</strong> + shared workforce</p>
+
+</div>
+<div class="panel">
+<div class="mini">Departments</div>
+<ul class="mods">
+<li>F&amp;B POS</li>
+<li>Clinic</li>
+<li>Pharmacy (Retail POS preset)</li>
+</ul>
+
+</div>
+</div>
+<div class="note"><strong>Marketplace SKU analog:</strong> “Sanatorium / Hospitality Suite” = Foundation + Finance Core + Hotel + Clinic + F&amp;B (+ Retail optional).</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Active real-data pilot</span><span>13 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">SKU recipes</p>
+<h2>Suggested marketplace packs</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero"><div class="mini">A · Hero</div><h3>Finance Foundation</h3><p>Orchestrator + MDM + Finance Core (+ Data Hub)</p></div>
+<div class="panel"><div class="mini">B</div><h3>Hospitality Suite</h3><p>A + Hotel + F&amp;B (+ Clinic for sanatorium)</p></div>
+<div class="panel"><div class="mini">C</div><h3>Retail Suite</h3><p>A + Retail POS (+ Loyalty / Payments add-ons)</p></div>
+<div class="panel"><div class="mini">D</div><h3>Trade / Field Suite</h3><p>A + CRM + Logistics / Wholesale / Auto / Construction (pick)</p></div>
+</div>
+<div class="note">Banking pack = separate enterprise SKU later (Bank Core + Bank satellite) — not mixed into day-one Holding retail marketplace shelf.</div>
+
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Packaging</span><span>14 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Glossary</p>
+<h2>Quick glossary</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel"><h3>Finance Core</h3><p>Company books / GL — killer product</p></div>
+<div class="panel"><h3>Satellite</h3><p>Industry ops app under Orchestrator entitlements</p></div>
+<div class="panel"><h3>Control plane</h3><p>Orchestrator: identity, billing, events, MDM API</p></div>
+<div class="panel"><h3>Department mode</h3><p>Ops unit under parent legal entity (no second VÖEN)</p></div>
+<div class="panel"><h3>VÖEN / FIN</h3><p>Legal entity tax ID / citizen ID</p></div>
+<div class="panel"><h3>Bank Core</h3><p>Customer-money CBS — strategic, ≠ Finance Core</p></div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Glossary</span><span>15 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">How to use</p>
+<h2>Two-deck pack for Pasha</h2>
+
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Part 1</div>
+<h3>Executive Partnership</h3>
+<p>For directors / marketplace owners. Roles, Finance-first story, Nafta, 20% commercial, 30/60/90.</p>
+
+</div>
+<div class="panel slate">
+<div class="mini">Part 2</div>
+<h3>This Product Catalog</h3>
+<p>For product / tech packaging. Modules &amp; capabilities per satellite — no need to edit before internal forward.</p>
+
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Usage</span><span>16 / 17</span></div>
+</div>
+</section>
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+<div class="part-badge">Presentation pack · Part 2 of 2 · Product Catalog</div>
+
+<div class="brand">ERA 365</div>
+<div class="rule"></div>
+<h1>Finance Core first.<br/>Verticals attach.</h1>
+
+<p class="lead">Built for Azerbaijan legislation. Questions on module packaging → next workshop with Pasha Technologies.</p>
+
+</div>
+<div class="sign-grid">
+<div>
+<div class="name">Chingiz Shirinov</div>
+
+<div class="role">Founder / CEO · ERA 365</div>
+
+</div>
+<div>
+<div class="name">Oksana Stepenko</div>
+
+<div class="role">Director · Axoft Azerbaijan (distributor)</div>
+
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · Part 2 of 2 · Confidential · 2026</span><span>17 / 17</span></div>
+</div>
+</section>
+</div>
+
+</body>
+</html>

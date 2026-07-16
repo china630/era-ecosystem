@@ -400,10 +400,11 @@ Two apps (ADR D9): **`era-bank-core`** = headless regulated engine (CBS, second 
 | `banking_treasury` | Treasury / ALM / liquidity | L2 | **MVP** |
 | `banking_dbo` | Digital banking + ASAN İmza/SİMA | L2 | **MVP** (`era-bank-dbo` :3211) |
 | `banking_regreporting` | CBAR prudential + FATCA/CRS | L2 | **PLANNED** |
+| `banking_risk` | Risk management: IFRS 9 ECL/provisioning, RWA/capital adequacy, IRRBB, LCR/NSFR, risk-appetite limits (ADR [era-bank-risk-and-audit.md](./adr/era-bank-risk-and-audit.md)) | L2 | **PROPOSED** |
 
-A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels run in **`era-bank-dbo`** (:3211).
+A `banking_*` module **spans both apps**: regulated math/API in `era-bank-core` + operational UI in `era-bank` (the commercial key gates both). `banking_dbo` customer channels run in **`era-bank-dbo`** (:3211). `banking_risk` computes risk read-models and posts provisions through the kernel posting engine (no parallel ledger); AML/CFT stays in `banking_aml`.
 
-**Architecture laws:** money is ACID (no money over event bus); engine headless / satellite holds no money; thin kernel (no bank/product logic in L1); branches = internal dimension (not orgs); MDM shared (store `globalPersonId` only). Phases P0–P7 in PRD §7 / TZ §12.
+**Architecture laws:** money is ACID (no money over event bus); engine headless / satellite holds no money; thin kernel (no bank/product logic in L1); branches = internal dimension (not orgs); MDM shared (store `globalPersonId` only). Phases P0–P7 (MVP) + P8 Risk (PROPOSED) in PRD §7 / TZ §14; `banking_risk` spec in TZ §12, ADR [era-bank-risk-and-audit.md](./adr/era-bank-risk-and-audit.md).
 
 ---
 

@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+
+<html data-lang="az" lang="az">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>ERA 365 × Pasha — Product Catalog</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&amp;family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    :root {
+      --ink: #1E2A35; --slate: #34495E; --muted: #536472; --faint: #6E7C86; --line: #C5CED6;
+      --action: #2980B9; --action-deep: #1B6FA3; --teal: #1F8A70;
+      --w: 1280px; --h: 720px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #152029; color: var(--ink); font-family: "Noto Sans", Manrope, sans-serif; }
+    .toolbar {
+      position: sticky; top: 0; z-index: 40; display: flex; gap: 8px; justify-content: center; align-items: center;
+      padding: 10px; background: rgba(21,32,41,.94); color: #fff; font-size: 12px;
+    }
+    .toolbar button, .toolbar a {
+      border: 1px solid rgba(255,255,255,.25); background: transparent; color: #fff; border-radius: 8px;
+      padding: 7px 12px; font: inherit; cursor: pointer; text-decoration: none;
+    }
+    .toolbar .active, .toolbar .primary { background: var(--action); border-color: var(--action); }
+    .toolbar .hint { opacity: .55; margin-left: 6px; }
+    .deck { padding: 24px 12px 48px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .slide {
+      width: var(--w); height: var(--h); position: relative; overflow: hidden;
+      background: linear-gradient(165deg, #EAF0F5 0%, #D7E1EA 48%, #CDD8E4 100%);
+      box-shadow: 0 16px 40px rgba(0,0,0,.35); page-break-after: always; break-after: page;
+    }
+    .slide::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(780px 360px at 110% -5%, rgba(41,128,185,.26), transparent 60%),
+        radial-gradient(620px 320px at -15% 105%, rgba(31,138,112,.12), transparent 55%),
+        linear-gradient(90deg, rgba(41,128,185,.14), transparent 16%);
+    }
+    .slide::after {
+      content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px;
+      background: linear-gradient(180deg, var(--action), #1F8A70);
+    }
+    .slide > * { position: relative; z-index: 1; }
+    .slide.ink { background: linear-gradient(145deg, #243442 0%, #2F4558 50%, #1F6A9A 125%); color: #F0F5F9; }
+    .slide.ink::after { background: linear-gradient(180deg, #5DB0E0, #2980B9); }
+    .slide.ink h1, .slide.ink h2, .slide.ink h3 { color: #fff; }
+    .slide.ink .lead, .slide.ink .footer { color: rgba(240,245,249,.82); }
+    .slide.ink .footer { border-top-color: rgba(255,255,255,.18); }
+    .slide.ink .footer strong { color: #fff; }
+    .frame { height: 100%; padding: 40px 48px 42px; display: flex; flex-direction: column; }
+    .kicker { margin: 0 0 8px; font: 700 11px/1 Manrope, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--action-deep); }
+    .slide.ink .kicker { color: #9ACAE8; }
+    h1, h2, h3 { font-family: Manrope, sans-serif; margin: 0; letter-spacing: -.02em; color: var(--slate); }
+    h1 { font-size: 44px; font-weight: 800; line-height: 1.05; }
+    h2 { font-size: 28px; font-weight: 800; line-height: 1.12; max-width: 24ch; }
+    h3 { font-size: 15px; font-weight: 700; }
+    .lead { margin: 10px 0 0; font-size: 15px; line-height: 1.4; color: var(--muted); max-width: 56ch; }
+    .body { margin-top: 14px; flex: 1; font-size: 13px; }
+    .footer { display: flex; justify-content: space-between; gap: 12px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; color: var(--faint); }
+    .footer strong { color: var(--slate); }
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+    .panel {
+      background: linear-gradient(180deg, #F7FAFC, #E7EEF5); border: 1px solid rgba(52,73,94,.14);
+      border-radius: 12px; padding: 12px 13px; box-shadow: 0 6px 14px rgba(36,52,66,.05);
+    }
+    .panel.hero { background: linear-gradient(145deg, #1F6A9A 0%, #2980B9 50%, #2A9B7A 140%); color: #fff; border: 0; }
+    .panel.hero h3, .panel.hero .mini { color: #fff; }
+    .panel.hero p, .panel.hero li { color: rgba(255,255,255,.92); }
+    .panel.slate { background: linear-gradient(160deg, #2D3E4E, #34495E); color: #EAF1F6; border: 0; }
+    .panel.slate h3, .panel.slate .mini { color: #fff; }
+    .panel.slate p { color: rgba(234,241,246,.85); }
+    .mini { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+    .panel p { margin: 6px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    ul.mods { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+    ul.mods li { position: relative; padding-left: 14px; font-size: 12px; line-height: 1.3; color: var(--ink); }
+    ul.mods li::before { content: ""; position: absolute; left: 0; top: .5em; width: 6px; height: 6px; border-radius: 2px; background: var(--action); }
+    .panel.hero ul.mods li { color: rgba(255,255,255,.95); }
+    .panel.hero ul.mods li::before { background: #fff; }
+    .tag {
+      display: inline-block; margin: 0 5px 5px 0; padding: 5px 8px; border-radius: 8px;
+      background: rgba(41,128,185,.14); color: var(--action-deep); font-size: 11px; font-weight: 700;
+    }
+    .brand { font: 800 15px/1 Manrope, sans-serif; letter-spacing: .16em; color: #8FCBEC; }
+    .rule { width: 64px; height: 4px; background: #5DB0E0; border-radius: 2px; margin: 16px 0 12px; }
+    .note { margin-top: 10px; padding: 10px 12px; border-left: 4px solid var(--action); background: rgba(41,128,185,.12); border-radius: 0 10px 10px 0; color: var(--slate); font-size: 12px; }
+    .lang-az { display: none !important; }
+    html[data-lang="en"] .lang-en { display: block !important; }
+    html[data-lang="en"] span.lang-en,
+    html[data-lang="en"] a.lang-en,
+    html[data-lang="en"] strong.lang-en { display: inline !important; }
+    html[data-lang="en"] table.lang-en { display: table !important; }
+    html[data-lang="en"] thead.lang-en,
+    html[data-lang="en"] tbody.lang-en { display: table-row-group !important; }
+    html[data-lang="en"] tr.lang-en { display: table-row !important; }
+    html[data-lang="en"] th.lang-en,
+    html[data-lang="en"] td.lang-en { display: table-cell !important; }
+    html[data-lang="en"] ul.lang-en,
+    html[data-lang="en"] ol.lang-en { display: grid !important; }
+    html[data-lang="en"] li.lang-en { display: list-item !important; }
+    html[data-lang="en"] h1.lang-en,
+    html[data-lang="en"] h2.lang-en,
+    html[data-lang="en"] h3.lang-en,
+    html[data-lang="en"] p.lang-en,
+    html[data-lang="en"] div.lang-en { display: block !important; }
+
+    html[data-lang="az"] .lang-en { display: none !important; }
+    html[data-lang="az"] .lang-az { display: block !important; }
+    html[data-lang="az"] span.lang-az,
+    html[data-lang="az"] a.lang-az,
+    html[data-lang="az"] strong.lang-az { display: inline !important; }
+    html[data-lang="az"] table.lang-az { display: table !important; }
+    html[data-lang="az"] thead.lang-az,
+    html[data-lang="az"] tbody.lang-az { display: table-row-group !important; }
+    html[data-lang="az"] tr.lang-az { display: table-row !important; }
+    html[data-lang="az"] th.lang-az,
+    html[data-lang="az"] td.lang-az { display: table-cell !important; }
+    html[data-lang="az"] ul.lang-az,
+    html[data-lang="az"] ol.lang-az { display: grid !important; }
+    html[data-lang="az"] li.lang-az { display: list-item !important; }
+    html[data-lang="az"] h1.lang-az,
+    html[data-lang="az"] h2.lang-az,
+    html[data-lang="az"] h3.lang-az,
+    html[data-lang="az"] p.lang-az,
+    html[data-lang="az"] div.lang-az { display: block !important; }
+
+    .part-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      padding: 6px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+      background: rgba(41,128,185,.16); color: var(--action-deep); letter-spacing: .04em;
+    }
+    .slide.ink .part-badge { background: rgba(255,255,255,.12); color: #B7D9F0; }
+    .why {
+      margin-top: 8px; padding: 9px 11px; border-radius: 10px;
+      background: linear-gradient(90deg, rgba(31,138,112,.15), rgba(41,128,185,.12));
+      border: 1px solid rgba(31,138,112,.25); font-size: 12px; line-height: 1.35; color: var(--slate);
+    }
+    .why strong { color: var(--action-deep); }
+    .why-label { white-space: nowrap; }
+    .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .sign-grid .name { font: 800 17px/1.15 Manrope, sans-serif; color: #fff; }
+    .sign-grid .role { margin-top: 4px; font-size: 12px; color: rgba(240,245,249,.82); }
+
+    @media print {
+      .toolbar { display: none !important; }
+      body { background: #fff; }
+      .deck { padding: 0; gap: 0; }
+      .slide { width: 297mm; height: 167mm; box-shadow: none; }
+      @page { size: 297mm 167mm; margin: 0; }
+    }
+  
+    /* Final readability (monolingual — keep blocks roomy) */
+    .panel {
+      padding: 16px 16px 14px !important;
+      min-height: 118px;
+    }
+    .panel.slate {
+      background: linear-gradient(160deg, #243442 0%, #34495E 55%, #2A4054 100%) !important;
+      color: #F2F6FA !important;
+      border: 0 !important;
+    }
+    .panel.slate .mini { color: #9EB6C8 !important; }
+    .panel.slate h3 { color: #FFFFFF !important; }
+    .panel.slate p,
+    .panel.slate li,
+    .panel.slate ul.mods li { color: #E4EEF6 !important; }
+    .panel.slate ul.mods li::before { background: #5DB0E0 !important; }
+    .panel.hero ul.mods li { color: rgba(255,255,255,.95) !important; }
+    .why, .az-flag {
+      margin-top: 12px !important;
+      padding: 14px 16px !important;
+      min-height: 64px;
+      font-size: 13px !important;
+      line-height: 1.45 !important;
+      border-width: 1px !important;
+      border-left-width: 5px !important;
+      display: block !important;
+    }
+    .az-flag {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why {
+      border-left: 5px solid #1F8A70 !important;
+    }
+    .why-label {
+      white-space: nowrap !important;
+      display: inline !important;
+    }
+    ul.clean li, ul.mods li { font-size: 13px !important; line-height: 1.4 !important; }
+    .arch-box { padding: 14px 15px !important; min-height: 72px; }
+    .arch-box .d { font-size: 13px !important; line-height: 1.4 !important; }
+    .sat { min-height: 102px; padding: 13px !important; }
+    .note { padding: 12px 14px !important; font-size: 13px !important; }
+
+  </style>
+<style>
+          .toolbar,script{display:none!important}
+          .panel.slate,.panel.slate *{color:inherit}
+          .panel.slate{color:#F2F6FA!important}
+          .panel.slate .mini{color:#9EB6C8!important}
+          .panel.slate h3{color:#fff!important}
+          .panel.slate li{color:#E4EEF6!important}
+        </style></head>
+<body>
+
+<div class="deck">
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+
+<div class="part-badge">Təqdimat paketi · 2 / 2 hissə · Məhsul kataloqu</div>
+<div class="brand">ERA 365 · PART 2</div>
+<div class="rule"></div>
+
+<h1>Marketplace paketləşməsi üçün<br/>məhsul kataloqu</h1>
+
+<p class="lead"><strong style="color:#fff">1-ci hissə · İcra tərəfdaşlığı</strong> üçün əlavə. Əvvəl Finance Core — Azərbaycan qanunvericiliyi üçün — sonra satellitlər, sonra strateji bank.</p>
+</div>
+<div>
+<div><a href="https://www.era-365.online" style="color:#9ACAE8;font-weight:700;text-decoration:none">www.era-365.online</a></div>
+
+<div style="margin-top:6px;opacity:.8">Konfidensial · 2 / 2 hissə · 2026</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Kataloq</span><span>01 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+
+<p class="kicker">Niyə ERA 365</p>
+
+<h2>Azərbaycan üçün hazırlanıb — sonradan uyğunlaşdırılmayıb</h2>
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+
+<div class="mini">S · Niyə ERA 365?</div>
+
+<h3>C · Əvvəl yerli qanunvericilik və əməliyyat reallığı</h3>
+
+<p style="margin-top:10px">Finance Core (və ətraf stack) Azərbaycan qaydaları ətrafında dizayn olunub: <strong>VÖEN</strong>, <strong>AZN</strong>, <strong>FIN</strong>, NAS yönümlü uçot, yerli vergi/ticarət, Asia/Baku — Holding müştərisi birinci gündən uyğun sistem alır.</p>
+</div>
+<div class="panel">
+
+<div class="mini">Praktiki nə deməkdir</div>
+
+<ul class="mods">
+<li>Hüquqi şəxs / vergi kimliyi VÖEN üçün</li>
+<li>MDM-də FIN + əcnəbi passport</li>
+<li>Finance vergi / ticarət — AZ compliance</li>
+<li>Data Hub: CBAR FX, VÖEN kataloqu, yerli banklar</li>
+<li>Satellitlər Finance-ə yazır — auditor üçün bir kitab</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Niyə</span><span>02 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">★ Finance Core</p>
+
+<h2>Killer məhsul — Azərbaycan üçün enterprise ERP</h2>
+
+<p class="lead">Hər ERA 365 vertikalı üçün uçot həqiqəti. GL, satış qaimələri, anbar, vergi və satellit postinqləri.</p>
+<div class="body">
+<div class="g3">
+<div class="panel hero">
+<div class="mini">GL</div>
+
+
+<ul class="mods">
+<li>NAS hesablar planı</li>
+<li>Jurnallar / mapping</li>
+<li>Satellit GL worker</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Sənədlər</div>
+
+
+<ul class="mods">
+<li>Satış qaimələri — SoT</li>
+<li>Alış, PO, tədarükçü qəbulları</li>
+<li>Tərəfdaş CRM (uçot MDM)</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Stock</div>
+
+
+<ul class="mods">
+<li>Anbarlar, hərəkətlər, audit</li>
+<li>Anbar parametrləri</li>
+<li>Retail / F&amp;B / auto körpüsü</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Cash</div>
+
+
+<ul class="mods"><li>Banking pro · kassa</li><li>Tier-ə bağlı kassa</li></ul>
+</div>
+<div class="panel">
+<div class="mini">AZ</div>
+
+
+<ul class="mods"><li>Azərbaycan qanunvericiliyinə uyğun vergi / ticarət</li><li>Yerli compliance / hesabat yolu</li><li>NAS yönümlü hesablar planı</li></ul>
+</div>
+<div class="panel">
+<div class="mini">People / Assets</div>
+<h3>HR · FA · Mfg</h3>
+
+<ul class="mods">
+<li>HR və əməkhaqqı</li>
+<li>Əsas vəsait reyestri</li>
+<li>İstehsalat MVP · IFRS MVP</li>
+</ul>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Finance Core Azərbaycan qanunvericiliyi üçün hazırlanıb — VÖEN, AZN, FIN/NAS, yerli vergi və ticarət — sonradan uyğunlaşdırılan xarici ERP deyil.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Finance Core</span><span>03 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Platforma</p>
+
+<h2>Orchestrator · MDM · Data Hub</h2>
+<div class="body">
+<div class="g3">
+<div class="panel slate">
+<div class="mini">Orchestrator</div>
+
+
+<ul class="mods" style="margin-top:8px;color:#EAF1F6">
+<li>Org üzvlük · SSO</li>
+<li>Lokal personal login</li>
+<li>Billing · modullar · add-on</li>
+<li>Satellit event ingest</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">MDM</div>
+
+
+<ul class="mods">
+<li>Satellitlərdə globalPersonId</li>
+<li>PII MDM-də</li>
+<li>FIN + əcnəbi passport</li>
+<li>Access grant-lər</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Data Hub</div>
+
+<div style="margin-top:8px">
+<span class="tag">CBAR FX</span><span class="tag">VÖEN directory</span><span class="tag">Banks</span>
+<span class="tag">Geo</span><span class="tag">Tax / customs</span><span class="tag">Calendars</span>
+</div>
+
+<p>Metered add-on · Finance və satellitləri qidalandırır</p>
+</div>
+</div>
+
+<div class="note">Paket tip: <strong>Foundation</strong> = Orchestrator + MDM (+ Data Hub) + Finance Core.</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Control plane, MDM (FIN/passport) və Data Hub (CBAR / VÖEN) Azərbaycan əməliyyat reallığı ətrafında qurulub.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Platforma</span><span>04 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Hotel PMS</p>
+
+<h2>Hospitality satelliti</h2>
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Kommersiya modulları</div>
+
+<ul class="mods">
+<li>hotel_core — FO, Front Cash, Night Audit</li>
+<li>hotel_housekeeping — Room Rack / HK</li>
+<li>hotel_distribution — Channel + Contracts</li>
+<li>hotel_guest_experience</li>
+<li>SPA · transfer · banquet</li>
+<li>hotel_medical_sanatorium</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">İmkanlar</div>
+
+<ul class="mods">
+<li>Rezervasiya, folio, night audit</li>
+<li>F&amp;B room charge körpüsü</li>
+<li>Clinic / sanatoriya körpüsü</li>
+<li>Yield / BAR · loyalty</li>
+<li>Room service QR · maintenance</li>
+<li>Paket: City / Resort / Sanatorium</li>
+</ul>
+</div>
+</div>
+
+<div class="note"><strong>→ Finance:</strong> folio / posting — hotel GL əvəz etmir.</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Sanatoriya / hospitality ops + qonaq kimliyi (FIN/passport via MDM) Azərbaycan obyektləri üçün; folio yerli Finance kitabına yazılır.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Hotel PMS</span><span>05 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Clinic</p>
+
+<h2>Healthcare satelliti</h2>
+<div class="body">
+<div class="g3">
+<div class="panel">
+<div class="mini">Core</div>
+
+<ul class="mods">
+<li>Pasiyent · həkim · otaq</li>
+<li>Qəbul · vizit kartı</li>
+<li>Multi-room cədvəl</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Clinical</div>
+
+<ul class="mods">
+<li>Lab (+ kritik flag)</li>
+<li>EHR / CPOE lite</li>
+<li>LIS HL7 import</li>
+<li>Telehealth + portal</li>
+<li>Sığorta (Finance proxy)</li>
+</ul>
+</div>
+<div class="panel hero">
+<div class="mini">Bridge</div>
+<h3>Sanatorium × Hotel</h3>
+
+<p>Nafta tipli obyektlər üçün qonaq / pasiyent bağı. Qiymət cache — Finance.</p>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Lazım olanda hotel qonaqları ilə klinik gün; qiymət Finance-dən; şəxs kimliyi AZ FIN/passport qaydaları ilə.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Clinic</span><span>06 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">F&amp;B POS</p>
+
+<h2>Yemək &amp; içki satelliti</h2>
+<div class="body">
+<div class="g4">
+<div class="panel"><div class="mini">Floor</div><ul class="mods"><li>Menyu / outlet</li><li>Zal + ticket</li><li>Ödənişlər</li><li>Split / void / endirim</li></ul></div>
+<div class="panel"><div class="mini">Kitchen</div><ul class="mods"><li>KDS</li><li>Course timing</li><li>Resept silinməsi</li></ul></div>
+<div class="panel"><div class="mini">Ops</div><ul class="mods"><li>Növbə X/Z</li><li>Delivery inbox</li><li>Labor PIN</li></ul></div>
+<div class="panel hero"><div class="mini">Bridge</div><h3>Hotel room charge</h3><p>PMS folio · resept event-ləri stock/Finance yoluna</p></div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> AZ hospitality qrupları üçün outlet ops; room charge və resept event-ləri Finance / anbar sərhədinə gedir.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · FnB POS</span><span>07 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Retail POS</p>
+
+<h2>Retail və aptek satelliti</h2>
+<div class="body">
+<div class="g3">
+<div class="panel hero">
+<div class="mini">POS</div>
+
+<ul class="mods">
+<li>Növbə · checkout · preset (aptek)</li>
+<li>Məhsul axtarışı (Finance SKU)</li>
+<li>Promo · müştəri POS-da</li>
+<li>X-report · offline növbə</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Growth</div>
+
+<ul class="mods">
+<li>Fiskal KKM</li>
+<li>Marketplace webhook</li>
+<li>BOPIS / OMS</li>
+<li>Mobil stok · replenish · SRM</li>
+</ul>
+</div>
+<div class="panel slate">
+<div class="mini">→ Finance</div>
+
+
+<p>Sale / shift event-lər; anbar Finance-də qalır.</p>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> AZ retail / aptek preset-ləri üçün POS; fiskal yol və stok həqiqəti Finance Core ilə uyğun qalır.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Retail POS</span><span>08 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">CRM</p>
+
+<h2>Satış CRM satelliti</h2>
+<div class="body">
+<div class="g2">
+<div class="panel">
+
+<ul class="mods">
+<li>Pipeline · lead kartı · create UI</li>
+<li>Vizit (+ geo) · next-contact · scoring</li>
+<li>Pipeline automation</li>
+<li>WhatsApp Business API</li>
+<li>Party profili (fiziki / hüquqi, VÖEN)</li>
+<li>Prospect CSV/XLSX import</li>
+<li>FIN → MDM</li>
+</ul>
+</div>
+<div class="panel hero">
+<div class="mini">→ Finance</div>
+
+
+<p>Lead convert Finance counterparty yaradır / bağlayır.</p>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Lidlər və hüquqi tərəflər VÖEN ilə; Azərbaycan B2B satışı üçün Finance counterparties-ə convert.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · CRM</span><span>09 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Logistics · Auto · Wholesale · Construction</p>
+
+<h2>Sahə və ticarət satellitləri</h2>
+<div class="body">
+<div class="g2">
+<div class="panel">
+<div class="mini">Logistics</div>
+
+<ul class="mods">
+<li>Park · reis · yol vərəqəsi · POD</li>
+<li>Yanacaq · gömrük · compliance</li>
+<li>Multi-stop · driver API · tracking</li>
+<li>Tarif · COD · cross-dock</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Auto service</div>
+
+<ul class="mods">
+<li>Avtomobil kartı · WO · əmək / ehtiyat</li>
+<li>Bay kalendar · intake · sex taymeri</li>
+<li>VIN kataloq · tarixçə · tool crib</li>
+<li>B2B ehtiyat PO → Finance</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Wholesale</div>
+
+<ul class="mods">
+<li>B2B sifariş · kredit limit · pick/pack</li>
+<li>TTN · pick wave</li>
+<li>EDI / alıcı API</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Construction</div>
+
+<ul class="mods">
+<li>Layihə / obyekt · smeta · material</li>
+<li>КС aktları · daily log · punch list</li>
+<li>Gantt · texnika · CDE · timesheet</li>
+<li>Subpodratçı iddiaları</li>
+</ul>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Yol vərəqəsi, TTN, aktlar və ehtiyat hissələri Finance sənədlərinə — eyni AZ müəssisə kitabı.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Sahə və ticarət</span><span>10 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Platforma add-on-ları</p>
+
+<h2>Çarpaz kommersiya add-on-ları</h2>
+<div class="body">
+<div class="g4">
+<div class="panel"><h3>Notifications</h3><p>WA / email / SMS</p></div>
+<div class="panel"><h3>Booking</h3><p>Widget-lər</p></div>
+<div class="panel"><h3>Customer Portal</h3><p>Sifariş, vizit, sənəd</p></div>
+<div class="panel"><h3>Payments</h3><p>Link ödəniş, depozit</p></div>
+<div class="panel"><h3>Loyalty</h3><p>Promo, ballar</p></div>
+<div class="panel"><h3>Custom domain</h3><p>White-label</p></div>
+<div class="panel"><h3>Delivery</h3><p>Retail + logistics</p></div>
+<div class="panel hero"><h3>Reference data</h3><p>Data Hub metering SKU</p></div>
+</div>
+
+<div class="note">Orchestrator kataloqu ilə satılır — hər satellitdə təkrarlanmır.</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Platforma add-on-ları Orchestrator vasitəsilə AZ multi-org qrupları üçün — Finance ilə eyni kommersiya parçası.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Add-on-lar</span><span>11 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Strateji xətt</p>
+
+<h2>Bank Core və Bank satelliti</h2>
+
+<p class="lead">Finance Core-dan ikinci dərəcəli. Orta banklar üçün ayrı regulated CBS — Holding marketplace-in birinci günlük hero SKU-su deyil.</p>
+<div class="body">
+<div class="g3">
+<div class="panel">
+<div class="mini">Bank Core</div>
+
+
+<ul class="mods">
+<li>Müştəri-pul ledger (≠ Finance)</li>
+<li>ACID posting · CIF · EOD/EOM</li>
+<li>Product factory · audit</li>
+</ul>
+</div>
+<div class="panel">
+<div class="mini">Bank satellite</div>
+
+
+<ul class="mods">
+<li>Teller / back-office / risk UI</li>
+<li>Bank Core API — UI DB-də pul yox</li>
+<li>DBO kanal — roadmap</li>
+</ul>
+</div>
+<div class="panel slate">
+<div class="mini">Status</div>
+
+
+<p>MVP arxitektura var. Strateji enterprise xətt kimi — “sabah Holding bankına qoş” deyil. Bankın öz korporativ kitabı yenə Finance Core-dadır.</p>
+</div>
+</div>
+
+<div class="why"><strong class="why-label">Niyə ERA 365:</strong> Banklar üçün ayrıca CBAR yönümlü CBS; bankın öz korporativ kitabı yenə AZ enterprise qaydaları altında Finance Core-dadır.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Bankinq (strateji)</span><span>12 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Nafta</p>
+
+<h2>Pilot paket nümunəsi</h2>
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Parent</div>
+<h3>Nafta · STANDALONE VÖEN</h3>
+
+<p>Hotel PMS + <strong>Finance Core</strong> + paylaşılan workforce</p>
+</div>
+<div class="panel">
+<div class="mini">Departments</div>
+
+<ul class="mods">
+<li>F&amp;B POS</li>
+<li>Clinic</li>
+<li>Aptek (Retail POS preset)</li>
+</ul>
+</div>
+</div>
+
+<div class="note"><strong>Marketplace SKU analoqu:</strong> “Sanatorium / Hospitality Suite” = Foundation + Finance Core + Hotel + Clinic + F&amp;B.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Aktiv real-data pilot</span><span>13 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">SKU reseptləri</p>
+
+<h2>Təklif olunan marketplace paketləri</h2>
+<div class="body">
+<div class="g2">
+<div class="panel hero"><div class="mini">A · Hero</div><h3>Finance Foundation</h3><p>Orchestrator + MDM + Finance Core (+ Data Hub)</p></div>
+<div class="panel"><div class="mini">B</div><h3>Hospitality Suite</h3><p>A + Hotel + F&amp;B (+ Clinic for sanatorium)</p></div>
+<div class="panel"><div class="mini">C</div><h3>Retail Suite</h3><p>A + Retail POS (+ Loyalty / Payments add-ons)</p></div>
+<div class="panel"><div class="mini">D</div><h3>Ticarət / Sahə Suite</h3><p>A + CRM + Logistics / Wholesale / Auto / Construction (pick)</p></div>
+</div>
+
+<div class="note">Banking pack = ayrıca enterprise SKU (sonra) — Holding retail marketplace rəfinə birinci gün qarışdırılmır.</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Paketləşmə</span><span>14 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Lüğət</p>
+
+<h2>Qısa lüğət</h2>
+<div class="body">
+<div class="g2">
+<div class="panel"><h3>Finance Core</h3><p>Şirkət kitabı / GL — killer məhsul</p></div>
+<div class="panel"><h3>Satellite</h3><p>Orchestrator entitlement altında sahə app</p></div>
+<div class="panel"><h3>Control plane</h3><p>Orchestrator: kimlik, billing, event, MDM API</p></div>
+<div class="panel"><h3>Department mode</h3><p>Parent hüquqi şəxs altında ops vahidi</p></div>
+<div class="panel"><h3>VÖEN / FIN</h3><p>Hüquqi şəxs vergi ID / vətəndaş ID</p></div>
+<div class="panel"><h3>Bank Core</h3><p>Müştəri-pul CBS — strateji, ≠ Finance Core</p></div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Lüğət</span><span>15 / 17</span></div>
+</div>
+</section>
+<section class="slide">
+<div class="frame">
+<p class="kicker">Necə istifadə etməli</p>
+
+<h2>Pasha üçün iki deck</h2>
+<div class="body">
+<div class="g2">
+<div class="panel hero">
+<div class="mini">Part 1</div>
+
+
+<p>Direktor / marketplace sahibləri üçün. Rollar, Finance-first, Nafta, 20%, 30/60/90.</p>
+</div>
+<div class="panel slate">
+<div class="mini">Part 2</div>
+
+
+<p>Məhsul / texniki paketləşmə üçün. Hər satellitin modulları — daxili ötürülməzdən əvvəl düzəliş tələb etmir.</p>
+</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · İstifadə</span><span>16 / 17</span></div>
+</div>
+</section>
+<section class="slide ink">
+<div class="frame" style="justify-content:space-between">
+<div>
+
+<div class="part-badge">Təqdimat paketi · 2 / 2 hissə · Məhsul kataloqu</div>
+<div class="brand">ERA 365</div>
+<div class="rule"></div>
+
+<h1>Əvvəl Finance Core.<br/>Vertikallar qoşulur.</h1>
+
+<p class="lead">Azərbaycan qanunvericiliyi üçün. Modul paketləşməsi → növbəti Pasha Technologies workshop.</p>
+</div>
+<div class="sign-grid">
+<div>
+
+<div class="name">Çingiz Şirinov</div>
+
+<div class="role">Təsisçi / CEO · ERA 365</div>
+</div>
+<div>
+
+<div class="name">Oksana Stepenko</div>
+
+<div class="role">Direktor · Axoft Azerbaijan (distributor)</div>
+</div>
+</div>
+<div class="footer"><span><strong>ERA 365</strong> · 2 / 2 hissə · Konfidensial · 2026</span><span>17 / 17</span></div>
+</div>
+</section>
+</div>
+
+</body>
+</html>
