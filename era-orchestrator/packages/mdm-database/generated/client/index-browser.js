@@ -133,6 +133,31 @@ exports.Prisma.GlobalNaturalPersonScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PersonHrProfileScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  bloodGroup: 'bloodGroup',
+  maritalStatus: 'maritalStatus',
+  educationCipher: 'educationCipher',
+  specialtyCipher: 'specialtyCipher',
+  statisticalCategories: 'statisticalCategories',
+  photoStorageKey: 'photoStorageKey',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PersonAddressScalarFieldEnum = {
+  id: 'id',
+  personId: 'personId',
+  kind: 'kind',
+  lineCipher: 'lineCipher',
+  cityCipher: 'cityCipher',
+  regionCipher: 'regionCipher',
+  postalCipher: 'postalCipher',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.PersonIdentifierScalarFieldEnum = {
   id: 'id',
   personId: 'personId',
@@ -202,6 +227,38 @@ exports.PersonSegment = exports.$Enums.PersonSegment = {
   UNVERIFIED: 'UNVERIFIED'
 };
 
+exports.BloodGroup = exports.$Enums.BloodGroup = {
+  A_POS: 'A_POS',
+  A_NEG: 'A_NEG',
+  B_POS: 'B_POS',
+  B_NEG: 'B_NEG',
+  AB_POS: 'AB_POS',
+  AB_NEG: 'AB_NEG',
+  O_POS: 'O_POS',
+  O_NEG: 'O_NEG',
+  UNKNOWN: 'UNKNOWN'
+};
+
+exports.MaritalStatus = exports.$Enums.MaritalStatus = {
+  SINGLE: 'SINGLE',
+  MARRIED: 'MARRIED',
+  DIVORCED: 'DIVORCED',
+  WIDOWED: 'WIDOWED',
+  OTHER: 'OTHER'
+};
+
+exports.StatisticalCategory = exports.$Enums.StatisticalCategory = {
+  REFUGEE: 'REFUGEE',
+  IDP: 'IDP',
+  MARTYR_FAMILY: 'MARTYR_FAMILY',
+  VETERAN: 'VETERAN'
+};
+
+exports.PersonAddressKind = exports.$Enums.PersonAddressKind = {
+  REGISTRATION: 'REGISTRATION',
+  ACTUAL: 'ACTUAL'
+};
+
 exports.PersonIdentifierType = exports.$Enums.PersonIdentifierType = {
   AZ_FIN: 'AZ_FIN',
   PASSPORT: 'PASSPORT',
@@ -224,6 +281,8 @@ exports.PersonAccessRequestStatus = exports.$Enums.PersonAccessRequestStatus = {
 
 exports.Prisma.ModelName = {
   GlobalNaturalPerson: 'GlobalNaturalPerson',
+  PersonHrProfile: 'PersonHrProfile',
+  PersonAddress: 'PersonAddress',
   PersonIdentifier: 'PersonIdentifier',
   GlobalLegalEntity: 'GlobalLegalEntity',
   PersonAccessRequest: 'PersonAccessRequest',

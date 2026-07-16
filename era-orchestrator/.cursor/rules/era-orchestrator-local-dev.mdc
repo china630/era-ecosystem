@@ -1,0 +1,37 @@
+---
+description: ERA Orchestrator — local dev, ports, Prisma, env
+alwaysApply: true
+---
+
+# ERA Orchestrator — local development
+
+**Inherits:** monorepo root `.cursor/rules/`. Ports: `docs/ECOSYSTEM_URLS.md`.
+
+## Stack
+
+- **API:** NestJS `apps/api` — port **4000** (`npm run start:dev -w @era365/api`)
+- **Web:** Next.js `apps/web` — port **3000**
+- **DBs:** `packages/database` (control plane), `packages/mdm-database` (`era_mdm`)
+
+## Commands (from `era-orchestrator/`)
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | API + Web concurrently |
+| `npm run db:generate` | Generate both Prisma clients |
+| `npm run db:bootstrap-local` | Migrate control-plane + bootstrap platform admins |
+| `npm run test:api` | API Jest suite |
+
+Migrations: `npm run db:migrate:deploy -w @era365/database` (and mdm-database when schema changes).
+
+## Env (typical)
+
+`JWT_SECRET`, `DATABASE_URL`, `MDM_DATABASE_URL`, `REDIS_URL`, `SATELLITE_EVENT_SERVICE_TOKEN`, `ERA_SSO_SHARED_SECRET`, `PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY`.
+
+**Platform catalog gateway (orchestrator → data-hub):** `ERA_DATA_HUB_URL` (e.g. `http://127.0.0.1:4200`), `DATA_HUB_SERVICE_TOKEN`, `REFERENCE_DATA_SKIP_ENTITLEMENT=1` for local dev without entitlement rows.
+
+**Workforce policy (satellites → orchestrator):** industry apps call `GET /platform/v1/workforce/policy` via `@era/satellite-kit` `fetchWorkforcePolicy` (no Finance URL).
+
+## i18n
+
+Orchestrator web: `apps/web/messages/{az,ru,en}.json` (next-intl). Not the finance three-channel i18n pipeline.
