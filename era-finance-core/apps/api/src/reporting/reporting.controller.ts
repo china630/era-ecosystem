@@ -45,6 +45,7 @@ import { UpdateProfitTaxAdjustmentDto } from "./dto/update-profit-tax-adjustment
 import { ReportingService } from "./reporting.service";
 import { TaxExportService } from "./tax-export.service";
 import { ProfitTaxService } from "./profit-tax.service";
+import { PropertyTaxService } from "./property-tax.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
 import {
   accountAnalysisPdfBuffer,
@@ -78,6 +79,7 @@ export class ReportingController {
     private readonly etaxes: ETaxesIntegrationService,
     private readonly taxExport: TaxExportService,
     private readonly profitTax: ProfitTaxService,
+    private readonly propertyTax: PropertyTaxService,
     private readonly finance: FinanceService,
   ) {}
 
@@ -782,6 +784,83 @@ export class ReportingController {
     @Query("asOf") asOf?: string,
   ) {
     return this.reporting.accountsReceivableAging(organizationId, asOf);
+  }
+
+  @Get("ap-aging")
+  @UseGuards(RolesGuard)
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.ACCOUNTANT,
+    UserRole.DIRECTOR,
+    UserRole.AUDITOR,
+  )
+  @ApiOperation({
+    summary:
+      "AP Aging: supplier payables 531 aged 0-30 / 31-60 / 61-90 / 90+, optional asOf",
+  })
+  apAging(
+    @OrganizationId() organizationId: string,
+    @Query("asOf") asOf?: string,
+  ) {
+    return this.reporting.accountsPayableAging(organizationId, asOf);
+  }
+
+  @Get("creditor-payment-plan")
+  @UseGuards(RolesGuard)
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.ACCOUNTANT,
+    UserRole.DIRECTOR,
+    UserRole.AUDITOR,
+  )
+  @ApiOperation({
+    summary:
+      "Creditor payment plan: outstanding 531 obligations + suggestedPayDate",
+  })
+  creditorPaymentPlan(
+    @OrganizationId() organizationId: string,
+    @Query("asOf") asOf?: string,
+  ) {
+    return this.reporting.creditorPaymentPlan(organizationId, asOf);
+  }
+
+  @Get("eqf-registry")
+  @UseGuards(VoenIntegrityGuard, RolesGuard)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT, UserRole.DIRECTOR)
+  @ApiOperation({
+    summary:
+      "EQF / e-Qaimə registry by debtor (eqaime* + dvxSync* on sales invoices)",
+  })
+  eqfRegistry(
+    @OrganizationId() organizationId: string,
+    @Query("counterpartyId") counterpartyId?: string,
+    @Query("status") status?: string,
+  ) {
+    return this.reporting.listEqfRegistry(organizationId, {
+      counterpartyId,
+      status,
+    });
+  }
+
+  @Get("property-tax/preview")
+  @UseGuards(SubscriptionGuard, RolesGuard)
+  @RequiresModule(ModuleEntitlement.TAX_PRO)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.ACCOUNTANT)
+  @ApiOperation({
+    summary:
+      "Preview annual property tax (Əmlak vergisi) on ACTIVE fixed-asset net book",
+  })
+  previewPropertyTax(
+    @OrganizationId() organizationId: string,
+    @Query("year") yearStr: string,
+  ) {
+    const year = Number(yearStr);
+    if (!Number.isFinite(year)) {
+      throw new BadRequestException("year is required");
+    }
+    return this.propertyTax.aggregatePropertyTax(organizationId, year);
   }
 
   @Get("vat-appendix-xlsx")

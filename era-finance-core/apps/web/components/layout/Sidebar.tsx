@@ -685,6 +685,13 @@ export function MainSidebar({
             icon={Ship}
             onNavClick={onNavClick}
           />
+          <SideNavSubItem
+            href="/procurement/protocols"
+            label={t("nav.procurementProtocols")}
+            isActive={pathname.startsWith("/procurement/protocols")}
+            icon={FileCheck2}
+            onNavClick={onNavClick}
+          />
           {canPostAccounting ? (
             <SideNavSubItem
               href="/finance/payables/suppliers"
@@ -937,6 +944,20 @@ export function MainSidebar({
             label={t("nav.aging")}
             isActive={pathname.startsWith("/reporting/aging")}
             icon={TrendingDown}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/ap-aging"
+            label={t("nav.apAging")}
+            isActive={pathname.startsWith("/reporting/ap-aging")}
+            icon={TrendingDown}
+            onNavClick={onNavClick}
+          />
+          <SideNavSubItem
+            href="/reporting/eqf-registry"
+            label={t("reporting.eqfRegistryLink")}
+            isActive={pathname.startsWith("/reporting/eqf-registry")}
+            icon={FileSpreadsheet}
             onNavClick={onNavClick}
           />
           <SideNavSubItem

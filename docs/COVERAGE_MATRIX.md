@@ -155,7 +155,7 @@ See [ADR clinic-product-lines-and-presets](./adr/clinic-product-lines-and-preset
 | FIN-ASAN-01 | ASAN İmza / SİMA gov-payload signing | Y org settings | API/STUB | `ERA_ASAN_SIMA_LIVE`; mock default — [ADR](./adr/asan-sima-gov-signature.md) |
 | FIN-EQAIME-IN-01 | Incoming e-qaimə compare + ingest | Y network-inbox | API | amount/VÖEN MATCH/MISMATCH |
 | FIN-04 | NAS / reference hub | Y `/admin/data` | SHIPPED | — |
-| FIN-TAX-01 | Tax declarations (simplified / profit / payroll / property) | Y `/reporting/tax-export` | API | tax_pro; UAT-SMOKE pending |
+| FIN-TAX-01 | Tax declarations (simplified / profit / payroll); property = aggregate/preview | Y `/reporting/tax-export`, `/reporting/property-tax/preview` | API | tax_pro; property declaration-file export pending; UAT-SMOKE pending |
 | FIN-TAX-02 | Profit tax adjustments + preview | Y API + tax-export | API | tax_pro |
 | FIN-STAT-01 | Goskomstat engine (1-müəssisə, 1/4-əmək, 1-İKT) | Y `/reporting/statforms` | API | compliance_pro or tax_pro |
 | FIN-CTR-01 | Contract hard-block limit + expire cron | Y `/contracts` check-limit | API | contract_management_pro |
