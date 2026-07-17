@@ -23,6 +23,7 @@ import { OrganizationId } from "../common/org-id.decorator";
 import { RequiresModule } from "../subscription/requires-module.decorator";
 import { SubscriptionGuard } from "../subscription/subscription.guard";
 import { ModuleEntitlement } from "../subscription/subscription.constants";
+import { CheckContractLimitDto } from "./dto/check-contract-limit.dto";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { PatchContractDto } from "./dto/patch-contract.dto";
 import { ContractsService } from "./contracts.service";
@@ -60,6 +61,25 @@ export class ContractsController {
     @Body() dto: CreateContractDto,
   ) {
     return this.contracts.create(organizationId, dto);
+  }
+
+  @Post("check-limit")
+  @Roles(
+    UserRole.OWNER,
+    UserRole.ADMIN,
+    UserRole.ACCOUNTANT,
+    UserRole.DIRECTOR,
+    UserRole.PROCUREMENT,
+  )
+  @ApiOperation({
+    summary:
+      "Hard-block check: ACTIVE status, dateTo not expired, amount limit vs commitments",
+  })
+  checkLimit(
+    @OrganizationId() organizationId: string,
+    @Body() dto: CheckContractLimitDto,
+  ) {
+    return this.contracts.checkLimit(dto.contractId, dto.amount, organizationId);
   }
 
   @Get(":id")
