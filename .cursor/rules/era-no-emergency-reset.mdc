@@ -1,0 +1,30 @@
+---
+description: Never emergency-reset a core/satellite to green a monorepo ship — fix cleanly or split PRs
+alwaysApply: true
+---
+
+# ERA — no emergency reset for green CI
+
+## Hard ban
+
+**Never** discard, reset, or force-align a core/satellite tree to `origin/dev` / `origin/master` solely so a large monorepo PR turns green.
+
+Forbidden patterns (including “temporary, follow-up later”):
+
+- `git checkout origin/dev -- era-finance-core/` (or any app root) to drop a conflicting wave
+- Commits like `reset X to origin/dev for CI green` that delete unfinished but valid domain work
+- Squashing away schema/migration/API work because merge residue is hard
+
+## Required instead
+
+1. **Fix the conflict** — graft schema, rename migrations, resolve duplicates, restore UTF-8 files correctly.
+2. **Split the PR** — ship orch / data-hub / satellites without the blocked core; land the blocked core in its **own** PR with green CI for that scope.
+3. **Park on a branch** — keep the wave on `feat/...` and document the gap in OPEN-TASKS / COVERAGE; do not delete it from history via reset-to-remote.
+
+## Why
+
+An emergency finance reset (2026-07) dropped real WS payroll depth while clearing control-plane merge noise. Recovery cost exceeded a clean finance-only PR. **Green CI without the product is not done.**
+
+## Ship skill
+
+`.cursor/skills/era-git-ship/` must not suggest reset-to-remote as a CI unblocker. Prefer failing CI over silent domain loss.

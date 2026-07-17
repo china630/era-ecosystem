@@ -138,6 +138,21 @@ export default function EmployeesPage() {
     await load();
   }
 
+  async function exportActiveListExcel() {
+    const res = await apiFetch("/api/hr/reports/active-list.xlsx");
+    if (!res.ok) {
+      alert(t("employees.activeListExportErr"));
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `active-list-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function runBulkWidget() {
     if (!snapshot?.modules.hrFull) {
       setUpsellOpen(true);
@@ -163,6 +178,14 @@ export default function EmployeesPage() {
         title={t("employees.title")}
         actions={
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              title={t("employees.activeListExportHint")}
+              onClick={() => void exportActiveListExcel()}
+            >
+              {t("employees.activeListExport")}
+            </button>
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}

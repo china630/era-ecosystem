@@ -27,12 +27,13 @@ Always read [manifests.yaml](manifests.yaml) for path buckets.
 
 ## Preconditions
 
-1. **Never commit:** `docker-data/`, `.env`, `.cursor/`, `node_modules/` — see `never_commit` in manifests.
+1. **Never commit:** `docker-data/`, `.env`, `.cursor/`, `node_modules/` — see `never_commit` in manifests. Exception: tracked `.cursor/rules/*.mdc` and `.cursor/skills/**` when the user asks to update them.
 2. **Do not edit** `.cursor/plans/*` unless user explicitly asks.
 3. **Git safety:** follow user git rules — no force push, no skip hooks, commit only when user asks (these triggers **are** explicit commit requests).
 4. **Branch protection:** `dev` and `master` require **PR + CI** — never `git push origin dev` directly.
 5. **gh auth:** `git push` uses Git Credential Manager; `gh` needs `GH_TOKEN`. If unset, run `Ensure-GhAuth` pattern from [docs/GH_CLI_SETUP.md](../../../docs/GH_CLI_SETUP.md) (auto in `era-ship.ps1`). Past chat tokens are **not** persisted across agent sessions.
 6. **PowerShell:** use `;` not `&&`. Commit messages: `-m "title" -m "body"` (no HEREDOC on Windows).
+7. **No emergency reset:** never `git checkout origin/dev -- <app>/` (or equivalent) to discard a conflicting wave so CI goes green. Fix cleanly or split into a separate PR. See `.cursor/rules/era-no-emergency-reset.mdc`.
 
 ## Full wave — commit order
 
