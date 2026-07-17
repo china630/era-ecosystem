@@ -1386,6 +1386,7 @@ export const resources = {
         actionsMenuAria: "Меню действий",
         createShipmentOrder: "Məxaric orderi yarat",
         eqaimeStatus: "e-Qaimə",
+        eqaimeNumber: "Номер e-Qaimə",
         eqaimeSubmit: "Отправить e-Qaimə",
         eqaimeSubmitting: "Отправка…",
         eqaimeSubmitOk: "e-Qaimə отправлен",
@@ -5556,6 +5557,7 @@ export const resources = {
         actionsMenuAria: "Əməliyyat menyusu",
         createShipmentOrder: "Məxaric orderi yarat",
         eqaimeStatus: "e-Qaimə",
+        eqaimeNumber: "e-Qaimə nömrəsi",
         eqaimeSubmit: "e-Qaimə göndər",
         eqaimeSubmitting: "Göndərilir…",
         eqaimeSubmitOk: "e-Qaimə göndərildi",
@@ -8596,6 +8598,7 @@ export const resources = {
       },
       invoices: {
         eqaimeStatus: "e-Qaimə",
+        eqaimeNumber: "e-Qaimə number",
         eqaimeSubmit: "Submit e-Qaimə",
         eqaimeSubmitting: "Submitting…",
         eqaimeSubmitOk: "e-Qaimə submitted",
