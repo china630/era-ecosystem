@@ -12,6 +12,7 @@ import { ReportingService } from "./reporting.service";
 import { ETaxesIntegrationService } from "./etaxes-integration.service";
 import { TaxExportService } from "./tax-export.service";
 import { ProfitTaxService } from "./profit-tax.service";
+import { PropertyTaxService } from "./property-tax.service";
 import { VatAppendixExportService } from "./vat-appendix-export.service";
 import { VatQuarterDataService } from "./vat-quarter-data.service";
 import { StandardReportsService } from "./standard-reports.service";
@@ -44,6 +45,7 @@ import { SystemConfigModule } from "../system-config/system-config.module";
     ETaxesIntegrationService,
     TaxExportService,
     ProfitTaxService,
+    PropertyTaxService,
     StatformsService,
     HttpEtaxesSubmissionAdapter,
     HsmEtaxesSubmissionAdapter,

@@ -12,6 +12,7 @@ import { InventoryAuditService } from "./inventory-audit.service";
 import { InventoryReconciliationController } from "./inventory-reconciliation.controller";
 import { InventoryController } from "./inventory.controller";
 import { InventoryService } from "./inventory.service";
+import { StatutoryFormsService } from "./statutory-forms.service";
 import { WmsController } from "./wms.controller";
 import { WmsMobileService } from "./wms-mobile.service";
 
@@ -23,7 +24,7 @@ import { WmsMobileService } from "./wms-mobile.service";
     InventoryReconciliationController,
     WmsController,
   ],
-  providers: [InventoryService, InventoryAuditService, BinBalanceService, WmsMobileService],
+  providers: [InventoryService, InventoryAuditService, BinBalanceService, WmsMobileService, StatutoryFormsService],
   exports: [InventoryService, BinBalanceService, WmsMobileService],
 })
 export class InventoryModule {}
