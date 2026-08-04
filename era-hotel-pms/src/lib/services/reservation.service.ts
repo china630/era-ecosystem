@@ -13,6 +13,7 @@ import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment 
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
+import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 
 export async function listReservations(status?: ReservationStatus, guestId?: string) {
   return prisma.reservation.findMany({
@@ -448,6 +449,33 @@ export async function addQuickCharge(
     throw new Error('Quick charges only for IN_HOUSE reservations');
   }
   return postCharge({ reservationId, ...input });
+}
+
+/** Guest ids that are a real named claim on this stay (not TBA / empty pax). */
+export function namedGuestIdsOnStay(input: {
+  guestId: string;
+  guestFullName?: string | null;
+  adults: number;
+  pax: Array<{
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  }>;
+}): string[] {
+  const ids = new Set<string>();
+  for (const row of input.pax) {
+    if (row.guestId && paxHasRealName(row)) ids.add(row.guestId);
+  }
+  if (
+    !reservationNamesIncomplete({
+      guestFullName: input.guestFullName,
+      adults: input.adults,
+      pax: input.pax,
+    })
+  ) {
+    ids.add(input.guestId);
+  }
+  return [...ids];
 }
 
 export async function assertNamedGuestsFreeOnStay(reservationId: string) {
