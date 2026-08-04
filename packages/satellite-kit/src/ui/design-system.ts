@@ -124,3 +124,7 @@ export const FIELD_PANEL_BODY_CLASS = "space-y-3 border-t border-[#D5DADF] px-3 
 export const MODAL_FULL_CLASS =
   "max-w-[min(98vw,1600px)] w-full min-h-[min(75vh,48rem)] max-h-[90vh]";
 export const TEXT_MUTED_CLASS = "text-[#7F8C8D]";
+
+export const SUBSECTION_SURFACE_CLASS = "rounded-lg bg-[#F8FAFC] p-2 text-[12px] text-[#34495E]";
+export const TEXT_SUCCESS_CLASS = "text-[#27AE60]";
+export const TEXT_DANGER_CLASS = "text-[#E74C3C]";

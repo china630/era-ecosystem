@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import {
   MODAL_CLOSE_BUTTON_CLASS,
   MODAL_DIALOG_CONTENT_CLASS,
@@ -17,10 +17,7 @@ export function ModalShell({
   onClose,
   children,
   footer,
-  headerActions,
   maxWidthClass = "max-w-lg",
-  bodyClassName = "mt-4 min-h-0 flex-1 overflow-y-auto",
-  footerClassName = "mt-4 shrink-0 border-t border-[#D5DADF] pt-4",
   closeLabel = "Close",
 }: {
   open: boolean;
@@ -29,36 +26,24 @@ export function ModalShell({
   onClose: () => void;
   children: ReactNode;
   footer?: ReactNode;
-  /** Secondary actions next to the close control (menu, print, attach). */
-  headerActions?: ReactNode;
   maxWidthClass?: string;
-  bodyClassName?: string;
-  footerClassName?: string;
   closeLabel?: string;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
-
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center overflow-hidden bg-black/40 p-4 pb-6 pt-10"
+      className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/40 p-4 pb-6 pt-24"
       style={{ backgroundColor: "rgba(0,0,0,0.4)" }}
+      onClick={onClose}
       role="presentation"
-      aria-hidden="true"
     >
       <div
         className={`${MODAL_DIALOG_CONTENT_CLASS} ${maxWidthClass}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="era-modal-title"
+        onClick={(e) => e.stopPropagation()}
       >
         <header className="flex shrink-0 items-start justify-between gap-3">
           <div className="min-w-0 flex-1 pr-2">
@@ -72,22 +57,19 @@ export function ModalShell({
               <p className="mb-0 mt-1 text-[13px] leading-snug text-[#7F8C8D]">{subtitle}</p>
             ) : null}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {headerActions}
-            <button
-              type="button"
-              className={MODAL_CLOSE_BUTTON_CLASS}
-              onClick={onClose}
-              aria-label={closeLabel}
-            >
-              <X className="h-4 w-4" aria-hidden />
-            </button>
-          </div>
+          <button
+            type="button"
+            className={MODAL_CLOSE_BUTTON_CLASS}
+            onClick={onClose}
+            aria-label={closeLabel}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </button>
         </header>
 
-        <div className={bodyClassName}>{children}</div>
+        <div className="mt-4 min-h-0 flex-1 overflow-y-auto">{children}</div>
 
-        {footer != null ? <footer className={footerClassName}>{footer}</footer> : null}
+        {footer != null ? <footer className="shrink-0">{footer}</footer> : null}
       </div>
     </div>
   );

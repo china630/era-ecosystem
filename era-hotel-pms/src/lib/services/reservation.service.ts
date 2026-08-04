@@ -449,3 +449,51 @@ export async function addQuickCharge(
   }
   return postCharge({ reservationId, ...input });
 }
+
+export async function assertNamedGuestsFreeOnStay(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { guest: true, paxGuests: true, room: true },
+  });
+  if (!stay) throw new Error('Reservation not found');
+
+  const claimed = namedGuestIdsOnStay({
+    guestId: stay.guestId,
+    guestFullName: stay.guest.fullName,
+    adults: stay.adults,
+    pax: stay.paxGuests,
+  });
+  if (claimed.length === 0) return;
+
+  for (const guestId of claimed) {
+    const conflict = await prisma.reservation.findFirst({
+      where: {
+        id: { not: reservationId },
+        status: { in: [...SCHEDULABLE_STATUSES] },
+        checkInDate: { lt: stay.checkOutDate },
+        checkOutDate: { gt: stay.checkInDate },
+        OR: [{ guestId }, { paxGuests: { some: { guestId } } }],
+      },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: true,
+      },
+    });
+    if (!conflict) continue;
+
+    const otherClaimed = namedGuestIdsOnStay({
+      guestId: conflict.guestId,
+      guestFullName: conflict.guest.fullName,
+      adults: conflict.adults,
+      pax: conflict.paxGuests,
+    });
+    if (!otherClaimed.includes(guestId)) continue;
+
+    const door = conflict.room?.roomNumber ?? 'TBA';
+    throw new Error(
+      `Guest already named on overlapping stay (room ${door}, ${conflict.checkInDate.toISOString().slice(0, 10)} – ${conflict.checkOutDate.toISOString().slice(0, 10)})`,
+    );
+  }
+}
+
