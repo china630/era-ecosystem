@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { validateProcedureCompatibility } from "@/lib/procedure-compatibility.service";
 import { isElectiveSchedulingAllowed, nextSchedulingDay } from "@/lib/production-calendar";
-import { bakuDayBounds } from "@/domain/ops/day-summary.service";
+import { bakuDayBounds } from "@/lib/baku-day";
 import { bakuDateKey } from "@/domain/patient/patient-timeline.service";
 import {
   DEFAULT_WORK_HOURS,
