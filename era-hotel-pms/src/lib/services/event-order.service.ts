@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
-import type { EventOrderLineKind, EventStaffAssignmentStatus } from '@prisma/client';
+import type { EventStaffAssignmentStatus } from '@prisma/client';
 
 const eventInclude = {
   saloon: { include: { posResource: true } },
@@ -42,7 +42,7 @@ export async function listEventOrderLines(banquetEventId: string) {
 
 export async function addEventOrderLine(input: {
   banquetEventId: string;
-  kind?: EventOrderLineKind;
+  kind?: string;
   description: string;
   quantity: number;
   unitPrice: number;

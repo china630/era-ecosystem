@@ -13,6 +13,7 @@ import { assertContractAllotmentAvailable, getAvailabilityWithContractAllotment 
 import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
+import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 
 export async function listReservations(status?: ReservationStatus, guestId?: string) {
   return prisma.reservation.findMany({
@@ -449,3 +450,78 @@ export async function addQuickCharge(
   }
   return postCharge({ reservationId, ...input });
 }
+
+/** Guest ids that are a real named claim on this stay (not TBA / empty pax). */
+export function namedGuestIdsOnStay(input: {
+  guestId: string;
+  guestFullName?: string | null;
+  adults: number;
+  pax: Array<{
+    guestId?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  }>;
+}): string[] {
+  const ids = new Set<string>();
+  for (const row of input.pax) {
+    if (row.guestId && paxHasRealName(row)) ids.add(row.guestId);
+  }
+  if (
+    !reservationNamesIncomplete({
+      guestFullName: input.guestFullName,
+      adults: input.adults,
+      pax: input.pax,
+    })
+  ) {
+    ids.add(input.guestId);
+  }
+  return [...ids];
+}
+
+export async function assertNamedGuestsFreeOnStay(reservationId: string) {
+  const stay = await prisma.reservation.findUnique({
+    where: { id: reservationId },
+    include: { guest: true, paxGuests: true, room: true },
+  });
+  if (!stay) throw new Error('Reservation not found');
+
+  const claimed = namedGuestIdsOnStay({
+    guestId: stay.guestId,
+    guestFullName: stay.guest.fullName,
+    adults: stay.adults,
+    pax: stay.paxGuests,
+  });
+  if (claimed.length === 0) return;
+
+  for (const guestId of claimed) {
+    const conflict = await prisma.reservation.findFirst({
+      where: {
+        id: { not: reservationId },
+        status: { in: [...SCHEDULABLE_STATUSES] },
+        checkInDate: { lt: stay.checkOutDate },
+        checkOutDate: { gt: stay.checkInDate },
+        OR: [{ guestId }, { paxGuests: { some: { guestId } } }],
+      },
+      include: {
+        guest: true,
+        room: true,
+        paxGuests: true,
+      },
+    });
+    if (!conflict) continue;
+
+    const otherClaimed = namedGuestIdsOnStay({
+      guestId: conflict.guestId,
+      guestFullName: conflict.guest.fullName,
+      adults: conflict.adults,
+      pax: conflict.paxGuests,
+    });
+    if (!otherClaimed.includes(guestId)) continue;
+
+    const door = conflict.room?.roomNumber ?? 'TBA';
+    throw new Error(
+      `Guest already named on overlapping stay (room ${door}, ${conflict.checkInDate.toISOString().slice(0, 10)} – ${conflict.checkOutDate.toISOString().slice(0, 10)})`,
+    );
+  }
+}
+

@@ -4,24 +4,26 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Plus } from 'lucide-react';
 import {
+  CARD_CONTAINER_CLASS,
   DATA_TABLE_CLASS,
   DATA_TABLE_HEAD_ROW_CLASS,
   DATA_TABLE_TH_LEFT_CLASS,
   DATA_TABLE_TR_CLASS,
   DATA_TABLE_TD_CLASS,
   DATA_TABLE_VIEWPORT_CLASS,
+  EraListFilterBar,
   Field,
   FieldRow,
   FieldSelect,
   FORM_STACK_CLASS,
   MODAL_CHECKBOX_CLASS,
-  MODAL_INPUT_CLASS,
   PRIMARY_BUTTON_CLASS,
+  PageHeader,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
 import { EraModal, EraModalFooter } from '@/components/EraModal';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
-import { ListFilterInput } from '@/components/master-data/ListFilterInput';
+import { HotelLookupsAdmin } from '@/components/admin/HotelLookupsAdmin';
 import { matchesCodeNameQuery, matchesRoomTypeFilter } from '@/lib/list-filter';
 import {
   matchesRetireFilter,
@@ -101,21 +103,24 @@ function RetireFilterSelect({
   value,
   onChange,
   labels,
+  statusLabel,
 }: {
   value: RetireFilter;
   onChange: (v: RetireFilter) => void;
   labels: { all: string; active: string; inactive: string };
+  statusLabel: string;
 }) {
   return (
-    <select
-      className={`${MODAL_INPUT_CLASS} max-w-[150px] text-[13px]`}
+    <FieldSelect
+      label={statusLabel}
+      preset="select"
       value={value}
       onChange={(e) => onChange(e.target.value as RetireFilter)}
     >
       <option value="ALL">{labels.all}</option>
       <option value="ACTIVE">{labels.active}</option>
       <option value="INACTIVE">{labels.inactive}</option>
-    </select>
+    </FieldSelect>
   );
 }
 
@@ -128,7 +133,6 @@ export default function MasterDataPage() {
   const [revenueCodes, setRevenueCodes] = useState<RevenueCode[]>([]);
   const [bedTypes, setBedTypes] = useState<DictRow[]>([]);
   const [roomViews, setRoomViews] = useState<DictRow[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const [rcFilter, setRcFilter] = useState('');
@@ -276,16 +280,28 @@ export default function MasterDataPage() {
   }
 
   return (
-    <AppShell maxWidthClass="max-w-4xl">
+    <>
       <PageHeader title={t('title')} />
-      <StatusMessage>{msg}</StatusMessage>
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('revenueCodes')}</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <ListFilterInput value={rcFilter} onChange={setRcFilter} placeholder={t('filterPlaceholder')} />
-            <RetireFilterSelect value={rcRetireFilter} onChange={setRcRetireFilter} labels={retireLabels} />
+            <EraListFilterBar className="mb-3">
+          <Field
+            label={tc('search')}
+            preset="longText"
+            value={rcFilter}
+            onChange={(e) => setRcFilter(e.target.value)}
+            placeholder={t('filterPlaceholder')}
+          />
+          <RetireFilterSelect
+            value={rcRetireFilter}
+            onChange={setRcRetireFilter}
+            labels={retireLabels}
+            statusLabel={t('activeStatus')}
+          />
+        </EraListFilterBar>
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -303,17 +319,30 @@ export default function MasterDataPage() {
           setEditRevenueCode(row);
           setRevenueCodeModalOpen(true);
         })}
-      </PageSection>
+      </section>
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <h2 className="mb-3 text-sm font-semibold text-[#34495E]">{t('dictionaries')}</h2>
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="m-0 text-[13px] font-medium text-[#34495E]">{t('bedTypes')}</h3>
               <div className="flex flex-wrap items-center gap-2">
-                <ListFilterInput value={bedFilter} onChange={setBedFilter} placeholder={t('filterPlaceholder')} />
-                <RetireFilterSelect value={bedRetireFilter} onChange={setBedRetireFilter} labels={retireLabels} />
+                <EraListFilterBar className="mb-3">
+          <Field
+            label={tc('search')}
+            preset="longText"
+            value={bedFilter}
+            onChange={(e) => setBedFilter(e.target.value)}
+            placeholder={t('filterPlaceholder')}
+          />
+          <RetireFilterSelect
+            value={bedRetireFilter}
+            onChange={setBedRetireFilter}
+            labels={retireLabels}
+            statusLabel={t('activeStatus')}
+          />
+        </EraListFilterBar>
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
@@ -340,8 +369,21 @@ export default function MasterDataPage() {
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="m-0 text-[13px] font-medium text-[#34495E]">{t('roomViews')}</h3>
               <div className="flex flex-wrap items-center gap-2">
-                <ListFilterInput value={viewFilter} onChange={setViewFilter} placeholder={t('filterPlaceholder')} />
-                <RetireFilterSelect value={viewRetireFilter} onChange={setViewRetireFilter} labels={retireLabels} />
+                <EraListFilterBar className="mb-3">
+          <Field
+            label={tc('search')}
+            preset="longText"
+            value={viewFilter}
+            onChange={(e) => setViewFilter(e.target.value)}
+            placeholder={t('filterPlaceholder')}
+          />
+          <RetireFilterSelect
+            value={viewRetireFilter}
+            onChange={setViewRetireFilter}
+            labels={retireLabels}
+            statusLabel={t('activeStatus')}
+          />
+        </EraListFilterBar>
                 <button
                   type="button"
                   className={PRIMARY_BUTTON_CLASS}
@@ -361,14 +403,29 @@ export default function MasterDataPage() {
             })}
           </div>
         </div>
-      </PageSection>
+      </section>
 
-      <PageSection className="mb-6">
+      <HotelLookupsAdmin />
+
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('roomTypes')}</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <ListFilterInput value={rtFilter} onChange={setRtFilter} placeholder={t('filterPlaceholder')} />
-            <RetireFilterSelect value={rtRetireFilter} onChange={setRtRetireFilter} labels={retireLabels} />
+            <EraListFilterBar className="mb-3">
+          <Field
+            label={tc('search')}
+            preset="longText"
+            value={rtFilter}
+            onChange={(e) => setRtFilter(e.target.value)}
+            placeholder={t('filterPlaceholder')}
+          />
+          <RetireFilterSelect
+            value={rtRetireFilter}
+            onChange={setRtRetireFilter}
+            labels={retireLabels}
+            statusLabel={t('activeStatus')}
+          />
+        </EraListFilterBar>
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -418,35 +475,45 @@ export default function MasterDataPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('rooms')}</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <ListFilterInput value={roomFilter} onChange={setRoomFilter} placeholder={t('filterRoomPlaceholder')} />
-            <select
-              className={`${MODAL_INPUT_CLASS} max-w-[160px] text-[13px]`}
-              value={roomInventoryFilter}
-              onChange={(e) => setRoomInventoryFilter(e.target.value as RoomInventoryFilter)}
-            >
-              <option value="ALL">{t('allRoomInventory')}</option>
-              <option value="INVENTORY">{t('inInventory')}</option>
-              <option value="DISABLED">{t('disabledRooms')}</option>
-              <option value="DELETED">{t('deletedRooms')}</option>
-            </select>
-            <select
-              className={`${MODAL_INPUT_CLASS} max-w-[140px] text-[13px]`}
-              value={roomTypeFilter}
-              onChange={(e) => setRoomTypeFilter(e.target.value)}
-            >
-              <option value="">{t('allRoomTypes')}</option>
-              {roomTypes.map((rt) => (
-                <option key={rt.id} value={rt.id}>
-                  {rt.code}
-                </option>
-              ))}
-            </select>
+            <EraListFilterBar className="mb-0">
+              <Field
+                label={tc('search')}
+                preset="longText"
+                value={roomFilter}
+                onChange={(e) => setRoomFilter(e.target.value)}
+                placeholder={t('filterRoomPlaceholder')}
+              />
+              <FieldSelect
+                label={t('activeStatus')}
+                preset="selectWide"
+                value={roomInventoryFilter}
+                onChange={(e) => setRoomInventoryFilter(e.target.value as RoomInventoryFilter)}
+              >
+                <option value="ALL">{t('allRoomInventory')}</option>
+                <option value="INVENTORY">{t('inInventory')}</option>
+                <option value="DISABLED">{t('disabledRooms')}</option>
+                <option value="DELETED">{t('deletedRooms')}</option>
+              </FieldSelect>
+              <FieldSelect
+                label={t('type')}
+                preset="select"
+                value={roomTypeFilter}
+                onChange={(e) => setRoomTypeFilter(e.target.value)}
+              >
+                <option value="">{t('allRoomTypes')}</option>
+                {roomTypes.map((rt) => (
+                  <option key={rt.id} value={rt.id}>
+                    {rt.code}
+                  </option>
+                ))}
+              </FieldSelect>
+            </EraListFilterBar>
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -500,14 +567,27 @@ export default function MasterDataPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
-      <PageSection className="mb-6">
+      <section className={`${CARD_CONTAINER_CLASS} mb-6 p-4`}>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="m-0 text-sm font-semibold text-[#34495E]">{t('ratePlans')}</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <ListFilterInput value={rpFilter} onChange={setRpFilter} placeholder={t('filterPlaceholder')} />
-            <RetireFilterSelect value={rpRetireFilter} onChange={setRpRetireFilter} labels={retireLabels} />
+            <EraListFilterBar className="mb-0">
+              <Field
+                label={tc('search')}
+                preset="longText"
+                value={rpFilter}
+                onChange={(e) => setRpFilter(e.target.value)}
+                placeholder={t('filterPlaceholder')}
+              />
+              <RetireFilterSelect
+                value={rpRetireFilter}
+                onChange={setRpRetireFilter}
+                labels={retireLabels}
+                statusLabel={t('activeStatus')}
+              />
+            </EraListFilterBar>
             <button
               type="button"
               className={PRIMARY_BUTTON_CLASS}
@@ -561,7 +641,7 @@ export default function MasterDataPage() {
             </tbody>
           </table>
         </div>
-      </PageSection>
+      </section>
 
       <EraModal
         open={roomTypeModalOpen}
@@ -609,10 +689,10 @@ export default function MasterDataPage() {
             if (res.ok) {
               setRoomTypeModalOpen(false);
               setEditRoomType(null);
-              setMsg(editRoomType ? t('roomTypeUpdated') : t('roomTypeCreated'));
+              showSuccess(editRoomType ? t('roomTypeUpdated') : t('roomTypeCreated'));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -726,10 +806,10 @@ export default function MasterDataPage() {
             if (res.ok) {
               setRatePlanModalOpen(false);
               setEditRatePlan(null);
-              setMsg(editRatePlan ? t('ratePlanUpdated') : t('ratePlanCreated'));
+              showSuccess(editRatePlan ? t('ratePlanUpdated') : t('ratePlanCreated'));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -851,10 +931,10 @@ export default function MasterDataPage() {
             if (res.ok) {
               setRevenueCodeModalOpen(false);
               setEditRevenueCode(null);
-              setMsg(editRevenueCode ? t('revenueCodeUpdated') : t('revenueCodeCreated'));
+              showSuccess(editRevenueCode ? t('revenueCodeUpdated') : t('revenueCodeCreated'));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -958,10 +1038,10 @@ export default function MasterDataPage() {
             if (res.ok) {
               setBedTypeModalOpen(false);
               setEditBedType(null);
-              setMsg(editBedType ? t('bedTypeUpdated') : t('bedTypeCreated'));
+              showSuccess(editBedType ? t('bedTypeUpdated') : t('bedTypeCreated'));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -1044,10 +1124,10 @@ export default function MasterDataPage() {
             if (res.ok) {
               setRoomViewModalOpen(false);
               setEditRoomView(null);
-              setMsg(editRoomView ? t('roomViewUpdated') : t('roomViewCreated'));
+              showSuccess(editRoomView ? t('roomViewUpdated') : t('roomViewCreated'));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -1137,10 +1217,10 @@ export default function MasterDataPage() {
               const roomNum = editRoom?.roomNumber ?? String(fd.get('roomNumber'));
               const wasEdit = !!editRoom;
               setEditRoom(null);
-              setMsg(wasEdit ? t('roomUpdated', { room: roomNum }) : t('roomCreated', { room: roomNum }));
+              showSuccess(wasEdit ? t('roomUpdated', { room: roomNum }) : t('roomCreated', { room: roomNum }));
               await load();
             } else {
-              setMsg(tc('error'));
+              showApiError({ error: tc('error') });
             }
           }}
         >
@@ -1186,33 +1266,39 @@ export default function MasterDataPage() {
               type="number"
               defaultValue={editRoom?.floor ?? 1}
             />
-            <Field
+            <FieldSelect
               label={t('viewCode')}
-              preset="code"
+              preset="select"
               id="rm-view"
               name="viewCode"
-              list="room-view-codes"
               defaultValue={editRoom?.viewCode ?? ''}
-            />
-            <Field
+            >
+              <option value="">—</option>
+              {roomViews
+                .filter((v) => v.active !== false)
+                .map((v) => (
+                  <option key={v.id} value={v.code}>
+                    {v.code} — {v.name}
+                  </option>
+                ))}
+            </FieldSelect>
+            <FieldSelect
               label={t('bedTypeCode')}
-              preset="code"
+              preset="select"
               id="rm-bed"
               name="bedTypeCode"
-              list="bed-type-codes"
               defaultValue={editRoom?.bedTypeCode ?? ''}
-            />
+            >
+              <option value="">—</option>
+              {bedTypes
+                .filter((b) => b.active !== false)
+                .map((b) => (
+                  <option key={b.id} value={b.code}>
+                    {b.code} — {b.name}
+                  </option>
+                ))}
+            </FieldSelect>
           </FieldRow>
-          <datalist id="room-view-codes">
-            {roomViews.map((v) => (
-              <option key={v.id} value={v.code} />
-            ))}
-          </datalist>
-          <datalist id="bed-type-codes">
-            {bedTypes.map((b) => (
-              <option key={b.id} value={b.code} />
-            ))}
-          </datalist>
           <FieldRow cols={2}>
             <Field
               label={t('location')}
@@ -1254,6 +1340,6 @@ export default function MasterDataPage() {
           )}
         </form>
       </EraModal>
-    </AppShell>
+    </>
   );
 }

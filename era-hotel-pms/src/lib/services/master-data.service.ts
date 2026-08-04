@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { toDecimal } from '@/lib/decimal';
-import type { FolioType } from '@prisma/client';
+import type { FolioType, HotelLookupKind } from '@prisma/client';
 import { roomInventoryWhere } from '@/lib/master-data/retire-policy';
 
 export async function listRoomTypes() {
@@ -208,4 +208,37 @@ export async function listActiveRevenueCodes() {
     include: { department: true, routingRule: true },
     orderBy: { code: 'asc' },
   });
+}
+
+export async function listHotelLookups(kind?: HotelLookupKind, activeOnly = false) {
+  return prisma.hotelLookup.findMany({
+    where: {
+      ...(kind ? { kind } : {}),
+      ...(activeOnly ? { active: true } : {}),
+    },
+    orderBy: [{ kind: 'asc' }, { sortOrder: 'asc' }, { code: 'asc' }],
+  });
+}
+
+export async function createHotelLookup(input: {
+  kind: HotelLookupKind;
+  code: string;
+  name: string;
+  sortOrder?: number;
+}) {
+  return prisma.hotelLookup.create({
+    data: {
+      kind: input.kind,
+      code: input.code.trim(),
+      name: input.name.trim(),
+      sortOrder: input.sortOrder ?? 0,
+    },
+  });
+}
+
+export async function updateHotelLookup(
+  id: string,
+  input: { name?: string; active?: boolean; sortOrder?: number },
+) {
+  return prisma.hotelLookup.update({ where: { id }, data: input });
 }

@@ -17,7 +17,18 @@ import {
   ReservationCardSubModals,
   useReservationSubModals,
 } from '@/components/reservation-card/ReservationCardSubModals';
-import type { BottomTab, DailyRateRow, FolioSubTab, PaxRow, SelectOption, TabId } from '@/components/reservation-card/types';
+import type {
+  AgencyOption,
+  BottomTab,
+  DailyRateRow,
+  FolioSubTab,
+  PaxRow,
+  RatePlanOption,
+  SelectOption,
+  SourceOption,
+  TabId,
+} from '@/components/reservation-card/types';
+import { isOtaAgency } from '@/lib/booking-source-kind';
 import { computeGuestFolioBalance } from '@/components/reservation-card/folio-balance';
 
 function mergeDateTime(date: string, time: string): string | undefined {
@@ -109,15 +120,15 @@ export function ReservationCardEditor({
   const [manualDailyRate, setManualDailyRate] = useState('');
   const [discountActive, setDiscountActive] = useState(false);
   const [dailyRates, setDailyRates] = useState<DailyRateRow[]>([]);
-  const [agencies, setAgencies] = useState<SelectOption[]>([]);
-  const [sources, setSources] = useState<SelectOption[]>([]);
+  const [agencies, setAgencies] = useState<AgencyOption[]>([]);
+  const [sources, setSources] = useState<SourceOption[]>([]);
   const [roomTypes, setRoomTypes] = useState<SelectOption[]>([]);
   const [mealPlans, setMealPlans] = useState<SelectOption[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; roomNumber: string }>>([]);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [pax, setPax] = useState<PaxRow[]>([]);
   const [ratePlanId, setRatePlanId] = useState('');
-  const [ratePlans, setRatePlans] = useState<SelectOption[]>([]);
+  const [ratePlans, setRatePlans] = useState<RatePlanOption[]>([]);
   const [guestId, setGuestId] = useState('');
   const [guestOptions, setGuestOptions] = useState<SelectOption[]>([]);
   const [paymentMethod, setPaymentMethod] = useState('CARD');
@@ -280,16 +291,23 @@ export function ReservationCardEditor({
         .catch(() => []),
     ]).then(([ag, src, rt, mp, rp, g, rm, contracts]) => {
       if (Array.isArray(ag)) {
-        setAgencies(ag.map((x: { id: string; code: string; name: string }) => ({
-          id: x.id,
-          label: `${x.code} — ${x.name}`,
-        })));
+        setAgencies(
+          ag.map((x: { id: string; code: string; name: string }) => ({
+            id: x.id,
+            code: x.code,
+            label: `${x.code} — ${x.name}`,
+            isOta: isOtaAgency(x.code, x.name),
+          })),
+        );
       }
       if (Array.isArray(src)) {
-        setSources(src.map((x: { id: string; code: string; name?: string }) => ({
-          id: x.id,
-          label: x.name ? `${x.code} — ${x.name}` : x.code,
-        })));
+        setSources(
+          src.map((x: { id: string; code: string; name?: string }) => ({
+            id: x.id,
+            code: x.code,
+            label: x.name ? `${x.code} — ${x.name}` : x.code,
+          })),
+        );
       }
       if (Array.isArray(rt)) {
         setRoomTypes(rt.map((x: { id: string; code: string }) => ({ id: x.id, label: x.code })));
@@ -299,10 +317,24 @@ export function ReservationCardEditor({
       }
       if (Array.isArray(rp)) {
         setRatePlans(
-          rp.map((x: { id: string; code: string; medicalFlag: boolean }) => ({
-            id: x.id,
-            label: `${x.code}${x.medicalFlag ? tc('medicalSuffix') : ''}`,
-          })),
+          rp.map(
+            (x: {
+              id: string;
+              code: string;
+              medicalFlag: boolean;
+              type?: string;
+              mealPlanId?: string | null;
+              roomTypeId?: string | null;
+            }) => ({
+              id: x.id,
+              code: x.code,
+              label: `${x.code}${x.medicalFlag ? tc('medicalSuffix') : ''}`,
+              type: x.type,
+              medicalFlag: x.medicalFlag,
+              mealPlanId: x.mealPlanId ?? null,
+              roomTypeId: x.roomTypeId ?? null,
+            }),
+          ),
         );
       }
       if (Array.isArray(g)) {

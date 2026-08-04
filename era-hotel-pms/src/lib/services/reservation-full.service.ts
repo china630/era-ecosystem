@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { RESERVATION_NOTE_TYPES } from '@/lib/reservation-note-types';
-import type { PaymentMethod, ReservationNoteType } from '@prisma/client';
+import { ensurePartyGuestFolios } from '@/lib/services/booking-folio.service';
+import type { PartyBillingMode } from '@prisma/client';
 
 const fullInclude = {
   room: { include: { roomType: true } },
@@ -35,7 +36,7 @@ export async function getReservationFull(id: string) {
 
   const notesMap = Object.fromEntries(
     reservation.notes.map((n) => [n.noteType, n.text]),
-  ) as Partial<Record<ReservationNoteType, string>>;
+  ) as Partial<Record<string, string>>;
 
   for (const nt of RESERVATION_NOTE_TYPES) {
     if (notesMap[nt] === undefined) notesMap[nt] = '';
@@ -111,9 +112,11 @@ export async function patchReservationFull(
     preferredBed?: string | null;
     givenRoomTypeId?: string | null;
     contractRef?: string | null;
-    notes?: Partial<Record<ReservationNoteType, string>>;
+    partyBillingMode?: PartyBillingMode;
+    notes?: Partial<Record<string, string>>;
     paxGuests?: Array<{
       id?: string;
+      guestId?: string | null;
       title?: string | null;
       gender?: string | null;
       firstName?: string | null;
@@ -128,6 +131,7 @@ export async function patchReservationFull(
       externalResId?: string | null;
       guestState?: string | null;
       isPrimary?: boolean;
+      ownsFolio?: boolean;
     }>;
     dailyRates?: Array<{
       stayDate: string;
@@ -139,10 +143,42 @@ export async function patchReservationFull(
     }>;
   },
 ) {
-  const existing = await prisma.reservation.findUnique({ where: { id } });
+  const existing = await prisma.reservation.findUnique({
+    where: { id },
+    include: { guest: true, paxGuests: { orderBy: { sortOrder: 'asc' } } },
+  });
   if (!existing) throw new Error('Reservation not found');
 
   const { notes, paxGuests, manualDailyRate, creditLimitAzn, dailyRates, ...data } = input;
+
+  if (data.roomId !== undefined && data.roomId !== null && data.roomId !== '') {
+    const { reservationNamesIncomplete } = await import('@/lib/reservation-names');
+    const paxForGate = paxGuests ?? existing.paxGuests;
+    const adultsForGate = data.adults ?? existing.adults;
+    if (
+      reservationNamesIncomplete({
+        guestFullName: existing.guest.fullName,
+        adults: adultsForGate,
+        pax: paxForGate,
+      })
+    ) {
+      throw new Error('Guest names incomplete — fill real names before assign');
+    }
+
+    const { assertRoomFree } = await import('@/lib/services/reservation.service');
+    const room = await prisma.room.findUnique({ where: { id: data.roomId } });
+    if (!room) throw new Error('Room not found');
+    const typeId = data.roomTypeId ?? existing.roomTypeId;
+    if (room.roomTypeId !== typeId) throw new Error('Room type mismatch');
+    if (!['AVAILABLE', 'CLEAN', 'INSPECTED'].includes(room.status)) {
+      throw new Error(
+        `Room ${room.roomNumber} is ${room.status}; must be AVAILABLE, CLEAN, or INSPECTED to assign`,
+      );
+    }
+    const checkIn = data.checkInDate ?? existing.checkInDate;
+    const checkOut = data.checkOutDate ?? existing.checkOutDate;
+    await assertRoomFree(data.roomId, checkIn, checkOut, id);
+  }
 
   await prisma.reservation.update({
     where: { id },
@@ -164,7 +200,7 @@ export async function patchReservationFull(
   });
 
   if (notes) {
-    for (const [noteType, text] of Object.entries(notes) as [ReservationNoteType, string][]) {
+    for (const [noteType, text] of Object.entries(notes) as [string, string][]) {
       await prisma.reservationNote.upsert({
         where: {
           reservationId_noteType: { reservationId: id, noteType },
@@ -176,27 +212,56 @@ export async function patchReservationFull(
   }
 
   if (paxGuests) {
+    const seenGuestIds = new Set<string>();
+    for (const p of paxGuests) {
+      if (!p.guestId) continue;
+      if (seenGuestIds.has(p.guestId)) {
+        throw new Error('Same guest cannot appear twice in the party for one room stay');
+      }
+      seenGuestIds.add(p.guestId);
+    }
     await prisma.reservationGuest.deleteMany({ where: { reservationId: id } });
+    const primaryIdx = Math.max(
+      0,
+      paxGuests.findIndex((p) => p.isPrimary),
+    );
+    const billingMode: PartyBillingMode =
+      input.partyBillingMode ?? existing.partyBillingMode;
     await prisma.reservationGuest.createMany({
-      data: paxGuests.map((p, i) => ({
-        reservationId: id,
-        title: p.title ?? null,
-        gender: p.gender ?? null,
-        firstName: p.firstName ?? null,
-        lastName: p.lastName ?? null,
-        nationality: p.nationality ?? null,
-        birthDate: p.birthDate ? new Date(p.birthDate) : null,
-        age: p.age ?? null,
-        idCardNo: p.idCardNo ?? null,
-        passportNo: p.passportNo ?? null,
-        memberNo: p.memberNo ?? null,
-        payStatus: p.payStatus ?? null,
-        externalResId: p.externalResId ?? null,
-        guestState: p.guestState ?? null,
-        isPrimary: p.isPrimary ?? i === 0,
-        sortOrder: i,
-      })),
+      data: paxGuests.map((p, i) => {
+        const isPrimary = i === primaryIdx;
+        const ownsFolio = billingMode === 'EQUAL' ? true : isPrimary;
+        return {
+          reservationId: id,
+          guestId: p.guestId ?? null,
+          title: p.title ?? null,
+          gender: p.gender ?? null,
+          firstName: p.firstName ?? null,
+          lastName: p.lastName ?? null,
+          nationality: p.nationality ?? null,
+          birthDate: p.birthDate ? new Date(p.birthDate) : null,
+          age: p.age ?? null,
+          idCardNo: p.idCardNo ?? null,
+          passportNo: p.passportNo ?? null,
+          memberNo: p.memberNo ?? null,
+          payStatus: p.payStatus ?? null,
+          externalResId: p.externalResId ?? null,
+          guestState: p.guestState ?? null,
+          /** Contact / PRIMARY-mode folio owner */
+          isPrimary,
+          ownsFolio,
+          sortOrder: i,
+        };
+      }),
     });
+    if (billingMode === 'EQUAL') {
+      await ensurePartyGuestFolios(id);
+    }
+  }
+
+  if (paxGuests || data.guestId !== undefined || (data.roomId !== undefined && data.roomId)) {
+    const { assertNamedGuestsFreeOnStay } = await import('@/lib/services/reservation.service');
+    await assertNamedGuestsFreeOnStay(id);
   }
 
   if (dailyRates?.length) {

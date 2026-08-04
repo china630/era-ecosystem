@@ -2,7 +2,27 @@ export { orchPublicHref, orchWebUrl } from "../platform/orch-web-url";
 export * from "./design-system";
 export { FIELD_WIDTH, fieldWidthClass, type FieldWidthPreset } from "./field-presets";
 export { Field, FieldSelect, FieldTextarea, FieldRow, type FieldProps, type FieldSelectProps, type FieldTextareaProps } from "./field";
+export {
+  resolveCatalogControl,
+  inferCatalogFieldKind,
+  assertCatalogAllowsPlainText,
+  type CatalogFieldKind,
+  type CatalogControlType,
+  type ResolvedCatalogControl,
+} from "./catalog-field-kind";
+export {
+  CatalogField,
+  type CatalogFieldProps,
+  type CatalogOption,
+} from "./catalog-field";
+export {
+  hotelTenderOptions,
+  clinicTenderOptions,
+  tenderCatalogOptions,
+} from "../catalog/tender-options";
+export { NATIONALITY_OPTIONS } from "../catalog/nationality-options";
 export { FieldSection } from "./field-section";
+export { FieldPanel } from "./field-panel";
 export { buildAuthLoginLabels } from "./auth-login-labels";
 export { AuthLoginCard, type AuthLoginCardLabels, type AuthLoginCardProps } from "./auth-login-card";
 export { AuthPageHeader } from "./auth-page-header";
@@ -40,6 +60,16 @@ export {
 export { EraOpsSidebarSections } from "./era-ops-sidebar-sections";
 export { ColorLegend, type ColorLegendItem, type ColorLegendProps } from "./color-legend";
 export { FilterMenuButton, type FilterMenuOption, type FilterMenuButtonProps } from "./filter-menu-button";
+export {
+  EraListFilterBar,
+  type EraListFilterBarProps,
+} from "./era-list-filter-bar";
+export {
+  DatePicker,
+  isoDateToDisplay,
+  parseDisplayDate,
+  type DatePickerProps,
+} from "./date-picker";
 export { EraOpsTopBar } from "./era-ops-top-bar";
 export { EraOpsContent } from "./era-ops-content";
 export { EraOpsRouteShell, type EraOpsRouteShellProps } from "./era-ops-route-shell";
