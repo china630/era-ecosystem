@@ -110,3 +110,12 @@ export const APP_SIDEBAR_COLLAPSED_OFFSET_CLASS = "lg:pl-[4.5rem]";
 export const APP_SIDEBAR_LEFT_CLASS = "lg:left-[17.5rem]";
 export const APP_SIDEBAR_COLLAPSED_LEFT_CLASS = "lg:left-[4.5rem]";
 export const APP_HEADER_OFFSET_CLASS = "pt-16";
+
+/** Static field group panel — FO reservation / guest cards. */
+export const FIELD_PANEL_CLASS =
+  "overflow-hidden rounded-xl border border-[#D5DADF] bg-white";
+
+export const FIELD_PANEL_HEADER_CLASS =
+  "bg-[#F8FAFC] px-3 py-2 text-[13px] font-semibold text-[#34495E]";
+
+export const FIELD_PANEL_BODY_CLASS = "space-y-3 border-t border-[#D5DADF] px-3 pb-3 pt-3";
