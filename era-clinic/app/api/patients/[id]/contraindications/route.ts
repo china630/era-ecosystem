@@ -1,20 +1,10 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
+import { BODY_PART_CODES } from "@/lib/body-part-codes";
 import { prisma } from "@/lib/prisma";
 
 const bodySchema = z.object({
-  bodyPart: z.enum([
-    "HEAD",
-    "NECK",
-    "CHEST",
-    "BACK",
-    "ABDOMEN",
-    "ARM_LEFT",
-    "ARM_RIGHT",
-    "LEG_LEFT",
-    "LEG_RIGHT",
-    "FULL_BODY",
-  ]),
+  bodyPart: z.enum(BODY_PART_CODES),
   note: z.string().optional(),
 });
 

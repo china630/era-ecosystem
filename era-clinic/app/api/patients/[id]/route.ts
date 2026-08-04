@@ -4,6 +4,7 @@ import {
   getPatient,
   updatePatient,
   PatientMdmRequiredError,
+  PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
 
 const patientSex = z.enum(["MALE", "FEMALE", "OTHER", "UNKNOWN"]);
@@ -31,6 +32,7 @@ const updateSchema = z.object({
   finCode: z.string().nullable().optional(),
   passportNumber: z.string().nullable().optional(),
   issuingCountry: z.string().nullable().optional(),
+  anamnesisText: z.string().nullable().optional(),
 });
 
 export async function GET(
@@ -60,7 +62,7 @@ export async function PATCH(
     const body = updateSchema.parse(await req.json());
     return jsonOk(await updatePatient(id, body));
   } catch (err) {
-    if (err instanceof PatientMdmRequiredError) {
+    if (err instanceof PatientMdmRequiredError || err instanceof PatientAnamnesisRequiredError) {
       return jsonError(err.message, 400);
     }
     return handleRouteError(err);

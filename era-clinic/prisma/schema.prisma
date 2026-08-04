@@ -28,8 +28,44 @@ model Tenant {
   procedureCheckInGraceBeforeMin Int                @default(5) @map("procedure_check_in_grace_before_min")
   /// Check-in allowed until scheduledAt + N minutes
   procedureCheckInGraceAfterMin  Int                @default(15) @map("procedure_check_in_grace_after_min")
+  /// When true nurse check-in needs a guest QR (or supervised override); when false MANUAL check-in is allowed
+  checkInRequiresQr        Boolean                  @default(true) @map("check_in_requires_qr")
+  /// Optional: auto-NO_SHOW a SCHEDULED order this many minutes past scheduledAt (null = end-of-day sweep only)
+  autoNoShowAfterMin       Int?                     @map("auto_no_show_after_min")
+  /// Clinic day start hour (Asia/Baku wall clock), inclusive
+  dayStartHour             Int                      @default(9) @map("day_start_hour")
+  /// Clinic day end hour (Asia/Baku), exclusive
+  dayEndHour               Int                      @default(18) @map("day_end_hour")
+  lunchStartHour           Int                      @default(13) @map("lunch_start_hour")
+  lunchEndHour             Int                      @default(14) @map("lunch_end_hour")
+  /// JS getUTCDay-style weekday numbers closed (0=Sunday). Default Sunday only.
+  closedWeekdays           Int[]                    @default([0]) @map("closed_weekdays")
+  /// Default minutes between consecutive patient procedures when template gap is unset
+  defaultProcedureGapMinutes Int                    @default(5) @map("default_procedure_gap_minutes")
+  /// When true, procedures/resources with extendedEndHour may run past dayEndHour
+  peakModeEnabled          Boolean                  @default(false) @map("peak_mode_enabled")
+  /// Peak-mode clinic day end hour (Asia/Baku), exclusive; used when procedure/resource has no override
+  peakDayEndHour           Int                      @default(22) @map("peak_day_end_hour")
   /// Last published `ok`|`warning`|`critical` for capacity foresight debounce
   lastCapacityRiskLevel    String?                  @map("last_capacity_risk_level")
+  /// Print branding — logo as data URL (no file storage)
+  printLogoDataUrl         String?                  @map("print_logo_data_url") @db.Text
+  printClinicNameEn        String?                  @map("print_clinic_name_en")
+  printClinicNameRu        String?                  @map("print_clinic_name_ru")
+  printClinicNameAz        String?                  @map("print_clinic_name_az")
+  printAddressEn           String?                  @map("print_address_en")
+  printAddressRu           String?                  @map("print_address_ru")
+  printAddressAz           String?                  @map("print_address_az")
+  printPhone               String?                  @map("print_phone")
+  printEmail               String?                  @map("print_email")
+  printWebsite             String?                  @map("print_website")
+  printFooterEn            String?                  @map("print_footer_en") @db.Text
+  printFooterRu            String?                  @map("print_footer_ru") @db.Text
+  printFooterAz            String?                  @map("print_footer_az") @db.Text
+  printSignatureLab        String?                  @map("print_signature_lab")
+  printSignatureDoctor     String?                  @map("print_signature_doctor")
+  /// Ordered checkup sections JSON: [{ specialty, enabled }]
+  checkupSectionsJson      String?                  @map("checkup_sections_json") @db.Text
   createdAt                DateTime                 @default(now())
   outlets                  Outlet[]
 }
@@ -74,7 +110,20 @@ enum ResourceKind {
   EQUIPMENT
 }
 
+enum ProcedureRequirementRole {
+  LOCATION
+  EQUIPMENT
+  STAFF
+}
+
+enum ProcedureStaffMode {
+  HARD
+  SOFT
+}
+
 enum ProcedureOrderStatus {
+  /// Package line shown on patient card; not on resources until doctor confirms
+  PROPOSED
   SCHEDULED
   CHECKED_IN
   COMPLETED
@@ -82,9 +131,27 @@ enum ProcedureOrderStatus {
   CANCELLED
 }
 
+enum RotationScope {
+  BODY_PART
+  GROUP
+}
+
+enum LabResultSource {
+  IN_HOUSE
+  EXTERNAL
+}
+
+enum LabResultFlag {
+  NORMAL
+  HIGH
+  LOW
+  CRITICAL
+}
+
 enum ProcedureCheckInChannel {
   QR
   OVERRIDE
+  MANUAL
 }
 
 enum ProgramSchedulingMode {
@@ -102,6 +169,20 @@ enum ClinicReceiptStatus {
   OPEN
   PAID
   VOID
+}
+
+enum ClinicReceiptChannel {
+  LOCAL
+  FINANCE
+  HOTEL_FOLIO
+  SETTLEMENT_HUB
+}
+
+enum ClinicReceiptLineSource {
+  VISIT_LINE
+  LAB_ITEM
+  PROCEDURE
+  MANUAL
 }
 
 enum QueueTicketStatus {
@@ -162,6 +243,9 @@ model PatientRef {
   emergencyContactName    String?            @map("emergency_contact_name")
   emergencyContactPhone   String?            @map("emergency_contact_phone")
   globalPersonId          String?
+  /// Free-text anamnesis; required before demographics save in ops UI
+  anamnesisText           String?            @map("anamnesis_text") @db.Text
+  anamnesisUpdatedAt      DateTime?          @map("anamnesis_updated_at")
   appointments            Appointment[]
   visits                  Visit[]
   labOrders               LabOrder[]
@@ -170,6 +254,8 @@ model PatientRef {
   contraindications       PatientContraindication[]
   bedAssignments          BedAssignment[]
   inpatientAdmissions     InpatientAdmission[]
+  receipts                ClinicReceipt[]
+  procedureChargeLogs     ProcedureChargeLog[]
   createdAt               DateTime           @default(now())
 }
 
@@ -188,6 +274,91 @@ model Practitioner {
   appointments       Appointment[]
   visits             Visit[]
   resourceBookings   ResourceBooking[]
+  skills             PractitionerSkill[]
+  procedureAllocations ProcedureAllocation[]
+  scheduleRules      PractitionerScheduleRule[]
+  scheduleExceptions PractitionerScheduleException[]
+}
+
+/// CLI-36 — doctor shift rotation.
+/// A practitioner's weekly/parity/cycle availability. Multiple rules stack
+/// (union of intervals). No active rule for a practitioner ⇒ unrestricted
+/// (tenant working hours), preserving pre-CLI-36 behaviour.
+enum PractitionerSchedulePattern {
+  WEEKLY           // weekdaysJson every week
+  WEEK_PARITY      // weekdaysJson on even/odd ISO weeks (parity)
+  MONTH_DAY_PARITY // even/odd day-of-month (parity)
+  CYCLE            // N-day rotation from cycleAnchor (cycleOffsetsJson)
+}
+
+enum ScheduleParity {
+  EVEN
+  ODD
+}
+
+enum PractitionerScheduleExceptionKind {
+  DAY_OFF      // block the whole date (overrides rules)
+  EXTRA_SHIFT  // add an interval on the date
+  CUSTOM_HOURS // replace the date's intervals with the given window
+}
+
+model PractitionerScheduleRule {
+  id               String                      @id @default(cuid())
+  practitionerId   String                      @map("practitioner_id")
+  pattern          PractitionerSchedulePattern
+  /// JSON int[] of weekdays (0=Sun .. 6=Sat) — WEEKLY / WEEK_PARITY
+  weekdaysJson     String?                     @map("weekdays_json")
+  /// WEEK_PARITY: even/odd ISO week; MONTH_DAY_PARITY: even/odd day-of-month
+  parity           ScheduleParity?
+  /// CYCLE anchor date (00:00 Asia/Baku)
+  cycleAnchor      DateTime?                   @map("cycle_anchor")
+  /// CYCLE length in days
+  cycleLengthDays  Int?                        @map("cycle_length_days")
+  /// CYCLE: JSON int[] of active day offsets within the cycle
+  cycleOffsetsJson String?                     @map("cycle_offsets_json")
+  /// Working window on a matching day, minutes from midnight (Asia/Baku)
+  startMinute      Int                         @map("start_minute")
+  endMinute        Int                         @map("end_minute")
+  /// Optional seasonal validity (inclusive from / exclusive to)
+  effectiveFrom    DateTime?                   @map("effective_from")
+  effectiveTo      DateTime?                   @map("effective_to")
+  active           Boolean                     @default(true)
+  sortOrder        Int                         @default(0) @map("sort_order")
+  createdAt        DateTime                    @default(now()) @map("created_at")
+  practitioner     Practitioner                @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@index([practitionerId, active])
+}
+
+model PractitionerScheduleException {
+  id             String                            @id @default(cuid())
+  practitionerId String                            @map("practitioner_id")
+  /// The affected calendar day (00:00 Asia/Baku)
+  date           DateTime                          @map("date")
+  kind           PractitionerScheduleExceptionKind
+  /// Minutes from midnight — EXTRA_SHIFT / CUSTOM_HOURS
+  startMinute    Int?                              @map("start_minute")
+  endMinute      Int?                              @map("end_minute")
+  note           String?
+  createdAt      DateTime                          @default(now()) @map("created_at")
+  practitioner   Practitioner                      @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+
+  @@unique([practitionerId, date, kind])
+  @@index([practitionerId, date])
+}
+
+model PractitionerSkill {
+  id               String       @id @default(cuid())
+  practitionerId   String       @map("practitioner_id")
+  procedureTypeId  String       @map("procedure_type_id")
+  active           Boolean      @default(true)
+  practitioner     Practitioner @relation(fields: [practitionerId], references: [id], onDelete: Cascade)
+  procedureType    ProcedureType @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  @@unique([practitionerId, procedureTypeId])
+  @@index([procedureTypeId])
+  @@map("practitioner_skill")
 }
 
 model Room {
@@ -204,10 +375,14 @@ model Resource {
   name             String
   kind             ResourceKind      @default(EQUIPMENT)
   capacity         Int               @default(1)
+  /// When peak mode is on, this resource may run until this hour (exclusive)
+  extendedEndHour  Int?              @map("extended_end_hour")
   roomId           String?
   room             Room?             @relation(fields: [roomId], references: [id])
   bookings         ResourceBooking[]
   procedureOrders  ProcedureOrder[]
+  appointments     Appointment[]
+  procedureAllocations ProcedureAllocation[]
   createdAt        DateTime          @default(now())
 }
 
@@ -233,15 +408,19 @@ model Appointment {
   practitionerId String
   scheduledAt    DateTime
   roomCode       String?
+  /// Pattern B secondary location/equipment (optional).
+  resourceId     String?           @map("resource_id")
   status         AppointmentStatus @default(SCHEDULED)
   reminderSentAt DateTime?
   patientRef     PatientRef        @relation(fields: [patientRefId], references: [id])
   practitioner   Practitioner      @relation(fields: [practitionerId], references: [id])
+  resource       Resource?         @relation(fields: [resourceId], references: [id])
   visit          Visit?
   resourceBooking ResourceBooking?
   createdAt      DateTime          @default(now())
 
   @@index([scheduledAt, status])
+  @@index([resourceId, scheduledAt])
 }
 
 model Visit {
@@ -290,22 +469,188 @@ model LabOrder {
   patientRefId      String
   visitId           String?
   clinicalEpisodeId String?
+  /// @deprecated dual-write snapshot; prefer LabOrderItem.serviceCode
   testCode          String
   status            LabOrderStatus @default(ORDERED)
   amountNet         Decimal        @default(0) @db.Decimal(12, 2)
   collectedAt       DateTime?
+  /// @deprecated dual-write snapshot; prefer LabResult rows
   resultJson        String?
   publishedAt       DateTime?
   telehealthUrl     String?
   completedAt       DateTime?
+  /// IN_HOUSE (clinic) or EXTERNAL (patient-brought results)
+  source            LabResultSource @default(IN_HOUSE)
+  /// Actual lab draw / result date (required for EXTERNAL; max 90 days age)
+  resultDate        DateTime?       @map("result_date")
+  fasting           Boolean         @default(false)
+  /// Planned collection slot (e.g. next morning fasting)
+  scheduledCollectionAt DateTime?   @map("scheduled_collection_at")
   patientRef        PatientRef     @relation(fields: [patientRefId], references: [id])
   visit             Visit?         @relation(fields: [visitId], references: [id])
   episode           ClinicalEpisode? @relation(fields: [clinicalEpisodeId], references: [id])
+  items             LabOrderItem[]
   createdAt         DateTime       @default(now())
 
   @@index([patientRefId, status])
   @@index([visitId])
   @@index([clinicalEpisodeId])
+  @@index([createdAt])
+}
+
+/// Diagnostic modality (LAB, USG, FUNCTIONAL, …) — catalog source of truth in DB.
+model Modality {
+  id          String              @id @default(cuid())
+  code        String              @unique
+  kind        String
+  titleEn     String              @map("title_en")
+  titleRu     String              @map("title_ru")
+  titleAz     String              @map("title_az")
+  sortOrder   Int                 @default(0) @map("sort_order")
+  active      Boolean             @default(true)
+  services    DiagnosticService[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+/// Diagnostic / lab service from catalog (USG-ABD, LAB-CBC, packages, visit templates).
+model DiagnosticService {
+  id           String              @id @default(cuid())
+  code         String              @unique
+  modalityId   String              @map("modality_id")
+  modality     Modality            @relation(fields: [modalityId], references: [id])
+  category     String              @default("")
+  kind         String
+  titleEn      String              @map("title_en")
+  titleRu      String              @map("title_ru")
+  titleAz      String              @map("title_az")
+  /// Price / Finance link code
+  serviceCode  String              @map("service_code")
+  /// Imaging / visit template fields JSON (CatalogFieldDef[])
+  fieldsJson   String?             @map("fields_json") @db.Text
+  /// Package composition: child service codes JSON (string[])
+  includesJson String?             @map("includes_json") @db.Text
+  sortOrder    Int                 @default(0) @map("sort_order")
+  active       Boolean             @default(true)
+  analytes     DiagnosticAnalyte[]
+  labOrderItems LabOrderItem[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([modalityId])
+  @@index([kind])
+  @@index([active])
+}
+
+enum AnalyteValueType {
+  NUMERIC
+  QUALITATIVE
+}
+
+model DiagnosticAnalyte {
+  id           String               @id @default(cuid())
+  serviceId    String               @map("service_id")
+  service      DiagnosticService    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  code         String
+  unit         String?
+  labelEn      String               @map("label_en")
+  labelRu      String               @map("label_ru")
+  labelAz      String               @map("label_az")
+  refMin       String?              @map("ref_min")
+  refMax       String?              @map("ref_max")
+  /// Print grouping within a panel (e.g. physical-chemical / microscopy)
+  section      String?
+  valueType    AnalyteValueType     @default(NUMERIC) @map("value_type")
+  sortOrder    Int                  @default(0) @map("sort_order")
+  valueOptions AnalyteValueOption[]
+
+  @@unique([serviceId, code])
+  @@index([serviceId])
+}
+
+/// Trilingual allowed values for QUALITATIVE analytes (store code in LabResult.value).
+model AnalyteValueOption {
+  id        String            @id @default(cuid())
+  analyteId String            @map("analyte_id")
+  analyte   DiagnosticAnalyte @relation(fields: [analyteId], references: [id], onDelete: Cascade)
+  code      String
+  labelEn   String            @map("label_en")
+  labelRu   String            @map("label_ru")
+  labelAz   String            @map("label_az")
+  sortOrder Int               @default(0) @map("sort_order")
+
+  @@unique([analyteId, code])
+  @@index([analyteId])
+}
+
+/// Trilingual USM / imaging phrase library (store phrase code in LabResult.value).
+model ImagingPhrase {
+  id                   String   @id @default(cuid())
+  organKey             String   @map("organ_key")
+  code                 String   @unique
+  textEn               String   @map("text_en") @db.Text
+  textRu               String   @map("text_ru") @db.Text
+  textAz               String   @map("text_az") @db.Text
+  /// JSON string[] of measurement placeholder keys (e.g. ["sizeCm"])
+  measurementKeysJson  String?  @map("measurement_keys_json") @db.Text
+  sortOrder            Int      @default(0) @map("sort_order")
+  active               Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([organKey, sortOrder])
+  @@index([active])
+}
+
+/// Global common meta fields for imaging/visit result forms.
+model DiagnosticMetaField {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  fieldType  String   @map("field_type")
+  labelEn    String   @map("label_en")
+  labelRu    String   @map("label_ru")
+  labelAz    String   @map("label_az")
+  unit       String?
+  optionsJson String? @map("options_json") @db.Text
+  required   Boolean  @default(false)
+  sortOrder  Int      @default(0) @map("sort_order")
+}
+
+model LabOrderItem {
+  id                  String             @id @default(cuid())
+  labOrderId          String             @map("lab_order_id")
+  labOrder            LabOrder           @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  diagnosticServiceId String?            @map("diagnostic_service_id")
+  diagnosticService   DiagnosticService? @relation(fields: [diagnosticServiceId], references: [id])
+  /// Snapshot of catalog / order code at create time
+  serviceCode         String             @map("service_code")
+  amountNet           Decimal            @default(0) @db.Decimal(12, 2) @map("amount_net")
+  sortOrder           Int                @default(0) @map("sort_order")
+  results             LabResult[]
+  createdAt           DateTime           @default(now())
+
+  @@index([labOrderId])
+  @@index([diagnosticServiceId])
+  @@index([serviceCode])
+}
+
+model LabResult {
+  id              String         @id @default(cuid())
+  labOrderItemId  String         @map("lab_order_item_id")
+  labOrderItem    LabOrderItem   @relation(fields: [labOrderItemId], references: [id], onDelete: Cascade)
+  code            String
+  label           String?
+  value           String
+  unit            String?
+  refMin          String?        @map("ref_min")
+  refMax          String?        @map("ref_max")
+  flag            LabResultFlag  @default(NORMAL)
+  enteredByUserId String?        @map("entered_by_user_id")
+  enteredAt       DateTime       @default(now()) @map("entered_at")
+
+  @@index([labOrderItemId])
+  @@index([flag])
+  @@unique([labOrderItemId, code])
 }
 
 model ClinicalEpisode {
@@ -362,17 +707,25 @@ model IcdCode {
   diagnoses   ClinicalDiagnosis[]
 }
 
-enum BodyPart {
-  HEAD
-  NECK
-  CHEST
-  BACK
-  ABDOMEN
-  ARM_LEFT
-  ARM_RIGHT
-  LEG_LEFT
-  LEG_RIGHT
-  FULL_BODY
+/// Former BodyPart Prisma enum — String codes from ClinicLookup kind=BODY_PART (ADR A4).
+
+/// T1 SatAdmin pick-lists — ADR managed-lists-vs-enums A4
+enum ClinicLookupKind {
+  BODY_PART
+}
+
+model ClinicLookup {
+  id        String           @id @default(cuid())
+  kind      ClinicLookupKind
+  code      String
+  name      String
+  active    Boolean          @default(true)
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([kind, code])
+  @@index([kind, active, sortOrder])
 }
 
 enum ProcedureRuleKind {
@@ -408,11 +761,62 @@ model ProcedureType {
   durationMin        Int           @default(30)
   resourceKind       ResourceKind?
   resourceCode       String?
-  bodyPart           BodyPart?
+  /// ClinicLookup BODY_PART code
+  bodyPart           String?
   afterLunchAllowed  Boolean       @default(true)
+  /// When peak mode is on, this procedure may run until this hour (exclusive)
+  extendedEndHour    Int?          @map("extended_end_hour")
   orders             ProcedureOrder[]
+  requirements       ProcedureTypeRequirement[]
+  skills             PractitionerSkill[]
 
   @@index([resourceCode])
+}
+
+/// Consecutive-day rotation (e.g. naftalan max 2 days then iod-brom; superinductive by body part)
+model ProcedureRotationRule {
+  id                 String        @id @default(cuid())
+  code               String        @unique
+  name               String
+  memberCodes        String[]      @map("member_codes")
+  scope              RotationScope @default(GROUP)
+  maxConsecutiveDays Int           @default(1) @map("max_consecutive_days")
+  restProcedureCode  String?       @map("rest_procedure_code")
+  active             Boolean       @default(true)
+  note               String?
+  createdAt          DateTime      @default(now()) @map("created_at")
+
+  @@index([active])
+}
+
+/// Quota-preserving substitute when original is contraindicated
+model ProcedureSubstitutionRule {
+  id              String   @id @default(cuid())
+  originalCode    String   @map("original_code")
+  substituteCode  String   @map("substitute_code")
+  active          Boolean  @default(true)
+  note            String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([originalCode])
+  @@index([substituteCode])
+  @@index([active])
+}
+
+model ProcedureTypeRequirement {
+  id               String                   @id @default(cuid())
+  procedureTypeId  String                   @map("procedure_type_id")
+  role             ProcedureRequirementRole
+  resourceKind     ResourceKind?            @map("resource_kind")
+  resourceCode     String?                  @map("resource_code")
+  quantity         Int                      @default(1)
+  staffMode        ProcedureStaffMode       @default(HARD) @map("staff_mode")
+  required         Boolean                  @default(true)
+  procedureType    ProcedureType            @relation(fields: [procedureTypeId], references: [id], onDelete: Cascade)
+  createdAt        DateTime                 @default(now()) @map("created_at")
+
+  @@index([procedureTypeId])
+  @@map("procedure_type_requirement")
 }
 
 model ProcedureRule {
@@ -421,7 +825,8 @@ model ProcedureRule {
   afterCode       String
   kind            ProcedureRuleKind  @default(SEQUENCE_GAP)
   minGapMinutes   Int                @default(0)
-  bodyPart        BodyPart?
+  /// ClinicLookup BODY_PART code
+  bodyPart        String?
 
   @@index([beforeCode])
   @@index([afterCode])
@@ -430,7 +835,8 @@ model ProcedureRule {
 model PatientContraindication {
   id           String     @id @default(cuid())
   patientRefId String
-  bodyPart     BodyPart
+  /// ClinicLookup BODY_PART code
+  bodyPart     String
   note         String?
   patientRef   PatientRef @relation(fields: [patientRefId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
@@ -438,12 +844,29 @@ model PatientContraindication {
   @@index([patientRefId])
 }
 
+enum ServiceCatalogKind {
+  PROCEDURE
+  DIAGNOSTIC
+  LAB
+  VISIT
+  OTHER
+}
+
 model ServiceCatalogCache {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  description String
-  amount      Decimal  @db.Decimal(12, 2)
-  syncedAt    DateTime @default(now())
+  id               String             @id @default(cuid())
+  code             String             @unique
+  description      String
+  /// Locale-specific commercial names (Finance sync / Nafta import). UI picks via localizedCatalogDescription.
+  descriptionAz    String?            @map("description_az")
+  descriptionRu    String?            @map("description_ru")
+  descriptionEn    String?            @map("description_en")
+  amount           Decimal            @db.Decimal(12, 2)
+  packageIncluded  Boolean            @default(false) @map("package_included")
+  department       String?
+  kind             ServiceCatalogKind @default(OTHER)
+  syncedAt         DateTime           @default(now())
+
+  @@index([kind])
 }
 
 model VisitDiscountAudit {
@@ -525,14 +948,21 @@ model ProcedureOrder {
   scheduledAt      DateTime
   endsAt           DateTime?
   sequenceIndex    Int?
-  bodyPart         BodyPart?
+  /// ClinicLookup BODY_PART code
+  bodyPart         String?
   status           ProcedureOrderStatus @default(SCHEDULED)
   amountNet        Decimal              @default(0) @db.Decimal(12, 2)
+  /// Therapist instruction / clinical note for print schedule
+  note             String?              @db.Text
+  quantity         Int                  @default(1)
   patientOrigin    PatientOrigin        @default(WALK_IN)
   reservationId    String?
   resourceId       String?
   /// Reception moved/assigned outside auto-planner
   manuallyAdjusted Boolean              @default(false) @map("manually_adjusted")
+  /// Doctor confirmed PROPOSED → place on resources
+  confirmedAt      DateTime?            @map("confirmed_at")
+  confirmedByUserId String?             @map("confirmed_by_user_id")
   checkedInAt      DateTime?            @map("checked_in_at")
   checkedInByUserId String?             @map("checked_in_by_user_id")
   checkInChannel   ProcedureCheckInChannel? @map("check_in_channel")
@@ -549,12 +979,31 @@ model ProcedureOrder {
   procedureType    ProcedureType?       @relation(fields: [procedureTypeId], references: [id])
   resource         Resource?            @relation(fields: [resourceId], references: [id])
   resourceBooking  ResourceBooking?
+  allocations      ProcedureAllocation[]
   createdAt        DateTime             @default(now())
 
   @@index([scheduledAt, status])
   @@index([patientRefId])
   @@index([resourceId, scheduledAt])
   @@index([status, scheduledAt])
+}
+
+model ProcedureAllocation {
+  id               String                   @id @default(cuid())
+  procedureOrderId String                   @map("procedure_order_id")
+  role             ProcedureRequirementRole
+  resourceId       String?                  @map("resource_id")
+  practitionerId   String?                  @map("practitioner_id")
+  startsAt         DateTime                 @map("starts_at")
+  endsAt           DateTime                 @map("ends_at")
+  procedureOrder   ProcedureOrder           @relation(fields: [procedureOrderId], references: [id], onDelete: Cascade)
+  resource         Resource?                @relation(fields: [resourceId], references: [id])
+  practitioner     Practitioner?            @relation(fields: [practitionerId], references: [id])
+
+  @@index([procedureOrderId])
+  @@index([resourceId, startsAt, endsAt])
+  @@index([practitionerId, startsAt, endsAt])
+  @@map("procedure_allocation")
 }
 
 enum InpatientAdmissionStatus {
@@ -634,41 +1083,100 @@ model CpoeEntry {
 }
 
 model ClinicShift {
-  id        String          @id @default(cuid())
-  code      String          @unique
-  openedAt  DateTime        @default(now())
-  closedAt  DateTime?
-  status    String          @default("OPEN")
-  receipts  ClinicReceipt[]
+  id             String          @id @default(cuid())
+  code           String          @unique
+  openedAt       DateTime        @default(now())
+  closedAt       DateTime?
+  status         String          @default("OPEN")
+  openedByUserId String?         @map("opened_by_user_id")
+  closedByUserId String?         @map("closed_by_user_id")
+  /// JSON snapshot of Z-report totals at close
+  zReportJson    String?         @map("z_report_json") @db.Text
+  receipts       ClinicReceipt[]
 }
 
 model ClinicReceipt {
-  id              String              @id @default(cuid())
-  shiftId         String
-  visitId         String?
-  status          ClinicReceiptStatus @default(OPEN)
-  amountNet       Decimal             @default(0) @db.Decimal(12, 2)
-  paymentMethod   String?
-  fiscalReceiptId String?
-  fiscalQrPayload String?
-  paidAt          DateTime?
-  shift           ClinicShift         @relation(fields: [shiftId], references: [id])
-  visit           Visit?              @relation(fields: [visitId], references: [id])
-  lines           ClinicReceiptLine[]
-  createdAt       DateTime            @default(now())
+  id                  String                @id @default(cuid())
+  shiftId             String
+  visitId             String?
+  patientRefId        String?               @map("patient_ref_id")
+  status              ClinicReceiptStatus   @default(OPEN)
+  channel             ClinicReceiptChannel  @default(LOCAL)
+  amountGross         Decimal               @default(0) @db.Decimal(12, 2) @map("amount_gross")
+  discountAmount      Decimal               @default(0) @db.Decimal(12, 2) @map("discount_amount")
+  amountNet           Decimal               @default(0) @db.Decimal(12, 2)
+  /// @deprecated dual-write primary method; prefer ClinicReceiptPayment rows
+  paymentMethod       String?
+  fiscalReceiptId     String?
+  fiscalQrPayload     String?
+  paidAt              DateTime?
+  voidedAt            DateTime?             @map("voided_at")
+  voidReason          String?               @map("void_reason")
+  voidedByUserId      String?               @map("voided_by_user_id")
+  reprintCount        Int                   @default(0) @map("reprint_count")
+  settlementPendingId String?               @map("settlement_pending_id")
+  folioChargeRef      String?               @map("folio_charge_ref")
+  shift               ClinicShift           @relation(fields: [shiftId], references: [id])
+  visit               Visit?                @relation(fields: [visitId], references: [id])
+  patientRef          PatientRef?           @relation(fields: [patientRefId], references: [id])
+  lines               ClinicReceiptLine[]
+  payments            ClinicReceiptPayment[]
+  createdAt           DateTime              @default(now())
 
   @@index([shiftId, status])
+  @@index([createdAt])
+  @@index([patientRefId])
+  @@index([status, createdAt])
 }
 
 model ClinicReceiptLine {
-  id          String        @id @default(cuid())
-  receiptId   String
-  serviceCode String
-  description String
-  amount      Decimal       @db.Decimal(12, 2)
-  receipt     ClinicReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  id             String                   @id @default(cuid())
+  receiptId      String
+  serviceCode    String
+  description    String
+  amount         Decimal                  @db.Decimal(12, 2)
+  discountAmount Decimal                  @default(0) @db.Decimal(12, 2) @map("discount_amount")
+  sourceType     ClinicReceiptLineSource  @default(VISIT_LINE) @map("source_type")
+  sourceId       String?                  @map("source_id")
+  receipt        ClinicReceipt            @relation(fields: [receiptId], references: [id], onDelete: Cascade)
 
   @@index([receiptId])
+}
+
+model ClinicReceiptPayment {
+  id              String        @id @default(cuid())
+  receiptId       String
+  method          String
+  amount          Decimal       @db.Decimal(12, 2)
+  fiscalReceiptId String?       @map("fiscal_receipt_id")
+  createdAt       DateTime      @default(now())
+  receipt         ClinicReceipt @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+
+  @@index([receiptId])
+}
+
+/// Over-quota / folio charge visibility for cashier (K6)
+model ProcedureChargeLog {
+  id               String     @id @default(cuid())
+  procedureOrderId String     @map("procedure_order_id")
+  patientRefId     String     @map("patient_ref_id")
+  reservationId    String?    @map("reservation_id")
+  procedureCode    String     @map("procedure_code")
+  procedureName    String     @map("procedure_name")
+  amountNet        Decimal    @db.Decimal(12, 2) @map("amount_net")
+  overQuota        Boolean    @default(false) @map("over_quota")
+  /// HOTEL_FOLIO | LOCAL | BLOCKED | WARN_ONLY
+  channel          String
+  externalTicketId String?    @map("external_ticket_id")
+  settledLocally   Boolean    @default(false) @map("settled_locally")
+  receiptId        String?    @map("receipt_id")
+  patientRef       PatientRef @relation(fields: [patientRefId], references: [id])
+  createdAt        DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([patientRefId])
+  @@index([settledLocally, overQuota])
+  @@index([procedureOrderId])
 }
 
 model ProcessedEvent {
