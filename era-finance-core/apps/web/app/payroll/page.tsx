@@ -691,6 +691,14 @@ function PayrollPageInner() {
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <a
+                href="/settings/payroll-components"
+                className={SECONDARY_BUTTON_CLASS}
+              >
+                {t("payroll.componentsAdmin", {
+                  defaultValue: "Payroll components",
+                })}
+              </a>
+              <a
                 href={workspaceAbsencesUrl}
                 className={SECONDARY_BUTTON_CLASS}
                 target="_blank"

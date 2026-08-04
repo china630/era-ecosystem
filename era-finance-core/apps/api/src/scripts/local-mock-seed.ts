@@ -8,8 +8,6 @@ import { NestFactory } from "@nestjs/core";
 import {
   AccountType,
   CashOrderKind,
-  CashOrderPkoSubtype,
-  CashOrderRkoSubtype,
   CashOrderStatus,
   OrganizationKind,
   CounterpartyKind,
@@ -503,8 +501,8 @@ async function recreateOrganization(
       amount: number;
       purpose: string;
       cashFlowCode: "CF-OPS" | "CF-SUP" | "CF-OTH";
-      pkoSubtype?: CashOrderPkoSubtype;
-      rkoSubtype?: CashOrderRkoSubtype;
+      pkoSubtype?: string;
+      rkoSubtype?: string;
       offsetAccountCode: string;
       counterpartyId?: string | null;
       employeeId?: string | null;
@@ -665,7 +663,7 @@ async function recreateOrganization(
           amount: cashWithdrawal,
           purpose: "Cash withdrawal from bank for monthly operations",
           cashFlowCode: "CF-OPS",
-          pkoSubtype: CashOrderPkoSubtype.WITHDRAWAL_FROM_BANK,
+          pkoSubtype: 'WITHDRAWAL_FROM_BANK',
           offsetAccountCode: "221",
           journalLines: [
             { accountCode: "101", debit: String(cashWithdrawal), credit: "0" },
@@ -716,7 +714,7 @@ async function recreateOrganization(
               amount,
               purpose: "Operational cash expense (internet/office/marketing)",
               cashFlowCode: "CF-OTH",
-              rkoSubtype: CashOrderRkoSubtype.OTHER,
+              rkoSubtype: 'OTHER',
               offsetAccountCode: "721",
               journalLines: [
                 { accountCode: "721", debit: String(amount), credit: "0" },
@@ -733,7 +731,7 @@ async function recreateOrganization(
           amount: advanceAmount,
           purpose: "Cash advance for urgent filming expenses",
           cashFlowCode: "CF-OTH",
-          rkoSubtype: CashOrderRkoSubtype.ACCOUNTABLE_ISSUE,
+          rkoSubtype: 'ACCOUNTABLE_ISSUE',
           offsetAccountCode: accountableAccountCode,
           employeeId: employeeMap.get("Content Manager") ?? null,
           journalLines: [
@@ -749,7 +747,7 @@ async function recreateOrganization(
           amount: returnAmount,
           purpose: "Return of unused accountable cash",
           cashFlowCode: "CF-OPS",
-          pkoSubtype: CashOrderPkoSubtype.RETURN_FROM_ACCOUNTABLE,
+          pkoSubtype: 'RETURN_FROM_ACCOUNTABLE',
           offsetAccountCode: accountableAccountCode,
           employeeId: employeeMap.get("Content Manager") ?? null,
           journalLines: [
@@ -783,7 +781,7 @@ async function recreateOrganization(
           amount: cashWithdrawal,
           purpose: "Cash withdrawal from bank for tournament operations",
           cashFlowCode: "CF-OPS",
-          pkoSubtype: CashOrderPkoSubtype.WITHDRAWAL_FROM_BANK,
+          pkoSubtype: 'WITHDRAWAL_FROM_BANK',
           offsetAccountCode: "221",
           journalLines: [
             { accountCode: "101", debit: String(cashWithdrawal), credit: "0" },
@@ -853,7 +851,7 @@ async function recreateOrganization(
               amount,
               purpose: "Stadium urgent purchases (water, first aid, logistics)",
               cashFlowCode: "CF-OTH",
-              rkoSubtype: CashOrderRkoSubtype.OTHER,
+              rkoSubtype: 'OTHER',
               offsetAccountCode: "721",
               journalLines: [
                 { accountCode: "721", debit: String(amount), credit: "0" },
@@ -870,7 +868,7 @@ async function recreateOrganization(
           amount: cashIn,
           purpose: "Cash participation fees for amateur tournaments",
           cashFlowCode: "CF-OPS",
-          pkoSubtype: CashOrderPkoSubtype.INCOME_FROM_CUSTOMER,
+          pkoSubtype: 'INCOME_FROM_CUSTOMER',
           offsetAccountCode: "601",
           counterpartyId: counterpartyMap.get("Baku Tennis Academy") ?? null,
           journalLines: [
@@ -886,7 +884,7 @@ async function recreateOrganization(
           amount: bankDeposit,
           purpose: "Cash collection deposit to bank account",
           cashFlowCode: "CF-SUP",
-          rkoSubtype: CashOrderRkoSubtype.BANK_DEPOSIT,
+          rkoSubtype: 'BANK_DEPOSIT',
           offsetAccountCode: "221",
           journalLines: [
             { accountCode: "221", debit: String(bankDeposit), credit: "0" },

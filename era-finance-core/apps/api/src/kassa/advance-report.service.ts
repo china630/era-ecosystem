@@ -7,13 +7,13 @@ import {
 import {
   AdvanceReportStatus,
   CashOrderKind,
-  CashOrderRkoSubtype,
   CashOrderStatus,
   Decimal,
   LedgerType,
   type PostingRole,
   type Prisma,
 } from "@erafinance/database";
+import { CashOrderRkoSubtype } from "./cash-order-subtype-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { CurrencyConverterService } from "../fx/currency-converter.service";

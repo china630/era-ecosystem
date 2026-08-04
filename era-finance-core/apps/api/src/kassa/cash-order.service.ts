@@ -9,13 +9,15 @@ import {
 import {
   AdvanceReportStatus,
   CashOrderKind,
-  CashOrderPkoSubtype,
-  CashOrderRkoSubtype,
   CashOrderStatus,
   Decimal,
   LedgerType,
   type Prisma,
 } from "@erafinance/database";
+import {
+  CashOrderPkoSubtype,
+  CashOrderRkoSubtype,
+} from "./cash-order-subtype-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import {
@@ -266,7 +268,7 @@ export class CashOrderService {
     organizationId: string,
     dto: {
       date: string;
-      pkoSubtype: CashOrderPkoSubtype;
+      pkoSubtype: string;
       amount: number;
       currency?: string;
       purpose: string;
@@ -334,7 +336,7 @@ export class CashOrderService {
     organizationId: string,
     dto: {
       date: string;
-      rkoSubtype: CashOrderRkoSubtype;
+      rkoSubtype: string;
       amount: number;
       currency?: string;
       purpose: string;
@@ -411,7 +413,7 @@ export class CashOrderService {
 
   private async resolvePkoOffset(
     organizationId: string,
-    st: CashOrderPkoSubtype,
+    st: string,
     explicit?: string,
   ): Promise<string> {
     if (explicit?.trim()) return explicit.trim();
@@ -498,7 +500,7 @@ export class CashOrderService {
   private async resolveRkoOffset(
     prisma: PrismaService | Tx,
     organizationId: string,
-    st: CashOrderRkoSubtype,
+    st: string,
     employeeId: string | undefined,
     explicit?: string,
   ): Promise<string> {
