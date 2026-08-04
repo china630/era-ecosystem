@@ -30,14 +30,13 @@ jobs:
     name: sast (semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Tune-in: do not fail the PR check on findings until Appendix B suppressions land
-    continue-on-error: true
     container:
       image: semgrep/semgrep
     steps:
       - uses: actions/checkout@v4
-      - name: Semgrep OWASP / JS-TS
+      - name: Semgrep OWASP / JS-TS (tune-in: non-blocking)
         run: |
+          set +e
           semgrep scan \
             --config=p/owasp-top-ten \
             --config=p/typescript \
@@ -49,21 +48,24 @@ jobs:
             --exclude='**/docker-data/**' \
             --exclude='**/Dockerfile*' \
             --exclude='**/*.nginx.conf' \
-            --exclude='**/nginx*.conf' \
-            || true
-        # Exit 0 during tune-in; flip to --error + remove continue-on-error after noise review
+            --exclude='**/nginx*.conf'
+          code=$?
+          echo "semgrep_exit=$code"
+          exit 0
 
   osv:
     name: deps (osv-scanner)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: OSV-Scanner
-        uses: google/osv-scanner-action/osv-scanner-action@v2.0.3
-        with:
-          # Recursive lockfile scan; tune severity in branch protection later
-          scan-args: |-
-            --recursive
+      - name: OSV-Scanner (tune-in: non-blocking)
+        run: |
+          set +e
+          docker run --rm -v "$PWD:/src" -w /src ghcr.io/google/osv-scanner:v2.0.3 \
+            --recursive \
             ./
+          code=$?
+          echo "osv_exit=$code"
+          # Tune-in: report findings but do not fail the check
+          exit 0
