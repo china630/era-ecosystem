@@ -119,3 +119,8 @@ export const FIELD_PANEL_HEADER_CLASS =
   "bg-[#F8FAFC] px-3 py-2 text-[13px] font-semibold text-[#34495E]";
 
 export const FIELD_PANEL_BODY_CLASS = "space-y-3 border-t border-[#D5DADF] px-3 pb-3 pt-3";
+
+/** Near-fullscreen ops card (reservation / guest / group booking). */
+export const MODAL_FULL_CLASS =
+  "max-w-[min(98vw,1600px)] w-full min-h-[min(75vh,48rem)] max-h-[90vh]";
+export const TEXT_MUTED_CLASS = "text-[#7F8C8D]";
