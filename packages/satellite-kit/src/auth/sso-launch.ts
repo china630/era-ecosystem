@@ -14,7 +14,7 @@ export type SatelliteSsoLaunchParams = {
 export function signSatelliteSsoPayload(
   params: Pick<
     SatelliteSsoLaunchParams,
-    "email" | "organizationId" | "expiresAt" | "financeRole"
+    "email" | "organizationId" | "expiresAt" | "financeRole" | "jti"
   >,
   secret?: string,
 ): string {
