@@ -13,11 +13,11 @@ import {
   Decimal,
   EmployeeKind,
   OrganizationKind,
-  PayrollComponentCode,
   PayrollComponentKind,
   PayrollRunStatus,
   UserRole,
 } from "@erafinance/database";
+import { PayrollComponentCode } from "./payroll-component-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
