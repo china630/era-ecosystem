@@ -59,18 +59,7 @@ type CashOrderRow = {
   employee?: { id: string; firstName: string; lastName: string } | null;
 };
 
-type PkoSubtype =
-  | "INCOME_FROM_CUSTOMER"
-  | "RETURN_FROM_ACCOUNTABLE"
-  | "WITHDRAWAL_FROM_BANK"
-  | "OTHER";
-
-type RkoSubtype =
-  | "SALARY"
-  | "SUPPLIER_PAYMENT"
-  | "ACCOUNTABLE_ISSUE"
-  | "BANK_DEPOSIT"
-  | "OTHER";
+type CashSubtypeOpt = { code: string; nameAz: string; nameRu: string; nameEn: string };
 
 type AccountableRow = {
   employee: {
@@ -197,8 +186,10 @@ export default function BankingCashPage() {
   const [quickOpen, setQuickOpen] = useState(false);
   const [advOpen, setAdvOpen] = useState(false);
 
+  const [pkoSubtypes, setPkoSubtypes] = useState<CashSubtypeOpt[]>([]);
+  const [rkoSubtypes, setRkoSubtypes] = useState<CashSubtypeOpt[]>([]);
   const [pkoDate, setPkoDate] = useState(todayIso);
-  const [pkoSubtype, setPkoSubtype] = useState<PkoSubtype>("INCOME_FROM_CUSTOMER");
+  const [pkoSubtype, setPkoSubtype] = useState("INCOME_FROM_CUSTOMER");
   const [pkoAmount, setPkoAmount] = useState("");
   const [pkoCurrency, setPkoCurrency] = useState<SupportedCurrency>("AZN");
   const [pkoPurpose, setPkoPurpose] = useState("");
@@ -211,7 +202,7 @@ export default function BankingCashPage() {
   const [pkoDeskId, setPkoDeskId] = useState("");
 
   const [rkoDate, setRkoDate] = useState(todayIso);
-  const [rkoSubtype, setRkoSubtype] = useState<RkoSubtype>("SUPPLIER_PAYMENT");
+  const [rkoSubtype, setRkoSubtype] = useState("SUPPLIER_PAYMENT");
   const [rkoAmount, setRkoAmount] = useState("");
   const [rkoCurrency, setRkoCurrency] = useState<SupportedCurrency>("AZN");
   const [rkoPurpose, setRkoPurpose] = useState("");
@@ -273,19 +264,52 @@ export default function BankingCashPage() {
     return Array.isArray(list) ? list : [];
   }, []);
 
+  const fetchOffsetAccounts = useCallback(
+    async (search: string) => {
+      const q = new URLSearchParams();
+      q.set("ledgerType", ledgerType);
+      const trimmed = search.trim();
+      if (trimmed) q.set("search", trimmed);
+      const res = await apiFetch(`/api/accounts?${q}`);
+      if (!res.ok) return [];
+      const list = (await res.json()) as Array<{
+        code: string;
+        name?: string;
+        displayName?: string;
+      }>;
+      if (!Array.isArray(list)) return [];
+      const filtered = trimmed
+        ? list.filter(
+            (a) =>
+              a.code.toLowerCase().includes(trimmed.toLowerCase()) ||
+              (a.displayName ?? a.name ?? "")
+                .toLowerCase()
+                .includes(trimmed.toLowerCase()),
+          )
+        : list;
+      return filtered.slice(0, 40).map((a) => ({
+        id: a.code,
+        name: `${a.code} — ${a.displayName ?? a.name ?? a.code}`,
+      }));
+    },
+    [ledgerType],
+  );
+
   const loadCore = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     setErr(null);
     const { from, to } = monthDateRange(yearMonth);
     const ordersQuery = `dateFrom=${encodeURIComponent(from)}&dateTo=${encodeURIComponent(to)}&page=${encodeURIComponent(String(ordersPage))}&pageSize=${encodeURIComponent(String(ordersPageSize))}`;
-    const [b, o, e, chart, cf, desks] = await Promise.all([
+    const [b, o, e, chart, cf, desks, pkoSt, rkoSt] = await Promise.all([
       apiFetch(`/api/banking/cash/balances?${lq}`),
       apiFetch(`/api/banking/cash/orders?${ordersQuery}`),
       apiFetch("/api/hr/employees?page=1&pageSize=100"),
       apiFetch("/api/accounts/chart/cash-catalog"),
       apiFetch("/api/treasury/cash-flow-items"),
       apiFetch("/api/treasury/cash-desks"),
+      apiFetch("/api/banking/cash/subtypes?direction=PKO&activeOnly=1"),
+      apiFetch("/api/banking/cash/subtypes?direction=RKO&activeOnly=1"),
     ]);
     if (!b.ok || !o.ok) {
       const msg = t("banking.cash.loadErr");
@@ -314,6 +338,12 @@ export default function BankingCashPage() {
       setCashDesks((await desks.json()) as CashDeskOpt[]);
     } else {
       setCashDesks([]);
+    }
+    if (pkoSt.ok) {
+      setPkoSubtypes((await pkoSt.json()) as CashSubtypeOpt[]);
+    }
+    if (rkoSt.ok) {
+      setRkoSubtypes((await rkoSt.json()) as CashSubtypeOpt[]);
     }
     const accRes = await apiFetch(`/api/banking/cash/accountable?${lq}`);
     if (accRes.ok) {
@@ -1241,19 +1271,37 @@ export default function BankingCashPage() {
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.pkoSubtype")}
                   <span className="mt-1 block">
-                    <Select value={pkoSubtype} onValueChange={(v) => setPkoSubtype(v as PkoSubtype)}>
+                    <Select value={pkoSubtype} onValueChange={setPkoSubtype}>
                       <SelectTrigger className="" />
                       <SelectContent>
-                        <SelectItem value="INCOME_FROM_CUSTOMER">
-                          {t("banking.cash.subtypeIncomeCustomer")}
-                        </SelectItem>
-                        <SelectItem value="RETURN_FROM_ACCOUNTABLE">
-                          {t("banking.cash.subtypeReturnAccountable")}
-                        </SelectItem>
-                        <SelectItem value="WITHDRAWAL_FROM_BANK">
-                          {t("banking.cash.subtypeBankWithdrawal")}
-                        </SelectItem>
-                        <SelectItem value="OTHER">{t("banking.cash.subtypeOther")}</SelectItem>
+                        {(pkoSubtypes.length
+                          ? pkoSubtypes
+                          : ([
+                              {
+                                code: "INCOME_FROM_CUSTOMER",
+                                nameEn: "Income from customer",
+                                nameAz: "",
+                                nameRu: "",
+                              },
+                              {
+                                code: "RETURN_FROM_ACCOUNTABLE",
+                                nameEn: "Return from accountable",
+                                nameAz: "",
+                                nameRu: "",
+                              },
+                              {
+                                code: "WITHDRAWAL_FROM_BANK",
+                                nameEn: "Withdrawal from bank",
+                                nameAz: "",
+                                nameRu: "",
+                              },
+                              { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
+                            ] satisfies CashSubtypeOpt[])
+                        ).map((row) => (
+                          <SelectItem key={row.code} value={row.code}>
+                            {row.nameEn || row.code}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </span>
@@ -1298,10 +1346,14 @@ export default function BankingCashPage() {
                 {(pkoSubtype === "OTHER" || pkoSubtype === "RETURN_FROM_ACCOUNTABLE") && (
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.offsetAccount")}
-                    <input
-                      className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                    <AsyncCombobox<{ id: string; name: string }>
+                      className="mt-1 w-full"
                       value={pkoOffset}
-                      onChange={(e) => setPkoOffset(e.target.value)}
+                      onChange={(id) => setPkoOffset(id)}
+                      fetcher={fetchOffsetAccounts}
+                      getOptionLabel={(a) => a.name}
+                      placeholder="—"
+                      selectedLabel={pkoOffset}
                     />
                   </label>
                 )}
@@ -1431,16 +1483,33 @@ export default function BankingCashPage() {
                 <label className={MODAL_FIELD_LABEL_CLASS}>
                   {t("banking.cash.rkoSubtype")}
                   <span className="mt-1 block">
-                    <Select value={rkoSubtype} onValueChange={(v) => setRkoSubtype(v as RkoSubtype)}>
+                    <Select value={rkoSubtype} onValueChange={setRkoSubtype}>
                       <SelectTrigger className="" />
                       <SelectContent>
-                        <SelectItem value="SALARY">{t("banking.cash.subtypeSalary")}</SelectItem>
-                        <SelectItem value="SUPPLIER_PAYMENT">{t("banking.cash.subtypeSupplier")}</SelectItem>
-                        <SelectItem value="ACCOUNTABLE_ISSUE">
-                          {t("banking.cash.subtypeAccountableIssue")}
-                        </SelectItem>
-                        <SelectItem value="BANK_DEPOSIT">{t("banking.cash.subtypeBankDeposit")}</SelectItem>
-                        <SelectItem value="OTHER">{t("banking.cash.subtypeOther")}</SelectItem>
+                        {(rkoSubtypes.length
+                          ? rkoSubtypes
+                          : [
+                              { code: "SALARY", nameEn: "Salary", nameAz: "", nameRu: "" },
+                              {
+                                code: "SUPPLIER_PAYMENT",
+                                nameEn: "Supplier payment",
+                                nameAz: "",
+                                nameRu: "",
+                              },
+                              {
+                                code: "ACCOUNTABLE_ISSUE",
+                                nameEn: "Accountable issue",
+                                nameAz: "",
+                                nameRu: "",
+                              },
+                              { code: "BANK_DEPOSIT", nameEn: "Bank deposit", nameAz: "", nameRu: "" },
+                              { code: "OTHER", nameEn: "Other", nameAz: "", nameRu: "" },
+                            ]
+                        ).map((row) => (
+                          <SelectItem key={row.code} value={row.code}>
+                            {row.nameEn || row.code}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </span>
@@ -1496,10 +1565,14 @@ export default function BankingCashPage() {
                 {rkoSubtype === "OTHER" && (
                   <label className={MODAL_FIELD_LABEL_CLASS}>
                     {t("banking.cash.offsetAccount")}
-                    <input
-                      className={`mt-1 block w-full ${MODAL_INPUT_CLASS}`}
+                    <AsyncCombobox<{ id: string; name: string }>
+                      className="mt-1 w-full"
                       value={rkoOffset}
-                      onChange={(e) => setRkoOffset(e.target.value)}
+                      onChange={(id) => setRkoOffset(id)}
+                      fetcher={fetchOffsetAccounts}
+                      getOptionLabel={(a) => a.name}
+                      placeholder="—"
+                      selectedLabel={rkoOffset}
                     />
                   </label>
                 )}

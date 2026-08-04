@@ -1,9 +1,7 @@
-import { Injectable } from "@nestjs/common";
-import {
-  PayrollComponentCode,
-  PayrollComponentKind,
-} from "@erafinance/database";
+import { BadRequestException, Injectable } from "@nestjs/common";
+import { PayrollComponentKind } from "@erafinance/database";
 import { PrismaService } from "../prisma/prisma.service";
+import { PayrollComponentCode } from "./payroll-component-codes";
 
 const DEFAULT_COMPONENTS: Array<{
   code: PayrollComponentCode;
@@ -141,7 +139,7 @@ export class PayrollComponentsService {
   async create(
     organizationId: string,
     data: {
-      code: PayrollComponentCode;
+      code: string;
       kind: PayrollComponentKind;
       nameAz: string;
       nameRu: string;
@@ -149,10 +147,14 @@ export class PayrollComponentsService {
       isActive?: boolean;
     },
   ) {
+    const code = data.code.trim().toUpperCase().replace(/\s+/g, "_");
+    if (!code) {
+      throw new BadRequestException("Payroll component code is required");
+    }
     return this.prisma.payrollComponent.create({
       data: {
         organizationId,
-        code: data.code,
+        code,
         kind: data.kind,
         nameAz: data.nameAz.trim(),
         nameRu: data.nameRu.trim(),
@@ -162,14 +164,14 @@ export class PayrollComponentsService {
     });
   }
 
-  kindForCode(code: PayrollComponentCode): PayrollComponentKind {
+  kindForCode(code: string): PayrollComponentKind {
     const row = DEFAULT_COMPONENTS.find((c) => c.code === code);
     return row?.kind ?? PayrollComponentKind.EARNING;
   }
 
   async componentIdMap(
     organizationId: string,
-  ): Promise<Map<PayrollComponentCode, string>> {
+  ): Promise<Map<string, string>> {
     await this.ensureDefaultComponents(organizationId);
     const rows = await this.prisma.payrollComponent.findMany({
       where: { organizationId },
