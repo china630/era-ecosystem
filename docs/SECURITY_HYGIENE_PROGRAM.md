@@ -347,12 +347,13 @@ Not a global refactor. Format = **one defect class × 1–2 apps × PR stack × 
 | SEC-CP-02 | P1 | orch | RolesGuard OWNER→billing.manage | `roles.guard.ts` | R1 | open | — |
 | SEC-CP-03 | P1 | orch | Org header without membership | `org-id.decorator.ts` | R1 | open | — |
 | SEC-CP-04 | P1 | orch | Freeze not global on mutations | dispute/freeze only on transfer | R1 | open | — |
-| SEC-FIN-02 | P0 | finance | Cash post double-journal | `cash-order.service.ts` TOCTOU | R2 | open | — |
-| SEC-FIN-03 | P0 | finance | Payroll PAID double-journal | `payroll.service.ts` | R2 | open | — |
-| SEC-FIN-04 | P0 | finance | Advance report double-post | `advance-report.service.ts` | R2 | open | — |
+| SEC-FIN-02 | P0 | finance | Cash post double-journal | `cash-order.service.ts` FOR UPDATE + updateMany | R2 | closed ✓ | — |
+| SEC-FIN-03 | P0 | finance | Payroll PAID double-journal | `payroll.service.ts` SENT→PAID claim | R2 | closed ✓ | — |
+| SEC-FIN-04 | P0 | finance | Advance report double-post | `advance-report.service.ts` FOR UPDATE | R2 | closed ✓ | — |
 | SEC-FIN-05 | P1 | finance | Raw SQL bypass tenant wrapper | unused `TenantPrismaRawService` | R2 | open | — |
 | SEC-FIN-06 | P1 | finance | Workers skip tenant ALS | compliance/ocr/bank workers | R2 | open | — |
-| SEC-FIN-07 | P1 | finance | Invoice payment race | `recordPayment` no FOR UPDATE | R2 | open | — |
+| SEC-FIN-07 | P1 | finance | Invoice payment race | `recordPayment` FOR UPDATE | R2 | closed ✓ | — |
+| SEC-FIN-10 | P1 | finance | Payroll run DRAFT→POSTED race | `postRunSync` updateMany claim | R2 | closed ✓ | — |
 | SEC-FIN-08 | P1 | finance | Network receive body not DTO | `NetworkDocumentPayload` type-only | R2 | open | — |
 | SEC-CLI-02 | P0 | clinic | Public booking creates patients | `/api/booking` public POST | R3 | open | — |
 | SEC-HOT-03 | P1 | hotel | Admin API without permission | maintenance / auto-bar | R3 | open | — |
@@ -401,6 +402,7 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 |------|--------|
 | 2026-08-04 | Initial SSOT: phases 0–6, appendices A–C, locked tools |
 | 2026-08-04 | Full program pass: Waves A–C audit; R0/R1 remediations (tokens, BFF, SSO v2, dispatch, bridges); SAST workflow; DAST scripts; PR template; Appendix A filled |
+| 2026-08-04 | R2 finance atomic claim: cash/payroll/advance/invoice FOR UPDATE + updateMany (SEC-FIN-02/03/04/07/10) |
 
 ---
 
