@@ -47,7 +47,9 @@
     "test:design-regression": "playwright test -c e2e/design-regression/playwright.config.ts",
     "test:design-regression:update": "playwright test -c e2e/design-regression/playwright.config.ts --update-snapshots",
     "test:design-regression:smoke": "playwright test -c e2e/design-regression/playwright.config.ts design-smoke-hotel.spec.ts design-smoke-clinic.spec.ts",
-    "test:design-tokens": "node --test scripts/__tests__/design-tokens.spec.mjs"
+    "test:design-tokens": "node --test scripts/__tests__/design-tokens.spec.mjs",
+    "test:security-sso": "node --test scripts/__tests__/sso-hmac-v2.spec.mjs",
+    "security:authz-smoke": "node scripts/security/authz-smoke.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

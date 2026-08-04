@@ -66,8 +66,14 @@ export class SatelliteEventsService {
   }
 
   assertServiceToken(authorization: string | undefined): void {
-    const expected = this.config.get<string>("SATELLITE_EVENT_SERVICE_TOKEN");
-    if (!expected) return;
+    const expected = this.config.get<string>("SATELLITE_EVENT_SERVICE_TOKEN")?.trim();
+    // SEC-TOK-01: fail closed in production when token env is unset
+    if (!expected) {
+      if (process.env.NODE_ENV === "production") {
+        throw new UnauthorizedException("Satellite event token not configured");
+      }
+      return;
+    }
     const token = authorization?.startsWith("Bearer ")
       ? authorization.slice(7).trim()
       : authorization?.trim();

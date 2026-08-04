@@ -338,7 +338,8 @@ export class AuthService {
       throw new UnauthorizedException("Organization access denied");
     }
 
-    const role = (dto.role as UserRole | undefined) ?? m.role;
+    // SEC-SSO-02: never trust client role — membership is source of truth
+    const role = m.role;
     const claims = await this.buildClaims({
       sub: user.id,
       email: user.email,
@@ -348,6 +349,54 @@ export class AuthService {
     });
     const accessToken = await this.issueAccessToken(claims);
     return { accessToken, claims, financeRole: role };
+  }
+
+  /**
+   * SEC-SSO-02 / SEC-SSO-03: mint only for active membership; HMAC covers financeRole (v2).
+   */
+  async createSatelliteSsoTicket(input: {
+    userId: string;
+    email: string;
+    organizationId: string | null;
+  }): Promise<{
+    email: string;
+    fullName: string;
+    organizationId: string;
+    expiresAt: number;
+    signature: string;
+    financeRole: string;
+  }> {
+    const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
+    if (!secret) {
+      throw new UnauthorizedException("SSO not configured");
+    }
+    if (!input.organizationId) {
+      throw new UnauthorizedException("No active organization for SSO launch");
+    }
+    const membership = await this.prisma.organizationMembership.findFirst({
+      where: {
+        userId: input.userId,
+        organizationId: input.organizationId,
+        deletedAt: null,
+      },
+    });
+    if (!membership) {
+      throw new UnauthorizedException(
+        "Not a member of the requested organization",
+      );
+    }
+    const financeRole = String(membership.role);
+    const expiresAt = Math.floor(Date.now() / 1000) + 300;
+    const payload = `${input.email}|${input.organizationId}|${expiresAt}|${financeRole}`;
+    const signature = createHmac("sha256", secret).update(payload).digest("hex");
+    return {
+      email: input.email,
+      fullName: input.email.split("@")[0] ?? "User",
+      organizationId: input.organizationId,
+      expiresAt,
+      signature,
+      financeRole,
+    };
   }
 
   verifyAccessToken(token: string): Promise<EraJwtPayload> {
