@@ -2,7 +2,8 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 /**
  * SSO HMAC payload.
- * v2 (preferred): email|organizationId|expiresAt|financeRole
+ * v3 (preferred): email|organizationId|expiresAt|financeRole|jti
+ * v2: email|organizationId|expiresAt|financeRole
  * v1 (legacy): email|organizationId|expiresAt — client financeRole MUST be ignored
  */
 export function buildSsoPayload(
@@ -10,9 +11,12 @@ export function buildSsoPayload(
   organizationId: string,
   expiresAt: number,
   financeRole?: string | null,
+  jti?: string | null,
 ): string {
   const base = `${email}|${organizationId}|${expiresAt}`;
   const role = financeRole?.trim();
+  const nonce = jti?.trim();
+  if (role && nonce) return `${base}|${role}|${nonce}`;
   if (role) return `${base}|${role}`;
   return base;
 }
@@ -33,7 +37,7 @@ export function verifySsoSignature(
 }
 
 /**
- * SEC-SSO-02: accept unsigned financeRole only when the HMAC covers it (v2).
+ * SEC-SSO-02: accept unsigned financeRole only when the HMAC covers it (v2/v3).
  * Legacy v1 signatures verify without role → force USER (no owner escalation).
  * Returns null when signature is invalid.
  */
@@ -43,9 +47,23 @@ export function resolveVerifiedSsoFinanceRole(input: {
   expiresAt: number;
   signature: string;
   financeRole?: string | null;
+  jti?: string | null;
   secret?: string;
 }): string | null {
   const claimed = input.financeRole?.trim() || "";
+  const jti = input.jti?.trim() || "";
+  if (claimed && jti) {
+    const v3 = buildSsoPayload(
+      input.email,
+      input.organizationId,
+      input.expiresAt,
+      claimed,
+      jti,
+    );
+    if (verifySsoSignature(v3, input.signature, input.secret)) {
+      return claimed;
+    }
+  }
   if (claimed) {
     const v2 = buildSsoPayload(
       input.email,

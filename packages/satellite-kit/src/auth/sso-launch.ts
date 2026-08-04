@@ -7,6 +7,8 @@ export type SatelliteSsoLaunchParams = {
   organizationId: string;
   expiresAt: number;
   financeRole?: string;
+  /** SEC-SSO-01 one-time ticket id (HMAC v3). */
+  jti?: string;
 };
 
 export function signSatelliteSsoPayload(
@@ -25,6 +27,7 @@ export function signSatelliteSsoPayload(
     params.organizationId,
     params.expiresAt,
     params.financeRole ?? "USER",
+    params.jti,
   );
   return createHmac("sha256", key).update(payload).digest("hex");
 }
@@ -65,6 +68,9 @@ export function buildSatelliteSsoLaunchUrlFromTicket(
   });
   if (ticket.financeRole) {
     q.set("financeRole", ticket.financeRole);
+  }
+  if (ticket.jti) {
+    q.set("jti", ticket.jti);
   }
   return `${normalized}/sso/callback?${q.toString()}`;
 }

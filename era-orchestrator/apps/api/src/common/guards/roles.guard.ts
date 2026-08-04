@@ -9,6 +9,10 @@ import type { UserRole } from "@era365/database";
 import { ROLES_KEY } from "../decorators/roles.decorator";
 import type { EraJwtPayload } from "../../auth/jwt-payload.type";
 
+/**
+ * SEC-CP-02: role checks are exact — no OWNER→billing.manage permission
+ * elevation that could satisfy unrelated required roles.
+ */
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -27,25 +31,8 @@ export class RolesGuard implements CanActivate {
     if (user.isSuperAdmin) return true;
     const role = user.role;
     if (role && required.includes(role)) return true;
-    const perms = user.permissions ?? [];
-    const roleFallback: Record<UserRole, string> = {
-      OWNER: "billing.manage",
-      ADMIN: "reporting.view",
-      ACCOUNTANT: "accounting.post",
-      USER: "reporting.view",
-      PROCUREMENT: "purchases.manage",
-      AUDITOR: "reporting.view",
-      WAREHOUSE_KEEPER: "inventory.manage",
-      HR_OFFICER: "hr.manage",
-      HR_MANAGER: "hr.manage",
-      DEPARTMENT_HEAD: "reporting.view",
-      DIRECTOR: "billing.manage",
-      PARTNER: "reporting.view",
-    };
-    const needed = required
-      .map((r) => roleFallback[r])
-      .filter((p): p is string => Boolean(p));
-    if (needed.some((p) => perms.includes(p))) return true;
+    const roles = user.roles ?? [];
+    if (roles.some((r) => required.includes(r))) return true;
     throw new ForbiddenException("Insufficient role");
   }
 }

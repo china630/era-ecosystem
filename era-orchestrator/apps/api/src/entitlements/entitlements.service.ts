@@ -13,7 +13,17 @@ export class EntitlementsService {
   async validate(
     input: ValidateEntitlementRequest,
   ): Promise<ValidateEntitlementResponse> {
-    if (!input.organizationId || input.isSuperAdmin) {
+    // SEC-CP-01: never trust body.isSuperAdmin — resolve from DB when userId present
+    let isSuperAdmin = false;
+    if (input.userId?.trim()) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: input.userId.trim() },
+        select: { isSuperAdmin: true },
+      });
+      isSuperAdmin = Boolean(user?.isSuperAdmin);
+    }
+
+    if (!input.organizationId || isSuperAdmin) {
       return { allowed: true, billingStatus: "ACTIVE" };
     }
 
