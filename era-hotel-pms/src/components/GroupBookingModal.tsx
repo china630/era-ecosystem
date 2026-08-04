@@ -528,7 +528,6 @@ export default function GroupBookingModal({ open, onClose, onCreated }: GroupBoo
       subtitle={t('subtitle')}
       onClose={onClose}
       maxWidthClass={`${MODAL_FULL_CLASS} overflow-hidden flex flex-col`}
-      bodyClassName="mt-4 min-h-0 flex-1 overflow-hidden flex flex-col"
       footer={
         <EraModalFooter
           onCancel={onClose}
