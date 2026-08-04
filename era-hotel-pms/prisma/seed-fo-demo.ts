@@ -1,11 +1,13 @@
 /**
  * Realistic Front Office demo dataset: ~28 guests, reservations of every status.
  * Invoked from prisma/seed.ts after master data exists.
+ *
+ * Nafta seed: `rateMedical` = PKG-STANDART; `mealHB`/`mealBB` args are both Full board (FB)
+ * (packages include FB; param names kept for call-site compatibility).
  */
 import {
   PaymentMethod,
   PrismaClient,
-  ReservationNoteType,
   ReservationStatus,
   RoomStatus,
   type Agency,
@@ -19,6 +21,16 @@ import {
   type RoomType,
   type TransferVehicle,
 } from '@prisma/client';
+import type { ReservationNoteTypeCode } from '../src/lib/reservation-note-types';
+import {
+  addHotelDays,
+  hotelDateKey,
+  parseHotelNoon,
+  stayCheckIn,
+  stayCheckOut,
+  stayNights,
+  staysOverlap,
+} from '../src/lib/hotel-calendar';
 
 export type FoDemoSeedContext = {
   rooms: Room[];
@@ -83,46 +95,28 @@ const GUEST_PROFILES: Array<{
   { fullName: 'Shirinova Aynur', firstName: 'Aynur', lastName: 'Shirinova', nationality: 'AZ', phone: '+994556667788', email: 'aynur.s@inbox.ru', passport: 'AB5678901', visitCount: 2 },
 ];
 
-function dayAt(hour = 14): Date {
-  const d = new Date();
-  d.setHours(hour, 0, 0, 0);
-  return d;
-}
-
-function addDays(base: Date, days: number): Date {
-  const d = new Date(base);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function dateOnly(base: Date): Date {
-  const d = new Date(base);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function nightsBetween(checkIn: Date, checkOut: Date): number {
-  return Math.max(1, Math.round((checkOut.getTime() - checkIn.getTime()) / 86400000));
-}
-
 /** Statuses that block the room on the room plan (must not overlap per room). */
 const ROOM_PLAN_STATUSES: ReservationStatus[] = ['CONFIRMED', 'IN_HOUSE', 'OPTION'];
 
-function calendarKeyBaku(d: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baku' }).format(d);
-}
-
-function staysOverlap(aIn: Date, aOut: Date, bIn: Date, bOut: Date): boolean {
-  return aIn.getTime() < bOut.getTime() && bIn.getTime() < aOut.getTime();
+function dateOnlyKey(key: string): Date {
+  return new Date(`${key}T00:00:00.000Z`);
 }
 
 export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): Promise<void> {
-  const today = dayAt(12);
-  const todayDate = dateOnly(today);
+  const todayKey = hotelDateKey();
+  const todayDate = dateOnlyKey(todayKey);
+  const yesterdayKey = addHotelDays(todayKey, -1);
+  const yesterdayDate = dateOnlyKey(yesterdayKey);
+  /** Stay check-in at offset days from today (14:00 Asia/Baku). */
+  const ci = (days: number) => stayCheckIn(addHotelDays(todayKey, days));
+  /** Stay check-out at offset days from today (12:00 Asia/Baku). */
+  const co = (days: number) => stayCheckOut(addHotelDays(todayKey, days));
+  /** Non-stay timestamp at hotel noon for offset day. */
+  const at = (days: number) => parseHotelNoon(addHotelDays(todayKey, days));
 
   await prisma.businessDay.upsert({
-    where: { date: dateOnly(addDays(today, -1)) },
-    create: { date: dateOnly(addDays(today, -1)), status: 'CLOSED' },
+    where: { date: yesterdayDate },
+    create: { date: yesterdayDate, status: 'CLOSED' },
     update: { status: 'CLOSED' },
   });
   await prisma.businessDay.upsert({
@@ -132,7 +126,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   });
 
   const yesterdayBd = await prisma.businessDay.findUnique({
-    where: { date: dateOnly(addDays(today, -1)) },
+    where: { date: yesterdayDate },
   });
   if (yesterdayBd && !(await prisma.nightAuditRun.findFirst({ where: { businessDayId: yesterdayBd.id } }))) {
     await prisma.nightAuditRun.create({
@@ -140,7 +134,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         businessDayId: yesterdayBd.id,
         status: 'COMPLETED',
         stepsJson: JSON.stringify(['room_charges', 'housekeeping', 'statistics']),
-        completedAt: addDays(today, -1),
+        completedAt: at(-1),
       },
     });
   }
@@ -151,7 +145,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         cashier: 'reception',
         registerId: 'FO-01',
         status: 'OPEN',
-        openedAt: addDays(today, -1),
+        openedAt: at(-1),
       },
     });
   }
@@ -200,7 +194,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         guestId: g.id,
         docType: p.nationality === 'AZ' ? 'ID_CARD' : 'PASSPORT',
         docNumber: p.passport,
-        expiresAt: addDays(today, 365 * 3),
+        expiresAt: at(365 * 3),
       },
     });
     await prisma.guestContact.createMany({
@@ -229,7 +223,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     agencyId?: string;
     groupId?: string;
     sourceId?: string;
-    notes?: Partial<Record<ReservationNoteType, string>>;
+    notes?: Partial<Record<ReservationNoteTypeCode, string>>;
     total?: number;
     withStay?: boolean;
     withFolio?: boolean;
@@ -243,8 +237,8 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         if (staysOverlap(s.checkIn, s.checkOut, spec.checkIn, spec.checkOut)) {
           throw new Error(
             `[seed-fo-demo] Room ${spec.roomNumber} overlap: ${s.guest} (${s.status}) ` +
-              `${calendarKeyBaku(s.checkIn)}–${calendarKeyBaku(s.checkOut)} vs ${guest.fullName} ` +
-              `(${spec.status}) ${calendarKeyBaku(spec.checkIn)}–${calendarKeyBaku(spec.checkOut)}`,
+              `${hotelDateKey(s.checkIn)}–${hotelDateKey(s.checkOut)} vs ${guest.fullName} ` +
+              `(${spec.status}) ${hotelDateKey(spec.checkIn)}–${hotelDateKey(spec.checkOut)}`,
           );
         }
       }
@@ -257,7 +251,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
       roomPlanSlots[spec.roomNumber] = slots;
     }
     const room = spec.roomNumber ? roomByNum[spec.roomNumber] : undefined;
-    const nights = nightsBetween(spec.checkIn, spec.checkOut);
+    const nights = stayNights(spec.checkIn, spec.checkOut);
     const rate = spec.ratePlanId ?? ctx.rateStd.id;
     const rt = spec.roomTypeId ?? room?.roomTypeId ?? ctx.typeStd.id;
     resSeq += 1;
@@ -291,7 +285,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         await prisma.reservationNote.create({
           data: {
             reservationId: res.id,
-            noteType: noteType as ReservationNoteType,
+            noteType: noteType as ReservationNoteTypeCode,
             text,
           },
         });
@@ -314,7 +308,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
       await prisma.reservationDailyRate.create({
         data: {
           reservationId: res.id,
-          stayDate: dateOnly(addDays(spec.checkIn, i)),
+          stayDate: dateOnlyKey(addHotelDays(hotelDateKey(spec.checkIn), i)),
           amount: rate === ctx.rateMedical.id ? 180 : 120,
         },
       });
@@ -332,7 +326,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
       await prisma.stay.create({
         data: {
           reservationId: res.id,
-          actualCheckIn: addDays(spec.checkIn, spec.checkIn < today ? 0 : 0),
+          actualCheckIn: spec.checkIn,
         },
       });
     }
@@ -377,14 +371,14 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   });
 
   const inHouseSpecs: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 0, roomNumber: '201', ratePlanId: ctx.rateMedical.id, checkIn: addDays(today, -2), checkOut: addDays(today, 4), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 540, payAmount: 200, notes: { RES_NOTE: 'Müalicə paketi — gündəlik prosedur cədvəli verilib.', CIN_NOTE: 'Giriş saat 14:30, VIP lounge.' } },
-    { guestIndex: 1, roomNumber: '101', checkIn: addDays(today, -1), checkOut: addDays(today, 2), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 360, notes: { GENERAL_NOTE: 'Vegetarian breakfast.' } },
-    { guestIndex: 12, roomNumber: '301', ratePlanId: ctx.rateMedical.id, checkIn: addDays(today, -3), checkOut: addDays(today, 7), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 720, payAmount: 400 },
-    { guestIndex: 13, roomNumber: '302', checkIn: addDays(today, -1), checkOut: addDays(today, 5), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 480 },
-    { guestIndex: 18, roomNumber: '202', checkIn: addDays(today, -2), checkOut: addDays(today, 3), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 600, payAmount: 600 },
-    { guestIndex: 4, roomNumber: '102', checkIn: addDays(today, 0), checkOut: addDays(today, 3), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 360 },
-    { guestIndex: 8, roomNumber: '103', checkIn: addDays(today, -1), checkOut: addDays(today, 6), status: 'IN_HOUSE', withStay: true, notes: { ROOM_NOTE: 'Extra pillows.' } },
-    { guestIndex: 24, roomNumber: '204', checkIn: addDays(today, -4), checkOut: addDays(today, 2), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 500, notes: { PAYMENT_NOTE: 'Partial payment on checkout.' } },
+    { guestIndex: 0, roomNumber: '201', ratePlanId: ctx.rateMedical.id, checkIn: ci(-2), checkOut: co(4), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 540, payAmount: 200, notes: { RES_NOTE: 'Müalicə paketi — gündəlik prosedur cədvəli verilib.', CIN_NOTE: 'Giriş saat 14:30, VIP lounge.' } },
+    { guestIndex: 1, roomNumber: '101', checkIn: ci(-1), checkOut: co(2), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 360, notes: { GENERAL_NOTE: 'Vegetarian breakfast.' } },
+    { guestIndex: 12, roomNumber: '301', ratePlanId: ctx.rateMedical.id, checkIn: ci(-3), checkOut: co(7), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 720, payAmount: 400 },
+    { guestIndex: 13, roomNumber: '302', checkIn: ci(-1), checkOut: co(5), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 480 },
+    { guestIndex: 18, roomNumber: '202', checkIn: ci(-2), checkOut: co(3), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 600, payAmount: 600 },
+    { guestIndex: 4, roomNumber: '102', checkIn: ci(0), checkOut: co(3), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 360 },
+    { guestIndex: 8, roomNumber: '103', checkIn: ci(-1), checkOut: co(6), status: 'IN_HOUSE', withStay: true, notes: { ROOM_NOTE: 'Extra pillows.' } },
+    { guestIndex: 24, roomNumber: '204', checkIn: ci(-4), checkOut: co(2), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 500, notes: { PAYMENT_NOTE: 'Partial payment on checkout.' } },
   ];
 
   for (const s of inHouseSpecs) {
@@ -392,44 +386,44 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   }
 
   const arrivalsToday: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 2, roomNumber: '104', checkIn: today, checkOut: addDays(today, 3), status: 'CONFIRMED', sourceId: ctx.sourceOta.id },
-    { guestIndex: 3, roomNumber: '204', checkIn: addDays(today, 3), checkOut: addDays(today, 8), status: 'CONFIRMED', agencyId: ctx.agency.id, notes: { RES_NOTE: 'Arrival after in-house on 204 ends (+2).' } },
-    { guestIndex: 11, roomNumber: '303', checkIn: today, checkOut: addDays(today, 4), status: 'CONFIRMED', notes: { EXTRA_REQ: 'Late check-in 22:00.' } },
+    { guestIndex: 2, roomNumber: '104', checkIn: ci(0), checkOut: co(3), status: 'CONFIRMED', sourceId: ctx.sourceOta.id },
+    { guestIndex: 3, roomNumber: '204', checkIn: ci(3), checkOut: co(8), status: 'CONFIRMED', agencyId: ctx.agency.id, notes: { RES_NOTE: 'Arrival after in-house on 204 ends (+2).' } },
+    { guestIndex: 11, roomNumber: '303', checkIn: ci(0), checkOut: co(4), status: 'CONFIRMED', notes: { EXTRA_REQ: 'Late check-in 22:00.' } },
   ];
   for (const s of arrivalsToday) await createReservation(s);
 
   const departuresToday: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 10, roomNumber: '203', checkIn: addDays(today, -4), checkOut: today, status: 'IN_HOUSE', withStay: true, notes: { RES_NOTE: 'Departure today — chain on 203 starts tomorrow.' } },
-    { guestIndex: 7, roomNumber: '401', checkIn: addDays(today, -2), checkOut: today, status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 240, payAmount: 240 },
+    { guestIndex: 10, roomNumber: '203', checkIn: ci(-4), checkOut: co(0), status: 'IN_HOUSE', withStay: true, notes: { RES_NOTE: 'Departure today — chain on 203 starts tomorrow.' } },
+    { guestIndex: 7, roomNumber: '401', checkIn: ci(-2), checkOut: co(0), status: 'IN_HOUSE', withStay: true, withFolio: true, chargeAmount: 240, payAmount: 240 },
   ];
   for (const s of departuresToday) await createReservation(s);
 
   const optionSpecs: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 5, roomNumber: '304', checkIn: addDays(today, 2), checkOut: addDays(today, 6), status: 'OPTION', notes: { RES_NOTE: 'Option until Friday 18:00.' } },
-    { guestIndex: 9, checkIn: addDays(today, 3), checkOut: addDays(today, 7), status: 'OPTION' },
-    { guestIndex: 15, roomNumber: '402', checkIn: addDays(today, 1), checkOut: addDays(today, 4), status: 'OPTION' },
+    { guestIndex: 5, roomNumber: '304', checkIn: ci(2), checkOut: co(6), status: 'OPTION', notes: { RES_NOTE: 'Option until Friday 18:00.' } },
+    { guestIndex: 9, checkIn: ci(3), checkOut: co(7), status: 'OPTION' },
+    { guestIndex: 15, roomNumber: '402', checkIn: ci(1), checkOut: co(4), status: 'OPTION' },
   ];
   for (const s of optionSpecs) await createReservation(s);
 
   const cancelled: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 6, checkIn: addDays(today, 1), checkOut: addDays(today, 4), status: 'CANCELLED', notes: { CANCEL_NOTE: 'Guest cancelled — flight delayed.' } },
-    { guestIndex: 14, checkIn: addDays(today, 2), checkOut: addDays(today, 5), status: 'CANCELLED', notes: { CANCEL_NOTE: 'OTA cancellation ref OTA-9912.' } },
+    { guestIndex: 6, checkIn: ci(1), checkOut: co(4), status: 'CANCELLED', notes: { CANCEL_NOTE: 'Guest cancelled — flight delayed.' } },
+    { guestIndex: 14, checkIn: ci(2), checkOut: co(5), status: 'CANCELLED', notes: { CANCEL_NOTE: 'OTA cancellation ref OTA-9912.' } },
   ];
   for (const s of cancelled) await createReservation(s);
 
   await createReservation({
     guestIndex: 16,
     roomNumber: '402',
-    checkIn: addDays(today, -1),
-    checkOut: addDays(today, 2),
+    checkIn: ci(-1),
+    checkOut: co(2),
     status: 'NO_SHOW',
     notes: { CANCEL_NOTE: 'No-show — no contact.' },
   });
 
   const checkedOut: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 17, roomNumber: '202', checkIn: addDays(today, -5), checkOut: addDays(today, -1), status: 'CHECKED_OUT', withFolio: true, chargeAmount: 600, payAmount: 600 },
-    { guestIndex: 19, roomNumber: '103', checkIn: addDays(today, -3), checkOut: addDays(today, -1), status: 'CHECKED_OUT' },
-    { guestIndex: 20, roomNumber: '104', checkIn: addDays(today, -7), checkOut: addDays(today, -2), status: 'CHECKED_OUT', agencyId: ctx.agency.id },
+    { guestIndex: 17, roomNumber: '202', checkIn: ci(-5), checkOut: co(-1), status: 'CHECKED_OUT', withFolio: true, chargeAmount: 600, payAmount: 600 },
+    { guestIndex: 19, roomNumber: '103', checkIn: ci(-3), checkOut: co(-1), status: 'CHECKED_OUT' },
+    { guestIndex: 20, roomNumber: '104', checkIn: ci(-7), checkOut: co(-2), status: 'CHECKED_OUT', agencyId: ctx.agency.id },
   ];
   for (const s of checkedOut) {
     const res = await createReservation(s);
@@ -443,11 +437,11 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
   }
 
   const futureConfirmed: Parameters<typeof createReservation>[0][] = [
-    { guestIndex: 21, roomNumber: '301', checkIn: addDays(today, 8), checkOut: addDays(today, 13), status: 'CONFIRMED', notes: { RES_NOTE: 'After in-house on 301 ends (+7).' } },
-    { guestIndex: 22, roomNumber: '302', checkIn: addDays(today, 7), checkOut: addDays(today, 14), status: 'CONFIRMED', sourceId: ctx.sourceOta.id },
-    { guestIndex: 23, checkIn: addDays(today, 4), checkOut: addDays(today, 8), status: 'CONFIRMED' },
-    { guestIndex: 24, checkIn: addDays(today, 10), checkOut: addDays(today, 15), status: 'CONFIRMED', agencyId: ctx.agency.id },
-    { guestIndex: 25, roomNumber: '403', checkIn: addDays(today, 3), checkOut: addDays(today, 6), status: 'CONFIRMED' },
+    { guestIndex: 21, roomNumber: '301', checkIn: ci(8), checkOut: co(13), status: 'CONFIRMED', notes: { RES_NOTE: 'After in-house on 301 ends (+7).' } },
+    { guestIndex: 22, roomNumber: '302', checkIn: ci(7), checkOut: co(14), status: 'CONFIRMED', sourceId: ctx.sourceOta.id },
+    { guestIndex: 23, checkIn: ci(4), checkOut: co(8), status: 'CONFIRMED' },
+    { guestIndex: 24, checkIn: ci(10), checkOut: co(15), status: 'CONFIRMED', agencyId: ctx.agency.id },
+    { guestIndex: 25, roomNumber: '403', checkIn: ci(3), checkOut: co(6), status: 'CONFIRMED' },
   ];
   for (const s of futureConfirmed) await createReservation(s);
 
@@ -461,8 +455,8 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     await createReservation({
       guestIndex: m.guestIndex,
       roomNumber: m.roomNumber,
-      checkIn: addDays(today, 8),
-      checkOut: addDays(today, 12),
+      checkIn: ci(8),
+      checkOut: co(12),
       status: 'CONFIRMED',
       agencyId: ctx.agency.id,
       groupId: group.id,
@@ -473,15 +467,15 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
 
   await createReservation({
     guestIndex: 3,
-    checkIn: addDays(today, 0),
-    checkOut: addDays(today, 2),
+    checkIn: ci(0),
+    checkOut: co(2),
     status: 'CONFIRMED',
     notes: { RES_NOTE: 'Unassigned — assign before 16:00.' },
   });
   await createReservation({
     guestIndex: 11,
-    checkIn: addDays(today, 1),
-    checkOut: addDays(today, 4),
+    checkIn: ci(1),
+    checkOut: co(4),
     status: 'CONFIRMED',
   });
 
@@ -490,48 +484,48 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     {
       guestIndex: 14,
       roomNumber: '203',
-      checkIn: addDays(today, 1),
-      checkOut: addDays(today, 4),
+      checkIn: ci(1),
+      checkOut: co(4),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '203 chain 1/6 — starts day after today.' },
     },
     {
       guestIndex: 15,
       roomNumber: '203',
-      checkIn: addDays(today, 4),
-      checkOut: addDays(today, 6),
+      checkIn: ci(4),
+      checkOut: co(6),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '203 chain 2/6 — checkout = next check-in (same day turnover).' },
     },
     {
       guestIndex: 16,
       roomNumber: '203',
-      checkIn: addDays(today, 6),
-      checkOut: addDays(today, 8),
+      checkIn: ci(6),
+      checkOut: co(8),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '203 chain 3/6 — back-to-back, 2 nights.' },
     },
     {
       guestIndex: 17,
       roomNumber: '203',
-      checkIn: addDays(today, 9),
-      checkOut: addDays(today, 11),
+      checkIn: ci(9),
+      checkOut: co(11),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '203 chain 4/6 — 1 empty night between stays (gap day).' },
     },
     {
       guestIndex: 19,
       roomNumber: '203',
-      checkIn: addDays(today, 11),
-      checkOut: addDays(today, 14),
+      checkIn: ci(11),
+      checkOut: co(14),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '203 chain 5/6 — arrival next day after previous checkout.' },
     },
     {
       guestIndex: 20,
       roomNumber: '203',
-      checkIn: addDays(today, 15),
-      checkOut: addDays(today, 17),
+      checkIn: ci(15),
+      checkOut: co(17),
       status: 'OPTION',
       notes: { RES_NOTE: '203 chain 6/6 — option; 1-night gap before arrival.' },
     },
@@ -543,40 +537,40 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     {
       guestIndex: 21,
       roomNumber: '403',
-      checkIn: addDays(today, 7),
-      checkOut: addDays(today, 9),
+      checkIn: ci(7),
+      checkOut: co(9),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '403 chain 1/5 — first slot after existing booking.' },
     },
     {
       guestIndex: 22,
       roomNumber: '403',
-      checkIn: addDays(today, 9),
-      checkOut: addDays(today, 11),
+      checkIn: ci(9),
+      checkOut: co(11),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '403 chain 2/5 — turnover same day.' },
     },
     {
       guestIndex: 23,
       roomNumber: '403',
-      checkIn: addDays(today, 12),
-      checkOut: addDays(today, 14),
+      checkIn: ci(12),
+      checkOut: co(14),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '403 chain 3/5 — check-in next calendar day after prior checkout.' },
     },
     {
       guestIndex: 25,
       roomNumber: '403',
-      checkIn: addDays(today, 14),
-      checkOut: addDays(today, 16),
+      checkIn: ci(14),
+      checkOut: co(16),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '403 chain 4/5 — back-to-back turnover.' },
     },
     {
       guestIndex: 26,
       roomNumber: '403',
-      checkIn: addDays(today, 18),
-      checkOut: addDays(today, 21),
+      checkIn: ci(18),
+      checkOut: co(21),
       status: 'CONFIRMED',
       notes: { RES_NOTE: '403 chain 5/5 — 2-night gap, then 3-night stay.' },
     },
@@ -607,8 +601,8 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     where: { guestId: guests[0]!.id, status: 'IN_HOUSE' },
   });
   if (medRes) {
-    const tomorrow = addDays(today, 1);
-    tomorrow.setHours(10, 0, 0, 0);
+    const tomorrowKey = addHotelDays(todayKey, 1);
+    const tomorrow = new Date(`${tomorrowKey}T10:00:00.000+04:00`);
     await prisma.procedureAppointment.create({
       data: {
         reservationId: medRes.id,
@@ -625,7 +619,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
         reservationId: medRes.id,
         direction: 'OUT',
         flightNo: 'J2-813',
-        pickupAt: addDays(today, 4),
+        pickupAt: at(4),
         vehicleId: ctx.vehicleVan1.id,
         status: 'CONFIRMED',
         price: 40,
@@ -646,7 +640,7 @@ export async function seedFoDemo(prisma: PrismaClient, ctx: FoDemoSeedContext): 
     data: {
       description: 'Silver wristwatch — lobby sofa',
       location: 'Main lobby',
-      foundDate: dateOnly(addDays(today, -1)),
+      foundDate: yesterdayDate,
       status: 'OPEN',
     },
   });

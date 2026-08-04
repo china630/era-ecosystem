@@ -42,3 +42,9 @@ export * from "./subscription";
 export * from "./reference-data";
 export * from "./mdm";
 export * from "./workforce";
+export * from "./tender";
+
+export type {
+  ClinicServiceCatalogItem,
+  ClinicServiceCatalogResponse,
+} from "./clinic/service-catalog";

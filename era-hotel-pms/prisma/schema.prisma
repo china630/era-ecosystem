@@ -32,6 +32,36 @@ enum PaymentMethod {
   CARD
   COMPANY_ACCOUNT
   LOYALTY_POINTS
+  /** Settle offset from FolioDeposit HELD → APPLIED */
+  DEPOSIT
+}
+
+enum FolioPaymentKind {
+  PAYMENT
+  REFUND
+}
+
+/** Corporate negotiation / hold block (above ContractAllotment quota). See docs/adr/hotel-booking-hierarchy.md */
+enum AllotmentBlockStatus {
+  TENTATIVE
+  DEFINITE
+  CANCELLED
+  RELEASED
+}
+
+/** How folios are owned across stays in a ReservationGroup (Booking). */
+enum BookingFolioMode {
+  INDIVIDUAL
+  MASTER
+  SPLIT
+}
+
+/** How party members bill within one RoomStay. */
+enum PartyBillingMode {
+  /** One folio owner (ReservationGuest.isPrimary / reservation.guestId). */
+  PRIMARY
+  /** Equal peers — each party member owns a GUEST folio. */
+  EQUAL
 }
 
 enum FolioDepositStatus {
@@ -55,23 +85,7 @@ enum FolioSettlementStatus {
   VOID
 }
 
-enum ReservationNoteType {
-  EXTRA_REQ
-  RES_NOTE
-  CIN_NOTE
-  COUT_NOTE
-  ROOM_NOTE
-  CANCEL_NOTE
-  PAYMENT_NOTE
-  PRICE_NOTE
-  INVOICE_NOTE
-  CONFIRMATION
-  GENERAL_NOTE
-  ARRIVAL_POSTPONED
-  DEPARTURE_EXTENDED
-  SET_ARRIVAL_EARLY
-  SET_DEPARTURE_EARLY
-}
+/// Former Prisma enum — now String codes from HotelLookup kind=NOTE_TYPE (ADR A2).
 
 enum FolioType {
   GUEST
@@ -83,6 +97,10 @@ enum FolioStatus {
   OPEN
   CLOSED
   VOID
+  /** Guest checked out; company/agency balance awaiting AR handoff */
+  PENDING_AR
+  /** Handed off to Finance / invoice issued */
+  TRANSFERRED_AR
 }
 
 enum BusinessDayStatus {
@@ -281,6 +299,40 @@ enum ProductType {
   STOCK
 }
 
+/// T1 SatAdmin pick-lists (market, segment, VIP, …) — ADR managed-lists-vs-enums A1
+enum HotelLookupKind {
+  MARKET
+  SEGMENT
+  VIP_TYPE
+  LOYALTY_TIER
+  VISA_TYPE
+  TITLE
+  GENDER
+  MARITAL_STATUS
+  TRIP_REASON
+  ACCOM_TYPE
+  RECORD_TYPE
+  SPECIAL_STATE
+  VERIFICATION_STATUS
+  NOTE_TYPE
+  CONCIERGE_CATEGORY
+  EVENT_LINE_KIND
+}
+
+model HotelLookup {
+  id        String          @id @default(uuid())
+  kind      HotelLookupKind
+  code      String
+  name      String
+  active    Boolean         @default(true)
+  sortOrder Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([kind, code])
+  @@index([kind, active, sortOrder])
+}
+
 model RoomView {
   id        String   @id @default(uuid())
   code      String   @unique
@@ -316,6 +368,7 @@ model RoomType {
   stopSells     ChannelStopSell[]
   channelRoomMappings ChannelRoomMapping[]
   contractAllotments ContractAllotment[]
+  allotmentBlockLines AllotmentBlockLine[]
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
 }
@@ -400,6 +453,7 @@ model RatePlan {
   roomTypeRates RoomTypeRate[]
   addOns        RatePlanAddOn[]
   salesContracts SalesContract[]
+  allotmentBlockLines AllotmentBlockLine[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }
@@ -558,9 +612,14 @@ model Agency {
   name                 String
   voen                 String?
   commissionPercent    Decimal?            @db.Decimal(5, 2)
+  /** Max open AR (PENDING_AR + TRANSFERRED_AR) for this agency; null = use stay/hotel default */
+  creditLimitAzn       Decimal?            @db.Decimal(12, 2)
+  /** Net days after checkout for Finance aging (display + H-BL-48) */
+  paymentTermsDays     Int?
   active               Boolean             @default(true)
   reservations         Reservation[]
   reservationGroups    ReservationGroup[]
+  allotmentBlocks      AllotmentBlock[]
   contractPricingRules ContractPricingRule[]
   salesContracts       SalesContract[]
   banquetEvents        BanquetEvent[]       @relation("BanquetAgency")
@@ -583,13 +642,7 @@ enum SalesContractCounterpartyType {
   CORPORATE
 }
 
-enum EventOrderLineKind {
-  MENU
-  EQUIPMENT
-  STAFF
-  ROOM_RENTAL
-  OTHER
-}
+/// Former EventOrderLineKind enum — String codes from HotelLookup kind=EVENT_LINE_KIND (ADR A2).
 
 enum EventStaffAssignmentStatus {
   PLANNED
@@ -640,6 +693,7 @@ model SalesContract {
   externalRef       String?
   legacyRuleId      String?                       @unique
   allotments        ContractAllotment[]
+  allotmentBlocks   AllotmentBlock[]
   reservations      Reservation[]
   banquetEvents     BanquetEvent[]
   createdAt         DateTime                      @default(now())
@@ -737,6 +791,7 @@ model Guest {
   familyMembers      GuestFamily[]       @relation("GuestFamilyOwner")
   familyOf           GuestFamily[]       @relation("GuestFamilyRelated")
   bookerReservations Reservation[]       @relation("ReservationBooker")
+  partyMemberships   ReservationGuest[]
   migrationRegistrations MigrationRegistration[]
   salesContracts       SalesContract[]     @relation("SalesContractCompany")
   banquetEventsAsCompany BanquetEvent[]    @relation("BanquetCompanyGuest")
@@ -1034,15 +1089,67 @@ model GuestAddress {
 }
 
 model ReservationGroup {
-  id           String        @id @default(uuid())
-  code         String        @unique
-  name         String?
-  agencyId     String?
-  agency       Agency?       @relation(fields: [agencyId], references: [id], onDelete: SetNull)
-  reservations Reservation[]
-  banquetEvents BanquetEvent[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id               String           @id @default(uuid())
+  code             String           @unique
+  name             String?
+  agencyId         String?
+  agency           Agency?          @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  /** Booking envelope = group of RoomStay (Reservation) rows. See hotel-booking-hierarchy ADR. */
+  folioMode        BookingFolioMode @default(INDIVIDUAL)
+  allotmentBlockId String?
+  allotmentBlock   AllotmentBlock?  @relation(fields: [allotmentBlockId], references: [id], onDelete: SetNull)
+  checkInDate      DateTime?
+  checkOutDate     DateTime?
+  notes            String?
+  reservations     Reservation[]
+  banquetEvents    BanquetEvent[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([allotmentBlockId])
+  @@index([agencyId])
+}
+
+/** Corporate negotiation block — inventory hold before / during pickup into bookings. */
+model AllotmentBlock {
+  id              String               @id @default(uuid())
+  code            String               @unique
+  name            String?
+  status          AllotmentBlockStatus @default(TENTATIVE)
+  agencyId        String?
+  agency          Agency?              @relation(fields: [agencyId], references: [id], onDelete: SetNull)
+  salesContractId String?
+  salesContract   SalesContract?       @relation(fields: [salesContractId], references: [id], onDelete: SetNull)
+  validFrom       DateTime             @db.Date
+  validTo         DateTime             @db.Date
+  /** Soft release / option cutoff for unpicked rooms. */
+  cutoffDate      DateTime?            @db.Date
+  notes           String?
+  lines           AllotmentBlockLine[]
+  bookings        ReservationGroup[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([agencyId, status])
+  @@index([validFrom, validTo])
+  @@index([cutoffDate])
+}
+
+model AllotmentBlockLine {
+  id               String         @id @default(uuid())
+  allotmentBlockId String
+  allotmentBlock   AllotmentBlock @relation(fields: [allotmentBlockId], references: [id], onDelete: Cascade)
+  roomTypeId       String
+  roomType         RoomType       @relation(fields: [roomTypeId], references: [id])
+  /** Number of physical rooms held (variant A: each will become one Reservation stay on pickup). */
+  quantity         Int
+  ratePlanId       String?
+  ratePlan         RatePlan?      @relation(fields: [ratePlanId], references: [id], onDelete: SetNull)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([allotmentBlockId])
+  @@index([roomTypeId])
 }
 
 model Reservation {
@@ -1073,6 +1180,7 @@ model Reservation {
   totalAmount   Decimal           @default(0) @db.Decimal(12, 2)
   creditLimitAzn Decimal?         @db.Decimal(12, 2)
   voucherNo     String?
+  /** @deprecated variant A: always 1 for new stays — multi-room = N Reservation rows under ReservationGroup */
   roomCount     Int               @default(1)
   adults        Int               @default(1)
   children11_6  Int               @default(0)
@@ -1095,6 +1203,8 @@ model Reservation {
   colorCode     String?
   resNo         String?
   shareNo       String?
+  /** PRIMARY = one folio owner; EQUAL = each party member has own GUEST folio. */
+  partyBillingMode PartyBillingMode @default(PRIMARY)
   optionDate    DateTime?
   optionState   String?
   salesProject  String?
@@ -1185,6 +1295,9 @@ model ReservationGuest {
   id            String      @id @default(uuid())
   reservationId String
   reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /** Linked Guest master when created/picked from FO. */
+  guestId       String?
+  guest         Guest?      @relation(fields: [guestId], references: [id], onDelete: SetNull)
   title         String?
   gender        String?
   firstName     String?
@@ -1198,10 +1311,15 @@ model ReservationGuest {
   payStatus     String?
   externalResId String?
   guestState    String?
+  /** Contact / PRIMARY-mode folio owner. In EQUAL mode may still mark the create guestId. */
   isPrimary     Boolean     @default(false)
+  /** Owns a personal GUEST folio (all true in EQUAL; only primary in PRIMARY). */
+  ownsFolio     Boolean     @default(false)
   sortOrder     Int         @default(0)
+  folio         Folio?
 
   @@index([reservationId])
+  @@index([guestId])
 }
 
 model ReservationAttachment {
@@ -1217,11 +1335,12 @@ model ReservationAttachment {
 }
 
 model ReservationNote {
-  id            String              @id @default(uuid())
+  id            String      @id @default(uuid())
   reservationId String
-  reservation   Reservation         @relation(fields: [reservationId], references: [id], onDelete: Cascade)
-  noteType      ReservationNoteType
-  text          String              @default("")
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /// HotelLookup NOTE_TYPE code
+  noteType      String
+  text          String      @default("")
 
   @@unique([reservationId, noteType])
   @@index([reservationId])
@@ -1414,6 +1533,9 @@ model Folio {
   id            String         @id @default(uuid())
   reservationId String
   reservation   Reservation    @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  /** Personal party folio when partyBillingMode=EQUAL (one GUEST folio per ReservationGuest). */
+  reservationGuestId String?   @unique
+  reservationGuest   ReservationGuest? @relation(fields: [reservationGuestId], references: [id], onDelete: SetNull)
   type          FolioType
   status        FolioStatus    @default(OPEN)
   charges         FolioCharge[]
@@ -1480,19 +1602,26 @@ model FolioCharge {
 }
 
 model FolioPayment {
-  id              String        @id @default(uuid())
+  id              String           @id @default(uuid())
   folioId         String
-  folio           Folio         @relation(fields: [folioId], references: [id], onDelete: Cascade)
+  folio           Folio            @relation(fields: [folioId], references: [id], onDelete: Cascade)
   settlementId    String?
   settlement      FolioSettlement? @relation(fields: [settlementId], references: [id], onDelete: SetNull)
-  amount          Decimal       @db.Decimal(12, 2)
+  amount          Decimal          @db.Decimal(12, 2)
   paymentMethod   PaymentMethod
+  kind            FolioPaymentKind @default(PAYMENT)
+  /** Original payment when kind=REFUND */
+  refundOfPaymentId String?
+  refundOfPayment   FolioPayment?  @relation("FolioPaymentRefunds", fields: [refundOfPaymentId], references: [id], onDelete: SetNull)
+  refunds           FolioPayment[] @relation("FolioPaymentRefunds")
+  refundReason      String?
   registerRef     String?
   fiscalReceiptId String?
   fiscalQrPayload String?
-  createdAt       DateTime      @default(now())
+  createdAt       DateTime         @default(now())
 
   @@index([settlementId])
+  @@index([refundOfPaymentId])
 }
 
 model FolioSettlement {
@@ -1764,18 +1893,19 @@ model BanquetEvent {
 }
 
 model EventOrderLine {
-  id             String             @id @default(uuid())
+  id             String       @id @default(uuid())
   banquetEventId String
-  banquetEvent   BanquetEvent       @relation(fields: [banquetEventId], references: [id], onDelete: Cascade)
-  kind           EventOrderLineKind @default(OTHER)
+  banquetEvent   BanquetEvent @relation(fields: [banquetEventId], references: [id], onDelete: Cascade)
+  /// HotelLookup EVENT_LINE_KIND code
+  kind           String       @default("OTHER")
   description    String
-  quantity       Decimal            @db.Decimal(12, 2)
-  unitPrice      Decimal            @db.Decimal(12, 2)
+  quantity       Decimal      @db.Decimal(12, 2)
+  unitPrice      Decimal      @db.Decimal(12, 2)
   revenueCodeId  String?
-  revenueCode    RevenueCode?       @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
+  revenueCode    RevenueCode? @relation(fields: [revenueCodeId], references: [id], onDelete: SetNull)
   notes          String?
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([banquetEventId])
 }
@@ -1937,12 +2067,6 @@ model TransferOrder {
   @@index([status])
 }
 
-enum ConciergeProductCategory {
-  EXCURSION
-  TICKET
-  RESTAURANT_EXT
-}
-
 enum ConciergeOrderStatus {
   REQUESTED
   CONFIRMED
@@ -1951,16 +2075,17 @@ enum ConciergeOrderStatus {
 }
 
 model ConciergeProduct {
-  id            String                   @id @default(uuid())
-  code          String                   @unique
+  id            String           @id @default(uuid())
+  code          String           @unique
   name          String
-  category      ConciergeProductCategory @default(EXCURSION)
+  /// HotelLookup CONCIERGE_CATEGORY code
+  category      String           @default("EXCURSION")
   supplierName  String?
-  commissionPct Decimal?                 @db.Decimal(5, 2)
-  price         Decimal                  @db.Decimal(12, 2)
-  active        Boolean                  @default(true)
+  commissionPct Decimal?         @db.Decimal(5, 2)
+  price         Decimal          @db.Decimal(12, 2)
+  active        Boolean          @default(true)
   orders        ConciergeOrder[]
-  createdAt     DateTime                 @default(now())
+  createdAt     DateTime         @default(now())
 }
 
 model ConciergeOrder {
