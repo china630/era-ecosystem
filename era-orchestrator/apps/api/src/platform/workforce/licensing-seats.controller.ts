@@ -26,8 +26,16 @@ export class LicensingSeatsController {
   ) {}
 
   private assertToken(auth?: string) {
-    const expected = this.config.get<string>("ORCHESTRATOR_INTERNAL_SERVICE_TOKEN");
-    if (!expected) return;
+    const expected =
+      this.config.get<string>("ORCHESTRATOR_INTERNAL_SERVICE_TOKEN")?.trim() ??
+      this.config.get<string>("SATELLITE_EVENT_SERVICE_TOKEN")?.trim();
+    // SEC-TOK-01: fail closed in production
+    if (!expected) {
+      if (process.env.NODE_ENV === "production") {
+        throw new UnauthorizedException("Internal service token not configured");
+      }
+      return;
+    }
     const token = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : auth?.trim();
     if (!token || token !== expected) {
       throw new UnauthorizedException("Invalid service token");

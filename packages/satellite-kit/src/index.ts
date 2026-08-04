@@ -5,8 +5,14 @@ export {
 } from "./orchestrator-gateway";
 
 export {
+  assertEnvServiceToken,
+  assertBridgeSecret,
+  type ServiceTokenAssertResult,
+} from "./auth/assert-service-token";
+export {
   buildSsoPayload,
   verifySsoSignature,
+  resolveVerifiedSsoFinanceRole,
 } from "./auth/sso-verify";
 export {
   signSatelliteSsoPayload,

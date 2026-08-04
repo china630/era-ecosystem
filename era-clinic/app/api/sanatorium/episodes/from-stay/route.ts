@@ -12,9 +12,15 @@ const bodySchema = z.object({
   globalPersonId: z.string().nullable().optional(),
 });
 
+/** SEC-CLI-01: fail closed in production when CLINIC_BRIDGE_SECRET unset */
 function assertBridgeSecret(req: Request) {
   const expected = process.env.CLINIC_BRIDGE_SECRET?.trim();
-  if (!expected) return;
+  if (!expected) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Invalid bridge secret');
+    }
+    return;
+  }
   const got = req.headers.get('x-clinic-bridge-secret');
   if (got !== expected) {
     throw new Error('Invalid bridge secret');

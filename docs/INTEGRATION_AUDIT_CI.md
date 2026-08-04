@@ -2,6 +2,8 @@
 
 Living static audits for MDM identity, reference-data boundaries, and data-model integration compliance.
 
+**Related:** AuthZ / secrets / SAST / DAST program SSOT — [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) (does not replace this gate).
+
 ## Commands
 
 ```bash

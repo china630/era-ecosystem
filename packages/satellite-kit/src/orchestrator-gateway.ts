@@ -13,7 +13,13 @@ export async function publishToOrchestratorGateway(
     process.env.ORCHESTRATOR_EVENT_URL ??
     process.env.ORCHESTRATOR_URL ??
     "http://localhost:4100";
-  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN ?? "";
+  const token = process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ?? "";
+  if (!token && process.env.NODE_ENV === "production") {
+    return {
+      ok: false,
+      error: "SATELLITE_EVENT_SERVICE_TOKEN is required in production",
+    };
+  }
   const url = `${baseUrl.replace(/\/$/, "")}/api/v1/satellite-events`;
 
   try {

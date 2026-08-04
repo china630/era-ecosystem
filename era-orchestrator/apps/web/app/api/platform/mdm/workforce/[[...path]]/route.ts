@@ -6,10 +6,16 @@ const MDM_SERVICE_TOKEN =
   process.env.SATELLITE_EVENT_SERVICE_TOKEN ??
   "";
 
+/** SEC-TOK-02: require caller JWT; inject service token via x-service-token only. */
 async function proxy(
   request: NextRequest,
   path: string[],
 ): Promise<NextResponse> {
+  const callerAuth = request.headers.get("authorization")?.trim();
+  if (!callerAuth?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const subpath = path.join("/");
   const url = new URL(
     `${ORCH_API_URL.replace(/\/$/, "")}/internal/v1/mdm/persons/${subpath}`,
@@ -19,11 +25,14 @@ async function proxy(
   });
 
   const headers = new Headers();
-  const auth = request.headers.get("authorization");
-  if (auth) headers.set("Authorization", auth);
+  headers.set("Authorization", callerAuth);
   if (MDM_SERVICE_TOKEN) {
-    headers.set("Authorization", `Bearer ${MDM_SERVICE_TOKEN}`);
     headers.set("x-service-token", MDM_SERVICE_TOKEN);
+  } else if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "MDM service token not configured" },
+      { status: 503 },
+    );
   }
   const orgId = request.headers.get("x-organization-id");
   if (orgId) headers.set("x-organization-id", orgId);

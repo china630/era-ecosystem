@@ -6,24 +6,34 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 
 ## SSO (Epic A — Phase A complete)
 
-- **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`)
-- **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` verifies HS256 JWT (`ERA_JWT_SECRET`, `iss`, `aud`)
+### Satellite launch HMAC (industry apps)
+
+- **Mint:** `POST /auth/satellite-sso-ticket` (JWT required) — only for an **active membership** of the caller; `financeRole` comes from membership (not client default `OWNER`).
+- **Payload v2 (preferred):** `email|organizationId|expiresAt|financeRole` signed with `ERA_SSO_SHARED_SECRET`.
+- **Payload v1 (legacy):** `email|organizationId|expiresAt` — still verifies, but satellites **force** `financeRole=USER` (unsigned query role is ignored). See [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) SEC-SSO-02.
+- **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` (`@era/satellite-kit`). When `ERA_SATELLITE_ORGANIZATION_ID` is set, ticket org must match (SEC-SSO-05).
+
+- **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`, `POST /auth/finance-handoff`)
+- **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` and `provisionFromControlPlane` both use `verifyControlPlaneAccessToken` (`ERA_JWT_SECRET` / JWKS, `iss`, `aud`)
+- **Handoff:** browser → Orchestrator one-time Redis ticket (`POST /auth/finance-handoff`) → Finance `/auth/cp-handoff` redeems at Orchestrator → stores **CP access + refresh** in `sessionStorage` (`erafinance_cp_*`) → `POST /auth/cp-provision` mints Finance-local session (`erafinance_access_token`). Legacy `?token=` only when CP access JWT is still valid (also stored as CP access for billing proxies).
+- **Dual browser tokens:** Finance ERP APIs use the Finance-local JWT. Control-plane proxies (`resolveApiUrl` → `/cp/v1/subscription`, billing, partner, …) use the CP JWT. A 401 from Orchestrator must **not** clear the Finance session or redirect to `/login` (soft-fail + optional `POST /cp/auth/token/refresh`).
 - **Rollout:** set `ERA_AUTH_MODE=control-plane` on finance-core API (default `legacy` keeps `JwtAuthGuard` + DB validation)
+- **Auth secret:** `ERA_JWT_SECRET` only (Finance `JWT_SECRET` removed). PII/audit use dedicated keys — see [ADR control-plane-jwt-keys](./adr/control-plane-jwt-keys.md).
 
 ### CP2 RS256 cutover (staging)
 
 | Env | Orchestrator | Consumers (Finance, satellites) |
 |-----|--------------|----------------------------------|
-| Local dev | `ERA_JWT_SIGNING_MODE=hs256` (default), `ERA_JWT_SECRET` | `ERA_JWT_VERIFY_MODE=dual`, same secret fallback |
-| Staging/prod | `ERA_JWT_SIGNING_MODE=rs256` or `dual`, `ERA_JWT_RS256_JWK` (private JWK JSON) | `ERA_JWT_JWKS_URL=http://orchestrator:4100/.well-known/jwks.json` on Finance API |
+| Local Docker | `ERA_JWT_SIGNING_MODE=dual`, `ERA_JWT_RS256_JWK_FILE` (+ HS256 `ERA_JWT_SECRET`) | `ERA_JWT_VERIFY_MODE=dual`, `ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json` |
+| Staging/prod | `ERA_JWT_SIGNING_MODE=rs256` or `dual`, `ERA_JWT_RS256_JWK` (private JWK JSON) | `ERA_JWT_JWKS_URL` pointing at Orchestrator JWKS |
 
 **Smoke (staging):**
 
-1. Orchestrator: configure `ERA_JWT_RS256_JWK`; login returns RS256 `accessToken` (when cutover flag enabled).
-2. Finance: `ERA_JWT_RS256_JWKS_URL=http://orchestrator:4100/.well-known/jwks.json` (or equivalent) — CP guard accepts RS256 tokens.
-3. HS256 remains valid during dual-sign period if both secrets/keys configured.
+1. Orchestrator: configure `ERA_JWT_RS256_JWK` / `_FILE`; login returns RS256 `accessToken` when signing mode is `dual`/`rs256`.
+2. Finance: `ERA_JWT_JWKS_URL=http://orchestrator:4000/.well-known/jwks.json` — CP guard and cp-provision accept RS256 tokens.
+3. HS256 remains valid during dual period if `ERA_JWT_SECRET` is set on both sides.
 
-JWKS endpoint: `era-orchestrator/apps/api/src/auth/well-known.controller.ts`. DELIVERY checkbox: [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) CP2.
+JWKS endpoint: `era-orchestrator/apps/api/src/auth/well-known.controller.ts` (`GET /.well-known/jwks.json`). DELIVERY checkbox: [DELIVERY-ORCHESTRATOR.md](../era-orchestrator/doc/DELIVERY-ORCHESTRATOR.md) CP2.
 - **Billing:** `ControlPlaneEntitlementGuard` runs after auth; `isOwner` from JWT for owner-only routes
 
 ## RBAC (Epic A2 — orchestrator source of truth)
@@ -97,6 +107,14 @@ After `POST /api/auth/sso/exchange` on a satellite, session JWT includes:
 
 Use `requireRole(session, 'BUSINESS_OWNER')` for executive routes (pilot: `era-retail-pos/app/executive`).
 
+**Platform super-admin (full access everywhere).** Emails in `PLATFORM_SUPER_ADMIN_EMAILS` (`@era/satellite-kit` `isPlatformSuperAdminUser`) always see the complete satellite feature set, independent of role/permission data:
+
+- `executeSatelliteSsoExchange` maps them to `BUSINESS_OWNER` (`isOwner=true`) on every SSO login.
+- Shared gates bypass for them regardless of stored role: `sessionHasRole` returns `true` for any role, and `resolvePlatformCapabilities`/`hasPlatformCapability` return owner capabilities. Requires `email`/`login` on the session (SSO puts `email` in the JWT).
+- Hotel PMS uses its own permission model: `useAuth.can()`, `/api/auth/me`, and `assertPermission` grant the full `PERMISSIONS` set to super-admins.
+
+When editing these gates, keep the bypass — never regress a super-admin to a role-limited view.
+
 ### RBAC / memberships on industry satellites (hybrid)
 
 Industry apps **do not** expose orchestrator RBAC routes locally (`join-org`, `access-requests`, `transfer-ownership`, `GET /memberships` → **N/A** in matrix §2.1).
@@ -148,6 +166,7 @@ Validated on orchestrator ingress by `isSatelliteEvent()` in [`packages/era-cont
 **Shipped v3.0 (2026-07-02):** `SATELLITE_CRM_LEAD_CONVERTED` payload includes `partyKind`, `taxId`, `companyName`, contact fields, `activitySector`, `prospectType`; Finance `handleCrmLead` calls `findOrCreateByVoen` / `findOrCreateIndividualForCrm`. ADR [crm-lead-party-model-and-prospect-import.md](./adr/crm-lead-party-model-and-prospect-import.md).
 | `SATELLITE_AUTO_WORK_ORDER_COMPLETED` | era-auto-service | `handleAutoSto` | GL + draft invoice |
 | `SATELLITE_CLINIC_VISIT_COMPLETED` | era-clinic | `handleClinicVisit` | GL + draft invoice |
+| `SATELLITE_CLINIC_PROCEDURE_COMPLETED` | era-clinic (auto-complete at `endsAt`, not at check-in) | procedure / folio dispatch | Stock write-off + optional hotel folio |
 | `SATELLITE_CLINIC_WARD_DAY_CHARGE` | era-clinic cron | `handleClinicWardDayCharge` | GL + draft invoice (inpatient day) |
 | `SATELLITE_CLINIC_LAB_ORDER_COMPLETED` | era-clinic | `handleClinicLabOrder` | GL + draft invoice |
 | `SATELLITE_WHOLESALE_ORDER_CONFIRMED` | era-wholesale | `handleWholesaleOrder` | GL + draft invoice |
@@ -257,6 +276,8 @@ User JWT composition API: `v1/holdings/*` (create, attach org, members). Web: Or
 | `WORKFORCE_VACATION_PLAN_APPROVED` | Annual vacation plan approved (CP master). Finance mirror **HEADLESS** for now (event published; no local table/consumer yet) |
 | `WORKFORCE_PERSONNEL_ORDER_ISSUED` | (audit/log in CP; optional future satellite event) Printable kadr order issued — see ADR cp-personnel-orders |
 | `WORKFORCE_STAFF_SCHEDULE_APPROVED` | (audit in CP) Approved ştat cədvəli revision snapshot |
+
+Absence `kind` (TK AZ set): `VACATION` (əmək məzuniyyəti) → Finance `LABOR_LEAVE`, `SICK` → `SICK_LEAVE`, `UNPAID` → `UNPAID_LEAVE`, `SOCIAL_LEAVE` (maternity) → `SOCIAL_LEAVE`, `EDUCATIONAL_LEAVE` → `EDUCATIONAL_LEAVE`, `ADMINISTRATIVE` → `UNPAID_LEAVE`. `BUSINESS_TRIP` (ezamiyyət) is an attendance record, not a payroll leave, so it is **not** mirrored to Finance (sync skips it).
 
 Schema: `packages/era-contracts/src/events/workforce.events.ts`. ADR: [cp-workforce-absence-split.md](./adr/cp-workforce-absence-split.md).
 
