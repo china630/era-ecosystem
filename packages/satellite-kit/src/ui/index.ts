@@ -64,6 +64,7 @@ export {
   EraListFilterBar,
   type EraListFilterBarProps,
 } from "./era-list-filter-bar";
+export { useDebouncedValue } from "./use-debounced-value";
 export {
   DatePicker,
   isoDateToDisplay,
@@ -88,6 +89,13 @@ export { useControlPlaneSubscription, type ControlPlaneQuotaSnapshot } from "./u
 export { useSatelliteOpsSession, type SatelliteOpsSession } from "./use-satellite-ops-session";
 export { EraAppRouteShell, type EraAppRouteShellProps } from "./era-app-route-shell";
 export { EraDataGrid } from "./era-data-grid";
+export {
+  ListPaginationFooter,
+  LIST_PAGE_SIZE_OPTIONS,
+  DEFAULT_LIST_PAGE_SIZE,
+  type ListPaginationFooterLabels,
+  type ListPaginationFooterProps,
+} from "./list-pagination-footer";
 export { VoenLookupField, type VoenLookupResult } from "./voen-lookup-field";
 export { buildVoenLookupLabels, type VoenLookupFieldLabels } from "./voen-lookup-labels";
 export { FxEquivalentBadge, type FxEquivalentPreview } from "./fx-equivalent-badge";
