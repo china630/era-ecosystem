@@ -91,13 +91,14 @@ export type ReservationCardLeftPanelProps = {
   salesContractId: string;
   creditLimitAzn: string;
   folioBalance: number;
-  booker: string;
-  guestRep: string;
-  paidBy: string;
-  vipType: string;
-  accomType: string;
-  recordType: string;
-  tripReason: string;
+  /** Optional until FO editor wires commercial booker fields. */
+  booker?: string;
+  guestRep?: string;
+  paidBy?: string;
+  vipType?: string;
+  accomType?: string;
+  recordType?: string;
+  tripReason?: string;
   statusLabel?: string;
   reservationId?: string | null;
   agencies: AgencyOption[];
@@ -128,6 +129,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     isLocked,
     showAssignment = false,
     sellable = null,
+    booker = '',
+    guestRep = '',
+    paidBy = '',
+    vipType = '',
+    accomType = '',
+    recordType = '',
+    tripReason = '',
     agencies,
     sources,
     salesContracts,
