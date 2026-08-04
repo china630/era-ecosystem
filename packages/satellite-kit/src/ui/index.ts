@@ -64,6 +64,7 @@ export {
   EraListFilterBar,
   type EraListFilterBarProps,
 } from "./era-list-filter-bar";
+export { useDebouncedValue } from "./use-debounced-value";
 export {
   DatePicker,
   isoDateToDisplay,
