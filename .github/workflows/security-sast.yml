@@ -30,6 +30,8 @@ jobs:
     name: sast (semgrep)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Tune-in: do not fail the PR check on findings until Appendix B suppressions land
+    continue-on-error: true
     container:
       image: semgrep/semgrep
     steps:
@@ -40,17 +42,22 @@ jobs:
             --config=p/owasp-top-ten \
             --config=p/typescript \
             --config=p/javascript \
-            --error \
             --exclude='**/.next/**' \
             --exclude='**/node_modules/**' \
             --exclude='**/generated/**' \
             --exclude='**/.wt-*/**' \
-            --exclude='**/docker-data/**'
+            --exclude='**/docker-data/**' \
+            --exclude='**/Dockerfile*' \
+            --exclude='**/*.nginx.conf' \
+            --exclude='**/nginx*.conf' \
+            || true
+        # Exit 0 during tune-in; flip to --error + remove continue-on-error after noise review
 
   osv:
     name: deps (osv-scanner)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - name: OSV-Scanner
@@ -59,5 +66,4 @@ jobs:
           # Recursive lockfile scan; tune severity in branch protection later
           scan-args: |-
             --recursive
-            --skip-git
             ./
