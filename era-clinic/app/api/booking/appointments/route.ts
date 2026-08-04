@@ -2,19 +2,29 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createBookingAppointment } from "@era/satellite-kit";
 import { prisma } from "@/lib/prisma";
-import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 
 const schema = z.object({
-  customerRef: z.string(),
-  customerName: z.string(),
-  customerPhone: z.string().optional(),
+  customerRef: z.string().min(1).max(64),
+  customerName: z.string().min(1).max(200),
+  customerPhone: z.string().max(32).optional(),
   scheduledAt: z.string().datetime(),
-  practitionerCode: z.string().default("GP-01"),
-  practitionerFullName: z.string().default("General Practitioner"),
+  practitionerCode: z.string().min(1).max(64).default("GP-01"),
 });
 
+/**
+ * SEC-CLI-02: public booking may create a pending appointment only.
+ * Does not create visits, practitioners, or MDM-linked patient intake.
+ */
 export async function POST(request: Request) {
   try {
+    const enabled = process.env.CLINIC_PUBLIC_BOOKING_ENABLED?.trim();
+    if (process.env.NODE_ENV === "production" && enabled !== "true") {
+      return NextResponse.json(
+        { error: "Public booking disabled" },
+        { status: 403 },
+      );
+    }
+
     const body = schema.parse(await request.json());
     const orgId = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
 
@@ -32,6 +42,17 @@ export async function POST(request: Request) {
       ).catch(() => null);
     }
 
+    const practitioner = await prisma.practitioner.findUnique({
+      where: { code: body.practitionerCode },
+    });
+    if (!practitioner) {
+      return NextResponse.json(
+        { error: "Practitioner not found" },
+        { status: 404 },
+      );
+    }
+
+    // Pending patient stub — no MDM link from public path
     let patient = await prisma.patientRef.findUnique({
       where: { refCode: body.customerRef },
     });
@@ -44,20 +65,6 @@ export async function POST(request: Request) {
         },
       });
     }
-    await linkPatientGlobalPerson({
-      patientRefId: patient.id,
-      fullName: body.customerName,
-      phone: body.customerPhone,
-    });
-
-    let practitioner = await prisma.practitioner.findUnique({
-      where: { code: body.practitionerCode },
-    });
-    if (!practitioner) {
-      practitioner = await prisma.practitioner.create({
-        data: { code: body.practitionerCode, fullName: body.practitionerFullName },
-      });
-    }
 
     const appointment = await prisma.appointment.create({
       data: {
@@ -65,16 +72,8 @@ export async function POST(request: Request) {
         practitionerId: practitioner.id,
         scheduledAt: new Date(body.scheduledAt),
         status: "SCHEDULED",
-        visit: {
-          create: {
-            patientRefId: patient.id,
-            practitionerId: practitioner.id,
-            patientOrigin: "WALK_IN",
-            billingTarget: "FINANCE",
-          },
-        },
       },
-      include: { patientRef: true, practitioner: true, visit: true },
+      include: { patientRef: true, practitioner: true },
     });
 
     return NextResponse.json({ appointment }, { status: 201 });

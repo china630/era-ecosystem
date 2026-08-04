@@ -8,10 +8,11 @@ Marketing and onboarding routes live on **Orchestrator web** (`NEXT_PUBLIC_ORCH_
 
 ### Satellite launch HMAC (industry apps)
 
-- **Mint:** `POST /auth/satellite-sso-ticket` (JWT required) — only for an **active membership** of the caller; `financeRole` comes from membership (not client default `OWNER`).
-- **Payload v2 (preferred):** `email|organizationId|expiresAt|financeRole` signed with `ERA_SSO_SHARED_SECRET`.
+- **Mint:** `POST /auth/satellite-sso-ticket` (JWT required) — only for an **active membership** of the caller; `financeRole` comes from membership (not client default `OWNER`); includes one-time `jti`.
+- **Payload v3 (preferred):** `email|organizationId|expiresAt|financeRole|jti` signed with `ERA_SSO_SHARED_SECRET`.
+- **Payload v2:** `email|organizationId|expiresAt|financeRole` (still accepted).
 - **Payload v1 (legacy):** `email|organizationId|expiresAt` — still verifies, but satellites **force** `financeRole=USER` (unsigned query role is ignored). See [SECURITY_HYGIENE_PROGRAM.md](./SECURITY_HYGIENE_PROGRAM.md) SEC-SSO-02.
-- **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` (`@era/satellite-kit`). When `ERA_SATELLITE_ORGANIZATION_ID` is set, ticket org must match (SEC-SSO-05).
+- **Exchange:** satellite `POST /api/auth/sso/exchange` via `resolveVerifiedSsoFinanceRole` + `consumeSsoSignatureOnce` (SEC-SSO-01 process-local replay guard; Redis planned for multi-instance). When `ERA_SATELLITE_ORGANIZATION_ID` is set, ticket org must match (SEC-SSO-05).
 
 - **Issuer:** `era-orchestrator` (`POST /auth/login`, `POST /auth/token/refresh`, `POST /auth/sso/exchange`, `POST /auth/finance-handoff`)
 - **Consumer:** `era-finance-core` — `ControlPlaneAuthGuard` and `provisionFromControlPlane` both use `verifyControlPlaneAccessToken` (`ERA_JWT_SECRET` / JWKS, `iss`, `aud`)

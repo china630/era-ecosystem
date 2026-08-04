@@ -302,22 +302,42 @@ export class AuthService {
     });
   }
 
+  private readonly usedSsoSignatures = new Map<string, number>();
+
+  private consumeSsoSignature(signature: string, expiresAtSec: number): void {
+    const now = Math.floor(Date.now() / 1000);
+    for (const [sig, exp] of this.usedSsoSignatures) {
+      if (exp < now) this.usedSsoSignatures.delete(sig);
+    }
+    const key = signature.trim().toLowerCase();
+    if (!key || expiresAtSec < now || this.usedSsoSignatures.has(key)) {
+      throw new UnauthorizedException("SSO ticket already used or expired");
+    }
+    this.usedSsoSignatures.set(key, expiresAtSec);
+  }
+
   async ssoExchange(dto: SsoExchangeDto) {
     const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
     if (!secret) {
       throw new UnauthorizedException("SSO not configured");
     }
-    const payload = `${dto.email}|${dto.organizationId}|${dto.expiresAt}`;
+    const expiresAtSec =
+      dto.expiresAt > 1e12
+        ? Math.floor(dto.expiresAt / 1000)
+        : dto.expiresAt;
+    const payload = `${dto.email}|${dto.organizationId}|${expiresAtSec}`;
     const expected = createHmac("sha256", secret).update(payload).digest("hex");
     const sigBuf = Buffer.from(dto.signature, "hex");
     const expBuf = Buffer.from(expected, "hex");
     if (
       sigBuf.length !== expBuf.length ||
       !timingSafeEqual(sigBuf, expBuf) ||
-      Date.now() > dto.expiresAt
+      Math.floor(Date.now() / 1000) > expiresAtSec
     ) {
       throw new UnauthorizedException("Invalid SSO signature");
     }
+    // SEC-SSO-01: one-time consume
+    this.consumeSsoSignature(dto.signature, expiresAtSec);
 
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email.toLowerCase() },
@@ -365,6 +385,7 @@ export class AuthService {
     expiresAt: number;
     signature: string;
     financeRole: string;
+    jti: string;
   }> {
     const secret = this.config.get<string>("ERA_SSO_SHARED_SECRET");
     if (!secret) {
@@ -387,7 +408,9 @@ export class AuthService {
     }
     const financeRole = String(membership.role);
     const expiresAt = Math.floor(Date.now() / 1000) + 300;
-    const payload = `${input.email}|${input.organizationId}|${expiresAt}|${financeRole}`;
+    const jti = randomUUID().replace(/-/g, "");
+    // SEC-SSO-01: HMAC v3 includes jti
+    const payload = `${input.email}|${input.organizationId}|${expiresAt}|${financeRole}|${jti}`;
     const signature = createHmac("sha256", secret).update(payload).digest("hex");
     return {
       email: input.email,
@@ -396,6 +419,7 @@ export class AuthService {
       expiresAt,
       signature,
       financeRole,
+      jti,
     };
   }
 

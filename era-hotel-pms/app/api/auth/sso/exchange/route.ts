@@ -1,42 +1,41 @@
-import { createHmac, timingSafeEqual } from 'crypto';
-import { z } from 'zod';
+import {
+  consumeSsoSignatureOnce,
+  resolveVerifiedSsoFinanceRole,
+  ssoExchangeBodySchema,
+} from '@era/satellite-kit';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { signToken } from '@/lib/auth/jwt';
 import { prisma } from '@/lib/prisma';
 import { ROLE_CODES } from '@/lib/auth/permissions';
 import { permissionsForRole } from '@/lib/auth/permissions';
 
-const schema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(1),
-  organizationId: z.string().min(1),
-  expiresAt: z.number().int(),
-  signature: z.string().min(1),
-});
-
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'era_session';
-
-function verifySsoSignature(payload: string, signature: string): boolean {
-  const secret = process.env.ERA_SSO_SHARED_SECRET;
-  if (!secret) return false;
-  const expected = createHmac('sha256', secret).update(payload).digest('hex');
-  try {
-    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
+    const body = ssoExchangeBodySchema.parse(await request.json());
     if (body.expiresAt < Math.floor(Date.now() / 1000)) {
       return jsonError('SSO token expired', 401);
     }
 
-    const payload = `${body.email}|${body.organizationId}|${body.expiresAt}`;
-    if (!verifySsoSignature(payload, body.signature)) {
+    const financeRole = resolveVerifiedSsoFinanceRole({
+      email: body.email,
+      organizationId: body.organizationId,
+      expiresAt: body.expiresAt,
+      signature: body.signature,
+      financeRole: body.financeRole,
+      jti: body.jti,
+    });
+    if (!financeRole) {
       return jsonError('Invalid SSO signature', 401);
+    }
+    if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
+      return jsonError('SSO ticket already used', 401);
+    }
+
+    const deployOrg = process.env.ERA_SATELLITE_ORGANIZATION_ID?.trim();
+    if (deployOrg && body.organizationId !== deployOrg) {
+      return jsonError('SSO organization mismatch', 401);
     }
 
     let role = await prisma.role.findUnique({
