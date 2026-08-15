@@ -4,6 +4,7 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/health",
   "/api/events/dispatch",
   "/api/locale",
+  "/api/internal",
 ];
 
 /** Page paths reachable without authentication (locale toggle, FAQ on login). */
