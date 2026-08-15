@@ -11,6 +11,7 @@ export const DEFAULT_PUBLIC_API_PREFIXES = [
   "/api/health",
   "/api/events/dispatch",
   "/api/locale",
+  "/api/internal",
 ];
 
 export const DEFAULT_PUBLIC_PAGE_PREFIXES = ["/login", "/sso/callback", "/help"];
