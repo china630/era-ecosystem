@@ -14,7 +14,6 @@ import { findActiveSalesContract } from '@/lib/services/sales-contract.service';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 import type { PaymentMethod, ReservationStatus } from '@prisma/client';
-import { paxHasRealName, reservationNamesIncomplete } from '@/lib/reservation-names';
 
 export async function listReservations(status?: ReservationStatus, guestId?: string) {
   return prisma.reservation.findMany({
