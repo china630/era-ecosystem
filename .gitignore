@@ -51,3 +51,8 @@ era-hotel-pms/doc/nafta/bridge-har/*.json
 # Local-only JWT signing material (generate per env; never commit private d)
 **/dev-rs256-jwk.json
 **/dev-*-jwk.json
+
+# Local e-taxes enrichment scratch (never commit)
+data/legal-entities/.etaxes-token-hypotheses.json
+data/legal-entities/.token-seeds-*.json
+
