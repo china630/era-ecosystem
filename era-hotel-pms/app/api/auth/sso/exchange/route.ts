@@ -1,4 +1,5 @@
 import {
+  consumeSsoSignatureOnce,
   resolveVerifiedSsoFinanceRole,
   ssoExchangeBodySchema,
   satelliteOrganizationId,
@@ -28,8 +29,8 @@ async function ensureRole(code: string) {
 }
 
 /**
- * SEC-SSO-02: Orchestrator mints v2 HMAC (email|org|exp|financeRole).
- * Legacy hotel verify was v1-only → Invalid SSO signature after orch upgrade.
+ * SEC-SSO-02/01: Orchestrator mints HMAC (v2/v3); replay guard via consumeSsoSignatureOnce.
+ * SEC-SSO-05: ticket org must match satelliteOrganizationId() when bound.
  */
 export async function POST(request: Request) {
   try {
@@ -44,13 +45,16 @@ export async function POST(request: Request) {
       expiresAt: body.expiresAt,
       signature: body.signature,
       financeRole: body.financeRole,
+      jti: body.jti,
     });
     if (!financeRole) {
       return jsonError('Invalid SSO signature', 401);
     }
+    if (!consumeSsoSignatureOnce(body.signature, body.expiresAt)) {
+      return jsonError('SSO ticket already used', 401);
+    }
 
     const deployOrg = satelliteOrganizationId();
-    // SEC-SSO-05: bind ticket org to deployment org when configured
     if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
       return jsonError('SSO organization mismatch', 401);
     }

@@ -21,6 +21,7 @@ import { OrgStructureService } from "./org-structure.service";
 import { TimesheetController } from "./timesheet.controller";
 import { TimesheetService } from "./timesheet.service";
 import { PayrollController } from "./payroll.controller";
+import { PayrollComponentsController } from "./payroll-components.controller";
 import { PayrollHeavyQueueService } from "./payroll-heavy.queue";
 import { PayrollHeavyWorker } from "./payroll-heavy.worker";
 import { PayrollService } from "./payroll.service";
@@ -66,6 +67,7 @@ import { ActiveListService } from "./active-list.service";
     EmployeesController,
     EmasController,
     PayrollController,
+    PayrollComponentsController,
     AbsencesController,
     AbsenceTypesController,
     OrgStructureController,

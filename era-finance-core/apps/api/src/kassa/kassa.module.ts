@@ -9,6 +9,8 @@ import { TreasuryModule } from "../treasury/treasury.module";
 import { AdvanceReportService } from "./advance-report.service";
 import { CashDeskController } from "./cash-desk.controller";
 import { CashOrderService } from "./cash-order.service";
+import { CashOrderSubtypesController } from "./cash-order-subtypes.controller";
+import { CashOrderSubtypesService } from "./cash-order-subtypes.service";
 
 @Module({
   imports: [
@@ -20,8 +22,8 @@ import { CashOrderService } from "./cash-order.service";
     FxModule,
     forwardRef(() => ComplianceModule),
   ],
-  controllers: [CashDeskController],
-  providers: [CashOrderService, AdvanceReportService],
-  exports: [CashOrderService, AdvanceReportService],
+  controllers: [CashDeskController, CashOrderSubtypesController],
+  providers: [CashOrderService, AdvanceReportService, CashOrderSubtypesService],
+  exports: [CashOrderService, AdvanceReportService, CashOrderSubtypesService],
 })
 export class KassaModule {}

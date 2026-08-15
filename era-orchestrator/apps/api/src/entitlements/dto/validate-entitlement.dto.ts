@@ -3,6 +3,9 @@ export type ValidateEntitlementRequest = {
   userId?: string;
   method: string;
   path: string;
+  /**
+   * @deprecated SEC-CP-01 — ignored by EntitlementsService; resolve from userId/DB.
+   */
   isSuperAdmin?: boolean;
 };
 

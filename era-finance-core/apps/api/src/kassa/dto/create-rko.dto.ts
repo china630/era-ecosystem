@@ -1,14 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { CashOrderRkoSubtype } from "@erafinance/database";
 import { Type } from "class-transformer";
 import {
   IsDateString,
-  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
   IsUUID,
   Min,
+  MinLength,
 } from "class-validator";
 
 export class CreateRkoDraftDto {
@@ -16,9 +15,10 @@ export class CreateRkoDraftDto {
   @IsDateString()
   date!: string;
 
-  @ApiProperty({ enum: CashOrderRkoSubtype })
-  @IsEnum(CashOrderRkoSubtype)
-  rkoSubtype!: CashOrderRkoSubtype;
+  @ApiProperty({ example: "SUPPLIER_PAYMENT" })
+  @IsString()
+  @MinLength(1)
+  rkoSubtype!: string;
 
   @ApiProperty({ example: 50 })
   @Type(() => Number)

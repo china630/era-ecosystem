@@ -12,6 +12,9 @@ const updateSchema = z.object({
   durationMin: z.number().int().positive().optional(),
   resourceKind: z.enum(["ROOM", "EQUIPMENT"]).nullable().optional(),
   resourceCode: z.string().nullable().optional(),
+  bodyPart: z.string().min(1).nullable().optional(),
+  afterLunchAllowed: z.boolean().optional(),
+  extendedEndHour: z.number().int().min(1).max(24).nullable().optional(),
 });
 
 export async function PATCH(

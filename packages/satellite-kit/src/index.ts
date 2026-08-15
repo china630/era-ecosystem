@@ -25,6 +25,10 @@ export {
   resolveVerifiedSsoFinanceRole,
 } from "./auth/sso-verify";
 export {
+  consumeSsoSignatureOnce,
+  resetSsoReplayStoreForTests,
+} from "./auth/sso-replay";
+export {
   signSatelliteSsoPayload,
   buildSatelliteSsoLaunchUrl,
   defaultSsoExpiresAt,

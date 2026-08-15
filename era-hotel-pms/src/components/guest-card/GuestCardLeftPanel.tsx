@@ -43,41 +43,41 @@ export function GuestCardLeftPanel({
   title,
   gender,
   nationality,
-  birthDate,
-  birthPlace,
-  phone,
-  email,
+  birthDate = '',
+  birthPlace = '',
+  phone = '',
+  email = '',
   vipType,
-  loyaltyTier,
-  verificationStatus,
+  loyaltyTier = '',
+  verificationStatus = '',
   greyList,
   problematic,
-  phoneVerified,
-  emailVerified,
-  voen,
-  visaType,
-  visaNumber,
-  visaExpiry,
-  registrationNumber,
-  vehiclePlate,
-  occupation,
-  maritalStatus,
-  fatherName,
-  motherName,
-  marriageDate,
-  bonusPercent,
-  hotelName,
-  transientIdentity,
-  mdmProfile,
+  phoneVerified = false,
+  emailVerified = false,
+  voen = '',
+  visaType = '',
+  visaNumber = '',
+  visaExpiry = '',
+  registrationNumber = '',
+  vehiclePlate = '',
+  occupation = '',
+  maritalStatus = '',
+  fatherName = '',
+  motherName = '',
+  marriageDate = '',
+  bonusPercent = '',
+  hotelName = '',
+  transientIdentity = { nationalIdFin: '', passportNumber: '' },
+  mdmProfile = null,
   profileLoading,
-  guestId,
-  globalPersonId,
+  guestId = null,
+  globalPersonId = null,
   allergenCount,
   onIdReader,
   onChange,
-  onTransientChange,
-  onVerified,
-  onGlobalPersonIdChange,
+  onTransientChange = () => {},
+  onVerified = () => {},
+  onGlobalPersonIdChange = () => {},
   onReload,
 }: {
   fullName: string;
@@ -86,41 +86,41 @@ export function GuestCardLeftPanel({
   title: string;
   gender: string;
   nationality: string;
-  birthDate: string;
-  birthPlace: string;
-  phone: string;
-  email: string;
+  birthDate?: string;
+  birthPlace?: string;
+  phone?: string;
+  email?: string;
   vipType: string;
-  loyaltyTier: string;
-  verificationStatus: string;
+  loyaltyTier?: string;
+  verificationStatus?: string;
   greyList: boolean;
   problematic: boolean;
-  phoneVerified: boolean;
-  emailVerified: boolean;
-  voen: string;
-  visaType: string;
-  visaNumber: string;
-  visaExpiry: string;
-  registrationNumber: string;
-  vehiclePlate: string;
-  occupation: string;
-  maritalStatus: string;
-  fatherName: string;
-  motherName: string;
-  marriageDate: string;
-  bonusPercent: string;
-  hotelName: string;
-  transientIdentity: { nationalIdFin: string; passportNumber: string };
-  mdmProfile: MdmProfile | null;
+  phoneVerified?: boolean;
+  emailVerified?: boolean;
+  voen?: string;
+  visaType?: string;
+  visaNumber?: string;
+  visaExpiry?: string;
+  registrationNumber?: string;
+  vehiclePlate?: string;
+  occupation?: string;
+  maritalStatus?: string;
+  fatherName?: string;
+  motherName?: string;
+  marriageDate?: string;
+  bonusPercent?: string;
+  hotelName?: string;
+  transientIdentity?: { nationalIdFin: string; passportNumber: string };
+  mdmProfile?: MdmProfile | null;
   profileLoading?: boolean;
-  guestId: string | null;
-  globalPersonId: string | null;
+  guestId?: string | null;
+  globalPersonId?: string | null;
   allergenCount?: number;
   onIdReader?: () => void;
   onChange: (patch: Record<string, string | boolean>) => void;
-  onTransientChange: (key: 'nationalIdFin' | 'passportNumber', value: string) => void;
-  onVerified: (key: 'phoneVerified' | 'emailVerified', value: boolean) => void;
-  onGlobalPersonIdChange: (id: string | null) => void;
+  onTransientChange?: (key: 'nationalIdFin' | 'passportNumber', value: string) => void;
+  onVerified?: (key: 'phoneVerified' | 'emailVerified', value: boolean) => void;
+  onGlobalPersonIdChange?: (id: string | null) => void;
   onReload?: () => void;
 }) {
   const t = useTranslations('guestCard');

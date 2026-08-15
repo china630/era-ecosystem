@@ -15,6 +15,7 @@ import { PostingAccountResolver } from "../accounting/posting/posting-account-re
 import { PostingJournalBuilder } from "../accounting/posting/posting-journal-builder.service";
 import { VatDepositService } from "../accounting/vat-deposit.service";
 import { PrismaService } from "../prisma/prisma.service";
+import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 import { InventoryService } from "../inventory/inventory.service";
 import {
   STORAGE_SERVICE,
@@ -695,6 +696,15 @@ export class InvoicesService {
     assertUserMayMutateInvoiceInPaidStatus(role, head.status);
 
     const councilTrigger = await this.prisma.$transaction(async (tx) => {
+      // SEC-FIN-07: serialize payments on the same invoice
+      const locked = await lockOrgRowForUpdate(
+        tx,
+        "invoices",
+        invoiceId,
+        organizationId,
+      );
+      if (!locked) throw new NotFoundException("Invoice not found");
+
       const existing = await tx.invoice.findFirst({
         where: { id: invoiceId, organizationId },
         include: {

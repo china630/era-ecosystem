@@ -99,6 +99,7 @@ model Organization {
   cashDesks                       CashDesk[]
   cashFlowItems                   CashFlowItem[]
   cashOrders                      CashOrder[]
+  cashOrderSubtypes               CashOrderSubtype[]
   counterparties                  Counterparty[]
   agencyCityLedgerSnapshots       AgencyCityLedgerSnapshot[]
   departments                     Department[]
@@ -1552,21 +1553,6 @@ enum PayrollComponentKind {
   DEDUCTION
 }
 
-enum PayrollComponentCode {
-  BONUS
-  MATERIAL_AID
-  ALIMONY
-  EXECUTION_SHEET
-  LOAN
-  ADVANCE
-  UNION_DUE
-  INCOME_TAX_RELIEF
-  NIGHT_PREMIUM
-  EVENING_PREMIUM
-  OVERTIME_PREMIUM
-  BASE_SALARY
-}
-
 enum BusinessTripKind {
   DOMESTIC
   FOREIGN
@@ -1590,10 +1576,11 @@ model WorkSchedule {
   @@map("work_schedules")
 }
 
+/// code was PayrollComponentCode enum — now String (ADR managed-lists A6).
 model PayrollComponent {
   id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   organizationId String               @map("organization_id") @db.Uuid
-  code           PayrollComponentCode
+  code           String
   kind           PayrollComponentKind
   nameAz         String               @map("name_az")
   nameRu         String               @map("name_ru")
@@ -1614,7 +1601,7 @@ model PayrollSlipLine {
   organizationId String               @map("organization_id") @db.Uuid
   payrollSlipId  String               @map("payroll_slip_id") @db.Uuid
   componentId    String?              @map("component_id") @db.Uuid
-  code           PayrollComponentCode
+  code           String
   kind           PayrollComponentKind
   amount         Decimal              @db.Decimal(19, 4)
   note           String               @default("")
@@ -2885,7 +2872,7 @@ model Counterparty {
   /// *
   ///    * Предпочитаемый язык портала счёта для клиента: `az` | `ru` | `en` (nullable).
   portalLocale                  String?                    @map("portal_locale")
-  /// AR payment terms in days (H-BL-48); null → default 30 in invoice due-date resolution
+  /// Payment terms in days for AR due-date defaults (hotel CL / invoice handoff).
   paymentTermsDays              Int?                       @map("payment_terms_days")
   bankAccounts                  CounterpartyBankAccount[]
   cashOrders                    CashOrder[]
@@ -3939,8 +3926,10 @@ model CashOrder {
   date                   DateTime             @db.Date
   kind                   CashOrderKind
   status                 CashOrderStatus      @default(DRAFT)
-  pkoSubtype             CashOrderPkoSubtype? @map("pko_subtype")
-  rkoSubtype             CashOrderRkoSubtype? @map("rko_subtype")
+  /// CashOrderSubtype code (direction=PKO); former CashOrderPkoSubtype enum
+  pkoSubtype             String?              @map("pko_subtype")
+  /// CashOrderSubtype code (direction=RKO); former CashOrderRkoSubtype enum
+  rkoSubtype             String?              @map("rko_subtype")
   currency               String               @default("AZN")
   amount                 Decimal              @db.Decimal(19, 4)
   purpose                String               @default("")
@@ -4920,19 +4909,30 @@ enum CashOrderStatus {
   CANCELLED
 }
 
-enum CashOrderPkoSubtype {
-  INCOME_FROM_CUSTOMER
-  RETURN_FROM_ACCOUNTABLE
-  WITHDRAWAL_FROM_BANK
-  OTHER
+/// T1 Finance catalog for PKO/RKO subtypes (ADR managed-lists A6).
+enum CashOrderSubtypeDirection {
+  PKO
+  RKO
 }
 
-enum CashOrderRkoSubtype {
-  SALARY
-  SUPPLIER_PAYMENT
-  ACCOUNTABLE_ISSUE
-  BANK_DEPOSIT
-  OTHER
+model CashOrderSubtype {
+  id             String                     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  organizationId String                     @map("organization_id") @db.Uuid
+  direction      CashOrderSubtypeDirection
+  code           String
+  nameAz         String                     @map("name_az")
+  nameRu         String                     @map("name_ru")
+  nameEn         String                     @map("name_en")
+  active         Boolean                    @default(true)
+  sortOrder      Int                        @default(0) @map("sort_order")
+  systemKey      String?                    @map("system_key")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+  organization   Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, direction, code])
+  @@index([organizationId, direction, active, sortOrder])
+  @@map("cash_order_subtypes")
 }
 
 enum AdvanceReportStatus {

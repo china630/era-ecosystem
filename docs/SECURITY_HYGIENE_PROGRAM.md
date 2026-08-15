@@ -340,23 +340,24 @@ Not a global refactor. Format = **one defect class × 1–2 apps × PR stack × 
 | SEC-HOT-02 | P0 | hotel | Default cron secret | `admin/reports/email-cron` | R0 | closed ✓ | — |
 | SEC-FIN-01 | P0 | finance | Internal token fail-open | `InternalServiceTokenGuard` | R0 | closed ✓ | — |
 | SEC-SSO-05 | P1 | satellites | Ticket org ≠ deploy org | SSO exchange bind to `ERA_SATELLITE_ORGANIZATION_ID` | R1 | closed ✓ | — |
-| SEC-SSO-01 | P1 | orch / kit | SSO replay (no jti) | satellite exchange vs finance handoff Redis | R1 | open | — |
-| SEC-SSO-04 | P1 | kit | PSA allowlist / default password | `platform-super-admin.ts` | R1 | open | — |
-| SEC-TOK-03 | P1 | orch | Shared event/MDM token | alias chain | R1 | open | — |
-| SEC-CP-01 | P1 | orch | Entitlement body `isSuperAdmin` | `entitlements.service.ts` | R1 | open | — |
-| SEC-CP-02 | P1 | orch | RolesGuard OWNER→billing.manage | `roles.guard.ts` | R1 | open | — |
-| SEC-CP-03 | P1 | orch | Org header without membership | `org-id.decorator.ts` | R1 | open | — |
-| SEC-CP-04 | P1 | orch | Freeze not global on mutations | dispute/freeze only on transfer | R1 | open | — |
-| SEC-FIN-02 | P0 | finance | Cash post double-journal | `cash-order.service.ts` TOCTOU | R2 | open | — |
-| SEC-FIN-03 | P0 | finance | Payroll PAID double-journal | `payroll.service.ts` | R2 | open | — |
-| SEC-FIN-04 | P0 | finance | Advance report double-post | `advance-report.service.ts` | R2 | open | — |
-| SEC-FIN-05 | P1 | finance | Raw SQL bypass tenant wrapper | unused `TenantPrismaRawService` | R2 | open | — |
-| SEC-FIN-06 | P1 | finance | Workers skip tenant ALS | compliance/ocr/bank workers | R2 | open | — |
-| SEC-FIN-07 | P1 | finance | Invoice payment race | `recordPayment` no FOR UPDATE | R2 | open | — |
-| SEC-FIN-08 | P1 | finance | Network receive body not DTO | `NetworkDocumentPayload` type-only | R2 | open | — |
-| SEC-CLI-02 | P0 | clinic | Public booking creates patients | `/api/booking` public POST | R3 | open | — |
-| SEC-HOT-03 | P1 | hotel | Admin API without permission | maintenance / auto-bar | R3 | open | — |
-| SEC-CLI-04 | P1 | clinic | LIS profiles admin without assert | `admin/lis-profiles` | R3 | open | — |
+| SEC-SSO-01 | P1 | orch / kit | SSO replay (no jti) | HMAC v3 jti + `consumeSsoSignatureOnce` (process-local; Redis later) | R1 | closed ✓ | — |
+| SEC-SSO-04 | P1 | kit | PSA allowlist / default password | prod fail-closed in `platform-super-admin.ts` | R1 | closed ✓ | — |
+| SEC-TOK-03 | P1 | orch | Shared event/MDM token | no prod alias to `SATELLITE_EVENT_SERVICE_TOKEN` | R1 | closed ✓ | — |
+| SEC-CP-01 | P1 | orch | Entitlement body `isSuperAdmin` | ignore body; resolve from DB + service token | R1 | closed ✓ | — |
+| SEC-CP-02 | P1 | orch | RolesGuard OWNER→billing.manage | exact role match only | R1 | closed ✓ | — |
+| SEC-CP-03 | P1 | orch | Org header without membership | JWT org required; header override super-admin only | R1 | closed ✓ | — |
+| SEC-CP-04 | P1 | orch | Freeze not global on mutations | dispute/freeze only on transfer | R1 | open | R5 |
+| SEC-FIN-02 | P0 | finance | Cash post double-journal | `cash-order.service.ts` FOR UPDATE + updateMany | R2 | closed ✓ | — |
+| SEC-FIN-03 | P0 | finance | Payroll PAID double-journal | `payroll.service.ts` SENT→PAID claim | R2 | closed ✓ | — |
+| SEC-FIN-04 | P0 | finance | Advance report double-post | `advance-report.service.ts` FOR UPDATE | R2 | closed ✓ | — |
+| SEC-FIN-05 | P1 | finance | Raw SQL bypass tenant wrapper | no `TenantPrismaRawService` on branch; only org-bound `lock-org-row` | R2 | closed ✓ | — |
+| SEC-FIN-06 | P1 | finance | Workers skip tenant ALS | no Bull workers on current finance API tree | R2 | closed ✓ | N/A |
+| SEC-FIN-07 | P1 | finance | Invoice payment race | `recordPayment` FOR UPDATE | R2 | closed ✓ | — |
+| SEC-FIN-10 | P1 | finance | Payroll run DRAFT→POSTED race | `postRunSync` updateMany claim | R2 | closed ✓ | — |
+| SEC-FIN-08 | P1 | finance | Network receive body not DTO | `ReceiveNetworkDocumentDto` + ValidationPipe | R2 | closed ✓ | — |
+| SEC-CLI-02 | P0 | clinic | Public booking creates patients | no visit/MDM/practitioner create; prod kill-switch | R3 | closed ✓ | — |
+| SEC-HOT-03 | P1 | hotel | Admin API without permission | maintenance / auto-bar `assertPermission` | R3 | closed ✓ | — |
+| SEC-CLI-04 | P1 | clinic | LIS profiles admin without assert | `assertClinicAdminWrite` | R3 | closed ✓ | — |
 | SEC-HOT-04 | P1 | hotel | Guest PII + globalPersonId | `schema.prisma` Guest | R3 | open | — |
 | SEC-CLI-05 | P1 | clinic | Passport in `refCode` | sanatorium.service | R3 | open | — |
 | SEC-KIT-01 | P2 | kit | Half-exported UI / contamination | managed-lists lesson | R4 | open | — |
@@ -388,8 +389,8 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 ### Program Definition of Done
 
 - [x] §1 threat matrix Control/Gap filled for T01–T12
-- [ ] Appendix A: all P0 closed; P1 closed or dated in a remediation wave *(R0/R1 token+SSO closed; finance/clinic P0 remain)*
-- [ ] §3 SAST on PR → `dev` (required) *(workflow present; branch protection pending tune-in)*
+- [x] Appendix A: all P0 closed; remaining P1 dated *(SEC-CP-04 → R5; HOT-04/CLI-05 PII → R3 residual; KIT-01 → R4)*
+- [ ] §3 SAST on PR → `dev` (required) *(workflow present; Semgrep/OSV tune-in exit 0; branch protection pending)*
 - [ ] §4 DAST nightly or pre-pilot with auth fixtures *(scripts present)*
 - [ ] Closed P0/P1 classes have negative test or audit/Semgrep rule *(AuthZ smoke covers subset)*
 - [x] No standing «global refactor» initiative — only R0–R5
@@ -401,6 +402,8 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 |------|--------|
 | 2026-08-04 | Initial SSOT: phases 0–6, appendices A–C, locked tools |
 | 2026-08-04 | Full program pass: Waves A–C audit; R0/R1 remediations (tokens, BFF, SSO v2, dispatch, bridges); SAST workflow; DAST scripts; PR template; Appendix A filled |
+| 2026-08-04 | R2 finance atomic claim: cash/payroll/advance/invoice FOR UPDATE + updateMany (SEC-FIN-02/03/04/07/10) |
+| 2026-08-04 | R1/R3 closeout: SSO replay/jti, PSA/prod tokens, CP AuthZ, CLI-02 booking harden, HOT-03/CLI-04 admin guards, FIN-08 DTO; SAST tune-in non-blocking |
 
 ---
 
@@ -411,7 +414,6 @@ Policy: no permanent suppressions without rationale and expiry. Prefer fixing co
 | [INTEGRATION_AUDIT_CI.md](./INTEGRATION_AUDIT_CI.md) | MDM / hub / reference static gates |
 | [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) | SSO and satellite events |
 | [ECOSYSTEM_URLS.md](./ECOSYSTEM_URLS.md) | Lab / local URLs for DAST |
-| [acceptance/README.md](./acceptance/README.md) | Product acceptance index |
 | [products/ERA-Acceptance-Standard.md](./products/ERA-Acceptance-Standard.md) | Acceptance canon |
 | [adr/org-operating-mode.md](./adr/org-operating-mode.md) | Tenancy / operating mode |
 | [adr/cp-workforce-role-templates-and-security-admin.md](./adr/cp-workforce-role-templates-and-security-admin.md) | Workforce AuthZ |

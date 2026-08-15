@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { jsonOk, handleRouteError, getRouteSession, jsonError } from "@/lib/api-utils";
 import {
-  listPatients,
+  listPatientsPaged,
   createPatient,
   PatientMdmRequiredError,
+  PatientAnamnesisRequiredError,
 } from "@/domain/patient/patient.service";
 import { patientHasMdmIdentifier } from "@era/clinic-domain";
 
@@ -34,17 +35,45 @@ const createSchema = z
     finCode: z.string().optional(),
     passportNumber: z.string().optional(),
     issuingCountry: z.string().optional(),
+    anamnesisText: z.string().nullable().optional(),
   })
   .refine((d) => patientHasMdmIdentifier(d), {
     message: "Provide FIN, passport+country, or phone for MDM resolve",
   });
 
+function parseHasMdm(raw: string | null): 0 | 1 | undefined {
+  if (raw === "0") return 0;
+  if (raw === "1") return 1;
+  return undefined;
+}
+
 export async function GET(req: Request) {
   try {
     const session = await getRouteSession();
     if (!session) return jsonError("Unauthorized", 401);
-    const q = new URL(req.url).searchParams.get("q") ?? undefined;
-    return jsonOk(await listPatients(q));
+    const params = new URL(req.url).searchParams;
+    const q = params.get("q") ?? undefined;
+    const sexRaw = params.get("sex");
+    const bloodRaw = params.get("bloodGroup");
+    const pageRaw = params.get("page");
+    const pageSizeRaw = params.get("pageSize");
+    const ageMinRaw = params.get("ageMin");
+    const ageMaxRaw = params.get("ageMax");
+
+    const result = await listPatientsPaged({
+      q,
+      sex: sexRaw && patientSex.safeParse(sexRaw).success ? (sexRaw as z.infer<typeof patientSex>) : undefined,
+      bloodGroup:
+        bloodRaw && patientBloodGroup.safeParse(bloodRaw).success
+          ? (bloodRaw as z.infer<typeof patientBloodGroup>)
+          : undefined,
+      hasMdm: parseHasMdm(params.get("hasMdm")),
+      ageMin: ageMinRaw ? Number(ageMinRaw) : undefined,
+      ageMax: ageMaxRaw ? Number(ageMaxRaw) : undefined,
+      page: pageRaw ? Number(pageRaw) : undefined,
+      pageSize: pageSizeRaw ? Number(pageSizeRaw) : undefined,
+    });
+    return jsonOk(result);
   } catch (err) {
     return handleRouteError(err);
   }

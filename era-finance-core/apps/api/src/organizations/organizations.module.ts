@@ -14,6 +14,7 @@ import { OrganizationsService } from "./organizations.service";
 import { HoldingsController } from "./holdings.controller";
 import { HoldingsReportingService } from "./holdings-reporting.service";
 import { OrganizationSettingsController } from "./organization-settings.controller";
+import { OrganizationTendersController } from "./organization-tenders.controller";
 import { OrganizationSettingsService } from "./organization-settings.service";
 
 @Module({
@@ -33,6 +34,7 @@ import { OrganizationSettingsService } from "./organization-settings.service";
     OrganizationsController,
     HoldingsController,
     OrganizationSettingsController,
+    OrganizationTendersController,
   ],
   providers: [
     OrganizationsService,

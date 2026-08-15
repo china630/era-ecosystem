@@ -1,0 +1,388 @@
+{
+  "finishedAt": "2026-07-17T19:29:25.618Z",
+  "cache": {
+    "path": "D:\\My Projects\\era-ecosystem\\data\\legal-entities\\.cache\\etaxes-search",
+    "exists": false,
+    "nameFiles": 0
+  },
+  "exactCache": [
+    {
+      "token": "hotel",
+      "cachePresent": false
+    },
+    {
+      "token": "otel",
+      "cachePresent": false
+    },
+    {
+      "token": "resort",
+      "cachePresent": false
+    },
+    {
+      "token": "trans",
+      "cachePresent": false
+    },
+    {
+      "token": "exp",
+      "cachePresent": false
+    },
+    {
+      "token": "eksp",
+      "cachePresent": false
+    },
+    {
+      "token": "tour",
+      "cachePresent": false
+    },
+    {
+      "token": "turizm",
+      "cachePresent": false
+    },
+    {
+      "token": "travel",
+      "cachePresent": false
+    },
+    {
+      "token": "logistik",
+      "cachePresent": false
+    },
+    {
+      "token": "logistic",
+      "cachePresent": false
+    },
+    {
+      "token": "cargo",
+      "cachePresent": false
+    },
+    {
+      "token": "freight",
+      "cachePresent": false
+    },
+    {
+      "token": "shipping",
+      "cachePresent": false
+    },
+    {
+      "token": "avia",
+      "cachePresent": false
+    },
+    {
+      "token": "airline",
+      "cachePresent": false
+    },
+    {
+      "token": "marina",
+      "cachePresent": false
+    },
+    {
+      "token": "spa",
+      "cachePresent": false
+    },
+    {
+      "token": "sanatoriya",
+      "cachePresent": false
+    },
+    {
+      "token": "hostel",
+      "cachePresent": false
+    },
+    {
+      "token": "palace",
+      "cachePresent": false
+    },
+    {
+      "token": "transit",
+      "cachePresent": false
+    },
+    {
+      "token": "forward",
+      "cachePresent": false
+    },
+    {
+      "token": "broker",
+      "cachePresent": false
+    },
+    {
+      "token": "express",
+      "cachePresent": false
+    },
+    {
+      "token": "transport",
+      "cachePresent": false
+    }
+  ],
+  "sources": [
+    {
+      "file": "D:\\My Projects\\era-ecosystem\\data\\legal-entities\\azerbaijan-tax-registry-expanded.csv",
+      "rows": 32977,
+      "results": [
+        {
+          "token": "hotel",
+          "companies": 139,
+          "uniqueVoen": 139,
+          "samples": [
+            "\"ABSHERON HOTEL GROUP\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ADİSSON HOTEL RESTAURANTS\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ADMİRAL HOTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ALBA HOTEL SPA\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "otel",
+          "companies": 13,
+          "uniqueVoen": 13,
+          "samples": [
+            "\"BARAT OTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"BİLGƏH OTEL TİKİNTİ\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"CONTİNENT OTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"DİPLOMAT OTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "resort",
+          "companies": 26,
+          "uniqueVoen": 26,
+          "samples": [
+            "\"BOOYNOOZ RESORT\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"CountrySide Resort\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"GÖYGÖL LAKE RESORT\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"GUBA GOLF RESORT\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "trans",
+          "companies": 51,
+          "uniqueVoen": 51,
+          "samples": [
+            "\"ADMİRAL TRANS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ADNAN TRANS GROUP\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ALPHA-OMEGA TRANS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ASTARA TRANS SERVİS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "exp",
+          "companies": 1,
+          "uniqueVoen": 1,
+          "samples": [
+            "\"NORTH-EXP\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "eksp",
+          "companies": 0,
+          "uniqueVoen": 0,
+          "samples": []
+        },
+        {
+          "token": "tour",
+          "companies": 86,
+          "uniqueVoen": 86,
+          "samples": [
+            "\"1001 NİGHTS TOUR COMPANY\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ADDRESS TOUR AND TRAVEL\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ADƏMOĞLU TOUR\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ALL SEASONS TOUR\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "turizm",
+          "companies": 157,
+          "uniqueVoen": 157,
+          "samples": [
+            "\"3 STARS TURİZM TEKNOLOJİ VE TİCARET LİMİTED ŞİRKETİNİN\" AZƏRBAYCAN RESPUBLİKASINDAKI FİLİALI",
+            "“A.YENİKAZANCI İKLİMLENDİRME KLİMA ISITMA SOĞUTMA HAVALANDIRMA ELEKTRİKLİ EV ALETLERİ BEYAZ EŞYA ELE",
+            "\"AFFAN EMLAK TURİZM VE İNŞAAT TİCARET ANONİM\" ŞİRKETİNİN AZƏRBAYCAN FİLİALI",
+            "\"AGAH TURİZM\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "travel",
+          "companies": 534,
+          "uniqueVoen": 534,
+          "samples": [
+            " \"MOORTHY ASİA AZERBAİJAN TRAVEL \" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\" SKYCAMP TRAVEL\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"5 STAR TRAVEL\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"7 DAYS TRAVEL COMPANY\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "logistik",
+          "companies": 9,
+          "uniqueVoen": 9,
+          "samples": [
+            "\"ARMADA LOGISTIK\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"AZEL LOGİSTİK SERVİCES\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"KARVAN MOTORS VƏ LOGİSTİK\"  MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"QAFQAZ LOGİSTİK 2019\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "logistic",
+          "companies": 10,
+          "uniqueVoen": 10,
+          "samples": [
+            "\"AZ-KARABAKH LOGISTIC\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"CASPIAN COAST LOGISTIC SERVICES\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"DAVUD-S TRADE AND LOGİSTİC\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"DIETRICH A.B LOGISTIC\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "cargo",
+          "companies": 9,
+          "uniqueVoen": 9,
+          "samples": [
+            "\"CASPİAN TRAVEL AGENCY AND CARGO\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"CAUCASUS-CASPIAN  INTERNATIONAL CARGO COMPANY\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"DELTA CARGO CASPİAN\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"DELUXE CARGO\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "freight",
+          "companies": 5,
+          "uniqueVoen": 5,
+          "samples": [
+            "\"FREİGHT MASTERS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"GLOBAL FREİGHT FORVARDİNG GROUP\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"RƏVAN FREIGHT FORVARDER\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"RHENUS FREİGHT EAST GMBH\" ŞİRKƏTİNİN AZƏRBAYCAN RESPUBLİKASINDAKI NÜMAYƏNDƏLİYİ (Ləğv prosesindədir"
+          ]
+        },
+        {
+          "token": "shipping",
+          "companies": 10,
+          "uniqueVoen": 10,
+          "samples": [
+            "\"AzEl Construction Shipping Service\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"AZERBAİJAN MARİTİME REGİSTRY OF SHİPPİNG\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"BASCO SHİPPİNG LTD\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"LAKER SHIPPING\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "avia",
+          "companies": 3,
+          "uniqueVoen": 3,
+          "samples": [
+            "\"AVANQARD-AVİA\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"AVİA -EKOLOGİYA\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"AVİA SHOP\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "airline",
+          "companies": 0,
+          "uniqueVoen": 0,
+          "samples": []
+        },
+        {
+          "token": "marina",
+          "companies": 3,
+          "uniqueVoen": 3,
+          "samples": [
+            "\"LAZURE MARİNA\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"MARİNA\" MƏHDUD MƏSULLİYYƏTLİ CƏMİYYƏTİ",
+            "\"SEA BREEZE MARİNA\" MƏNZİL-TİKİNTİ KOOPERATİVİ"
+          ]
+        },
+        {
+          "token": "spa",
+          "companies": 14,
+          "uniqueVoen": 14,
+          "samples": [
+            "\"ALBA HOTEL SPA\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ALTUS HOTEL SPA\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"DANİYAL SULTAN SPA MEHMANXANA\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"DURNA GÖZƏLLİK VƏ SPA MƏRKƏZİ\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "sanatoriya",
+          "companies": 6,
+          "uniqueVoen": 6,
+          "samples": [
+            "\"NAFTALAN-SANATORİYA TOUR\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"NAFTALAN\" SANATORİYA-KURORT  BİRLİYİ",
+            "\"PAMBIQÇI\" SANATORİYA-PROFİLAKTORİYASI",
+            "\"SANATORİYA\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "hostel",
+          "companies": 45,
+          "uniqueVoen": 45,
+          "samples": [
+            "\"A AND L CEYLON HOSTEL BY DİAMOND DİAZ\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"A AND R HOSTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"AL-BİLAL HOSTEL\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ALFA HOSTEL AND HOTEL\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "palace",
+          "companies": 48,
+          "uniqueVoen": 48,
+          "samples": [
+            "\"5 SİLVER PALACE\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTLİ",
+            "“ABŞERON MİR PALACE”  MƏNZİL-TİKİNTİ KOOPERATİVİ",
+            "\"ALZA PALACE\" MƏNZİL-TİKİNTİ KOOPERATİVİ ",
+            "\"BAKI İNŞAAT PALACE\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "transit",
+          "companies": 3,
+          "uniqueVoen": 3,
+          "samples": [
+            "\"DELTA QROUP TRANSIT\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"LAPİS LAZULİ TRANSİT ROUTE\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"SILK ROUTE TRANSIT\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "forward",
+          "companies": 0,
+          "uniqueVoen": 0,
+          "samples": []
+        },
+        {
+          "token": "broker",
+          "companies": 38,
+          "uniqueVoen": 38,
+          "samples": [
+            "\"AVRASİYA BROKER VƏ LOGİSTİKA XİDMƏTİ\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"AZƏRİ TACİRLƏRİ\" BROKER FİRMASI",
+            "\"CAHAN SIĞORTA VƏ TƏKRAR SIĞORTA ÜZRƏ BROKER\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"CƏNUB BROKER\" Məhdud Məsuliyyətli Cəmiyyəti"
+          ]
+        },
+        {
+          "token": "express",
+          "companies": 30,
+          "uniqueVoen": 30,
+          "samples": [
+            "\"ABŞERON EXPRESS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ALFA EXPRESS\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"ANADOLU EXPRESS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"AVAND EXPRESS\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        },
+        {
+          "token": "transport",
+          "companies": 102,
+          "uniqueVoen": 102,
+          "samples": [
+            "\"884 TRANSPORT\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"A-FF TRANSPORT\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ",
+            "\"ABSHERON TRANSPORT\" Məhdud Məsuliyyətli Cəmiyyəti",
+            "\"AFURJA TRANSPORT\" MƏHDUD MƏSULİYYƏTLİ CƏMİYYƏTİ"
+          ]
+        }
+      ]
+    }
+  ],
+  "note": "Cache dir may be empty after cleanup; CSV scan uses tax_name substrings with word-ish boundaries. Short tokens (exp, spa, inn) are noisier."
+}

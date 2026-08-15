@@ -9,13 +9,15 @@ import {
 import {
   AdvanceReportStatus,
   CashOrderKind,
-  CashOrderPkoSubtype,
-  CashOrderRkoSubtype,
   CashOrderStatus,
   Decimal,
   LedgerType,
   type Prisma,
 } from "@erafinance/database";
+import {
+  CashOrderPkoSubtype,
+  CashOrderRkoSubtype,
+} from "./cash-order-subtype-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import {
@@ -31,6 +33,7 @@ import { TreasuryService } from "../treasury/treasury.service";
 import { ApprovalsService } from "../approvals/approvals.service";
 import { CouncilTriggerService } from "../compliance/council/council-trigger.service";
 import { AdvanceReportService } from "./advance-report.service";
+import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 
 type Tx = Prisma.TransactionClient;
 
@@ -266,7 +269,7 @@ export class CashOrderService {
     organizationId: string,
     dto: {
       date: string;
-      pkoSubtype: CashOrderPkoSubtype;
+      pkoSubtype: string;
       amount: number;
       currency?: string;
       purpose: string;
@@ -334,7 +337,7 @@ export class CashOrderService {
     organizationId: string,
     dto: {
       date: string;
-      rkoSubtype: CashOrderRkoSubtype;
+      rkoSubtype: string;
       amount: number;
       currency?: string;
       purpose: string;
@@ -411,7 +414,7 @@ export class CashOrderService {
 
   private async resolvePkoOffset(
     organizationId: string,
-    st: CashOrderPkoSubtype,
+    st: string,
     explicit?: string,
   ): Promise<string> {
     if (explicit?.trim()) return explicit.trim();
@@ -498,7 +501,7 @@ export class CashOrderService {
   private async resolveRkoOffset(
     prisma: PrismaService | Tx,
     organizationId: string,
-    st: CashOrderRkoSubtype,
+    st: string,
     employeeId: string | undefined,
     explicit?: string,
   ): Promise<string> {
@@ -540,12 +543,23 @@ export class CashOrderService {
     }
     await this.approvals.assertCashOrderMayPost(organizationId, orderId);
     if (order.skipJournalPosting) {
-      const posted = await this.prisma.cashOrder.update({
-        where: { id: order.id },
+      // SEC-FIN-02: atomic DRAFT→POSTED claim (no journal path)
+      const claimed = await this.prisma.cashOrder.updateMany({
+        where: {
+          id: order.id,
+          organizationId,
+          status: CashOrderStatus.DRAFT,
+        },
         data: {
           status: CashOrderStatus.POSTED,
           postedTransactionId: order.linkedTransactionId ?? undefined,
         },
+      });
+      if (claimed.count !== 1) {
+        throw new ConflictException("Order is not draft");
+      }
+      const posted = await this.prisma.cashOrder.findUniqueOrThrow({
+        where: { id: order.id },
       });
       this.maybeTriggerCouncilForCashOrder(organizationId, posted);
       return posted;
@@ -593,6 +607,16 @@ export class CashOrderService {
     });
 
     const posted = await this.prisma.$transaction(async (tx) => {
+      // SEC-FIN-02: lock row before journal so concurrent posts serialize
+      const locked = await lockOrgRowForUpdate(
+        tx,
+        "cash_orders",
+        order.id,
+        organizationId,
+      );
+      if (!locked || locked.status !== CashOrderStatus.DRAFT) {
+        throw new ConflictException("Order is not draft");
+      }
       const payrollTaxPayableCode = wht.gt(0)
         ? await this.posting.resolveAccountCode(organizationId, "PAYROLL_TAX_PAYABLE", tx)
         : null;
@@ -627,13 +651,20 @@ export class CashOrderService {
         isFinal: true,
         lines,
       });
-      await tx.cashOrder.update({
-        where: { id: order.id },
+      const claimed = await tx.cashOrder.updateMany({
+        where: {
+          id: order.id,
+          organizationId,
+          status: CashOrderStatus.DRAFT,
+        },
         data: {
           status: CashOrderStatus.POSTED,
           postedTransactionId: transactionId,
         },
       });
+      if (claimed.count !== 1) {
+        throw new ConflictException("Order is not draft");
+      }
       return tx.cashOrder.findUniqueOrThrow({ where: { id: order.id } });
     });
     this.maybeTriggerCouncilForCashOrder(organizationId, posted);
@@ -862,6 +893,15 @@ export class CashOrderService {
     const amt = rep.totalDeclared.toString();
 
     return this.prisma.$transaction(async (tx) => {
+      const locked = await lockOrgRowForUpdate(
+        tx,
+        "advance_reports",
+        rep.id,
+        organizationId,
+      );
+      if (!locked || locked.status !== AdvanceReportStatus.DRAFT) {
+        throw new ConflictException("Already posted");
+      }
       const miscExpenseCode = await this.posting.resolveAccountCode(
         organizationId,
         "MISC_OPERATING_EXPENSE",
@@ -882,13 +922,20 @@ export class CashOrderService {
           { accountCode: acc244, debit: "0", credit: amt },
         ],
       });
-      await tx.advanceReport.update({
-        where: { id: rep.id },
+      const claimed = await tx.advanceReport.updateMany({
+        where: {
+          id: rep.id,
+          organizationId,
+          status: AdvanceReportStatus.DRAFT,
+        },
         data: {
           status: AdvanceReportStatus.POSTED,
           transactionId,
         },
       });
+      if (claimed.count !== 1) {
+        throw new ConflictException("Already posted");
+      }
       return tx.advanceReport.findUniqueOrThrow({ where: { id: rep.id } });
     });
   }

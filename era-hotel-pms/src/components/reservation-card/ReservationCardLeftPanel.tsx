@@ -91,13 +91,14 @@ export type ReservationCardLeftPanelProps = {
   salesContractId: string;
   creditLimitAzn: string;
   folioBalance: number;
-  booker: string;
-  guestRep: string;
-  paidBy: string;
-  vipType: string;
-  accomType: string;
-  recordType: string;
-  tripReason: string;
+  /** Optional until FO editor wires commercial booker fields. */
+  booker?: string;
+  guestRep?: string;
+  paidBy?: string;
+  vipType?: string;
+  accomType?: string;
+  recordType?: string;
+  tripReason?: string;
   statusLabel?: string;
   reservationId?: string | null;
   agencies: AgencyOption[];
@@ -128,6 +129,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
     isLocked,
     showAssignment = false,
     sellable = null,
+    booker = '',
+    guestRep = '',
+    paidBy = '',
+    vipType = '',
+    accomType = '',
+    recordType = '',
+    tripReason = '',
     agencies,
     sources,
     salesContracts,
@@ -400,9 +408,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               kind="CLOSED_SMALL"
               label={t('vipType')}
               className="min-w-0"
-              value={props.vipType}
+              value={vipType}
               onChange={setCatalog('vipType')}
-              options={withOrphanOption(byKind.VIP_TYPE ?? [], props.vipType)}
+              options={withOrphanOption(byKind.VIP_TYPE ?? [], vipType)}
               hint={t('vipFromGuestHint')}
               disabled={disabled}
             />
@@ -410,9 +418,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               kind="CLOSED_SMALL"
               label={t('tripReason')}
               className="min-w-0"
-              value={props.tripReason}
+              value={tripReason}
               onChange={setCatalog('tripReason')}
-              options={withOrphanOption(byKind.TRIP_REASON ?? [], props.tripReason)}
+              options={withOrphanOption(byKind.TRIP_REASON ?? [], tripReason)}
               disabled={disabled}
             />
           </FieldRow>
@@ -474,9 +482,9 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             <Field label={t('contractRef')} preset="code" value={props.contractRef} onChange={set('contractRef')} />
           </FieldRow>
           <FieldRow cols={3}>
-            <Field label={t('booker')} preset="shortText" value={props.booker} onChange={set('booker')} />
-            <Field label={t('guestRep')} preset="shortText" value={props.guestRep} onChange={set('guestRep')} />
-            <Field label={t('paidBy')} preset="shortText" value={props.paidBy} onChange={set('paidBy')} />
+            <Field label={t('booker')} preset="shortText" value={booker} onChange={set('booker')} />
+            <Field label={t('guestRep')} preset="shortText" value={guestRep} onChange={set('guestRep')} />
+            <Field label={t('paidBy')} preset="shortText" value={paidBy} onChange={set('paidBy')} />
           </FieldRow>
             <CatalogField
               kind="CLOSED_SMALL"
@@ -682,17 +690,17 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
             <CatalogField
               kind="CLOSED_SMALL"
               label={t('accomType')}
-              value={props.accomType}
+              value={accomType}
               onChange={setCatalog('accomType')}
-              options={withOrphanOption(byKind.ACCOM_TYPE ?? [], props.accomType)}
+              options={withOrphanOption(byKind.ACCOM_TYPE ?? [], accomType)}
               disabled={disabled}
             />
             <CatalogField
               kind="CLOSED_SMALL"
               label={t('recordType')}
-              value={props.recordType}
+              value={recordType}
               onChange={setCatalog('recordType')}
-              options={withOrphanOption(byKind.RECORD_TYPE ?? [], props.recordType)}
+              options={withOrphanOption(byKind.RECORD_TYPE ?? [], recordType)}
               disabled={disabled}
             />
           </FieldRow>

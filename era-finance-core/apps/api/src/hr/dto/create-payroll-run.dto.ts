@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { PayrollComponentKind } from "@erafinance/database";
 import { Type } from "class-transformer";
 import {
   IsArray,
-  IsEnum,
   IsIn,
   IsInt,
   IsNumber,
@@ -12,11 +10,12 @@ import {
   IsUUID,
   Max,
   Min,
+  MinLength,
   ValidateNested,
 } from "class-validator";
 import {
   PAYROLL_COMPONENT_CODES,
-  PayrollComponentCode,
+  type PayrollComponentCode,
 } from "../payroll-component-codes";
 
 export class PayrollEmployeeLineDto {
@@ -79,26 +78,4 @@ export class EmailPayslipDto {
   @IsOptional()
   @IsString()
   to?: string;
-}
-
-export class CreatePayrollComponentDto {
-  @ApiProperty({ enum: PAYROLL_COMPONENT_CODES })
-  @IsIn(PAYROLL_COMPONENT_CODES)
-  code!: PayrollComponentCode;
-
-  @ApiProperty({ enum: PayrollComponentKind })
-  @IsEnum(PayrollComponentKind)
-  kind!: PayrollComponentKind;
-
-  @ApiProperty()
-  @IsString()
-  nameAz!: string;
-
-  @ApiProperty()
-  @IsString()
-  nameRu!: string;
-
-  @ApiProperty()
-  @IsString()
-  nameEn!: string;
 }

@@ -7,13 +7,13 @@ import {
 import {
   AdvanceReportStatus,
   CashOrderKind,
-  CashOrderRkoSubtype,
   CashOrderStatus,
   Decimal,
   LedgerType,
   type PostingRole,
   type Prisma,
 } from "@erafinance/database";
+import { CashOrderRkoSubtype } from "./cash-order-subtype-codes";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { CurrencyConverterService } from "../fx/currency-converter.service";
@@ -22,6 +22,7 @@ import { OrchestratorMdmClientService } from "../orchestrator/orchestrator-mdm-c
 import { PrismaService } from "../prisma/prisma.service";
 import { ReportingService } from "../reporting/reporting.service";
 import { decodeOrganizationTaxId } from "../security/pii-crypto.util";
+import { lockOrgRowForUpdate } from "../common/db/lock-org-row";
 
 type Tx = Prisma.TransactionClient;
 
@@ -326,6 +327,16 @@ export class AdvanceReportService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // SEC-FIN-04: lock before journal
+      const locked = await lockOrgRowForUpdate(
+        tx,
+        "advance_reports",
+        rep.id,
+        organizationId,
+      );
+      if (!locked || locked.status !== AdvanceReportStatus.DRAFT) {
+        throw new ConflictException("Already posted");
+      }
       const { transactionId } = await this.accounting.postJournalInTransaction(tx, {
         organizationId,
         date: reportDate,
@@ -334,13 +345,20 @@ export class AdvanceReportService {
         isFinal: true,
         lines: journalLines,
       });
-      await tx.advanceReport.update({
-        where: { id: rep.id },
+      const claimed = await tx.advanceReport.updateMany({
+        where: {
+          id: rep.id,
+          organizationId,
+          status: AdvanceReportStatus.DRAFT,
+        },
         data: {
           status: AdvanceReportStatus.POSTED,
           transactionId,
         },
       });
+      if (claimed.count !== 1) {
+        throw new ConflictException("Already posted");
+      }
       return tx.advanceReport.findUniqueOrThrow({
         where: { id: rep.id },
         include: { lines: true, transaction: { select: { id: true, reference: true } } },

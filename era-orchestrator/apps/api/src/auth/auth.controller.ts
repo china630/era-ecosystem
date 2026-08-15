@@ -65,7 +65,6 @@ export class AuthController {
       userId: user.sub,
       email: user.email,
       organizationId: body.organizationId ?? user.organizationId ?? null,
-      role: user.role ? String(user.role) : null,
     });
   }
 
