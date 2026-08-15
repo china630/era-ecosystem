@@ -1,0 +1,42 @@
+---
+description: Legal-entities master + e-taxes cache must stay outside git; backup to D:\ERA-BACKUP
+globs: data/legal-entities/**,tools/backup-legal-entities.ps1,tools/build-azerbaijan-companies-master.mjs,tools/enrich-etaxes*.mjs
+alwaysApply: false
+---
+
+# Legal entities — master + cache backup
+
+## Canonical product files (local, not git)
+
+| File | Role |
+|------|------|
+| `data/legal-entities/azerbaijan-companies-with-voen.csv` | Master company DB (~VÖEN rows) |
+| `data/legal-entities/azerbaijan-companies-without-voen.csv` | Donors still without VÖEN |
+| `data/legal-entities/.companies-master-stats.json` | Build stats |
+| `data/legal-entities/.cache/etaxes-search/` | DVX API response cache (gitignored) |
+
+Do **not** treat intermediate CSVs (`azerbaijan-legal-entities.csv`, `azerbaijan-tax-registry-expanded.csv`, `azerbaijan-donors-no-tax-match.csv`) as the product — they are obsolete.
+
+## Backup location (mandatory)
+
+Mirror to **`D:\ERA-BACKUP\legal-entities\`**:
+
+```text
+D:\ERA-BACKUP\legal-entities\latest\master\     # CSVs + stats
+D:\ERA-BACKUP\legal-entities\latest\cache\etaxes-search\
+D:\ERA-BACKUP\legal-entities\snapshots\<stamp>\
+```
+
+```powershell
+npm run backup:legal-entities
+# or
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/backup-legal-entities.ps1
+```
+
+## Safety rules for agents
+
+1. **Before** `git stash -u`, `git clean`, or any bulk untracked wipe: run backup; verify `latest\master\azerbaijan-companies-with-voen.csv` size (~400MB+).
+2. **Never drop** a git stash that still holds master recovery blobs until `D:\ERA-BACKUP\...\latest\` is verified.
+3. `npm run build:companies-master` must **merge** cache into the existing master (never rebuild from empty cache alone).
+4. After a successful enrich wave that grows master or cache: run `backup:legal-entities` again.
+5. Cache is recoverable only by re-querying DVX — treat it as expensive; always robocopy when present.

@@ -47,8 +47,24 @@ Kernel routes consumed by `era-bank` BFF (prefix `/api/v1/`).
 | Module | Routes |
 |--------|--------|
 | Payments | `GET/POST /payments/orders`, `GET /payments/orders/:id`, `POST .../submit`, `POST /payments/inbound` |
+| Payments cash | `/payments/standing-orders`, `/payments/virtual-accounts`, `/payments/cheques`, `/payments/sweep-rules`, `/payments/nostro-statement-import` |
 | Deposits | `GET/POST /deposits`, `GET /deposits/:id`, `POST .../close`, `POST .../rollover` (maturity extend only) |
 | Loans | `GET/POST /loans`, `GET /loans/:id`, `GET .../schedule`, `POST .../disburse`, `.../repay`, `.../restructure` |
+| Loans deep | applications, credit-lines, drawdowns, score, collateral valuations, liens |
+
+## BE Lite→Deep L2
+
+| Module | Routes |
+|--------|--------|
+| Fees / SDB / packages | `/fees/tariffs`, `/fees/assess`, `/fees/packages`, `/fees/safe-deposit-boxes` |
+| Cash | `/cash/movements`, `/cash/inventory`, `/cash/queue` |
+| Collections | `/collections/cases` (+ assign/ptp/recover/write-off) |
+| Trade | `/trade/lc`, `/trade/guarantees`, `/trade/dc`, `/trade/scf`, `/trade/swift` |
+| Islamic | `/islamic/contracts` |
+| Wealth | `/wealth/safekeeping`, `/wealth/positions/receive`, `/wealth/insurance-commissions` |
+| AML extras | `/aml/cases`, `/aml/fraud/score` |
+| Risk extras | `/risk/irrbb/inputs`, `/risk/oprisk/...` |
+| DBO ops | H2H jobs + OB consents (dbo-ops) |
 
 ## Product factory
 

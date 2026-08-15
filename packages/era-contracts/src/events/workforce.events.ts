@@ -5,7 +5,15 @@ export const WORKFORCE_ABSENCE_APPROVED = "WORKFORCE_ABSENCE_APPROVED" as const;
 export const WORKFORCE_ABSENCE_CANCELLED = "WORKFORCE_ABSENCE_CANCELLED" as const;
 export const WORKFORCE_ABSENCE_UPDATED = "WORKFORCE_ABSENCE_UPDATED" as const;
 
-export const workforceAbsenceKindSchema = z.enum(["VACATION", "SICK", "UNPAID"]);
+export const workforceAbsenceKindSchema = z.enum([
+  "VACATION",
+  "SICK",
+  "UNPAID",
+  "SOCIAL_LEAVE",
+  "EDUCATIONAL_LEAVE",
+  "BUSINESS_TRIP",
+  "ADMINISTRATIVE",
+]);
 
 export const workforceAbsenceEventPayloadSchema = z.object({
   cpAbsenceId: z.string().uuid(),

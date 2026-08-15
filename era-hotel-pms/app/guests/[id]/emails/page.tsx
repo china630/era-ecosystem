@@ -7,16 +7,17 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crm.sendEmail"
       apiPath={(gid) => `/api/guests/${gid}/communications?channel=EMAIL`}
-      onAdd={async (guestId) => {
-        const body = window.prompt('Email body');
-        const subject = window.prompt('Subject') ?? '';
-        if (!body?.trim()) return;
-        await fetch(`/api/guests/${guestId}/communications`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: 'EMAIL', subject, body: body.trim() }),
-        });
-      }}
+      postPath={(gid) => `/api/guests/${gid}/communications`}
+      addFields={[
+        { name: 'subject', label: 'Subject', preset: 'longText' },
+        { name: 'body', label: 'Email body', required: true, multiline: true },
+      ]}
+      buildBody={(v) => ({
+        channel: 'EMAIL',
+        subject: v.subject.trim(),
+        body: v.body.trim(),
+      })}
+      searchKeys={['subject', 'body', 'status']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           {r.subject ? <strong>{String(r.subject)}</strong> : null}

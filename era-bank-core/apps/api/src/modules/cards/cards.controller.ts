@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
-import { CardStatus, CardTxnStatus } from "@era/bank-core-database";
+import { CardStatus, CardTxnStatus, CardDisputeStatus } from "@era/bank-core-database";
 import { IsNumber, IsObject, IsOptional, IsString } from "class-validator";
 import { BankAuthGuard } from "../../auth/bank-auth.guard";
 import { BankingModuleGuard, RequireBankingModule } from "../../auth/banking-module.guard";
@@ -26,19 +26,27 @@ class IssueCardDto {
   branchId!: string;
 
   @IsString()
-  panLast4!: string;
+  productTemplateId!: string;
 
+  @IsOptional()
   @IsString()
-  bin6!: string;
+  panLast4?: string;
 
+  @IsOptional()
+  @IsString()
+  bin6?: string;
+
+  @IsOptional()
   @IsNumber()
-  expiryMonth!: number;
+  expiryMonth?: number;
 
+  @IsOptional()
   @IsNumber()
-  expiryYear!: number;
+  expiryYear?: number;
 
+  @IsOptional()
   @IsObject()
-  limitsJson!: Record<string, unknown>;
+  limitsJson?: Record<string, unknown>;
 }
 
 class LimitsDto {
@@ -66,6 +74,89 @@ export class CardsController {
     @Query("status") status?: CardStatus,
   ) {
     return this.cards.list({ customerId, accountId, status });
+  }
+
+  @Get("disputes/list")
+  listDisputes(@Query("status") status?: CardDisputeStatus) {
+    return this.cards.listDisputes(status);
+  }
+
+  @Post("disputes")
+  createDispute(
+    @Body()
+    dto: {
+      cardTransactionId: string;
+      amountMinor: string;
+      currency?: string;
+      reasonCode: string;
+    },
+  ) {
+    return this.cards.createDispute({
+      ...dto,
+      amountMinor: BigInt(dto.amountMinor),
+    });
+  }
+
+  @Patch("disputes/:id")
+  patchDispute(
+    @Param("id") id: string,
+    @Body() dto: { status: CardDisputeStatus },
+  ) {
+    return this.cards.updateDisputeStatus(id, dto.status);
+  }
+
+  @Get("3ds/challenges")
+  listThreeDs(@Query("cardId") cardId?: string) {
+    return this.cards.listThreeDs(cardId);
+  }
+
+  @Post("3ds/challenges")
+  createThreeDs(
+    @Body() dto: { cardId: string; amountMinor: string; currency?: string },
+  ) {
+    return this.cards.createThreeDs({
+      ...dto,
+      amountMinor: BigInt(dto.amountMinor),
+    });
+  }
+
+  @Post("3ds/challenges/:id/complete")
+  completeThreeDs(
+    @Param("id") id: string,
+    @Body() dto: { success: boolean },
+  ) {
+    return this.cards.completeThreeDs(id, dto.success);
+  }
+
+  @Get("merchants")
+  listMerchants() {
+    return this.cards.listMerchants();
+  }
+
+  @Post("merchants")
+  registerMerchant(
+    @Body()
+    dto: { merchantCode: string; name: string; mcc?: string; authToken?: string },
+  ) {
+    return this.cards.registerMerchant(dto);
+  }
+
+  @Post("merchants/authorize")
+  merchantAuthorize(
+    @Body()
+    dto: {
+      merchantCode: string;
+      authToken: string;
+      cardToken: string;
+      amountMinor: string;
+      currency: string;
+      processorRef: string;
+    },
+  ) {
+    return this.cards.authorizeMerchant({
+      ...dto,
+      amountMinor: BigInt(dto.amountMinor),
+    });
   }
 
   @Get(":id")

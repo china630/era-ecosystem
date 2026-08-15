@@ -1,26 +1,17 @@
 import { prisma } from '@/lib/prisma';
+import {
+  addHotelDays,
+  hotelDateKey,
+  parseHotelNoon,
+} from '@/lib/hotel-calendar';
 
 const PLAN_STATUSES = ['CONFIRMED', 'IN_HOUSE', 'OPTION'] as const;
 
-function startOfDay(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function dayKey(d: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Baku' }).format(d);
-}
-
-function nightsBetween(from: Date, to: Date): number {
-  return Math.round((to.getTime() - from.getTime()) / 86400000);
-}
-
 export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   const days = input?.days ?? 14;
-  const from = startOfDay(input?.from ?? new Date());
-  const to = new Date(from);
-  to.setDate(to.getDate() + days);
+  const fromKey = hotelDateKey(input?.from ?? new Date());
+  const from = parseHotelNoon(fromKey);
+  const to = parseHotelNoon(addHotelDays(fromKey, days));
 
   const rooms = await prisma.room.findMany({
     include: { roomType: true },
@@ -57,9 +48,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
 
   const dateKeys: string[] = [];
   for (let i = 0; i < days; i++) {
-    const d = new Date(from);
-    d.setDate(d.getDate() + i);
-    dateKeys.push(dayKey(d));
+    dateKeys.push(addHotelDays(fromKey, i));
   }
 
   const occupiedByDay = new Map<string, Set<string>>();
@@ -67,13 +56,11 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
 
   for (const r of reservations) {
     if (!r.roomId) continue;
-    const ci = startOfDay(r.checkInDate);
-    const co = startOfDay(r.checkOutDate);
-    for (let i = 0; i < days; i++) {
-      const d = new Date(from);
-      d.setDate(d.getDate() + i);
-      if (d >= ci && d < co) {
-        occupiedByDay.get(dayKey(d))?.add(r.roomId);
+    const ciKey = hotelDateKey(r.checkInDate);
+    const coKey = hotelDateKey(r.checkOutDate);
+    for (const dk of dateKeys) {
+      if (dk >= ciKey && dk < coKey) {
+        occupiedByDay.get(dk)?.add(r.roomId);
       }
     }
   }
@@ -100,13 +87,12 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
     for (const dk of dateKeys) out[dk] = roomList.length;
     for (const r of reservations) {
       if (!r.roomId || !roomList.some((x) => x.id === r.roomId)) continue;
-      const ci = startOfDay(r.checkInDate);
-      const co = startOfDay(r.checkOutDate);
-      for (let i = 0; i < days; i++) {
-        const d = new Date(from);
-        d.setDate(d.getDate() + i);
-        const dk = dayKey(d);
-        if (d >= ci && d < co) out[dk] = Math.max(0, (out[dk] ?? roomList.length) - 1);
+      const ciKey = hotelDateKey(r.checkInDate);
+      const coKey = hotelDateKey(r.checkOutDate);
+      for (const dk of dateKeys) {
+        if (dk >= ciKey && dk < coKey) {
+          out[dk] = Math.max(0, (out[dk] ?? roomList.length) - 1);
+        }
       }
     }
     return out;
@@ -132,7 +118,7 @@ export async function getRoomPlan(input?: { from?: Date; days?: number }) {
   };
 
   return {
-    from: dayKey(from),
+    from: fromKey,
     days,
     to: to.toISOString(),
     rooms,

@@ -5,11 +5,13 @@ import {
 } from "@nestjs/common";
 import {
   AmlSeverity,
+  CardDisputeStatus,
   CardStatus,
   CardTxnStatus,
   CardTxnType,
   KycStatus,
   Prisma,
+  ThreeDsChallengeStatus,
   TxnType,
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -21,7 +23,17 @@ import {
   SystemGlKey,
 } from "../../kernel/ledger/system-gl-config.service";
 import { PostingEngineService } from "../../kernel/posting-engine/posting-engine.service";
+import { ProductFactoryService } from "../../kernel/product-factory/product-factory.service";
+import {
+  parseProductParams,
+  resolveCardLimits,
+  type CardProductParams,
+} from "../../kernel/product-factory/product-params";
 import { AmlService } from "../aml/aml.service";
+import {
+  assertDisputeTransition,
+  THREE_DS_THRESHOLD_MINOR,
+} from "../../common/fc2-fc7.util";
 import {
   exceedsPerTxnLimit,
   generateAuthCode,
@@ -41,6 +53,7 @@ export class CardsService {
     private readonly aml: AmlService,
     private readonly gateway: MockAzeriCardGateway,
     private readonly events: OrchestratorEventsPublisher,
+    private readonly products: ProductFactoryService,
   ) {}
 
   list(filters?: { customerId?: string; accountId?: string; status?: CardStatus }) {
@@ -85,11 +98,12 @@ export class CardsService {
     customerId: string;
     accountId: string;
     branchId: string;
-    panLast4: string;
-    bin6: string;
-    expiryMonth: number;
-    expiryYear: number;
-    limitsJson: Record<string, unknown>;
+    productTemplateId: string;
+    panLast4?: string;
+    bin6?: string;
+    expiryMonth?: number;
+    expiryYear?: number;
+    limitsJson?: Record<string, unknown>;
     makerUserId?: string;
   }) {
     const customer = await this.prisma.bankCustomer.findFirst({
@@ -105,11 +119,48 @@ export class CardsService {
       throw new BadRequestException("Account must be ACTIVE");
     }
 
-    const cardToken = `card_${Date.now()}_${input.panLast4}`;
+    const template = await this.products.assertActiveCardProduct(
+      input.productTemplateId,
+    );
+    const productParams = parseProductParams(
+      template.kind,
+      template.paramsJson,
+    ) as CardProductParams;
+    const limits = resolveCardLimits({
+      product: productParams,
+      requested: input.limitsJson
+        ? {
+            dailySpendLimitMinor:
+              typeof input.limitsJson.dailySpendLimitMinor === "number"
+                ? input.limitsJson.dailySpendLimitMinor
+                : undefined,
+            atmDailyLimitMinor:
+              typeof input.limitsJson.atmDailyLimitMinor === "number"
+                ? input.limitsJson.atmDailyLimitMinor
+                : undefined,
+            perTxnMaxMinor:
+              typeof input.limitsJson.perTxnMaxMinor === "number"
+                ? input.limitsJson.perTxnMaxMinor
+                : undefined,
+          }
+        : undefined,
+    });
+
+    const panLast4 =
+      input.panLast4?.replace(/\D/g, "").slice(-4) ||
+      String(1000 + (Date.now() % 9000));
+    const bin6 =
+      input.bin6?.replace(/\D/g, "").slice(0, 6) ||
+      (productParams.scheme.toUpperCase() === "MASTERCARD" ? "545612" : "416598");
+    const now = new Date();
+    const expiryMonth = input.expiryMonth ?? now.getUTCMonth() + 1;
+    const expiryYear = input.expiryYear ?? now.getUTCFullYear() + 3;
+
+    const cardToken = `card_${Date.now()}_${panLast4}`;
     const registration = await this.gateway.registerCard({
       cardToken,
-      panLast4: input.panLast4,
-      bin6: input.bin6,
+      panLast4,
+      bin6,
       customerId: input.customerId,
     });
 
@@ -120,11 +171,11 @@ export class CardsService {
         accountId: input.accountId,
         branchId: input.branchId,
         cardToken: registration.processorToken,
-        panLast4: input.panLast4,
-        bin6: input.bin6,
-        expiryMonth: input.expiryMonth,
-        expiryYear: input.expiryYear,
-        limitsJson: input.limitsJson as Prisma.InputJsonValue,
+        panLast4,
+        bin6,
+        expiryMonth,
+        expiryYear,
+        limitsJson: limits as Prisma.InputJsonValue,
         issuedAt: new Date(),
         status: CardStatus.ACTIVE,
       },
@@ -135,7 +186,12 @@ export class CardsService {
         bankOrgId: this.bankOrg.bankOrgId,
         direction: "OUTBOUND",
         gateway: this.gateway.name,
-        payloadJson: registration.payload as Prisma.InputJsonValue,
+        payloadJson: {
+          ...registration.payload,
+          productTemplateId: input.productTemplateId,
+          scheme: productParams.scheme,
+          cardType: productParams.cardType,
+        } as Prisma.InputJsonValue,
         cardTxnId: null,
       },
     });
@@ -146,7 +202,12 @@ export class CardsService {
       panLast4: card.panLast4,
     }).catch(() => undefined);
 
-    return card;
+    return {
+      ...card,
+      productTemplateId: input.productTemplateId,
+      scheme: productParams.scheme,
+      cardType: productParams.cardType,
+    };
   }
 
   async updateLimits(id: string, limitsJson: Record<string, unknown>) {
@@ -210,6 +271,27 @@ export class CardsService {
       return this.decline(card, input, "LIMIT_EXCEEDED");
     }
 
+    if (input.amountMinor > THREE_DS_THRESHOLD_MINOR) {
+      const completed = await this.prisma.threeDsChallenge.findFirst({
+        where: {
+          bankOrgId: this.bankOrg.bankOrgId,
+          cardId: card.id,
+          amountMinor: input.amountMinor,
+          status: ThreeDsChallengeStatus.COMPLETED,
+          completedAt: { gte: new Date(Date.now() - 15 * 60 * 1000) },
+        },
+        orderBy: { completedAt: "desc" },
+      });
+      if (!completed) {
+        await this.createThreeDs({
+          cardId: card.id,
+          amountMinor: input.amountMinor,
+          currency: input.currency,
+        });
+        return this.decline(card, input, "3DS_REQUIRED");
+      }
+    }
+
     const account = await this.prisma.account.findFirst({
       where: { id: card.accountId, bankOrgId: this.bankOrg.bankOrgId },
     });
@@ -236,7 +318,7 @@ export class CardsService {
       card.accountId,
       input.amountMinor,
       "CARD_AUTH",
-      expiresAt,
+      { expiresAt },
     );
 
     await this.gateway.forwardAuthorize({
@@ -413,6 +495,136 @@ export class CardsService {
       await this.ledger.releaseHold(hold.accountId, hold.id);
     }
     return { expiredCount: stale.length };
+  }
+
+  listDisputes(status?: CardDisputeStatus) {
+    return this.prisma.cardDisputeCase.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        ...(status ? { status } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  createDispute(input: {
+    cardTransactionId: string;
+    amountMinor: bigint;
+    currency?: string;
+    reasonCode: string;
+  }) {
+    return this.prisma.cardDisputeCase.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        cardTransactionId: input.cardTransactionId,
+        amountMinor: input.amountMinor,
+        currency: input.currency ?? "AZN",
+        reasonCode: input.reasonCode,
+        status: CardDisputeStatus.OPEN,
+      },
+    });
+  }
+
+  async updateDisputeStatus(id: string, status: CardDisputeStatus) {
+    const dispute = await this.prisma.cardDisputeCase.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!dispute) throw new NotFoundException("Dispute not found");
+    assertDisputeTransition(dispute.status, status);
+    return this.prisma.cardDisputeCase.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  listMerchants() {
+    return this.prisma.acquiringMerchant.findMany({
+      where: { bankOrgId: this.bankOrg.bankOrgId },
+      orderBy: { merchantCode: "asc" },
+    });
+  }
+
+  registerMerchant(input: {
+    merchantCode: string;
+    name: string;
+    mcc?: string;
+    authToken?: string;
+  }) {
+    return this.prisma.acquiringMerchant.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        merchantCode: input.merchantCode,
+        name: input.name,
+        mcc: input.mcc,
+        authToken: input.authToken ?? `mer_${Date.now()}`,
+      },
+    });
+  }
+
+  async authorizeMerchant(input: {
+    merchantCode: string;
+    authToken: string;
+    cardToken: string;
+    amountMinor: bigint;
+    currency: string;
+    processorRef: string;
+  }) {
+    const merchant = await this.prisma.acquiringMerchant.findFirst({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        merchantCode: input.merchantCode,
+        status: "ACTIVE",
+      },
+    });
+    if (!merchant || merchant.authToken !== input.authToken) {
+      throw new BadRequestException("Invalid merchant credentials");
+    }
+    return this.authorize({
+      cardToken: input.cardToken,
+      amountMinor: input.amountMinor,
+      currency: input.currency,
+      processorRef: input.processorRef,
+      merchantName: merchant.name,
+      mcc: merchant.mcc ?? undefined,
+    });
+  }
+
+  listThreeDs(cardId?: string) {
+    return this.prisma.threeDsChallenge.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        ...(cardId ? { cardId } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  createThreeDs(input: {
+    cardId: string;
+    amountMinor: bigint;
+    currency?: string;
+  }) {
+    return this.prisma.threeDsChallenge.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        cardId: input.cardId,
+        amountMinor: input.amountMinor,
+        currency: input.currency ?? "AZN",
+        status: ThreeDsChallengeStatus.PENDING,
+      },
+    });
+  }
+
+  completeThreeDs(id: string, success: boolean) {
+    return this.prisma.threeDsChallenge.updateMany({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+      data: {
+        status: success
+          ? ThreeDsChallengeStatus.COMPLETED
+          : ThreeDsChallengeStatus.FAILED,
+        completedAt: new Date(),
+      },
+    });
   }
 
   private async resolveCard(cardId?: string, cardToken?: string) {

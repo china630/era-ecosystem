@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { findCatalogItem } from "@/domain/catalog/diagnostic-catalog";
-import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
+import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 import { getClinicSettings } from "@/domain/settings/settings.service";
 import {
@@ -33,24 +33,30 @@ function parseResultLines(resultJson: string | null): ResultLineInput[] {
   }
 }
 
-function labCatalog(testCode: string): { title: string; titleL10n?: L10n } {
+function labCatalog(
+  testCode: string,
+  catalogItems: DiagnosticCatalogItem[],
+): { title: string; titleL10n?: L10n } {
   const primary = testCode.split(",")[0]?.trim() ?? testCode;
-  const item = findCatalogItem(primary);
+  const item = catalogItems.find((i) => i.code === primary || i.serviceCode === primary);
   if (!item) return { title: testCode };
   return { title: `${item.title.en} (${testCode})`, titleL10n: item.title };
 }
 
-function mapLabEvent(o: {
-  id: string;
-  testCode: string;
-  status: string;
-  amountNet: { toString(): string };
-  resultJson: string | null;
-  publishedAt: Date | null;
-  completedAt: Date | null;
-  collectedAt: Date | null;
-  createdAt: Date;
-}): PatientTimelineEvent {
+function mapLabEvent(
+  o: {
+    id: string;
+    testCode: string;
+    status: string;
+    amountNet: { toString(): string };
+    resultJson: string | null;
+    publishedAt: Date | null;
+    completedAt: Date | null;
+    collectedAt: Date | null;
+    createdAt: Date;
+  },
+  catalogItems: DiagnosticCatalogItem[],
+): PatientTimelineEvent {
   const at = (
     o.publishedAt ??
     o.completedAt ??
@@ -59,7 +65,7 @@ function mapLabEvent(o: {
   ).toISOString();
   const lines = parseResultLines(o.resultJson);
   const codes = o.testCode.split(",").map((c) => c.trim()).filter(Boolean);
-  const catalog = labCatalog(o.testCode);
+  const catalog = labCatalog(o.testCode, catalogItems);
   return {
     id: `lab_order:${o.id}`,
     type: "lab_order",
@@ -88,7 +94,7 @@ function withTimeSubtitle(ev: PatientTimelineEvent): PatientTimelineEvent {
   return {
     ...ev,
     subtitle: ev.subtitle
-      ? `${bakuTimeLabel(ev.at)} В· ${ev.subtitle}`
+      ? `${bakuTimeLabel(ev.at)} · ${ev.subtitle}`
       : bakuTimeLabel(ev.at),
   };
 }
@@ -114,7 +120,7 @@ function groupDays(events: PatientTimelineEvent[]): PatientTimelineDay[] {
 }
 
 export async function getPatientCardSummary(patientRefId: string) {
-  const settings = await getClinicSettings();
+  const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const now = new Date();
 
   const [
@@ -124,6 +130,7 @@ export async function getPatientCardSummary(patientRefId: string) {
     pendingLabs,
     resultLabs,
     upcomingProcedures,
+    proposedProcedures,
   ] = await Promise.all([
     prisma.appointment.findFirst({
       where: {
@@ -164,6 +171,14 @@ export async function getPatientCardSummary(patientRefId: string) {
         patientRefId,
         scheduledAt: { gte: now },
         status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
+      },
+      orderBy: { scheduledAt: "asc" },
+      take: settings.patientCardPlanPreview,
+    }),
+    prisma.procedureOrder.findMany({
+      where: {
+        patientRefId,
+        status: "PROPOSED",
       },
       orderBy: { scheduledAt: "asc" },
       take: settings.patientCardPlanPreview,
@@ -210,17 +225,29 @@ export async function getPatientCardSummary(patientRefId: string) {
         : null,
       pendingLabs: {
         count: pendingLabs.length,
-        items: pendingLabs.slice(0, 5).map(mapLabEvent),
+        items: pendingLabs.slice(0, 5).map((o) => mapLabEvent(o, catalog.items)),
       },
     },
-    resultsPreview: resultLabs.map(mapLabEvent).map(withTimeSubtitle),
+    resultsPreview: resultLabs.map((o) => mapLabEvent(o, catalog.items)).map(withTimeSubtitle),
     planPreview: upcomingProcedures.map((p) =>
       withTimeSubtitle({
         id: `procedure:${p.id}`,
         type: "procedure",
         at: p.scheduledAt.toISOString(),
-        title: `Procedure В· ${p.procedureName}`,
+        title: `Procedure · ${p.procedureName}`,
         subtitle: p.procedureCode,
+        status: p.status,
+        codes: [p.procedureCode],
+        amountNet: p.amountNet.toString(),
+      }),
+    ),
+    proposedPreview: proposedProcedures.map((p) =>
+      withTimeSubtitle({
+        id: `procedure:${p.id}`,
+        type: "procedure",
+        at: p.scheduledAt.toISOString(),
+        title: `Procedure · ${p.procedureName}`,
+        subtitle: [p.procedureCode, p.bodyPart].filter(Boolean).join(" · "),
         status: p.status,
         codes: [p.procedureCode],
         amountNet: p.amountNet.toString(),
@@ -242,7 +269,7 @@ export async function getPatientHistoryPage(
     limit?: number;
   },
 ) {
-  const settings = await getClinicSettings();
+  const [settings, catalog] = await Promise.all([getClinicSettings(), getDiagnosticCatalog()]);
   const limit = opts.limit ?? settings.patientCardHistoryPageSize;
   const offset = opts.offset ?? 0;
   const types = opts.types?.length ? new Set(opts.types) : null;
@@ -286,7 +313,7 @@ export async function getPatientHistoryPage(
       id: `visit:${v.id}`,
       type: "visit",
       at,
-      title: `Visit В· ${v.practitioner.fullName}`,
+      title: `Visit · ${v.practitioner.fullName}`,
       subtitle:
         services.length > 0
           ? services.slice(0, 6).join(", ") + (services.length > 6 ? "вЂ¦" : "")
@@ -301,7 +328,7 @@ export async function getPatientHistoryPage(
   for (const o of labOrders) {
     if (labFilter === "results" && !RESULT_STATUSES.has(o.status)) continue;
     if (labFilter === "pending" && !PENDING_LAB_STATUSES.has(o.status)) continue;
-    events.push(mapLabEvent(o));
+    events.push(mapLabEvent(o, catalog.items));
   }
 
   for (const a of appointments) {
@@ -309,7 +336,7 @@ export async function getPatientHistoryPage(
       id: `appointment:${a.id}`,
       type: "appointment",
       at: a.scheduledAt.toISOString(),
-      title: `Appointment В· ${a.practitioner.fullName}`,
+      title: `Appointment · ${a.practitioner.fullName}`,
       subtitle: a.roomCode ? `Room ${a.roomCode}` : a.practitioner.code,
       status: a.status,
       href: "/appointments",
@@ -352,11 +379,16 @@ export async function getPatientPlanPage(
 
   const where = {
     patientRefId,
-    status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
-    scheduledAt: {
-      gte: opts.from && opts.from > now ? opts.from : now,
-      ...(opts.to ? { lte: opts.to } : {}),
-    },
+    OR: [
+      { status: "PROPOSED" as const },
+      {
+        status: { in: ["SCHEDULED", "CHECKED_IN"] as ("SCHEDULED" | "CHECKED_IN")[] },
+        scheduledAt: {
+          gte: opts.from && opts.from > now ? opts.from : now,
+          ...(opts.to ? { lte: opts.to } : {}),
+        },
+      },
+    ],
   };
 
   const [total, rows] = await Promise.all([
@@ -373,11 +405,14 @@ export async function getPatientPlanPage(
     id: `procedure:${p.id}`,
     type: "procedure",
     at: p.scheduledAt.toISOString(),
-    title: `Procedure В· ${p.procedureName}`,
-    subtitle: p.procedureCode,
+    title: `Procedure · ${p.procedureName}`,
+    subtitle: [p.procedureCode, p.bodyPart, p.status === "PROPOSED" ? "proposed" : null]
+      .filter(Boolean)
+      .join(" · "),
     status: p.status,
     codes: [p.procedureCode],
     amountNet: p.amountNet.toString(),
+    href: undefined,
   }));
 
   const hasMore = offset + limit < total;

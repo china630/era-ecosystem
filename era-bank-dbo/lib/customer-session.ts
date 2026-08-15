@@ -1,14 +1,19 @@
 import { createHash } from "crypto";
-import type { DboChannel } from "@prisma/client";
 import {
   DBO_SESSION_COOKIE,
   signDboSessionCookie,
   verifyDboSessionCookie,
+  type DboChannel,
   type DboSessionPayload,
 } from "@/lib/dbo-session-cookie";
 import { prisma } from "@/lib/prisma";
 
-export { DBO_SESSION_COOKIE, verifyDboSessionCookie, type DboSessionPayload };
+export {
+  DBO_SESSION_COOKIE,
+  verifyDboSessionCookie,
+  type DboChannel,
+  type DboSessionPayload,
+};
 
 export function hashApiKey(rawKey: string): string {
   return createHash("sha256").update(rawKey).digest("hex");
@@ -36,10 +41,10 @@ export async function createCustomerSession(input: CreateCustomerSessionInput) {
       expiresAt,
     },
   });
-  const cookieToken = signDboSessionCookie({
+  const cookieToken = await signDboSessionCookie({
     sessionId: session.id,
     customerId: session.customerId,
-    channel: session.channel,
+    channel: session.channel as DboChannel,
     exp: Math.floor(expiresAt.getTime() / 1000),
   });
   return { session, cookieToken, maxAge: ttlMinutes * 60 };
@@ -47,7 +52,7 @@ export async function createCustomerSession(input: CreateCustomerSessionInput) {
 
 export async function resolveCustomerSession(token: string | null | undefined) {
   if (!token) return null;
-  const payload = verifyDboSessionCookie(token);
+  const payload = await verifyDboSessionCookie(token);
   if (!payload) return null;
   const session = await prisma.customerSession.findUnique({ where: { id: payload.sessionId } });
   if (!session || session.revokedAt || session.expiresAt < new Date()) return null;

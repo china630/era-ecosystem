@@ -1,0 +1,4 @@
+product: hotel
+status: mvp
+pilot_ready: false
+notes: "FO + City Ledger MVP showable; Scaffold BE + UI/Demo green; Pilot lab/field open; KKM STUB; not ga"

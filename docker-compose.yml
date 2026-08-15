@@ -82,6 +82,11 @@ services:
       args:
         NEXT_PUBLIC_ORCH_API_URL: ${ERA_API_ORIGIN:-http://127.0.0.1:4000}
         NEXT_PUBLIC_FINANCE_WEB_URL: ${ERA_FINANCE_ORIGIN:-http://127.0.0.1:3100}
+        # Industry launcher deep-links — baked into the web bundle at build time.
+        NEXT_PUBLIC_SATELLITE_HOTEL_URL: ${ERA_HOTEL_PMS_ORIGIN:-http://127.0.0.1:3201}
+        NEXT_PUBLIC_SATELLITE_FNB_POS_URL: ${ERA_FNB_POS_ORIGIN:-http://127.0.0.1:3202}
+        NEXT_PUBLIC_SATELLITE_CLINIC_URL: ${ERA_CLINIC_ORIGIN:-http://127.0.0.1:3203}
+        NEXT_PUBLIC_SATELLITE_RETAIL_URL: ${ERA_RETAIL_ORIGIN:-http://127.0.0.1:3204}
     container_name: era-orchestrator
     restart: unless-stopped
     environment:
@@ -97,6 +102,8 @@ services:
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
       ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
+      ERA_JWT_SIGNING_MODE: ${ERA_JWT_SIGNING_MODE:-dual}
+      ERA_JWT_RS256_JWK_FILE: /run/era/rs256.jwk.json
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
@@ -119,6 +126,8 @@ services:
     ports:
       - "${ORCHESTRATOR_WEB_PUBLISH_PORT:-3000}:3000"
       - "${ORCHESTRATOR_API_PUBLISH_PORT:-4000}:4000"
+    volumes:
+      - ./era-orchestrator/dev-rs256-jwk.json:/run/era/rs256.jwk.json:ro
     networks:
       - era-network
 
@@ -171,10 +180,14 @@ services:
       CONTROL_PLANE_URL: http://orchestrator:4000
       CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
       ERA_JWT_SECRET: ${ERA_JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
-      JWT_SECRET: ${JWT_SECRET:-change-me-shared-hs256-secret-min-32-chars}
       ERA_JWT_ISSUER: ${ERA_JWT_ISSUER:-era-orchestrator}
       ERA_JWT_AUDIENCE_FINANCE: ${ERA_JWT_AUDIENCE_FINANCE:-era-finance-core}
+      ERA_JWT_VERIFY_MODE: ${ERA_JWT_VERIFY_MODE:-dual}
+      ERA_JWT_JWKS_URL: ${ERA_JWT_JWKS_URL:-http://orchestrator:4000/.well-known/jwks.json}
       ERA_AUTH_MODE: ${ERA_AUTH_MODE:-legacy}
+      PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
+      PII_BLIND_INDEX_KEY: ${PII_BLIND_INDEX_KEY:-dev-era-pii-blind-index-key-32chars!}
+      AUDIT_HASH_SECRET: ${AUDIT_HASH_SECRET:-dev-era-audit-hash-secret-min-32-chars}
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       SATELLITE_EVENT_WORKER_DISABLED: ${SATELLITE_EVENT_WORKER_DISABLED:-0}
       SATELLITE_EVENT_REDIS_URL: redis://redis:6379/0
@@ -517,6 +530,9 @@ services:
       ERA_DATA_HUB_ONPREM: ${ERA_DATA_HUB_ONPREM:-false}
       PII_ENCRYPTION_KEY: ${PII_ENCRYPTION_KEY:-dev-era-pii-encryption-key-32chars!!}
       PII_BLIND_INDEX_KEY: ${PII_BLIND_INDEX_KEY:-dev-era-pii-blind-index-key-32chars!}
+      # Shared with era-bank-dbo for customer JWT + channel session signing
+      BANK_DBO_JWT_SECRET: ${BANK_DBO_JWT_SECRET:-${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}}
+      DEV_OTP_CODE: ${DEV_OTP_CODE:-123456}
       RUN_SEED: ${BANK_CORE_RUN_SEED:-true}
     ports:
       - "${BANK_CORE_API_PUBLISH_PORT:-4300}:4300"
@@ -549,6 +565,8 @@ services:
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-change-me-min-32-chars-for-satellites}
       ERA_SSO_SHARED_SECRET: ${ERA_SSO_SHARED_SECRET:-change-me-sso-hmac-secret}
       ORCHESTRATOR_EVENT_URL: http://orchestrator:4000
+      CONTROL_PLANE_URL: http://orchestrator:4000
+      CONTROL_PLANE_SERVICE_TOKEN: ${CONTROL_PLANE_SERVICE_TOKEN:-dev-control-plane-token}
       SATELLITE_EVENT_SERVICE_TOKEN: ${SATELLITE_EVENT_SERVICE_TOKEN:-dev-satellite-event-token}
       RUN_SEED: ${BANK_RUN_SEED:-true}
     ports:
@@ -580,7 +598,8 @@ services:
       ERA_BANK_CORE_URL: http://bank-core:4300
       BANK_CORE_SERVICE_TOKEN: ${BANK_CORE_SERVICE_TOKEN:-dev-bank-core-service-token}
       ERA_BANK_ORGANIZATION_ID: ${ERA_BANK_ORGANIZATION_ID:-demo-bank-org-001}
-      DBO_JWT_SECRET: ${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}
+      BANK_DBO_JWT_SECRET: ${BANK_DBO_JWT_SECRET:-${DBO_JWT_SECRET:-change-me-dbo-jwt-secret-min-32-chars}}
+      DEV_OTP_CODE: ${DEV_OTP_CODE:-123456}
       RUN_SEED: ${BANK_DBO_RUN_SEED:-true}
     ports:
       - "${BANK_DBO_PUBLISH_PORT:-3211}:3211"

@@ -15,6 +15,7 @@ import {
   ACCESS_TOKEN_COOKIE_KEY,
   ORGS_KEY,
   USER_KEY,
+  clearControlPlaneTokens,
 } from "./session-keys";
 import { apiFetch } from "./api-client";
 import { FALLBACK_CURRENCY_CODES } from "./currencies";
@@ -216,6 +217,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem(USER_KEY, JSON.stringify(u));
       sessionStorage.setItem(ORGS_KEY, JSON.stringify(orgs));
       sessionStorage.removeItem(ACCESS_FLAGS_KEY);
+      // Local Finance password login is not a CP handoff — drop any stale Orch JWTs.
+      clearControlPlaneTokens();
       setToken(accessToken);
       setAccessTokenCookie(accessToken);
       setUser(u);
@@ -236,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(USER_KEY);
     sessionStorage.removeItem(ORGS_KEY);
     sessionStorage.removeItem(ACCESS_FLAGS_KEY);
+    clearControlPlaneTokens();
     setToken(null);
     setUser(null);
     setOrganizations([]);

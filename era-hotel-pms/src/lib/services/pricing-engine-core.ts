@@ -55,6 +55,8 @@ export type ChildPricingRow = {
   ageFrom: number;
   ageTo: number;
   discountPercent: number;
+  amountOverride?: number | null;
+  freeCount?: number;
 };
 
 export type ChildCountByAge = {
@@ -62,43 +64,119 @@ export type ChildCountByAge = {
   representativeAge: number;
 };
 
+export type OccupancySupplementInput = {
+  adults: number;
+  baseOccupancy: number;
+  extraAdultAmount: number | null | undefined;
+  thirdAdultAmount: number | null | undefined;
+  extraBeds?: number;
+  extraBedAmount?: number | null | undefined;
+};
+
 /** Nafta TZ defaults when ChildPricingMatrix is empty. */
 export const DEFAULT_CHILD_PRICING_MATRIX: ChildPricingRow[] = [
-  { ageFrom: 0, ageTo: 6, discountPercent: 100 },
-  { ageFrom: 7, ageTo: 11, discountPercent: 50 },
-  { ageFrom: 12, ageTo: 17, discountPercent: 0 },
+  { ageFrom: 0, ageTo: 6, discountPercent: 100, freeCount: 1 },
+  { ageFrom: 7, ageTo: 11, discountPercent: 50, freeCount: 0 },
+  { ageFrom: 12, ageTo: 17, discountPercent: 0, freeCount: 0 },
 ];
+
+export function resolveChildBand(
+  age: number,
+  matrix: ChildPricingRow[],
+): ChildPricingRow | undefined {
+  const rows = matrix.length > 0 ? matrix : DEFAULT_CHILD_PRICING_MATRIX;
+  return rows.find((row) => age >= row.ageFrom && age <= row.ageTo);
+}
 
 export function resolveChildDiscountPercent(
   age: number,
   matrix: ChildPricingRow[],
 ): number {
-  const rows = matrix.length > 0 ? matrix : DEFAULT_CHILD_PRICING_MATRIX;
-  const hit = rows.find((row) => age >= row.ageFrom && age <= row.ageTo);
-  return hit?.discountPercent ?? 0;
+  return resolveChildBand(age, matrix)?.discountPercent ?? 0;
+}
+
+/**
+ * Extra adults / extra beds on top of base room nightly.
+ * baseOccupancy adults are included in the room rate (typically 1).
+ * 2nd adult uses extraAdultAmount; 3rd+ prefer thirdAdultAmount else extraAdultAmount.
+ */
+export function computeOccupancyNightlySupplement(
+  input: OccupancySupplementInput,
+): Prisma.Decimal {
+  const adults = Math.max(0, input.adults);
+  const base = Math.max(1, input.baseOccupancy || 1);
+  const extras = Math.max(0, adults - base);
+  let supplement = ZERO;
+
+  if (extras > 0) {
+    const second = toDecimal(input.extraAdultAmount ?? 0);
+    const thirdPlus = toDecimal(
+      input.thirdAdultAmount ?? input.extraAdultAmount ?? 0,
+    );
+    // First extra adult (adult # base+1)
+    supplement = supplement.plus(second);
+    if (extras > 1) {
+      supplement = supplement.plus(thirdPlus.mul(extras - 1));
+    }
+  }
+
+  const beds = Math.max(0, input.extraBeds ?? 0);
+  if (beds > 0 && input.extraBedAmount != null) {
+    supplement = supplement.plus(toDecimal(input.extraBedAmount).mul(beds));
+  }
+
+  return roundMoney(supplement);
 }
 
 /**
  * Child nightly addon on top of adult room rate.
- * discountPercent = waiver (100 = free child slot).
+ * - freeCount: first N in band are free
+ * - when useAbsolutePricing and amountOverride set: charge that AZN per paying child
+ * - else: discountPercent waiver of adult nightly (100 = free)
  */
 export function computeChildNightlyAddon(
   adultNightly: Prisma.Decimal | number,
   children: ChildCountByAge[],
   matrix: ChildPricingRow[],
+  options?: { useAbsolutePricing?: boolean },
 ): Prisma.Decimal {
   const adult = toDecimal(adultNightly);
   let addon = ZERO;
+  const useAbsolute = options?.useAbsolutePricing === true;
 
   for (const group of children) {
     if (group.count <= 0) continue;
-    const discount = resolveChildDiscountPercent(group.representativeAge, matrix);
+    const band = resolveChildBand(group.representativeAge, matrix);
+    const free = Math.min(group.count, Math.max(0, band?.freeCount ?? 0));
+    const paying = group.count - free;
+    if (paying <= 0) continue;
+
+    if (
+      useAbsolute &&
+      band?.amountOverride != null &&
+      Number.isFinite(band.amountOverride)
+    ) {
+      addon = addon.plus(toDecimal(band.amountOverride).mul(paying));
+      continue;
+    }
+
+    const discount = band?.discountPercent ?? 0;
     const payFactor = HUNDRED.minus(toDecimal(discount)).div(HUNDRED);
     const childRate = adult.mul(payFactor);
-    addon = addon.plus(childRate.mul(group.count));
+    addon = addon.plus(childRate.mul(paying));
   }
 
   return roundMoney(addon);
+}
+
+/** Apply yield adjustment percent to a nightly amount. */
+export function applyLoadBasedAdjustment(
+  nightly: Prisma.Decimal | number,
+  adjustmentPercent: number,
+): Prisma.Decimal {
+  if (!adjustmentPercent) return roundMoney(toDecimal(nightly));
+  const base = toDecimal(nightly);
+  return roundMoney(base.mul(HUNDRED.plus(toDecimal(adjustmentPercent)).div(HUNDRED)));
 }
 
 /** Map reservation child count fields to representative ages. */

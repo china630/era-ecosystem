@@ -40,9 +40,16 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 
 ## Stage 4 — Night audit (NA-01, NA-02)
 
+> **Honesty (2026-08-03):** core EOD = COVERAGE **HOT-NA-01 SHIPPED**. Polish = **HOT-NA-02 / H-BL-44 SHIPPED** — see [ADR hotel-city-ledger-and-fo-money](../../docs/adr/hotel-city-ledger-and-fo-money.md).  
+> **MENU-IA deepen (2026-08-07):** cash journal + EOD P1 grids + updates CSV — [MENU-IA-DEEPEN-AUDIT.md](./MENU-IA-DEEPEN-AUDIT.md). HOT-CASH-06 / HOT-NA-03 / HOT-NA-04 = SHIPPED (UAT-SMOKE §28). HOT-NA-05 = STUB ([ADR hotel-year-end-calendar](../../docs/adr/hotel-year-end-calendar.md)).
+
 - [x] BusinessDay, NightAuditRun
 - [x] `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` event
-- [x] `/operations` UI + API
+- [x] `/night-audit` UI + API (legacy `/operations` redirects)
+- [x] EOD reports hub + P1 grids (cancelled / created / folio tx / price control)
+- [x] Reservation updates filter + CSV
+- [x] Front cash journal (payments + HELD deposits + pending + method totals)
+- [s] Year-end close/open (preview only; `YEAR_END_NOT_ENABLED`)
 
 ## Stage 5 — Satellite bridge (doc 19)
 
@@ -52,7 +59,7 @@ MVP go-live criteria from [clone-spec/12-user-stories-index.md](clone-spec/12-us
 ## Stage 6 — HK, channel, medical
 
 - [x] Housekeeping tasks + OOO
-- [s] Channel sync errors + OTA cancel stub (vendor creds)
+- [s] Channel sync errors + OTA cancel by externalRef/reservationId (local CM UI); live vendor push/pull still STUB until credentials (HOT-CH-02)
 - [x] Medical alerts, orders, lab, procedure → folio
 
 ## Deferred (post-MVP)
@@ -235,6 +242,8 @@ OpenAPI: [fb-pos-pms-bridge.yaml](openapi/fb-pos-pms-bridge.yaml) v0.3 · Wirefl
 **Migration:** `20260528150000_wave5_gl_bridge`
 
 ### Stage 23 — INVOICE-AGENCY
+> **Honesty (2026-08-03):** agency CL = ops snapshot + settlement (HOT-CL-03 / HOT-AG-02). Finance AR aging/invoice matching = HOT-CL-05 SHIPPED. Transfer-to-CL at checkout = H-BL-40 SHIPPED.
+
 - [x] `/reports/invoices` — all fiscal documents + `integrateToAccounting` toggle (PROC-35)
 - [x] `GET /api/reports/invoices`, `PATCH /api/reports/invoices/[id]`
 - [x] Agency CL summary: city ledger, cash paid, net amount (PROC-21 / WA_CASH_02)
@@ -432,3 +441,70 @@ Migrations: `20260603120000_wave_e_reservation_csv`, `20260603130000_wave_f_gues
 - [x] Gate doc [doc/nafta/B2B-GATE.md](nafta/B2B-GATE.md); ADR [hotel-b2b-sales-contracts.md](../../docs/adr/hotel-b2b-sales-contracts.md)
 
 **Migration:** `20260614160000_nafta_p4_b2b`
+
+## P5 — FO money / City Ledger (2026-08-03)
+
+Tracked in [BACKLOG-PRODUCTION.md § P5](BACKLOG-PRODUCTION.md) · [COVERAGE_MATRIX HOT-CASH/CL/CO](../../docs/COVERAGE_MATRIX.md) · ADR [hotel-city-ledger-and-fo-money](../../docs/adr/hotel-city-ledger-and-fo-money.md).
+
+- [x] H-BL-40 Transfer to City Ledger at checkout + credit/contract gate
+- [x] H-BL-41 Deposit apply/offset at settle & checkout (extends H-BL-10)
+- [x] H-BL-10 deposits full lifecycle (apply@check-in + settle/checkout)
+- [x] H-BL-42 Folio payment refunds (mock fiscal)
+- [x] H-BL-43 Checkout discounts (manual + automatic)
+- [x] H-BL-44 Night Audit polish
+- [x] H-BL-45 Selective / per-guest folio close
+- [x] H-BL-46 Agency postpaid settlement ops + commission accrual note
+- [x] H-BL-47 List filter enrichment (reservations status, allotment, agency-ledger)
+- [x] H-BL-48 Finance AR terms/aging/invoice matching (Finance owner)
+
+**Migration (hotel):** `20260803120000_p5_fo_money_city_ledger` · **Finance:** `20260803140000_counterparty_payment_terms`
+
+### Unit economics / BAR floor (2026-08-10)
+
+- [x] Versioned pricing components (service fee 6, meals 25, food COGS 16, medical COGS 20) + history — `/settings/pricing-components`, migration `20260810140000_pricing_components` (HOT-PC-01)
+- [x] Pricing policy flags (occupancy / load-based yield / child absolute) default OFF — `/settings/pricing-policy` (HOT-OCC-01)
+- [x] Rate plan 2nd/3rd adult + extra bed amounts + child matrix absolute/freeCount CRUD
+- [x] Package `costFloor` + manual `sellPrice` versions (independent of BAR) — `/settings/package-prices` (HOT-PKG-01)
+- [x] BAR calendar shows recommended extra-adult add-on from components
+- [~] `HOT-UE-01` Phase A: proxy CPOR + below-floor package strip — `/executive/unit-economics` (full BEP/trends later)
+- [ ] Finance allocation → actual period CPOR (dashboard drops “estimate” badge)
+
+## UI design system wave (2026-07-20)
+
+- [x] Guest CRM: modal CRUD + subnav; no `window.prompt` / AppShell
+- [x] List screens: `EraListFilterBar` on table/grid pages (40+) — depth uneven → H-BL-47
+- [x] Admin modals: Field*/DatePicker presets; `showApiError`
+- [x] Ops canvases: light token polish (chessboard/room-plan/folio/HK)
+- [x] Table chrome: shell+scroll / viewport clip-path so sticky thead keeps rounded corners
+- [x] Grid pagination: kit `EraDataGrid` + hotel `HotelDataGrid` with i18n `ListPaginationFooter` (25/50/100)
+- [x] Reservation card: single ModalShell header; footer Save/Check-in; `TAB_*` / `CHIP_*` / folio `HotelDataGrid`
+- [x] Reservation Stay: `DatePicker` + stable `MODAL_WIDE` min/max height; FieldSection/CHIP light headers
+- [x] Reservation card UX regroup: `MODAL_FULL` (~98vw/1600px); left rail 2-col sections (Stay/Room/Pax/Classification/Commercial/Billing); Guests tab = pax grid only
+- [x] Reservation card dub2: 50/50 split; static `FieldPanel` (always open); bottom stubs as compact chips under right column
+- [x] Guest card FO parity: `MODAL_FULL` 50/50; left FieldPanels (Identity/Classification/Documents+MDM/Other); Details tab collapsed into left form
+- [x] ModalShell: button-only dismiss (no backdrop click / Esc); body scroll lock; raised overlay (`pt-10`); `MODAL_FULL` max-h 90vh
+- [x] Create = edit same layout for reservation + guest cards; removed dead `NewBookingModal`
+- [x] Reservation card Phase 0: Stay/Product/Pax/Class/Commercial; Assignment by stage; Additional collapsed; agency-first field set
+- [x] Booking hierarchy ADR + schema: AllotmentBlock, ReservationGroup folioMode, roomCount=1 on create, primary pax enforced
+- [x] Allotment blocks admin UI + API; booking stays list on reservation card; add-stay under group
+- [x] Cutoff cron `POST /api/cron/allotment-block-cutoff` (HEADLESS); MASTER/SPLIT folio routing; block Pickup → N stays
+- [x] Room plan: Tarix/Otaq/Qonaq filters + fullscreen (clinic matrix pattern)
+- [x] Room plan bars: half-day model rewrite — arrow on depart, concave turnover both edges, flat clipped/continues; precomputed geometry in `computePlacedBars` (`shapes.spec.ts` green)
+- [x] Stay times: `hotel-calendar.ts` (14:00/12:00 Baku); FO seed + `load-nafta-transactions.cjs` no overlaps; room-plan availability in Baku TZ
+- Tokens ADR: `docs/adr/era-design-tokens-3tier.md`
+
+## Thin MVP deepen → OTA (2026-08-11)
+
+Wave A (Nafta ops slice) + Wave B (OTA safety / ARI / honest live STUB):
+
+- [x] HOT-CL-01 stay folio routing overrides + card table + `postCharge` prefer override
+- [x] HOT-CASH-06 front-cash shift filter + printable ops Z + Close shift
+- [x] HOT-XFER-01 transfer charge via routing + cancel/void + day-board driver print
+- [x] HOT-CASH-01 `BANK_TRANSFER` tender + `bankReference` on pay/settle
+- [x] HOT-NA-03 EOD no-shows / room-moves / VIP + CSV
+- [x] HOT-BEO-01 printable HTML day sheet + preferred folio on confirm
+- [x] HOT-CL-04 agency-ledger snapshot meta + Push + Finance deep link (OpsUI SHIPPED)
+- [x] HOT-CH-01 local CM cancel-by-ref + error journal + health; HOT-CH-02 live vendor **STUB**
+- [x] UAT-SMOKE §28–§29 · COVERAGE_MATRIX · module-map · MENU-IA-CANON
+
+**Migration:** `20260811120000_wave_a_thin_mvp`

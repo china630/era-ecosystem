@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 import { CustomerType } from "@era/bank-core-database";
 import { IsEnum, IsOptional, IsString } from "class-validator";
@@ -68,5 +68,14 @@ export class CifController {
       ...dto,
       actorUserId: req.userId ?? "service",
     });
+  }
+
+  @Patch(":id/pep-flag")
+  updatePepFlag(
+    @Param("id") id: string,
+    @Body() dto: { pepFlag: boolean },
+    @Req() req: BankAuthRequest,
+  ) {
+    return this.cif.updatePepFlag(id, dto.pepFlag, req.userId ?? "service");
   }
 }

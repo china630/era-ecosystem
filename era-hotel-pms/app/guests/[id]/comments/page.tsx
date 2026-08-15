@@ -7,15 +7,11 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.commentsTitle"
       apiPath={(gid) => `/api/guests/${gid}/comments`}
-      onAdd={async (guestId) => {
-        const comment = window.prompt('Comment');
-        if (!comment?.trim()) return;
-        await fetch(`/api/guests/${guestId}/comments`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ comment: comment.trim(), state: 'NEW' }),
-        });
-      }}
+      addFields={[
+        { name: 'comment', label: 'Comment', required: true, multiline: true },
+      ]}
+      buildBody={(v) => ({ comment: v.comment.trim(), state: 'NEW' })}
+      searchKeys={['comment', 'state']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           <span className="text-[11px] text-[#7F8C8D]">{String(r.state)}</span>

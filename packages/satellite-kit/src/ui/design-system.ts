@@ -1,112 +1,79 @@
 /**
- * DESIGN.md — ERA ecosystem visual tokens (shared by industry satellites).
- * Canonical spec: ../../../DESIGN.md
+ * DESIGN.md visual tokens - public facade.
+ *
+ * Implementation lives in ./tokens (L1/L2/L3). This file re-exports L3 component
+ * classes so existing `import { ... } from "./design-system"` keep working.
+ *
+ * Do not add new hex literals here - edit tokens/primitives.ts (L1) and align
+ * tokens/components.ts (L3). See docs/adr/era-design-tokens-3tier.md.
  */
 
-export const DESIGN = {
-  primary: "#34495E",
-  secondary: "#7F8C8D",
-  background: "#EBEDF0",
-  action: "#2980B9",
-} as const;
-
-export const APP_SHELL_CLASS =
-  "min-h-screen bg-[#EBEDF0] text-[#34495E] antialiased font-[Segoe_UI,system-ui,sans-serif]";
-
-export const PRIMARY_BUTTON_CLASS =
-  "inline-flex h-8 min-h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg px-4 text-[13px] font-semibold text-white bg-[#2980B9] shadow-sm transition hover:bg-[#2471A3] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9] disabled:opacity-50 disabled:pointer-events-none";
-
-export const SECONDARY_BUTTON_CLASS =
-  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#D5DADF] bg-white px-4 text-[13px] font-medium text-[#34495E] shadow-sm transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/40 disabled:opacity-50 disabled:pointer-events-none";
-
-export const GHOST_BUTTON_CLASS =
-  "inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-transparent bg-transparent px-2 text-[13px] font-medium text-[#7F8C8D] transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/30 disabled:opacity-50 disabled:pointer-events-none";
-
-export const CARD_CONTAINER_CLASS =
-  "rounded-2xl border border-[#D5DADF] bg-white shadow-sm";
-
-export const MODAL_DIALOG_CONTENT_CLASS =
-  "flex w-full max-h-[90vh] min-h-0 flex-col overflow-hidden rounded-2xl border border-[#D5DADF] bg-white p-6 shadow-lg";
-
-export const MODAL_CLOSE_BUTTON_CLASS =
-  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent text-[#7F8C8D] transition hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/30";
-
-export const MODAL_FOOTER_ACTIONS_CLASS = "mt-6 flex justify-end gap-2";
-
-export const MODAL_FOOTER_BUTTON_CLASS =
-  "inline-flex h-9 min-h-9 shrink-0 items-center justify-center rounded-lg px-4 text-[13px] font-semibold disabled:opacity-50 disabled:pointer-events-none";
-
-export const MODAL_FOOTER_PRIMARY_CLASS = `${MODAL_FOOTER_BUTTON_CLASS} bg-[#2980B9] text-white hover:bg-[#2471A3] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]`;
-
-export const MODAL_FOOTER_OUTLINE_CLASS = `${MODAL_FOOTER_BUTTON_CLASS} border border-[#D5DADF] bg-white font-medium text-[#34495E] hover:bg-[#F4F5F7] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/40`;
-
-export const MODAL_FIELD_LABEL_CLASS =
-  "mb-1.5 block text-[13px] font-semibold text-[#34495E]";
-
-const MODAL_INPUT_BASE =
-  "w-full rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px] text-[#34495E] shadow-sm placeholder:text-[#7F8C8D] focus:outline-none focus:ring-1 focus:ring-[#2980B9] disabled:bg-[#F4F5F7] disabled:text-[#7F8C8D]";
-
-export const MODAL_INPUT_CLASS = `${MODAL_INPUT_BASE} box-border h-9 min-h-9 leading-normal`;
-
-export const MODAL_TEXTAREA_CLASS = `${MODAL_INPUT_BASE} min-h-[4.5rem] resize-y py-2 leading-normal`;
-
-export const MODAL_CHECKBOX_CLASS =
-  "h-4 w-4 shrink-0 rounded-lg border border-[#D5DADF] accent-[#2980B9]";
-
-export const DATA_TABLE_VIEWPORT_CLASS =
-  "max-h-[min(70vh,56rem)] overflow-auto rounded-2xl border border-[#D5DADF] bg-white shadow-sm";
-
-export const DATA_TABLE_CLASS = "min-w-full border-collapse text-[13px]";
-
-export const DATA_TABLE_HEAD_ROW_CLASS =
-  "sticky top-0 z-10 border-b border-[#D5DADF] bg-[#F8FAFC] shadow-[0_1px_0_0_#D5DADF]";
-
-export const DATA_TABLE_TH_LEFT_CLASS =
-  "px-4 py-2 text-left text-xs font-bold leading-tight text-[#475569]";
-
-export const DATA_TABLE_TH_RIGHT_CLASS =
-  "px-4 py-2 text-right text-xs font-bold leading-tight text-[#475569]";
-
-export const DATA_TABLE_TR_CLASS =
-  "border-b border-[#D5DADF] bg-white transition-colors hover:bg-[#F1F5F9]";
-
-export const DATA_TABLE_TD_CLASS = "px-4 py-2 align-middle text-[13px] text-[#34495E]";
-
-export const TABLE_ROW_ICON_BTN_CLASS =
-  "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-transparent bg-transparent transition-colors hover:bg-[#EBEDF0] focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#2980B9]/25 disabled:pointer-events-none disabled:opacity-50";
-
-export const SIDEBAR_LINK_CLASS =
-  "flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium text-[#34495E] transition hover:bg-[#E2E5E9]";
-
-export const SIDEBAR_LINK_ACTIVE_CLASS =
-  "flex items-center gap-2 rounded-lg bg-[#2980B9]/10 px-3 py-2 text-[13px] font-semibold text-[#2980B9]";
-
-export const FORM_FIELD_GROUP_CLASS = "space-y-1.5";
-
-export const FORM_STACK_CLASS = "space-y-4";
-
-export const LINK_ACCENT_CLASS =
-  "text-[13px] font-medium text-[#2980B9] hover:text-[#2471A3] hover:underline";
-
-/** Segmented AZ / RU / EN control — auth header + app header (DESIGN.md public auth). */
-export const LOCALE_TOGGLE_GROUP_CLASS =
-  "inline-flex shrink-0 rounded-lg border border-[#D5DADF] bg-white p-0.5 shadow-sm";
-
-export const LOCALE_TOGGLE_ACTIVE_CLASS =
-  "inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-md px-2 text-[12px] font-semibold bg-[#2980B9] text-white transition";
-
-export const LOCALE_TOGGLE_INACTIVE_CLASS =
-  "inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-md px-2 text-[12px] font-semibold text-[#7F8C8D] transition hover:bg-[#F4F5F7] hover:text-[#34495E]";
-
-export const FORM_INPUT_CLASS =
-  "box-border h-9 min-h-9 w-full rounded-lg border border-[#D5DADF] bg-white px-3 text-[13px] text-[#34495E] placeholder:text-[#7F8C8D] focus:outline-none focus:ring-1 focus:ring-[#2980B9] disabled:bg-[#F4F5F7]";
-
-/** Expanded sidebar width (280px) — matches Finance MainSidebar. */
-export const APP_SIDEBAR_WIDTH = "17.5rem";
-export const APP_SIDEBAR_WIDTH_CLASS = "w-[17.5rem]";
-export const APP_SIDEBAR_COLLAPSED_CLASS = "lg:w-[4.5rem]";
-export const APP_SIDEBAR_OFFSET_CLASS = "lg:pl-[17.5rem]";
-export const APP_SIDEBAR_COLLAPSED_OFFSET_CLASS = "lg:pl-[4.5rem]";
-export const APP_SIDEBAR_LEFT_CLASS = "lg:left-[17.5rem]";
-export const APP_SIDEBAR_COLLAPSED_LEFT_CLASS = "lg:left-[4.5rem]";
-export const APP_HEADER_OFFSET_CLASS = "pt-16";
+export {
+  DESIGN,
+  APP_SHELL_CLASS,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+  GHOST_BUTTON_CLASS,
+  SUCCESS_BUTTON_CLASS,
+  DANGER_BUTTON_CLASS,
+  CARD_CONTAINER_CLASS,
+  MODAL_DIALOG_CONTENT_CLASS,
+  MODAL_WIDE_CLASS,
+  MODAL_FULL_CLASS,
+  MODAL_CLOSE_BUTTON_CLASS,
+  MODAL_FOOTER_ACTIONS_CLASS,
+  MODAL_FOOTER_BUTTON_CLASS,
+  MODAL_FOOTER_PRIMARY_CLASS,
+  MODAL_FOOTER_OUTLINE_CLASS,
+  MODAL_FIELD_LABEL_CLASS,
+  MODAL_INPUT_CLASS,
+  MODAL_TEXTAREA_CLASS,
+  MODAL_CHECKBOX_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_SCROLL_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_TD_CLASS,
+  TABLE_ROW_ICON_BTN_CLASS,
+  SIDEBAR_LINK_CLASS,
+  SIDEBAR_LINK_ACTIVE_CLASS,
+  FORM_FIELD_GROUP_CLASS,
+  FORM_STACK_CLASS,
+  LINK_ACCENT_CLASS,
+  TAB_STRIP_CLASS,
+  TAB_ITEM_CLASS,
+  TAB_ITEM_ACTIVE_CLASS,
+  CHIP_GROUP_CLASS,
+  CHIP_CLASS,
+  CHIP_ACTIVE_CLASS,
+  FIELD_SECTION_CLASS,
+  FIELD_SECTION_HEADER_CLASS,
+  FIELD_SECTION_BODY_CLASS,
+  FIELD_PANEL_CLASS,
+  FIELD_PANEL_HEADER_CLASS,
+  FIELD_PANEL_BODY_CLASS,
+  SUBSECTION_SURFACE_CLASS,
+  TEXT_SUCCESS_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
+  DROPDOWN_PANEL_CLASS,
+  DROPDOWN_ITEM_CLASS,
+  LOCALE_TOGGLE_GROUP_CLASS,
+  LOCALE_TOGGLE_ACTIVE_CLASS,
+  LOCALE_TOGGLE_INACTIVE_CLASS,
+  FORM_INPUT_CLASS,
+  APP_SIDEBAR_WIDTH,
+  APP_SIDEBAR_WIDTH_CLASS,
+  APP_SIDEBAR_COLLAPSED_CLASS,
+  APP_SIDEBAR_OFFSET_CLASS,
+  APP_SIDEBAR_COLLAPSED_OFFSET_CLASS,
+  APP_SIDEBAR_LEFT_CLASS,
+  APP_SIDEBAR_COLLAPSED_LEFT_CLASS,
+  APP_HEADER_OFFSET_CLASS,
+  APP_MAIN_CONTENT_PADDED_CLASS,
+  APP_MAIN_CONTENT_CLASS,
+} from "./tokens/components";

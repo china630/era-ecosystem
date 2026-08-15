@@ -1,0 +1,63 @@
+# ERA Security Hygiene Program §3 — SAST (secrets + Semgrep + OSV)
+# Tune-in: warn-friendly first; make required on branch protection after noise review.
+name: Security SAST
+
+on:
+  pull_request:
+    branches: [dev, master]
+  push:
+    branches: [dev, master]
+
+concurrency:
+  group: security-sast-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: secrets (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  semgrep:
+    name: sast (semgrep)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep OWASP / JS-TS
+        run: |
+          semgrep scan \
+            --config=p/owasp-top-ten \
+            --config=p/typescript \
+            --config=p/javascript \
+            --error \
+            --exclude='**/.next/**' \
+            --exclude='**/node_modules/**' \
+            --exclude='**/generated/**' \
+            --exclude='**/.wt-*/**' \
+            --exclude='**/docker-data/**'
+
+  osv:
+    name: deps (osv-scanner)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: OSV-Scanner
+        uses: google/osv-scanner-action/osv-scanner-action@v2.0.3
+        with:
+          # Recursive lockfile scan; tune severity in branch protection later
+          scan-args: |-
+            --recursive
+            --skip-git
+            ./

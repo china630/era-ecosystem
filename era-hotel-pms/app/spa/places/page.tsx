@@ -8,25 +8,20 @@ import { PERMISSIONS } from '@/lib/auth/permissions';
 export default function SpaPlacesPage() {
   const { can } = useAuth();
   const t = useTranslations('placesAndRooms');
+  const tc = useTranslations('common');
   return (
     <SimpleCrudPage
       title={t('title')}
       apiPath="/api/spa/places"
       canWrite={can(PERMISSIONS.MASTER_DATA_MANAGE)}
-      onAdd={async () => {
-        const code = window.prompt('Code');
-        const name = window.prompt('Name');
-        if (!code || !name) return;
-        await fetch('/api/spa/places', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, name }),
-        });
-        location.reload();
-      }}
+      addLabel={tc('add')}
+      addFields={[
+        { name: 'code', label: tc('code'), preset: 'code', required: true },
+        { name: 'name', label: tc('name'), preset: 'longText', required: true },
+      ]}
       columns={[
-        { key: 'code', header: 'Code' },
-        { key: 'name', header: 'Name' },
+        { key: 'code', header: tc('code') },
+        { key: 'name', header: tc('name') },
         { key: 'capacity', header: 'Capacity' },
       ]}
     />

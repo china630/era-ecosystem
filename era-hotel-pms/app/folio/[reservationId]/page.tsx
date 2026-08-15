@@ -5,14 +5,19 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import {
+  CARD_CONTAINER_CLASS,
+  Field,
+  FieldSelect,
+  FieldTextarea,
   FxEquivalentBadge,
   GHOST_BUTTON_CLASS,
-  MODAL_INPUT_CLASS,
+  PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
+  showApiError,
+  showSuccess,
 } from '@era/satellite-kit/ui';
-import { PageHeader } from '@era/satellite-kit/ui';
-import AppShell, { PageSection, StatusMessage } from '@/components/layout/AppShell';
+import { EraModal, EraModalFooter } from '@/components/EraModal';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -30,8 +35,10 @@ interface FolioRow {
   status: string;
   charges: { id: string; amount: number; qty: number; description: string; revenueCode: { code: string } }[];
   payments: {
+    id?: string;
     amount: number;
     paymentMethod: string;
+    kind?: string;
     fiscalReceiptId?: string | null;
     fiscalQrPayload?: string | null;
   }[];
@@ -47,7 +54,10 @@ const FISCAL_COLORS: Record<string, string> = {
 
 function folioBalance(f: FolioRow): number {
   const c = f.charges.reduce((s, x) => s + Number(x.amount) * x.qty, 0);
-  const p = f.payments.reduce((s, x) => s + Number(x.amount), 0);
+  const p = f.payments.reduce((s, x) => {
+    const n = Number(x.amount);
+    return s + (x.kind === 'REFUND' ? -n : n);
+  }, 0);
   return c - p;
 }
 
@@ -65,12 +75,22 @@ export default function FolioPage() {
   const [chargeAmount, setChargeAmount] = useState('25');
   const [payAmount, setPayAmount] = useState('');
   const [payMethod, setPayMethod] = useState('CASH');
+  const [payBankReference, setPayBankReference] = useState('');
   const [loyaltyBalance, setLoyaltyBalance] = useState<number | null>(null);
-  const [settleLines, setSettleLines] = useState<{ method: string; amount: string }[]>([
-    { method: 'CASH', amount: '' },
-  ]);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [settleLines, setSettleLines] = useState<
+    { method: string; amount: string; bankReference: string }[]
+  >([{ method: 'CASH', amount: '', bankReference: '' }]);
   const [pricingCurrency, setPricingCurrency] = useState('AZN');
+  const [applyDeposits, setApplyDeposits] = useState(true);
+  const [discountAmount, setDiscountAmount] = useState('');
+  const [transferToCl, setTransferToCl] = useState(true);
+  const [heldDeposits, setHeldDeposits] = useState(0);
+  const [refundTarget, setRefundTarget] = useState<{ id: string; max: number; folioStatus: string } | null>(
+    null,
+  );
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundReason, setRefundReason] = useState('');
+  const [checkoutConfirmOpen, setCheckoutConfirmOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [fRes, rRes, resRes] = await Promise.all([
@@ -81,7 +101,9 @@ export default function FolioPage() {
     const fData = await fRes.json();
     const rData = await rRes.json();
     const resData = resRes.ok ? await resRes.json() : null;
-    if (fRes.ok) {
+    if (!fRes.ok) {
+      showApiError(fData, tc('loadError'));
+    } else {
       setFolios(fData);
       if (fData[0]) setSelectedFolio(fData[0].id);
       const guestPhone = fData[0]?.reservation?.guest?.phone as string | undefined;
@@ -99,7 +121,17 @@ export default function FolioPage() {
       .map((d) => (d.currencyCode ?? 'AZN').trim().toUpperCase())
       .find((c) => c !== 'AZN');
     setPricingCurrency(foreign ?? rates[0]?.currencyCode?.trim().toUpperCase() ?? 'AZN');
-  }, [reservationId]);
+  }, [reservationId, tc]);
+
+  useEffect(() => {
+    if (!selectedFolio) return;
+    void fetch(`/api/folios/settle?folioId=${selectedFolio}`)
+      .then((r) => r.json())
+      .then((p) => {
+        if (p?.heldDeposits != null) setHeldDeposits(Number(p.heldDeposits));
+      })
+      .catch(() => null);
+  }, [selectedFolio, folios]);
 
   useEffect(() => {
     load();
@@ -122,21 +154,24 @@ export default function FolioPage() {
       }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('chargePosted') : data.error);
+    if (res.ok) showSuccess(t('chargePosted'));
+    else showApiError(data, tc('error'));
     await load();
   }
 
   async function voidCharge(chargeId: string) {
     const res = await fetch(`/api/folios/charges/${chargeId}/void`, { method: 'POST' });
     const data = await res.json();
-    setMsg(res.ok ? t('chargeVoided') : data.error);
+    if (res.ok) showSuccess(t('chargeVoided'));
+    else showApiError(data, tc('error'));
     await load();
   }
 
   async function issueInvoice(folioId: string) {
     const res = await fetch(`/api/folios/${folioId}/issue-invoice`, { method: 'POST' });
     const data = await res.json();
-    setMsg(res.ok ? t('invoiceIssued', { number: data.invoiceNumber }) : data.error);
+    if (res.ok) showSuccess(t('invoiceIssued', { number: data.invoiceNumber }));
+    else showApiError(data, tc('error'));
     await load();
   }
 
@@ -149,26 +184,107 @@ export default function FolioPage() {
         folioId: selectedFolio,
         amount: parseFloat(payAmount),
         paymentMethod: payMethod,
+        bankReference:
+          payMethod === 'BANK_TRANSFER' && payBankReference.trim()
+            ? payBankReference.trim()
+            : undefined,
       }),
     });
     const data = await res.json();
-    setMsg(res.ok ? t('paymentRecorded') : data.error);
+    if (res.ok) {
+      showSuccess(t('paymentRecorded'));
+      setPayBankReference('');
+    } else showApiError(data, tc('error'));
     await load();
   }
 
   async function completeSettlement() {
     if (!selectedFolio) return;
     const lines = settleLines
-      .map((l) => ({ method: l.method, amount: parseFloat(l.amount) }))
+      .map((l) => ({
+        method: l.method,
+        amount: parseFloat(l.amount),
+        bankReference:
+          l.method === 'BANK_TRANSFER' && l.bankReference.trim()
+            ? l.bankReference.trim()
+            : undefined,
+      }))
       .filter((l) => l.amount > 0);
-    if (lines.length === 0) return;
+    if (lines.length === 0 && !applyDeposits) return;
+    if (lines.length === 0 && applyDeposits) {
+      lines.push({
+        method: 'DEPOSIT',
+        amount: Math.max(heldDeposits, 0.01),
+        bankReference: undefined,
+      });
+    }
     const res = await fetch('/api/folios/settle', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folioId: selectedFolio, lines }),
+      body: JSON.stringify({
+        folioId: selectedFolio,
+        lines,
+        applyDeposits,
+        discountAmount: discountAmount ? parseFloat(discountAmount) : undefined,
+      }),
     });
     const data = await res.json();
-    setMsg(res.ok ? 'Settlement completed' : data.error);
+    if (res.ok) showSuccess(t('settlementCompleted'));
+    else showApiError(data, tc('error'));
+    await load();
+  }
+
+  async function refundPayment() {
+    if (!refundTarget) return;
+    if (refundTarget.folioStatus === 'TRANSFERRED_AR') {
+      showApiError({ error: t('refundBlockedTransferred') }, tc('error'));
+      return;
+    }
+    const amount = refundAmount ? parseFloat(refundAmount) : undefined;
+    const res = await fetch(`/api/folios/payments/${refundTarget.id}/refund`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount: amount && amount > 0 ? amount : undefined,
+        reason: refundReason.trim() || t('refundDefaultReason'),
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showSuccess(t('refundSuccess'));
+      setRefundTarget(null);
+      setRefundAmount('');
+      setRefundReason('');
+    } else showApiError(data, tc('error'));
+    await load();
+  }
+
+  async function closeOneFolio(folioId: string) {
+    const res = await fetch(`/api/folios/${folioId}/close`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) showSuccess(t('folioClosed'));
+    else showApiError(data, tc('error'));
+    await load();
+  }
+
+  async function doCheckout() {
+    const res = await fetch(`/api/reservations/${reservationId}/check-out`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        transferToCityLedger: transferToCl,
+        discountAmount: discountAmount ? parseFloat(discountAmount) : undefined,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showSuccess(
+        data.cityLedgerTransferred?.length
+          ? t('checkoutClSuccess', { count: data.cityLedgerTransferred.length })
+          : t('checkoutSuccess'),
+      );
+      setCheckoutConfirmOpen(false);
+    } else showApiError(data, tc('error'));
     await load();
   }
 
@@ -181,12 +297,13 @@ export default function FolioPage() {
       body: JSON.stringify({ amount, paymentMethod: payMethod }),
     });
     const data = await res.json();
-    setMsg(res.ok ? 'Deposit recorded (HELD)' : data.error);
+    if (res.ok) showSuccess(t('depositRecorded'));
+    else showApiError(data, tc('error'));
     await load();
   }
 
   return (
-    <AppShell maxWidthClass="max-w-3xl">
+    <div className="max-w-3xl">
       <PageHeader
         title={t('title', { id: reservationId.slice(0, 8) })}
         leading={
@@ -196,8 +313,8 @@ export default function FolioPage() {
         }
       />
 
-      <PageSection
-        className={`mb-4 text-[13px] ${
+      <section
+        className={`${CARD_CONTAINER_CLASS} mb-4 p-4 text-[13px] ${
           Math.abs(totalBalance) < 0.01
             ? 'border-[#2980B9]/30 bg-[#F8FAFC] text-[#34495E]'
             : 'border-amber-200 bg-amber-50 text-amber-900'
@@ -211,12 +328,50 @@ export default function FolioPage() {
           </span>
         ) : null}
         {Math.abs(totalBalance) < 0.01 ? t('readyCheckout') : t('paymentRequired')}
-      </PageSection>
-
-      <StatusMessage>{msg}</StatusMessage>
+        {heldDeposits > 0 ? (
+          <span className="ml-2">
+            · {t('heldDeposits', { amount: heldDeposits.toFixed(2) })}
+          </span>
+        ) : null}
+        {can(PERMISSIONS.RESERVATIONS_CHECKOUT) ? (
+          <div className="mt-3 flex flex-wrap items-end gap-3">
+            <div className="space-y-1">
+              <p className="m-0 text-[12px] font-medium text-[#34495E]">{t('checkoutMode')}</p>
+              <label className="mr-3 inline-flex items-center gap-1.5 text-[12px]">
+                <input
+                  type="radio"
+                  name="clMode"
+                  checked={transferToCl}
+                  onChange={() => setTransferToCl(true)}
+                />
+                {t('leaveOnCityLedger')}
+              </label>
+              <label className="inline-flex items-center gap-1.5 text-[12px]">
+                <input
+                  type="radio"
+                  name="clMode"
+                  checked={!transferToCl}
+                  onChange={() => setTransferToCl(false)}
+                />
+                {t('payGuestFirst')}
+              </label>
+              <p className="m-0 text-[11px] text-[#7F8C8D]">
+                {transferToCl ? t('leaveOnCityLedgerHint') : t('payGuestFirstHint')}
+              </p>
+            </div>
+            <button
+              type="button"
+              className={PRIMARY_BUTTON_CLASS}
+              onClick={() => setCheckoutConfirmOpen(true)}
+            >
+              {t('checkOut')}
+            </button>
+          </div>
+        ) : null}
+      </section>
 
       {folios.map((f) => (
-        <PageSection key={f.id} className="mb-4">
+        <section key={f.id} className={`${CARD_CONTAINER_CLASS} mb-4 p-4`}>
           <h2 className="font-semibold text-[#34495E]">
             {t('folioLine', {
               type: f.type,
@@ -242,12 +397,49 @@ export default function FolioPage() {
               </li>
             ))}
             {f.payments.map((p, i) => (
-              <li key={i}>
-                {t('paymentLine', { method: p.paymentMethod, amount: Number(p.amount) })}
-                {p.fiscalReceiptId ? t('kkmReceipt', { receiptId: p.fiscalReceiptId }) : ''}
+              <li key={p.id ?? i} className="flex flex-wrap items-center gap-2">
+                <span>
+                  {p.kind === 'REFUND' ? 'REFUND ' : ''}
+                  {t('paymentLine', { method: p.paymentMethod, amount: Number(p.amount) })}
+                  {p.fiscalReceiptId ? t('kkmReceipt', { receiptId: p.fiscalReceiptId }) : ''}
+                </span>
+                {can(PERMISSIONS.FOLIO_PAYMENT) && p.id && p.kind !== 'REFUND' ? (
+                  <button
+                    type="button"
+                    className={GHOST_BUTTON_CLASS}
+                    disabled={f.status === 'TRANSFERRED_AR'}
+                    title={
+                      f.status === 'TRANSFERRED_AR' ? t('refundBlockedTransferred') : undefined
+                    }
+                    onClick={() => {
+                      if (f.status === 'TRANSFERRED_AR') {
+                        showApiError({ error: t('refundBlockedTransferred') }, tc('error'));
+                        return;
+                      }
+                      setRefundTarget({
+                        id: p.id!,
+                        max: Number(p.amount),
+                        folioStatus: f.status,
+                      });
+                      setRefundAmount(String(p.amount));
+                      setRefundReason('');
+                    }}
+                  >
+                    {t('refund')}
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>
+          {can(PERMISSIONS.FOLIO_PAYMENT) && f.status === 'OPEN' && Math.abs(folioBalance(f)) < 0.01 ? (
+            <button
+              type="button"
+              onClick={() => void closeOneFolio(f.id)}
+              className={`mt-2 mr-2 ${SECONDARY_BUTTON_CLASS}`}
+            >
+              {t('closeFolio')}
+            </button>
+          ) : null}
           {can(PERMISSIONS.FOLIO_PAYMENT) && f.charges.length > 0 && (
             <button type="button" onClick={() => issueInvoice(f.id)} className={`mt-2 ${SECONDARY_BUTTON_CLASS}`}>
               {t('issueInvoice')}
@@ -269,27 +461,29 @@ export default function FolioPage() {
               ))}
             </div>
           )}
-        </PageSection>
+        </section>
       ))}
 
       {can(PERMISSIONS.FOLIO_CHARGE) && (
-        <PageSection className="mb-4 flex flex-wrap items-center gap-2">
-          <input
+        <section className={`${CARD_CONTAINER_CLASS} mb-4 flex flex-wrap items-end gap-2 p-4`}>
+          <Field
+            label={tc('amount')}
+            preset="amount"
             type="number"
-            className={`w-24 ${MODAL_INPUT_CLASS}`}
             value={chargeAmount}
             onChange={(e) => setChargeAmount(e.target.value)}
           />
           <button type="button" onClick={addCharge} className={SECONDARY_BUTTON_CLASS}>
             {t('postCharge')}
           </button>
-        </PageSection>
+        </section>
       )}
 
       {can(PERMISSIONS.FOLIO_PAYMENT) && (
-        <PageSection className="flex flex-wrap items-center gap-2">
-          <select
-            className={MODAL_INPUT_CLASS}
+        <section className={`${CARD_CONTAINER_CLASS} flex flex-wrap items-end gap-2 p-4`}>
+          <FieldSelect
+            label="Folio"
+            preset="select"
             value={selectedFolio}
             onChange={(e) => setSelectedFolio(e.target.value)}
           >
@@ -298,43 +492,58 @@ export default function FolioPage() {
                 {f.type}
               </option>
             ))}
-          </select>
-          <input
+          </FieldSelect>
+          <Field
+            label={tc('amount')}
+            preset="amount"
             type="number"
-            placeholder={tc('amount')}
-            className={`w-28 ${MODAL_INPUT_CLASS}`}
             value={payAmount}
             onChange={(e) => setPayAmount(e.target.value)}
           />
-          <select
-            className={MODAL_INPUT_CLASS}
+          <FieldSelect
+            label="Method"
+            preset="select"
             value={payMethod}
             onChange={(e) => setPayMethod(e.target.value)}
           >
             <option value="CASH">CASH</option>
             <option value="CARD">CARD</option>
+            <option value="BANK_TRANSFER">BANK_TRANSFER</option>
             <option value="LOYALTY_POINTS">LOYALTY_POINTS</option>
             <option value="COMPANY_ACCOUNT">COMPANY_ACCOUNT</option>
-          </select>
+          </FieldSelect>
+          {payMethod === 'BANK_TRANSFER' && (
+            <Field
+              label={t('bankReference')}
+              preset="longText"
+              value={payBankReference}
+              onChange={(e) => setPayBankReference(e.target.value)}
+              placeholder={t('bankReferencePlaceholder')}
+            />
+          )}
           <button type="button" onClick={addPayment} className={PRIMARY_BUTTON_CLASS}>
             {t('recordPayment')}
           </button>
           <button type="button" onClick={recordDeposit} className={SECONDARY_BUTTON_CLASS}>
-            Record deposit (HELD)
+            {t('recordDeposit')}
           </button>
-        </PageSection>
+        </section>
       )}
 
       {can(PERMISSIONS.FOLIO_PAYMENT) && totalBalance > 0.01 && (
-        <PageSection className="mt-4 space-y-2">
-          <h3 className="font-semibold text-[#34495E]">Split settlement</h3>
+        <section className={`${CARD_CONTAINER_CLASS} mt-4 space-y-2 p-4`}>
+          <h3 className="font-semibold text-[#34495E]">{t('settleTitle')}</h3>
+          <p className="m-0 text-[12px] text-[#7F8C8D]">{t('settleHint')}</p>
           {loyaltyBalance != null && loyaltyBalance > 0 && (
-            <p className="text-[13px] text-[#7F8C8D]">Loyalty redeemable: up to {loyaltyBalance.toFixed(2)} AZN</p>
+            <p className="text-[13px] text-[#7F8C8D]">
+              {t('loyaltyRedeemable', { amount: loyaltyBalance.toFixed(2) })}
+            </p>
           )}
           {settleLines.map((line, idx) => (
-            <div key={idx} className="flex flex-wrap gap-2">
-              <select
-                className={MODAL_INPUT_CLASS}
+            <div key={idx} className="flex flex-wrap items-end gap-2">
+              <FieldSelect
+                label={t('method')}
+                preset="select"
                 value={line.method}
                 onChange={(e) => {
                   const next = [...settleLines];
@@ -344,12 +553,15 @@ export default function FolioPage() {
               >
                 <option value="CASH">CASH</option>
                 <option value="CARD">CARD</option>
+                <option value="BANK_TRANSFER">BANK_TRANSFER</option>
                 <option value="LOYALTY_POINTS">LOYALTY_POINTS</option>
-              </select>
-              <input
+                <option value="DEPOSIT">DEPOSIT</option>
+                <option value="COMPANY_ACCOUNT">COMPANY_ACCOUNT</option>
+              </FieldSelect>
+              <Field
+                label={tc('amount')}
+                preset="amount"
                 type="number"
-                className={`w-28 ${MODAL_INPUT_CLASS}`}
-                placeholder="Amount"
                 value={line.amount}
                 onChange={(e) => {
                   const next = [...settleLines];
@@ -357,22 +569,110 @@ export default function FolioPage() {
                   setSettleLines(next);
                 }}
               />
+              {line.method === 'BANK_TRANSFER' && (
+                <Field
+                  label={t('bankReference')}
+                  preset="longText"
+                  value={line.bankReference}
+                  onChange={(e) => {
+                    const next = [...settleLines];
+                    next[idx] = { ...next[idx], bankReference: e.target.value };
+                    setSettleLines(next);
+                  }}
+                  placeholder={t('bankReferencePlaceholder')}
+                />
+              )}
             </div>
           ))}
+          <Field
+            label={t('discountAzn')}
+            preset="amount"
+            type="number"
+            value={discountAmount}
+            onChange={(e) => setDiscountAmount(e.target.value)}
+          />
+          <label className="inline-flex items-center gap-1.5 text-[12px]">
+            <input
+              type="checkbox"
+              checked={applyDeposits}
+              onChange={(e) => setApplyDeposits(e.target.checked)}
+            />
+            {t('applyHeldDeposits')}
+            {heldDeposits > 0 ? ` (${heldDeposits.toFixed(2)} AZN)` : ''}
+          </label>
           <div className="flex gap-2">
             <button
               type="button"
               className={SECONDARY_BUTTON_CLASS}
-              onClick={() => setSettleLines([...settleLines, { method: 'CASH', amount: '' }])}
+              onClick={() =>
+                setSettleLines([...settleLines, { method: 'CASH', amount: '', bankReference: '' }])
+              }
             >
-              Add tender line
+              {t('addTenderLine')}
             </button>
             <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={completeSettlement}>
-              Complete settlement
+              {t('completeSettlement')}
             </button>
           </div>
-        </PageSection>
+        </section>
       )}
-    </AppShell>
+
+      <EraModal
+        open={Boolean(refundTarget)}
+        title={t('refundModalTitle')}
+        onClose={() => setRefundTarget(null)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setRefundTarget(null)}
+            onSubmit={() => void refundPayment()}
+            submitLabel={t('refund')}
+          />
+        }
+      >
+        <div className="space-y-3">
+          <p className="m-0 text-[13px] text-[#7F8C8D]">
+            {t('refundModalHint', { max: refundTarget?.max.toFixed(2) ?? '0' })}
+          </p>
+          <Field
+            label={tc('amount')}
+            preset="amount"
+            type="number"
+            value={refundAmount}
+            onChange={(e) => setRefundAmount(e.target.value)}
+          />
+          <FieldTextarea
+            label={t('refundReason')}
+            value={refundReason}
+            onChange={(e) => setRefundReason(e.target.value)}
+            rows={3}
+          />
+        </div>
+      </EraModal>
+
+      <EraModal
+        open={checkoutConfirmOpen}
+        title={t('checkOut')}
+        onClose={() => setCheckoutConfirmOpen(false)}
+        footer={
+          <EraModalFooter
+            onCancel={() => setCheckoutConfirmOpen(false)}
+            onSubmit={() => void doCheckout()}
+            submitLabel={t('confirmCheckout')}
+          />
+        }
+      >
+        <div className="space-y-2 text-[13px] text-[#34495E]">
+          <p className="m-0">
+            {t('totalBalance')} <strong>{totalBalance.toFixed(2)} AZN</strong>
+          </p>
+          <p className="m-0 text-[#7F8C8D]">
+            {transferToCl ? t('leaveOnCityLedgerHint') : t('payGuestFirstHint')}
+          </p>
+          {transferToCl ? (
+            <p className="m-0 text-amber-800">{t('checkoutClConfirmWarn')}</p>
+          ) : null}
+        </div>
+      </EraModal>
+    </div>
   );
 }

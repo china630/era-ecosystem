@@ -1,36 +1,41 @@
 # ERA ecosystem — readiness matrix
 
-Living snapshot of **code + DELIVERY** readiness.
+Living snapshot of **code + DELIVERY** readiness (engineering API levels and checklist %).
 
-**Refresh:** Cursor skill `era-readiness-matrix` («обнови матрицу готовности») or `node scripts/delivery-readiness.mjs` for §1 counts only.
+> **Not sell/show:** For product pilot / commercial honesty use [`docs/acceptance/`](./acceptance/README.md) Product-Readiness matrices and [`docs/editions/`](./editions/). Canon: [ERA-Acceptance-Standard](./products/ERA-Acceptance-Standard.md).
+
+**Refresh:** Cursor skill `era-readiness-matrix` («обнови матрицу готовности API») or `node scripts/delivery-readiness.mjs` for §1 counts only.
 
 **Related:** [INTEGRATION_SSO_EVENTS.md](./INTEGRATION_SSO_EVENTS.md) · [MODULES_CATALOG.md](./MODULES_CATALOG.md) · [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) · [PLATFORM_ADDONS.md](./PLATFORM_ADDONS.md) · [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) (launcher, auth, MDM, UI gaps for local UAT)
 
 **R1 re-audit (2026-06-16):** Integration domains A–E **COMPLIANT**; automated strict audit **0 issues**. See [audit-snapshots/r1-delta-2026-06-16.md](./audit-snapshots/r1-delta-2026-06-16.md).
 
-Last updated: 2026-06-16 (R1 full layer re-audit — W1–W5 verified; **v3 Workforce Plans A–E** — CP hub clean cutover)
+Last updated: 2026-08-04 (hotel BE scaffold green — negative-path suites; Product Readiness UI/Pilot still 🟡)
 
 > **Workforce v3 (orchestrator):** Absence (A), org structure (B), role templates + CP provisioning + Security Admin (C), PII tiers (D), clean cutover (E) — see [COVERAGE_MATRIX CP-WF-*](./COVERAGE_MATRIX.md), master ADR [cp-core-workforce-hub.md](./adr/cp-core-workforce-hub.md), runbook [v3-workforce-cutover.md](./runbooks/v3-workforce-cutover.md).
 
-> **Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`):** Engine MVP P0–P7; **ops teller UX GA** with modal CRUD compliance. See [era-bank/doc/DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md), [BANK_DOC_API_UI_AUDIT.md](./BANK_DOC_API_UI_AUDIT.md), [era-bank-core/doc/DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md).
+> **Bank CBS (`era-bank-core`, `era-bank`, `era-bank-dbo`):** Engine MVP P0–P7; **ops teller UX ops-mvp** with modal CRUD compliance (edition `docs/editions/bank.yaml` = mvp, not product ga). See [era-bank/doc/DELIVERY-BANK.md](../era-bank/doc/DELIVERY-BANK.md), [BANK_DOC_API_UI_AUDIT.md](./BANK_DOC_API_UI_AUDIT.md), [era-bank-core/doc/DELIVERY-BANK-CORE.md](../era-bank-core/doc/DELIVERY-BANK-CORE.md).
 
 > **Clinic (`era-clinic`):** Matrix gaps closure (Phases 0–7). See [CLINIC_DOC_API_UI_AUDIT.md](./CLINIC_DOC_API_UI_AUDIT.md), [COVERAGE_MATRIX CLI-*](./COVERAGE_MATRIX.md#era-clinic-cli), [DELIVERY-CLINIC.md](../era-clinic/doc/DELIVERY-CLINIC.md).
 
-### Bank Ops UX GA (2026-06)
+> **Hotel FO money / City Ledger (2026-08-04):** P5 COVERAGE SHIPPED + BE Scaffold ✅ (INT STUB excl.) + UI/Demo ✅ (`reports/hotel-demo-te-signoff.md`). Product Readiness **mvp showable** — Pilot lab/field open — [Hotel-Product-Readiness-Matrix](./acceptance/Hotel-Product-Readiness-Matrix.md).
+
+### Bank Ops UX (2026-06) — ops-mvp (not edition ga)
 
 | Module | Engine | Ops UI | DBO | Verdict |
 |--------|--------|--------|-----|---------|
-| `banking_core` | MVP | **GA** | — | Teller day green; modal CRUD + `/api/gl` BFF |
-| `banking_payments` | MVP+posting | **GA** | MVP | Staff + customer |
-| `banking_deposits` | MVP+posting | **GA** | — | Open/close |
-| `banking_loans` | MVP+posting | **GA** | — | Disburse/repay |
-| `banking_aml` | MVP | GA | preflight | Unchanged |
-| `banking_cards` | MVP | GA | stretch | Unchanged |
-| `banking_treasury` | MVP | GA | — | Unchanged |
-| `banking_regreporting` | MVP | GA | — | Unchanged |
-| `banking_dbo` | MVP | — | GA | Unchanged |
+| `banking_core` | MVP | **ops-mvp** | — | Teller day green; modal CRUD + `/api/gl` BFF |
+| `banking_payments` | MVP+posting | **ops-mvp** | MVP | Staff + customer |
+| `banking_deposits` | MVP+posting | **ops-mvp** | — | Open/close |
+| `banking_loans` | MVP+posting | **ops-mvp** | — | Disburse/repay |
+| `banking_aml` | MVP | ops-mvp | preflight | Unchanged |
+| `banking_cards` | MVP | ops-mvp | stretch | Unchanged |
+| `banking_treasury` | MVP | ops-mvp | — | Unchanged |
+| `banking_regreporting` | MVP | ops-mvp | — | Unchanged |
+| `banking_dbo` | MVP | — | ops-mvp | Unchanged |
 
-**Production certification** (live rails, FMN, pentest): [era-bank/doc/CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md) — parallel track, not blocking ops pilot.
+**Edition SSOT:** [`docs/editions/bank.yaml`](./editions/bank.yaml) = `mvp`, `pilot_ready: false`.  
+**Production certification** (live rails, FMN, pentest): [era-bank/doc/CERTIFICATION-TRACK.md](../era-bank/doc/CERTIFICATION-TRACK.md) — parallel track, not product `ga`.
 
 ### Banking modules (MVP engine)
 

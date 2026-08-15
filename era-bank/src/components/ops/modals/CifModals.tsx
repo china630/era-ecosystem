@@ -3,9 +3,20 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Field, FieldSelect, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CatalogField,
+  Field,
+  PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
+} from "@era/satellite-kit/ui";
 import { OpsModalShell } from "@/components/ops/OpsModalShell";
 import { OpsError, StatusBadge, maskIban } from "@/components/ops-ui";
+import {
+  CUSTOMER_TYPE_OPTIONS,
+  loadBranchOptions,
+  type LookupOption,
+  withOrphanOption,
+} from "@/lib/bank-lookups";
 
 function maskPersonId(id: string | null | undefined): string {
   if (!id) return "—";
@@ -54,11 +65,22 @@ type CifCreateModalProps = {
 export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps) {
   const t = useTranslations("pages.cif");
   const [customerType, setCustomerType] = useState<"NATURAL" | "LEGAL">("NATURAL");
+  const [homeBranchId, setHomeBranchId] = useState("");
+  const [branches, setBranches] = useState<LookupOption[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fin, setFin] = useState("");
   const [previewPersonId, setPreviewPersonId] = useState<string | null>(null);
   const formId = "cif-create-form";
+
+  useEffect(() => {
+    if (!open) return;
+    void loadBranchOptions().then(setBranches);
+    setFin("");
+    setHomeBranchId("");
+    setPreviewPersonId(null);
+    setError(null);
+  }, [open]);
 
   async function previewMdm() {
     if (customerType !== "NATURAL" || !fin.trim()) return;
@@ -82,15 +104,23 @@ export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps
     setBusy(true);
     setError(null);
     const form = new FormData(e.currentTarget);
+    if (!homeBranchId) {
+      setError("Home branch is required");
+      setBusy(false);
+      return;
+    }
     try {
       const res = await fetch("/api/cif/customers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerType,
-          homeBranchId: form.get("homeBranchId"),
-          fin: customerType === "NATURAL" ? form.get("fin") : undefined,
-          voen: customerType === "LEGAL" ? form.get("voen") : undefined,
+          homeBranchId,
+          fin: customerType === "NATURAL" ? fin.trim() || undefined : undefined,
+          voen:
+            customerType === "LEGAL"
+              ? String(form.get("voen") ?? "").trim() || undefined
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -117,27 +147,33 @@ export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps
       busy={busy}
     >
       <form id={formId} onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
-        <FieldSelect
+        <CatalogField
+          kind="CLOSED_SMALL"
           label={t("customerType")}
-          preset="selectWide"
           className="sm:col-span-2"
+          options={CUSTOMER_TYPE_OPTIONS}
           value={customerType}
-          onChange={(e) => setCustomerType(e.target.value as "NATURAL" | "LEGAL")}
-        >
-          <option value="NATURAL">{t("natural")}</option>
-          <option value="LEGAL">{t("legal")}</option>
-        </FieldSelect>
+          onChange={(next) =>
+            setCustomerType(
+              (Array.isArray(next) ? next[0] : next) === "LEGAL" ? "LEGAL" : "NATURAL",
+            )
+          }
+          required
+        />
         {customerType === "NATURAL" ? (
           <>
-            <Field name="fin" label="FIN (7 chars)" preset="fin" defaultValue="1234567" />
+            <Field
+              name="fin"
+              label="FIN (7 chars)"
+              preset="fin"
+              value={fin}
+              onChange={(e) => setFin(e.target.value)}
+            />
             <div className="sm:col-span-2 flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 className={SECONDARY_BUTTON_CLASS}
-                onClick={() => {
-                  setFin("1234567");
-                  void previewMdm();
-                }}
+                onClick={() => void previewMdm()}
               >
                 {t("mdmPreview")}
               </button>
@@ -147,9 +183,19 @@ export function CifCreateModal({ open, onClose, onCreated }: CifCreateModalProps
             </div>
           </>
         ) : (
-          <Field name="voen" label="VÖEN (10 digits)" preset="voen" defaultValue="1234567890" />
+          <Field name="voen" label="VÖEN (10 digits)" preset="voen" />
         )}
-        <Field name="homeBranchId" label={t("homeBranch")} preset="code" defaultValue="demo-branch-hq" />
+        <CatalogField
+          kind="ENTITY_REF"
+          label={t("homeBranch")}
+          className="sm:col-span-2"
+          options={withOrphanOption(branches, homeBranchId)}
+          value={homeBranchId}
+          onChange={(next) =>
+            setHomeBranchId(Array.isArray(next) ? next[0] ?? "" : next)
+          }
+          required
+        />
         <div className="sm:col-span-2">
           <OpsError message={error} />
         </div>
@@ -212,7 +258,7 @@ function UboAddModal({ open, customerId, onClose, onAdded }: UboAddModalProps) {
       <form id={formId} onSubmit={submit} className="grid gap-3">
         <Field name="fin" label="FIN" preset="fin" />
         <Field name="passport" label={t("passport")} preset="shortText" />
-        <Field name="sharePercent" label={t("sharePercent")} preset="amount" type="number" defaultValue="25" />
+        <Field name="sharePercent" label={t("sharePercent")} preset="amount" type="number" />
         <OpsError message={error} />
       </form>
     </OpsModalShell>

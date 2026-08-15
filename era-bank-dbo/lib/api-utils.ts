@@ -45,12 +45,15 @@ export async function requireCustomerSession(): Promise<
 }
 
 export function setSessionCookie(res: NextResponse, token: string, maxAge: number) {
+  // Secure only when explicitly enabled — docker local uses http://127.0.0.1
+  const secure =
+    process.env.COOKIE_SECURE === "true" || process.env.COOKIE_SECURE === "1";
   res.cookies.set(DBO_SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",
     maxAge,
-    secure: process.env.NODE_ENV === "production",
+    secure,
   });
 }
 

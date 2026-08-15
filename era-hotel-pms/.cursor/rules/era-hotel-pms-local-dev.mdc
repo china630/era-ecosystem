@@ -31,3 +31,4 @@ Next.js App Router: `app/` (UI) + `app/api/` (Route Handlers). Prisma: `prisma/s
 
 - Staff: `POST /api/auth/login` (local)
 - Management: SSO `/sso/callback` from orchestrator launcher
+- **Platform super-admin** (`PLATFORM_SUPER_ADMIN_EMAILS` / `@era/satellite-kit`): full hotel permissions in UI (`useAuth.can`) and API (`assertPermission`), regardless of local role `permissionsJson`. SSO maps them to `Hotel_Admin`.

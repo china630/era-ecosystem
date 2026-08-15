@@ -18,17 +18,17 @@ export default function AppNav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-700 pb-4 text-sm">
       <div className="flex flex-wrap gap-4">
-        <Link href="/" className="text-sky-400 hover:underline">
+        <Link href="/fo/rack" className="text-sky-400 hover:underline">
           {t('chessboard')}
         </Link>
         {can(PERMISSIONS.RESERVATIONS_READ) && (
-          <Link href="/room-plan" className="text-sky-400 hover:underline">
+          <Link href="/fo/room-plan" className="text-sky-400 hover:underline">
             {t('roomPlan')}
           </Link>
         )}
         {can(PERMISSIONS.RESERVATIONS_WRITE) && (
           <Link href="/bookings/new" className="text-sky-400 hover:underline">
-            {t('newBooking')}
+            {t('roomBooking')}
           </Link>
         )}
         {can(PERMISSIONS.REPORTS_READ) && (
@@ -36,7 +36,7 @@ export default function AppNav() {
             <Link href="/reports/occupancy" className="text-sky-400 hover:underline">
               {t('occupancy')}
             </Link>
-            <Link href="/reports/agency-ledger" className="text-sky-400 hover:underline">
+            <Link href="/front-cash/agency-ledger" className="text-sky-400 hover:underline">
               {t('agencyLedger')}
             </Link>
             <Link href="/reports/reconciliation" className="text-sky-400 hover:underline">
@@ -60,29 +60,29 @@ export default function AppNav() {
         )}
         {can(PERMISSIONS.MASTER_DATA_MANAGE) && (
           <>
-            <Link href="/admin/master-data" className="text-sky-400 hover:underline">
+            <Link href="/settings/master-data" className="text-sky-400 hover:underline">
               {t('masterData')}
             </Link>
-            <Link href="/admin/integration" className="text-sky-400 hover:underline">
+            <Link href="/settings/integration" className="text-sky-400 hover:underline">
               {t('integration')}
             </Link>
-            <Link href="/admin/stock" className="text-sky-400 hover:underline">
+            <Link href="/settings/stock" className="text-sky-400 hover:underline">
               {t('stock')}
             </Link>
           </>
         )}
         {can(PERMISSIONS.USERS_MANAGE) && (
-          <Link href="/admin/users" className="text-sky-400 hover:underline">
+          <Link href="/settings/users" className="text-sky-400 hover:underline">
             {t('users')}
           </Link>
         )}
         {(can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS)) && (
-          <Link href="/housekeeping" className="text-sky-400 hover:underline">
+          <Link href="/hk" className="text-sky-400 hover:underline">
             {t('housekeeping')}
           </Link>
         )}
         {can(PERMISSIONS.CHANNEL_MANAGE) && (
-          <Link href="/channel" className="text-sky-400 hover:underline">
+          <Link href="/distribution/channel" className="text-sky-400 hover:underline">
             {t('channel')}
           </Link>
         )}
@@ -92,7 +92,7 @@ export default function AppNav() {
           </Link>
         )}
         {(can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL)) && (
-          <Link href="/operations" className="text-sky-400 hover:underline">
+          <Link href="/night-audit" className="text-sky-400 hover:underline">
             {t('operations')}
           </Link>
         )}

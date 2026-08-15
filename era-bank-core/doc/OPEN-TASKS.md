@@ -9,13 +9,13 @@ Living issue tracker for open code debt in the bank engine. Priorities:
 | **P2** | Risk & regulatory reporting stubs (ties to P8 `banking_risk`) |
 | **P3** | Config / hardcode debt |
 
-Related: [DELIVERY-BANK-CORE.md](./DELIVERY-BANK-CORE.md) · [TZ.md](../TZ.md) §12–§14 · ADR [era-bank-risk-and-audit.md](../../docs/adr/era-bank-risk-and-audit.md) · ADR [era-bank-gl-account-mapping.md](../../docs/adr/era-bank-gl-account-mapping.md)
+Related: [DELIVERY-BANK-CORE.md](./DELIVERY-BANK-CORE.md) · [TZ.md](../TZ.md) §12–§14 · ADR [era-bank-risk-and-audit.md](../../docs/adr/era-bank-risk-and-audit.md) · ADR [era-bank-gl-account-mapping.md](../../docs/adr/era-bank-gl-account-mapping.md) · ADR [era-bank-product-params.md](../../docs/adr/era-bank-product-params.md)
 
 ---
 
 ## P0 — Security
 
-- [ ] **SSO/HMAC signature must verify in production** — [`apps/api/src/auth/bank-auth.guard.ts`](../apps/api/src/auth/bank-auth.guard.ts) (~L83): dev-mode skips HMAC when secret matches the placeholder; ensure production never uses the skip path.
+- [x] **SSO/HMAC signature must verify in production** — [`apps/api/src/auth/bank-auth.guard.ts`](../apps/api/src/auth/bank-auth.guard.ts): HS256 verified with `timingSafeEqual`. Production never skips. Optional decode-without-verify only when `NODE_ENV≠production` **and** `BANK_JWT_ALLOW_INSECURE_DEV=1` **and** secret is not a known placeholder.
 
 ## P1 — External integrations (stubs / mocks)
 
@@ -28,11 +28,15 @@ Related: [DELIVERY-BANK-CORE.md](./DELIVERY-BANK-CORE.md) · [TZ.md](../TZ.md) �
 
 ## P2 — Risk & reg-reporting stubs
 
-- [ ] **LCR ratio** — [`apps/api/src/modules/treasury/liquidity-gap.engine.ts`](../apps/api/src/modules/treasury/liquidity-gap.engine.ts) `computeLcrRatioStub`; consumed by treasury EOD. Move ownership to `banking_risk` (TZ §12.5 / DELIVERY P8).
-- [ ] **CBAR report templates** — [`apps/api/src/modules/regreporting/regreporting.service.ts`](../apps/api/src/modules/regreporting/regreporting.service.ts): `buildBalanceSheetStub` / `buildLcrStub`. Replace with real formulas; RWA/CAR from `banking_risk`.
-- [ ] **AKB / credit-bureau score** — [`apps/api/src/modules/loans/loans.service.ts`](../apps/api/src/modules/loans/loans.service.ts) (~L62): `akbScore: 720` hardcoded. Wire AKB / Mərkəzi Kredit Reyestri connector.
-- [ ] **IFRS 9 staging / ECL** — [`apps/api/src/modules/loans/loans.service.ts`](../apps/api/src/modules/loans/loans.service.ts) `restructure()` (~L216): manual stage only. Implement via `banking_risk` (TZ §12.4 / DELIVERY P8).
+- [~] **AKB / credit-bureau score** — stub default; `LiveAkbAdapter` behind `BANK_BUREAU_MODE=live` + `BANK_AKB_BASE_URL` / `BANK_AKB_API_KEY` (fail-closed if misconfigured). No certified claim without partner UAT.
+- [~] **IFRS 9 staging / ECL** — DPD staging + STAGE_FLAT / PD_LGD lab matrices + maker-checker provision approve. See [reports/ecl-lab-methodology-signoff.md](./reports/ecl-lab-methodology-signoff.md). **Not certified.**
+- [~] **LCR / RWA / CAR** — risk owns LCR/NSFR read + RwaSnapshot/CapitalAdequacySnapshot; EOD `steps.lcr`; EOM endpoint; regreporting `CBAR_CAR_STUB` / LCR from risk. Treasury keeps GAP engine only.
 
 ## P3 — Config / hardcode debt
 
-- [x] **GL account hardcodes** — product GL codes were constants in loans/deposits; system GL codes were inline literals in treasury/payments/cards/teller/branch. Resolved: product GL from `ProductTemplate.paramsJson` (`getProductGlCode`); system GL from `SystemGlConfig` + `SystemGlConfigService` (`CASH_VAULT`, `NOSTRO`, `MFR_SETTLEMENT`, …). See ADR [era-bank-gl-account-mapping.md](../../docs/adr/era-bank-gl-account-mapping.md). Apply migration `20260716220000_system_gl_config` + `db:seed` before runtime.
+- [x] **GL account hardcodes** — product GL codes were constants in loans/deposits; system GL codes were inline literals in treasury/payments/cards/teller/branch. Resolved: product GL from `ProductTemplate.paramsJson` (`getProductGlCode`); system GL from `SystemGlConfig` + `SystemGlConfigService` (`CASH_VAULT`, `NOSTRO`, `MFR_SETTLEMENT`, …, `LOAN_LOSS_EXPENSE`, `LOAN_LOSS_ALLOWANCE`). See ADR [era-bank-gl-account-mapping.md](../../docs/adr/era-bank-gl-account-mapping.md). Apply migration `20260716220000_system_gl_config` (+ `20260805220000_deposit_accrual_loan_repay_ecl`) + `db:seed` before runtime.
+- [x] **Deposit EOD accrual** — ACT/365 daily accrual in EOD (`DepositsService.accrueDailyInterest`); rate locked on contract; close pays accrued; rollover capitalizes. See [EOD-HA.md](./EOD-HA.md).
+- [~] **Product Factory params + apply-on-originate** — typed `paramsJson` per kind, activate/retire, strict bands, day-count + FLOATING index/spread. Exception pricing dual-control (`PENDING_PRICING_APPROVAL` + approve/reject SoD) **engine landed**; ops UI queue + Product Factory authoring fields remain yellow-clear YC-A3/A4.
+- [ ] **Yellow-clear YC-E*** — live rails / cards / ASAN / certified ECL / FMN / pentest / Pilot field — ⏸ until sandbox creds (see `era-bank/doc/CERTIFICATION-TRACK.md`).
+- [~] **Capability Inventory SSOT** — OUT vs DECLARED vs IN tracked in [`docs/acceptance/Bank-Capability-Inventory.md`](../../docs/acceptance/Bank-Capability-Inventory.md); BE Lite→Deep waves landed 2026-08-06 (`Bank-BE-Roadmap.md`, signoffs `be-lite/deep1/deep2-signoff.md`). Live/cert still YC-E*.
+- [x] **BE Lite→Deep domain APIs** — fee/cash/collections/trade/islamic/wealth + payments SO/VA/cheque + loans-deep + AML RTF/case + IRRBB/OpRisk + EOD steps. Migration `20260806010000_be_lite_deep_extensions`.

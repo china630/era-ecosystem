@@ -207,6 +207,22 @@ export class CifService {
     return row;
   }
 
+  async updatePepFlag(customerId: string, pepFlag: boolean, actorUserId: string) {
+    const customer = await this.assertExists(customerId);
+    const updated = await this.prisma.bankCustomer.update({
+      where: { id: customerId },
+      data: { pepFlag },
+    });
+    await this.audit.append({
+      entity: "BankCustomer",
+      entityId: customerId,
+      action: "PEP_FLAG_UPDATED",
+      beforeJson: { pepFlag: customer.pepFlag },
+      afterJson: { pepFlag },
+      actorUserId,
+    });
+    return updated;
+  }
 }
 
 

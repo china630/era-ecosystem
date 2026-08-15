@@ -3,10 +3,17 @@ import { decimalToNumber, toDecimal } from '@/lib/decimal';
 import { quoteReservationStay } from '@/lib/services/pricing-quote.service';
 import { postCharge } from '@/lib/services/folio.service';
 import {
+  applyLoadBasedAdjustment,
   computeChildNightlyAddon,
+  computeOccupancyNightlySupplement,
   reservationChildGroups,
   type ChildPricingRow,
 } from '@/lib/services/pricing-engine-core';
+import { getHotelPolicy } from '@/lib/services/hotel-policy.service';
+import {
+  estimateOccupancyPctForNight,
+  resolveLoadBasedAdjustmentPercent,
+} from '@/lib/services/yield-pricing.service';
 
 async function loadChildPricingMatrix(): Promise<ChildPricingRow[]> {
   const rows = await prisma.childPricingMatrix.findMany({
@@ -17,6 +24,9 @@ async function loadChildPricingMatrix(): Promise<ChildPricingRow[]> {
     ageFrom: row.ageFrom,
     ageTo: row.ageTo,
     discountPercent: decimalToNumber(row.discountPercent),
+    amountOverride:
+      row.amountOverride == null ? null : decimalToNumber(row.amountOverride),
+    freeCount: row.freeCount,
   }));
 }
 
@@ -57,12 +67,35 @@ export async function recalcReservationDailyRates(reservationId: string) {
     guests: res.adults + res.children1_0 + res.children5_2 + res.children11_6,
   });
 
+  const policy = await getHotelPolicy();
   const childMatrix = await loadChildPricingMatrix();
   const childGroups = reservationChildGroups({
     children1_0: res.children1_0,
     children5_2: res.children5_2,
     children11_6: res.children11_6,
   });
+
+  const occupancySupplement = policy.occupancyPricingEnabled
+    ? decimalToNumber(
+        computeOccupancyNightlySupplement({
+          adults: res.adults,
+          baseOccupancy: res.ratePlan.baseOccupancy ?? 1,
+          extraAdultAmount:
+            res.ratePlan.extraAdultAmount == null
+              ? null
+              : decimalToNumber(res.ratePlan.extraAdultAmount),
+          thirdAdultAmount:
+            res.ratePlan.thirdAdultAmount == null
+              ? null
+              : decimalToNumber(res.ratePlan.thirdAdultAmount),
+          extraBeds: res.extraBeds ?? 0,
+          extraBedAmount:
+            res.ratePlan.extraBedAmount == null
+              ? null
+              : decimalToNumber(res.ratePlan.extraBedAmount),
+        }),
+      )
+    : 0;
 
   const nights = eachNight(res.checkInDate, res.checkOutDate);
   const nightlyByDate = new Map(quoteResult.nightlyRates.map((n) => [n.date, n.amount]));
@@ -72,9 +105,10 @@ export async function recalcReservationDailyRates(reservationId: string) {
       : quoteResult.adultNightly;
 
   const childAddonNightly = decimalToNumber(
-    computeChildNightlyAddon(adultNightly, childGroups, childMatrix),
+    computeChildNightlyAddon(adultNightly, childGroups, childMatrix, {
+      useAbsolutePricing: policy.childAbsolutePricingEnabled,
+    }),
   );
-  const nightly = adultNightly + childAddonNightly;
 
   const discountPct = res.discountActive ? 0 : null;
   const rows: Array<{
@@ -101,7 +135,12 @@ export async function recalcReservationDailyRates(reservationId: string) {
     } else {
       const dateKey = night.toISOString().slice(0, 10);
       const barNight = nightlyByDate.get(dateKey);
-      const baseAmount = (barNight ?? adultNightly) + childAddonNightly;
+      let baseAmount = (barNight ?? adultNightly) + occupancySupplement + childAddonNightly;
+      if (policy.loadBasedPricingEnabled) {
+        const occPct = await estimateOccupancyPctForNight(night);
+        const adj = await resolveLoadBasedAdjustmentPercent(occPct);
+        baseAmount = decimalToNumber(applyLoadBasedAdjustment(baseAmount, adj));
+      }
       rows.push({
         stayDate: night,
         amount: baseAmount,

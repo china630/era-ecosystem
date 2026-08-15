@@ -31,14 +31,55 @@ export async function createChildPricingRow(input: {
   ageFrom: number;
   ageTo: number;
   discountPercent: number;
+  amountOverride?: number | null;
+  freeCount?: number;
+  active?: boolean;
 }) {
   return prisma.childPricingMatrix.create({
     data: {
       ageFrom: input.ageFrom,
       ageTo: input.ageTo,
       discountPercent: toDecimal(input.discountPercent),
+      amountOverride:
+        input.amountOverride == null ? null : toDecimal(input.amountOverride),
+      freeCount: input.freeCount ?? 0,
+      active: input.active ?? true,
     },
   });
+}
+
+export async function updateChildPricingRow(
+  id: string,
+  input: {
+    ageFrom?: number;
+    ageTo?: number;
+    discountPercent?: number;
+    amountOverride?: number | null;
+    freeCount?: number;
+    active?: boolean;
+  },
+) {
+  const data: Record<string, unknown> = {
+    ageFrom: input.ageFrom,
+    ageTo: input.ageTo,
+    freeCount: input.freeCount,
+    active: input.active,
+  };
+  if (input.discountPercent != null) {
+    data.discountPercent = toDecimal(input.discountPercent);
+  }
+  if (input.amountOverride !== undefined) {
+    data.amountOverride =
+      input.amountOverride == null ? null : toDecimal(input.amountOverride);
+  }
+  for (const key of Object.keys(data)) {
+    if (data[key] === undefined) delete data[key];
+  }
+  return prisma.childPricingMatrix.update({ where: { id }, data });
+}
+
+export async function deleteChildPricingRow(id: string) {
+  return prisma.childPricingMatrix.delete({ where: { id } });
 }
 
 export async function listTravelAgencies() {

@@ -6,12 +6,14 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   Field,
   FieldRow,
   FieldSelect,
   PRIMARY_BUTTON_CLASS,
   VoenLookupField,
   PageHeader,
+  type CatalogOption,
 } from "@era/satellite-kit/ui";
 
 type Agent = {
@@ -46,6 +48,31 @@ type SessionUser = {
 
 const STAGES = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"];
 const ASSIGN_ROLES = new Set(["SALES_LEAD", "BUSINESS_OWNER"]);
+
+const FALLBACK_CHANNEL: CatalogOption[] = [
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "instagram", label: "Instagram" },
+  { value: "visit", label: "Visit" },
+  { value: "phone", label: "Phone" },
+  { value: "other", label: "Other" },
+];
+
+const FALLBACK_SECTOR: CatalogOption[] = [
+  { value: "Hospitality", label: "Hospitality" },
+  { value: "Healthcare", label: "Healthcare" },
+  { value: "Retail", label: "Retail" },
+  { value: "Wholesale", label: "Wholesale" },
+  { value: "Construction", label: "Construction" },
+  { value: "Logistics", label: "Logistics" },
+  { value: "Finance", label: "Finance" },
+  { value: "Other", label: "Other" },
+];
+
+const FALLBACK_PROSPECT: CatalogOption[] = [
+  { value: "CUSTOMER", label: "Customer" },
+  { value: "PARTNER", label: "Partner" },
+  { value: "OTHER", label: "Other" },
+];
 
 function PipelineFallback() {
   const t = useTranslations("leads");
@@ -87,10 +114,15 @@ function LeadsPipelineContent() {
     "CUSTOMER" | "PARTNER" | "OTHER"
   >("CUSTOMER");
   const [formSector, setFormSector] = useState("");
+  const [formChannel, setFormChannel] = useState("phone");
   const [formAmount, setFormAmount] = useState("");
   const [formFin, setFormFin] = useState("");
   const [formGlobalPersonId, setFormGlobalPersonId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [channelOptions, setChannelOptions] = useState<CatalogOption[]>(FALLBACK_CHANNEL);
+  const [sectorOptions, setSectorOptions] = useState<CatalogOption[]>(FALLBACK_SECTOR);
+  const [prospectOptions, setProspectOptions] =
+    useState<CatalogOption[]>(FALLBACK_PROSPECT);
 
   const canAssign = session ? ASSIGN_ROLES.has(session.role.code) : false;
 
@@ -122,6 +154,30 @@ function LeadsPipelineContent() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => setSession(data))
       .catch(() => setSession(null));
+
+    async function loadLookups() {
+      try {
+        const kinds = ["CHANNEL", "ACTIVITY_SECTOR", "PROSPECT_TYPE"] as const;
+        const results = await Promise.all(
+          kinds.map(async (kind) => {
+            const res = await fetch(`/api/lookups?kind=${kind}&activeOnly=1`);
+            const data = await res.json();
+            return Array.isArray(data)
+              ? (data as { code: string; name: string }[]).map((r) => ({
+                  value: r.code,
+                  label: r.name || r.code,
+                }))
+              : [];
+          }),
+        );
+        if (results[0]?.length) setChannelOptions(results[0]);
+        if (results[1]?.length) setSectorOptions(results[1]);
+        if (results[2]?.length) setProspectOptions(results[2]);
+      } catch {
+        /* keep fallbacks */
+      }
+    }
+    void loadLookups();
   }, []);
 
   useEffect(() => {
@@ -170,7 +226,7 @@ function LeadsPipelineContent() {
         contactPhone: formPhone.trim() || undefined,
         contactEmail: formEmail.trim() || undefined,
         contactRef: formPhone.trim() || formEmail.trim() || undefined,
-        channel: formPhone.trim() ? "phone" : "other",
+        channel: formChannel || (formPhone.trim() ? "phone" : "other"),
         estimatedAmount: formAmount ? Number(formAmount) : undefined,
         globalPersonId: formGlobalPersonId ?? undefined,
       };
@@ -406,26 +462,29 @@ function LeadsPipelineContent() {
                 </button>
               </div>
             )}
-            <FieldSelect
+            <CatalogField
+              kind="CLOSED_SMALL"
+              label={t("channel")}
+              value={formChannel}
+              onChange={(v) => setFormChannel(String(v))}
+              options={channelOptions}
+            />
+            <CatalogField
+              kind="CLOSED_SMALL"
               label={t("prospectType")}
-              preset="selectWide"
               value={formProspectType}
-              onChange={(e) =>
-                setFormProspectType(
-                  e.target.value as "CUSTOMER" | "PARTNER" | "OTHER",
-                )
+              onChange={(v) =>
+                setFormProspectType(String(v) as "CUSTOMER" | "PARTNER" | "OTHER")
               }
-            >
-              <option value="CUSTOMER">{t("prospectCustomer")}</option>
-              <option value="PARTNER">{t("prospectPartner")}</option>
-              <option value="OTHER">{t("prospectOther")}</option>
-            </FieldSelect>
+              options={prospectOptions}
+            />
             <FieldRow cols={2}>
-              <Field
+              <CatalogField
+                kind="CLOSED_MEDIUM"
                 label={t("activitySector")}
-                preset="shortText"
                 value={formSector}
-                onChange={(e) => setFormSector(e.target.value)}
+                onChange={(v) => setFormSector(String(v))}
+                options={sectorOptions}
               />
               <Field
                 label={t("estimatedAmount")}

@@ -9,6 +9,8 @@ alwaysApply: false
 
 # Wholesale module map
 
+**Acceptance SSOT:** [Wholesale-Acceptance-System](../../../docs/acceptance/Wholesale-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Wholesale-Product-Readiness-Matrix.md) · edition [`docs/editions/wholesale.yaml`](../../../docs/editions/wholesale.yaml)
+
 | Domain | API prefix | Notes |
 |--------|------------|-------|
 | Auth / SSO | `app/api/auth/` | local + SSO |

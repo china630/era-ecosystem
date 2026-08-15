@@ -100,6 +100,42 @@ export class ControlPlaneClient {
     }
   }
 
+  /**
+   * Fetch control-plane org profile (name + decrypted VÖEN) so Finance can
+   * provision a local organization row on SSO ingress. Service-token protected.
+   */
+  async fetchOrganizationDetails(organizationId: string): Promise<{
+    organizationId: string;
+    name: string;
+    taxId: string | null;
+  } | null> {
+    if (!this.serviceToken) return null;
+    try {
+      const res = await fetch(
+        `${this.baseUrl}/internal/v1/mdm/organizations/${encodeURIComponent(
+          organizationId,
+        )}/details`,
+        {
+          method: "GET",
+          headers: { "x-service-token": this.serviceToken },
+        },
+      );
+      if (!res.ok) return null;
+      return (await res.json()) as {
+        organizationId: string;
+        name: string;
+        taxId: string | null;
+      };
+    } catch (err) {
+      this.logger.warn(
+        `Control plane org details failed for ${organizationId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      return null;
+    }
+  }
+
   async attachReferralOnSignup(input: {
     organizationId: string;
     organizationCreatedAt: string;

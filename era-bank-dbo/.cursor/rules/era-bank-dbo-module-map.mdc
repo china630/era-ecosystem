@@ -5,6 +5,8 @@ globs: era-bank-dbo/**/*
 
 # era-bank-dbo module map
 
+**Acceptance SSOT:** [Bank-DBO-Acceptance-System](../../../docs/acceptance/Bank-DBO-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Bank-DBO-Product-Readiness-Matrix.md) · edition [`docs/editions/bank-dbo.yaml`](../../../docs/editions/bank-dbo.yaml)
+
 Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
 
 ## Public
@@ -50,3 +52,13 @@ Port **3211**. Customer channel — not ops SSO. BFF only; balances from engine.
 ## Channel DB models
 
 `CustomerSession`, `CorporateApiKey`, `PaymentSignRequest` only.
+
+
+## UI waves (customer)
+
+| Path | BFF | Engine |
+|------|-----|--------|
+| `/standing-orders` | `/api/standing-orders` | `dbo/standing-orders` |
+| `/loans/apply` | `/api/loans/applications` | `dbo/loans/applications` |
+| `/cards/3ds` | `/api/cards/3ds/challenges` | `dbo/cards/3ds/challenges` |
+| `/islamic` | `/api/islamic/contracts` | `dbo/islamic/contracts` (read-only) |

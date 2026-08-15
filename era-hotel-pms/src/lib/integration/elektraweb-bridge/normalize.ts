@@ -22,7 +22,15 @@ export function parseElektrawebDate(value: unknown): Date | null {
   if (value == null || value === '') return null;
   if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
   const s = String(value).trim();
-  // "2026-07-15 14:00:00.000" → ISO-ish
+  // "2026-07-15 14:00:00.000" — treat naive local wall time as Asia/Baku.
+  const m = s.match(
+    /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/,
+  );
+  if (m) {
+    const [, ymd, hh, mm, ss = '00'] = m;
+    const d = new Date(`${ymd}T${hh}:${mm}:${ss}.000+04:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
   const normalized = s.includes('T') ? s : s.replace(' ', 'T');
   const d = new Date(normalized);
   if (!Number.isNaN(d.getTime())) return d;

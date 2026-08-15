@@ -2,15 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, PRIMARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
+import {
+  CARD_CONTAINER_CLASS,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  showApiError,
+} from "@era/satellite-kit/ui";
 import { OpsModalShell, useEodLock } from "@/components/ops";
-import { OpsError, StatusBadge } from "@/components/ops-ui";
+import { StatusBadge } from "@/components/ops-ui";
 
 type EodRun = {
   status?: string;
   businessDate?: string;
-  stepsJson?: {
+  stepsJson?: Record<string, unknown> & {
     trialBalance?: { balanced?: boolean; totalDebit?: number; totalCredit?: number };
+    depositInterestAccrual?: unknown;
+    lcr?: unknown;
+    floatingRateReset?: unknown;
   };
 };
 
@@ -34,11 +43,13 @@ export default function EodAdminPage() {
         return;
       }
       if (!res.ok) {
+        showApiError(tCommon("error"));
         setError(`${tCommon("error")} (${res.status})`);
         return;
       }
       setRun((await res.json()) as EodRun);
     } catch {
+      showApiError(tCommon("error"));
       setError(tCommon("error"));
     }
   }, [businessDate, tCommon]);
@@ -71,20 +82,19 @@ export default function EodAdminPage() {
   }
 
   const tb = run?.stepsJson?.trialBalance;
+  const steps = run?.stepsJson;
 
   return (
     <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
       <div className={`${CARD_CONTAINER_CLASS} grid gap-4 sm:grid-cols-2`}>
-        <label>
-          <span className="mb-1 block text-[12px] text-muted-foreground">{t("businessDate")}</span>
-          <input
-            type="date"
-            className="w-full rounded border px-3 py-2 text-sm"
-            value={businessDate}
-            onChange={(e) => setBusinessDate(e.target.value)}
-          />
-        </label>
+        <Field
+          label={t("businessDate")}
+          preset="date"
+          type="date"
+          value={businessDate}
+          onChange={(e) => setBusinessDate(e.target.value)}
+        />
         <div className="flex items-end gap-2">
           <button
             type="button"
@@ -96,18 +106,51 @@ export default function EodAdminPage() {
           </button>
         </div>
       </div>
-      <OpsError message={error} />
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className={CARD_CONTAINER_CLASS}>
         <h3 className="mb-2 font-medium">{t("status")}</h3>
-        {run?.status ? <StatusBadge status={run.status} /> : <span className="text-sm text-muted-foreground">{t("notRun")}</span>}
+        {run?.status ? (
+          <StatusBadge status={run.status} />
+        ) : (
+          <span className="text-sm text-muted-foreground">{t("notRun")}</span>
+        )}
         {tb ? (
           <div className="mt-4 text-sm">
             <p>
               {t("trialBalance")}: {tb.balanced ? t("balanced") : t("unbalanced")}
             </p>
             <p>
-              Debit: {tb.totalDebit ?? 0} / Credit: {tb.totalCredit ?? 0}
+              {t("debitLabel")}: {tb.totalDebit ?? 0} / {t("creditLabel")}:{" "}
+              {tb.totalCredit ?? 0}
             </p>
+          </div>
+        ) : null}
+        {steps ? (
+          <div className="mt-4 space-y-2 text-sm">
+            {steps.depositInterestAccrual != null ? (
+              <div>
+                <p className="font-medium">{t("stepDepositAccrual")}</p>
+                <pre className="overflow-auto text-xs">
+                  {JSON.stringify(steps.depositInterestAccrual, null, 2)}
+                </pre>
+              </div>
+            ) : null}
+            {steps.lcr != null ? (
+              <div>
+                <p className="font-medium">{t("stepLcr")}</p>
+                <pre className="overflow-auto text-xs">
+                  {JSON.stringify(steps.lcr, null, 2)}
+                </pre>
+              </div>
+            ) : null}
+            {steps.floatingRateReset != null ? (
+              <div>
+                <p className="font-medium">{t("stepFloatingReset")}</p>
+                <pre className="overflow-auto text-xs">
+                  {JSON.stringify(steps.floatingRateReset, null, 2)}
+                </pre>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

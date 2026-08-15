@@ -1,0 +1,115 @@
+# ERA Ecosystem — acceptance kit config
+# Used by scripts/check-acceptance-consistency.mjs|.ps1
+
+canon_path: docs/products/ERA-Acceptance-Standard.md
+docs_roots:
+  - docs
+  - reports
+
+products:
+  - id: platform
+    name: Platform
+    acceptance_system: docs/acceptance/Platform-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Platform-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Platform-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Platform-Evidence-Rules.md
+  - id: clinic
+    name: Clinic
+    acceptance_system: docs/acceptance/Clinic-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Clinic-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Clinic-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Clinic-Evidence-Rules.md
+  - id: hotel
+    name: Hotel
+    acceptance_system: docs/acceptance/Hotel-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Hotel-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Hotel-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Hotel-Evidence-Rules.md
+  - id: finance
+    name: Finance
+    acceptance_system: docs/acceptance/Finance-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Finance-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Finance-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Finance-Evidence-Rules.md
+  - id: bank
+    name: Bank
+    acceptance_system: docs/acceptance/Bank-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Bank-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Bank-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Bank-Evidence-Rules.md
+    # capability inventory (scope IN/OUT): docs/acceptance/Bank-Capability-Inventory.md
+  - id: bank-dbo
+    name: Bank DBO
+    acceptance_system: docs/acceptance/Bank-DBO-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Bank-DBO-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Bank-DBO-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Bank-DBO-Evidence-Rules.md
+  - id: fnb
+    name: F&B
+    acceptance_system: docs/acceptance/Fnb-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Fnb-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Fnb-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Fnb-Evidence-Rules.md
+  - id: retail
+    name: Retail
+    acceptance_system: docs/acceptance/Retail-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Retail-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Retail-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Retail-Evidence-Rules.md
+  - id: crm
+    name: CRM
+    acceptance_system: docs/acceptance/Crm-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Crm-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Crm-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Crm-Evidence-Rules.md
+  - id: logistics
+    name: Logistics
+    acceptance_system: docs/acceptance/Logistics-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Logistics-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Logistics-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Logistics-Evidence-Rules.md
+  - id: wholesale
+    name: Wholesale
+    acceptance_system: docs/acceptance/Wholesale-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Wholesale-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Wholesale-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Wholesale-Evidence-Rules.md
+  - id: construction
+    name: Construction
+    acceptance_system: docs/acceptance/Construction-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Construction-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Construction-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Construction-Evidence-Rules.md
+  - id: auto
+    name: Auto Service
+    acceptance_system: docs/acceptance/Auto-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Auto-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Auto-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Auto-Evidence-Rules.md
+  - id: data-hub
+    name: Data Hub
+    acceptance_system: docs/acceptance/Data-Hub-Acceptance-System.md
+    readiness_matrix: docs/acceptance/Data-Hub-Product-Readiness-Matrix.md
+    implementation_matrix: docs/acceptance/Data-Hub-Implementation-Matrix.md
+    evidence_rules: docs/acceptance/Data-Hub-Evidence-Rules.md
+
+forbid_bare_ga_in:
+  - docs/editions/platform.yaml
+  - docs/editions/clinic.yaml
+  - docs/editions/hotel.yaml
+  - docs/editions/finance.yaml
+  - docs/editions/bank.yaml
+  - docs/editions/bank-dbo.yaml
+  - docs/editions/fnb.yaml
+  - docs/editions/retail.yaml
+  - docs/editions/crm.yaml
+  - docs/editions/logistics.yaml
+  - docs/editions/wholesale.yaml
+  - docs/editions/construction.yaml
+  - docs/editions/auto.yaml
+  - docs/editions/data-hub.yaml
+
+exclude_md_names:
+  - ERA-Acceptance-Standard.md
+  - Product-Acceptance-Standard.md
+  - Acceptance-Honesty-Audit.md

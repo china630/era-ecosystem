@@ -7,19 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.familyTitle"
       apiPath={(gid) => `/api/guests/${gid}/family`}
-      onAdd={async (guestId) => {
-        const relatedGuestId = window.prompt('Related guest UUID');
-        const relationship = window.prompt('Relationship (Spouse, Child…)');
-        if (!relatedGuestId?.trim() || !relationship?.trim()) return;
-        await fetch(`/api/guests/${guestId}/family`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            relatedGuestId: relatedGuestId.trim(),
-            relationship: relationship.trim(),
-          }),
-        });
-      }}
+      addFields={[
+        { name: 'relatedGuestId', label: 'Related guest UUID', required: true, preset: 'longText' },
+        { name: 'relationship', label: 'Relationship', required: true, preset: 'shortText', placeholder: 'Spouse, Child…' },
+      ]}
+      buildBody={(v) => ({
+        relatedGuestId: v.relatedGuestId.trim(),
+        relationship: v.relationship.trim(),
+      })}
+      searchKeys={['relatedGuestId', 'relationship']}
       renderItem={(r) => {
         const rel = r.relatedGuest as { fullName?: string } | undefined;
         return (

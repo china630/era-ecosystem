@@ -2,16 +2,15 @@ import { randomUUID } from "crypto";
 import { SATELLITE_CLINIC_PROCEDURE_COMPLETED } from "@era/contracts";
 import { prisma } from "@/lib/prisma";
 import { dispatchSatelliteEvent } from "@/lib/dispatch-satellite-event";
-import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
 import { getSchedulingSettings } from "@/domain/settings/scheduling-settings";
-import { useProcedureQuota } from "@/lib/sanatorium-scheduler.service";
+import { postHotelRoomCharge, resolveBillingTarget } from "@/lib/billing-router";
 import { recordClinicAudit } from "@/lib/satellite-audit";
 import {
   ProcedureAttendanceError,
+  SYSTEM_ATTENDANCE_ACTOR,
   type AttendanceActor,
 } from "@/domain/procedure/procedure-attendance.service";
-
-const DEFAULT_OVER_QUOTA_AZN = 25;
+import { resolveProcedureCharge, logProcedureCharge } from "@/domain/procedure/procedure-charge.service";
 
 export async function completeProcedureOrder(
   orderId: string,
@@ -36,44 +35,29 @@ export async function completeProcedureOrder(
   }
   if (order.status !== "CHECKED_IN") {
     throw new ProcedureAttendanceError(
-      "Complete requires CHECKED_IN (guest must check in via QR first)",
+      "Complete requires CHECKED_IN (guest must check in first)",
       "INVALID_TRANSITION",
     );
   }
 
-  let overQuota = false;
-  if (order.reservationId) {
-    const program = await prisma.programInstance.findFirst({
-      where: { reservationId: order.reservationId },
-    });
-    if (program) {
-      const quota = await useProcedureQuota({
-        instanceId: program.id,
-        procedureCode: order.procedureCode,
-      });
-      overQuota = quota.overQuota;
-    }
-  }
-
+  const charge = await resolveProcedureCharge(order);
   const settings = await getSchedulingSettings();
-  if (overQuota && settings.procedureOverQuotaPolicy === "BLOCK") {
+
+  if (charge.overQuota && settings.procedureOverQuotaPolicy === "BLOCK") {
     throw new Error("Procedure quota exceeded — completion blocked");
   }
   if (
-    overQuota &&
+    charge.overQuota &&
     settings.procedureOverQuotaPolicy === "WARN_ONLY" &&
     !body.confirmOverQuota
   ) {
     throw new Error("Procedure quota exceeded — confirm to continue");
   }
 
+  const amountNet = body.amountNet ?? charge.amountNet;
   const lines = body.consumableLines ?? [
     { sku: `PROC-${order.procedureCode}`, qty: 1, description: order.procedureName },
   ];
-  let amountNet = body.amountNet ?? Number(order.amountNet);
-  if (overQuota && amountNet <= 0) {
-    amountNet = DEFAULT_OVER_QUOTA_AZN;
-  }
 
   const now = new Date();
   const updated = await prisma.procedureOrder.update({
@@ -92,7 +76,7 @@ export async function completeProcedureOrder(
     "ProcedureOrder",
     orderId,
     "PROCEDURE_COMPLETE",
-    { status: "COMPLETED", amountNet, overQuota },
+    { status: "COMPLETED", amountNet, overQuota: charge.overQuota },
   );
 
   await dispatchSatelliteEvent({
@@ -107,27 +91,47 @@ export async function completeProcedureOrder(
       currency: "AZN",
       lines,
       reservationId: order.reservationId ?? undefined,
-      overQuota,
+      overQuota: charge.overQuota,
     },
   });
 
   const billingTarget = await resolveBillingTarget(order.patientOrigin);
   const shouldChargeFolio =
     billingTarget === "HOTEL_FOLIO" &&
-    order.reservationId &&
+    !!order.reservationId &&
     amountNet > 0 &&
-    (!overQuota || settings.procedureOverQuotaPolicy === "CHARGE_FOLIO");
+    (!charge.overQuota || settings.procedureOverQuotaPolicy === "CHARGE_FOLIO");
 
-  if (shouldChargeFolio) {
+  const ticketId = `clinic-proc-${order.id}`;
+  if (shouldChargeFolio && order.reservationId) {
     await postHotelRoomCharge({
-      reservationId: order.reservationId!,
+      reservationId: order.reservationId,
       amount: amountNet,
-      description: overQuota
+      description: charge.overQuota
         ? `Over-quota procedure ${order.procedureCode}`
         : `Procedure ${order.procedureCode}`,
-      externalTicketId: `clinic-proc-${order.id}`,
+      externalTicketId: ticketId,
     });
   }
+
+  const logChannel = shouldChargeFolio
+    ? "HOTEL_FOLIO"
+    : settings.procedureOverQuotaPolicy === "BLOCK"
+      ? "BLOCKED"
+      : amountNet > 0 || charge.overQuota
+        ? "LOCAL"
+        : "WARN_ONLY";
+  await logProcedureCharge({
+    procedureOrderId: order.id,
+    patientRefId: order.patientRefId,
+    reservationId: order.reservationId,
+    procedureCode: order.procedureCode,
+    procedureName: order.procedureName,
+    amountNet,
+    overQuota: charge.overQuota,
+    channel: logChannel,
+    externalTicketId: shouldChargeFolio ? ticketId : null,
+  });
 
   const retailBase = (process.env.RETAIL_POS_URL ?? "http://127.0.0.1:3204").replace(/\/$/, "");
   await fetch(`${retailBase}/api/integration/stock-write-off`, {
@@ -141,5 +145,50 @@ export async function completeProcedureOrder(
     }),
   }).catch(() => null);
 
-  return { ...updated, overQuota, folioCharged: shouldChargeFolio };
+  return { ...updated, overQuota: charge.overQuota, folioCharged: !!shouldChargeFolio };
+}
+
+/**
+ * Auto-complete CHECKED_IN orders whose scheduled end has passed.
+ * Triggers: nurse board lazy load + cron catch-all.
+ */
+export async function autoCompleteElapsedCheckedIn(now = new Date()): Promise<{
+  completed: number;
+  failed: number;
+  errors: Array<{ id: string; error: string }>;
+}> {
+  const candidates = await prisma.procedureOrder.findMany({
+    where: { status: "CHECKED_IN" },
+    include: {
+      procedureType: { select: { durationMin: true } },
+    },
+    take: 200,
+    orderBy: { scheduledAt: "asc" },
+  });
+
+  let completed = 0;
+  let failed = 0;
+  const errors: Array<{ id: string; error: string }> = [];
+
+  for (const order of candidates) {
+    const durationMin = order.procedureType?.durationMin ?? 15;
+    const endsAt =
+      order.endsAt ?? new Date(order.scheduledAt.getTime() + durationMin * 60_000);
+    if (endsAt.getTime() > now.getTime()) continue;
+
+    try {
+      await completeProcedureOrder(order.id, SYSTEM_ATTENDANCE_ACTOR, {
+        confirmOverQuota: true,
+      });
+      completed += 1;
+    } catch (err) {
+      failed += 1;
+      errors.push({
+        id: order.id,
+        error: err instanceof Error ? err.message : "auto-complete failed",
+      });
+    }
+  }
+
+  return { completed, failed, errors };
 }

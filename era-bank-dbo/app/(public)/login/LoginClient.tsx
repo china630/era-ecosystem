@@ -30,7 +30,7 @@ export default function LoginClient() {
         body: JSON.stringify({ identifier, channel }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "OTP request failed");
+      if (!res.ok) throw new Error(data.message ?? data.error ?? "OTP request failed");
       setOtpSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("title"));
@@ -49,7 +49,7 @@ export default function LoginClient() {
         body: JSON.stringify({ identifier, channel, code: otpCode }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "OTP verify failed");
+      if (!res.ok) throw new Error(data.message ?? data.error ?? "OTP verify failed");
       window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : t("title"));
@@ -101,6 +101,9 @@ export default function LoginClient() {
     <div className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-4 py-8">
       <div className="rounded-2xl bg-white p-6 shadow-sm">
         <h1 className="mb-4 text-xl font-semibold text-dbo-ink">{t("title")}</h1>
+        <p className="mb-4 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          {t("asanStubBadge")}
+        </p>
 
         <div className="mb-4 flex rounded-lg bg-dbo-surface p-1">
           {(["RETAIL", "CORPORATE"] as Channel[]).map((c) => (

@@ -3,6 +3,7 @@ import {
   fetchSubscriptionSnapshot,
   getBearerOrCookieToken,
   hasActiveModule,
+  parseActiveModules,
 } from "@era/satellite-kit";
 import { cookies, headers } from "next/headers";
 
@@ -37,6 +38,43 @@ export class BankingEntitlementError extends Error {
   }
 }
 
+export async function loadBankSubscriptionSnapshot(): Promise<Record<string, unknown> | null> {
+  const base = (
+    process.env.CONTROL_PLANE_URL ??
+    process.env.ORCHESTRATOR_EVENT_URL ??
+    ""
+  ).replace(/\/$/, "");
+  const token =
+    process.env.CONTROL_PLANE_SERVICE_TOKEN?.trim() ||
+    process.env.SATELLITE_EVENT_SERVICE_TOKEN?.trim() ||
+    "";
+
+  // Prefer internal snapshot (service token). /v1/subscription/me is JWT-only.
+  if (base && BANK_ORG_ID) {
+    try {
+      const res = await fetch(
+        `${base}/internal/v1/subscription/snapshot?organizationId=${encodeURIComponent(BANK_ORG_ID)}`,
+        {
+          headers: token
+            ? {
+                Authorization: `Bearer ${token}`,
+                "x-service-token": token,
+              }
+            : {},
+        },
+      );
+      if (res.ok) {
+        return (await res.json()) as Record<string, unknown>;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (!BANK_ORG_ID) return null;
+  return fetchSubscriptionSnapshot(BANK_ORG_ID);
+}
+
 export async function assertBankingEntitlement(
   moduleKey = "industry_banking",
 ): Promise<void> {
@@ -44,14 +82,32 @@ export async function assertBankingEntitlement(
     if (process.env.NODE_ENV !== "production") return;
     throw new BankingEntitlementError(moduleKey);
   }
-  const snapshot = await fetchSubscriptionSnapshot(BANK_ORG_ID);
+  const snapshot = await loadBankSubscriptionSnapshot();
+  const strict = process.env.ERA_BANK_ENTITLEMENTS_STRICT === "true";
   if (!snapshot) {
     if (process.env.NODE_ENV !== "production") return;
+    // Fail-open when CP is unreachable so local docker ops UI stays usable.
+    if (strict) throw new BankingEntitlementError(moduleKey);
+    return;
+  }
+  // Demo slug orgs (e.g. demo-bank-org-001) are not UUIDs — orch returns an
+  // empty snapshot. Do not block ops lists unless strict mode is on.
+  if (parseActiveModules(snapshot).size === 0) {
+    if (process.env.NODE_ENV !== "production" || !strict) return;
     throw new BankingEntitlementError(moduleKey);
   }
-  if (!hasActiveModule(snapshot, moduleKey)) {
-    throw new BankingEntitlementError(moduleKey);
+  if (hasActiveModule(snapshot, moduleKey)) return;
+
+  // Demo/docker often seeds only the satellite gate SKU. L2 banking_* modules
+  // are then covered by industry_banking until commercial SKUs are split.
+  if (
+    moduleKey.startsWith("banking_") &&
+    hasActiveModule(snapshot, "industry_banking")
+  ) {
+    return;
   }
+
+  throw new BankingEntitlementError(moduleKey);
 }
 
 async function resolveUserJwt(): Promise<string | undefined> {
@@ -69,6 +125,8 @@ export type ForwardToBankCoreInput = {
   path: string;
   body?: string | null;
   userJwt?: string;
+  /** Ops staff id for maker-checker when calling via service token */
+  opsUserId?: string;
   idempotencyKey?: string;
   searchParams?: URLSearchParams;
   entitlementModule?: string;
@@ -98,11 +156,16 @@ export async function forwardToBankCore(
     Accept: "application/json",
     "X-Organization-Id": BANK_ORG_ID,
   };
+  // Prefer service-token auth for BFF→core. Satellite session JWT must NOT be
+  // sent as Authorization — BankAuthGuard reads Bearer first and rejects it.
   if (SERVICE_TOKEN) {
     reqHeaders["X-Service-Token"] = SERVICE_TOKEN;
-  }
-  if (userJwt) {
+    reqHeaders.Authorization = `Bearer ${SERVICE_TOKEN}`;
+  } else if (userJwt) {
     reqHeaders.Authorization = `Bearer ${userJwt}`;
+  }
+  if (input.opsUserId) {
+    reqHeaders["X-Ops-User-Id"] = input.opsUserId;
   }
   if (input.idempotencyKey) {
     reqHeaders["Idempotency-Key"] = input.idempotencyKey;

@@ -53,6 +53,16 @@ export async function getClinicSettings() {
     programSchedulingMode: tenant.programSchedulingMode,
     schedulingSlotMinutes: tenant.schedulingSlotMinutes,
     procedureOverQuotaPolicy: tenant.procedureOverQuotaPolicy,
+    dayStartHour: tenant.dayStartHour,
+    dayEndHour: tenant.dayEndHour,
+    lunchStartHour: tenant.lunchStartHour,
+    lunchEndHour: tenant.lunchEndHour,
+    closedWeekdays: tenant.closedWeekdays ?? [0],
+    defaultProcedureGapMinutes: tenant.defaultProcedureGapMinutes ?? 5,
+    peakModeEnabled: tenant.peakModeEnabled ?? false,
+    peakDayEndHour: tenant.peakDayEndHour ?? 22,
+    checkInRequiresQr: tenant.checkInRequiresQr ?? true,
+    autoNoShowAfterMin: tenant.autoNoShowAfterMin ?? null,
     patientCardResultsPreview:
       tenant.patientCardResultsPreview ?? CARD_DEFAULTS.patientCardResultsPreview,
     patientCardPlanPreview: tenant.patientCardPlanPreview ?? CARD_DEFAULTS.patientCardPlanPreview,
@@ -60,7 +70,34 @@ export async function getClinicSettings() {
       tenant.patientCardHistoryPageSize ?? CARD_DEFAULTS.patientCardHistoryPageSize,
     patientCardPlanPageSize:
       tenant.patientCardPlanPageSize ?? CARD_DEFAULTS.patientCardPlanPageSize,
+    printLogoDataUrl: tenant.printLogoDataUrl ?? null,
+    printClinicNameEn: tenant.printClinicNameEn ?? null,
+    printClinicNameRu: tenant.printClinicNameRu ?? null,
+    printClinicNameAz: tenant.printClinicNameAz ?? null,
+    printAddressEn: tenant.printAddressEn ?? null,
+    printAddressRu: tenant.printAddressRu ?? null,
+    printAddressAz: tenant.printAddressAz ?? null,
+    printPhone: tenant.printPhone ?? null,
+    printEmail: tenant.printEmail ?? null,
+    printWebsite: tenant.printWebsite ?? null,
+    printFooterEn: tenant.printFooterEn ?? null,
+    printFooterRu: tenant.printFooterRu ?? null,
+    printFooterAz: tenant.printFooterAz ?? null,
+    printSignatureLab: tenant.printSignatureLab ?? null,
+    printSignatureDoctor: tenant.printSignatureDoctor ?? null,
+    checkupSectionsJson: tenant.checkupSectionsJson ?? null,
   };
+}
+
+function clampHour(n: number | undefined, fallback: number): number | undefined {
+  if (n == null || Number.isNaN(n)) return undefined;
+  return Math.min(23, Math.max(0, Math.floor(n)));
+}
+
+function clampWeekdays(values: number[] | undefined): number[] | undefined {
+  if (!values) return undefined;
+  const out = [...new Set(values.filter((d) => d >= 0 && d <= 6))];
+  return out;
 }
 
 export async function updateClinicSettings(input: {
@@ -69,10 +106,36 @@ export async function updateClinicSettings(input: {
   programSchedulingMode?: ProgramSchedulingMode;
   schedulingSlotMinutes?: number;
   procedureOverQuotaPolicy?: ProcedureOverQuotaPolicy;
+  dayStartHour?: number;
+  dayEndHour?: number;
+  lunchStartHour?: number;
+  lunchEndHour?: number;
+  closedWeekdays?: number[];
+  defaultProcedureGapMinutes?: number;
+  peakModeEnabled?: boolean;
+  peakDayEndHour?: number;
+  checkInRequiresQr?: boolean;
+  autoNoShowAfterMin?: number | null;
   patientCardResultsPreview?: number;
   patientCardPlanPreview?: number;
   patientCardHistoryPageSize?: number;
   patientCardPlanPageSize?: number;
+  printLogoDataUrl?: string | null;
+  printClinicNameEn?: string | null;
+  printClinicNameRu?: string | null;
+  printClinicNameAz?: string | null;
+  printAddressEn?: string | null;
+  printAddressRu?: string | null;
+  printAddressAz?: string | null;
+  printPhone?: string | null;
+  printEmail?: string | null;
+  printWebsite?: string | null;
+  printFooterEn?: string | null;
+  printFooterRu?: string | null;
+  printFooterAz?: string | null;
+  printSignatureLab?: string | null;
+  printSignatureDoctor?: string | null;
+  checkupSectionsJson?: string | null;
 }) {
   const presets = input.enabledPresets?.filter(isClinicPreset) ?? undefined;
   if (input.enabledPresets && presets && presets.length !== input.enabledPresets.length) {
@@ -98,6 +161,15 @@ export async function updateClinicSettings(input: {
     input.patientCardPlanPageSize,
     CARD_DEFAULTS.patientCardPlanPageSize,
   );
+  const dayStartHour = clampHour(input.dayStartHour, 9);
+  const dayEndHour = clampHour(input.dayEndHour, 18);
+  const lunchStartHour = clampHour(input.lunchStartHour, 13);
+  const lunchEndHour = clampHour(input.lunchEndHour, 14);
+  const closedWeekdays = clampWeekdays(input.closedWeekdays);
+  const defaultProcedureGapMinutes =
+    input.defaultProcedureGapMinutes != null
+      ? Math.min(240, Math.max(0, Math.floor(input.defaultProcedureGapMinutes)))
+      : undefined;
 
   return prisma.tenant.upsert({
     where: { code: DEFAULT_TENANT_CODE },
@@ -105,6 +177,12 @@ export async function updateClinicSettings(input: {
       code: DEFAULT_TENANT_CODE,
       name: input.clinicName ?? "Nafta Clinic",
       enabledPresets: presets ?? [CLINIC_PRESET.OUTPATIENT],
+      dayStartHour: dayStartHour ?? 9,
+      dayEndHour: dayEndHour ?? 18,
+      lunchStartHour: lunchStartHour ?? 13,
+      lunchEndHour: lunchEndHour ?? 14,
+      closedWeekdays: closedWeekdays ?? [0],
+      defaultProcedureGapMinutes: defaultProcedureGapMinutes ?? 5,
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
@@ -122,10 +200,49 @@ export async function updateClinicSettings(input: {
       ...(input.procedureOverQuotaPolicy
         ? { procedureOverQuotaPolicy: input.procedureOverQuotaPolicy }
         : {}),
+      ...(dayStartHour != null ? { dayStartHour } : {}),
+      ...(dayEndHour != null ? { dayEndHour } : {}),
+      ...(lunchStartHour != null ? { lunchStartHour } : {}),
+      ...(lunchEndHour != null ? { lunchEndHour } : {}),
+      ...(closedWeekdays != null ? { closedWeekdays } : {}),
+      ...(defaultProcedureGapMinutes != null ? { defaultProcedureGapMinutes } : {}),
+      ...(input.peakModeEnabled != null ? { peakModeEnabled: input.peakModeEnabled } : {}),
+      ...(input.peakDayEndHour != null
+        ? { peakDayEndHour: Math.min(24, Math.max(1, Math.floor(input.peakDayEndHour))) }
+        : {}),
+      ...(input.checkInRequiresQr != null ? { checkInRequiresQr: input.checkInRequiresQr } : {}),
+      ...(input.autoNoShowAfterMin !== undefined
+        ? {
+            autoNoShowAfterMin:
+              input.autoNoShowAfterMin == null
+                ? null
+                : Math.min(24 * 60, Math.max(1, Math.floor(input.autoNoShowAfterMin))),
+          }
+        : {}),
       ...(resultsPreview != null ? { patientCardResultsPreview: resultsPreview } : {}),
       ...(planPreview != null ? { patientCardPlanPreview: planPreview } : {}),
       ...(historyPage != null ? { patientCardHistoryPageSize: historyPage } : {}),
       ...(planPage != null ? { patientCardPlanPageSize: planPage } : {}),
+      ...(input.printLogoDataUrl !== undefined ? { printLogoDataUrl: input.printLogoDataUrl } : {}),
+      ...(input.printClinicNameEn !== undefined ? { printClinicNameEn: input.printClinicNameEn } : {}),
+      ...(input.printClinicNameRu !== undefined ? { printClinicNameRu: input.printClinicNameRu } : {}),
+      ...(input.printClinicNameAz !== undefined ? { printClinicNameAz: input.printClinicNameAz } : {}),
+      ...(input.printAddressEn !== undefined ? { printAddressEn: input.printAddressEn } : {}),
+      ...(input.printAddressRu !== undefined ? { printAddressRu: input.printAddressRu } : {}),
+      ...(input.printAddressAz !== undefined ? { printAddressAz: input.printAddressAz } : {}),
+      ...(input.printPhone !== undefined ? { printPhone: input.printPhone } : {}),
+      ...(input.printEmail !== undefined ? { printEmail: input.printEmail } : {}),
+      ...(input.printWebsite !== undefined ? { printWebsite: input.printWebsite } : {}),
+      ...(input.printFooterEn !== undefined ? { printFooterEn: input.printFooterEn } : {}),
+      ...(input.printFooterRu !== undefined ? { printFooterRu: input.printFooterRu } : {}),
+      ...(input.printFooterAz !== undefined ? { printFooterAz: input.printFooterAz } : {}),
+      ...(input.printSignatureLab !== undefined ? { printSignatureLab: input.printSignatureLab } : {}),
+      ...(input.printSignatureDoctor !== undefined
+        ? { printSignatureDoctor: input.printSignatureDoctor }
+        : {}),
+      ...(input.checkupSectionsJson !== undefined
+        ? { checkupSectionsJson: input.checkupSectionsJson }
+        : {}),
     },
   });
 }

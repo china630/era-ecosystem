@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { jsonOk, handleRouteError } from '@/lib/api-utils';
 import { serialize } from '@/lib/serialize';
-import { assignVehicle, completeTransfer } from '@/lib/services/transfer.service';
+import {
+  assignVehicle,
+  cancelTransfer,
+  completeTransfer,
+} from '@/lib/services/transfer.service';
 import { getSessionFromHeaders } from '@/lib/auth/session';
 import { assertPermission } from '@/lib/auth/require';
 import { PERMISSIONS } from '@/lib/auth/permissions';
@@ -13,6 +17,10 @@ const patchSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action: z.literal('complete'),
+  }),
+  z.object({
+    action: z.literal('cancel'),
+    reason: z.string().max(200).optional(),
   }),
 ]);
 
@@ -29,7 +37,9 @@ export async function PATCH(
     const result =
       body.action === 'assign'
         ? await assignVehicle(id, body.vehicleId)
-        : await completeTransfer(id);
+        : body.action === 'complete'
+          ? await completeTransfer(id)
+          : await cancelTransfer(id, body.reason);
 
     return jsonOk(serialize(result));
   } catch (err) {

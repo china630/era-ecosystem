@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import {
   AmlAlertStatus,
+  AmlCaseStatus,
   AmlSeverity,
   FmnReportStatus,
   Prisma,
@@ -264,5 +265,139 @@ export class AmlService {
     const payload = report.payloadJson as Record<string, unknown>;
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<fmnReport>\n  <institutionMfo>${payload.institutionMfo ?? ""}</institutionMfo>\n  <reportType>${payload.reportType ?? ""}</reportType>\n  <periodFrom>${payload.periodFrom ?? ""}</periodFrom>\n  <periodTo>${payload.periodTo ?? ""}</periodTo>\n</fmnReport>`;
     return { contentType: "application/xml", body: xml };
+  }
+
+  listCases(status?: AmlCaseStatus) {
+    return this.prisma.amlCase.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        ...(status ? { status } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  getCase(id: string) {
+    return this.prisma.amlCase.findFirst({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+    });
+  }
+
+  createCase(input: {
+    alertId?: string;
+    customerId?: string;
+    sarDraft?: string;
+  }) {
+    return this.prisma.amlCase.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        alertId: input.alertId,
+        customerId: input.customerId,
+        sarDraft: input.sarDraft,
+        status: AmlCaseStatus.OPEN,
+      },
+    });
+  }
+
+  updateCaseStatus(
+    id: string,
+    status: AmlCaseStatus,
+    sarDraft?: string,
+    sarDraftFields?: Record<string, unknown>,
+  ) {
+    return this.prisma.amlCase.updateMany({
+      where: { id, bankOrgId: this.bankOrg.bankOrgId },
+      data: {
+        status,
+        sarDraft,
+        ...(sarDraftFields
+          ? { sarDraftFields: sarDraftFields as Prisma.InputJsonValue }
+          : {}),
+      },
+    });
+  }
+
+  async screenBatch(names: string[], listSource?: string) {
+    const results = await Promise.all(
+      names.map((name) => this.screen({ name, listSource })),
+    );
+    return { screened: results.length, results };
+  }
+
+  async updatePepFlag(customerId: string, pepFlag: boolean) {
+    const customer = await this.prisma.bankCustomer.findFirst({
+      where: { id: customerId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!customer) throw new NotFoundException("Customer not found");
+    const updated = await this.prisma.bankCustomer.update({
+      where: { id: customerId },
+      data: { pepFlag },
+    });
+    const mlScore = await this.refreshMlScore(customerId);
+    return { ...updated, mlScorePlaceholder: mlScore };
+  }
+
+  async refreshMlScore(customerId: string) {
+    const customer = await this.prisma.bankCustomer.findFirst({
+      where: { id: customerId, bankOrgId: this.bankOrg.bankOrgId },
+    });
+    if (!customer) throw new NotFoundException("Customer not found");
+    const since = new Date(Date.now() - 30 * 86400000);
+    const alertCount30d = await this.prisma.amlAlert.count({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        customerId,
+        createdAt: { gte: since },
+      },
+    });
+    const { computeMlScorePlaceholder } = await import("../../common/fc2-fc7.util");
+    const score = computeMlScorePlaceholder({
+      pepFlag: customer.pepFlag,
+      riskRating: customer.riskRating,
+      alertCount30d,
+    });
+    await this.prisma.bankCustomer.update({
+      where: { id: customerId },
+      data: { mlScorePlaceholder: score },
+    });
+    return score;
+  }
+
+  async scoreFraud(input: {
+    reference: string;
+    channel: string;
+    amountMinor: bigint;
+    currency?: string;
+    deviceId?: string;
+    muleSuspectFlag?: boolean;
+  }) {
+    let score = Number(input.amountMinor % 1000n) + 50;
+    const reasonCodes: string[] = [];
+    if (input.muleSuspectFlag) {
+      score += 200;
+      reasonCodes.push("MULE_SUSPECT");
+    }
+    if (input.deviceId?.startsWith("dev-block")) {
+      score += 150;
+      reasonCodes.push("DEVICE_BLOCKLIST");
+    }
+    if (score >= 900) reasonCodes.push("HIGH_AMOUNT");
+    else if (score >= 700) reasonCodes.push("REVIEW");
+    const holdPayment = score >= 900;
+
+    return this.prisma.fraudScoreRequest.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        reference: input.reference,
+        channel: input.channel,
+        amountMinor: input.amountMinor,
+        currency: input.currency ?? "AZN",
+        deviceId: input.deviceId,
+        muleSuspectFlag: input.muleSuspectFlag ?? false,
+        score,
+        reasonCodes,
+        holdPayment,
+      },
+    });
   }
 }

@@ -1,63 +1,120 @@
-# Nafta — derived BAR (2026)
+# Nafta — BAR accounting base (2026)
 
-**Status:** calculated proposal from accounting inputs + Standart package PDF differentials. Not a published hotel tariff — for PMS `BAR` base plan / folio split until hotel confirms.
+**Status:** Product-locked 2026-08-10.  
+**ADR:** [hotel-bar-accounting-vs-package-sell.md](../../../docs/adr/hotel-bar-accounting-vs-package-sell.md)  
+**Costing reference:** [reference/hotel-costing-and-pricing-usali.md](./reference/hotel-costing-and-pricing-usali.md) (+ PDF in same folder)
 
-**Inputs (accounting, 2026-07-14):**
+## Product rules (locked)
 
-| Input | AZN | Role |
-|-------|----:|------|
-| Simplest room, no medical package, **breakfast included** | 70 | Anchor **BAR BB** for Standart |
-| Lunch **or** dinner in canteen (sell) | 25 | Each |
-| FB food **cost** (COGS) | 16 | Folio/GL cost — not subtracted to get BAR |
-| Room cleaning **cost** | 5 | COGS |
-| Base package medical (checkups etc.) **cost** | 20 | COGS |
+1. **BAR** = **accounting base** (folio / night-audit split + recommended floor). Leadership may set BAR from market; system still stores composition for CPOR/floor.
+2. **Medical packages** = primary **sell** products. Final package prices are entered **manually** by sales and **are not required** to match BAR.
+3. Each package has **cost floor (min)** + **sell**, both with **history + audit** (implementation backlog).
+4. **Cash integrity:** Σ folio postings for a stay = reservation sell; BAR used for split + residual, never silent drift.
 
-**Board policy (locked):** no RO sale; commercial products are FB packages. HB rare.
-
----
-
-## Method
-
-1. **Standart, low season, BAR BB** = **70** (accounting).
-2. **Other categories / high season** = `70 + (Standart_package_single[room, season] − 129)`.
-   Diffs come only from the published Standart **package** single matrix (room-category + season ladder), applied onto the BB anchor.
-3. **BAR FB (1 person)** = `BAR_BB + 25 + 25` (add lunch + dinner; breakfast already in BB). Useful for “room + full board, no medical”.
-4. **Triple:** no single rate in PDF. Scale Standart BB by package **triple ÷ double** totals for that season:
-   - low: `70 × (285 / 219)` → **91**
-   - high: `80 × (343 / 239)` → **115**
-5. **Premium / Dermo / Detoks:** hotel assigns **Junior or Deluxe** only; package price is medical product. Room BAR = Junior or Deluxe BB from the table (no season split on those packages).
-
-Implied medical sell-through on Standart low single package: `129 − 70 − 50 = 9 AZN` (below medical **cost** 20 — medical is a loss-leader / subsidised in the package).
+Commercial package PDF: `NAFTA PRICE & PACKAGES LIST - 2026 (AZE RU ENG).pdf`.
 
 ---
 
-## BAR BB matrix (AZN / room / night)
+## Versioned components (settings — planned)
 
-| Room type | Low (Nov–Apr) | High (May–Oct) |
-|-----------|-------------:|---------------:|
-| Standart DBL/Twin (22 m²) | 70 | 80 |
-| Junior Suite (30 m²) | 80 | 96 |
-| Deluxe (42 m²) | 92 | 102 |
-| Triple (24 m²) | 91 | 115 |
+| Code | Meaning | Sell | COGS | Unit |
+|------|---------|-----:|-----:|------|
+| `SVC_FEE` | Service fee — linen/service | **6** | ~5 | per person / night |
+| `MEAL_BREAKFAST` | Breakfast | **25** | (part of food 16/day) | per person / meal |
+| `MEAL_LUNCH` | Lunch | **25** | | per person / meal |
+| `MEAL_DINNER` | Dinner | **25** | | per person / meal |
+| Food bundle COGS | FB food | — | **16** | per person / day |
+| Medical base COGS | Package medicine | — | **20** | per person / night (package) |
 
-## BAR FB matrix — 1 adult, no medical (AZN / room / night)
+Change of sell/COGS = new effective-dated version + audit (do not overwrite in place).
+
+---
+
+## Composition
+
+```
+RO (room only — one amount per room / night)
+  + SVC_FEE × N adults
+  + meals × N adults
+  → BAR BB / BAR FB (accounting totals for N adults)
+```
+
+| Product | Formula |
+|---------|---------|
+| **RO** | Shared room component (not multiplied by adults) |
+| **BB** | `RO + (6 + 25) × N` |
+| **FB** | `RO + (6 + 75) × N` = BB + lunch+dinner × N |
+| **Extra adult** | **+31** on BB (6+25) or **+81** on FB (6+75) — never +RO |
+
+Anchor check (Standart low, N=1): BB sell **70** → `RO = 70 − 6 − 25 = **39**`.
+
+Leadership may **override** published BAR BB/FB cells from market; recommended minimum from components should still be visible in UI (future).
+
+---
+
+## RO matrix (derived from BB₁ − 31)
 
 | Room type | Low | High |
 |-----------|----:|-----:|
-| Standart | 120 | 130 |
-| Junior | 130 | 146 |
-| Deluxe | 142 | 152 |
-| Triple | 141 | 165 |
+| Standart DBL/Twin | 39 | 49 |
+| Junior Suite | 49 | 65 |
+| Deluxe | 61 | 71 |
+| Triple | 60 | 84 |
 
-FB here = BB + lunch + dinner at canteen sell prices. Extra adults: add **50 AZN/person** for L+D (breakfast policy for 2nd adult — confirm with hotel).
+## BAR BB (AZN / room / night)
+
+| Room type | Season | 1 adult | 2 adults |
+|-----------|--------|--------:|---------:|
+| Standart | Low | 70 | 101 |
+| Standart | High | 80 | 111 |
+| Junior | Low | 80 | 111 |
+| Junior | High | 96 | 127 |
+| Deluxe | Low | 92 | 123 |
+| Deluxe | High | 102 | 133 |
+| Triple | Low | 91 | 122 |
+| Triple | High | 115 | 146 |
+
+## BAR FB — no medical (AZN / room / night)
+
+| Room type | Season | 1 adult | 2 adults |
+|-----------|--------|--------:|---------:|
+| Standart | Low | 120 | 201 |
+| Standart | High | 130 | 211 |
+| Junior | Low | 130 | 211 |
+| Junior | High | 146 | 227 |
+| Deluxe | Low | 142 | 223 |
+| Deluxe | High | 152 | 233 |
+| Triple | Low | 141 | 222 |
+| Triple | High | 165 | 246 |
+
+Legacy ladder method (BB from Standart package single deltas, Triple from 285/219 · 343/239) remains the source of the 1-adult BB column above; RO/2-adult rows follow the composition rules.
+
+---
+
+## Packages vs BAR (illustrative)
+
+Package sell is **manual** (PDF / sales). Comparison for control only:
+
+| | BAR FB (1) | PDF Standart single | Δ (package − FB) |
+|--|----------:|--------------------:|-----------------:|
+| Standart low | 120 | 129 | +9 (medical sell residual) |
+| Standart high | 130 | 139 | +9 |
+
+Double occupancy PDF rates are **per person** and need not equal `BAR_FB₂ / 2`. Do not force package sell to BAR.
+
+Premium / Dermo / Detoks: flat PDF sell; room class JR/DLX; BAR row for that room used only for split.
+
+---
 
 ## Machine file
 
-Row dump: [BAR_DERIVED_2026_rows.csv](./BAR_DERIVED_2026_rows.csv) (also copied under `Downloads/EW/` when generated).
+[BAR_DERIVED_2026_rows.csv](./BAR_DERIVED_2026_rows.csv)
 
-## Open confirms
+## Open / backlog
 
-- [ ] Hotel accepts this derived BAR ladder (esp. Triple + high season).
-- [ ] Double occupancy: same room BAR up to 2 adults, or second adult BB surcharge?
-- [ ] Breakfast value inside 70 for 2nd adult / child.
-- [ ] Folio night split for package stays: use BAR BB + 50 board sell + residual medical, or COGS-based (16 / 5 / 20) for finance only.
+- [x] Settings UI: versioned `SVC_FEE` / meals sell+COGS + history — `/settings/pricing-components` (HOT-PC-01)
+- [ ] Package `costFloor` + `sellPrice` versions + audit
+- [ ] BAR calendar shows **recommended min** from components (USALI/CPOR path)
+- [ ] **Management dashboard** (`HOT-UE-01`): BEP, CPOR stack, article COGS/sell trends, below-floor risks — [ADR §5](../../../docs/adr/hotel-bar-accounting-vs-package-sell.md)
+- [ ] Finance allocation engine → period CPOR (see reference digest Phase B)
+- [ ] Hotel sign-off if market BAR diverges permanently from composed ladder

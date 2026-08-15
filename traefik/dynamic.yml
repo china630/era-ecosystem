@@ -3,6 +3,16 @@
 
 http:
   routers:
+    # HTTP→HTTPS for all hosts except ACME HTTP-01 challenge path.
+    http-to-https:
+      rule: "HostRegexp(`{host:.+}`) && !PathPrefix(`/.well-known/acme-challenge/`)"
+      entryPoints:
+        - web
+      middlewares:
+        - redirect-to-https
+      service: noop
+      priority: 1
+
     apex-redirect:
       rule: Host(`era-365.online`)
       entryPoints:
@@ -127,6 +137,11 @@ http:
       service: clinic
 
   middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
     apex-to-app:
       redirectRegex:
         regex: "^https?://era-365\\.online/(.*)"
@@ -134,6 +149,12 @@ http:
         permanent: true
 
   services:
+    # Dummy backend for the HTTP redirect router (middleware short-circuits).
+    noop:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1"
+
     orchestrator-web:
       loadBalancer:
         servers:

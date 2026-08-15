@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { findCatalogItem } from "@/domain/catalog/diagnostic-catalog";
-import type { L10n } from "@/domain/catalog/diagnostic-catalog-shared";
+import { getDiagnosticCatalog } from "@/domain/catalog/diagnostic-catalog";
+import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { hasCriticalFlag, type ResultLineInput } from "@/lib/lab-result-flags";
 
 export type TimelineEventType =
@@ -65,9 +65,12 @@ function parseResultLines(resultJson: string | null): ResultLineInput[] {
   }
 }
 
-function labCatalog(testCode: string): { title: string; titleL10n?: L10n } {
+function labCatalog(
+  testCode: string,
+  catalogItems: DiagnosticCatalogItem[],
+): { title: string; titleL10n?: L10n } {
   const primary = testCode.split(",")[0]?.trim() ?? testCode;
-  const item = findCatalogItem(primary);
+  const item = catalogItems.find((i) => i.code === primary || i.serviceCode === primary);
   if (!item) return { title: testCode };
   return {
     title: `${item.title.en} (${testCode})`,
@@ -83,6 +86,8 @@ export async function getPatientTimeline(
   if (!patient) {
     throw new Error("Patient not found");
   }
+
+  const catalog = await getDiagnosticCatalog();
 
   const [appointments, visits, labOrders, procedures, episodes] = await Promise.all([
     prisma.appointment.findMany({
@@ -163,13 +168,13 @@ export async function getPatientTimeline(
     ).toISOString();
     const lines = parseResultLines(o.resultJson);
     const codes = o.testCode.split(",").map((c) => c.trim()).filter(Boolean);
-    const catalog = labCatalog(o.testCode);
+    const labInfo = labCatalog(o.testCode, catalog.items);
     events.push({
       id: `lab_order:${o.id}`,
       type: "lab_order",
       at,
-      title: catalog.title,
-      titleL10n: catalog.titleL10n,
+      title: labInfo.title,
+      titleL10n: labInfo.titleL10n,
       subtitle:
         o.status === "PUBLISHED" || o.status === "COMPLETED" || o.status === "RESULT_READY"
           ? lines.length

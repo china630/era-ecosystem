@@ -1,0 +1,212 @@
+[
+ {
+  "code": "SVC-4-KAMERALI-HIDROQALVANIZASIYA",
+  "name": "4 kameralı hidroqalvanizasiya",
+  "price": 15,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-4-KAMERALI-NAFTALAN-VANNASI",
+  "name": "4 kameralı naftalan vannası",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-AMPLIPULS",
+  "name": "Amplipuls",
+  "price": 11,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-BUKME",
+  "name": "Bükmə",
+  "price": 20,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-DARSONVAL",
+  "name": "Darsonval",
+  "price": 11,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-ELEKTROTERAPIYA",
+  "name": "Elektroterapiya",
+  "price": 14,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-FITO-TERAPIYA-BOCKA",
+  "name": "Fito terapiya (boçka)",
+  "price": 16,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-HIDROKOLONOTERAPIYA",
+  "name": "Hidrokolonoterapiya",
+  "price": 30,
+  "durationMin": 40
+ },
+ {
+  "code": "SVC-HIDROKOLONOTERAPIYA-BITKI-CAYI-ILE",
+  "name": "Hidrokolonoterapiya (Bitki çayı ilə)",
+  "price": 35,
+  "durationMin": 40
+ },
+ {
+  "code": "SVC-HIDROMASAJ-VANNASI",
+  "name": "Hidromasaj vannası",
+  "price": 15,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-INFRAQIRMIZI",
+  "name": "İnfraqırmızı",
+  "price": 14,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-INQALYASIYA",
+  "name": "İnqalyasiya",
+  "price": 10,
+  "durationMin": 15
+ },
+ {
+  "code": "SVC-KARBOKSITERAPIYA",
+  "name": "Karboksiterapiya",
+  "price": 18,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-KLASIK-MASSAJ-15-DEQIQE",
+  "name": "Klasik massaj (15 dəqiqə)",
+  "price": 16,
+  "durationMin": 15
+ },
+ {
+  "code": "SVC-KLASIK-MASSAJ-30-DEQIQE",
+  "name": "Klasik massaj (30 dəqiqə)",
+  "price": 19,
+  "durationMin": 30
+ },
+ {
+  "code": "SVC-LAZERTERAPIYA",
+  "name": "Lazerterapiya",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-LIMFODRENAJ",
+  "name": "Limfodrenaj",
+  "price": 16,
+  "durationMin": 30
+ },
+ {
+  "code": "SVC-MAQNITOTERAPIYA",
+  "name": "Maqnitoterapiya",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-OZONTERAPIYA",
+  "name": "Ozonterapiya",
+  "price": 17,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-PARAFINOTERAPIYA-ASAGI-ETRAF",
+  "name": "Parafinoterapiya (aşağı ətraf)",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-PARAFINOTERAPIYA-BOYUN-KUREK",
+  "name": "Parafinoterapiya (boyun kürək)",
+  "price": 14,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-PARAFINOTERAPIYA-BUTUN-BEDEN",
+  "name": "Parafinoterapiya (bütün bədən)",
+  "price": 18,
+  "durationMin": 30
+ },
+ {
+  "code": "SVC-PARAFINOTERAPIYA-YUXARI-ETRAF",
+  "name": "Parafinoterapiya (yuxarı ətraf)",
+  "price": 11,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-QISA-DALGA-TERAPIYA-UVC",
+  "name": "Qısa dalğa terapiya UVÇ",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-SOLLYUKS",
+  "name": "Sollyuks",
+  "price": 14,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-SUPER-INDUCTIVE-SYSTEM-TERAPIYASI",
+  "name": "Super Inductive system terapiyası",
+  "price": 30,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-TAM-BEDEN-NAFTALAN-VANNASI",
+  "name": "Tam bədən naftalan vannası",
+  "price": 14,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-TURUNDA-BURUN-VE-QULAQ",
+  "name": "Turunda (burun və qulaq)",
+  "price": 12,
+  "durationMin": 15
+ },
+ {
+  "code": "SVC-UFB-TERAPIYA",
+  "name": "UFB terapiya",
+  "price": 20,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-ULTRAFONOFOREZ",
+  "name": "Ultrafonoforez",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-UROLOJI-MIKROKLIZMA",
+  "name": "Uroloji mikroklizma",
+  "price": 14,
+  "durationMin": 15
+ },
+ {
+  "code": "SVC-UROLOJI-VIBRO-LAZER",
+  "name": "Uroloji Vibro lazer",
+  "price": 12,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-VAKUUMTERAPIYA",
+  "name": "Vakuumterapiya",
+  "price": 11,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-YOD-BROM-VANNASI",
+  "name": "Yod brom vannası",
+  "price": 18,
+  "durationMin": 20
+ },
+ {
+  "code": "SVC-ZERBE-DALGA-TERAPIYA",
+  "name": "Zərbə dalğa terapiya",
+  "price": 24,
+  "durationMin": 20
+ }
+]

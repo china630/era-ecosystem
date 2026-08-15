@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { EraDataGrid, PageHeader } from '@era/satellite-kit/ui';
+import {
+  EraListFilterBar,
+  useDebouncedValue,
+  Field,
+  PageHeader,
+  showApiError,
+} from '@era/satellite-kit/ui';
+import { HotelDataGrid } from "@/components/HotelDataGrid";
 import GuestCardModal from '@/components/GuestCardModal';
-import AppShell, { StatusMessage } from '@/components/layout/AppShell';
-import { ListFilterInput } from '@/components/master-data/ListFilterInput';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { matchesCodeNameQuery } from '@/lib/list-filter';
@@ -23,19 +28,23 @@ export default function GuestsPage() {
   const t = useTranslations('guestsPage');
   const tc = useTranslations('common');
   const [rows, setRows] = useState<GuestRow[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
   const [cardOpen, setCardOpen] = useState(false);
   const [cardGuestId, setCardGuestId] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [q, setQ] = useState('');
+  const debouncedQ = useDebouncedValue(q, 300);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/guests');
-    const data = await res.json();
-    if (!res.ok) {
-      setMsg(data.error ?? tc('loadError'));
-      return;
+    try {
+      const res = await fetch('/api/guests');
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('loadError'));
+        return;
+      }
+      setRows(Array.isArray(data) ? data : []);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
     }
-    setRows(Array.isArray(data) ? data : []);
   }, [tc]);
 
   useEffect(() => {
@@ -43,8 +52,8 @@ export default function GuestsPage() {
   }, [load]);
 
   const filteredRows = useMemo(
-    () => rows.filter((r) => matchesCodeNameQuery(r, search)),
-    [rows, search],
+    () => rows.filter((r) => matchesCodeNameQuery(r, debouncedQ)),
+    [rows, debouncedQ],
   );
 
   function openCreate() {
@@ -58,21 +67,24 @@ export default function GuestsPage() {
   }
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('noPermission')}</p>
-      </AppShell>
-    );
+    return <p className="text-sm text-[#7F8C8D]">{tc('noPermission')}</p>;
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader title={t('title')} subtitle={t('subtitle')} />
-      <StatusMessage>{msg}</StatusMessage>
-      <div className="mb-3">
-        <ListFilterInput value={search} onChange={setSearch} placeholder={t('filterPlaceholder')} />
-      </div>
-      <EraDataGrid<GuestRow & Record<string, unknown>>
+      <EraListFilterBar
+        resetLabel={tc('filterReset')}
+        onReset={() => setQ('')}
+      >
+        <Field
+          label={tc('search')}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </EraListFilterBar>
+      <HotelDataGrid<GuestRow & Record<string, unknown>>
         columns={[
           { key: 'name', header: t('name'), render: (r) => r.fullName },
           { key: 'nationality', header: t('nationality'), render: (r) => r.nationality },
@@ -118,6 +130,6 @@ export default function GuestsPage() {
           void load();
         }}
       />
-    </AppShell>
+    </>
   );
 }

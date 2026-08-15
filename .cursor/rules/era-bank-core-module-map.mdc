@@ -6,6 +6,8 @@ alwaysApply: false
 
 # era-bank-core (engine) + era-bank (satellite) — module map
 
+**Acceptance SSOT:** [Bank-Acceptance-System](../../docs/acceptance/Bank-Acceptance-System.md) · [Product-Readiness](../../docs/acceptance/Bank-Product-Readiness-Matrix.md) · edition [`docs/editions/bank.yaml`](../../docs/editions/bank.yaml) (`mvp` / ops-mvp ≠ product ga)
+
 Core Banking System (CBS) for AZ banks. Two apps (ADR D9):
 - **`era-bank-core`** — headless regulated engine (ledger, posting, CIF, EOD, product engines). API `:4300`, DB `era_bank_core`. No UI.
 - **`era-bank`** — operational satellite (`industry_banking` gate): UI/workflow client of the engine. Web+`/api` `:3210`, DB `era_bank` (ops/UI state only).

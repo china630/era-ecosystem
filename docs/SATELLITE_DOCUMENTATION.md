@@ -25,15 +25,18 @@ Every ERA industry satellite follows this layout. **DELIVERY** is the source of 
 | Local UAT gaps | [LOCAL_UAT_GAP_CHECKLIST.md](./LOCAL_UAT_GAP_CHECKLIST.md) |
 | Quartet smoke (Hot/FB/Fin/Orch) | [QUARTET_UAT.md](./QUARTET_UAT.md) |
 | Hospitality ↔ Finance boundary | [HOSPITALITY_FINANCE_BOUNDARY.md](./HOSPITALITY_FINANCE_BOUNDARY.md) |
+| Hotel City Ledger / FO money (P5) | [adr/hotel-city-ledger-and-fo-money.md](./adr/hotel-city-ledger-and-fo-money.md) · coverage `HOT-CASH-*` / `HOT-CL-*` |
 | Satellite UI playbook | [UI_PLAYBOOK_SATELLITES.md](./UI_PLAYBOOK_SATELLITES.md) — **`EraAppRouteShell`**, header slots, sidebar checklist |
 | Finance ERP docs index | [era-finance-core/docs/README.md](../era-finance-core/docs/README.md) |
 | Finance bridge pattern (ADR) | [satellite-finance-bridge-pattern.md](./adr/satellite-finance-bridge-pattern.md) |
 | ERA Data Hub (DaaS) ADR | [era-data-hub.md](./adr/era-data-hub.md) |
+| Managed lists vs enums (tenant/platform catalogs) | [adr/managed-lists-vs-enums.md](./adr/managed-lists-vs-enums.md) — Wave A/B migration; SatAdmin / Finance / SuperAdmin ownership |
 | ERA Data Hub delivery | [era-data-hub/doc/DELIVERY-DATA-HUB.md](../era-data-hub/doc/DELIVERY-DATA-HUB.md) |
 | CP ↔ Finance handoff (ADR) | [cp-finance-handoff.md](./adr/cp-finance-handoff.md) |
 | Bank Core (CBS) ADR | [era-bank-core.md](./adr/era-bank-core.md) — headless engine + `era-bank` satellite (D9) |
 | Bank engine spec | [era-bank-core/PRD.md](../era-bank-core/PRD.md) (product-line lead) · [era-bank-core/TZ.md](../era-bank-core/TZ.md) |
 | Bank satellite spec | [era-bank/PRD.md](../era-bank/PRD.md) · [era-bank/TZ.md](../era-bank/TZ.md) (`industry_banking`) |
+| Bank scope / acceptance | [Bank-Capability-Inventory.md](./acceptance/Bank-Capability-Inventory.md) · [Bank-Full-CBS-Roadmap.md](./acceptance/Bank-Full-CBS-Roadmap.md) · [Bank-Product-Readiness-Matrix.md](./acceptance/Bank-Product-Readiness-Matrix.md) — Full commercial CBS program (mvp until field) |
 | Bank DBO channel | [era-bank-dbo/doc/DELIVERY-BANK-DBO.md](../era-bank-dbo/doc/DELIVERY-BANK-DBO.md) · `:3211` retail/corporate PWA |
 
 ## Per-satellite layout

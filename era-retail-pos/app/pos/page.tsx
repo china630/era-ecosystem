@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
   PRIMARY_BUTTON_CLASS,
+  PageHeader,
 } from "@era/satellite-kit/ui";
-import { PageHeader } from "@era/satellite-kit/ui";
 import type { RetailPreset, RetailPresetConfig } from "@/lib/retail-preset";
 import {
   enqueueOfflineReceipt,
@@ -83,7 +84,7 @@ export default function PosCheckoutPage() {
     Record<RetailPreset, RetailPresetConfig> | null
   >(null);
   const [lineForm, setLineForm] = useState<LineForm>(EMPTY_LINE);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [paymentMethod, setPaymentMethod] = useState("CASH");
   const [promoCode, setPromoCode] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [loyaltyRef, setLoyaltyRef] = useState("");
@@ -462,17 +463,17 @@ export default function PosCheckoutPage() {
               ))}
             </select>
           </label>
-          <label className="text-[13px]">
-            {t("paymentMethod")}
-            <select
-              className="mt-1 w-full rounded border px-2 py-1"
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            >
-              <option value="cash">{t("cash")}</option>
-              <option value="card">{t("card")}</option>
-            </select>
-          </label>
+          <CatalogField
+            kind="OPS_HOT"
+            label={t("paymentMethod")}
+            value={paymentMethod}
+            onChange={(v) => setPaymentMethod(String(v))}
+            options={[
+              { value: "CASH", label: t("cash") },
+              { value: "CARD", label: t("card") },
+              { value: "TRANSFER", label: t("transfer") },
+            ]}
+          />
         </div>
 
         <div className="flex flex-wrap gap-2">

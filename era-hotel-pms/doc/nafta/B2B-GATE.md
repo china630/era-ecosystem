@@ -7,7 +7,7 @@ Recorded for Wave 4 dev defaults. Confirm with Nafta on site; update [open-quest
 | # | Question | P4 default (dev / sanatorium pilot) | Implementation |
 |---|----------|-------------------------------------|----------------|
 | 1 | Allotment/block contracts vs discount-only? | **Both supported**; Nafta sanatorium pilot ships **discount + optional nightly quota** per room type | `SalesContract` + `ContractAllotment`; BAR hidden when booking under ACTIVE contract rate plan |
-| 2 | Contract advance: folio deposit vs Finance bank transfer? | **Folio deposit first** (`FolioDeposit` / BEO advance pattern); Finance AR for city ledger statements only | `depositRequired` + `depositAmount` on `SalesContract`; link to P2 deposit module |
+| 2 | Contract advance: folio deposit vs Finance bank transfer? | **Folio deposit first** (`FolioDeposit` / BEO advance pattern); Finance AR for city ledger statements / matching | `depositRequired` + `depositAmount`; settle offset = **H-BL-41**; Finance aging/match = **H-BL-48** |
 | 3 | BEO POS: extras only or full pax portions? | **Extras only** on event day; base package total on PMS master folio | `beoId` on fb-pos tickets; package lines posted on BEO confirm |
 | 4 | Corporate events: master folio (company VÖEN) or guest folio? | **Master folio** — `COMPANY` / `AGENCY` folio when counterparty has VÖEN; guest folio fallback | `BanquetEvent.masterFolioId`, `companyGuestId`, `agencyId` |
 | 5 | Sales pipeline: era-crm or hotel-only? | **Hotel-only** for contract CRUD + allotment; era-crm optional lead handoff later | `/admin/contracts`; no duplicate Finance counterparty screens |
@@ -22,6 +22,7 @@ Documented order: **contract allotment block > OTA channel quota > BAR**.
 
 ## Related docs
 
-- [BACKLOG-PRODUCTION.md § P4](../BACKLOG-PRODUCTION.md)
+- [BACKLOG-PRODUCTION.md § P4 + P5](../BACKLOG-PRODUCTION.md)
 - [docs/adr/hotel-b2b-sales-contracts.md](../../docs/adr/hotel-b2b-sales-contracts.md)
+- [docs/adr/hotel-city-ledger-and-fo-money.md](../../docs/adr/hotel-city-ledger-and-fo-money.md)
 - [process-catalog.md](./process-catalog.md) — PROC-24 replacement UAT

@@ -2,37 +2,40 @@
 
 Applies to `era-bank/app/**` and `era-bank/src/components/**`.
 
+Canon: [docs/UI_PLAYBOOK_SATELLITES.md](../../docs/UI_PLAYBOOK_SATELLITES.md) · hotel pilot patterns.
+
+## Shell (variant 1 — sections + hubs)
+
+- `BankOpsShell` uses `navSections` (not flat `navItems`): Core · Payments · Products · AML · Reports · Treasury · Risk · Admin.
+- Header LTR: Locale → `SatelliteNotificationBell` → Org → Profile → `BankHeaderTierBar`.
+- Role filter via `bank-role-nav.ts` + entitlement modules via `useBankEntitlements`.
+
+## List screens (required)
+
+- Every table page: `PageHeader` → `EraListFilterBar` → `BankDataGrid` (wraps kit `EraDataGrid`).
+- Pagination: client footer on by default; i18n via `useListPaginationLabels`.
+- Errors: `showApiError` toast — not inline `OpsError` for API failures.
+- Amounts: major AZN in UI (`Field preset="amount"` / `majorToMinor`); never qepik inputs.
+- Pick-lists: `CatalogField` + `CatalogFieldKind` — no `preset="code"` for currency/branch/product/rail/customer refs. Options from `bank-lookups.ts`.
+
 ## Modal CRUD (mandatory)
 
-Follow [docs/UI_PLAYBOOK_SATELLITES.md](../../docs/UI_PLAYBOOK_SATELLITES.md):
-
-- **One index route per entity area** — list/table on the page.
-- **Create, detail, edit, and workflow actions** open in `OpsModalShell` (wraps `@era/satellite-kit/ui` `ModalShell`).
-- **Do not add** standalone `/new` or `/[id]` pages for admin/ops entities. Use redirects with `?modal=create` / `?id=` for bookmarks only.
-- Row click → detail modal; primary «Add» → create modal.
-
-Shared primitives: `era-bank/src/components/ops/` — `useOpsModal`, `OpsDataTable`, `OpsModalShell`, `EodLockProvider`.
+- One index route per entity; create/detail in `OpsModalShell`.
+- Redirect stubs `/new` / `/[id]` for bookmarks only.
+- Dates: kit `DatePicker` (not bare `type="date"` alone).
 
 ## EOD lock
 
-- All mutation submit buttons must respect `useEodLock().mutationsDisabled` (wired in `OpsModalShell` and explicit actions).
-- `EodLockProvider` wraps ops shell; polls `GET /api/eod/{today}`.
-
-## Entitlements
-
-- Sidebar nav filtered via `useBankEntitlements()` — hide modules when `banking_*` not active.
-- BFF routes enforce entitlement server-side; UI filter is UX only.
+- Mutations respect `useEodLock().mutationsDisabled`.
 
 ## i18n
 
-- Locales: az (default), ru, en — keys in `messages/*.json`; no raw enum labels in UI.
-- New screens: add keys to **all three** locale files in the same change.
+- Locales az + ru + en; no raw English column labels.
 
 ## BFF
 
-- No ledger/money persistence in `era_bank` DB (ADR D9).
-- GL reads/writes via `/api/gl/*`, not `/api/accounts/gl/*`.
+- No ledger in `era_bank` DB (ADR D9). GL via `/api/gl/*`.
 
-## Module map
+## Deprecated
 
-Ops screens by route — see app `PRD.md` §modules and [docs/BANK_DOC_API_UI_AUDIT.md](../../docs/BANK_DOC_API_UI_AUDIT.md).
+- Do not add new uses of `OpsDataTable`, `OpsField`, or minor-unit `AmountInput`.

@@ -153,13 +153,16 @@ export class InvoicesService {
 
   async list(
     organizationId: string,
-    opts?: { page?: number; pageSize?: number },
+    opts?: { page?: number; pageSize?: number; counterpartyId?: string },
   ) {
     const page = Math.max(1, opts?.page ?? 1);
     const pageSize = Math.min(200, Math.max(1, opts?.pageSize ?? 25));
     const skip = (page - 1) * pageSize;
 
-    const where = { organizationId };
+    const where = {
+      organizationId,
+      ...(opts?.counterpartyId ? { counterpartyId: opts.counterpartyId } : {}),
+    };
 
     const [rows, total] = await Promise.all([
       this.prisma.invoice.findMany({
@@ -1605,7 +1608,7 @@ export class InvoicesService {
   private portalTokenSecret(): string {
     return (
       this.config.get<string>("INVOICE_PORTAL_TOKEN_SECRET") ??
-      this.config.getOrThrow<string>("JWT_SECRET")
+      this.config.getOrThrow<string>("ERA_JWT_SECRET")
     );
   }
 

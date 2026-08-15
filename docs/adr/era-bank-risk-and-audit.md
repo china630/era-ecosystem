@@ -17,7 +17,7 @@ Today, "risk" exists in the codebase only as **attributes and side-effects scatt
 | Risk concern | Where it lives today | Maturity |
 |--------------|----------------------|----------|
 | Financial-crime risk (AML/CFT) | `modules/aml/*` (own module) | Implemented (rules engine, alerts, screening, FMN) |
-| Credit risk (staging, scoring, collateral) | `LoanContract.ifrs9Stage` / `akbScore` / `collateralRef` fields, manual `restructure()` | Field-only; no ECL/provisioning/NPL engine |
+| Credit risk (staging, scoring, collateral) | `LoanContract.ifrs9Stage` / `akbScore` / `collateralRef` + `POST /risk/staging/run` + lab `POST /risk/ecl/run` (stage flat rates) | Lab ECL MVP (not certified); no PD/LGD matrices / maker-checker DoD |
 | KYC/customer risk | `BankCustomer.riskRating`, `pepFlag` | Attribute; consumed by AML |
 | Liquidity risk / ALM | `modules/treasury/liquidity-gap.engine.ts`, `LiquidityGapSnapshot`, `computeLcrRatioStub` | GAP buckets real; LCR is a stub; no NSFR |
 | Regulatory capital (RWA, CAR, large exposure) | — | **No owner** |

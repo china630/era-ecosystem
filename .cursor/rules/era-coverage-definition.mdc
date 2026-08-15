@@ -48,6 +48,9 @@ alwaysApply: true
 
 1. COVERAGE_MATRIX row updated (ID + actor columns)
 2. DELIVERY tag matches status (`[x]` only for SHIPPED/HEADLESS)
-3. UAT-SMOKE UI path for SHIPPED ops/admin flows
-4. Module-map `.mdc` route listed
-5. i18n en + az + ru for new screens
+3. UAT-SMOKE UI path for SHIPPED ops/admin flows (or `reports/*-signoff.md` artifact) — **no evidence → no SHIPPED**
+4. Product line Acceptance docs when capability affects sell/show: Implementation-Matrix + Product-Readiness-Matrix (see `task-acceptance.mdc`)
+5. Edition `ga` / commercial “ready” only from `docs/editions/*.yaml` with `pilot_ready: true` + Pilot field proof
+6. Module-map `.mdc` route listed
+7. i18n en + az + ru for new screens
+8. `npm run check:acceptance` PASS

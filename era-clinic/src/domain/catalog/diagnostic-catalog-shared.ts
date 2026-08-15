@@ -9,12 +9,20 @@ export type CatalogFieldDef = {
   required?: boolean;
 };
 
+export type CatalogAnalyteValueOption = {
+  code: string;
+  label: L10n;
+};
+
 export type CatalogAnalyteDef = {
   code: string;
   unit?: string;
   label: L10n;
   refMin?: string;
   refMax?: string;
+  section?: string;
+  valueType?: "NUMERIC" | "QUALITATIVE";
+  valueOptions?: CatalogAnalyteValueOption[];
 };
 
 export type DiagnosticCatalogItem = {

@@ -1,4 +1,12 @@
-import { ACCESS_TOKEN_KEY, ORGS_KEY, USER_KEY } from "./session-keys";
+import {
+  ACCESS_TOKEN_KEY,
+  CP_ACCESS_TOKEN_KEY,
+  CP_REFRESH_TOKEN_KEY,
+  ORGS_KEY,
+  USER_KEY,
+  clearControlPlaneTokens,
+  setControlPlaneTokens,
+} from "./session-keys";
 import { isPublicWebPath } from "./public-routes";
 
 /**
@@ -71,6 +79,97 @@ export function resolveApiUrl(path: string): string {
   return `${controlPlaneBaseUrl()}${cpPath}${search}`;
 }
 
+function parsePathname(path: string): string {
+  try {
+    if (path.startsWith("http")) {
+      return new URL(path).pathname;
+    }
+    return (path.split("?")[0] ?? path).trim();
+  } catch {
+    return path;
+  }
+}
+
+let cpRefreshInFlight: Promise<string | null> | null = null;
+
+/** Refresh Orchestrator access token using the handoff refresh JWT. */
+async function refreshControlPlaneAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  if (cpRefreshInFlight) return cpRefreshInFlight;
+
+  cpRefreshInFlight = (async () => {
+    const refreshToken = sessionStorage.getItem(CP_REFRESH_TOKEN_KEY);
+    if (!refreshToken) return null;
+    try {
+      const res = await fetch("/cp/auth/token/refresh", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        clearControlPlaneTokens();
+        return null;
+      }
+      const data = (await res.json()) as {
+        accessToken?: string;
+        refreshToken?: string;
+      };
+      if (!data.accessToken) {
+        clearControlPlaneTokens();
+        return null;
+      }
+      setControlPlaneTokens(
+        data.accessToken,
+        data.refreshToken ?? refreshToken,
+      );
+      return data.accessToken;
+    } catch {
+      clearControlPlaneTokens();
+      return null;
+    } finally {
+      cpRefreshInFlight = null;
+    }
+  })();
+
+  return cpRefreshInFlight;
+}
+
+function applyBearerForRequest(path: string, headers: Headers): boolean {
+  const pathname = parsePathname(path);
+  if (isControlPlaneApiPath(pathname)) {
+    // Never send Finance-local JWT to Orchestrator (different identity store).
+    const cpToken = sessionStorage.getItem(CP_ACCESS_TOKEN_KEY);
+    if (cpToken) {
+      headers.set("Authorization", `Bearer ${cpToken}`);
+      return true;
+    }
+    headers.delete("Authorization");
+    return false;
+  }
+  // Respect caller-supplied Bearer (e.g. CP JWT on /auth/cp-provision).
+  if (headers.has("Authorization")) {
+    return true;
+  }
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+    return true;
+  }
+  return false;
+}
+
+function clearFinanceSessionAndRedirectToLogin(): void {
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  sessionStorage.removeItem(USER_KEY);
+  sessionStorage.removeItem(ORGS_KEY);
+  clearControlPlaneTokens();
+  const currentPath = window.location.pathname;
+  if (!isPublicWebPath(currentPath)) {
+    window.location.replace("/login");
+  }
+}
+
 function parseApiErrorMessage(text: string): string {
   const trimmed = text.trim().slice(0, 800);
   if (!trimmed) return "";
@@ -121,52 +220,56 @@ export function emitClientApiError(status: number, message: string): void {
   );
 }
 
-export function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+export function apiFetch(
+  path: string,
+  init: RequestInit = {},
+  opts?: { allowCpRefresh?: boolean },
+): Promise<Response> {
+  const allowCpRefresh = opts?.allowCpRefresh !== false;
   const headers = new Headers(init.headers);
+  const pathname = parsePathname(path);
+  const isCp = isControlPlaneApiPath(pathname);
+  let sentAuth = false;
   if (typeof window !== "undefined") {
-    const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
+    sentAuth = applyBearerForRequest(path, headers);
   }
   const url = resolveApiUrl(path);
 
-  return fetch(url, {
-    ...init,
-    headers,
-    credentials: "include",
-  }).then(async (res) => {
+  const run = (requestInit: RequestInit): Promise<Response> =>
+    fetch(url, {
+      ...requestInit,
+      credentials: "include",
+    });
+
+  return run({ ...init, headers }).then(async (res) => {
     const method = (init.method ?? "GET").toUpperCase();
-    const pathOnly = (() => {
-      try {
-        if (path.startsWith("http")) {
-          return new URL(path).pathname;
-        }
-        return (path.split("?")[0] ?? path).trim();
-      } catch {
-        return path;
-      }
-    })();
-    const normalizedPath = pathOnly.replace(/\/+$/, "") || pathOnly;
+    const normalizedPath = pathname.replace(/\/+$/, "") || pathname;
     const isAuthLoginPost =
       method === "POST" &&
-      (normalizedPath === "/api/auth/login" || normalizedPath.endsWith("/api/auth/login"));
+      (normalizedPath === "/api/auth/login" ||
+        normalizedPath.endsWith("/api/auth/login"));
 
     if (res.status === 401 && typeof window !== "undefined") {
       if (isAuthLoginPost) {
         // Wrong password / invalid credentials — do not redirect (user is already on /login).
-        // Clear stale session keys so the next attempt does not send a bad Bearer token.
         sessionStorage.removeItem(ACCESS_TOKEN_KEY);
         sessionStorage.removeItem(USER_KEY);
         sessionStorage.removeItem(ORGS_KEY);
-      } else if (headers.has("Authorization")) {
-        sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-        sessionStorage.removeItem(USER_KEY);
-        sessionStorage.removeItem(ORGS_KEY);
-        const currentPath = window.location.pathname;
-        if (!isPublicWebPath(currentPath)) {
-          window.location.replace("/login");
+        clearControlPlaneTokens();
+      } else if (isCp) {
+        // Soft-fail: CP billing/subscription must not wipe the Finance ERP session.
+        if (sentAuth && allowCpRefresh) {
+          const refreshed = await refreshControlPlaneAccessToken();
+          if (refreshed) {
+            headers.set("Authorization", `Bearer ${refreshed}`);
+            return apiFetch(path, { ...init, headers }, { allowCpRefresh: false });
+          }
+          clearControlPlaneTokens();
+        } else if (sentAuth) {
+          clearControlPlaneTokens();
         }
+      } else if (sentAuth || headers.has("Authorization")) {
+        clearFinanceSessionAndRedirectToLogin();
       }
     }
     let skipApiErrorToast = false;
@@ -242,10 +345,7 @@ export function apiFetch(path: string, init: RequestInit = {}): Promise<Response
 export function apiPostKeepalive(path: string, body: unknown): void {
   if (typeof window === "undefined") return;
   const headers = new Headers({ "Content-Type": "application/json" });
-  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
+  applyBearerForRequest(path, headers);
   const url = resolveApiUrl(path);
   void fetch(url, {
     method: "POST",

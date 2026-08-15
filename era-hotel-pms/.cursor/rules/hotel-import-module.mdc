@@ -70,7 +70,9 @@ Retire policy (no hard delete): [docs/adr/hotel-master-data-retire-policy.md](..
 
 ## Seed
 
-`prisma/seed-reference.ts` — `npm run db:seed:reference` (RevenueCode, BedType, RoomView; no wipe).
+`prisma/seed-reference.ts` — `npm run db:seed:reference` (RevenueCode, BedType, RoomView, **HotelLookup** markets/segments/VIP/…; no wipe).
+
+Master lookups API: `GET/POST /api/master/lookups?kind=MARKET&activeOnly=1`, `PATCH /api/master/lookups/[id]`. Admin UI: `/admin/master-data` → HotelLookupsAdmin.
 
 ## Pre-merge (Elektraweb ~1000 row cap)
 

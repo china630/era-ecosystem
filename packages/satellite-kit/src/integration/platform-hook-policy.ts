@@ -1,4 +1,8 @@
-import { getSubscriptionMe, type PlatformCallOptions } from "./control-plane-platform.client";
+import {
+  getSubscriptionMe,
+  getSubscriptionSnapshotInternal,
+  type PlatformCallOptions,
+} from "./control-plane-platform.client";
 
 export type PlatformModuleKey =
   | "platform_booking"
@@ -49,8 +53,15 @@ export async function fetchSubscriptionSnapshot(
   organizationId: string,
   opts?: PlatformCallOptions,
 ): Promise<Record<string, unknown> | null> {
+  const callOpts = { organizationId, ...opts };
+  // Prefer internal snapshot: service token works; /v1/subscription/me needs user JWT.
   try {
-    return await getSubscriptionMe({ organizationId, ...opts });
+    return await getSubscriptionSnapshotInternal(callOpts);
+  } catch {
+    /* fall through */
+  }
+  try {
+    return await getSubscriptionMe(callOpts);
   } catch {
     return null;
   }

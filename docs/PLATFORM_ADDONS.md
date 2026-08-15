@@ -2,7 +2,9 @@
 
 Cross-cutting commercial services sold **on top of** ERA Core and industry satellites. Implemented and billed from **era-orchestrator** (control plane), not from individual vertical apps.
 
-**Billing model:** see [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) — modules/add-ons on **monthly post-paid** invoice; metered channels (messages, storage over tier) on **live tier/quota accumulation**.
+**Commercial claim / edition honesty:** MODULES or add-on **DONE** ≠ product `ga`. See [`docs/editions/`](./editions/) and [`docs/acceptance/`](./acceptance/README.md) ([ERA-Acceptance-Standard](./products/ERA-Acceptance-Standard.md)).
+
+**Billing model:** see [CONTROL_PLANE_ARCHITECTURE.md](./CONTROL_PLANE_ARCHITECTURE.md) — modules/add-ons on **monthly post-paid** invoice; ERA Core + ERA Banking Core foundations (banking gated on `industry_banking`); metered channels (messages, storage, OCR pages over tier) on **live tier/quota accumulation**.
 
 ---
 

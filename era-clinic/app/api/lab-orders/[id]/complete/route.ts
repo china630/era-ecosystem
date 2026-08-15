@@ -16,7 +16,7 @@ export async function POST(
     const { id } = await params;
     const order = await prisma.labOrder.findUnique({
       where: { id },
-      include: { patientRef: true, visit: true },
+      include: { patientRef: true, visit: true, items: true },
     });
     if (!order) return jsonError("Lab order not found", 404);
     if (order.status === "COMPLETED") return jsonOk(order);
@@ -33,7 +33,9 @@ export async function POST(
       include: { patientRef: true, visit: true },
     });
 
-    const testCodes = testCodesFromOrder(completed.testCode);
+    const testCodes = order.items.length
+      ? order.items.map((item) => item.serviceCode)
+      : testCodesFromOrder(completed.testCode);
 
     await dispatchSatelliteEvent({
       type: SATELLITE_CLINIC_LAB_ORDER_COMPLETED,

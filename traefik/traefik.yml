@@ -1,4 +1,7 @@
 # Traefik static configuration — file provider only (no Docker labels for routing).
+# IMPORTANT: do NOT redirect entryPoint `web` (:80) globally to HTTPS — that breaks
+# Let's Encrypt HTTP-01 challenges. HTTP→HTTPS redirect lives in dynamic.yml and
+# excludes `/.well-known/acme-challenge/`.
 api:
   dashboard: true
   insecure: true
@@ -6,11 +9,6 @@ api:
 entryPoints:
   web:
     address: ":80"
-    http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
   websecure:
     address: ":443"
 

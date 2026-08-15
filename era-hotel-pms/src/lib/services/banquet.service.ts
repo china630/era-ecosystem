@@ -131,7 +131,10 @@ export async function createBanquetEvent(input: {
   return getBanquetEvent(created.id);
 }
 
-export async function confirmBanquetEvent(id: string) {
+export async function confirmBanquetEvent(
+  id: string,
+  opts?: { preferredFolioType?: FolioType },
+) {
   const event = await prisma.banquetEvent.findUnique({
     where: { id },
     include: eventInclude,
@@ -171,8 +174,17 @@ export async function confirmBanquetEvent(id: string) {
   });
 
   let masterFolioId: string | null = event.masterFolioId;
+  const preferredOrder: FolioType[] = opts?.preferredFolioType
+    ? [
+        opts.preferredFolioType,
+        ...(['COMPANY', 'AGENCY', 'GUEST'] as FolioType[]).filter(
+          (t) => t !== opts.preferredFolioType,
+        ),
+      ]
+    : ['COMPANY', 'AGENCY', 'GUEST'];
 
   if (event.reservationId && planned > 0) {
+    // Prefer BANQUET code so F&B extras on other codes do not look like package double-post
     const banquetCode = await prisma.revenueCode.findFirst({
       where: { code: { in: ['BANQUET', 'FB', 'ROOM'] }, active: true },
       orderBy: { code: 'asc' },
@@ -187,7 +199,7 @@ export async function confirmBanquetEvent(id: string) {
       masterFolioId = charge.folio.id;
     }
   } else if (!masterFolioId && event.reservationId) {
-    const master = await resolveMasterFolio(event.reservationId, ['COMPANY', 'AGENCY', 'GUEST']);
+    const master = await resolveMasterFolio(event.reservationId, preferredOrder);
     masterFolioId = master?.id ?? null;
   }
 
@@ -220,6 +232,45 @@ export async function confirmBanquetEvent(id: string) {
   });
 
   return { event: updated, depositPaymentId, posReservationId, masterFolioId, plannedRevenue: planned };
+}
+
+/** One-page ops day sheet for print / driver-kitchen handoff. */
+export async function getBanquetDaySheet(id: string) {
+  const event = await getBanquetEvent(id);
+  if (!event) throw new Error('Banquet event not found');
+  return {
+    eventName: event.eventName,
+    referenceNo: event.referenceNo,
+    eventDate: event.eventDate,
+    status: event.status,
+    pax: event.pax,
+    contactName: event.contactName,
+    saloon: event.saloon?.name ?? null,
+    masterFolioId: event.masterFolioId,
+    reservationId: event.reservationId,
+    plannedRevenue: event.plannedRevenue,
+    advanceAmount: event.advanceAmount,
+    lines: (event.orderLines ?? []).map((l) => ({
+      id: l.id,
+      description: l.description,
+      qty: l.quantity,
+      unitPrice: l.unitPrice,
+      kind: l.kind,
+    })),
+    resources: (event.resourceBookings ?? []).map((r) => ({
+      id: r.id,
+      label: r.label ?? r.saloon?.name ?? 'Resource',
+      startAt: r.startAt,
+      endAt: r.endAt,
+      notes: r.notes,
+    })),
+    staff: (event.staffAssignments ?? []).map((s) => ({
+      id: s.id,
+      role: s.role,
+      staffName: s.staffName,
+      notes: s.notes,
+    })),
+  };
 }
 
 /** Record POS extras against event (fb-pos beoId tickets). Updates actual revenue. */

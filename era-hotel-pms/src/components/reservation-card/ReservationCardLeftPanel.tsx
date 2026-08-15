@@ -313,13 +313,13 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
               {sellable.available < 1 ? (
                 <div className="mt-1">
                   {t('noSellableHint')}{' '}
-                  <Link href="/availability" className="underline">
+                  <Link href="/fo/availability" className="underline">
                     {t('openRoomTypeAvailability')}
                   </Link>
                 </div>
               ) : (
                 <div className="mt-1">
-                  <Link href="/availability" className="underline">
+                  <Link href="/fo/availability" className="underline">
                     {t('openRoomTypeAvailability')}
                   </Link>
                 </div>
@@ -529,7 +529,7 @@ export function ReservationCardLeftPanel(props: ReservationCardLeftPanelProps) {
                 </button>
                 {props.roomId ? (
                   <Link
-                    href={`/housekeeping?roomId=${props.roomId}`}
+                    href={`/hk?roomId=${props.roomId}`}
                     className={`${SECONDARY_BUTTON_CLASS} text-[11px]`}
                     title={t('roomHk')}
                   >

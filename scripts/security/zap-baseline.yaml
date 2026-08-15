@@ -1,0 +1,41 @@
+# OWASP ZAP Automation Framework — baseline (passive + light active)
+# ERA Security Hygiene Program §4
+# Run (example, lab only):
+#   docker run --rm -v "%cd%/scripts/security:/zap/wrk:rw" -t ghcr.io/zaproxy/zaproxy:stable \
+#     zap.sh -cmd -autorun /zap/wrk/zap-baseline.yaml
+#
+# Set targets via env substitution or edit urls below to match docs/ECOSYSTEM_URLS.md lab ports.
+env:
+  contexts:
+    - name: era-lab
+      urls:
+        - "http://host.docker.internal:3000"
+        - "http://host.docker.internal:3002"
+        - "http://host.docker.internal:3003"
+      includePaths:
+        - "http://host.docker.internal:3000.*"
+        - "http://host.docker.internal:3002.*"
+        - "http://host.docker.internal:3003.*"
+jobs:
+  - type: passiveScan-config
+    parameters:
+      maxAlertsPerRule: 10
+  - type: spider
+    parameters:
+      context: era-lab
+      maxDuration: 3
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+  - type: report
+    parameters:
+      template: traditional-md
+      reportDir: /zap/wrk
+      reportFile: zap-report
+      reportTitle: ERA Lab ZAP Baseline
+alerts:
+  # Suppressions go in docs/SECURITY_HYGIENE_PROGRAM.md Appendix B (SSOT),
+  # then mirrored here with ruleId when tune-in completes.
+  - ruleId: 10038
+    action: ignore
+    # Content Security Policy Header Not Set — known lab gap until headers wave

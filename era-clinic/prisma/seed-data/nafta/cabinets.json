@@ -1,0 +1,206 @@
+[
+ {
+  "code": "CAB-4-KAMERA-HIDROQALVANIZASIYA",
+  "name": "4 kamera hidroqalvanizasiya"
+ },
+ {
+  "code": "CAB-BUKME",
+  "name": "Bükmə"
+ },
+ {
+  "code": "CAB-FITOTERAPIYA-OTAGI",
+  "name": "Fitoterapiya otağı"
+ },
+ {
+  "code": "CAB-HIDROKOLON",
+  "name": "Hidrokolon"
+ },
+ {
+  "code": "CAB-HIDROMASSAJ",
+  "name": "Hidromassaj"
+ },
+ {
+  "code": "CAB-HEKIM-OTAGI-4",
+  "name": "Həkim otağı 4"
+ },
+ {
+  "code": "CAB-INQALYASIYA",
+  "name": "İnqalyasiya"
+ },
+ {
+  "code": "CAB-KABINA-1",
+  "name": "Kabina 1"
+ },
+ {
+  "code": "CAB-KABINA-10",
+  "name": "Kabina 10"
+ },
+ {
+  "code": "CAB-KABINA-11",
+  "name": "Kabina 11"
+ },
+ {
+  "code": "CAB-KABINA-12",
+  "name": "Kabina 12"
+ },
+ {
+  "code": "CAB-KABINA-13",
+  "name": "Kabina 13"
+ },
+ {
+  "code": "CAB-KABINA-14",
+  "name": "Kabina 14"
+ },
+ {
+  "code": "CAB-KABINA-15",
+  "name": "Kabina 15"
+ },
+ {
+  "code": "CAB-KABINA-16",
+  "name": "Kabina 16"
+ },
+ {
+  "code": "CAB-KABINA-17",
+  "name": "Kabina 17"
+ },
+ {
+  "code": "CAB-KABINA-18",
+  "name": "Kabina 18"
+ },
+ {
+  "code": "CAB-KABINA-2",
+  "name": "Kabina 2"
+ },
+ {
+  "code": "CAB-KABINA-3",
+  "name": "Kabina 3"
+ },
+ {
+  "code": "CAB-KABINA-4",
+  "name": "Kabina 4"
+ },
+ {
+  "code": "CAB-KABINA-5-DUZ",
+  "name": "Kabina 5 (Düz)"
+ },
+ {
+  "code": "CAB-KABINA-6-HALQA",
+  "name": "Kabina 6 (Halqa)"
+ },
+ {
+  "code": "CAB-KABINA-7",
+  "name": "Kabina 7"
+ },
+ {
+  "code": "CAB-KABINA-8",
+  "name": "Kabina 8"
+ },
+ {
+  "code": "CAB-KABINA-PARAFIN-1",
+  "name": "Kabina Parafin 1"
+ },
+ {
+  "code": "CAB-KABINA-PARAFIN-2",
+  "name": "Kabina Parafin 2"
+ },
+ {
+  "code": "CAB-KABINA-PARAFIN-3",
+  "name": "Kabina Parafin 3"
+ },
+ {
+  "code": "CAB-KABINA-PARAFIN-4",
+  "name": "Kabina Parafin 4"
+ },
+ {
+  "code": "CAB-KABINA-PARAFIN-5",
+  "name": "Kabina Parafin 5"
+ },
+ {
+  "code": "CAB-KARBOKSITERAPIYA",
+  "name": "Karboksiterapiya"
+ },
+ {
+  "code": "CAB-MASSAJ-YATAQ-1",
+  "name": "Massaj Yataq 1"
+ },
+ {
+  "code": "CAB-MASSAJ-YATAQ-2",
+  "name": "Massaj yataq 2"
+ },
+ {
+  "code": "CAB-MASSAJ-YATAQ-3",
+  "name": "Massaj yataq 3"
+ },
+ {
+  "code": "CAB-MASSAJ-YATAQ-4",
+  "name": "Massaj yataq 4"
+ },
+ {
+  "code": "CAB-OZONOTERAPIYA-KABINA-1",
+  "name": "Ozonoterapiya kabina 1"
+ },
+ {
+  "code": "CAB-OZONOTERAPIYA-KABINA-2",
+  "name": "Ozonoterapiya kabina 2"
+ },
+ {
+  "code": "CAB-OZONOTERAPIYA-KABINA-3",
+  "name": "Ozonoterapiya kabina 3"
+ },
+ {
+  "code": "CAB-UFB",
+  "name": "UFB"
+ },
+ {
+  "code": "CAB-UROLOQ-OTAGI",
+  "name": "Uroloq otağı"
+ },
+ {
+  "code": "CAB-USM-OTAGI",
+  "name": "USM otağı"
+ },
+ {
+  "code": "CAB-VANNA-4-KAMERALI-QADIN-KISI",
+  "name": "Vanna (4 kameralı Qadın/Kişi)"
+ },
+ {
+  "code": "CAB-VANNA-1-KISI",
+  "name": "Vanna 1 (Kişi)"
+ },
+ {
+  "code": "CAB-VANNA-1-QADIN",
+  "name": "Vanna 1 (Qadın)"
+ },
+ {
+  "code": "CAB-VANNA-2-KISI",
+  "name": "Vanna 2 (Kişi)"
+ },
+ {
+  "code": "CAB-VANNA-2-QADIN",
+  "name": "Vanna 2 (Qadın)"
+ },
+ {
+  "code": "CAB-VANNA-3-KISI",
+  "name": "Vanna 3 (Kişi)"
+ },
+ {
+  "code": "CAB-VANNA-3-QADIN",
+  "name": "Vanna 3 (Qadın)"
+ },
+ {
+  "code": "CAB-VANNA-4-KISI",
+  "name": "Vanna 4 (Kişi)"
+ },
+ {
+  "code": "CAB-VANNA-4-QADIN",
+  "name": "Vanna 4 (Qadın)"
+ },
+ {
+  "code": "CAB-YOD-BROM-VANNASI",
+  "name": "Yod brom vannası"
+ },
+ {
+  "code": "CAB-ZERBE-DALGA",
+  "name": "Zərbə dalğa"
+ }
+]

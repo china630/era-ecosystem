@@ -7,18 +7,21 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.surveysTitle"
       apiPath={(gid) => `/api/guests/${gid}/surveys`}
-      onAdd={async (guestId) => {
-        const surveyName = window.prompt('Survey name');
-        if (!surveyName?.trim()) return;
-        await fetch(`/api/guests/${guestId}/surveys`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            surveyName: surveyName.trim(),
-            filledAt: new Date().toISOString().slice(0, 10),
-          }),
-        });
-      }}
+      addFields={[
+        { name: 'surveyName', label: 'Survey name', required: true, preset: 'longText' },
+        {
+          name: 'filledAt',
+          label: 'Filled at',
+          required: true,
+          preset: 'date',
+          defaultValue: new Date().toISOString().slice(0, 10),
+        },
+      ]}
+      buildBody={(v) => ({
+        surveyName: v.surveyName.trim(),
+        filledAt: v.filledAt.trim(),
+      })}
+      searchKeys={['surveyName', 'filledAt']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           {String(r.surveyName)} — {String(r.filledAt).slice(0, 10)}

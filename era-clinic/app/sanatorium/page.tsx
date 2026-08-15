@@ -1,19 +1,54 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  CalendarClock,
+  ClipboardList,
+  Eye,
+  LayoutGrid,
+  ListChecks,
+  Trash2,
+} from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
-  FORM_FIELD_GROUP_CLASS,
+  CHIP_GROUP_CLASS,
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_SCROLL_CLASS,
+  DATA_TABLE_SHELL_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TH_RIGHT_CLASS,
+  DATA_TABLE_TR_CLASS,
+  DATA_TABLE_VIEWPORT_CLASS,
+  DatePicker,
+  EraListFilterBar,
+  useDebouncedValue,
+  FIELD_SECTION_BODY_CLASS,
+  FIELD_SECTION_CLASS,
+  Field,
+  FieldRow,
+  FieldSelect,
+  FieldTextarea,
   FORM_STACK_CLASS,
-  MODAL_FIELD_LABEL_CLASS,
+  LINK_ACCENT_CLASS,
+  LOCALE_TOGGLE_ACTIVE_CLASS,
   ModalFooter,
   ModalShell,
-  MODAL_INPUT_CLASS,
+  MODAL_CHECKBOX_CLASS,
   PRIMARY_BUTTON_CLASS,
+  SECONDARY_BUTTON_CLASS,
   PageHeader,
+  TABLE_ROW_ICON_BTN_CLASS,
+  TEXT_DANGER_CLASS,
+  TEXT_MUTED_CLASS,
+  TEXT_SUCCESS_CLASS,
 } from "@era/satellite-kit/ui";
+import { PatientCardModal } from "@/components/patients/PatientCardModal";
+import type { DiagnosticCatalogItem } from "@/domain/catalog/diagnostic-catalog-shared";
+import { pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
 
 type ProcedureLine = {
   procedureCode: string;
@@ -58,6 +93,35 @@ type Episode = {
   programInstance?: ProgramInstance | null;
 };
 
+type ProgramTemplate = {
+  id: string;
+  code: string;
+  name: string;
+  durationDays: number;
+};
+
+type WalkInForm = {
+  fullName: string;
+  fin: string;
+  passport: string;
+  phone: string;
+  sex: "" | "MALE" | "FEMALE";
+  birthDate: string;
+  nationality: string;
+  programCode: string;
+};
+
+const emptyWalkIn = (): WalkInForm => ({
+  fullName: "",
+  fin: "",
+  passport: "",
+  phone: "",
+  sex: "",
+  birthDate: "",
+  nationality: "AZ",
+  programCode: "",
+});
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -72,18 +136,22 @@ function daysRemaining(endsOn: string): number {
 
 export default function SanatoriumPage() {
   const t = useTranslations("sanatorium");
-  const tNav = useTranslations("nav");
+  const tc = useTranslations("common");
+  const locale = useLocale();
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [episodeDetail, setEpisodeDetail] = useState<Episode | null>(null);
   const [scheduleOrders, setScheduleOrders] = useState<ProcedureOrder[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
+  const [patientCardId, setPatientCardId] = useState<string | null>(null);
   const [chartDate, setChartDate] = useState(todayIso());
   const [complaint, setComplaint] = useState("");
   const [icdCode, setIcdCode] = useState("");
   const [icdCodeId, setIcdCodeId] = useState("");
   const [icdOptions, setIcdOptions] = useState<Array<{ id: string; code: string; description: string }>>([]);
   const [diagnosis, setDiagnosis] = useState("");
-  const [testCode, setTestCode] = useState("CBC");
+  const [testCode, setTestCode] = useState("");
+  const [labCatalogItems, setLabCatalogItems] = useState<DiagnosticCatalogItem[]>([]);
+  const [programTemplates, setProgramTemplates] = useState<ProgramTemplate[]>([]);
   const [programCode, setProgramCode] = useState("DETOX-7");
   const [programStartsOn, setProgramStartsOn] = useState(todayIso());
   const [msg, setMsg] = useState("");
@@ -92,19 +160,29 @@ export default function SanatoriumPage() {
   const [labModalOpen, setLabModalOpen] = useState(false);
   const [programModalOpen, setProgramModalOpen] = useState(false);
   const [walkInModalOpen, setWalkInModalOpen] = useState(false);
+  const [chartModalOpen, setChartModalOpen] = useState(false);
+  const [proceduresModalOpen, setProceduresModalOpen] = useState(false);
   const [rescheduleOrderId, setRescheduleOrderId] = useState<string | null>(null);
   const [rescheduleTime, setRescheduleTime] = useState("09:00");
-  const [walkInName, setWalkInName] = useState("");
-  const [walkInFin, setWalkInFin] = useState("");
+  const [walkIn, setWalkIn] = useState<WalkInForm>(emptyWalkIn);
   const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
+  const [filterOrigin, setFilterOrigin] = useState("");
+  const [proposedOrders, setProposedOrders] = useState<
+    Array<{ id: string; procedureName: string; procedureCode: string; status: string; scheduledAt: string }>
+  >([]);
+  const [selectedProposed, setSelectedProposed] = useState<Set<string>>(new Set());
+  const [bulkCancelOpen, setBulkCancelOpen] = useState(false);
+  const [bulkCancelReason, setBulkCancelReason] = useState("");
+  const [bulkCancelReplace, setBulkCancelReplace] = useState("");
 
   const loadList = useCallback(async () => {
     const res = await fetch("/api/sanatorium/episodes");
     const data = await res.json();
-    const list = Array.isArray(data) ? data : [];
+    const list = Array.isArray(data) ? data : (data?.data ?? []);
     setEpisodes(list);
-    if (!selectedId && list[0]?.id) setSelectedId(list[0].id);
-  }, [selectedId]);
+  }, []);
 
   const loadDetail = useCallback(async (episodeId: string) => {
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}`);
@@ -113,7 +191,7 @@ export default function SanatoriumPage() {
       return;
     }
     const data = await res.json();
-    setEpisodeDetail(data);
+    setEpisodeDetail(data?.data ?? data);
   }, []);
 
   const loadSchedule = useCallback(async (episodeId: string, date: string) => {
@@ -123,6 +201,7 @@ export default function SanatoriumPage() {
     const qs = new URLSearchParams({
       from: day.toISOString(),
       to: next.toISOString(),
+      locale,
     });
     const res = await fetch(`/api/sanatorium/episodes/${episodeId}/schedule?${qs}`);
     if (!res.ok) {
@@ -130,7 +209,36 @@ export default function SanatoriumPage() {
       return;
     }
     const data = await res.json();
-    setScheduleOrders(Array.isArray(data) ? data : []);
+    const payload = data?.data ?? data;
+    setScheduleOrders(Array.isArray(payload) ? payload : []);
+  }, [locale]);
+
+  const loadProposed = useCallback(async (patientRefId: string) => {
+    const res = await fetch(`/api/patients/${patientRefId}/card-feed?section=plan&offset=0`);
+    if (!res.ok) {
+      setProposedOrders([]);
+      return;
+    }
+    const data = await res.json();
+    const row = data.data ?? data;
+    const events = (row.events ?? []) as Array<{
+      id: string;
+      title: string;
+      status: string;
+      at: string;
+      codes?: string[];
+    }>;
+    const proposed = events
+      .filter((ev) => ev.status === "PROPOSED")
+      .map((ev) => ({
+        id: ev.id.startsWith("procedure:") ? ev.id.slice("procedure:".length) : ev.id,
+        procedureName: ev.title.replace(/^Procedure · /, ""),
+        procedureCode: ev.codes?.[0] ?? "",
+        status: ev.status,
+        scheduledAt: ev.at,
+      }));
+    setProposedOrders(proposed);
+    setSelectedProposed(new Set());
   }, []);
 
   useEffect(() => {
@@ -138,12 +246,60 @@ export default function SanatoriumPage() {
   }, [loadList]);
 
   useEffect(() => {
+    void fetch("/api/diagnostic-catalog?kinds=lab_panel&applyFavorites=false")
+      .then((r) => r.json())
+      .then((d) => {
+        const row = d.data ?? d;
+        const items = (row.items ?? []) as DiagnosticCatalogItem[];
+        setLabCatalogItems(items.filter((item) => item.kind === "lab_panel"));
+      });
+  }, []);
+
+  useEffect(() => {
+    void fetch("/api/sanatorium/program-templates")
+      .then((r) => r.json())
+      .then((d) => {
+        const rows = (d.data ?? d) as ProgramTemplate[];
+        setProgramTemplates(Array.isArray(rows) ? rows : []);
+      });
+  }, []);
+
+  useEffect(() => {
     if (!selectedId) return;
     void loadDetail(selectedId);
     void loadSchedule(selectedId, chartDate);
   }, [selectedId, chartDate, loadDetail, loadSchedule]);
 
-  const selected = episodeDetail ?? episodes.find((e) => e.id === selectedId);
+  useEffect(() => {
+    const patientRefId = episodeDetail?.patientRef?.id;
+    if (chartModalOpen && patientRefId && episodeDetail?.programInstance) {
+      void loadProposed(patientRefId);
+    }
+  }, [chartModalOpen, episodeDetail, loadProposed]);
+
+  const selected = episodeDetail?.id === selectedId
+    ? episodeDetail
+    : episodes.find((e) => e.id === selectedId) ?? null;
+
+  const filtered = useMemo(() => {
+    const needle = debouncedQ.trim().toLowerCase();
+    return episodes.filter((e) => {
+      if (filterOrigin && e.patientOrigin !== filterOrigin) return false;
+      if (!needle) return true;
+      const hay = [
+        e.patientRef?.fullName,
+        e.patientRef?.refCode,
+        e.roomNumber,
+        e.programCode,
+        e.programInstance?.programCode,
+        e.reservationId,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [episodes, debouncedQ, filterOrigin]);
 
   function statusLabel(status: string): string {
     switch (status) {
@@ -158,9 +314,55 @@ export default function SanatoriumPage() {
         return t("statusCompleted");
       case "CANCELLED":
         return t("statusCancelled");
+      case "PROPOSED":
+        return t("statusProposed", { defaultValue: "Proposed" });
       default:
         return status;
     }
+  }
+
+  function originLabel(origin: string): string {
+    if (origin === "WALK_IN") return t("originWalkIn");
+    if (origin === "IN_HOUSE") return t("originInHouse");
+    return origin;
+  }
+
+  async function confirmProposed(orderIds: string[]) {
+    if (orderIds.length === 0) return;
+    setBusy(true);
+    const res = await fetch("/api/procedures/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderIds }),
+    });
+    setBusy(false);
+    setMsg(res.ok ? t("planConfirmed", { defaultValue: "Plan confirmed" }) : t("failed"));
+    if (res.ok) {
+      setSelectedProposed(new Set());
+      const patientRefId = selected?.patientRef?.id;
+      if (patientRefId) await loadProposed(patientRefId);
+      if (selectedId) await loadSchedule(selectedId, chartDate);
+    }
+  }
+
+  async function submitBulkCancel() {
+    if (!selectedId || !bulkCancelReason.trim()) return;
+    setBusy(true);
+    const res = await fetch("/api/procedures/bulk-cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        episodeId: selectedId,
+        reason: bulkCancelReason.trim(),
+        replaceWithCode: bulkCancelReplace.trim() || undefined,
+      }),
+    });
+    setBusy(false);
+    setBulkCancelOpen(false);
+    setBulkCancelReason("");
+    setBulkCancelReplace("");
+    setMsg(res.ok ? t("bulkCancelled", { defaultValue: "Procedures cancelled" }) : t("failed"));
+    if (res.ok && selectedId) await loadSchedule(selectedId, chartDate);
   }
 
   async function reloadEpisode() {
@@ -169,6 +371,19 @@ export default function SanatoriumPage() {
       await loadDetail(selectedId);
       await loadSchedule(selectedId, chartDate);
     }
+  }
+
+  async function openChart(episodeId: string) {
+    setSelectedId(episodeId);
+    setChartModalOpen(true);
+    await loadDetail(episodeId);
+  }
+
+  async function openProcedures(episodeId: string) {
+    setSelectedId(episodeId);
+    setProceduresModalOpen(true);
+    await loadDetail(episodeId);
+    await loadSchedule(episodeId, chartDate);
   }
 
   async function postAction(action: string, body: unknown) {
@@ -211,15 +426,32 @@ export default function SanatoriumPage() {
     }
   }
 
+  function validateWalkIn(): string | null {
+    if (!walkIn.fullName.trim()) return t("walkInName");
+    if (!walkIn.sex) return t("sexRequired");
+    if (!walkIn.fin.trim() && !walkIn.passport.trim()) return t("finOrPassportRequired");
+    return null;
+  }
+
   async function registerWalkIn() {
+    const validationError = validateWalkIn();
+    if (validationError) {
+      setMsg(validationError);
+      return;
+    }
     setBusy(true);
     const res = await fetch("/api/sanatorium/episodes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        fullName: walkInName,
-        fin: walkInFin || undefined,
-        programCode,
+        fullName: walkIn.fullName.trim(),
+        fin: walkIn.fin.trim() || undefined,
+        passport: walkIn.passport.trim() || undefined,
+        phone: walkIn.phone.trim() || undefined,
+        sex: walkIn.sex,
+        birthDate: walkIn.birthDate || undefined,
+        nationality: walkIn.nationality.trim() || undefined,
+        programCode: walkIn.programCode.trim() || undefined,
       }),
     });
     const data = await res.json();
@@ -229,8 +461,7 @@ export default function SanatoriumPage() {
       return;
     }
     setWalkInModalOpen(false);
-    setWalkInName("");
-    setWalkInFin("");
+    setWalkIn(emptyWalkIn());
     setMsg(t("walkInRegistered"));
     await loadList();
     const ep = data.data ?? data;
@@ -278,135 +509,195 @@ export default function SanatoriumPage() {
         title={t("title")}
         subtitle={t("subtitle")}
         actions={
-          <div className="flex gap-2">
-            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
-              {t("registerWalkIn")}
-            </button>
-            <Link href="/sanatorium/resources" className={PRIMARY_BUTTON_CLASS}>
-              {t("resourceCalendar")}
-            </Link>
-            <Link href="/" className={PRIMARY_BUTTON_CLASS}>
-              {tNav("home")}
-            </Link>
-          </div>
+          <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={() => setWalkInModalOpen(true)}>
+            {t("registerWalkIn")}
+          </button>
         }
       />
-      <div className={`${CARD_CONTAINER_CLASS} p-6 space-y-6`}>
-        {msg && <p className="text-[13px] text-emerald-700">{msg}</p>}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div>
-            <h2 className="mb-2 text-sm font-semibold text-[#34495E]">{t("inHouseList")}</h2>
-            <ul className="space-y-2 text-[13px]">
-              {episodes.map((e) => (
-                <li key={e.id}>
-                  <button
-                    type="button"
-                    className={`w-full rounded border px-3 py-2 text-left ${
-                      e.id === selectedId ? "border-sky-500 bg-sky-50" : "border-[#ECF0F1]"
-                    }`}
-                    onClick={() => setSelectedId(e.id)}
-                  >
-                    <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
-                    <div className="text-[#7F8C8D]">
-                      {t("stay")} {e.reservationId?.slice(0, 8) ?? "—"} · {e.status}
-                    </div>
-                  </button>
-                </li>
-              ))}
-              {episodes.length === 0 && (
-                <li className="text-[#7F8C8D]">{t("noEpisodes")}</li>
-              )}
-            </ul>
-          </div>
-          {selected && (
-            <div className="space-y-4 text-[13px]">
-              <div>
-                <strong>{selected.patientRef?.fullName}</strong> ({selected.patientRef?.refCode})
-                {selected.patientRef?.id ? (
-                  <Link
-                    href={`/patients/${selected.patientRef.id}`}
-                    className="ml-2 text-blue-600 hover:underline"
-                  >
-                    Body map
-                  </Link>
-                ) : null}
-              </div>
-              <div>
-                <h3 className="font-semibold">{t("complaints")}</h3>
-                <ul className="list-disc pl-5">
-                  {selected.complaints.map((c, i) => (
-                    <li key={i}>{c.text}</li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
-                  onClick={() => setComplaintModalOpen(true)}
-                >
-                  {t("add")}
-                </button>
-              </div>
-              <div>
-                <h3 className="font-semibold">{t("diagnoses")}</h3>
-                <ul className="list-disc pl-5">
-                  {selected.diagnoses.map((d, i) => (
-                    <li key={i}>
-                      {(d.icdCode?.code ?? d.icdCodeText)
-                        ? `${d.icdCode?.code ?? d.icdCodeText}: `
-                        : ""}
-                      {d.description}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
-                  onClick={() => setDiagnosisModalOpen(true)}
-                >
-                  {t("addDiagnosis")}
-                </button>
-              </div>
-              <div>
-                <h3 className="font-semibold">{t("labOrders")}</h3>
-                <ul>
-                  {selected.labOrders.map((o) => (
-                    <li key={o.id}>
-                      {o.testCode} — {o.status}{" "}
-                      <Link href={`/lab-orders/${o.id}`} className="text-sky-600 underline">
-                        {t("workflow")}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className={`${PRIMARY_BUTTON_CLASS} mt-2`}
-                  onClick={() => setLabModalOpen(true)}
-                >
-                  {t("orderLab")}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+      {msg ? <p className={`mb-3 text-[13px] ${TEXT_SUCCESS_CLASS}`}>{msg}</p> : null}
 
-        {selected && (
-          <div className="space-y-4 border-t border-[#ECF0F1] pt-6 text-[13px]">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 className="text-sm font-semibold text-[#34495E]">{t("treatmentChart")}</h2>
-              <div className={FORM_FIELD_GROUP_CLASS}>
-                <label className={MODAL_FIELD_LABEL_CLASS}>{t("chartDate")}</label>
-                <input
-                  type="date"
-                  className={MODAL_INPUT_CLASS}
-                  value={chartDate}
-                  onChange={(e) => setChartDate(e.target.value)}
-                />
-              </div>
+      <EraListFilterBar
+        resetLabel={tc("filterReset")}
+        onReset={() => {
+          setQ("");
+          setFilterOrigin("");
+        }}
+      >
+        <Field
+          label={tc("search")}
+          preset="shortText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <FieldSelect
+          label={t("filterOrigin")}
+          preset="select"
+          value={filterOrigin}
+          onChange={(e) => setFilterOrigin(e.target.value)}
+        >
+          <option value="">{tc("all")}</option>
+          <option value="IN_HOUSE">{t("originInHouse")}</option>
+          <option value="WALK_IN">{t("originWalkIn")}</option>
+        </FieldSelect>
+      </EraListFilterBar>
+
+      <div className={`${CARD_CONTAINER_CLASS} overflow-hidden`}>
+        <div className={DATA_TABLE_VIEWPORT_CLASS}>
+          <table className={DATA_TABLE_CLASS}>
+            <thead>
+              <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colPatient")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRef")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colRoom")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colOrigin")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colProgram")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colDaysLeft")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("colStatus")}</th>
+                <th className={DATA_TABLE_TH_LEFT_CLASS}>{tc("actions")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((e) => {
+                const prog = e.programInstance;
+                const days = prog ? daysRemaining(prog.endsOn) : null;
+                return (
+                  <tr key={e.id} className={DATA_TABLE_TR_CLASS}>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <div className="font-medium">{e.patientRef?.fullName ?? t("guest")}</div>
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{e.patientRef?.refCode ?? "—"}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{e.roomNumber ?? "—"}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{originLabel(e.patientOrigin)}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      {prog?.programCode ?? e.programCode ?? "—"}
+                    </td>
+                    <td className={DATA_TABLE_TD_CLASS}>{days != null ? days : "—"}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>{e.status}</td>
+                    <td className={DATA_TABLE_TD_CLASS}>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={t("treatmentChart")}
+                          onClick={() => void openChart(e.id)}
+                        >
+                          <ClipboardList className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className={TABLE_ROW_ICON_BTN_CLASS}
+                          aria-label={t("proceduresBtn")}
+                          onClick={() => void openProcedures(e.id)}
+                        >
+                          <ListChecks className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                        </button>
+                        {e.patientRef?.id ? (
+                          <button
+                            type="button"
+                            className={TABLE_ROW_ICON_BTN_CLASS}
+                            aria-label={t("patientCard")}
+                            onClick={() => setPatientCardId(e.patientRef!.id)}
+                          >
+                            <Eye className="h-4 w-4 text-[#2980B9]" aria-hidden />
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
+                    {t("noEpisodes")}
+                    <div className="mt-1 text-[12px]">{t("emptyHint")}</div>
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <ModalShell
+        open={chartModalOpen && Boolean(selected)}
+        title={t("treatmentChart")}
+        subtitle={selected?.patientRef?.fullName}
+        onClose={() => setChartModalOpen(false)}
+        maxWidthClass="max-w-2xl"
+      >
+        {selected ? (
+          <div className="space-y-4 text-[13px]">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setComplaintModalOpen(true)}
+              >
+                {t("addComplaint")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setDiagnosisModalOpen(true)}
+              >
+                {t("addDiagnosis")}
+              </button>
+              <button
+                type="button"
+                className={SECONDARY_BUTTON_CLASS}
+                onClick={() => setLabModalOpen(true)}
+              >
+                {t("orderLab")}
+              </button>
+            </div>
+
+            <div>
+              <h3 className="mb-1 font-semibold">{t("complaints")}</h3>
+              <ul className="list-disc pl-5">
+                {selected.complaints.map((c, i) => (
+                  <li key={i}>{c.text}</li>
+                ))}
+                {selected.complaints.length === 0 ? (
+                  <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
+                ) : null}
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-1 font-semibold">{t("diagnoses")}</h3>
+              <ul className="list-disc pl-5">
+                {selected.diagnoses.map((d, i) => (
+                  <li key={i}>
+                    {(d.icdCode?.code ?? d.icdCodeText)
+                      ? `${d.icdCode?.code ?? d.icdCodeText}: `
+                      : ""}
+                    {d.description}
+                  </li>
+                ))}
+                {selected.diagnoses.length === 0 ? (
+                  <li className={`list-none ${TEXT_MUTED_CLASS}`}>—</li>
+                ) : null}
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-1 font-semibold">{t("labOrders")}</h3>
+              <ul>
+                {selected.labOrders.map((o) => (
+                  <li key={o.id}>
+                    {o.testCode} — {o.status}{" "}
+                    <Link href={`/lab-orders/${o.id}`} className={LINK_ACCENT_CLASS}>
+                      {t("workflow")}
+                    </Link>
+                  </li>
+                ))}
+                {selected.labOrders.length === 0 ? (
+                  <li className={TEXT_MUTED_CLASS}>—</li>
+                ) : null}
+              </ul>
             </div>
 
             {program ? (
-              <div className="rounded border border-[#ECF0F1] p-4 space-y-3">
+              <div className={`${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-3`}>
                 <div className="flex flex-wrap gap-4">
                   <span>
                     <strong>{t("programSummary")}:</strong> {program.programCode}
@@ -429,9 +720,9 @@ export default function SanatoriumPage() {
                             <span>{line.procedureCode}</span>
                             <span>{t("quotaUsed", { used: line.quotaUsed, total: line.quotaTotal })}</span>
                           </div>
-                          <div className="h-2 rounded bg-[#ECF0F1]">
+                          <div className={`h-2 overflow-hidden rounded-lg ${CHIP_GROUP_CLASS} !p-0`}>
                             <div
-                              className="h-2 rounded bg-sky-500"
+                              className={`h-full ${LOCALE_TOGGLE_ACTIVE_CLASS}`}
                               style={{ width: `${pct}%` }}
                             />
                           </div>
@@ -440,11 +731,72 @@ export default function SanatoriumPage() {
                     })}
                   </ul>
                 </div>
+                <div>
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-semibold">
+                      {t("proposedPlanTitle", { defaultValue: "Proposed plan" })}
+                    </h3>
+                    {proposedOrders.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className={SECONDARY_BUTTON_CLASS}
+                          disabled={busy || selectedProposed.size === 0}
+                          onClick={() => void confirmProposed([...selectedProposed])}
+                        >
+                          {t("confirmSelected", { defaultValue: "Confirm selected" })}
+                        </button>
+                        <button
+                          type="button"
+                          className={PRIMARY_BUTTON_CLASS}
+                          disabled={busy}
+                          onClick={() => void confirmProposed(proposedOrders.map((o) => o.id))}
+                        >
+                          {t("confirmAll", { defaultValue: "Confirm all" })}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {proposedOrders.length === 0 ? (
+                    <p className={TEXT_MUTED_CLASS}>
+                      {t("proposedEmpty", { defaultValue: "No proposed procedures." })}
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {proposedOrders.map((o) => (
+                        <li
+                          key={o.id}
+                          className={`flex items-start gap-2 px-3 py-2 ${FIELD_SECTION_CLASS}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className={`mt-1 ${MODAL_CHECKBOX_CLASS}`}
+                            checked={selectedProposed.has(o.id)}
+                            onChange={() => {
+                              setSelectedProposed((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(o.id)) next.delete(o.id);
+                                else next.add(o.id);
+                                return next;
+                              });
+                            }}
+                          />
+                          <div>
+                            <span className="font-medium">{o.procedureName}</span>
+                            <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>
+                              {o.procedureCode} · {statusLabel(o.status)}
+                            </p>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="rounded border border-dashed border-[#ECF0F1] p-4 space-y-2">
+              <div className={`border-dashed ${FIELD_SECTION_CLASS} ${FIELD_SECTION_BODY_CLASS} space-y-2`}>
                 {!selected.checkupCompletedAt && (
-                  <p className="text-[13px] text-[#7F8C8D]">{t("checkupPendingHint")}</p>
+                  <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("checkupPendingHint")}</p>
                 )}
                 <button
                   type="button"
@@ -456,40 +808,70 @@ export default function SanatoriumPage() {
                 </button>
               </div>
             )}
+          </div>
+        ) : null}
+      </ModalShell>
 
-            <div className="overflow-x-auto rounded border border-[#ECF0F1]">
-              <table className="min-w-full text-left text-[13px]">
-                <thead className="border-b border-[#ECF0F1] bg-[#F8F9FA]">
-                  <tr>
-                    <th className="px-3 py-2 font-semibold">{t("procedureTime")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("procedureName")}</th>
-                    <th className="px-3 py-2 font-semibold">{t("procedureStatus")}</th>
-                    <th className="px-3 py-2" />
+      <ModalShell
+        open={proceduresModalOpen && Boolean(selected)}
+        title={t("proceduresBtn")}
+        subtitle={selected?.patientRef?.fullName}
+        onClose={() => setProceduresModalOpen(false)}
+        maxWidthClass="max-w-3xl"
+      >
+        <div className="space-y-3 text-[13px]">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <DatePicker
+              label={t("chartDate")}
+              value={chartDate}
+              onChange={setChartDate}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+            <button
+              type="button"
+              className={SECONDARY_BUTTON_CLASS}
+              onClick={() => setBulkCancelOpen(true)}
+            >
+              {t("bulkCancel", { defaultValue: "Bulk cancel" })}
+            </button>
+          </div>
+          <div className={DATA_TABLE_SHELL_CLASS}>
+            <div className={DATA_TABLE_SCROLL_CLASS}>
+              <table className={DATA_TABLE_CLASS}>
+                <thead>
+                  <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureTime")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureName")}</th>
+                    <th className={DATA_TABLE_TH_LEFT_CLASS}>{t("procedureStatus")}</th>
+                    <th className={DATA_TABLE_TH_RIGHT_CLASS} />
                   </tr>
                 </thead>
                 <tbody>
                   {scheduleOrders.map((o) => (
-                    <tr key={o.id} className="border-b border-[#ECF0F1] last:border-0">
-                      <td className="px-3 py-2">
+                    <tr key={o.id} className={DATA_TABLE_TR_CLASS}>
+                      <td className={DATA_TABLE_TD_CLASS}>
                         {new Date(o.scheduledAt).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
                       </td>
-                      <td className="px-3 py-2">{o.procedureName}</td>
-                      <td className="px-3 py-2">{statusLabel(o.status)}</td>
-                      <td className="px-3 py-2 text-right space-x-2">
+                      <td className={DATA_TABLE_TD_CLASS}>{o.procedureName}</td>
+                      <td className={DATA_TABLE_TD_CLASS}>{statusLabel(o.status)}</td>
+                      <td className={`${DATA_TABLE_TD_CLASS} text-right`}>
                         {o.status === "SCHEDULED" ? (
-                          <>
+                          <div className="flex flex-wrap items-center justify-end gap-1">
                             <Link
                               href={`/sanatorium/resources?date=${chartDate}&highlight=${o.id}`}
-                              className="rounded border px-2 py-1 text-xs"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={t("openMatrix")}
                             >
-                              {t("openMatrix")}
+                              <LayoutGrid className="h-4 w-4 text-[#2980B9]" aria-hidden />
                             </Link>
                             <button
                               type="button"
-                              className="rounded border px-2 py-1 text-xs"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={t("reschedule")}
                               onClick={() => {
                                 setRescheduleOrderId(o.id);
                                 setRescheduleTime(
@@ -497,34 +879,65 @@ export default function SanatoriumPage() {
                                 );
                               }}
                             >
-                              {t("reschedule")}
+                              <CalendarClock className="h-4 w-4 text-[#7F8C8D]" aria-hidden />
                             </button>
                             <button
                               type="button"
-                              className="rounded border px-2 py-1 text-xs text-red-700"
+                              className={TABLE_ROW_ICON_BTN_CLASS}
+                              aria-label={t("cancelProcedure")}
                               disabled={busy}
                               onClick={() => void cancelProcedure(o.id)}
                             >
-                              {t("cancelProcedure")}
+                              <Trash2 className="h-4 w-4 text-[#E74C3C]" aria-hidden />
                             </button>
-                          </>
+                          </div>
                         ) : null}
                       </td>
                     </tr>
                   ))}
-                  {scheduleOrders.length === 0 && (
+                  {scheduleOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="px-3 py-4 text-[#7F8C8D]">
+                      <td colSpan={4} className={`${DATA_TABLE_TD_CLASS} ${TEXT_MUTED_CLASS}`}>
                         {t("noProcedures")}
                       </td>
                     </tr>
-                  )}
+                  ) : null}
                 </tbody>
               </table>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </ModalShell>
+
+      <ModalShell
+        open={bulkCancelOpen}
+        title={t("bulkCancel", { defaultValue: "Bulk cancel" })}
+        onClose={() => setBulkCancelOpen(false)}
+        footer={
+          <ModalFooter
+            onCancel={() => setBulkCancelOpen(false)}
+            onSubmit={() => void submitBulkCancel()}
+            busy={busy}
+            submitLabel={t("cancelProcedure")}
+          />
+        }
+      >
+        <div className={FORM_STACK_CLASS}>
+          <Field
+            label={t("bulkCancelReason", { defaultValue: "Reason" })}
+            preset="shortText"
+            value={bulkCancelReason}
+            onChange={(e) => setBulkCancelReason(e.target.value)}
+            required
+          />
+          <Field
+            label={t("replaceWithCode", { defaultValue: "Replace with code (optional)" })}
+            preset="code"
+            value={bulkCancelReplace}
+            onChange={(e) => setBulkCancelReplace(e.target.value)}
+          />
+        </div>
+      </ModalShell>
 
       <ModalShell
         open={complaintModalOpen}
@@ -540,14 +953,13 @@ export default function SanatoriumPage() {
         }
       >
         <div className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("newComplaint")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={complaint}
-              onChange={(e) => setComplaint(e.target.value)}
-            />
-          </div>
+          <Field
+            label={t("newComplaint")}
+            preset="shortText"
+            value={complaint}
+            onChange={(e) => setComplaint(e.target.value)}
+            required
+          />
         </div>
       </ModalShell>
 
@@ -570,41 +982,37 @@ export default function SanatoriumPage() {
           />
         }
       >
-        <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>ICD</label>
-            <select
-              className={MODAL_INPUT_CLASS}
-              value={icdCodeId}
-              onFocus={() => {
-                void fetch("/api/icd")
-                  .then((r) => r.json())
-                  .then((d) => setIcdOptions(d.items ?? []));
-              }}
-              onChange={(e) => {
-                const id = e.target.value;
-                setIcdCodeId(id);
-                const row = icdOptions.find((x) => x.id === id);
-                if (row) setIcdCode(row.code);
-              }}
-              required
-            >
-              <option value="">—</option>
-              {icdOptions.map((row) => (
-                <option key={row.id} value={row.id}>
-                  {row.code} — {row.description}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("description")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={diagnosis}
-              onChange={(e) => setDiagnosis(e.target.value)}
-            />
-          </div>
+        <div className={`${FORM_STACK_CLASS} grid grid-cols-1 gap-3`}>
+          <FieldSelect
+            label="ICD"
+            preset="select"
+            value={icdCodeId}
+            onFocus={() => {
+              void fetch("/api/icd")
+                .then((r) => r.json())
+                .then((d) => setIcdOptions(d.items ?? []));
+            }}
+            onChange={(e) => {
+              const id = e.target.value;
+              setIcdCodeId(id);
+              const row = icdOptions.find((x) => x.id === id);
+              if (row) setIcdCode(row.code);
+            }}
+            required
+          >
+            <option value="">—</option>
+            {icdOptions.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.code} — {row.description}
+              </option>
+            ))}
+          </FieldSelect>
+          <FieldTextarea
+            label={t("description")}
+            rows={5}
+            value={diagnosis}
+            onChange={(e) => setDiagnosis(e.target.value)}
+          />
         </div>
       </ModalShell>
 
@@ -615,21 +1023,34 @@ export default function SanatoriumPage() {
         footer={
           <ModalFooter
             onCancel={() => setLabModalOpen(false)}
-            onSubmit={() => void postAction("lab", { testCode })}
+            onSubmit={() => {
+              if (!testCode) {
+                setMsg(t("failed"));
+                return;
+              }
+              void postAction("lab", { testCode });
+            }}
             busy={busy}
+            submitDisabled={!testCode}
             submitLabel={t("orderLab")}
           />
         }
       >
         <div className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("orderLab")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={testCode}
-              onChange={(e) => setTestCode(e.target.value)}
-            />
-          </div>
+          <FieldSelect
+            label={t("orderLab")}
+            preset="select"
+            value={testCode}
+            onChange={(e) => setTestCode(e.target.value)}
+            required
+          >
+            <option value="">—</option>
+            {labCatalogItems.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.code} — {pickL10n(item.title, locale)}
+              </option>
+            ))}
+          </FieldSelect>
         </div>
       </ModalShell>
 
@@ -653,23 +1074,19 @@ export default function SanatoriumPage() {
         }
       >
         <div className={`${FORM_STACK_CLASS} grid grid-cols-2 gap-3`}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("programCode")}</label>
-            <input
-              className={MODAL_INPUT_CLASS}
-              value={programCode}
-              onChange={(e) => setProgramCode(e.target.value)}
-            />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("startsOn")}</label>
-            <input
-              type="date"
-              className={MODAL_INPUT_CLASS}
-              value={programStartsOn}
-              onChange={(e) => setProgramStartsOn(e.target.value)}
-            />
-          </div>
+          <Field
+            label={t("programCode")}
+            preset="code"
+            value={programCode}
+            onChange={(e) => setProgramCode(e.target.value)}
+          />
+          <DatePicker
+            label={t("startsOn")}
+            value={programStartsOn}
+            onChange={setProgramStartsOn}
+            placeholder={tc("datePlaceholder")}
+            openCalendarLabel={tc("openCalendar")}
+          />
         </div>
       </ModalShell>
 
@@ -677,6 +1094,7 @@ export default function SanatoriumPage() {
         open={walkInModalOpen}
         title={t("registerWalkIn")}
         onClose={() => setWalkInModalOpen(false)}
+        maxWidthClass="max-w-2xl"
         footer={
           <ModalFooter
             onCancel={() => setWalkInModalOpen(false)}
@@ -687,14 +1105,82 @@ export default function SanatoriumPage() {
         }
       >
         <div className={FORM_STACK_CLASS}>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("walkInName")}</label>
-            <input className={MODAL_INPUT_CLASS} value={walkInName} onChange={(e) => setWalkInName(e.target.value)} />
-          </div>
-          <div className={FORM_FIELD_GROUP_CLASS}>
-            <label className={MODAL_FIELD_LABEL_CLASS}>{t("walkInFin")}</label>
-            <input className={MODAL_INPUT_CLASS} value={walkInFin} onChange={(e) => setWalkInFin(e.target.value)} />
-          </div>
+          <FieldRow>
+            <Field
+              label={t("walkInName")}
+              preset="shortText"
+              value={walkIn.fullName}
+              onChange={(e) => setWalkIn({ ...walkIn, fullName: e.target.value })}
+              required
+            />
+            <Field
+              label={t("walkInPhone")}
+              preset="phone"
+              value={walkIn.phone}
+              onChange={(e) => setWalkIn({ ...walkIn, phone: e.target.value })}
+            />
+          </FieldRow>
+          <FieldRow>
+            <Field
+              label={t("walkInFin")}
+              preset="fin"
+              value={walkIn.fin}
+              onChange={(e) => setWalkIn({ ...walkIn, fin: e.target.value })}
+            />
+            <Field
+              label={t("walkInPassport")}
+              preset="shortText"
+              value={walkIn.passport}
+              onChange={(e) => setWalkIn({ ...walkIn, passport: e.target.value })}
+            />
+          </FieldRow>
+          <FieldRow>
+            <FieldSelect
+              label={t("walkInSex")}
+              preset="select"
+              value={walkIn.sex}
+              onChange={(e) =>
+                setWalkIn({
+                  ...walkIn,
+                  sex: e.target.value as WalkInForm["sex"],
+                })
+              }
+              required
+            >
+              <option value="">{t("walkInSexEmpty")}</option>
+              <option value="MALE">{t("sexMale")}</option>
+              <option value="FEMALE">{t("sexFemale")}</option>
+            </FieldSelect>
+            <DatePicker
+              label={t("walkInBirthDate")}
+              value={walkIn.birthDate}
+              onChange={(isoDate) => setWalkIn({ ...walkIn, birthDate: isoDate })}
+              placeholder={tc("datePlaceholder")}
+              openCalendarLabel={tc("openCalendar")}
+            />
+          </FieldRow>
+          <FieldRow>
+            <Field
+              label={t("walkInNationality")}
+              preset="shortText"
+              value={walkIn.nationality}
+              onChange={(e) => setWalkIn({ ...walkIn, nationality: e.target.value })}
+            />
+            <FieldSelect
+              label={t("programSelect")}
+              preset="select"
+              value={walkIn.programCode}
+              onChange={(e) => setWalkIn({ ...walkIn, programCode: e.target.value })}
+            >
+              <option value="">—</option>
+              {programTemplates.map((p) => (
+                <option key={p.code} value={p.code}>
+                  {p.code} — {p.name}
+                </option>
+              ))}
+            </FieldSelect>
+          </FieldRow>
+          <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{t("walkInHint")}</p>
         </div>
       </ModalShell>
 
@@ -711,13 +1197,20 @@ export default function SanatoriumPage() {
           />
         }
       >
-        <input
+        <Field
+          label={t("procedureTime")}
+          preset="time"
           type="time"
-          className={MODAL_INPUT_CLASS}
           value={rescheduleTime}
           onChange={(e) => setRescheduleTime(e.target.value)}
         />
       </ModalShell>
+
+      <PatientCardModal
+        patientId={patientCardId}
+        open={Boolean(patientCardId)}
+        onClose={() => setPatientCardId(null)}
+      />
     </>
   );
 }

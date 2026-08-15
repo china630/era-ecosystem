@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { PageHeader } from '@era/satellite-kit/ui';
+import {
+  CARD_CONTAINER_CLASS,
+  PageHeader } from '@era/satellite-kit/ui';
 import { PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
 
 type Product = { id: string; code: string; name: string; price: number; category: string };
 type Order = { id: string; status: string; product: { name: string }; guest: { fullName: string } };
@@ -35,9 +36,9 @@ export default function ConciergePage() {
   }
 
   return (
-    <AppShell maxWidthClass="max-w-4xl">
+    <>
       <PageHeader title="Concierge & excursions" />
-      <PageSection className="mb-4">
+      <section className={`${CARD_CONTAINER_CLASS} p-4 mb-4`}>
         <h2 className="mb-2 font-semibold text-[#34495E]">Catalog</h2>
         <ul className="space-y-2 text-[13px]">
           {products.map((p) => (
@@ -46,8 +47,8 @@ export default function ConciergePage() {
             </li>
           ))}
         </ul>
-      </PageSection>
-      <PageSection>
+      </section>
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
         <h2 className="mb-2 font-semibold text-[#34495E]">Orders</h2>
         <ul className="space-y-2 text-[13px]">
           {orders.map((o) => (
@@ -61,7 +62,7 @@ export default function ConciergePage() {
             </li>
           ))}
         </ul>
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }

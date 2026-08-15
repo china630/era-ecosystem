@@ -18,6 +18,8 @@ Any change that adds or alters a **feature**, **behavior**, **API/event contract
 | API, SSO, or event contract | `docs/INTEGRATION_SSO_EVENTS.md` + app docs |
 | New satellite capability / readiness | `docs/SATELLITE_DOCUMENTATION.md`, `docs/READINESS_MATRIX.md`, `docs/COVERAGE_MATRIX.md` |
 | Feature SHIPPED vs API-only / STUB | `docs/COVERAGE_MATRIX.md` + DELIVERY tag `[x]`/`[~]`/`[s]`/`[h]` — see `era-coverage-definition.mdc` |
+| Product sell/show / pilot honesty | `docs/acceptance/*-Product-Readiness-Matrix.md` + Implementation-Matrix + `docs/editions/*.yaml` — see `docs/products/ERA-Acceptance-Standard.md` |
+| Bank scope boundary (IN/OUT vs full ABS) | `docs/acceptance/Bank-Capability-Inventory.md` + Bank Acceptance-System / PRD §11 — AC ✅ ≠ full commercial bank |
 | Control-plane / billing | `docs/CONTROL_PLANE_ARCHITECTURE.md` or matching `docs/*.md` |
 | New API route or domain area | App `<app>-module-map.mdc` in `.cursor/rules/` |
 | Dev ports / env vars | `docs/ECOSYSTEM_URLS.md` and app `*-local-dev.mdc` |
@@ -38,4 +40,5 @@ Any change that adds or alters a **feature**, **behavior**, **API/event contract
 - [ ] New route/module? → Module map rule updated.
 - [ ] No silent drift between code and docs.
 - [ ] COVERAGE_MATRIX row updated with Ops / SatAdmin / OrgOwner / SuperAdmin where applicable.
+- [ ] Product-Readiness / Implementation-Matrix updated when sell/show or AC status changed.
 - [ ] DELIVERY `[x]` only for SHIPPED or documented HEADLESS.

@@ -7,15 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.favoritesTitle"
       apiPath={(gid) => `/api/guests/${gid}/favorites`}
-      onAdd={async (guestId) => {
-        const roomNumber = window.prompt('Room number');
-        if (!roomNumber?.trim()) return;
-        await fetch(`/api/guests/${guestId}/favorites`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomNumber: roomNumber.trim() }),
-        });
-      }}
+      addFields={[
+        { name: 'roomNumber', label: 'Room number', required: true, preset: 'code' },
+        { name: 'roomType', label: 'Room type', preset: 'shortText' },
+      ]}
+      buildBody={(v) => ({
+        roomNumber: v.roomNumber.trim(),
+        roomType: v.roomType.trim() || undefined,
+      })}
+      searchKeys={['roomNumber', 'roomType']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           Room {String(r.roomNumber)}

@@ -2,8 +2,12 @@
 
 import { useLocale } from "next-intl";
 import {
-  MODAL_INPUT_CLASS,
+  Field,
+  FieldSelect,
+  LINK_ACCENT_CLASS,
+  MODAL_CHECKBOX_CLASS,
   SECONDARY_BUTTON_CLASS,
+  TEXT_MUTED_CLASS,
 } from "@era/satellite-kit/ui";
 import type { DiagnosticCatalogItem, L10n } from "@/domain/catalog/diagnostic-catalog-shared";
 import { itemMatchesFavorites, pickL10n } from "@/domain/catalog/diagnostic-catalog-shared";
@@ -57,14 +61,17 @@ export function DiagnosticCatalogPicker({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
-        <input
-          className={`${MODAL_INPUT_CLASS} min-w-[12rem] flex-1`}
+        <Field
+          label={labels.search}
+          preset="shortText"
+          className="min-w-[12rem] flex-1"
           placeholder={labels.search}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        <select
-          className={MODAL_INPUT_CLASS}
+        <FieldSelect
+          label={labels.allModalities}
+          preset="select"
           value={modalityFilter}
           onChange={(e) => onModalityFilterChange(e.target.value)}
         >
@@ -74,13 +81,13 @@ export function DiagnosticCatalogPicker({
               {pickL10n(m.title, locale)}
             </option>
           ))}
-        </select>
+        </FieldSelect>
       </div>
       {favoritesMode === "only" && favoriteKeys.length > 0 && (
-        <p className="text-[12px] text-[#7F8C8D]">{labels.favoritesOnlyHint}</p>
+        <p className={`text-[12px] ${TEXT_MUTED_CLASS}`}>{labels.favoritesOnlyHint}</p>
       )}
       {items.length === 0 ? (
-        <p className="text-[13px] text-[#7F8C8D]">{labels.empty}</p>
+        <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{labels.empty}</p>
       ) : (
         <ul className="max-h-64 space-y-1 overflow-y-auto rounded border p-2">
           {items.map((item) => {
@@ -91,14 +98,14 @@ export function DiagnosticCatalogPicker({
                 <button
                   type="button"
                   className={`flex w-full items-start gap-2 rounded px-2 py-1.5 text-left text-[13px] ${
-                    isOn ? "bg-blue-50 text-[#2980B9]" : "hover:bg-slate-50"
+                    isOn ? `bg-blue-50 ${LINK_ACCENT_CLASS}` : "hover:bg-slate-50"
                   }`}
                   onClick={() => toggle(item.code)}
                 >
-                  <input type="checkbox" readOnly checked={isOn} className="mt-0.5" />
+                  <input type="checkbox" readOnly checked={isOn} className={`mt-0.5 ${MODAL_CHECKBOX_CLASS}`} />
                   <span className="flex-1">
                     <span className="font-medium">{pickL10n(item.title, locale)}</span>
-                    <span className="block text-[11px] text-[#7F8C8D]">
+                    <span className={`block text-[11px] ${TEXT_MUTED_CLASS}`}>
                       {item.code} · {item.modality}
                       {item.category ? ` / ${item.category}` : ""}
                     </span>

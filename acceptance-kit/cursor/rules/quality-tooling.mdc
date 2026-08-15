@@ -1,0 +1,30 @@
+---
+description: Quality gates, Cursor hooks and scanners (portable acceptance-kit)
+alwaysApply: true
+---
+
+# Quality tooling (agent)
+
+Canon: `docs/products/Product-Acceptance-Standard.md` § Tooling.
+
+## Before «done» / PR
+
+1. `pwsh -File scripts/check-acceptance-consistency.ps1`
+2. On AuthZ / license / security code: run your local quality script or skill `quality-gates`
+3. Matrix: no Scaffold ✅ without negative path; no false `all ✅`
+
+## Shell bans (also in hooks)
+
+- `git push --force`, `git reset --hard`, `git clean -f` without explicit user request
+- `git stash` without explicit user request
+- DROP/TRUNCATE DB; wipe volumes on `*prod*` compose
+
+## Artifacts
+
+| What | Where |
+|------|-------|
+| Hooks | `.cursor/hooks.json` |
+| Skills | `.cursor/skills/acceptance-closeout`, `quality-gates` |
+| Consistency | `scripts/check-acceptance-consistency.ps1` |
+
+Do not add phone-home telemetry to product runtime. Scanners stay offline/local/CI.

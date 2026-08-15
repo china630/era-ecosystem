@@ -48,16 +48,16 @@ export default function AppSidebar() {
   }
 
   const items: NavItem[] = [
-    { href: '/', labelKey: 'chessboard', icon: LayoutGrid, show: true },
+    { href: '/fo/rack', labelKey: 'chessboard', icon: LayoutGrid, show: true },
     {
-      href: '/room-plan',
+      href: '/fo/room-plan',
       labelKey: 'roomPlan',
       icon: BedDouble,
       show: can(PERMISSIONS.RESERVATIONS_READ),
     },
     {
       href: '/bookings/new',
-      labelKey: 'newBooking',
+      labelKey: 'roomBooking',
       icon: CalendarDays,
       show: can(PERMISSIONS.RESERVATIONS_WRITE),
     },
@@ -74,7 +74,7 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.REPORTS_READ),
     },
     {
-      href: '/reports/agency-ledger',
+      href: '/front-cash/agency-ledger',
       labelKey: 'agencyLedger',
       icon: ClipboardList,
       show: can(PERMISSIONS.REPORTS_READ),
@@ -96,43 +96,43 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.RESERVATIONS_READ),
     },
     {
-      href: '/admin/master-data',
+      href: '/settings/master-data',
       labelKey: 'masterData',
       icon: Building2,
       show: can(PERMISSIONS.MASTER_DATA_MANAGE),
     },
     {
-      href: '/admin/integration',
+      href: '/settings/integration',
       labelKey: 'integration',
       icon: Link2,
       show: can(PERMISSIONS.MASTER_DATA_MANAGE),
     },
     {
-      href: '/admin/stock',
+      href: '/settings/stock',
       labelKey: 'stock',
       icon: Package,
       show: can(PERMISSIONS.MASTER_DATA_MANAGE),
     },
     {
-      href: '/admin/users',
+      href: '/settings/users',
       labelKey: 'users',
       icon: Users,
       show: can(PERMISSIONS.USERS_MANAGE),
     },
     {
-      href: '/housekeeping',
+      href: '/hk',
       labelKey: 'housekeeping',
       icon: Wrench,
       show: can(PERMISSIONS.HOUSEKEEPING_MANAGE) || can(PERMISSIONS.ROOMS_STATUS),
     },
     {
-      href: '/channel',
+      href: '/distribution/channel',
       labelKey: 'channel',
       icon: Radio,
       show: can(PERMISSIONS.CHANNEL_MANAGE),
     },
     {
-      href: '/admin/contracts',
+      href: '/distribution/contracts',
       labelKey: 'salesContracts',
       icon: Settings,
       show: can(PERMISSIONS.MASTER_DATA_MANAGE),
@@ -162,7 +162,7 @@ export default function AppSidebar() {
       show: can(PERMISSIONS.RESERVATIONS_READ),
     },
     {
-      href: '/operations',
+      href: '/night-audit',
       labelKey: 'operations',
       icon: Settings,
       show: can(PERMISSIONS.NIGHT_AUDIT_RUN) || can(PERMISSIONS.RESERVATIONS_CANCEL),
@@ -171,7 +171,7 @@ export default function AppSidebar() {
 
   function linkClass(href: string) {
     const active = href !== '/' && pathname.startsWith(href);
-    const isHome = href === '/' && pathname === '/';
+    const isHome = href === '/fo/rack' && (pathname === '/fo/rack' || pathname === '/');
     return active || isHome ? SIDEBAR_LINK_ACTIVE_CLASS : SIDEBAR_LINK_CLASS;
   }
 

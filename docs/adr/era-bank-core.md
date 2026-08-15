@@ -3,13 +3,13 @@
 **Status:** Accepted (MVP implemented 2026-06-14)
 **Decision owners:** Platform architecture.
 **Related:** [tenancy-and-outlet-boundaries.md](./tenancy-and-outlet-boundaries.md) · [org-operating-mode.md](./org-operating-mode.md) · [CONTROL_PLANE_ARCHITECTURE.md](../CONTROL_PLANE_ARCHITECTURE.md) · [era-data-hub.md](./era-data-hub.md) · [satellite-finance-bridge-pattern.md](./satellite-finance-bridge-pattern.md)
-**Product docs:** [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md)
+**Product docs:** [era-bank-core/PRD.md](../../era-bank-core/PRD.md) · [era-bank-core/TZ.md](../../era-bank-core/TZ.md) · scope boundary [Bank-Capability-Inventory.md](../acceptance/Bank-Capability-Inventory.md) · Full commercial CBS program [Bank-Full-CBS-Roadmap.md](../acceptance/Bank-Full-CBS-Roadmap.md)
 
 ---
 
 ## Context
 
-ERA is a corporate ERP/business ecosystem: `era-finance-core` (GL, documents, inventory, HR/payroll, tax), `era-orchestrator` (identity, SSO, billing, entitlements, MDM), `era-data-hub` (reference data), and industry satellites. We want to add a **Core Banking System (CBS)** as a **licensable product** for mid-size banks in Azerbaijan, regulated by the Central Bank of Azerbaijan (**CBAR / AMB**).
+ERA is a corporate ERP/business ecosystem: `era-finance-core` (GL, documents, inventory, HR/payroll, tax), `era-orchestrator` (identity, SSO, billing, entitlements, MDM), `era-data-hub` (reference data), and industry satellites. We deliver a **Core Banking System (CBS)** as a **licensable full commercial product** for banks in Azerbaijan, regulated by the Central Bank of Azerbaijan (**CBAR / AMB**). Mid-size-lab framing is retired; PARTIAL→IN and former OUT→IN are tracked in Bank-Full-CBS-Roadmap.
 
 A CBS is a different class of software from an ERP. Its central object is **the accounts and products of the bank's thousands of customers** (deposits, loans, cards) plus **interbank payment processing** — not "one company's own bookkeeping". The bank's own bookkeeping is just *one* concern of the CBS, not its purpose.
 

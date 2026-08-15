@@ -240,4 +240,46 @@ export class TreasuryController {
   gapHistory(@Query("limit") limit?: string) {
     return this.treasury.gapHistory(limit ? Number(limit) : 10);
   }
+
+  @Get("money-market")
+  listMoneyMarket() {
+    return this.treasury.listMoneyMarket();
+  }
+
+  @Post("money-market")
+  placeMoneyMarket(@Body() dto: InterbankDto, @Req() req: BankAuthRequest) {
+    return this.treasury.placeMoneyMarket({
+      counterpartyId: dto.counterpartyId,
+      nostroAccountId: dto.nostroAccountId,
+      principalMinor: BigInt(dto.principalMinor),
+      currency: dto.currency,
+      rateAnnual: dto.rateAnnual,
+      startDate: new Date(dto.startDate),
+      maturityDate: new Date(dto.maturityDate),
+      bookGlCode: "161010",
+      bookedByUserId: req.userId ?? "service",
+      idempotencyKey: dto.idempotencyKey,
+    });
+  }
+
+  @Post("money-market/:id/mature")
+  matureMoneyMarket(@Param("id") id: string, @Req() req: BankAuthRequest) {
+    return this.treasury.matureMoneyMarket(id, req.userId ?? "service");
+  }
+
+  @Post("nostro-vostro/:id/corr-payment")
+  nostroPayment(
+    @Param("id") id: string,
+    @Body()
+    dto: { amountMinor: string; reference: string; idempotencyKey: string },
+    @Req() req: BankAuthRequest,
+  ) {
+    return this.treasury.nostroCorrespondentPayment({
+      nostroAccountId: id,
+      amountMinor: BigInt(dto.amountMinor),
+      reference: dto.reference,
+      makerUserId: req.userId ?? "service",
+      idempotencyKey: dto.idempotencyKey,
+    });
+  }
 }

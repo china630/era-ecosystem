@@ -40,17 +40,21 @@ export function GuestCardToolbar({
         ) : null}
       </span>
       <div className="flex flex-wrap gap-2">
-        {onAttach ? (
-          <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={onAttach}>
-            {t('toolbar.attach')}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className={SECONDARY_BUTTON_CLASS}
+          disabled={busy || !onAttach}
+          title={!onAttach ? t('availableAfterSave') : undefined}
+          onClick={onAttach}
+        >
+          {t('toolbar.attach')}
+        </button>
         <button
           type="button"
           className={SECONDARY_BUTTON_CLASS}
           disabled={!onCopy}
           onClick={onCopy}
-          title={!onCopy ? t('comingSoon') : undefined}
+          title={!onCopy ? t('availableAfterSave') : undefined}
         >
           {t('toolbar.copy')}
         </button>
@@ -92,7 +96,16 @@ export function GuestCardToolbar({
           <button type="button" className={SECONDARY_BUTTON_CLASS} disabled={busy} onClick={onToggleLock}>
             {isLocked ? t('toolbar.unlock') : t('toolbar.lock')}
           </button>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            className={SECONDARY_BUTTON_CLASS}
+            disabled
+            title={t('availableAfterSave')}
+          >
+            {t('toolbar.lock')}
+          </button>
+        )}
         {onSave ? (
           <button
             type="button"

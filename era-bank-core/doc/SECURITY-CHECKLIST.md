@@ -11,7 +11,8 @@ Certification prep checklist for CBAR/FMN engagement. Not a substitute for exter
 | PCI | Card PAN never stored; `cardToken` + `panLast4` only | ✓ |
 | PII | CIF uses `globalPersonId`; no duplicate FIN in satellite DBs | ✓ |
 | Service tokens | Engine routes require `Authorization: Bearer` service token | ✓ |
-| EOD lock | Posting rejected during EOD RUNNING (documented) | ~ |
+| EOD lock | External posts return **423 Locked** while EOD RUNNING (`allowDuringEod` for EOD-internal) | ✓ |
+| JWT HMAC | HS256 signature verified; production never skips; optional `BANK_JWT_ALLOW_INSECURE_DEV=1` non-prod only | ✓ |
 | Audit | Append-only `AuditLogEntry` on posting lifecycle | ✓ |
 | Validation | Global `ValidationPipe` whitelist + forbidNonWhitelisted | ✓ |
 

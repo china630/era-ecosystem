@@ -12,7 +12,8 @@ This replaces the Elektraweb pattern where ACC screens mixed operational folio w
 | Night audit (operational day) | Hotel PMS | Close business day; emit `SATELLITE_HOTEL_NIGHT_AUDIT_CLOSED` |
 | Revenue → GL mapping | Hotel config → Finance journal | Admin `/admin/integration`; Finance posts NAS |
 | **Sales invoices (e-qaimə / AR)** | **Finance** `/sales/invoices` | Operational list `/reports/invoices`; flag `integrateToAccounting`; **deep link** to Finance |
-| **Agency city ledger / CL** | **Finance** counterparty reconciliation | Operational snapshot `/reports/agency-ledger`; **deep link** to `/crm/counterparties` |
+| **Agency city ledger / CL (ops)** | **Hotel** folios + snapshot + checkout transfer-to-AR (P5 H-BL-40) | Routing, credit gate, `PENDING_AR`/`TRANSFERRED_AR` handoff; snapshot `/reports/agency-ledger` |
+| **Agency AR / aging / invoice matching** | **Finance** counterparty reconciliation | Deep link `/crm/counterparties`; bank apply / matching (**H-BL-48**) — not duplicated in PMS |
 | **Purchases / PO** | **Finance** `/purchases` | Not implemented in hotel (Wave 6+) |
 | **Inventory / stock** | **Finance** `/inventory/*` | Local MVP `/admin/stock` for HK/consumption only; **deep link** to Finance warehouse |
 | POS tickets, KDS, shifts | fb-pos | Full CRUD; room charge → hotel bridge |
@@ -51,9 +52,28 @@ Banner component: `FinanceBoundaryBanner` — shows when `NEXT_PUBLIC_FINANCE_WE
 - `FiscalDocument` — operational invoice register before ERP handoff
 - `integrateToAccounting` — per-document flag for export queue
 - Agency ledger **operational** totals (opening, charges, payments, city ledger) — not GL aging
+- Folio money close (settle, deposits, refunds, checkout gates) — see [ADR hotel-city-ledger-and-fo-money](./adr/hotel-city-ledger-and-fo-money.md)
+- Planned folio AR phases at checkout: `PENDING_AR` / `TRANSFERRED_AR` (P5) before Finance Paid
+
+## FO money / City Ledger backlog (P5)
+
+| ID | Theme | Owner |
+|----|-------|-------|
+| H-BL-40 | Transfer to CL at checkout + credit/contract gate | hotel-pms |
+| H-BL-41 | Deposit at settle/checkout | hotel-pms |
+| H-BL-42 | Folio payment refunds | hotel-pms |
+| H-BL-43 | Checkout discounts | hotel-pms |
+| H-BL-44 | Night Audit polish | hotel-pms |
+| H-BL-45 | Per-guest folio close | hotel-pms |
+| H-BL-46 | Agency prepaid/postpaid settlement | hotel + Finance |
+| H-BL-47 | Table filter enrichment | hotel-pms |
+| H-BL-48 | Terms / aging / invoice matching | **Finance** |
+
+Coverage rows: `HOT-CASH-*`, `HOT-CL-*`, `HOT-CO-*`, `HOT-NA-*` in [COVERAGE_MATRIX.md](./COVERAGE_MATRIX.md).
 
 ## References
 
 - [era-hotel-pms/doc/clone-spec/01-finance-boundary.md](../era-hotel-pms/doc/clone-spec/01-finance-boundary.md)
 - [era-finance-core/docs/industry-satellite-sync.md](../era-finance-core/docs/industry-satellite-sync.md)
 - [docs/MODULES_CATALOG.md](./MODULES_CATALOG.md)
+- [docs/adr/hotel-city-ledger-and-fo-money.md](./adr/hotel-city-ledger-and-fo-money.md)

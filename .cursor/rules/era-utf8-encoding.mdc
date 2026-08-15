@@ -1,0 +1,41 @@
+---
+description: File encoding policy — UTF-8 (no BOM) + LF everywhere; how to avoid Windows UTF-16LE drift
+alwaysApply: true
+---
+
+# ERA — file encoding (UTF-8, no BOM, LF)
+
+## Why this exists
+
+On this Windows box the default host is **Windows PowerShell 5.1**, which writes **UTF-16LE** for `Set-Content` / `>` / `Out-File` and for many editor/tool file writes. Node.js and the TypeScript/JSON parsers read those bytes as `SyntaxError: Invalid or unexpected token` / `TS1127: Invalid character`. Every recurrence of "invalid character" in `.ts/.tsx/.cjs/.json` traces back to a file silently saved as UTF-16.
+
+## Hard rules
+
+- All repo text files are **UTF-8 without BOM**, line endings **LF** (`.bat`/`.cmd` are `CRLF`). Enforced by `.editorconfig` + root `.gitattributes`.
+- **Never** create or edit a source file via `Set-Content`, `Out-File`, `echo >`, or `@'...'@ | Set-Content` in PowerShell 5.1 without an explicit UTF-8 (no BOM) encoding — it will corrupt the file.
+- **Preferred write path:** the editor Write/StrReplace tools, or `fs.writeFileSync(path, data, "utf8")` in a Node script. When writing many-line files, prefer Node.
+
+## After writing any NEW file on Windows — verify + fix
+
+The editor Write tool can still emit UTF-16LE on this host. Immediately after creating a new file, verify and convert if needed:
+
+```powershell
+node -e "const fs=require('fs');const f=process.argv[1];let b=fs.readFileSync(f);if(b[1]===0){fs.writeFileSync(f,Buffer.from(b.toString('utf16le').replace(/^\uFEFF/,''),'utf8'));console.log('converted utf16->utf8',f);}else{console.log('utf8 ok',f);}" -- path/to/new/file
+```
+
+A UTF-8 ASCII file has no `0x00` byte at index 1; a UTF-16LE file does. That single check catches the drift.
+
+## Permanent fixes already applied (repo)
+
+- `.editorconfig` — `charset = utf-8`, `end_of_line = lf`.
+- Root `.gitattributes` — `* text=auto eol=lf` + per-extension `eol=lf`, binaries marked `binary`.
+- `.vscode/settings.json` — `files.encoding: utf8`, `files.autoGuessEncoding: false`, `files.eol: \n`.
+- Windows PowerShell 5.1 `$PROFILE` patched with UTF-8 console + `$PSDefaultParameterValues['*:Encoding']='utf8'`.
+
+## PowerShell 7 — installed (best UTF-8 host)
+
+pwsh 7 writes **UTF-8 (no BOM)** by default. Installed at `C:\Program Files\PowerShell\7\pwsh.exe` (v7.6.3) and set as the default Cursor/VSCode terminal profile in `.vscode/settings.json`.
+
+- winget failed on this box (`0x80080005` non-elevated / `0x8a15005e` source-cert); installed via the GitHub MSI `PowerShell-7.6.3-win-x64.msi` with elevation.
+- Upgrade later: `winget upgrade Microsoft.PowerShell` or a newer GitHub MSI.
+- Restart Cursor so new terminals spawn as pwsh 7.

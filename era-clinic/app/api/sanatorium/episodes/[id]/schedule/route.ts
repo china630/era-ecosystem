@@ -24,7 +24,12 @@ export async function GET(
           return next;
         })();
 
-    const orders = await getEpisodeSchedule(id, from, to);
+    const orders = await getEpisodeSchedule(
+      id,
+      from,
+      to,
+      url.searchParams.get("locale") ?? req.headers.get("x-era-locale") ?? "en",
+    );
     return jsonOk(orders);
   } catch (err) {
     return handleRouteError(err);

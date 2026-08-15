@@ -1,15 +1,65 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
-import { EraDataGrid, MODAL_INPUT_CLASS } from '@era/satellite-kit/ui';
+import {
+  DATA_TABLE_CLASS,
+  DATA_TABLE_HEAD_ROW_CLASS,
+  DATA_TABLE_TD_CLASS,
+  DATA_TABLE_TH_LEFT_CLASS,
+  DATA_TABLE_TR_CLASS,
+} from '@era/satellite-kit/ui';
+
+/** Compact sub-collection table for guest card — no pagination (typically 0–5 rows). */
+function MiniTable({
+  headers,
+  empty,
+  emptyLabel,
+  children,
+  colSpan,
+}: {
+  headers: string[];
+  empty: boolean;
+  emptyLabel: string;
+  children: ReactNode;
+  colSpan: number;
+}) {
+  return (
+    <div className="overflow-x-auto rounded border border-[#D5DADF]">
+      <table className={`${DATA_TABLE_CLASS} text-[12px]`}>
+        <thead>
+          <tr className={DATA_TABLE_HEAD_ROW_CLASS}>
+            {headers.map((h) => (
+              <th key={h} className={DATA_TABLE_TH_LEFT_CLASS}>
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {empty ? (
+            <tr className={DATA_TABLE_TR_CLASS}>
+              <td
+                colSpan={colSpan}
+                className={`${DATA_TABLE_TD_CLASS} text-[#7F8C8D]`}
+              >
+                {emptyLabel}
+              </td>
+            </tr>
+          ) : (
+            children
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 export function GuestCardIdentityTab({
   guestId,
   documents,
   contacts,
   addresses,
-  phone,
-  email,
   gdprConfirmed,
   smsConsent,
   whatsappConsent,
@@ -32,8 +82,6 @@ export function GuestCardIdentityTab({
   }>;
   contacts: Array<{ id: string; kind: string; value: string }>;
   addresses: Array<{ id: string; kind: string; line1: string }>;
-  phone: string;
-  email: string;
   gdprConfirmed: boolean;
   smsConsent: boolean;
   whatsappConsent: boolean;
@@ -44,39 +92,38 @@ export function GuestCardIdentityTab({
   onReload: () => void;
 }) {
   const t = useTranslations('guestCard');
+  const dash = '—';
 
   return (
     <div className="space-y-4 text-[13px]">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label>
-          {t('details.phone')}
-          <input className={MODAL_INPUT_CLASS} value={phone} readOnly />
-        </label>
-        <label>
-          {t('details.email')}
-          <input className={MODAL_INPUT_CLASS} value={email} readOnly />
-        </label>
-      </div>
       <div>
         <h3 className="mb-2 font-semibold text-[#34495E]">{t('documents')}</h3>
-        <EraDataGrid
-          rows={documents as Array<Record<string, unknown>>}
-          columns={[
-            { key: 'docType', header: t('grid.type') },
-            { key: 'docNumber', header: t('grid.number') },
-            { key: 'serialNo', header: t('grid.serial') },
-            { key: 'issuingAuthority', header: t('grid.issuer') },
-            { key: 'nationality', header: t('grid.nationality') },
-            { key: 'issuePlace', header: t('grid.issuePlace') },
-            {
-              key: 'isPrimary',
-              header: t('grid.primary'),
-              render: (r) => (r.isPrimary ? '✓' : '—'),
-            },
+        <MiniTable
+          headers={[
+            t('grid.type'),
+            t('grid.number'),
+            t('grid.serial'),
+            t('grid.issuer'),
+            t('grid.nationality'),
+            t('grid.issuePlace'),
+            t('grid.primary'),
           ]}
-          rowKey={(r) => String(r.id)}
-          emptyMessage="—"
-        />
+          empty={documents.length === 0}
+          emptyLabel={t('grid.empty')}
+          colSpan={7}
+        >
+          {documents.map((r) => (
+            <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+              <td className={DATA_TABLE_TD_CLASS}>{r.docType || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.docNumber || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.serialNo || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.issuingAuthority || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.nationality || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.issuePlace || dash}</td>
+              <td className={DATA_TABLE_TD_CLASS}>{r.isPrimary ? '✓' : dash}</td>
+            </tr>
+          ))}
+        </MiniTable>
         {guestId ? (
           <button
             type="button"
@@ -100,15 +147,19 @@ export function GuestCardIdentityTab({
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <h3 className="mb-2 font-semibold text-[#34495E]">{t('contacts')}</h3>
-          <EraDataGrid
-            rows={contacts as Array<Record<string, unknown>>}
-            columns={[
-              { key: 'kind', header: t('grid.type') },
-              { key: 'value', header: t('grid.contact') },
-            ]}
-            rowKey={(r) => String(r.id)}
-            emptyMessage="—"
-          />
+          <MiniTable
+            headers={[t('grid.type'), t('grid.contact')]}
+            empty={contacts.length === 0}
+            emptyLabel={t('grid.empty')}
+            colSpan={2}
+          >
+            {contacts.map((r) => (
+              <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                <td className={DATA_TABLE_TD_CLASS}>{r.kind || dash}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{r.value || dash}</td>
+              </tr>
+            ))}
+          </MiniTable>
           {guestId ? (
             <button
               type="button"
@@ -131,15 +182,19 @@ export function GuestCardIdentityTab({
         </div>
         <div>
           <h3 className="mb-2 font-semibold text-[#34495E]">{t('addresses')}</h3>
-          <EraDataGrid
-            rows={addresses as Array<Record<string, unknown>>}
-            columns={[
-              { key: 'kind', header: t('grid.type') },
-              { key: 'line1', header: t('grid.address') },
-            ]}
-            rowKey={(r) => String(r.id)}
-            emptyMessage="—"
-          />
+          <MiniTable
+            headers={[t('grid.type'), t('grid.address')]}
+            empty={addresses.length === 0}
+            emptyLabel={t('grid.empty')}
+            colSpan={2}
+          >
+            {addresses.map((r) => (
+              <tr key={r.id} className={DATA_TABLE_TR_CLASS}>
+                <td className={DATA_TABLE_TD_CLASS}>{r.kind || dash}</td>
+                <td className={DATA_TABLE_TD_CLASS}>{r.line1 || dash}</td>
+              </tr>
+            ))}
+          </MiniTable>
           {guestId ? (
             <button
               type="button"
@@ -173,7 +228,11 @@ export function GuestCardIdentityTab({
           ] as const
         ).map(([key, checked, label]) => (
           <label key={key} className="flex items-center gap-2">
-            <input type="checkbox" checked={checked} onChange={(e) => onConsent(key, e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => onConsent(key, e.target.checked)}
+            />
             {label}
           </label>
         ))}

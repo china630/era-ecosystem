@@ -6,12 +6,18 @@ import {
 import {
   FatcaCrsClass,
   GlAccountType,
+  LoanStatus,
   RegReportStatus,
   Prisma,
 } from "@era/bank-core-database";
 import { PrismaService } from "../../prisma/prisma.service";
 import { BankOrgConfig } from "../../common/bank-org.config";
 import { OrchestratorEventsPublisher } from "../../integration/orchestrator-events.publisher";
+import {
+  assertLiveConfigured,
+  cbarMode,
+  ConfigError,
+} from "../../integration/live-mode";
 import { LedgerService } from "../../kernel/ledger/ledger.service";
 
 type TrialRow = {
@@ -57,7 +63,10 @@ export class RegReportingService {
         outputJson = this.buildBalanceSheetStub(template, trialBalance, glById);
         break;
       case "CBAR_LCR_STUB":
-        outputJson = this.buildLcrStub(template, trialBalance, glById);
+        outputJson = await this.buildLcrFromRisk(template, trialBalance, glById);
+        break;
+      case "CBAR_CAR_STUB":
+        outputJson = await this.buildCarFromRisk(template);
         break;
       default:
         throw new BadRequestException(`Unknown CBAR template: ${template}`);
@@ -80,6 +89,21 @@ export class RegReportingService {
       where: { id: runId, bankOrgId: this.bankOrg.bankOrgId },
     });
     if (!run) throw new NotFoundException("Reg report run not found");
+
+    const mode = cbarMode();
+    if (mode === "live" && run.templateCode.startsWith("CBAR_")) {
+      assertLiveConfigured(
+        mode,
+        {
+          BANK_CBAR_BASE_URL: process.env.BANK_CBAR_BASE_URL,
+          BANK_CBAR_API_KEY: process.env.BANK_CBAR_API_KEY,
+        },
+        "BANK_CBAR_MODE=live",
+      );
+      throw new ConfigError(
+        "BANK_CBAR_MODE=live requires live CBAR submit adapter (YC-E5)",
+      );
+    }
 
     await this.prisma.regReportRun.update({
       where: { id: runId },
@@ -158,6 +182,70 @@ export class RegReportingService {
       update: {
         classification: input.classification,
         tinStatus: input.tinStatus,
+      },
+    });
+  }
+
+  async advanceFatcaWorkflow(
+    customerId: string,
+    target: FatcaCrsClass,
+    reviewerUserId?: string,
+  ) {
+    const row = await this.upsertFatcaClassification(customerId, {
+      classification: target,
+      tinStatus: target === FatcaCrsClass.US_PERSON ? "REQUIRED" : "OPTIONAL",
+    });
+    return {
+      ...row,
+      workflow: "FATCA_CLASSIFICATION",
+      reviewerUserId: reviewerUserId ?? "service",
+      labOnly: true,
+    };
+  }
+
+  async largeExposureReport(asOfDate = new Date()) {
+    const loans = await this.prisma.loanContract.findMany({
+      where: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        status: {
+          in: [LoanStatus.DISBURSED, LoanStatus.ACTIVE, LoanStatus.OVERDUE],
+        },
+      },
+      select: { customerId: true, outstandingMinor: true, currency: true },
+    });
+    const byCustomer = new Map<string, bigint>();
+    for (const loan of loans) {
+      byCustomer.set(
+        loan.customerId,
+        (byCustomer.get(loan.customerId) ?? 0n) + loan.outstandingMinor,
+      );
+    }
+    const tier1Stub = 10_000_000_000n;
+    const thresholdMinor = tier1Stub / 4n;
+    const exposures = [...byCustomer.entries()]
+      .map(([customerId, exposureMinor]) => ({
+        customerId,
+        exposureMinor: exposureMinor.toString(),
+        pctOfTier1: Number(exposureMinor) / Number(tier1Stub),
+        large: exposureMinor >= thresholdMinor,
+      }))
+      .filter((e) => e.large)
+      .sort((a, b) => Number(b.exposureMinor) - Number(a.exposureMinor));
+
+    return this.prisma.regReportRun.create({
+      data: {
+        bankOrgId: this.bankOrg.bankOrgId,
+        templateCode: "LARGE_EXPOSURES",
+        periodFrom: asOfDate,
+        periodTo: asOfDate,
+        status: RegReportStatus.GENERATED,
+        outputJson: {
+          template: "LARGE_EXPOSURES",
+          asOfDate: asOfDate.toISOString().slice(0, 10),
+          tier1CapitalStubMinor: tier1Stub.toString(),
+          thresholdPct: 0.25,
+          exposures,
+        } as Prisma.InputJsonValue,
       },
     });
   }
@@ -241,6 +329,57 @@ export class RegReportingService {
       liquidAssetsMinor: liquidAssets.toString(),
       outflowsMinor: outflows.toString(),
       lcrRatio: ratio.toFixed(4),
+    };
+  }
+
+  /** Prefer risk-owned LCR from latest LiquidityGapSnapshot; fall back to GL stub. */
+  private async buildLcrFromRisk(
+    template: string,
+    trialBalance: TrialRow[],
+    glById: Map<string, { code: string; type: GlAccountType }>,
+  ) {
+    const snap = await this.prisma.liquidityGapSnapshot.findFirst({
+      where: { bankOrgId: this.bankOrg.bankOrgId },
+      orderBy: { asOfDate: "desc" },
+    });
+    const buckets = (snap?.bucketsJson ?? {}) as {
+      lcrRatioStub?: number | null;
+    };
+    if (snap && buckets.lcrRatioStub != null) {
+      return {
+        template,
+        source: "banking_risk via LiquidityGapSnapshot",
+        gapSnapshotId: snap.id,
+        asOfDate: snap.asOfDate.toISOString().slice(0, 10),
+        lcrRatio: String(buckets.lcrRatioStub),
+      };
+    }
+    return {
+      ...this.buildLcrStub(template, trialBalance, glById),
+      source: "gl_fallback",
+    };
+  }
+
+  private async buildCarFromRisk(template: string) {
+    const car = await this.prisma.capitalAdequacySnapshot.findFirst({
+      where: { bankOrgId: this.bankOrg.bankOrgId },
+      orderBy: { asOfDate: "desc" },
+    });
+    if (!car) {
+      return {
+        template,
+        note: "No CapitalAdequacySnapshot — run POST /risk/capital/run",
+        carRatio: null,
+      };
+    }
+    return {
+      template,
+      source: "banking_risk.CapitalAdequacySnapshot",
+      asOfDate: car.asOfDate.toISOString().slice(0, 10),
+      carRatio: car.carRatio,
+      tier1Ratio: car.tier1Ratio,
+      rwaMinor: car.rwaMinor.toString(),
+      tier1CapitalMinor: car.tier1CapitalMinor.toString(),
     };
   }
 

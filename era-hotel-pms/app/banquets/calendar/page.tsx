@@ -3,9 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { PageHeader } from '@era/satellite-kit/ui';
-import { SECONDARY_BUTTON_CLASS } from '@era/satellite-kit/ui';
-import AppShell, { PageSection } from '@/components/layout/AppShell';
+import {
+  CARD_CONTAINER_CLASS,
+  DatePicker,
+  PageHeader,
+  SECONDARY_BUTTON_CLASS,
+  showApiError,
+} from '@era/satellite-kit/ui';
 import { useAuth } from '@/hooks/useAuth';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 
@@ -27,28 +31,32 @@ export default function BanquetCalendarPage() {
   const [to, setTo] = useState('');
 
   const load = useCallback(async () => {
-    const qs = new URLSearchParams();
-    if (from) qs.set('from', from);
-    if (to) qs.set('to', to);
-    const res = await fetch(`/api/banquets/calendar?${qs}`);
-    const data = await res.json();
-    setBookings(Array.isArray(data) ? data : []);
-  }, [from, to]);
+    try {
+      const qs = new URLSearchParams();
+      if (from) qs.set('from', from);
+      if (to) qs.set('to', to);
+      const res = await fetch(`/api/banquets/calendar?${qs}`);
+      const data = await res.json();
+      if (!res.ok) {
+        showApiError(data, tc('loadError'));
+        return;
+      }
+      setBookings(Array.isArray(data) ? data : []);
+    } catch (e) {
+      showApiError({ error: e instanceof Error ? e.message : tc('loadError') });
+    }
+  }, [from, to, tc]);
 
   useEffect(() => {
     if (can(PERMISSIONS.RESERVATIONS_READ)) void load();
   }, [can, load]);
 
   if (!can(PERMISSIONS.RESERVATIONS_READ)) {
-    return (
-      <AppShell>
-        <p className="text-sm text-red-600">{tc('accessDenied')}</p>
-      </AppShell>
-    );
+    return <p className="text-sm text-[#7F8C8D]">{tc('accessDenied')}</p>;
   }
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={t('calendarTitle')}
         subtitle={t('calendarSubtitle')}
@@ -58,10 +66,22 @@ export default function BanquetCalendarPage() {
           </Link>
         }
       />
-      <PageSection>
-        <div className="mb-4 flex gap-3">
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded border px-2 py-1 text-sm" />
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded border px-2 py-1 text-sm" />
+      <section className={`${CARD_CONTAINER_CLASS} p-4`}>
+        <div className="mb-4 flex flex-wrap items-end gap-3">
+          <DatePicker
+            label={tc('from')}
+            value={from}
+            onChange={setFrom}
+            placeholder={tc('datePlaceholder')}
+            preset="date"
+          />
+          <DatePicker
+            label={tc('to')}
+            value={to}
+            onChange={setTo}
+            placeholder={tc('datePlaceholder')}
+            preset="date"
+          />
           <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
             {tc('refresh')}
           </button>
@@ -95,7 +115,7 @@ export default function BanquetCalendarPage() {
             )}
           </tbody>
         </table>
-      </PageSection>
-    </AppShell>
+      </section>
+    </>
   );
 }

@@ -1,11 +1,19 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, PageHeader, SECONDARY_BUTTON_CLASS } from "@era/satellite-kit/ui";
-import { OpsDataTable, useOpsModal } from "@/components/ops";
+import {
+  EraListFilterBar,
+  Field,
+  PageHeader,
+  PRIMARY_BUTTON_CLASS,
+  showApiError,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
+import { useOpsModal } from "@/components/ops";
 import { PostingCreateModal, PostingDetailModal } from "@/components/ops/modals/PostingModals";
-import { OpsError, StatusBadge } from "@/components/ops-ui";
+import { StatusBadge } from "@/components/ops-ui";
 
 type PostingRow = {
   id: string;
@@ -22,81 +30,102 @@ function PostingsQueuePageContent() {
   const tCommon = useTranslations("common");
   const modal = useOpsModal();
   const [branchId, setBranchId] = useState("");
+  const debouncedBranch = useDebouncedValue(branchId, 300);
   const [rows, setRows] = useState<PostingRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const params = new URLSearchParams({ status: "PENDING" });
-    if (branchId.trim()) params.set("branchId", branchId.trim());
+    if (debouncedBranch.trim()) params.set("branchId", debouncedBranch.trim());
     try {
       const res = await fetch(`/api/postings?${params}`, { cache: "no-store" });
       if (!res.ok) {
-        setError(`${tCommon("error")} (${res.status})`);
+        showApiError(tCommon("error"));
+        setRows([]);
         return;
       }
       setRows((await res.json()) as PostingRow[]);
     } catch {
-      setError(tCommon("error"));
+      showApiError(tCommon("error"));
+      setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [branchId, tCommon]);
+  }, [debouncedBranch, tCommon]);
 
   useEffect(() => {
     void load();
   }, [load]);
 
+  const gridRows = useMemo(
+    () => rows as Array<PostingRow & Record<string, unknown>>,
+    [rows],
+  );
+
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      <div className={`${CARD_CONTAINER_CLASS} flex flex-wrap gap-3`}>
-        <input
-          className="rounded border px-3 py-2 text-sm"
-          placeholder={t("branchFilter")}
+      <PageHeader
+        title={t("title")}
+        subtitle={t("subtitle")}
+        actions={
+          <button
+            type="button"
+            className={PRIMARY_BUTTON_CLASS}
+            onClick={() => modal.open("create")}
+          >
+            {t("newPosting")}
+          </button>
+        }
+      />
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setBranchId("")}
+      >
+        <Field
+          label={t("branchFilter")}
+          preset="longText"
           value={branchId}
           onChange={(e) => setBranchId(e.target.value)}
         />
-        <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void load()}>
-          {tCommon("refresh")}
-        </button>
-      </div>
-      <OpsError message={error} />
-      <div className={CARD_CONTAINER_CLASS}>
-        {loading ? <p className="text-sm text-muted-foreground">{tCommon("loading")}</p> : null}
-        {!loading ? (
-          <OpsDataTable
-            rows={rows}
-            addLabel={t("newPosting")}
-            onAdd={() => modal.open("create")}
-            emptyLabel={tCommon("empty")}
-            onRowClick={(row) => modal.open("detail", row.id)}
-            columns={[
-              {
-                key: "reference",
-                label: "Reference",
-                render: (row) => (
-                  <span className="text-primary">{row.reference ?? row.id.slice(0, 10)}</span>
-                ),
-              },
-              { key: "type", label: "Type" },
-              {
-                key: "status",
-                label: "Status",
-                render: (row) => (row.status ? <StatusBadge status={row.status} /> : "—"),
-              },
-              { key: "makerUserId", label: "Maker" },
-              {
-                key: "bookingDate",
-                label: "Date",
-                render: (row) => row.bookingDate?.slice(0, 10) ?? "—",
-              },
-            ]}
-          />
-        ) : null}
-      </div>
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
+          columns={[
+            {
+              key: "reference",
+              header: t("colReference"),
+              render: (row) => (
+                <button
+                  type="button"
+                  className="text-primary hover:underline"
+                  onClick={() => modal.open("detail", String(row.id))}
+                >
+                  {String(row.reference ?? String(row.id).slice(0, 10))}
+                </button>
+              ),
+            },
+            { key: "type", header: t("colType") },
+            {
+              key: "status",
+              header: t("colStatus"),
+              render: (row) =>
+                row.status ? <StatusBadge status={String(row.status)} /> : "—",
+            },
+            { key: "makerUserId", header: t("colMaker") },
+            {
+              key: "bookingDate",
+              header: t("colDate"),
+              render: (row) =>
+                row.bookingDate ? String(row.bookingDate).slice(0, 10) : "—",
+            },
+          ]}
+          rows={gridRows}
+          emptyLabel={tCommon("empty")}
+        />
+      )}
       <PostingCreateModal
         open={modal.mode === "create"}
         onClose={modal.close}
@@ -118,7 +147,11 @@ function PostingsQueuePageContent() {
 export default function PostingsQueuePage() {
   const tCommon = useTranslations("common");
   return (
-    <Suspense fallback={<p className="text-sm text-muted-foreground">{tCommon("loading")}</p>}>
+    <Suspense
+      fallback={
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      }
+    >
       <PostingsQueuePageContent />
     </Suspense>
   );

@@ -1,22 +1,55 @@
 season,room_type,rate_kind,occupancy_note,amount_azn,currency,source_method,notes
-low (Nov-Apr),Standart DBL/Twin (22kv),BAR_BB,room/night up to TBD adults,70,AZN,accounting_anchor,Simplest room BB — accounting 2026-07-14
-high (May-Oct),Standart DBL/Twin (22kv),BAR_BB,room/night up to TBD adults,80,AZN,anchor_plus_pkg_single_delta,70+(139-129)
-low (Nov-Apr),Junior Suite (30kv),BAR_BB,room/night up to TBD adults,80,AZN,anchor_plus_pkg_single_delta,70+(139-129)
-high (May-Oct),Junior Suite (30kv),BAR_BB,room/night up to TBD adults,96,AZN,anchor_plus_pkg_single_delta,70+(155-129)
-low (Nov-Apr),Deluxe Room (42kv),BAR_BB,room/night up to TBD adults,92,AZN,anchor_plus_pkg_single_delta,70+(151-129)
-high (May-Oct),Deluxe Room (42kv),BAR_BB,room/night up to TBD adults,102,AZN,anchor_plus_pkg_single_delta,70+(161-129)
-low (Nov-Apr),Triple Room (24kv),BAR_BB,room/night (3 pax capacity),91,AZN,scale_std_bb_by_pkg_triple_over_double,round(70*285/219)
-high (May-Oct),Triple Room (24kv),BAR_BB,room/night (3 pax capacity),115,AZN,scale_high_std_bb_by_pkg_triple_over_double,round(80*343/239)
-low (Nov-Apr),Standart DBL/Twin (22kv),BAR_FB_1pax,1 adult room+FB no medical,120,AZN,bar_bb_plus_lunch_dinner,70+25+25
-high (May-Oct),Standart DBL/Twin (22kv),BAR_FB_1pax,1 adult room+FB no medical,130,AZN,bar_bb_plus_lunch_dinner,80+25+25
-low (Nov-Apr),Junior Suite (30kv),BAR_FB_1pax,1 adult room+FB no medical,130,AZN,bar_bb_plus_lunch_dinner,80+25+25
-high (May-Oct),Junior Suite (30kv),BAR_FB_1pax,1 adult room+FB no medical,146,AZN,bar_bb_plus_lunch_dinner,96+25+25
-low (Nov-Apr),Deluxe Room (42kv),BAR_FB_1pax,1 adult room+FB no medical,142,AZN,bar_bb_plus_lunch_dinner,92+25+25
-high (May-Oct),Deluxe Room (42kv),BAR_FB_1pax,1 adult room+FB no medical,152,AZN,bar_bb_plus_lunch_dinner,102+25+25
-low (Nov-Apr),Triple Room (24kv),BAR_FB_1pax,1 adult room+FB no medical,141,AZN,bar_bb_plus_lunch_dinner,91+25+25
-high (May-Oct),Triple Room (24kv),BAR_FB_1pax,1 adult room+FB no medical,165,AZN,bar_bb_plus_lunch_dinner,115+25+25
-any,Junior or Deluxe,BAR_BB_premium_packages,Premium/Dermo/Detoks assigned room,see Junior/Deluxe rows,AZN,policy_A2,Hotel assigns JR/DLX; use matching BAR_BB; package tariff is medical product
-n/a,COGS,FB_food_cost,per package night,16,AZN,accounting,Not a sell rate
-n/a,COGS,room_cleaning_cost,per room night,5,AZN,accounting,Not a sell rate
-n/a,COGS,base_medical_package_cost,per package night,20,AZN,accounting,Not a sell rate
-n/a,SELL_ref,canteen_lunch_or_dinner,per meal,25,AZN,accounting,Used to build BAR_FB
+n/a,POLICY,bar_vs_package,n/a,n/a,AZN,adr_2026-08-10,BAR=accounting base; package sell manual; need not match BAR
+n/a,SELL_ref,SVC_FEE,per person night,6,AZN,accounting_2026-08-10,Service fee; versioned setting planned
+n/a,COGS_ref,SVC_FEE,per person night,5,AZN,accounting_2026-07-14,Historical COGS for service fee
+n/a,SELL_ref,canteen_breakfast,per person per meal,25,AZN,accounting_2026-08-10,Versioned setting planned
+n/a,SELL_ref,canteen_lunch,per person per meal,25,AZN,accounting
+n/a,SELL_ref,canteen_dinner,per person per meal,25,AZN,accounting
+n/a,COGS_ref,FB_food,per person day,16,AZN,accounting_2026-07-14,Food COGS bundle
+n/a,COGS_ref,medical_base,per person night,20,AZN,accounting_2026-07-14,Package medicine COGS
+n/a,SELL_ref,extra_adult_BB,per person night,31,AZN,composition,service fee 6 + breakfast 25
+n/a,SELL_ref,extra_adult_FB,per person night,81,AZN,composition,service fee 6 + B+L+D 75
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_RO,room shared,39,AZN,bb1_minus_fi_minus_breakfast,70-6-25
+high (May-Oct),Standart DBL/Twin (22kv),BAR_RO,room shared,49,AZN,bb1_minus_fi_minus_breakfast,80-6-25
+low (Nov-Apr),Junior Suite (30kv),BAR_RO,room shared,49,AZN,bb1_minus_fi_minus_breakfast,80-6-25
+high (May-Oct),Junior Suite (30kv),BAR_RO,room shared,65,AZN,bb1_minus_fi_minus_breakfast,96-6-25
+low (Nov-Apr),Deluxe Room (42kv),BAR_RO,room shared,61,AZN,bb1_minus_fi_minus_breakfast,92-6-25
+high (May-Oct),Deluxe Room (42kv),BAR_RO,room shared,71,AZN,bb1_minus_fi_minus_breakfast,102-6-25
+low (Nov-Apr),Triple Room (24kv),BAR_RO,room shared,60,AZN,bb1_minus_fi_minus_breakfast,91-6-25
+high (May-Oct),Triple Room (24kv),BAR_RO,room shared,84,AZN,bb1_minus_fi_minus_breakfast,115-6-25
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_BB,1 adult,70,AZN,accounting_anchor,Market/composed
+high (May-Oct),Standart DBL/Twin (22kv),BAR_BB,1 adult,80,AZN,ladder,70+(139-129)
+low (Nov-Apr),Junior Suite (30kv),BAR_BB,1 adult,80,AZN,ladder,70+(139-129)
+high (May-Oct),Junior Suite (30kv),BAR_BB,1 adult,96,AZN,ladder,70+(155-129)
+low (Nov-Apr),Deluxe Room (42kv),BAR_BB,1 adult,92,AZN,ladder,70+(151-129)
+high (May-Oct),Deluxe Room (42kv),BAR_BB,1 adult,102,AZN,ladder,70+(161-129)
+low (Nov-Apr),Triple Room (24kv),BAR_BB,1 adult,91,AZN,ladder,round(70*285/219)
+high (May-Oct),Triple Room (24kv),BAR_BB,1 adult,115,AZN,ladder,round(80*343/239)
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_BB,2 adults,101,AZN,ro_plus_31n,39+31*2
+high (May-Oct),Standart DBL/Twin (22kv),BAR_BB,2 adults,111,AZN,ro_plus_31n,49+31*2
+low (Nov-Apr),Junior Suite (30kv),BAR_BB,2 adults,111,AZN,ro_plus_31n
+high (May-Oct),Junior Suite (30kv),BAR_BB,2 adults,127,AZN,ro_plus_31n
+low (Nov-Apr),Deluxe Room (42kv),BAR_BB,2 adults,123,AZN,ro_plus_31n
+high (May-Oct),Deluxe Room (42kv),BAR_BB,2 adults,133,AZN,ro_plus_31n
+low (Nov-Apr),Triple Room (24kv),BAR_BB,2 adults,122,AZN,ro_plus_31n
+high (May-Oct),Triple Room (24kv),BAR_BB,2 adults,146,AZN,ro_plus_31n
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_FB,1 adult no medical,120,AZN,bb_plus_lunch_dinner,70+50
+high (May-Oct),Standart DBL/Twin (22kv),BAR_FB,1 adult no medical,130,AZN,bb_plus_lunch_dinner,80+50
+low (Nov-Apr),Junior Suite (30kv),BAR_FB,1 adult no medical,130,AZN,bb_plus_lunch_dinner
+high (May-Oct),Junior Suite (30kv),BAR_FB,1 adult no medical,146,AZN,bb_plus_lunch_dinner
+low (Nov-Apr),Deluxe Room (42kv),BAR_FB,1 adult no medical,142,AZN,bb_plus_lunch_dinner
+high (May-Oct),Deluxe Room (42kv),BAR_FB,1 adult no medical,152,AZN,bb_plus_lunch_dinner
+low (Nov-Apr),Triple Room (24kv),BAR_FB,1 adult no medical,141,AZN,bb_plus_lunch_dinner
+high (May-Oct),Triple Room (24kv),BAR_FB,1 adult no medical,165,AZN,bb_plus_lunch_dinner
+low (Nov-Apr),Standart DBL/Twin (22kv),BAR_FB,2 adults no medical,201,AZN,ro_plus_81n,39+81*2
+high (May-Oct),Standart DBL/Twin (22kv),BAR_FB,2 adults no medical,211,AZN,ro_plus_81n
+low (Nov-Apr),Junior Suite (30kv),BAR_FB,2 adults no medical,211,AZN,ro_plus_81n
+high (May-Oct),Junior Suite (30kv),BAR_FB,2 adults no medical,227,AZN,ro_plus_81n
+low (Nov-Apr),Deluxe Room (42kv),BAR_FB,2 adults no medical,223,AZN,ro_plus_81n
+high (May-Oct),Deluxe Room (42kv),BAR_FB,2 adults no medical,233,AZN,ro_plus_81n
+low (Nov-Apr),Triple Room (24kv),BAR_FB,2 adults no medical,222,AZN,ro_plus_81n
+high (May-Oct),Triple Room (24kv),BAR_FB,2 adults no medical,246,AZN,ro_plus_81n
+n/a,PDF_ref,Standart_single_low,per person night,129,AZN,pdf_2026,Manual package sell — not forced to BAR
+n/a,PDF_ref,Standart_double_low,per person night,219,AZN,pdf_2026,Manual package sell
+n/a,PDF_ref,Standart_single_high,per person night,139,AZN,pdf_2026
+n/a,PDF_ref,Standart_double_high,per person night,239,AZN,pdf_2026

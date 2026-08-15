@@ -1,6 +1,7 @@
 import {
   authCookieName,
   buildSsoPayload,
+  isPlatformSuperAdminUser,
   mapFinanceRoleToSatellite,
   SATELLITE_ROLE,
   signSatelliteSession,
@@ -35,19 +36,26 @@ export async function POST(request: Request) {
       return jsonError("Invalid SSO signature", 401);
     }
 
-    const satelliteRole = mapFinanceRoleToSatellite(body.financeRole ?? "USER");
-    const roleName =
-      satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER
-        ? "Business Owner"
-        : "Executive viewer";
+    // Platform super-admins get full bank ops access (BUSINESS_OWNER + approve),
+    // regardless of their finance membership role.
+    const isPlatformSuperAdmin = isPlatformSuperAdminUser({
+      email: body.email,
+      login: body.email,
+    });
+    const satelliteRole = isPlatformSuperAdmin
+      ? SATELLITE_ROLE.BUSINESS_OWNER
+      : mapFinanceRoleToSatellite(body.financeRole ?? "USER");
+    const isOwner = satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER;
+    const roleName = isOwner ? "Business Owner" : "Executive viewer";
+    const limitsJson = { readOnly: !isOwner, canApprove: isOwner };
 
     const role = await prisma.opsRole.upsert({
       where: { code: satelliteRole },
-      update: { name: roleName },
+      update: { name: roleName, limitsJson },
       create: {
         code: satelliteRole,
         name: roleName,
-        limitsJson: { readOnly: satelliteRole !== SATELLITE_ROLE.BUSINESS_OWNER },
+        limitsJson,
       },
     });
 
@@ -75,9 +83,10 @@ export async function POST(request: Request) {
     const token = await signSatelliteSession({
       sub: user.id,
       login: user.username,
+      email: body.email,
       role: user.opsRole.code,
       fullName: user.fullName,
-      isOwner: satelliteRole === SATELLITE_ROLE.BUSINESS_OWNER,
+      isOwner,
     });
 
     const res = jsonOk({
@@ -86,6 +95,7 @@ export async function POST(request: Request) {
         login: user.username,
         fullName: user.fullName,
         role: user.opsRole.code,
+        isPlatformSuperAdmin,
       },
       token,
     });

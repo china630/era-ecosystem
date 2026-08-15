@@ -1,10 +1,5 @@
-import { Suspense } from 'react';
-import Chessboard from '@/components/Chessboard';
+import { redirect } from 'next/navigation';
 
-export default function HomePage() {
-  return (
-    <Suspense fallback={null}>
-      <Chessboard />
-    </Suspense>
-  );
+export default function HomeRedirect() {
+  redirect('/fo/rack');
 }

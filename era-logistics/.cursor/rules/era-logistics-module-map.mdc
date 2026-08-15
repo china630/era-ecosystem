@@ -9,6 +9,8 @@ alwaysApply: false
 
 # Logistics module map
 
+**Acceptance SSOT:** [Logistics-Acceptance-System](../../../docs/acceptance/Logistics-Acceptance-System.md) · [Product-Readiness](../../../docs/acceptance/Logistics-Product-Readiness-Matrix.md) · edition [`docs/editions/logistics.yaml`](../../../docs/editions/logistics.yaml)
+
 | Domain | API prefix | Notes |
 |--------|------------|-------|
 | Auth / SSO | `app/api/auth/` | local + SSO |

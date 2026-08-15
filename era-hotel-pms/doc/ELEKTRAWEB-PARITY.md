@@ -88,7 +88,7 @@
 | Guest card | Split panels, all consent toggles, details schema fields, loyalty/time-share grids |
 | Guest routes | `/guests/:id/notes`, `/guests/:id/tasks` |
 | Reservation sub-modals | Credit card, packages, tasks, folio routing (API + modals) |
-| Group reservations | `GroupCreateModal`, open reservation card from row |
+| Group reservations | `GroupBookingModal`, open reservation card from code/guest |
 | Schema | `20260602120000_wave_d2_guest_res_submodals` |
 | Tests | `e2e/guest-card.spec.ts` |
 

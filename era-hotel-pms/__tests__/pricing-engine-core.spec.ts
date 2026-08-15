@@ -6,6 +6,7 @@ import {
   computeAddOnAmount,
   computeAddOnQuantity,
   computeChildNightlyAddon,
+  computeOccupancyNightlySupplement,
   DEFAULT_CHILD_PRICING_MATRIX,
   resolveChildDiscountPercent,
 } from '@/lib/services/pricing-engine-core';
@@ -84,6 +85,30 @@ describe('pricing-engine-core', () => {
         DEFAULT_CHILD_PRICING_MATRIX,
       );
       expect(addon.toNumber()).toBe(50);
+    });
+
+    it('absolute override charges paying children only', () => {
+      const addon = computeChildNightlyAddon(
+        100,
+        [{ count: 2, representativeAge: 3 }],
+        [{ ageFrom: 0, ageTo: 6, discountPercent: 0, amountOverride: 40, freeCount: 1 }],
+        { useAbsolutePricing: true },
+      );
+      expect(addon.toNumber()).toBe(40);
+    });
+  });
+
+  describe('occupancy supplement', () => {
+    it('charges second and third adult tiers', () => {
+      const amount = computeOccupancyNightlySupplement({
+        adults: 3,
+        baseOccupancy: 1,
+        extraAdultAmount: 31,
+        thirdAdultAmount: 31,
+        extraBeds: 1,
+        extraBedAmount: 20,
+      });
+      expect(amount.toNumber()).toBe(82);
     });
   });
 

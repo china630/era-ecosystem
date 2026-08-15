@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { CARD_CONTAINER_CLASS, MODAL_INPUT_CLASS } from "@era/satellite-kit/ui";
+import { CARD_CONTAINER_CLASS, FieldSelect, TEXT_DANGER_CLASS, TEXT_MUTED_CLASS } from "@era/satellite-kit/ui";
 
 type Summary = {
   date: string;
@@ -18,10 +18,15 @@ type Summary = {
 
 type Practitioner = { id: string; code: string; fullName: string };
 
-export function ExecutiveDashboard() {
+export function ExecutiveDashboard({
+  date,
+  refreshKey = 0,
+}: {
+  date: string;
+  refreshKey?: number;
+}) {
   const t = useTranslations("executive");
   const tc = useTranslations("common");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [practitionerId, setPractitionerId] = useState("");
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -52,59 +57,46 @@ export function ExecutiveDashboard() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, refreshKey]);
 
   if (loading && !summary) {
-    return <p className="text-[13px] text-[#7F8C8D]">{tc("loading")}</p>;
+    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{tc("loading")}</p>;
   }
 
   if (error) {
-    return <p className="text-[13px] text-red-600">{error}</p>;
+    return <p className={`text-[13px] ${TEXT_DANGER_CLASS}`}>{error}</p>;
   }
 
   if (!summary) {
-    return <p className="text-[13px] text-[#7F8C8D]">{t("loadFailed")}</p>;
+    return <p className={`text-[13px] ${TEXT_MUTED_CLASS}`}>{t("loadFailed")}</p>;
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-3">
-        <label className="flex items-center gap-2 text-[13px]">
-          {t("filterDate")}
-          <input
-            type="date"
-            className={MODAL_INPUT_CLASS}
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
-        </label>
-        <label className="flex items-center gap-2 text-[13px]">
-          {t("filterPractitioner")}
-          <select
-            className={MODAL_INPUT_CLASS}
-            value={practitionerId}
-            onChange={(e) => setPractitionerId(e.target.value)}
-          >
-            <option value="">{tc("all")}</option>
-            {practitioners.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.fullName}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <dl className={`${CARD_CONTAINER_CLASS} grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4 text-[13px]`}>
+      <FieldSelect
+        label={t("filterPractitioner")}
+        preset="selectWide"
+        value={practitionerId}
+        onChange={(e) => setPractitionerId(e.target.value)}
+      >
+        <option value="">{tc("all")}</option>
+        {practitioners.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.fullName}
+          </option>
+        ))}
+      </FieldSelect>
+      <dl className={`${CARD_CONTAINER_CLASS} grid gap-4 p-4 text-[13px] sm:grid-cols-2 lg:grid-cols-4`}>
         <div className="rounded border p-4">
-          <dt className="text-[#7F8C8D]">{t("visitsToday")}</dt>
+          <dt className={TEXT_MUTED_CLASS}>{t("visitsToday")}</dt>
           <dd className="text-2xl font-semibold">{summary.visitsToday}</dd>
         </div>
         <div className="rounded border p-4">
-          <dt className="text-[#7F8C8D]">{t("labRevenueToday")}</dt>
+          <dt className={TEXT_MUTED_CLASS}>{t("labRevenueToday")}</dt>
           <dd className="text-2xl font-semibold">{summary.labRevenueToday.toFixed(2)} AZN</dd>
         </div>
         <div className="rounded border p-4">
-          <dt className="text-[#7F8C8D]">{t("openLabOrders")}</dt>
+          <dt className={TEXT_MUTED_CLASS}>{t("openLabOrders")}</dt>
           <dd className="text-2xl font-semibold">{summary.openLabOrders}</dd>
         </div>
         <div
@@ -116,9 +108,9 @@ export function ExecutiveDashboard() {
                 : ""
           }`}
         >
-          <dt className="text-[#7F8C8D]">{t("capacityTitle")}</dt>
+          <dt className={TEXT_MUTED_CLASS}>{t("capacityTitle")}</dt>
           <dd className="text-2xl font-semibold">~{summary.capacity.guestEquivalent} guests</dd>
-          <dd className="text-xs text-[#7F8C8D]">
+          <dd className={`text-xs ${TEXT_MUTED_CLASS}`}>
             {summary.capacity.scheduledSlots} slots · risk {summary.capacity.riskLevel}
           </dd>
         </div>

@@ -33,7 +33,12 @@ export default function DboCardsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">{t("title")}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">{t("title")}</h1>
+        <Link href="/cards/3ds" className="text-xs text-dbo-primary">
+          3DS
+        </Link>
+      </div>
       {loading ? <p className="text-sm text-dbo-muted">{tc("loading")}</p> : null}
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       <ul className="space-y-3">

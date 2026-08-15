@@ -5,6 +5,8 @@ export interface SessionPayload {
   login: string;
   role: string;
   fullName: string;
+  /** When known (login/SSO) — platform super-admin allowlist matches email. */
+  email?: string;
 }
 
 function getSecret() {
@@ -16,11 +18,14 @@ function getSecret() {
 }
 
 export async function signToken(payload: SessionPayload): Promise<string> {
-  return new SignJWT({
+  const claims: Record<string, unknown> = {
     login: payload.login,
     role: payload.role,
     fullName: payload.fullName,
-  })
+  };
+  if (payload.email) claims.email = payload.email;
+
+  return new SignJWT(claims)
     .setProtectedHeader({ alg: 'HS256' })
     .setSubject(payload.sub)
     .setIssuedAt()
@@ -37,5 +42,6 @@ export async function verifyToken(token: string): Promise<SessionPayload> {
     login: String(payload.login ?? ''),
     role: String(payload.role ?? ''),
     fullName: String(payload.fullName ?? ''),
+    email: payload.email != null ? String(payload.email) : undefined,
   };
 }

@@ -55,8 +55,13 @@ export class InvoicesController {
     @OrganizationId() orgId: string,
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query("pageSize", new DefaultValuePipe(25), ParseIntPipe) pageSize: number,
+    @Query("counterpartyId") counterpartyId?: string,
   ) {
-    return this.invoices.list(orgId, { page, pageSize });
+    return this.invoices.list(orgId, {
+      page,
+      pageSize,
+      counterpartyId: counterpartyId?.trim() || undefined,
+    });
   }
 
   @Post(":id/payments")

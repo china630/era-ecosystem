@@ -7,15 +7,12 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crm.sendSms"
       apiPath={(gid) => `/api/guests/${gid}/communications?channel=SMS`}
-      onAdd={async (guestId) => {
-        const body = window.prompt('SMS text');
-        if (!body?.trim()) return;
-        await fetch(`/api/guests/${guestId}/communications`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ channel: 'SMS', body: body.trim() }),
-        });
-      }}
+      postPath={(gid) => `/api/guests/${gid}/communications`}
+      addFields={[
+        { name: 'body', label: 'SMS text', required: true, multiline: true },
+      ]}
+      buildBody={(v) => ({ channel: 'SMS', body: v.body.trim() })}
+      searchKeys={['body', 'status']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           {String(r.body)}

@@ -19,6 +19,7 @@ import {
   envelopeToCityLedgerSnapshotEvent,
   publishToOrchestratorGateway,
 } from './orchestrator-gateway';
+import { satelliteOrganizationId } from '@era/satellite-kit';
 import type {
   IntegrationEnvelope,
   DispatchResult,
@@ -350,9 +351,8 @@ export async function publishEvent(
       envelope.eventType === 'SATELLITE_HOTEL_CITY_LEDGER_SNAPSHOT') &&
     eventGatewayMode() === 'orchestrator'
   ) {
-    const organizationId =
-      process.env.ERA_SATELLITE_ORGANIZATION_ID ?? process.env.ORGANIZATION_ID;
-    if (!organizationId) {
+    const organizationId = satelliteOrganizationId();
+    if (!organizationId || organizationId === 'demo-org') {
       const msg = 'ERA_SATELLITE_ORGANIZATION_ID is not configured';
       appendFailedLog(envelope, msg);
       await logOutboundEvent(envelope, 'FAILED', 0, msg);

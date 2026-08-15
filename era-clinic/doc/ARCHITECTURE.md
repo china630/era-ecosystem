@@ -22,7 +22,7 @@ src/
 |--------|------|
 | `domain/patient/` | Registry, MDM resolve, `PatientRef` |
 | `domain/master-data/` | Practitioners, rooms, resources, procedure types |
-| `domain/scheduling/` | Slots, bookings, reschedule |
+| `domain/appointment/` | Day matrix, shift rotation (CLI-36), create/reschedule conflict |
 | `domain/visit/` | Appointments, check-in, visit lines, complete |
 | `domain/lab/` | Lab order lifecycle |
 | `domain/inpatient/` | Ward, bed, assignment, ADT-light (Phase 4) |
@@ -51,7 +51,7 @@ Nav gating: `ClinicOpsShell` + middleware cookie `era_clinic_presets` (Phase 1).
 | `domain/presets/` | Done | Constants + cookie helpers |
 | `domain/inpatient/` | Done | Ward CRUD, ADT-light admit/transfer/discharge |
 | `domain/visit/` | Done | Visit cancel (K-15) |
-| `domain/scheduling/` | Planned | Move from `lib/scheduling.service.ts` |
+| `domain/appointment/` | Done | Calendar matrix + practitioner schedule (CLI-36); conflict helper still in `lib/scheduling.service.ts` |
 | `domain/sanatorium/` | Planned | Move from `lib/services/sanatorium.service.ts` |
 | `domain/billing/` | Planned | Move from `lib/billing-router.ts` |
 | `infra/prisma.ts` | Planned | Thin re-export of `@/lib/prisma` |

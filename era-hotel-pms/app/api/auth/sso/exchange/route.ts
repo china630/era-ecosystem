@@ -1,58 +1,74 @@
-import { createHmac, timingSafeEqual } from 'crypto';
-import { z } from 'zod';
+import {
+  resolveVerifiedSsoFinanceRole,
+  ssoExchangeBodySchema,
+  satelliteOrganizationId,
+} from '@era/satellite-kit';
 import { jsonOk, handleRouteError, jsonError } from '@/lib/api-utils';
 import { signToken } from '@/lib/auth/jwt';
 import { prisma } from '@/lib/prisma';
-import { ROLE_CODES } from '@/lib/auth/permissions';
-import { permissionsForRole } from '@/lib/auth/permissions';
-
-const schema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(1),
-  organizationId: z.string().min(1),
-  expiresAt: z.number().int(),
-  signature: z.string().min(1),
-});
+import {
+  ROLE_CODES,
+  permissionsForRole,
+  serializePermissions,
+} from '@/lib/auth/permissions';
+import { isPlatformSuperAdminUser } from '@/lib/auth/platform-super-admin';
 
 const COOKIE_NAME = process.env.AUTH_COOKIE_NAME ?? 'era_session';
 
-function verifySsoSignature(payload: string, signature: string): boolean {
-  const secret = process.env.ERA_SSO_SHARED_SECRET;
-  if (!secret) return false;
-  const expected = createHmac('sha256', secret).update(payload).digest('hex');
-  try {
-    return timingSafeEqual(Buffer.from(expected, 'hex'), Buffer.from(signature, 'hex'));
-  } catch {
-    return false;
-  }
+async function ensureRole(code: string) {
+  const existing = await prisma.role.findUnique({ where: { code } });
+  if (existing) return existing;
+  return prisma.role.create({
+    data: {
+      code,
+      name: code.replace(/_/g, ' '),
+      permissionsJson: serializePermissions(permissionsForRole(code)),
+    },
+  });
 }
 
+/**
+ * SEC-SSO-02: Orchestrator mints v2 HMAC (email|org|exp|financeRole).
+ * Legacy hotel verify was v1-only → Invalid SSO signature after orch upgrade.
+ */
 export async function POST(request: Request) {
   try {
-    const body = schema.parse(await request.json());
+    const body = ssoExchangeBodySchema.parse(await request.json());
     if (body.expiresAt < Math.floor(Date.now() / 1000)) {
       return jsonError('SSO token expired', 401);
     }
 
-    const payload = `${body.email}|${body.organizationId}|${body.expiresAt}`;
-    if (!verifySsoSignature(payload, body.signature)) {
+    const financeRole = resolveVerifiedSsoFinanceRole({
+      email: body.email,
+      organizationId: body.organizationId,
+      expiresAt: body.expiresAt,
+      signature: body.signature,
+      financeRole: body.financeRole,
+    });
+    if (!financeRole) {
       return jsonError('Invalid SSO signature', 401);
     }
 
-    let role = await prisma.role.findUnique({
-      where: { code: ROLE_CODES.FINANCIAL_AUDITOR },
-    });
-    if (!role) {
-      role = await prisma.role.create({
-        data: {
-          code: ROLE_CODES.FINANCIAL_AUDITOR,
-          name: 'Financial Auditor',
-          permissionsJson: JSON.stringify(permissionsForRole(ROLE_CODES.FINANCIAL_AUDITOR)),
-        },
-      });
+    const deployOrg = satelliteOrganizationId();
+    // SEC-SSO-05: bind ticket org to deployment org when configured
+    if (deployOrg && deployOrg !== 'demo-org' && body.organizationId !== deployOrg) {
+      return jsonError('SSO organization mismatch', 401);
     }
 
-    const login = `sso_${body.email.split('@')[0]}`;
+    const email = body.email.trim().toLowerCase();
+    const isPlatformSuperAdmin = isPlatformSuperAdminUser({
+      email,
+      login: email,
+    });
+
+    // Platform super-admins get full hotel ops; other launcher SSO users stay
+    // on Financial_Auditor (exec / read-oriented) until role mapping is expanded.
+    const roleCode = isPlatformSuperAdmin
+      ? ROLE_CODES.HOTEL_ADMIN
+      : ROLE_CODES.FINANCIAL_AUDITOR;
+    const role = await ensureRole(roleCode);
+
+    const login = `sso_${email.split('@')[0]}`;
     let user = await prisma.user.findUnique({
       where: { login },
       include: { role: true },
@@ -61,7 +77,7 @@ export async function POST(request: Request) {
       user = await prisma.user.create({
         data: {
           login,
-          email: body.email,
+          email,
           fullName: body.fullName,
           passwordHash: 'sso:no-password',
           roleId: role.id,
@@ -73,7 +89,13 @@ export async function POST(request: Request) {
     } else {
       user = await prisma.user.update({
         where: { id: user.id },
-        data: { lastLoginAt: new Date(), fullName: body.fullName },
+        data: {
+          lastLoginAt: new Date(),
+          fullName: body.fullName,
+          email,
+          // Re-assert role on every SSO so PSA is never stuck on read-only.
+          roleId: role.id,
+        },
         include: { role: true },
       });
     }
@@ -83,6 +105,7 @@ export async function POST(request: Request) {
       login: user.login,
       role: user.role.code,
       fullName: user.fullName,
+      email,
     });
 
     const res = jsonOk({
@@ -91,6 +114,8 @@ export async function POST(request: Request) {
         login: user.login,
         fullName: user.fullName,
         role: user.role.code,
+        isPlatformSuperAdmin,
+        financeRole,
       },
       token,
     });

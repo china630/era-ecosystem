@@ -214,6 +214,8 @@ model ProductTemplate {        // bank-configured, no code (deposits/loans/curre
 
 The kernel knows only `ProductTemplate.paramsJson` shape contracts; deposit/loan *behavior* lives in L2 modules that read these params. The kernel never hardcodes a product.
 
+**Canonical params contract:** [docs/adr/era-bank-product-params.md](../../docs/adr/era-bank-product-params.md) (`product-params.ts`). Origination uses ACTIVE templates with optional rate/term bands.
+
 **Product GL mapping keys in `paramsJson`** (required where the product posts to that role):
 
 | Key | Used by |
@@ -221,7 +223,7 @@ The kernel knows only `ProductTemplate.paramsJson` shape contracts; deposit/loan
 | `glAssetCode` | Loans (portfolio), other asset products |
 | `glLiabilityCode` | Current accounts, term deposits |
 | `glInterestIncomeCode` | Loans (interest leg on repay) |
-| `glInterestExpenseCode` | Deposits (interest accrual — when implemented) |
+| `glInterestExpenseCode` | Deposits (EOD interest accrual — ACT/365 MVP) |
 
 Helpers: `apps/api/src/common/product-gl.ts` (`getProductGlCode`). Bank-wide accounts (nostro, cash vault, MFR, FX transit, …) use `SystemGlConfig` (§2.1), not product templates.
 

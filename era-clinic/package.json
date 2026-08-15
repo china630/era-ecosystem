@@ -11,8 +11,13 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed:vnext": "npx tsx prisma/seed-vnext.ts",
-    "db:seed": "npx tsx prisma/seed-vnext.ts",
-    "test": "jest --ci"
+    "db:seed": "npx tsx prisma/seed-vnext.ts && node prisma/load-nafta-prices.cjs && node prisma/load-sanatorium-week.cjs && node prisma/seed-diagnostic-catalog.cjs && node prisma/backfill-lab-order-items.cjs && node prisma/load-lab-usg-demo.cjs && node prisma/seed-planning-rules.cjs",
+    "test": "jest --ci",
+    "db:seed:sanatorium-week": "node prisma/load-sanatorium-week.cjs",
+    "db:seed:lab-usg": "node prisma/load-lab-usg-demo.cjs",
+    "db:seed:planning-rules": "node prisma/seed-planning-rules.cjs",
+    "db:seed:diagnostic-catalog": "node prisma/seed-diagnostic-catalog.cjs",
+    "db:seed:backfill-lab-items": "node prisma/backfill-lab-order-items.cjs"
   },
   "dependencies": {
     "@era/clinic-domain": "file:../packages/clinic-domain",

@@ -14,6 +14,7 @@ export const reservationFullPatchSchema = z.object({
   checkOutDate: z.coerce.date().optional(),
   paymentMethod: z.enum(['CASH', 'CARD', 'COMPANY_ACCOUNT']).optional(),
   voucherNo: z.string().nullable().optional(),
+  partyBillingMode: z.enum(['PRIMARY', 'EQUAL']).optional(),
   roomCount: z.number().int().min(1).optional(),
   adults: z.number().int().min(0).optional(),
   children11_6: z.number().int().min(0).optional(),
@@ -51,6 +52,7 @@ export const reservationFullPatchSchema = z.object({
     .array(
       z.object({
         id: z.string().uuid().optional(),
+        guestId: z.string().uuid().nullable().optional(),
         title: z.string().nullable().optional(),
         gender: z.string().nullable().optional(),
         firstName: z.string().nullable().optional(),
@@ -65,6 +67,7 @@ export const reservationFullPatchSchema = z.object({
         externalResId: z.string().nullable().optional(),
         guestState: z.string().nullable().optional(),
         isPrimary: z.boolean().optional(),
+        ownsFolio: z.boolean().optional(),
       }),
     )
     .optional(),

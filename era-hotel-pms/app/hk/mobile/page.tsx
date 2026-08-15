@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { PRIMARY_BUTTON_CLASS, showApiError } from '@era/satellite-kit/ui';
 
 type HkTask = {
   id: string;
@@ -12,13 +13,12 @@ type HkTask = {
 
 export default function HkMobilePage() {
   const [tasks, setTasks] = useState<HkTask[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/housekeeping/tasks');
     const json = await res.json();
     if (res.ok) setTasks(Array.isArray(json) ? json : (json.tasks ?? []));
-    else setMsg(json.error ?? 'Failed to load');
+    else showApiError(json, 'Failed to load');
   }, []);
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function HkMobilePage() {
     });
     if (!res.ok) {
       const json = await res.json();
-      setMsg(json.error ?? 'Complete failed');
+      showApiError(json, 'Complete failed');
       return;
     }
     await load();
@@ -42,7 +42,6 @@ export default function HkMobilePage() {
   return (
     <main className="mx-auto max-w-md p-4">
       <h1 className="mb-4 text-lg font-semibold">HK Mobile (v1.1)</h1>
-      {msg && <p className="mb-2 text-sm text-red-600">{msg}</p>}
       <ul className="space-y-2">
         {tasks.map((t) => (
           <li key={t.id} className="flex items-center justify-between rounded border p-3">
@@ -52,7 +51,7 @@ export default function HkMobilePage() {
             {t.status !== 'DONE' && (
               <button
                 type="button"
-                className="rounded bg-[#2980B9] px-3 py-1 text-xs text-white"
+                className={PRIMARY_BUTTON_CLASS}
                 onClick={() => complete(t.id)}
               >
                 Done

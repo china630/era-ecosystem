@@ -1,5 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { randomUUID } from "crypto";
+import {
+  asanMode,
+  assertLiveConfigured,
+  ConfigError,
+} from "./live-mode";
 
 type ChallengeRecord = {
   identifier: string;
@@ -12,6 +17,20 @@ const challenges = new Map<string, ChallengeRecord>();
 @Injectable()
 export class AsanSimaStubAdapter {
   startChallenge(input: { identifier: string; fin?: string }) {
+    const mode = asanMode();
+    if (mode === "live") {
+      assertLiveConfigured(
+        mode,
+        {
+          BANK_ASAN_BASE_URL: process.env.BANK_ASAN_BASE_URL,
+          BANK_ASAN_API_KEY: process.env.BANK_ASAN_API_KEY,
+        },
+        "BANK_ASAN_MODE=live",
+      );
+      throw new ConfigError(
+        "BANK_ASAN_MODE=live requires live ASAN/SİMA adapter (YC-E3)",
+      );
+    }
     const transactionId = randomUUID();
     challenges.set(transactionId, {
       identifier: input.identifier.trim().toUpperCase(),

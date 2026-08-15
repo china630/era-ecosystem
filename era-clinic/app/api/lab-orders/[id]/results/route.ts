@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
-import { enrichResultLines, hasCriticalFlag } from "@/lib/lab-result-flags";
 import { prisma } from "@/lib/prisma";
+import { writeLabResultsForOrder } from "@/domain/lab/lab-order-write.service";
 
 const bodySchema = z.object({
   lines: z
@@ -18,6 +18,9 @@ const bodySchema = z.object({
     .min(1),
 });
 
+/** Editable while COLLECTED/IN_PROGRESS/RESULT_READY — re-entry allowed until PUBLISHED. */
+const EDITABLE_STATUSES = ["COLLECTED", "IN_PROGRESS", "RESULT_READY"];
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -25,28 +28,19 @@ export async function POST(
   try {
     const { id } = await params;
     const body = bodySchema.parse(await req.json());
-    const order = await prisma.labOrder.findUnique({
-      where: { id },
-      include: { patientRef: true, visit: true },
-    });
+    const order = await prisma.labOrder.findUnique({ where: { id } });
     if (!order) return jsonError("Lab order not found", 404);
-    if (!["COLLECTED", "IN_PROGRESS"].includes(order.status)) {
+    if (!EDITABLE_STATUSES.includes(order.status)) {
       return jsonError(`Cannot enter results from status ${order.status}`, 400);
     }
 
-    const lines = enrichResultLines(body.lines);
-    const updated = await prisma.labOrder.update({
-      where: { id },
-      data: {
-        status: "RESULT_READY",
-        resultJson: JSON.stringify(lines),
-      },
-      include: { patientRef: true, visit: true },
-    });
+    const result = await writeLabResultsForOrder(id, body.lines);
+    if (!result) return jsonError("Lab order not found", 404);
+
     return jsonOk({
-      ...updated,
-      hasCritical: hasCriticalFlag(lines),
-      resultLines: lines,
+      ...result.order,
+      hasCritical: result.hasCritical,
+      resultLines: result.enrichedLines,
     });
   } catch (err) {
     return handleRouteError(err);

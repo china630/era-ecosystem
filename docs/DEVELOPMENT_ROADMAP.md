@@ -149,11 +149,12 @@ Gaps **not** covered by sibling satellites (hotel + fb + clinic + finance + orch
 
 | Priority | IDs | Theme |
 |----------|-----|-------|
-| **P2** | H-BL-01 … H-BL-10 | Split settlement, pre-auth, credit limit, meal gate, business date, guest omnichannel, guest intelligence, Stage 25 pricing, early/late charges, deposit lifecycle |
+| **P2** | H-BL-01 … H-BL-10 | Mostly done; **H-BL-10 Partial** (deposit@check-in only) → finish via **H-BL-41** |
 | **P3** | H-BL-20 … H-BL-28 | Excursions, smart minibar, dispatch, KBS, e-qaimə, extra OTA, guest CRM P2/P3, loyalty redeem, clinic procedure rules |
-| **P4** | H-BL-30 … H-BL-31 | B2B contract management / agency sales; full MICE (future — confirm Nafta) |
+| **P4** | H-BL-30 … H-BL-31 | B2B contracts + BEO MVP **Done**; agency settlement depth → **H-BL-46** |
+| **P5** | H-BL-40 … H-BL-48 | **FO money close + City Ledger** — transfer-to-CL, deposit@settle, refunds, CO discounts, NA polish, per-guest close, agency settlement, filters, Finance AR (terms/aging/match) |
 
-Pick next wave from **P2** unless Nafta onsite UAT surfaces a blocker elsewhere.
+**Next implementation wave:** **P5** ([ADR](./adr/hotel-city-ledger-and-fo-money.md), coverage `HOT-CASH-*` / `HOT-CL-*`). Do not treat DELIVERY Stage 4/23 `[x]` as Opera-depth City Ledger.
 
 ---
 

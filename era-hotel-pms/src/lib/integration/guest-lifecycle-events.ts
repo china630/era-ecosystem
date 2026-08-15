@@ -5,12 +5,11 @@ import {
   SATELLITE_HOTEL_ROOM_CHANGED,
   SATELLITE_HOTEL_SANATORIUM_BOOKING_CREATED,
 } from "@era/contracts";
-import { publishToOrchestratorGateway } from "@era/satellite-kit";
+import { publishToOrchestratorGateway, satelliteOrganizationId } from "@era/satellite-kit";
 
 async function publishLifecycle(event: Record<string, unknown>) {
-  const organizationId =
-    process.env.ERA_SATELLITE_ORGANIZATION_ID ?? process.env.ORGANIZATION_ID;
-  if (!organizationId) return;
+  const organizationId = satelliteOrganizationId();
+  if (!organizationId || organizationId === "demo-org") return;
   await publishToOrchestratorGateway({
     ...event,
     organizationId,

@@ -5,12 +5,23 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import {
   CARD_CONTAINER_CLASS,
+  CatalogField,
+  Field,
   PageHeader,
   PRIMARY_BUTTON_CLASS,
   SECONDARY_BUTTON_CLASS,
 } from "@era/satellite-kit/ui";
 import { OpsDataTable, OpsModalShell, useOpsModal } from "@/components/ops";
-import { OpsError, OpsField, OpsResult, StatusBadge } from "@/components/ops-ui";
+import { OpsError, OpsResult, StatusBadge } from "@/components/ops-ui";
+import {
+  loadAccountOptions,
+  loadBranchOptions,
+  loadCustomerOptions,
+  loadProductTemplateOptions,
+  majorToMinor,
+  type LookupOption,
+  withOrphanOption,
+} from "@/lib/bank-lookups";
 
 type CardRow = {
   id: string;
@@ -34,8 +45,16 @@ function CardsPageInner() {
   const [busy, setBusy] = useState(false);
   const [actionResult, setActionResult] = useState("");
   const [limitsOpen, setLimitsOpen] = useState(false);
-  const [dailyLimit, setDailyLimit] = useState("500000");
-  const [perTxnMax, setPerTxnMax] = useState("200000");
+  const [dailyLimitMajor, setDailyLimitMajor] = useState("5000");
+  const [perTxnMaxMajor, setPerTxnMaxMajor] = useState("2000");
+  const [customers, setCustomers] = useState<LookupOption[]>([]);
+  const [accounts, setAccounts] = useState<LookupOption[]>([]);
+  const [branches, setBranches] = useState<LookupOption[]>([]);
+  const [products, setProducts] = useState<LookupOption[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [accountId, setAccountId] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [productTemplateId, setProductTemplateId] = useState("");
 
   const load = useCallback(async () => {
     setError(null);
@@ -59,10 +78,10 @@ function CardsPageInner() {
         setDetail(data);
         const limits = data.limitsJson as Record<string, number> | undefined;
         if (limits?.dailySpendLimitMinor != null) {
-          setDailyLimit(String(limits.dailySpendLimitMinor));
+          setDailyLimitMajor(String(limits.dailySpendLimitMinor / 100));
         }
         if (limits?.perTxnMaxMinor != null) {
-          setPerTxnMax(String(limits.perTxnMaxMinor));
+          setPerTxnMaxMajor(String(limits.perTxnMaxMinor / 100));
         }
       }
     } catch {
@@ -73,6 +92,27 @@ function CardsPageInner() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (mode !== "create") return;
+    void Promise.all([
+      loadCustomerOptions(),
+      loadBranchOptions(),
+      loadProductTemplateOptions("CARD"),
+    ]).then(([c, b, p]) => {
+      setCustomers(c);
+      setBranches(b);
+      setProducts(p);
+    });
+  }, [mode]);
+
+  useEffect(() => {
+    if (!customerId) {
+      setAccounts([]);
+      return;
+    }
+    void loadAccountOptions(customerId).then(setAccounts);
+  }, [customerId]);
 
   useEffect(() => {
     if (mode === "detail" && entityId) {
@@ -88,23 +128,15 @@ function CardsPageInner() {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const form = new FormData(e.currentTarget);
     try {
       const res = await fetch("/api/cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          customerId: form.get("customerId"),
-          accountId: form.get("accountId"),
-          branchId: form.get("branchId") || "HQ",
-          panLast4: form.get("panLast4"),
-          bin6: form.get("bin6"),
-          expiryMonth: Number(form.get("expiryMonth")),
-          expiryYear: Number(form.get("expiryYear")),
-          limitsJson: {
-            dailySpendLimitMinor: Number(form.get("dailyLimit") ?? 500000),
-            perTxnMaxMinor: Number(form.get("perTxnMax") ?? 200000),
-          },
+          customerId,
+          accountId,
+          branchId,
+          productTemplateId,
         }),
       });
       if (!res.ok) {
@@ -164,8 +196,8 @@ function CardsPageInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           limitsJson: {
-            dailySpendLimitMinor: Number(dailyLimit),
-            perTxnMaxMinor: Number(perTxnMax),
+            dailySpendLimitMinor: majorToMinor(dailyLimitMajor),
+            perTxnMaxMinor: majorToMinor(perTxnMaxMajor),
           },
         }),
       });
@@ -240,15 +272,47 @@ function CardsPageInner() {
         busy={busy}
       >
         <form id="issue-card-form" onSubmit={(e) => void issueCard(e)} className="grid gap-3 sm:grid-cols-2">
-          <OpsField name="customerId" label="Customer ID" defaultValue="demo-retail-customer" />
-          <OpsField name="accountId" label="Account ID" defaultValue="demo-retail-acc-1" />
-          <OpsField name="branchId" label="Branch ID" defaultValue="HQ" />
-          <OpsField name="panLast4" label="PAN last 4" defaultValue="4242" />
-          <OpsField name="bin6" label="BIN6" defaultValue="424242" />
-          <OpsField name="expiryMonth" label="Expiry month" type="number" defaultValue={12} />
-          <OpsField name="expiryYear" label="Expiry year" type="number" defaultValue={2028} />
-          <OpsField name="dailyLimit" label="Daily limit (minor)" type="number" defaultValue={500000} />
-          <OpsField name="perTxnMax" label="Per txn max (minor)" type="number" defaultValue={200000} />
+          <CatalogField
+            kind="ENTITY_REF"
+            label="Customer"
+            options={withOrphanOption(customers, customerId)}
+            value={customerId}
+            onChange={(next) => {
+              setCustomerId(Array.isArray(next) ? next[0] ?? "" : next);
+              setAccountId("");
+            }}
+            required
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label="Account"
+            options={withOrphanOption(accounts, accountId)}
+            value={accountId}
+            onChange={(next) =>
+              setAccountId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+            required
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label="Branch"
+            options={withOrphanOption(branches, branchId)}
+            value={branchId}
+            onChange={(next) =>
+              setBranchId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+            required
+          />
+          <CatalogField
+            kind="ENTITY_REF"
+            label="Card product"
+            options={withOrphanOption(products, productTemplateId)}
+            value={productTemplateId}
+            onChange={(next) =>
+              setProductTemplateId(Array.isArray(next) ? next[0] ?? "" : next)
+            }
+            required
+          />
         </form>
       </OpsModalShell>
 
@@ -313,24 +377,22 @@ function CardsPageInner() {
         busy={busy}
       >
         <form id="card-limits-form" onSubmit={(e) => void saveLimits(e)} className="space-y-4">
-          <label className="block">
-            <span className="mb-1 block text-[12px] text-muted-foreground">Daily spend limit (minor)</span>
-            <input
-              className="w-full rounded border px-3 py-2 text-sm"
-              type="number"
-              value={dailyLimit}
-              onChange={(e) => setDailyLimit(e.target.value)}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-[12px] text-muted-foreground">Per transaction max (minor)</span>
-            <input
-              className="w-full rounded border px-3 py-2 text-sm"
-              type="number"
-              value={perTxnMax}
-              onChange={(e) => setPerTxnMax(e.target.value)}
-            />
-          </label>
+          <Field
+            label={t("dailySpendLimitMajor")}
+            preset="amount"
+            type="number"
+            step="0.01"
+            value={dailyLimitMajor}
+            onChange={(e) => setDailyLimitMajor(e.target.value)}
+          />
+          <Field
+            label={t("perTxnMaxMajor")}
+            preset="amount"
+            type="number"
+            step="0.01"
+            value={perTxnMaxMajor}
+            onChange={(e) => setPerTxnMaxMajor(e.target.value)}
+          />
         </form>
       </OpsModalShell>
     </div>

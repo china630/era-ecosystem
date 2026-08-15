@@ -8,10 +8,14 @@
 | `era-architecture-boundaries.mdc` | Control plane vs satellites, SSO, MDM, events |
 | `documentation-upkeep.mdc` | Docs as part of definition of done |
 | `era-coverage-definition.mdc` | SHIPPED vs API/STUB; actor-aware COVERAGE_MATRIX |
+| `task-acceptance.mdc` | Product Acceptance SSOT + sell/show vs engineering readiness routing; Bank Capability Inventory for OUT scope |
+| `quality-tooling.mdc` | Acceptance / integration / design-token gates + shell bans |
+| `era-managed-list-controls.mdc` | Pick-lists: ban plain text; `CatalogFieldKind` → Select/Multi/Chips/Autocomplete |
 | `era-no-emergency-reset.mdc` | **Never** reset a core to green a monorepo ship — fix or split PR |
 | `era-git-ship.mdc` | **полный коммит** / per-core PR workflow → `.cursor/skills/era-git-ship/` |
+| `era-legal-entities-backup.mdc` | Companies master + e-taxes cache → `D:\ERA-BACKUP\` (never stash-wipe) |
 
-**Skills:** `.cursor/skills/` — `era-readiness-matrix`, `era-git-ship` (ordered commit + PR dev/master).
+**Skills:** `.cursor/skills/` — `era-readiness-matrix` (engineering API/DELIVERY), `acceptance-closeout`, `quality-gates`, `era-git-ship`.
 
 **Per-app rules:** each project under `era-*/.cursor/rules/` (local-dev, module-map, ui). Finance: `era-finance-core/.cursor/rules/`. Shared libs: `packages/.cursor/rules/shared-packages.mdc`.
 

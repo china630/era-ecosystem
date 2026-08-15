@@ -11,7 +11,9 @@
     "transfers": "Transfer",
     "approve": "Approve",
     "more": "More",
-    "logout": "Log out"
+    "logout": "Log out",
+    "standingOrders": "SO",
+    "pfm": "PFM"
   },
   "login": {
     "title": "Sign in",
@@ -24,7 +26,8 @@
     "otpCode": "OTP code",
     "asanLogin": "ASAN Sign (stub)",
     "asanComplete": "Complete ASAN",
-    "devHint": "Dev OTP: 123456"
+    "devHint": "Dev OTP: 123456",
+    "asanStubBadge": "ASAN İmza / SİMA runs in stub mode — not live government signing (live = certification track)."
   },
   "dashboard": {
     "title": "Home",
@@ -53,6 +56,7 @@
     "beneficiaryName": "Name",
     "purpose": "Purpose",
     "amount": "Amount (AZN)",
+    "debitAccount": "Debit account",
     "create": "Create",
     "submit": "Submit",
     "status": "Status",
@@ -77,6 +81,39 @@
     "error": "Error",
     "back": "Back",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "select": "Select…"
+  },
+  "standingOrders": {
+    "title": "Standing orders",
+    "fromAccount": "From account",
+    "toIban": "IBAN",
+    "amount": "Amount (AZN)",
+    "create": "Create",
+    "pause": "Pause"
+  },
+  "loanApply": {
+    "title": "Loan application",
+    "product": "Product template ID",
+    "amount": "Amount (AZN)",
+    "create": "Save draft",
+    "submit": "Submit"
+  },
+  "threeDs": {
+    "title": "3DS",
+    "subtitle": "Approve or deny pending card authentication challenges",
+    "approve": "Approve",
+    "deny": "Deny"
+  },
+  "islamic": {
+    "title": "Islamic products",
+    "subtitle": "Read-only contract status (activate in ops)"
+  },
+  "pfm": {
+    "title": "Personal finance",
+    "subtitle": "Balances and spend categories (lab stub)",
+    "totalBalance": "Total balance",
+    "accounts": "Accounts",
+    "spendCategories": "Spend categories"
   }
 }

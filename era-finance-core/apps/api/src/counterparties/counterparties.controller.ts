@@ -313,6 +313,9 @@ export class CounterpartiesController {
           ...(dto.portalLocale !== undefined && {
             portalLocale: dto.portalLocale,
           }),
+          ...(dto.paymentTermsDays !== undefined && {
+            paymentTermsDays: dto.paymentTermsDays,
+          }),
           ...(globalPersonId ? { globalPersonId } : {}),
           ...counterpartyExtraFields(dto),
         },
@@ -350,6 +353,9 @@ export class CounterpartiesController {
         isVatPayer: dto.isVatPayer ?? false,
         ...(dto.portalLocale !== undefined && {
           portalLocale: dto.portalLocale,
+        }),
+        ...(dto.paymentTermsDays !== undefined && {
+          paymentTermsDays: dto.paymentTermsDays,
         }),
         ...(globalPersonId ? { globalPersonId } : {}),
         ...counterpartyExtraFields(dto),
@@ -418,6 +424,9 @@ export class CounterpartiesController {
         ...(dto.isVatPayer !== undefined && { isVatPayer: dto.isVatPayer }),
         ...(dto.portalLocale !== undefined && {
           portalLocale: dto.portalLocale,
+        }),
+        ...(dto.paymentTermsDays !== undefined && {
+          paymentTermsDays: dto.paymentTermsDays,
         }),
       },
       include: { global: true, bankAccounts: { orderBy: { createdAt: "asc" } } },

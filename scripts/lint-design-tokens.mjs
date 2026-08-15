@@ -32,7 +32,7 @@ const EXCLUDE_DIR = new Set(["node_modules", ".next", "dist", "coverage", "__tes
 const EXCLUDE_FILE = /\.(spec|test)\.(tsx|jsx)$/;
 
 const TOKEN_CLASS_RE =
-  /MODAL_INPUT_CLASS|FORM_INPUT_CLASS|FORM_TEXTAREA_CLASS|MODAL_TEXTAREA_CLASS|<Field[\s>]|<FieldSelect[\s>]|<FieldTextarea[\s>]/;
+  /MODAL_INPUT_CLASS|FORM_INPUT_CLASS|FORM_TEXTAREA_CLASS|MODAL_TEXTAREA_CLASS|MODAL_CHECKBOX_CLASS|<Field[\s>]|<FieldSelect[\s>]|<FieldTextarea[\s>]|<DatePicker[\s>]/;
 
 function walk(dir, acc = []) {
   if (!fs.existsSync(dir)) return acc;

@@ -45,11 +45,12 @@ export function ReservationCardPricingTab({
   const t = useTranslations('reservationCard');
   const tb = useTranslations('booking');
   const displayCurrency = useMemo(() => resolveDisplayCurrency(dailyRates), [dailyRates]);
+  const ratesLocked = isLocked || isCreate;
 
   return (
     <div className="space-y-4">
       <p className="text-right text-lg font-semibold text-[#34495E]">
-        {isCreate ? (
+        {isCreate || dailyRates.length === 0 ? (
           quoteText ?? tb('quotePending')
         ) : (
           <span className="inline-flex flex-col items-end gap-0.5">
@@ -67,30 +68,38 @@ export function ReservationCardPricingTab({
           </span>
         )}
       </p>
-      {!isCreate ? (
-        <div className="flex flex-wrap items-center gap-4 text-[13px]">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={useManualRate} disabled={isLocked} onChange={(e) => onToggle('useManualRate', e.target.checked)} />
-            {t('useManualRate')}
-          </label>
-          {useManualRate ? (
-            <Field
-              label={t('manualDailyRate')}
-              preset="amount"
-              type="number"
-              step="0.01"
-              value={manualDailyRate}
-              disabled={isLocked}
-              onChange={(e) => onManualRate(e.target.value)}
-            />
-          ) : null}
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={discountActive} disabled={isLocked} onChange={(e) => onToggle('discountActive', e.target.checked)} />
-            {t('discountActive')}
-          </label>
-        </div>
-      ) : null}
-      {!isCreate && dailyRates.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-4 text-[13px]">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={useManualRate}
+            disabled={ratesLocked}
+            onChange={(e) => onToggle('useManualRate', e.target.checked)}
+          />
+          {t('useManualRate')}
+        </label>
+        {useManualRate ? (
+          <Field
+            label={t('manualDailyRate')}
+            preset="amount"
+            type="number"
+            step="0.01"
+            value={manualDailyRate}
+            disabled={ratesLocked}
+            onChange={(e) => onManualRate(e.target.value)}
+          />
+        ) : null}
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={discountActive}
+            disabled={ratesLocked}
+            onChange={(e) => onToggle('discountActive', e.target.checked)}
+          />
+          {t('discountActive')}
+        </label>
+      </div>
+      {dailyRates.length > 0 ? (
         <table className="w-full font-mono text-[12px]">
           <thead className="bg-[#F8FAFC]">
             <tr>
@@ -110,7 +119,7 @@ export function ReservationCardPricingTab({
                   <input
                     className={`${MODAL_INPUT_CLASS} w-16`}
                     value={d.currencyCode ?? 'AZN'}
-                    disabled={isLocked}
+                    disabled={ratesLocked}
                     onChange={(e) => {
                       const next = [...dailyRates];
                       next[i] = { ...d, currencyCode: e.target.value };
@@ -124,7 +133,7 @@ export function ReservationCardPricingTab({
                     step="0.01"
                     className={`${MODAL_INPUT_CLASS} w-24 text-right`}
                     value={d.amount}
-                    disabled={isLocked}
+                    disabled={ratesLocked}
                     onChange={(e) => {
                       const next = [...dailyRates];
                       next[i] = { ...d, amount: Number(e.target.value) };
@@ -136,7 +145,7 @@ export function ReservationCardPricingTab({
                   <input
                     type="checkbox"
                     checked={Boolean(d.fixPrice)}
-                    disabled={isLocked}
+                    disabled={ratesLocked}
                     onChange={(e) => {
                       const next = [...dailyRates];
                       next[i] = { ...d, fixPrice: e.target.checked };
@@ -150,7 +159,7 @@ export function ReservationCardPricingTab({
                     step="0.01"
                     className={`${MODAL_INPUT_CLASS} w-16 text-right`}
                     value={d.discountPct ?? ''}
-                    disabled={isLocked}
+                    disabled={ratesLocked}
                     onChange={(e) => {
                       const next = [...dailyRates];
                       next[i] = {
@@ -165,7 +174,7 @@ export function ReservationCardPricingTab({
                   <input
                     type="checkbox"
                     checked={Boolean(d.manualFlag)}
-                    disabled={isLocked}
+                    disabled={ratesLocked}
                     onChange={(e) => {
                       const next = [...dailyRates];
                       next[i] = { ...d, manualFlag: e.target.checked };
@@ -177,24 +186,29 @@ export function ReservationCardPricingTab({
             ))}
           </tbody>
         </table>
-      ) : !isCreate ? (
+      ) : (
         <p className="text-[13px] text-[#7F8C8D]">{tb('quotePending')}</p>
-      ) : null}
-      {!isCreate ? (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded-lg bg-[#E74C3C] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
-            disabled={busy || isLocked}
-            onClick={onRecalc}
-          >
-            {t('calcDaily')}
-          </button>
-          <button type="button" className={PRIMARY_BUTTON_CLASS} disabled={busy || isLocked} onClick={onChargeAll}>
-            {t('chargeAll')}
-          </button>
-        </div>
-      ) : null}
+      )}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="rounded-lg bg-[#E74C3C] px-4 py-2 text-[13px] font-medium text-white disabled:opacity-50"
+          title={isCreate ? t('availableAfterSave') : undefined}
+          disabled={busy || ratesLocked}
+          onClick={onRecalc}
+        >
+          {t('calcDaily')}
+        </button>
+        <button
+          type="button"
+          className={PRIMARY_BUTTON_CLASS}
+          title={isCreate ? t('availableAfterSave') : undefined}
+          disabled={busy || ratesLocked}
+          onClick={onChargeAll}
+        >
+          {t('chargeAll')}
+        </button>
+      </div>
     </div>
   );
 }

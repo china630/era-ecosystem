@@ -13,11 +13,11 @@ import {
   Decimal,
   EmployeeKind,
   OrganizationKind,
-  PayrollComponentCode,
   PayrollComponentKind,
   PayrollRunStatus,
   UserRole,
 } from "@erafinance/database";
+import { PayrollComponentCode } from "@erafinance/database";
 import { AccountingService } from "../accounting/accounting.service";
 import { PostingAccountResolver } from "../accounting/posting/posting-account-resolver.service";
 import { PrismaService } from "../prisma/prisma.service";
@@ -1061,7 +1061,7 @@ export class PayrollService {
   private signPayload(payload: string): string {
     const secret =
       this.config.get<string>("PAYROLL_EXPORT_SIGN_SECRET") ||
-      this.config.get<string>("JWT_SECRET") ||
+      this.config.get<string>("ERA_JWT_SECRET") ||
       "payroll-export-dev-secret";
     return createHmac("sha256", secret).update(payload).digest("hex");
   }

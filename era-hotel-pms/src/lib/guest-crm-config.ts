@@ -126,7 +126,7 @@ const CRM_TAB: CrmButtonConfig[] = [
 const RES_DETAILS: CrmButtonConfig[] = [
   { buttonId: 'reservations', labelKey: 'resDetail.reservations', module: 'hotel', priority: 'P0', hrefTemplate: '/reports/reservations?guestId={id}' },
   { buttonId: 'transfers', labelKey: 'resDetail.transfers', module: 'hotel', priority: 'P0', hrefTemplate: '/transfers?guestId={id}' },
-  { buttonId: 'lost_and_found', labelKey: 'resDetail.lostAndFound', module: 'hotel', priority: 'P1', hrefTemplate: '/housekeeping/lost-and-found?guestId={id}' },
+  { buttonId: 'lost_and_found', labelKey: 'resDetail.lostAndFound', module: 'hotel', priority: 'P1', hrefTemplate: '/hk/lost-and-found?guestId={id}' },
   { buttonId: 'guest_all_folio', labelKey: 'resDetail.guestAllFolio', module: 'finance', priority: 'P1', financeTarget: 'folios' },
   { buttonId: 'group_hotels_visiting', labelKey: 'resDetail.groups', module: 'hotel', priority: 'P2', hrefTemplate: '/reports/group-reservations?guestId={id}' },
   { buttonId: 'accompanying_guests', labelKey: 'resDetail.accompanying', module: 'hotel', priority: 'P1', hrefTemplate: '/guests/{id}/accompanying' },

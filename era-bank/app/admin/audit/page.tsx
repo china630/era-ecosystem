@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { PageHeader, CARD_CONTAINER_CLASS } from "@era/satellite-kit/ui";
+import {
+  EraListFilterBar,
+  Field,
+  PageHeader,
+  showApiError,
+  useDebouncedValue,
+} from "@era/satellite-kit/ui";
+import { BankDataGrid } from "@/components/BankDataGrid";
 
 type AuditRow = {
   id: string;
@@ -17,53 +24,92 @@ type AuditRow = {
 export default function OpsAuditPage() {
   const t = useTranslations("pages.audit");
   const tCommon = useTranslations("common");
+  const [q, setQ] = useState("");
+  const debouncedQ = useDebouncedValue(q, 300);
   const [rows, setRows] = useState<AuditRow[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/audit", { cache: "no-store" });
+      if (!res.ok) {
+        showApiError(tCommon("error"));
+        setRows([]);
+        return;
+      }
+      const data = (await res.json()) as AuditRow[];
+      const needle = debouncedQ.trim().toLowerCase();
+      setRows(
+        needle
+          ? data.filter(
+              (r) =>
+                r.action.toLowerCase().includes(needle) ||
+                r.fullName.toLowerCase().includes(needle) ||
+                (r.refType ?? "").toLowerCase().includes(needle),
+            )
+          : data,
+      );
+    } catch {
+      showApiError(tCommon("error"));
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedQ, tCommon]);
 
   useEffect(() => {
-    fetch("/api/admin/audit", { cache: "no-store" })
-      .then(async (res) => {
-        if (!res.ok) {
-          setError(`${tCommon("error")} (${res.status})`);
-          return;
-        }
-        setRows((await res.json()) as AuditRow[]);
-      })
-      .catch(() => setError(tCommon("error")));
-  }, [tCommon]);
+    void load();
+  }, [load]);
+
+  const gridRows = useMemo(
+    () =>
+      rows.map((r) => ({
+        ...r,
+        refLabel: `${r.refType ?? "—"} ${r.refId ? `/ ${r.refId.slice(0, 8)}` : ""}`,
+      })) as Array<AuditRow & { refLabel: string } & Record<string, unknown>>,
+    [rows],
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader title={t("title")} subtitle={t("subtitle")} />
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className={CARD_CONTAINER_CLASS}>
-        {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{tCommon("empty")}</p>
-        ) : (
-          <table className="min-w-full text-left text-[12px]">
-            <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-3 py-2">{t("time")}</th>
-                <th className="px-3 py-2">{t("user")}</th>
-                <th className="px-3 py-2">{t("action")}</th>
-                <th className="px-3 py-2">{t("ref")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-b">
-                  <td className="px-3 py-2">{new Date(row.at).toLocaleString()}</td>
-                  <td className="px-3 py-2">{row.fullName}</td>
-                  <td className="px-3 py-2 font-mono">{row.action}</td>
-                  <td className="px-3 py-2">
-                    {row.refType ?? "—"} {row.refId ? `/ ${row.refId.slice(0, 8)}` : ""}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <EraListFilterBar
+        resetLabel={tCommon("filterReset")}
+        onReset={() => setQ("")}
+      >
+        <Field
+          label={t("searchLabel")}
+          preset="longText"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={t("searchPlaceholder")}
+        />
+      </EraListFilterBar>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">{tCommon("loading")}</p>
+      ) : (
+        <BankDataGrid
+          columns={[
+            {
+              key: "at",
+              header: t("colTime"),
+              render: (row) => new Date(String(row.at)).toLocaleString(),
+            },
+            { key: "fullName", header: t("colUser") },
+            {
+              key: "action",
+              header: t("colAction"),
+              render: (row) => (
+                <span className="font-mono text-[11px]">{String(row.action)}</span>
+              ),
+            },
+            { key: "refLabel", header: t("colRef") },
+          ]}
+          rows={gridRows}
+          emptyLabel={tCommon("empty")}
+        />
+      )}
     </div>
   );
 }

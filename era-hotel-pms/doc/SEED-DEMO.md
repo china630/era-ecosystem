@@ -15,6 +15,10 @@ Docker:
 docker exec -e DATABASE_URL="postgresql://era:era_dev_password@postgres:5432/era_hotel_pms?schema=public" era-hotel-pms npx tsx prisma/seed.ts
 ```
 
+## Stay time policy
+
+All planned stays use **check-in 14:00** and **check-out 12:00** Asia/Baku (`src/lib/hotel-calendar.ts`). Seed and volume loaders must not invent UTC-midnight (04:00 Baku) timestamps.
+
 ## Contents
 
 | Entity | Count (approx.) |
@@ -40,6 +44,16 @@ Statuses: `IN_HOUSE`, `CONFIRMED`, `OPTION`, `CANCELLED`, `NO_SHOW`, `CHECKED_OU
 | **403** | 5 bookings from +7d: back-to-back ×2, next-day gap, back-to-back, 2-night gap + 3 nights |
 
 Notes in DB: `203 chain N/6`, `403 chain N/5`.
+
+## Volume loader (`load-nafta-transactions.cjs`)
+
+Optional denser dataset for UAT volume (wipes guests/reservations/folios first). Uses the same 14:00/12:00 Baku policy and **skips** placements that would double-book a room.
+
+```powershell
+docker exec -e DATABASE_URL="postgresql://era:era_dev_password@postgres:5432/era_hotel_pms?schema=public" era-hotel-pms node prisma/load-nafta-transactions.cjs
+```
+
+For clean arrow/turnover demos prefer `npm run db:seed` (FO demo chains). Use the volume loader only when you need headcount, not when validating room-plan shapes.
 
 Logins: `admin` / `admin123`, `reception` / `reception123`, `manager` / `manager123`.
 

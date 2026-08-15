@@ -7,16 +7,15 @@ export default function Page() {
     <GuestCrmPromptListPage
       titleKey="crmPages.incidentsTitle"
       apiPath={(gid) => `/api/guests/${gid}/incidents`}
-      onAdd={async (guestId) => {
-        const location = window.prompt('Location');
-        const description = window.prompt('Description');
-        if (!location?.trim() || !description?.trim()) return;
-        await fetch(`/api/guests/${guestId}/incidents`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ location: location.trim(), description: description.trim() }),
-        });
-      }}
+      addFields={[
+        { name: 'location', label: 'Location', required: true, preset: 'longText' },
+        { name: 'description', label: 'Description', required: true, multiline: true },
+      ]}
+      buildBody={(v) => ({
+        location: v.location.trim(),
+        description: v.description.trim(),
+      })}
+      searchKeys={['location', 'description']}
       renderItem={(r) => (
         <li key={String(r.id)} className="rounded-lg border border-[#D5DADF] p-3">
           <strong>{String(r.location)}</strong>

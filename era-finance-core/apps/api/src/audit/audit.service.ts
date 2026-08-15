@@ -50,12 +50,11 @@ export class AuditService {
     private readonly activityEmitter: ActivityStreamEmitterService,
   ) {
     const explicit = this.config.get<string>("AUDIT_HASH_SECRET") ?? null;
-    const jwtFallback = this.config.get<string>("JWT_SECRET") ?? null;
-    this.auditHashSecret = explicit ?? jwtFallback ?? "audit-hash-dev-only";
-    if (!explicit && jwtFallback && !auditHashSecretFallbackWarned) {
+    this.auditHashSecret = explicit ?? "audit-hash-dev-only";
+    if (!explicit && !auditHashSecretFallbackWarned) {
       auditHashSecretFallbackWarned = true;
       console.warn(
-        "[AuditService] AUDIT_HASH_SECRET is not set; using JWT_SECRET as the audit hash key. Set AUDIT_HASH_SECRET in production to harden audit log integrity.",
+        "[AuditService] AUDIT_HASH_SECRET is not set; using audit-hash-dev-only. Set AUDIT_HASH_SECRET in production to harden audit log integrity.",
       );
     }
   }

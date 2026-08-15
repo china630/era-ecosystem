@@ -27,8 +27,14 @@ jobs:
         run: node --test scripts/__tests__/integration-audit.spec.mjs
       - name: Design token lint (baseline)
         run: node scripts/lint-design-tokens.mjs
+      - name: Design token layers lint (3-tier L1/L2/L3)
+        run: node scripts/lint-token-layers.mjs
       - name: Design token lint unit tests
-        run: node --test scripts/__tests__/design-tokens.spec.mjs
+        run: node --test scripts/__tests__/design-tokens.spec.mjs scripts/__tests__/token-layers.spec.mjs
+      - name: Acceptance consistency
+        run: npm run check:acceptance
+      - name: Acceptance consistency unit tests
+        run: npm run test:acceptance
 
   orchestrator:
     runs-on: ubuntu-latest
@@ -73,8 +79,11 @@ jobs:
     env:
       DATABASE_URL: postgresql://erafinance:erafinance@127.0.0.1:5432/erafinance?schema=public
       REDIS_URL: redis://127.0.0.1:6379
-      JWT_SECRET: ci-jwt-secret
+      ERA_JWT_SECRET: ci-jwt-secret
       JWT_REFRESH_SECRET: ci-jwt-refresh-secret
+      PII_ENCRYPTION_KEY: ci-pii-encryption-key-32chars!!
+      PII_BLIND_INDEX_KEY: ci-pii-blind-index-key-32chars!
+      AUDIT_HASH_SECRET: ci-audit-hash-secret-min-32-chars
       NODE_ENV: test
     services:
       redis:

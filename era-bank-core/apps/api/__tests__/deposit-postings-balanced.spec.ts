@@ -10,20 +10,23 @@ describe("deposit open/close posting balance", () => {
     expect(debit).toBe(credit);
   });
 
-  it("close legs mirror open (balanced reversal)", () => {
+  it("close legs pay principal + accrued (balanced)", () => {
     const principal = 1_000_000n;
+    const accrued = 12_000n;
+    const payout = principal + accrued;
     const closeLegs = [
-      { debitMinor: principal, creditMinor: 0n },
-      { debitMinor: 0n, creditMinor: principal },
+      { debitMinor: payout, creditMinor: 0n },
+      { debitMinor: 0n, creditMinor: payout },
     ];
     const debit = closeLegs.reduce((s, l) => s + l.debitMinor, 0n);
     const credit = closeLegs.reduce((s, l) => s + l.creditMinor, 0n);
     expect(debit).toBe(credit);
   });
 
-  it("rollover does not mutate principal (no extra legs)", () => {
-    const before = 5_000_000n;
-    const after = before;
-    expect(after).toBe(before);
+  it("rollover capitalizes accrued into principal (no extra legs)", () => {
+    const beforePrincipal = 5_000_000n;
+    const accrued = 25_000n;
+    const afterPrincipal = beforePrincipal + accrued;
+    expect(afterPrincipal).toBe(5_025_000n);
   });
 });

@@ -150,7 +150,7 @@ def collect_plaza_tenants(aliases: list[tuple[int, str, str, str]]) -> list[dict
             )
 
     # Registered legal addresses from DVX / e-taxes enrichment
-    legal_path = ROOT / "data" / "legal-entities" / "azerbaijan-legal-entities.csv"
+    legal_path = ROOT / "data" / "legal-entities" / "azerbaijan-companies-with-voen.csv"
     with legal_path.open(encoding="utf-8", newline="") as f:
         for row in csv.DictReader(f):
             addr = (row.get("tax_legal_address") or "").strip()

@@ -1,27 +1,31 @@
 import { z } from "zod";
-import { jsonOk, handleRouteError } from "@/lib/api-utils";
+import { jsonOk, jsonError, handleRouteError } from "@/lib/api-utils";
 import { prisma } from "@/lib/prisma";
-import { linkPatientGlobalPerson } from "@/lib/patient-identity";
 import { trySendPlatformNotification } from "@/lib/platform-notify";
+import { detectSchedulingConflict } from "@/lib/scheduling.service";
+import { isWithinShift } from "@/domain/appointment/practitioner-schedule.service";
 
-const createSchema = z.object({
-  patientRefCode: z.string(),
-  patientFullName: z.string(),
-  patientPhone: z.string().optional(),
-  patientFin: z.string().optional(),
-  practitionerCode: z.string(),
-  practitionerFullName: z.string(),
-  scheduledAt: z.string().datetime().optional(),
-  serviceLines: z
-    .array(
-      z.object({
-        serviceCode: z.string(),
-        description: z.string(),
-        amount: z.number().nonnegative(),
-      }),
-    )
-    .optional(),
-});
+const createSchema = z
+  .object({
+    patientRefId: z.string().min(1).optional(),
+    patientRefCode: z.string().min(1).optional(),
+    practitionerCode: z.string().min(1),
+    scheduledAt: z.string().datetime().optional(),
+    roomCode: z.string().optional(),
+    resourceId: z.string().optional(),
+    serviceLines: z
+      .array(
+        z.object({
+          serviceCode: z.string(),
+          description: z.string(),
+          amount: z.number().nonnegative(),
+        }),
+      )
+      .optional(),
+  })
+  .refine((b) => Boolean(b.patientRefId || b.patientRefCode), {
+    message: "patientRefId or patientRefCode required",
+  });
 
 export async function GET() {
   try {
@@ -40,37 +44,20 @@ export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
 
-    let patient = await prisma.patientRef.findUnique({
-      where: { refCode: body.patientRefCode },
-    });
+    const patient = body.patientRefId
+      ? await prisma.patientRef.findUnique({ where: { id: body.patientRefId } })
+      : await prisma.patientRef.findUnique({
+          where: { refCode: body.patientRefCode! },
+        });
     if (!patient) {
-      patient = await prisma.patientRef.create({
-        data: {
-          refCode: body.patientRefCode,
-          fullName: body.patientFullName,
-          phone: body.patientPhone,
-        },
-      });
-    }
-    if (!patient.globalPersonId) {
-      await linkPatientGlobalPerson({
-        patientRefId: patient.id,
-        fin: body.patientFin,
-        fullName: body.patientFullName,
-        phone: body.patientPhone,
-      });
-      patient = await prisma.patientRef.findUniqueOrThrow({
-        where: { id: patient.id },
-      });
+      return jsonError("Patient not found — register the patient first", 400);
     }
 
-    let practitioner = await prisma.practitioner.findUnique({
+    const practitioner = await prisma.practitioner.findUnique({
       where: { code: body.practitionerCode },
     });
-    if (!practitioner) {
-      practitioner = await prisma.practitioner.create({
-        data: { code: body.practitionerCode, fullName: body.practitionerFullName },
-      });
+    if (!practitioner || !practitioner.active) {
+      return jsonError("Practitioner not found", 400);
     }
 
     const scheduledAt = body.scheduledAt
@@ -79,11 +66,28 @@ export async function POST(req: Request) {
     const serviceLines = body.serviceLines ?? [];
     const amountNet = serviceLines.reduce((s, l) => s + l.amount, 0);
 
+    const conflict = await detectSchedulingConflict({
+      practitionerCode: body.practitionerCode,
+      scheduledAt,
+      resourceId: body.resourceId ?? null,
+    });
+    if (conflict) return jsonError(conflict, 409);
+
+    // CLI-36 — reject slots outside the practitioner's shift rotation.
+    const onShift = await isWithinShift(
+      practitioner.id,
+      scheduledAt,
+      practitioner.defaultSlotMinutes || 30,
+    );
+    if (!onShift) return jsonError("Practitioner is not on shift at this time", 409);
+
     const appointment = await prisma.appointment.create({
       data: {
         patientRefId: patient.id,
         practitionerId: practitioner.id,
         scheduledAt,
+        roomCode: body.roomCode?.trim() || null,
+        resourceId: body.resourceId || null,
         visit: {
           create: {
             patientRefId: patient.id,

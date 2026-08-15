@@ -2885,6 +2885,8 @@ model Counterparty {
   /// *
   ///    * Предпочитаемый язык портала счёта для клиента: `az` | `ru` | `en` (nullable).
   portalLocale                  String?                    @map("portal_locale")
+  /// AR payment terms in days (H-BL-48); null → default 30 in invoice due-date resolution
+  paymentTermsDays              Int?                       @map("payment_terms_days")
   bankAccounts                  CounterpartyBankAccount[]
   cashOrders                    CashOrder[]
   global                        GlobalCounterparty?        @relation(fields: [globalId], references: [id])

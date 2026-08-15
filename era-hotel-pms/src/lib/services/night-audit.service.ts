@@ -28,6 +28,26 @@ export async function getNightAuditStatus() {
   const settlementPolicy = orgId
     ? await resolveSettlementPolicy(orgId)
     : { pendingSettlementNaPolicy: 'BLOCK' as const };
+
+  const dayStart = new Date(currentBiz);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(currentBiz);
+  dayEnd.setHours(23, 59, 59, 999);
+  const unassignedArrivals = await prisma.reservation.count({
+    where: {
+      status: { in: ['CONFIRMED', 'OPTION'] },
+      checkInDate: { gte: dayStart, lte: dayEnd },
+      roomId: null,
+    },
+  });
+  const noShowCandidates = await prisma.reservation.count({
+    where: {
+      status: { in: ['CONFIRMED', 'OPTION'] },
+      checkInDate: { lt: dayStart },
+      roomId: null,
+    },
+  });
+
   return {
     openShift,
     posShiftStatus,
@@ -38,6 +58,10 @@ export async function getNightAuditStatus() {
     pendingSettlement: {
       count: pendingSummary.pendingCount,
       policy: settlementPolicy.pendingSettlementNaPolicy,
+    },
+    polishPreview: {
+      unassignedArrivals,
+      noShowCandidates,
     },
   };
 }
@@ -91,6 +115,78 @@ export async function runNightAudit() {
 
     const inHouseCount = await prisma.reservation.count({ where: { status: 'IN_HOUSE' } });
     steps.push(`Step 2: In-house reservations: ${inHouseCount}`);
+
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const unassignedArrivals = await prisma.reservation.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'OPTION'] },
+        checkInDate: { gte: dayStart, lte: dayEnd },
+        roomId: null,
+      },
+      select: { id: true, guest: { select: { fullName: true } } },
+    });
+    steps.push(
+      `Step 2a: Unassigned arrivals today: ${unassignedArrivals.length}` +
+        (unassignedArrivals.length
+          ? ` (${unassignedArrivals
+              .slice(0, 5)
+              .map((r) => r.guest.fullName)
+              .join(', ')})`
+          : ''),
+    );
+
+    const noShowCandidates = await prisma.reservation.findMany({
+      where: {
+        status: { in: ['CONFIRMED', 'OPTION'] },
+        checkInDate: { lt: dayStart },
+        roomId: null,
+      },
+      take: 50,
+    });
+    let noShowCount = 0;
+    for (const r of noShowCandidates) {
+      await prisma.reservation.update({
+        where: { id: r.id },
+        data: { status: 'NO_SHOW' },
+      });
+      noShowCount += 1;
+    }
+    steps.push(`Step 2b: Auto no-show marked: ${noShowCount}`);
+
+    const openFoliosWithBalance = await prisma.folio.findMany({
+      where: { status: 'OPEN' },
+      include: { charges: true, payments: true, reservation: { select: { id: true, status: true } } },
+    });
+    const { folioBalance: fb } = await import('@/lib/services/folio.service');
+    const exceptions = openFoliosWithBalance.filter((f) => {
+      const bal = fb(f.charges, f.payments);
+      return Math.abs(bal) > 0.01 && f.reservation.status === 'CHECKED_OUT';
+    });
+    steps.push(`Step 2c: Folio exceptions (CHECKED_OUT with open balance): ${exceptions.length}`);
+
+    const dayCharges = await prisma.folioCharge.findMany({
+      where: { businessDate: date },
+      select: { amount: true, qty: true },
+    });
+    const dayPays = await prisma.folioPayment.findMany({
+      where: { createdAt: { gte: dayStart, lt: new Date(dayEnd.getTime() + 1) } },
+      select: { amount: true, kind: true },
+    });
+    const trialCharges = dayCharges.reduce(
+      (s, c) => s + decimalToNumber(c.amount) * c.qty,
+      0,
+    );
+    const trialPays = dayPays.reduce((s, p) => {
+      const n = decimalToNumber(p.amount);
+      return s + (p.kind === 'REFUND' ? -n : n);
+    }, 0);
+    steps.push(
+      `Step 2d: Trial balance — charges ${trialCharges.toFixed(2)} / payments ${trialPays.toFixed(2)} AZN`,
+    );
 
     const revenueRoom = await prisma.revenueCode.findUnique({ where: { code: 'ROOM' } });
     if (!revenueRoom) throw new Error('Revenue code ROOM not configured');

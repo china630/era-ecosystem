@@ -82,9 +82,15 @@ Cross-product marketing and onboarding live on **Orchestrator web**, not Finance
 |---|---------|-------------|----------------|-----------|------|------------|
 | 5 | Hotel PMS | `era-hotel-pms` | `hotel-pms` | `hotel-pms` | 3201 | `https://hotel-pms.era-365.online/` |
 
-**Hotel FO routes (Wave B):** `/`, `/room-plan`, `/reports/reservations`, `/reports/group-reservations`, `/reports/reservations/notes`, `/reports/inhouse-daily`, `/reports/end-of-day-logs`, `/reports/reservation-times`, `/reports/room-changes`, `/in-house`, `/operations`. See [era-hotel-pms/doc/FRONT-OFFICE-ELECTRAWEB.md](../era-hotel-pms/doc/FRONT-OFFICE-ELECTRAWEB.md).
+**Hotel FO / IA routes:** `/fo/*` (rack, availability, reservations, room-plan, groups, in-house…), `/hk/*`, `/front-cash/*`, `/night-audit/*`, `/distribution/*`, `/settings/*`. Canon: [MENU-IA-CANON.md](../era-hotel-pms/doc/MENU-IA-CANON.md).
+
+**Hotel crons** (Bearer `HOTEL_CRON_SECRET` when set): `POST /api/cron/auto-bar`, `POST /api/cron/allotment-block-cutoff` (soft-release blocks past cutoff — [ADR hotel-booking-hierarchy](./adr/hotel-booking-hierarchy.md)).
+
 | 6 | F&B POS | `era-fnb-pos` | `fnb-pos` | `fnb-pos` | 3202 | `https://fnb-pos.era-365.online/` |
 | 7 | Clinic | `era-clinic` | `clinic` | `clinic` | 3203 | `https://clinic.era-365.online/` |
+
+**Clinic crons** (Bearer `PLATFORM_CRON_SECRET`): `POST /api/cron/procedure-auto-complete`, `POST /api/cron/procedure-no-show-sweep`, plus existing inpatient/catalog crons. Tenant flags: `checkInRequiresQr`, `autoNoShowAfterMin` (see ADR clinic-procedure-day-ops).
+
 | 8 | Retail & E-commerce | `era-retail-pos` | `retail-pos` | `retail-pos` | 3204 | `https://retail-pos.era-365.online/` |
 | 9 | Logistics & Customs | `era-logistics` | `logistics` | `logistics` | 3205 | `https://logistics.era-365.online/` |
 | 10 | Construction | `era-construction` | `construction` | `construction` | 3206 | `https://construction.era-365.online/` |
@@ -178,12 +184,26 @@ API: `https://{subdomain}.era-365.online/api/...` (Next.js Route Handlers).
 | Bank Core org | `ERA_BANK_ORGANIZATION_ID` | The single bank org (one deployment = one bank) |
 | Bank Core ref-data mode | `ERA_DATA_HUB_ONPREM` | `true` for isolated on-prem bank deployments |
 | Bank satellite → engine | `ERA_BANK_CORE_URL`, `BANK_CORE_SERVICE_TOKEN` | `era-bank` BFF calls to `era-bank-core` |
+| Bank DBO customer JWT | `BANK_DBO_JWT_SECRET` (≥16 chars) | Shared by `era-bank-core` (issue/verify customer JWT) and `era-bank-dbo` (channel session cookie). Dev OTP: `DEV_OTP_CODE` (default `123456`) |
 | Bank satellite origin | `ERA_BANK_ORIGIN` | `https://bank.era-365.online` |
 | Sanatorium per-satellite org (docker) | `ERA_HOTEL_ORGANIZATION_ID`, `ERA_FB_ORGANIZATION_ID`, `ERA_CLINIC_ORGANIZATION_ID`, `ERA_RETAIL_ORGANIZATION_ID` | See [NAFTA_SANATORIUM_UAT.md](./NAFTA_SANATORIUM_UAT.md); fallback `ERA_SATELLITE_ORGANIZATION_ID` |
 | Hotel guest MDM strict | `ERA_HOTEL_GUEST_MDM_STRICT` | `true` in production templates — create blocked without MDM link after transient resolve |
 | Dev module unlock (deprecated) | `ERA_DEV_UNLOCK_ALL_MODULES` | Superseded by [ADR platform-trial-hierarchy](./adr/platform-trial-hierarchy.md) — use owner Connect + super-admin trial UI |
 
 **JWT issuer (current):** `era-orchestrator`
+
+| Auth / crypto | Variable | Notes |
+|---------------|----------|-------|
+| Shared HS256 (Orch + Finance) | `ERA_JWT_SECRET` | Only auth secret; Finance `JWT_SECRET` removed |
+| Orch signing mode | `ERA_JWT_SIGNING_MODE` | `hs256` \| `dual` \| `rs256` (local Docker default `dual`) |
+| Orch RS256 private JWK | `ERA_JWT_RS256_JWK` or `ERA_JWT_RS256_JWK_FILE` | Private key **only** on Orchestrator |
+| Finance verify mode | `ERA_JWT_VERIFY_MODE` | `dual` (default) then `rs256` after cutover |
+| Finance JWKS | `ERA_JWT_JWKS_URL` | `http://orchestrator:4000/.well-known/jwks.json` |
+| Issuer / audience | `ERA_JWT_ISSUER`, `ERA_JWT_AUDIENCE_FINANCE` | Defaults `era-orchestrator` / `era-finance-core` |
+| PII at-rest | `PII_ENCRYPTION_KEY`, `PII_BLIND_INDEX_KEY` | Required; independent of auth rotation |
+| Audit chain | `AUDIT_HASH_SECRET` | Required in production |
+
+See [ADR control-plane-jwt-keys](./adr/control-plane-jwt-keys.md).
 
 ---
 

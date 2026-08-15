@@ -33,6 +33,12 @@ Run after `docker compose up -d`, `npx prisma migrate deploy`, `npm run db:seed`
 1. Open `/login`, sign in as `reception` / `reception123`.
 2. Confirm Chessboard loads; AppNav shows allowed links only.
 
+## 1b. Room type availability (FO chain)
+
+1. Open /availability — confirm Avl/Occ grid for date range.
+2. Pick a type/date with Avl > 0 → **+ Reservation**.
+3. On create card, Product shows sellable count; try dates with Avl = 0 → save blocked / message links to RTA.
+
 ## 2. Booking (PMS-01)
 
 1. `/bookings/new` — create guest via **+ New guest**; enter FIN/passport in lookup fields → MDM link → verify guest row has `globalPersonId` and **no** local FIN/passport columns (DB).
@@ -337,3 +343,36 @@ Prerequisite: orchestrator API `:4000` + data-hub `:4200` running; **finance-cor
 2. **Travel agency VÖEN:** `/admin/travel-agencies` (or counterparty form with VÖEN field) → lookup returns company name without finance API up.
 3. **Auto-BAR calendar:** `/admin/bar-calendar` loads; non-working days respected (orchestrator calendar proxy + Sat/Sun fallback if hub down).
 
+## 27. P5 FO money / City Ledger (2026-08-03)
+
+UI paths (OpsUI) — no curl-only for SHIPPED claims:
+
+1. **Leave on City Ledger:** company/agency stay with ACTIVE contract + within credit limit → folio or chessboard check-out → confirm CL → COMPANY/AGENCY folio `PENDING_AR` then `TRANSFERRED_AR`; guest folio still requires zero balance.
+2. **Gate fail:** same stay without contract or over limit → check-out with transfer refused / error.
+3. **Deposit on settle:** HELD deposit → `/folio/[id]` settle wizard → Apply deposits / method DEPOSIT → balance reduces; deposit APPLIED.
+4. **Refund payment:** post payment → Refund on payment row → `kind=REFUND` line; mock fiscal.
+5. **Discount:** settle or check-out with discount amount → negative DISCOUNT charge.
+6. **Per-guest close:** EQUAL party → Close on one personal folio when balance 0.
+7. **Agency settle:** `/front-cash/agency-ledger` → TRANSFERRED_AR list → Apply to City Ledger.
+8. **NA polish:** `/night-audit` → night audit status shows polishPreview (exceptions / auto no-show / trial).
+9. **Finance matching:** Finance `/reporting/aging` buckets; counterparty payment terms; `/sales/invoices/allocate` allocate tranche.
+
+## 28. MENU-IA deepen — cash journal / EOD grids / updates (2026-08-07 → thin MVP 2026-08-11)
+
+UI paths (OpsUI) — required before SHIPPED bump for HOT-CASH-06 / HOT-NA-03 / HOT-NA-04:
+
+1. **Cash journal + Z (HOT-CASH-06):** `/front-cash/transactions` — set from/to → payments / HELD deposits / pending / method totals (incl. BANK_TRANSFER); select CashShift → **Print Z** → **Close shift** (ops packet, not fiscal KKM Z).
+2. **EOD hub (HOT-NA-03):** `/night-audit/reports` — pick date → open **09 Cancelled**, **10 Created**, **11 Folio transactions**, **12 Room price control**, **13 No-shows**, **14 Room moves**, **15 VIP in-house** → each shows a grid; **Export CSV** on report pages.
+3. **Folio day ledger:** `/night-audit/reports/folio-transactions?date=…` — CHARGE and PAYMENT rows for the day; Folio link opens `/folio/[reservationId]`.
+4. **Reservation updates (HOT-NA-04):** `/night-audit/reservation-updates` — filter Action type Cancel/Extend/Note/Other → grid updates; **Export CSV** downloads file.
+5. **Year-end still staged (HOT-NA-05 STUB):** `/night-audit/year-end` → preview loads; Last/First day buttons return staged / `YEAR_END_NOT_ENABLED` (do **not** expect posting).
+6. **EOD logs path:** `/night-audit/logs` lists NightAuditRun rows (legacy `/reports/end-of-day-logs` redirects here).
+
+## 29. Thin MVP deepen — routing / bank / transfer / BEO / CL / OTA (2026-08-11)
+
+1. **Stay folio routing (HOT-CL-01):** reservation card → Folio routing → set ROOM→COMPANY, extras→GUEST → save; post charge respects stay override over property rule.
+2. **BANK tender (HOT-CASH-01):** `/folio/[id]` settle → method BANK_TRANSFER + bank reference → payment line stores `bankReference`; journal totals include BANK_TRANSFER.
+3. **Transfers (HOT-XFER-01):** `/transfers` → filter pickup date → **Print driver sheet**; complete posts via folio routing; **Cancel** voids charge when DONE+charged.
+4. **BEO day sheet (HOT-BEO-01):** `/banquets/[id]` → preferred folio on confirm → **Print day sheet** (HTML lines/resources/staff/master folio).
+5. **CL snapshot (HOT-CL-04):** `/front-cash/agency-ledger` → select agency → see last snapshot meta → **Push CL snapshot** → **Open Finance AR** when Finance URL configured.
+6. **Channel local CM (HOT-CH-01):** `/distribution/channel` — health panel; cancel OTA by externalRef/reservationId only (no latest-OTA fallback); error journal OPEN→RESOLVED. Live Booking/Expedia/Exely = HOT-CH-02 **STUB** until vendor creds + UAT.
